@@ -126,7 +126,6 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
 
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
-    // dispatch(stateSave());
   };
 }
 

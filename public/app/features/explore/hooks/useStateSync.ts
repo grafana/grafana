@@ -5,11 +5,12 @@ import { ExploreId, ExploreQueryParams, useDispatch, useSelector } from 'app/typ
 
 import { changeDatasource } from '../state/datasource';
 import { initializeExplore, urlDiff } from '../state/explorePane';
-import { splitClose } from '../state/main';
+import { splitClose, syncTimesAction } from '../state/main';
 import { runQueries, setQueriesAction } from '../state/query';
 import { updateTime } from '../state/time';
 
 import { getTimeRangeFromUrl, getUrlStateFromPaneState } from './utils';
+import { isEqual } from 'lodash';
 
 /**
  * Syncs URL changes with Explore's panes state by reacting to URL changes and updating the state.
@@ -26,6 +27,21 @@ export function useStateSync(params: ExploreQueryParams) {
         left: parseUrlState(params.left),
         ...(params.right && { right: parseUrlState(params.right) }),
       };
+
+      // if navigating the history causes one of the time range
+      // to not being equal to all the other ones, we set syncedTimes to false
+      // to avoid inconsistent UI state.
+      // TODO: ideally `syncedTimes` should be saved in the URL.
+      if (
+        Object.values(urlPanes).some((pane, i, panes) => {
+          if (i === 0) {
+            return false;
+          }
+          return !isEqual(pane.range, panes[i - 1].range);
+        })
+      ) {
+        dispatch(syncTimesAction({ syncedTimes: false }));
+      }
 
       for (const [id, pane] of Object.entries(urlPanes)) {
         const exploreId = id as ExploreId;
@@ -58,12 +74,6 @@ export function useStateSync(params: ExploreQueryParams) {
           }
 
           if (update.range) {
-            //TODO: We currently do not save whether the time ranges are synced or not in the URL,
-            // This means users can't hare explore links with "synced" time ranges.
-            // FIXME: if a user syncs the time ranges when 2 panes have different range, going back in history causes
-            // the time range to be out of sync, even though the UI shows it as synced.
-            // In such cases we should set synced=false when going back in history causes tha time ranges in the URL to be different.
-            // A better solution would be to save the synced state in the URL.
             dispatch(updateTime({ exploreId, rawRange: range.raw }));
           }
 
