@@ -19,7 +19,7 @@ import { store } from 'app/store/store';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { Graph } from '../../../core/utils/dag';
+import { Graph, Node } from '../../../core/utils/dag';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
@@ -641,6 +641,95 @@ export interface OnTimeRangeUpdatedDependencies {
   events: typeof appEvents;
 }
 
+const dfs = (node: Node, visited: string[], variables: VariableModel[], variablesRefreshTimeRange: VariableModel[]) => {
+  if (!visited.includes(node.name)) {
+    visited.push(node.name);
+    console.log('visited node', node.name);
+  }
+  console.log('outputEdges of node', node.name, node.outputEdges.length, node.outputEdges);
+  node.outputEdges.forEach((e) => {
+    const child = e.outputNode;
+    if (child && !visited.includes(child.name)) {
+      const childVariable = variables.find((v) => v.name === child.name) as QueryVariableModel;
+      // when a variable is refreshed on time range change, we need to add that variable to be refreshed and mark its children as visited
+      if (
+        childVariable &&
+        childVariable.refresh === VariableRefresh.onTimeRangeChanged &&
+        variablesRefreshTimeRange.indexOf(childVariable) === -1
+      ) {
+        variablesRefreshTimeRange.push(childVariable);
+        visited.push(child.name);
+      } else {
+        dfs(child, visited, variables, variablesRefreshTimeRange);
+      }
+    }
+  });
+
+  console.log(variablesRefreshTimeRange);
+  return variablesRefreshTimeRange;
+};
+
+const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): VariableWithOptions[] => {
+  const allVariables = getVariablesByKey(key, state);
+
+  //create dependency graph
+  const g = createGraph(allVariables);
+  // create a list of nodes that were visited
+  const visitedDfs: string[] = [];
+  const variablesRefreshTimeRange: VariableWithOptions[] = [];
+  allVariables.forEach((v) => {
+    const node = g.getNode(v.name);
+    if (visitedDfs.includes(v.name)) {
+      return;
+    }
+    if (node) {
+      const parentVariableNode = allVariables.find((v) => v.name === node.name) as QueryVariableModel;
+      const isVariableTimeRange =
+        parentVariableNode && parentVariableNode.refresh === VariableRefresh.onTimeRangeChanged;
+      //
+      if (isVariableTimeRange && node.outputEdges.length === 0) {
+        variablesRefreshTimeRange.push(parentVariableNode);
+      }
+
+      // if variable is time range and other variables depend on it (output edges) add it to the list of variables that need refresh and dont visit its dependents
+      if (
+        isVariableTimeRange &&
+        variablesRefreshTimeRange.includes(parentVariableNode) &&
+        node.outputEdges.length > 0
+      ) {
+        variablesRefreshTimeRange.push(parentVariableNode);
+        dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
+      }
+
+      // if variable is not time range but has dependents (output edges) visit its dependants and repeat the process
+      if (
+        parentVariableNode &&
+        parentVariableNode.refresh &&
+        parentVariableNode.refresh !== VariableRefresh.onTimeRangeChanged
+      ) {
+        dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
+      }
+    }
+  });
+
+  return variablesRefreshTimeRange;
+};
+
+// old approach of refreshing variables that need refresh
+const getVariablesThatNeedRefreshOld = (key: string, state: StoreState): VariableWithOptions[] => {
+  const allVariables = getVariablesByKey(key, state);
+
+  const variablesThatNeedRefresh = allVariables.filter((variable) => {
+    if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
+      const variableWithRefresh = variable as unknown as QueryVariableModel;
+      return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
+    }
+    return false;
+  }) as VariableWithOptions[];
+
+  return variablesThatNeedRefresh;
+};
+
 export const onTimeRangeUpdated =
   (
     key: string,
@@ -649,14 +738,13 @@ export const onTimeRangeUpdated =
   ): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     dependencies.templateSrv.updateTimeRange(timeRange);
-    const variablesThatNeedRefresh = getVariablesByKey(key, getState()).filter((variable) => {
-      if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
-        const variableWithRefresh = variable as unknown as QueryVariableModel;
-        return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
-      }
 
-      return false;
-    }) as VariableWithOptions[];
+    // approach # 2, get variables that need refresh but use the dependency graph to only update the ones that are affected
+    // const variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
+    const variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
+    const variablesThatNeedRefreshOld = getVariablesThatNeedRefreshOld(key, getState());
+    console.log('variablesThatNeedRefresh', variablesThatNeedRefresh);
+    console.log('variablesThatNeedRefreshOld', variablesThatNeedRefreshOld);
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable) =>

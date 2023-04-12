@@ -116,6 +116,9 @@ export class VariableQueryRunner {
       const target = runner.getTarget({ datasource, variable });
       const request = this.getRequest(variable, args, target);
 
+      console.log('variable', variable.name);
+      console.log('request', request);
+      //
       runner
         .runRequest(runnerArgs, request)
         .pipe(
