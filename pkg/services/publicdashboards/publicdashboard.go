@@ -29,7 +29,7 @@ type Service interface {
 	DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error
 
 	GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
-	GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
+	GetQueryDataResponse(ctx context.Context, skipDSCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	NewPublicDashboardAccessToken(ctx context.Context) (string, error)
 	NewPublicDashboardUid(ctx context.Context) (string, error)
