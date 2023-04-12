@@ -93,7 +93,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     setColumns([
       ...frame.fields.map((f, i) => {
         const displayName = getFieldDisplayName(f, frame);
-        const width = columnWidths.get(i) ?? getCellWidth(f, theme.typography.fontSize);
+        const width = columnWidths.get(i) ?? getCellWidth(f);
         return {
           title: displayName,
           width: width,
@@ -103,7 +103,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         };
       }),
     ]);
-  }, [columnWidths, frame, theme.typography.fontSize]);
+  }, [columnWidths, frame]);
 
   useEffect(() => {
     setGridColumns();
@@ -171,11 +171,10 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onColumnInputBlur = (columnName: string) => {
     const len = frame.length ?? 0;
-
     const newFrame = new MutableDataFrame(frame);
 
     const field: Field = {
-      name: columnName,
+      name: newFrame.fields.find((f) => f.name === columnName) ? `Column ${newFrame.fields.length}` : columnName,
       type: FieldType.string,
       config: {},
       values: new ArrayVector(new Array(len).fill('')),
@@ -305,7 +304,9 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
     const newFrame = new MutableDataFrame(frame);
-    newFrame.fields[columnIdx].name = columnName;
+    newFrame.fields[columnIdx].name = newFrame.fields.find((f) => f.name === columnName)
+      ? `Column ${columnIdx}`
+      : columnName;
 
     publishSnapshot(newFrame, id);
 

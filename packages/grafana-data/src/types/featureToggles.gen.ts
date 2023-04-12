@@ -96,5 +96,5 @@ export interface FeatureToggles {
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   dataplaneFrontendFallback?: boolean;
-  enableDatagridEditingPanel?: boolean;
+  enableDatagridEditing?: boolean;
 }

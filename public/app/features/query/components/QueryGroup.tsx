@@ -97,7 +97,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
-    if (config.featureToggles.enableDatagridEditingPanel) {
+    if (config.featureToggles.enableDatagridEditing) {
       const dashboard = getDashboardSrv().getCurrent();
       if (dashboard) {
         this.datagridEditEventSubscription = dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
@@ -153,7 +153,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       this.querySubscription = null;
     }
 
-    if (config.featureToggles.enableDatagridEditingPanel) {
+    if (config.featureToggles.enableDatagridEditing) {
       if (this.datagridEditEventSubscription) {
         this.datagridEditEventSubscription.unsubscribe();
         this.datagridEditEventSubscription = null;

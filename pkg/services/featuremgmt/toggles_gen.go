@@ -319,7 +319,7 @@ const (
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 
-	// FlagEnableDatagridEditingPanel
+	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
-	FlagEnableDatagridEditingPanel = "enableDatagridEditingPanel"
+	FlagEnableDatagridEditing = "enableDatagridEditing"
 )

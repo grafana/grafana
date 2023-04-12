@@ -520,7 +520,7 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "enableDatagridEditingPanel",
+			Name:         "enableDatagridEditing",
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
