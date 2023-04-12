@@ -105,6 +105,24 @@ lineage: seqs: [
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
+				// TODO: this should be a regular DataQuery that depends on the selected dashboard
+				// these match the properties of the "grafana" datasouce that is default in most dashboards
+				#AnnotationTarget: {
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already dependin on it so hard to change
+					limit: int64
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already dependin on it so hard to change
+					matchAny: bool
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already dependin on it so hard to change
+					tags: [...string]
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already dependin on it so hard to change
+					type: string
+					... // datasource will stick thier raw DataQuery here
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+
 				#AnnotationPanelFilter: {
 					// Should the specified panels be included or excluded
 					exclude?: bool | *false
@@ -119,42 +137,36 @@ lineage: seqs: [
 					@grafana(TSVeneer="type")
 
 					// Name of annotation.
-					name: string @grafanamaturity(NeedsExpertReview)
+					name: string
 
-					// Datasource to use for annotation.
+					// TODO: Should be DataSourceRef
 					datasource: {
 						type?: string
 						uid?:  string
 					} @grafanamaturity(NeedsExpertReview)
 
 					// When enabled the annotation query is issued with every dashboard refresh
-					enable: bool | *true @grafanamaturity(NeedsExpertReview)
+					enable: bool | *true
 
 					// Annotation queries can be toggled on or off at the top of the dashboard.  
 					// When hide is true, the toggle is not shown in the dashboard.
-					hide?: bool | *false @grafanamaturity(NeedsExpertReview)
+					hide?: bool | *false
 
 					// Color to use for the annotation event markers
 					iconColor: string
-
-					// TODO????
-					type?: string @grafanamaturity(NeedsExpertReview)
 
 					// Optionally   
 					filter?: #AnnotationPanelFilter
 
 					// TODO.. this should just be a normal query target
-					target?: {
-						// These exist because it is the -- grafana -- datasource
-						limit:    int64
-						matchAny: bool
-						tags: [...string]
-						type: string
-						...
-					}
+					target?: #AnnotationTarget
 
 					// TODO -- this should not exist here, it is based on the --grafana-- datasource
 					type?: string @grafanamaturity(NeedsExpertReview)
+
+					// unless datasources have migrated to the target+mapping,
+					// thhey just spread their query into the base object :(
+					...
 				} @cuetsy(kind="interface")
 
 				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)

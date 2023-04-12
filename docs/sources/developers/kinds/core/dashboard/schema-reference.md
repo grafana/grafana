@@ -53,16 +53,16 @@ TODO -- should not be a public interface on its own, but required for Veneer
 TODO docs
 FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 
-| Property     | Type                                            | Required | Default | Description                                                                                                                               |
-|--------------|-------------------------------------------------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| `datasource` | [object](#datasource)                           | **Yes**  |         | Datasource to use for annotation.                                                                                                         |
-| `enable`     | boolean                                         | **Yes**  | `true`  | When enabled the annotation query is issued with every dashboard refresh                                                                  |
-| `iconColor`  | string                                          | **Yes**  |         | Color to use for the annotation event markers                                                                                             |
-| `name`       | string                                          | **Yes**  |         | Name of annotation.                                                                                                                       |
-| `filter`     | [AnnotationPanelFilter](#annotationpanelfilter) | No       |         |                                                                                                                                           |
-| `hide`       | boolean                                         | No       | `false` | Annotation queries can be toggled on or off at the top of the dashboard.<br/>When hide is true, the toggle is not shown in the dashboard. |
-| `target`     | [object](#target)                               | No       |         | TODO.. this should just be a normal query target                                                                                          |
-| `type`       | string                                          | No       |         | TODO????<br/><br/><br/>TODO -- this should not exist here, it is based on the --grafana-- datasource                                      |
+| Property     | Type                                            | Required | Default | Description                                                                                                                                                                  |
+|--------------|-------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `datasource` | [object](#datasource)                           | **Yes**  |         | TODO: Should be DataSourceRef                                                                                                                                                |
+| `enable`     | boolean                                         | **Yes**  | `true`  | When enabled the annotation query is issued with every dashboard refresh                                                                                                     |
+| `iconColor`  | string                                          | **Yes**  |         | Color to use for the annotation event markers                                                                                                                                |
+| `name`       | string                                          | **Yes**  |         | Name of annotation.                                                                                                                                                          |
+| `filter`     | [AnnotationPanelFilter](#annotationpanelfilter) | No       |         |                                                                                                                                                                              |
+| `hide`       | boolean                                         | No       | `false` | Annotation queries can be toggled on or off at the top of the dashboard.<br/>When hide is true, the toggle is not shown in the dashboard.                                    |
+| `target`     | [AnnotationTarget](#annotationtarget)           | No       |         | TODO: this should be a regular DataQuery that depends on the selected dashboard<br/>these match the properties of the "grafana" datasouce that is default in most dashboards |
+| `type`       | string                                          | No       |         | TODO -- this should not exist here, it is based on the --grafana-- datasource                                                                                                |
 
 ### AnnotationPanelFilter
 
@@ -71,25 +71,26 @@ FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 | `ids`     | integer[] | **Yes**  |         | Panel IDs that should be included or excluded       |
 | `exclude` | boolean   | No       | `false` | Should the specified panels be included or excluded |
 
+### AnnotationTarget
+
+TODO: this should be a regular DataQuery that depends on the selected dashboard
+these match the properties of the "grafana" datasouce that is default in most dashboards
+
+| Property   | Type     | Required | Default | Description                                                                                                      |
+|------------|----------|----------|---------|------------------------------------------------------------------------------------------------------------------|
+| `limit`    | integer  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
+| `matchAny` | boolean  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
+| `tags`     | string[] | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
+| `type`     | string   | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
+
 ### Datasource
 
-Datasource to use for annotation.
+TODO: Should be DataSourceRef
 
 | Property | Type   | Required | Default | Description |
 |----------|--------|----------|---------|-------------|
 | `type`   | string | No       |         |             |
 | `uid`    | string | No       |         |             |
-
-### Target
-
-TODO.. this should just be a normal query target
-
-| Property   | Type     | Required | Default | Description                                            |
-|------------|----------|----------|---------|--------------------------------------------------------|
-| `limit`    | integer  | **Yes**  |         | These exist because it is the -- grafana -- datasource |
-| `matchAny` | boolean  | **Yes**  |         |                                                        |
-| `tags`     | string[] | **Yes**  |         |                                                        |
-| `type`     | string   | **Yes**  |         |                                                        |
 
 ### DashboardLink
 

@@ -177,7 +177,7 @@ type AnnotationPanelFilter struct {
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
-	// Datasource to use for annotation.
+	// TODO: Should be DataSourceRef
 	Datasource struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
@@ -197,20 +197,32 @@ type AnnotationQuery struct {
 	// Name of annotation.
 	Name string `json:"name"`
 
-	// TODO.. this should just be a normal query target
-	Target *struct {
-		// These exist because it is the -- grafana -- datasource
-		Limit    int64    `json:"limit"`
-		MatchAny bool     `json:"matchAny"`
-		Tags     []string `json:"tags"`
-		Type     string   `json:"type"`
-	} `json:"target,omitempty"`
+	// TODO: this should be a regular DataQuery that depends on the selected dashboard
+	// these match the properties of the "grafana" datasouce that is default in most dashboards
+	Target *AnnotationTarget `json:"target,omitempty"`
 
-	// Type TODO????
-	//
-	//
 	// TODO -- this should not exist here, it is based on the --grafana-- datasource
 	Type *string `json:"type,omitempty"`
+}
+
+// TODO: this should be a regular DataQuery that depends on the selected dashboard
+// these match the properties of the "grafana" datasouce that is default in most dashboards
+type AnnotationTarget struct {
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already dependin on it so hard to change
+	Limit int64 `json:"limit"`
+
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already dependin on it so hard to change
+	MatchAny bool `json:"matchAny"`
+
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already dependin on it so hard to change
+	Tags []string `json:"tags"`
+
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already dependin on it so hard to change
+	Type string `json:"type"`
 }
 
 // Dashboard defines model for Dashboard.

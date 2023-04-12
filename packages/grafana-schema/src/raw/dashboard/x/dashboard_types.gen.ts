@@ -20,12 +20,43 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
 };
 
 /**
+ * TODO: this should be a regular DataQuery that depends on the selected dashboard
+ * these match the properties of the "grafana" datasouce that is default in most dashboards
+ */
+export interface AnnotationTarget {
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already dependin on it so hard to change
+   */
+  limit: number;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already dependin on it so hard to change
+   */
+  matchAny: boolean;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already dependin on it so hard to change
+   */
+  tags: Array<string>;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already dependin on it so hard to change
+   */
+  type: string;
+}
+
+export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
+  tags: [],
+};
+
+/**
  * TODO docs
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
  */
 export interface AnnotationQuery {
   /**
-   * Datasource to use for annotation.
+   * TODO: Should be DataSourceRef
    */
   datasource: {
     type?: string;
@@ -64,18 +95,7 @@ export interface AnnotationQuery {
   /**
    * TODO.. this should just be a normal query target
    */
-  target?: {
-    /**
-     * These exist because it is the -- grafana -- datasource
-     */
-    limit: number;
-    matchAny: boolean;
-    tags: Array<string>;
-    type: string;
-  };
-  /**
-   * TODO????
-   */
+  target?: AnnotationTarget;
   /**
    * TODO -- this should not exist here, it is based on the --grafana-- datasource
    */
