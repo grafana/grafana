@@ -27,7 +27,7 @@ interface Props {
   showContextToggle?: (row?: LogRowModel) => boolean;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getRows: () => LogRowModel[];
-  onToggleContext: (row: LogRowModel, method: string) => void;
+  onOpenContext: (row: LogRowModel, method: string) => void;
   updateLimit?: () => void;
   runContextQuery?: () => void;
   logsSortOrder?: LogsSortOrder | null;
@@ -77,7 +77,7 @@ export class LogRowMessage extends PureComponent<Props> {
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
     const { scrollElement } = this.props;
     e.stopPropagation();
-    this.props.onToggleContext(this.props.row, 'open');
+    this.props.onOpenContext(this.props.row, 'open');
     if (scrollElement && this.logRowRef.current) {
       scrollElement.scroll({
         behavior: 'smooth',

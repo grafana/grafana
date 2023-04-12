@@ -212,7 +212,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
-              onToggleContext={this.onOpenContext}
+              onOpenContext={this.onOpenContext}
               app={app}
               scrollElement={scrollElement}
               logsSortOrder={logsSortOrder}
