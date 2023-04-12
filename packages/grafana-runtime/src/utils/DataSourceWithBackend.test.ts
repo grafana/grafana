@@ -246,6 +246,8 @@ describe('DataSourceWithBackend', () => {
       expect(isExpressionReference('Expression')).toBeTruthy(); // Name
       expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
       expect(isExpressionReference({ type: '-100' })).toBeTruthy();
+      expect(isExpressionReference(null)).toBeFalsy();
+      expect(isExpressionReference(undefined)).toBeFalsy();
     });
   });
 });
