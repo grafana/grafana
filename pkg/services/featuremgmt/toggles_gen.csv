@@ -17,7 +17,7 @@ storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 exploreMixedDatasource,alpha,@grafana/explore-squad,false,false,false,true
 newTraceView,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
-correlations,alpha,@grafana/explore-squad,false,false,false,false
+correlations,beta,@grafana/explore-squad,false,false,false,false
 cloudWatchDynamicLabels,stable,@grafana/aws-plugins,false,false,false,false
 datasourceQueryMultiStatus,alpha,@grafana/plugins-platform-backend,false,false,false,false
 traceToMetrics,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
