@@ -472,8 +472,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return dashboards.ErrFolderAccessDenied
 			}
 
-			err = s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID)
-			if err != nil {
+			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
 				return err
 			}
 
@@ -490,8 +489,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
 	for _, v := range s.registry {
-		err := v.DeleteInFolder(ctx, orgID, UID)
-		if err != nil {
+		if err := v.DeleteInFolder(ctx, orgID, UID); err != nil {
 			return err
 		}
 	}
