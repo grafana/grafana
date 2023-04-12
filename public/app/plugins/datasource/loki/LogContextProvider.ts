@@ -133,7 +133,7 @@ export class LogContextProvider {
 
     // We need to have original query to get parser and include parsed labels
     // We only add parser and parsed labels if there is only one parser in query
-    if (query && query && isQueryWithParser(query.expr).parserCount === 1) {
+    if (query && isQueryWithParser(query.expr).parserCount === 1) {
       const parser = getParserFromQuery(query.expr);
       if (parser) {
         expr = addParserToQuery(expr, parser);
