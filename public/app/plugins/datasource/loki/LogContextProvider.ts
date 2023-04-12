@@ -119,7 +119,7 @@ export class LogContextProvider {
     const labelFilters = this.contextFilters[row.uid]
       .map((filter) => {
         const label = filter.value;
-        if (filter && !filter.fromParser && filter.enabled) {
+        if (!filter.fromParser && filter.enabled) {
           // escape backslashes in label as users can't escape them by themselves
           return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
         }
