@@ -34,7 +34,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `emptyDashboardPage`                  | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling`   | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`                 | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
-| `disableElasticsearchBackendQuerying` | Disable processing of queries and responses in Elasticsearch data source trough backend                                                                                      |                    |
+| `disableElasticsearchBackendQuerying` | Disable the processing of queries and responses in the Elasticsearch data source through backend                                                                             |                    |
 
 ## Beta feature toggles
 

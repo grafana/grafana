@@ -308,6 +308,6 @@ const (
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 
 	// FlagDisableElasticsearchBackendQuerying
-	// Disable processing of queries and responses in Elasticsearch data source trough backend
+	// Disable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
 )

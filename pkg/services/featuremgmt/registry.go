@@ -502,7 +502,7 @@ var (
 		},
 		{
 			Name:        "disableElasticsearchBackendQuerying",
-			Description: "Disable processing of queries and responses in Elasticsearch data source trough backend",
+			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
 			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
