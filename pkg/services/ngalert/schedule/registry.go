@@ -62,22 +62,21 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type ruleVersion int64
-type ruleVersionAndPauseStatus struct {
-	Version  ruleVersion
-	IsPaused bool
+type ruleWithFolder struct {
+	rule        *models.AlertRule
+	folderTitle string
 }
 
 type alertRuleInfo struct {
 	evalCh   chan *evaluation
-	updateCh chan ruleVersionAndPauseStatus
+	updateCh chan ruleWithFolder
 	ctx      context.Context
 	stop     func(reason error)
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, stop := util.WithCancelCause(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersionAndPauseStatus), ctx: ctx, stop: stop}
+	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleWithFolder), ctx: ctx, stop: stop}
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
@@ -104,13 +103,13 @@ func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
 }
 
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
-func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
+func (a *alertRuleInfo) update(r ruleWithFolder) bool {
 	// check if the channel is not empty.
-	msg := lastVersion
+	msg := r
 	select {
 	case v := <-a.updateCh:
 		// if it has a version pick the greatest one.
-		if v.Version > msg.Version {
+		if v.rule.Version > msg.rule.Version {
 			msg = v
 		}
 	case <-a.ctx.Done():
@@ -127,9 +126,8 @@ func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
 }
 
 type evaluation struct {
+	ruleWithFolder
 	scheduledAt time.Time
-	rule        *models.AlertRule
-	folderTitle string
 }
 
 type alertRulesRegistry struct {

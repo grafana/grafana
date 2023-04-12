@@ -385,15 +385,17 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleWithFolder))
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
 
 			evalChan <- &evaluation{
 				scheduledAt: expectedTime,
-				rule:        rule,
-				folderTitle: folderTitle,
+				ruleWithFolder: ruleWithFolder{
+					rule:        rule,
+					folderTitle: folderTitle,
+				},
 			}
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
@@ -497,7 +499,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan ruleVersionAndPauseStatus))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan ruleWithFolder))
 				stoppedChan <- err
 			}()
 
@@ -516,7 +518,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			ctx, cancel := util.WithCancelCause(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evaluation), make(chan ruleVersionAndPauseStatus))
+				err := sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evaluation), make(chan ruleWithFolder))
 				stoppedChan <- err
 			}()
 
@@ -531,9 +533,15 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
 		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
 
+		copyWithVersion := func(version int64) *models.AlertRule {
+			r := models.CopyRule(rule)
+			r.Version = version
+			return r
+		}
+
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
-		updateChan := make(chan ruleVersionAndPauseStatus)
+		updateChan := make(chan ruleWithFolder)
 
 		sender := AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
@@ -551,7 +559,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		// init evaluation loop so it got the rule version
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
-			rule:        rule,
+			ruleWithFolder: ruleWithFolder{
+				rule: rule,
+			},
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)
@@ -584,9 +594,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version - 1), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false} // second time just to make sure that previous messages were handled
+			updateChan <- ruleWithFolder{rule: copyWithVersion(rule.Version - 1), folderTitle: util.GenerateShortUID()}
+			updateChan <- ruleWithFolder{rule: copyWithVersion(rule.Version), folderTitle: util.GenerateShortUID()}
+			updateChan <- ruleWithFolder{rule: copyWithVersion(rule.Version), folderTitle: util.GenerateShortUID()}
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -595,7 +605,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version + rand.Int63n(1000) + 1), false}
+			updateChan <- ruleWithFolder{rule: copyWithVersion(rule.Version + rand.Int63n(1000) + 1), folderTitle: util.GenerateShortUID()}
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls) > 0
@@ -625,12 +635,14 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleWithFolder))
 		}()
 
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
-			rule:        rule,
+			ruleWithFolder: ruleWithFolder{
+				rule: rule,
+			},
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)
@@ -695,12 +707,14 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleWithFolder))
 			}()
 
 			evalChan <- &evaluation{
 				scheduledAt: sch.clock.Now(),
-				rule:        rule,
+				ruleWithFolder: ruleWithFolder{
+					rule: rule,
+				},
 			}
 
 			waitForTimeChannel(t, evalAppliedChan)
@@ -728,12 +742,14 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleWithFolder))
 		}()
 
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
-			rule:        rule,
+			ruleWithFolder: ruleWithFolder{
+				rule: rule,
+			},
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)

@@ -271,30 +271,31 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
-		if isReadyToRun {
-			var folderTitle string
-			if !sch.disableGrafanaFolder {
-				title, ok := folderTitles[item.NamespaceUID]
-				if ok {
-					folderTitle = title
-				} else {
-					missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
-				}
+
+		var folderTitle string
+		if !sch.disableGrafanaFolder {
+			title, ok := folderTitles[item.NamespaceUID]
+			if ok {
+				folderTitle = title
+			} else {
+				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
 			}
+		}
+
+		if isReadyToRun {
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
-				rule:        item,
-				folderTitle: folderTitle,
+				ruleWithFolder: ruleWithFolder{
+					rule:        item,
+					folderTitle: folderTitle,
+				},
 			}})
 		}
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
 			go func(ri *alertRuleInfo, rule *ngmodels.AlertRule) {
-				ri.update(ruleVersionAndPauseStatus{
-					Version:  ruleVersion(rule.Version),
-					IsPaused: rule.IsPaused,
-				})
+				ri.update(ruleWithFolder{rule: rule, folderTitle: folderTitle})
 			}(ruleInfo, item)
 			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
 				Version:      item.Version,
@@ -342,7 +343,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions, updatedRules
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleWithFolder) error {
 	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
 	logger := sch.log.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
@@ -460,14 +461,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
-			if currentRuleVersion >= int64(ctx.Version) {
-				logger.Info("Skip updating rule because its current version is actual", "version", currentRuleVersion, "newVersion", ctx.Version)
+			if currentRuleVersion >= ctx.rule.Version {
+				logger.Info("Skip updating rule because its current version is actual", "version", currentRuleVersion, "newVersion", ctx.rule.Version)
 				continue
 			}
 
-			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version, "isPaused", ctx.IsPaused)
+			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.rule.Version, "isPaused", ctx.rule.IsPaused)
 			// clear the state. So the next evaluation will start from the scratch.
-			resetState(grafanaCtx, ctx.IsPaused)
+			resetState(grafanaCtx, ctx.rule.IsPaused)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {

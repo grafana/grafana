@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -27,7 +27,10 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
+				resultCh <- r.update(ruleWithFolder{
+					rule:        models.AlertRuleGen()(),
+					folderTitle: util.GenerateShortUID(),
+				})
 			}()
 			select {
 			case <-r.updateCh:
@@ -38,52 +41,66 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			version1 := ruleVersion(rand.Int31())
-			version2 := version1 + 1
+			version1 := ruleWithFolder{
+				rule:        models.AlertRuleGen()(),
+				folderTitle: util.GenerateShortUID(),
+			}
+			version2 := ruleWithFolder{
+				rule:        models.CopyRule(version1.rule),
+				folderTitle: util.GenerateShortUID(),
+			}
+			version2.rule.Version++
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version1, false})
+				r.update(version1)
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version2, false})
+				r.update(version2)
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
+				require.Equal(t, version2, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
 		})
 		t.Run("update should drop any concurrent sending to updateCh and use greater version", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			version1 := ruleVersion(rand.Int31())
-			version2 := version1 + 1
+			version1 := ruleWithFolder{
+				rule:        models.AlertRuleGen()(),
+				folderTitle: util.GenerateShortUID(),
+			}
+			version2 := ruleWithFolder{
+				rule:        models.CopyRule(version1.rule),
+				folderTitle: util.GenerateShortUID(),
+			}
+			version2.rule.Version++
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version2, false})
+				r.update(version2)
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version1, false})
+				r.update(version1)
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
+				require.Equal(t, version2, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -94,8 +111,10 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			resultCh := make(chan evalResponse)
 			data := &evaluation{
 				scheduledAt: expected,
-				rule:        models.AlertRuleGen()(),
-				folderTitle: util.GenerateShortUID(),
+				ruleWithFolder: ruleWithFolder{
+					rule:        models.AlertRuleGen()(),
+					folderTitle: util.GenerateShortUID(),
+				},
 			}
 			go func() {
 				result, dropped := r.eval(data)
@@ -119,13 +138,17 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			resultCh2 := make(chan evalResponse)
 			data := &evaluation{
 				scheduledAt: time1,
-				rule:        models.AlertRuleGen()(),
-				folderTitle: util.GenerateShortUID(),
+				ruleWithFolder: ruleWithFolder{
+					rule:        models.AlertRuleGen()(),
+					folderTitle: util.GenerateShortUID(),
+				},
 			}
 			data2 := &evaluation{
 				scheduledAt: time2,
-				rule:        data.rule,
-				folderTitle: data.folderTitle,
+				ruleWithFolder: ruleWithFolder{
+					rule:        data.rule,
+					folderTitle: data.folderTitle,
+				},
 			}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
@@ -162,8 +185,10 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			resultCh := make(chan evalResponse)
 			data := &evaluation{
 				scheduledAt: time.Now(),
-				rule:        models.AlertRuleGen()(),
-				folderTitle: util.GenerateShortUID(),
+				ruleWithFolder: ruleWithFolder{
+					rule:        models.AlertRuleGen()(),
+					folderTitle: util.GenerateShortUID(),
+				},
 			}
 			go func() {
 				result, dropped := r.eval(data)
@@ -185,15 +210,17 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false}))
+			require.False(t, r.update(ruleWithFolder{models.AlertRuleGen()(), util.GenerateShortUID()}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop(nil)
 			data := &evaluation{
 				scheduledAt: time.Now(),
-				rule:        models.AlertRuleGen()(),
-				folderTitle: util.GenerateShortUID(),
+				ruleWithFolder: ruleWithFolder{
+					rule:        models.AlertRuleGen()(),
+					folderTitle: util.GenerateShortUID(),
+				},
 			}
 			success, dropped := r.eval(data)
 			require.False(t, success)
@@ -237,12 +264,17 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
+						r.update(ruleWithFolder{
+							rule:        models.AlertRuleGen()(),
+							folderTitle: util.GenerateShortUID(),
+						})
 					case 2:
 						r.eval(&evaluation{
 							scheduledAt: time.Now(),
-							rule:        models.AlertRuleGen()(),
-							folderTitle: util.GenerateShortUID(),
+							ruleWithFolder: ruleWithFolder{
+								rule:        models.AlertRuleGen()(),
+								folderTitle: util.GenerateShortUID(),
+							},
 						})
 					case 3:
 						r.stop(nil)
