@@ -129,11 +129,11 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     const isClearable = typeof onClear === 'function';
 
     return (
-      <div aria-label={selectors.components.DataSourcePicker.container}>
+      <div data-testid={selectors.components.DataSourcePicker.container}>
         <Select
           isLoading={isLoading}
           disabled={disabled}
-          aria-label={selectors.components.DataSourcePicker.inputV2}
+          data-testid={selectors.components.DataSourcePicker.inputV2}
           inputId={inputId || 'data-source-picker'}
           className="ds-picker select-container"
           isMulti={false}
