@@ -1,16 +1,17 @@
-import {
-  from,
-  lastValueFrom,
-  MonoTypeOperatorFunction,
-  Observable,
-  of,
-  Subject,
-  Subscription,
-  throwError,
-  defer,
-} from 'rxjs';
+import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-import { catchError, filter, map, mergeMap, retryWhen, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
+import {
+  catchError,
+  filter,
+  finalize,
+  map,
+  mergeMap,
+  retryWhen,
+  share,
+  takeUntil,
+  tap,
+  throwIfEmpty,
+} from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
@@ -59,6 +60,7 @@ export class BackendSrv implements BackendService {
   private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
+  private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -141,7 +143,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    return defer(() => this.getFromFetchStream<T>(options)).pipe(
+    return this.getFromFetchStream<T>(options).pipe(
       this.handleStreamResponse<T>(options),
       this.handleStreamError(options),
       this.handleStreamCancellation(options)
@@ -320,7 +322,7 @@ export class BackendSrv implements BackendService {
   private handleStreamResponse<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
     return (inputStream) =>
       inputStream.pipe(
-        mergeMap((response) => {
+        map((response) => {
           if (!response.ok) {
             const { status, statusText, data } = response;
             const fetchErrorResponse: FetchError = {
@@ -330,9 +332,9 @@ export class BackendSrv implements BackendService {
               config: options,
               traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
             };
-            return throwError(() => fetchErrorResponse);
+            throw fetchErrorResponse;
           }
-          return of(response);
+          return response;
         }),
         tap((response) => {
           this.showSuccessAlert(response);
@@ -364,12 +366,9 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = () => this.loginPing();
-                if (config.featureToggles.clientTokenRotation) {
-                  authChecker = () => this.rotateToken();
-                }
+                let authChecker = config.featureToggles.clientTokenRotation ? this._rotateToken() : this.loginPing();
 
-                return from(authChecker()).pipe(
+                return authChecker.pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -460,12 +459,23 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  rotateToken() {
-    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 });
+  private _rotateToken() {
+    if (this._tokenRotationInProgress) {
+      return this._tokenRotationInProgress;
+    }
+
+    this._tokenRotationInProgress = this.fetch({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 }).pipe(
+      finalize(() => {
+        this._tokenRotationInProgress = null;
+      }),
+      share()
+    );
+
+    return this._tokenRotationInProgress;
   }
 
   loginPing() {
-    return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
+    return this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
   /** @deprecated */
