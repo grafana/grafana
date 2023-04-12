@@ -28,7 +28,7 @@ export interface GrafanaQuery extends DataQuery {
   path?: string; // for list and read
   search?: SearchQuery;
   snapshot?: DataFrameJSON[];
-  timeRegions?: TimeRegionConfig[];
+  timeRegion?: TimeRegionConfig;
   file?: GrafanaQueryFile;
 }
 

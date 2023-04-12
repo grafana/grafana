@@ -1,12 +1,21 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Field, FieldSet, Select, Switch } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
+import {
+  GrafanaAnnotationQuery,
+  GrafanaAnnotationType,
+  GrafanaQuery,
+  GrafanaQueryType,
+  TimeRegionConfig,
+} from '../types';
+
+import { TimeRegionEditor } from './TimeRegionEditor';
 
 const matchTooltipContent = 'Enabling this returns annotations that match any of the tags specified below';
 
@@ -14,7 +23,7 @@ const tagsTooltipContent = (
   <div>Specify a list of tags to match. To specify a key and value tag use `key:value` syntax.</div>
 );
 
-const annotationTypes = [
+const annotationTypes: Array<SelectableValue<GrafanaAnnotationType>> = [
   {
     label: 'Dashboard',
     value: GrafanaAnnotationType.Dashboard,
@@ -24,6 +33,19 @@ const annotationTypes = [
     label: 'Tags',
     value: GrafanaAnnotationType.Tags,
     description: 'This will fetch any annotation events that match the tags filter',
+  },
+];
+
+const queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
+  {
+    label: 'Annotations & Alerts',
+    value: GrafanaQueryType.Annotations,
+    description: '',
+  },
+  {
+    label: 'Time regions',
+    value: GrafanaQueryType.TimeRegions,
+    description: 'Configure a repeating time region',
   },
 ];
 
@@ -39,7 +61,9 @@ interface Props {
 
 export default function AnnotationQueryEditor({ query, onChange }: Props) {
   const annotationQuery = query as GrafanaAnnotationQuery;
-  const { limit, matchAny, tags, type } = annotationQuery;
+  const { limit, matchAny, tags, type, queryType } = annotationQuery;
+  let grafanaQueryType = queryType ?? GrafanaQueryType.Annotations;
+  const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
   const styles = getStyles();
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
@@ -66,40 +90,80 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
       tags,
     });
 
+  const onQueryTypeChange = (newValue: SelectableValue<GrafanaQueryType>) => {
+    const newQuery: GrafanaAnnotationQuery = { ...annotationQuery, queryType: newValue.value! };
+    if (newQuery.queryType === GrafanaQueryType.TimeRegions) {
+      if (!newQuery.timeRegion) {
+        newQuery.timeRegion = {
+          name: 'T1',
+          color: 'dark-green',
+          timezone: defaultTimezone,
+        };
+      }
+    } else {
+      delete newQuery.timeRegion;
+    }
+
+    onChange(newQuery);
+  };
+  const onTimeRegionChange = (timeRegion?: TimeRegionConfig) => {
+    onChange({
+      ...annotationQuery,
+      timeRegion,
+    });
+  };
+
   return (
     <FieldSet className={styles.container}>
-      <Field label="Filter by">
+      <Field label="Query type">
         <Select
-          inputId="grafana-annotations__filter-by"
-          options={annotationTypes}
-          value={type}
-          onChange={onFilterByChange}
+          inputId="grafana-annotations__query-type"
+          options={queryTypes}
+          value={grafanaQueryType}
+          onChange={onQueryTypeChange}
+          width={50}
         />
       </Field>
-      <Field label="Max limit">
-        <Select
-          inputId="grafana-annotations__limit"
-          width={16}
-          options={limitOptions}
-          value={limit}
-          onChange={onMaxLimitChange}
-        />
-      </Field>
-      {type === GrafanaAnnotationType.Tags && (
+      {grafanaQueryType === GrafanaQueryType.Annotations && (
         <>
-          <Field label="Match any" description={matchTooltipContent}>
-            <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
-          </Field>
-          <Field label="Tags" description={tagsTooltipContent}>
-            <TagFilter
-              allowCustomValue
-              inputId="grafana-annotations__tags"
-              onChange={onTagsChange}
-              tagOptions={getAnnotationTags}
-              tags={tags ?? []}
+          <Field label="Filter by">
+            <Select
+              inputId="grafana-annotations__filter-by"
+              options={annotationTypes}
+              value={type}
+              onChange={onFilterByChange}
+              width={50}
             />
           </Field>
+          <Field label="Max limit">
+            <Select
+              inputId="grafana-annotations__limit"
+              width={16}
+              options={limitOptions}
+              value={limit}
+              onChange={onMaxLimitChange}
+            />
+          </Field>
+          {type === GrafanaAnnotationType.Tags && (
+            <>
+              <Field label="Match any" description={matchTooltipContent}>
+                <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
+              </Field>
+              <Field label="Tags" description={tagsTooltipContent}>
+                <TagFilter
+                  allowCustomValue
+                  inputId="grafana-annotations__tags"
+                  onChange={onTagsChange}
+                  tagOptions={getAnnotationTags}
+                  tags={tags ?? []}
+                />
+              </Field>
+            </>
+          )}
         </>
+      )}
+      {grafanaQueryType === GrafanaQueryType.TimeRegions && (
+        <TimeRegionEditor value={annotationQuery.timeRegion!} onChange={onTimeRegionChange} />
       )}
     </FieldSet>
   );
@@ -108,7 +172,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
 const getStyles = () => {
   return {
     container: css`
-      max-width: 600px;
+      max-width: 1200px;
     `,
   };
 };

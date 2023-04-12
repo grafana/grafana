@@ -395,7 +395,7 @@ export function graphToTimeseriesOptions(angular: any): {
         uid: 'grafana',
       },
       queryType: GrafanaQueryType.TimeRegions,
-      timeRegions: regions,
+      timeRegion: regions,
     };
   }
 

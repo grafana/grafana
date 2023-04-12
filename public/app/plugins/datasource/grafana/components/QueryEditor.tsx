@@ -35,10 +35,9 @@ import * as DFImport from 'app/features/dataframe-import';
 import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
-import { defaultQuery, GrafanaQuery, GrafanaQueryType, TimeRegionConfig } from '../types';
+import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 
 import SearchEditor from './SearchEditor';
-import { TimeRegionsEditor } from './TimeRegionsEditor';
 
 interface Props extends QueryEditorProps<GrafanaDatasource, GrafanaQuery>, Themeable2 {}
 
@@ -79,13 +78,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         label: 'Search',
         value: GrafanaQueryType.Search,
         description: 'Search for grafana resources',
-      });
-    }
-    if (hasAlphaPanels) {
-      this.queryTypes.push({
-        label: 'Time regions',
-        value: GrafanaQueryType.TimeRegions,
-        description: 'Configure a repeating time region',
       });
     }
     if (config.featureToggles.editPanelCSVDragAndDrop) {
@@ -159,22 +151,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
 
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
     const { onChange, query, onRunQuery } = this.props;
-    const newQuery = { ...query, queryType: sel.value! };
-    if (newQuery.queryType === GrafanaQueryType.TimeRegions) {
-      if (!newQuery.timeRegions?.length) {
-        newQuery.timeRegions = [
-          {
-            name: 'T1',
-            color: 'dark-green',
-            timezone: 'browser',
-          },
-        ];
-      }
-    } else {
-      delete newQuery.timeRegions;
-    }
-
-    onChange(newQuery);
+    onChange({ ...query, queryType: sel.value! });
     onRunQuery();
 
     // Reload the channel list
@@ -468,16 +445,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  onTimeRegionsChanged = (timeRegions?: TimeRegionConfig[]) => {
-    const { query, onChange, onRunQuery } = this.props;
-
-    onChange({
-      ...query,
-      timeRegions,
-    });
-    onRunQuery();
-  };
-
   render() {
     const query = {
       ...defaultQuery,
@@ -506,11 +473,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
             without notice.
           </Alert>
         )}
-        {queryType === GrafanaQueryType.TimeRegions && (
-          <Alert title="Annotation query" severity="info">
-            This query produces data that is only visible in panels that can render time regions.
-          </Alert>
-        )}
         <InlineFieldRow>
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
@@ -523,9 +485,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
         {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}
-        {queryType === GrafanaQueryType.TimeRegions && (
-          <TimeRegionsEditor value={query.timeRegions} onChange={this.onTimeRegionsChanged} />
-        )}
         {queryType === GrafanaQueryType.Search && (
           <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
         )}
