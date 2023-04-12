@@ -11,7 +11,6 @@ import {
   dateTimeFormat,
   CoreApp,
   DataFrame,
-  DataSourceWithLogsContextSupport,
   LogRowContextOptions,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
