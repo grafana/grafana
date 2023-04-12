@@ -2,7 +2,15 @@ import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  CoreApp,
+  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  LoadingState,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -66,7 +74,7 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
-  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
+  onChangeDataSource = (instance: DataSourceApi, settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
     const updatedQueries = queries.map((item, itemIndex) => {
@@ -75,12 +83,14 @@ export class QueryRows extends PureComponent<Props> {
       }
 
       const previousSettings = this.getDataSourceSettings(item);
+      const defaultSettings =
+        typeof instance.getDefaultQuery === 'function' ? instance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
       // Copy model if changing to a datasource of same type.
       if (settings.type === previousSettings?.type) {
-        return copyModel(item, settings);
+        return copyModel(item, settings, defaultSettings);
       }
-      return newModel(item, settings);
+      return newModel(item, settings, defaultSettings);
     });
 
     onQueriesChange(updatedQueries);
@@ -160,9 +170,15 @@ export class QueryRows extends PureComponent<Props> {
                         model={query.model}
                         onUpdateDatasource={() => {
                           const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
-                          if (defaultDataSource) {
-                            this.onChangeDataSource(defaultDataSource, index);
+                          if (!defaultDataSource) {
+                            return;
                           }
+
+                          getDatasourceSrv()
+                            .get()
+                            .then((instance) => {
+                              this.onChangeDataSource(instance, defaultDataSource, index);
+                            });
                         }}
                         onRemoveQuery={() => {
                           this.onRemoveQuery(query);
@@ -204,10 +220,15 @@ export class QueryRows extends PureComponent<Props> {
   }
 }
 
-function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+function copyModel(
+  item: AlertQuery,
+  settings: DataSourceInstanceSettings,
+  defaults: Partial<AlertDataQuery> = {}
+): Omit<AlertQuery, 'datasource'> {
   return {
     ...item,
     model: {
+      ...defaults,
       ...omit(item.model, 'datasource'),
       datasource: {
         type: settings.type,
@@ -218,13 +239,18 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
   };
 }
 
-function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+function newModel(
+  item: AlertQuery,
+  settings: DataSourceInstanceSettings,
+  defaults: Partial<AlertDataQuery> = {}
+): Omit<AlertQuery, 'datasource'> {
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
     datasourceUid: settings.uid,
     model: {
+      ...defaults,
       refId: item.refId,
       hide: false,
       datasource: {

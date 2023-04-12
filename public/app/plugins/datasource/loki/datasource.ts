@@ -887,6 +887,14 @@ export class LokiDatasource
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
     return getQueryHints(query.expr, result);
   }
+
+  getDefaultQuery(app: CoreApp) {
+    if (app === CoreApp.UnifiedAlerting) {
+      return { queryType: LokiQueryType.Instant };
+    }
+
+    return {};
+  }
 }
 
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions

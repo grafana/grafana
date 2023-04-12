@@ -5,6 +5,7 @@ import React, { ChangeEvent, useState } from 'react';
 import {
   CoreApp,
   DataQuery,
+  DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
   GrafanaTheme2,
@@ -14,6 +15,7 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   GraphTresholdsStyleMode,
   Icon,
@@ -45,7 +47,7 @@ interface Props {
   query: AlertQuery;
   queries: AlertQuery[];
   dsSettings: DataSourceInstanceSettings;
-  onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
+  onChangeDataSource: (instance: DataSourceApi, settings: DataSourceInstanceSettings, index: number) => void;
   onChangeQuery: (query: DataQuery, index: number) => void;
   onChangeTimeRange?: (timeRange: RelativeTimeRange, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
@@ -150,7 +152,17 @@ export const QueryWrapper = ({
       <QueryEditorRow<DataQuery>
         alerting
         dataSource={dsSettings}
-        onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
+        onChangeDataSource={
+          !isExpression
+            ? (settings) => {
+                getDataSourceSrv()
+                  .get({ type: settings.type, uid: settings.uid })
+                  .then((instance) => {
+                    onChangeDataSource(instance, settings, index);
+                  });
+              }
+            : undefined
+        }
         id={query.refId}
         index={index}
         key={query.refId}

@@ -1279,6 +1279,14 @@ export class PrometheusDatasource
   getCacheDurationInMinutes(): number {
     return getClientCacheDurationInMinutes(this.cacheLevel);
   }
+
+  getDefaultQuery(app: CoreApp): Partial<PromQuery> {
+    if (app === CoreApp.UnifiedAlerting) {
+      return { instant: true };
+    }
+
+    return {};
+  }
 }
 
 /**
