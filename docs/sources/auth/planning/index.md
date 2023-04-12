@@ -160,8 +160,22 @@ You can assign these roles to users, teams and service accounts.
 
 Moreover, RBAC allows you to create your own custom roles and edit permissions granted by Grafana's basic roles.
 
-## 🚧 Will I need synchronization?
+## User synchronization between Grafana and Identity Providers
 
-### 🚧 Team sync
+When integrating Grafana with an Identity Provider, besides the initial authentication configuration, we might want to consider user base and role synchronization. This will allow the users within a group to share the same configuration, thus preventing setting permissions for each user.
 
-### 🚧 Organization sync
+### Team sync
+
+Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
+
+Grafana will keep the users in sync by actively querying for any changes. No need to worry to remove the user from accessing Grafana once he has been removed from the Identity Provider. The users will be labeled according to their Identity Provider for easy tracking.
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+
+> **Note:** Currently the synchronization only happens when a user logs in, unless LDAP is used with the active background synchronization that was added in Grafana 6.3.
+
+### Organization sync
+
+> **Note:** Available in Grafana version 7.0 and later.
+
+Organization sync happens upon configuration with an Identity Provider. With the proper configuration, the roles defined with the Identity Provider will be mapped to Grafana roles upon logging in for the first time.
