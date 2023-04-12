@@ -31,11 +31,7 @@ func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd ac
 			return errSaveAssign
 		}
 		// Update permissions
-		errSavePerm := s.savePermissions(ctx, sess, existingRole.ID, cmd.Permissions)
-		if errSavePerm != nil {
-			return errSavePerm
-		}
-		return nil
+		return s.savePermissions(ctx, sess, existingRole.ID, cmd.Permissions)
 	})
 }
 
