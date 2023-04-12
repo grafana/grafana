@@ -19,7 +19,6 @@ export const MAX_CHARACTERS = 100000;
 
 interface Props {
   row: LogRowModel;
-  contextIsOpen: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
   showRowMenu?: boolean;

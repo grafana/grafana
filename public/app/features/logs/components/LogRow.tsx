@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import {
@@ -73,11 +74,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showDetails: false,
   };
 
+  debouncedContextClose = debounce(() => {
+    this.setState({ showContext: false });
+  }, 3000);
+
   onOpenContext = (row: LogRowModel) => {
     this.setState({ showContext: true });
-    this.props.onOpenContext(row, () => {
-      this.setState({ showContext: false });
-    });
+    this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
   toggleDetails = () => {
@@ -205,7 +208,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               getLogRowContextUi={getLogRowContextUi}
               runContextQuery={runContextQuery}
               updateLimit={updateLimit}
-              contextIsOpen={showContext}
               showContextToggle={showContextToggle}
               showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
