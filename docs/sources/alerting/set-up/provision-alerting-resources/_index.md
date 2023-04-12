@@ -30,7 +30,7 @@ There are three options to choose from:
 
 Currently, provisioning for Grafana Alerting supports alert rules, contact points, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
 
-In order to create/edit Grafana UI editable alerting resources, you can add the x-disable-provenance header to the following requests in the API:
+To enable the creation or editing of alerting resources in the Grafana UI, add the x-disable-provenance header to the following requests in the API:
 
 - `POST /api/v1/provisioning/alert-rules`
 - `POST /api/v1/provisioning/contact-points`
