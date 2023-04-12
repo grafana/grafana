@@ -1,11 +1,11 @@
 import { uniq } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 import { Field } from '@grafana/ui';
 
-import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
+import { AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
 
 import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';
@@ -30,7 +30,7 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: Azur
     (item) => !excludedProperties.has(item)
   );
 
-  const [propertyMap, setPropertyMap] = useState(new Map<string, Array<AzureMonitorOption<string>>>());
+  const [propertyMap, setPropertyMap] = useState(new Map<string, Array<SelectableValue<string>>>());
   const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
   const [filters, updateFilters] = useState(queryFilters);
 
@@ -49,8 +49,8 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: Azur
   useTime(timeSrv.timeRange());
 
   useEffect(() => {
-    setPropertyMap(new Map<string, Array<AzureMonitorOption<string>>>());
-  }, [timeRange]);
+    setPropertyMap(new Map<string, Array<SelectableValue<string>>>());
+  }, [timeRange, query.azureTraces?.resources, query.azureTraces?.traceTypes, query.azureTraces?.operationId]);
 
   const changedFunc = (changed: Array<Partial<AzureTracesFilter>>) => {
     let updateQuery = false;

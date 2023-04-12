@@ -16,14 +16,14 @@ import {
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureMonitorOption, VariableOptionGroup } from '../../types';
+import { VariableOptionGroup } from '../../types';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  propertyMap: Map<string, AzureMonitorOption[]>;
-  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<AzureMonitorOption<string>>>>>;
+  propertyMap: Map<string, SelectableValue[]>;
+  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>;
   timeRange: TimeRange;
   queryTraceTypes: string[];
   properties: string[];
@@ -52,10 +52,10 @@ const getTraceProperties = async (
   datasource: Datasource,
   timeRange: TimeRange,
   traceTypes: string[],
-  propertyMap: Map<string, AzureMonitorOption[]>,
-  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<AzureMonitorOption<string>>>>>,
+  propertyMap: Map<string, SelectableValue[]>,
+  setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>,
   filter?: Partial<AzureTracesFilter>
-): Promise<AzureMonitorOption[]> => {
+): Promise<SelectableValue[]> => {
   const { azureTraces } = query;
   if (!azureTraces) {
     return [];
@@ -111,7 +111,7 @@ const getTraceProperties = async (
         if (value[property] === '') {
           label = '<Empty>';
         }
-        return { label: `${label} - (${value.count})`, value: value[property].toString() };
+        return { label: label.toString(), value: value[property].toString(), count: value.count };
       });
       propertyMap.set(property, values);
       setPropertyMap(propertyMap);
@@ -160,7 +160,7 @@ const Option = ({ data, innerProps, innerRef, isFocused, isSelected }: React.Pro
       title={data.title}
     >
       <div className={styles.optionBody}>
-        <Checkbox value={isSelected} label={data.label ?? ''} />
+        <Checkbox value={isSelected} label={data.label ? `${data.label} - (${data.count})` : ''} />
       </div>
     </div>
   );
@@ -187,7 +187,7 @@ const Filter = (
     variableOptionGroup,
   } = props;
   const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState<Array<AzureMonitorOption<string> | VariableOptionGroup>>(
+  const [values, setValues] = useState<Array<SelectableValue<string> | VariableOptionGroup>>(
     addValueToOptions(propertyMap.get(item.property ?? '') ?? [], variableOptionGroup)
   );
   const [selected, setSelected] = useState<SelectableValue[]>(

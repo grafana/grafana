@@ -1,6 +1,6 @@
 import { map } from 'lodash';
 
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, SelectableValue } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 
 import TimegrainConverter from '../time_grain_converter';
@@ -23,7 +23,7 @@ export const findOptions = (options: AzureMonitorOption[], values: string[] = []
 export const toOption = (v: { text: string; value: string }) => ({ value: v.value, label: v.text });
 
 export const addValueToOptions = (
-  values: AzureMonitorOption[],
+  values: Array<AzureMonitorOption | SelectableValue>,
   variableOptionGroup: VariableOptionGroup,
   value?: string
 ) => {
