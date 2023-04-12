@@ -61,7 +61,18 @@ func requireFloatAt(t *testing.T, expected float64, field *data.Field, index int
 }
 
 func requireTimeSeriesName(t *testing.T, expected string, frame *data.Frame) {
-	require.Equal(t, expected, frame.Name)
+	getField := func() *data.Field {
+		for _, field := range frame.Fields {
+			if field.Type() != data.FieldTypeTime {
+				return field
+			}
+		}
+		return nil
+	}
+
+	field := getField()
+	require.NotNil(t, expected, field.Config)
+	require.Equal(t, expected, field.Config.DisplayNameFromDS)
 }
 
 func TestRefIdMatching(t *testing.T) {

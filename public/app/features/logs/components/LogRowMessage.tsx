@@ -13,9 +13,9 @@ import {
 import { IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
-import { LogRowContext } from './LogRowContext';
-import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { LogRowStyles } from './getLogRowStyles';
+import { LogRowContext } from './log-context/LogRowContext';
+import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './log-context/LogRowContextProvider';
 
 export const MAX_CHARACTERS = 100000;
 
