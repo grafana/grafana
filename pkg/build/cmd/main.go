@@ -197,42 +197,31 @@ func main() {
 			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
 				{
-					Name:   "publish",
-					Usage:  "Publish Grafana artifacts",
-					Action: PublishArtifactsAction,
+					Name:   "storybook",
+					Usage:  "Publish Grafana storybook",
+					Action: PublishStorybookAction,
 					Flags: []cli.Flag{
 						&editionFlag,
-						&cli.BoolFlag{
-							Name:  "security",
-							Usage: "Security release",
-						},
+						&tagFlag,
+						&srcFlag,
 						&cli.StringFlag{
-							Name:  "security-dest-bucket",
-							Usage: "Google Cloud Storage bucket for security packages (or $SECURITY_DEST_BUCKET)",
+							Name:  "storybook-bucket",
+							Value: "grafana-storybook",
+							Usage: "Google Cloud Storage bucket for storybooks",
 						},
-						&cli.StringFlag{
-							Name:  "tag",
-							Usage: "Grafana version tag",
-						},
-						&cli.StringFlag{
-							Name:  "src-bucket",
-							Value: "grafana-prerelease",
-							Usage: "Google Cloud Storage bucket",
-						},
-						&cli.StringFlag{
-							Name:  "dest-bucket",
-							Value: "grafana-downloads",
-							Usage: "Google Cloud Storage bucket for published packages",
-						},
-						&cli.StringFlag{
-							Name:  "enterprise2-dest-bucket",
-							Value: "grafana-downloads-enterprise2",
-							Usage: "Google Cloud Storage bucket for published packages",
-						},
-						&cli.StringFlag{
-							Name:  "enterprise2-security-prefix",
-							Usage: "Bucket path prefix for enterprise2 security releases (or $ENTERPRISE2_SECURITY_PREFIX)",
-						},
+					},
+				},
+				{
+					Name:   "static-assets",
+					Usage:  "Publish Grafana static assets",
+					Action: PublishStaticAssetsAction,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&securityFlag,
+						&securityDestBucketFlag,
+						&tagFlag,
+						&srcFlag,
+						&destFlag,
 						&cli.StringFlag{
 							Name:  "static-assets-bucket",
 							Value: "grafana-static-assets",
@@ -242,10 +231,32 @@ func main() {
 							Name:  "static-asset-editions",
 							Usage: "All the editions of the static assets (or $STATIC_ASSET_EDITIONS)",
 						},
+					},
+				},
+				{
+					Name:   "packages",
+					Usage:  "Publish Grafana packages",
+					Action: PublishArtifactsAction,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&securityFlag,
+						&securityDestBucketFlag,
+						&tagFlag,
+						&srcFlag,
+						&destFlag,
+						&cli.StringSliceFlag{
+							Name:  "artifacts-editions",
+							Value: cli.NewStringSlice("oss", "enterprise", "enterprise2"),
+							Usage: "Editions for which the artifacts should be delivered (oss,enterprise,enterprise2), (or $ARTIFACTS_EDITIONS)",
+						},
 						&cli.StringFlag{
-							Name:  "storybook-bucket",
-							Value: "grafana-storybook",
-							Usage: "Google Cloud Storage bucket for storybooks",
+							Name:  "enterprise2-dest-bucket",
+							Value: "grafana-downloads-enterprise2",
+							Usage: "Google Cloud Storage bucket for published packages",
+						},
+						&cli.StringFlag{
+							Name:  "enterprise2-security-prefix",
+							Usage: "Bucket path prefix for enterprise2 security releases (or $ENTERPRISE2_SECURITY_PREFIX)",
 						},
 					},
 				},
