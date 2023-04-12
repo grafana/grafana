@@ -7,8 +7,25 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
@@ -23,12 +40,13 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
-		SQLStore: sqlStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
-		},
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
+		FolderService: setupFolderService(t, sqlStore, cfg),
 	}
 
 	t.Run("should increase version", func(t *testing.T) {
@@ -75,13 +93,18 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+	}
 
+	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
 		},
+		FolderService: setupFolderService(t, sqlStore, cfg),
 	}
 
 	rule1 := createRule(t, store)
@@ -169,7 +192,8 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestDB(t)
-	store := &DBstore{SQLStore: sqlStore}
+	cfg := setting.NewCfg()
+	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg)}
 	rule := createRule(t, store)
 
 	tests := map[string]struct {
@@ -236,141 +260,74 @@ func createRule(t *testing.T, store *DBstore) *models.AlertRule {
 	return rule
 }
 
-func createFolder(t *testing.T, store *DBstore, namespace string, title string, orgID int64) *dashboard {
+func createFolder(t *testing.T, store *DBstore, namespace, title string, orgID int64) {
 	t.Helper()
+	u := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          orgID,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
 
-	var resultDashboard *dashboard
-	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		cmd := saveFolderCommand{
-			OrgId:    orgID,
-			FolderId: 0,
-			IsFolder: true,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"title": title,
-			}),
-		}
-		dash := cmd.getDashboardModel()
-
-		dash.setUid(namespace)
-
-		dash.setVersion(1)
-		dash.Created = time.Now()
-		dash.CreatedBy = 1
-		dash.Updated = time.Now()
-		dash.UpdatedBy = 1
-
-		if _, err := sess.Insert(dash); err != nil {
-			return err
-		}
-
-		resultDashboard = dash
-
-		return nil
+	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
+		UID:          namespace,
+		OrgID:        orgID,
+		Title:        title,
+		Description:  "",
+		SignedInUser: u,
 	})
 
 	require.NoError(t, err)
 
-	return resultDashboard
 }
 
-type dashboard struct {
-	Id       int64
-	Uid      string
-	Slug     string
-	OrgId    int64
-	GnetId   int64
-	Version  int
-	PluginId string
+func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) folder.Service {
+	tracer := tracing.InitializeTracerForTest()
+	inProcBus := bus.ProvideBus(tracer)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	_, dashboardStore := SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	Created time.Time
-	Updated time.Time
-
-	UpdatedBy int64
-	CreatedBy int64
-	FolderId  int64
-	IsFolder  bool
-	HasACL    bool `xorm:"has_acl"`
-
-	Title string
-	Data  *simplejson.Json
+	return SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)
 }
 
-func (d *dashboard) setUid(uid string) {
-	d.Uid = uid
-	d.Data.Set("uid", uid)
+func SetupFolderService(tb testing.TB, cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus) folder.Service {
+	tb.Helper()
+
+	ac := acmock.New()
+	features := featuremgmt.WithFeatures()
+
+	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, nil, features)
 }
 
-func (d *dashboard) setVersion(version int) {
-	d.Version = version
-	d.Data.Set("version", version)
-}
+func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
+	tb.Helper()
 
-// UpdateSlug updates the slug
-func (d *dashboard) updateSlug() {
-	title := d.Data.Get("title").MustString()
-	d.Slug = slugify.Slugify(title)
-}
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue:  true,
+		CanViewValue:  true,
+		CanAdminValue: true,
+	})
+	tb.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
 
-func newDashboardFromJson(data *simplejson.Json) *dashboard {
-	dash := &dashboard{}
-	dash.Data = data
-	dash.Title = dash.Data.Get("title").MustString()
-	dash.updateSlug()
-	update := false
+	ac := acmock.New()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
-	if id, err := dash.Data.Get("id").Float64(); err == nil {
-		dash.Id = int64(id)
-		update = true
-	}
+	features := featuremgmt.WithFeatures()
+	quotaService := quotatest.New(false, nil)
 
-	if uid, err := dash.Data.Get("uid").String(); err == nil {
-		dash.Uid = uid
-		update = true
-	}
+	dashboardStore, err := databasestore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, fs, nil,
+		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
+	)
 
-	if version, err := dash.Data.Get("version").Float64(); err == nil && update {
-		dash.Version = int(version)
-		dash.Updated = time.Now()
-	} else {
-		dash.Data.Set("version", 0)
-		dash.Created = time.Now()
-		dash.Updated = time.Now()
-	}
+	require.NoError(tb, err)
 
-	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
-		dash.GnetId = int64(gnetId)
-	}
-
-	return dash
-}
-
-type saveFolderCommand struct {
-	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
-	UserId       int64            `json:"userId"`
-	Message      string           `json:"message"`
-	OrgId        int64            `json:"-"`
-	RestoredFrom int              `json:"-"`
-	PluginId     string           `json:"-"`
-	FolderId     int64            `json:"folderId"`
-	IsFolder     bool             `json:"isFolder"`
-
-	Result *dashboard
-}
-
-// GetDashboardModel turns the command into the saveable model
-func (cmd *saveFolderCommand) getDashboardModel() *dashboard {
-	dash := newDashboardFromJson(cmd.Dashboard)
-	userId := cmd.UserId
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	dash.UpdatedBy = userId
-	dash.OrgId = cmd.OrgId
-	dash.PluginId = cmd.PluginId
-	dash.IsFolder = cmd.IsFolder
-	dash.FolderId = cmd.FolderId
-	dash.updateSlug()
-	return dash
+	return dashboardService, dashboardStore
 }
