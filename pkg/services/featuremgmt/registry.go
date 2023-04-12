@@ -514,6 +514,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:            "useCachingService",
+			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
+			State:           FeatureStateStable,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "disableElasticsearchBackendQuerying",
 			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
 			State:       FeatureStateStable,

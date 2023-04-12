@@ -95,5 +95,6 @@ export interface FeatureToggles {
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   dataplaneFrontendFallback?: boolean;
+  useCachingService?: boolean;
   disableElasticsearchBackendQuerying?: boolean;
 }
