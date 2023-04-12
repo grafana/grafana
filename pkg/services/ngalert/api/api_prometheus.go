@@ -12,7 +12,6 @@ import (
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -288,6 +287,16 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
+// This is the same as matchers.Matches but avoids the need to create a LabelSet
+func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
+	for _, m := range matchers {
+		if !m.Matches(labels[m.Name]) {
+			return false
+		}
+	}
+	return true
+}
+
 func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
@@ -373,14 +382,8 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				}
 			}
 
-			if len(matchers) > 0 {
-				lbs := make(model.LabelSet)
-				for k, v := range alertState.Labels {
-					lbs[model.LabelName(k)] = model.LabelValue(v)
-				}
-				if !matchers.Matches(lbs) {
-					continue
-				}
+			if !matchersMatch(matchers, alertState.Labels) {
+				continue
 			}
 
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
