@@ -62,7 +62,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
         path={route.path}
         key={route.path}
         render={(props) => {
-          navigationLogger('AppWrapper', false, 'Rendering route', route, 'with match', props.location);
           // TODO[Router]: test this logic
           if (roles?.length) {
             if (!roles.some((r: string) => contextSrv.hasRole(r))) {

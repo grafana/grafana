@@ -1,7 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
-import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import config from 'app/core/config';
