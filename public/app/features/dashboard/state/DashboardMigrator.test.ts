@@ -2015,8 +2015,8 @@ describe('DashboardModel', () => {
         },
         annotations: {
           list: [
+            // @ts-expect-error
             {
-              // @ts-expect-error
               datasource: null,
             },
             {

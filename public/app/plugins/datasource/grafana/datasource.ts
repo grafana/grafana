@@ -60,6 +60,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         } else {
           datasource = anno.datasource as DataSourceRef;
         }
+
+        // Filter from streaming query conflicts with filter from annotations
         const { filter, ...rest } = anno;
 
         return { ...rest, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };

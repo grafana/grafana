@@ -46,6 +46,7 @@ export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | 
 }
 
 export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQuery>): AnnotationQuery {
+  // @ts-expect-error
   return {
     datasource: {
       type: 'foo',
@@ -54,7 +55,7 @@ export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQ
     enable: true,
     type: 'anno',
     ...annotationInput,
-  } as AnnotationQuery;
+  };
 }
 
 export function createVariableJSONFixture(annotationInput: Partial<VariableModel>): VariableModel {

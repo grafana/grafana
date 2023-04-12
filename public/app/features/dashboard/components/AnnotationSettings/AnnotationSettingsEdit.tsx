@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { DataSourcePicker, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, Checkbox, Field, FieldSet, HorizontalGroup, Input } from '@grafana/ui';
+import { Button, Checkbox, Field, FieldSet, HorizontalGroup, Input, Select, ValuePicker } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 
@@ -22,6 +22,12 @@ export const newAnnotationName = 'New annotation';
 
 export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const [annotation, setAnnotation] = useState(dashboard.annotations.list[editIdx]);
+  const panelFilter = useMemo(() => {
+    if (!annotation.filter) {
+      return PanelFilterType.AllPanels;
+    }
+    return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
+  }, [annotation.filter]);
 
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
@@ -65,6 +71,29 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     });
   };
 
+  const onFilterTypeChange = (v: SelectableValue<PanelFilterType>) => {
+    let filter =
+      v.value === PanelFilterType.AllPanels
+        ? undefined
+        : {
+            exclude: v.value === PanelFilterType.ExcludePanels,
+            ids: annotation.filter?.ids ?? [],
+          };
+    onUpdate({ ...annotation, filter });
+  };
+
+  const onAddFilterPanelID = (v: SelectableValue<number>) => {
+    if (!v.value) {
+      return;
+    }
+    const filter = {
+      exclude: panelFilter === PanelFilterType.ExcludePanels,
+      ids: annotation.filter?.ids ? [...annotation.filter.ids] : [],
+    };
+    filter.ids.push(v.value);
+    onUpdate({ ...annotation, filter });
+  };
+
   const onApply = goBackToList;
 
   const onPreview = () => {
@@ -78,6 +107,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   };
 
   const isNewAnnotation = annotation.name === newAnnotationName;
+  const formWidth = 50;
 
   return (
     <div>
@@ -90,12 +120,12 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             autoFocus={isNewAnnotation}
             value={annotation.name}
             onChange={onNameChange}
-            width={50}
+            width={formWidth}
           />
         </Field>
         <Field label="Data source" htmlFor="data-source-picker">
           <DataSourcePicker
-            width={50}
+            width={formWidth}
             annotations
             variables
             current={annotation.datasource}
@@ -112,7 +142,29 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
         </Field>
         <Field label="Show in">
-          <div>TODO.. select: All panels / Panel / All panels except</div>
+          <>
+            <Select width={formWidth} options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} />
+            {panelFilter !== PanelFilterType.AllPanels && (
+              <div>
+                <pre>{JSON.stringify(annotation.filter?.ids)}</pre>
+                <ValuePicker
+                  icon="plus"
+                  label="Select panel"
+                  variant="secondary"
+                  menuPlacement="auto"
+                  // isFullWidth={true}
+                  size="md"
+                  options={dashboard.panels.map<SelectableValue<number>>((p) => ({
+                    label: p.hasTitle() ? p.title : `Panel ${p.id}`,
+                    value: p.id,
+                    description: p.description,
+                    imgUrl: p.plugin?.meta?.info?.logos?.small,
+                  }))}
+                  onChange={onAddFilterPanelID}
+                />
+              </div>
+            )}
+          </>
         </Field>
         <Field label="Color" description="Color to use for the annotation event markers">
           <HorizontalGroup>
@@ -147,8 +199,31 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   );
 };
 
-AnnotationSettingsEdit.displayName = 'AnnotationSettingsEdit';
-
 function goBackToList() {
   locationService.partial({ editIndex: null });
 }
+
+// Synthetic type
+enum PanelFilterType {
+  AllPanels,
+  IncludePanels,
+  ExcludePanels,
+}
+
+const panelFilters = [
+  {
+    label: 'All panels',
+    value: PanelFilterType.AllPanels,
+    description: 'Send the annotation data to all panels that support annotations',
+  },
+  {
+    label: 'Only panels',
+    value: PanelFilterType.IncludePanels,
+    description: 'Send the annotations to the explicitly listed panels',
+  },
+  {
+    label: 'All panels except',
+    value: PanelFilterType.ExcludePanels,
+    description: 'Do not send data to the following panels',
+  },
+];
