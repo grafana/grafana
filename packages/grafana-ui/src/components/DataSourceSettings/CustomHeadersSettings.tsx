@@ -22,6 +22,7 @@ export type CustomHeaders = CustomHeader[];
 export interface Props {
   dataSourceConfig: DataSourceSettings<any, any>;
   onChange: (config: DataSourceSettings) => void;
+  overhaulStyle?: boolean;
 }
 
 export interface State {
@@ -196,10 +197,10 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
 
   render() {
     const { headers } = this.state;
-    const { dataSourceConfig } = this.props;
+    const { dataSourceConfig, overhaulStyle } = this.props;
 
     return (
-      <div className={'gf-form-group'}>
+      <div className={!overhaulStyle ? 'gf-form-group' : ''}>
         <div className="gf-form">
           <h6>Custom HTTP Headers</h6>
         </div>

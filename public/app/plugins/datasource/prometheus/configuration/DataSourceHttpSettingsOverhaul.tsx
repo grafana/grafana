@@ -158,17 +158,17 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
 
   return (
-    <div className="gf-form-group">
+    <div className={overhaulStyles.sectionBottomPadding}>
       <>
         <hr />
-        <h3 className="page-heading">Connection</h3>
-        <p className={`${styles.description}`}>Provide information to connect to this datasource.</p>
+        <h3 className={overhaulStyles.sectionHeaderPadding}>Connection</h3>
+        <p className={`${overhaulStyles.description}`}>Provide information to connect to this datasource.</p>
         <div className="gf-form-group">
           <div className="gf-form">
             <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
           </div>
         </div>
-        <div style={{ marginBottom: '12px' }}>
+        <div className={overhaulStyles.sectionBottomPadding}>
           For more information on configuring the Grafana Prometheus datasource see the{' '}
           <a
             style={{ textDecoration: 'underline' }}
@@ -184,9 +184,9 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
 
       <>
         <hr />
-        <h3 className="page-heading">Authentication</h3>
-        <p className={`${styles.description}`}>Provide information to grant access to this datasource.</p>
-        <div className="gf-form-group">
+        <h3 className={overhaulStyles.sectionHeaderPadding}>Authentication</h3>
+        <p className={`${overhaulStyles.description}`}>Provide information to grant access to this datasource.</p>
+        <div className={overhaulStyles.sectionBottomPadding}>
           <div className="gf-form-inline">
             <InlineField
               label="Basic auth"
@@ -222,66 +222,66 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
                 }}
               />
             </InlineField>
+
+            {azureAuthSettings?.azureAuthSupported && (
+              <div className="gf-form-inline">
+                <InlineField
+                  label="Azure Authentication"
+                  tooltip={<>Use Azure authentication for Azure endpoint.</>}
+                  labelWidth={LABEL_WIDTH}
+                  disabled={dataSourceConfig.readOnly}
+                >
+                  <InlineSwitch
+                    id="http-settings-azure-auth"
+                    value={azureAuthEnabled}
+                    onChange={(event) => {
+                      onSettingsChange(
+                        azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
+                      );
+                    }}
+                  />
+                </InlineField>
+              </div>
+            )}
+
+            {sigV4AuthToggleEnabled && (
+              <div className="gf-form-inline">
+                <InlineField
+                  label="SigV4 auth"
+                  labelWidth={LABEL_WIDTH}
+                  disabled={dataSourceConfig.readOnly}
+                  tooltip={
+                    <>
+                      If you use an AWS Identity and Access Management (IAM) policy to control access to your Amazon
+                      Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all
+                      requests to that domain.{' '}
+                      {docsTip(
+                        'https://grafana.com/docs/grafana/latest/datasources/prometheus/#amazon-managed-service-for-prometheus'
+                      )}
+                    </>
+                  }
+                >
+                  <InlineSwitch
+                    id="http-settings-sigv4-auth"
+                    value={dataSourceConfig.jsonData.sigV4Auth || false}
+                    onChange={(event) => {
+                      onSettingsChange({
+                        jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
+                      });
+                    }}
+                  />
+                </InlineField>
+              </div>
+            )}
+
+            {dataSourceConfig.access === 'proxy' && (
+              <HttpProxySettings
+                dataSourceConfig={dataSourceConfig}
+                onChange={(jsonData) => onSettingsChange({ jsonData })}
+                showForwardOAuthIdentityOption={showForwardOAuthIdentityOption}
+              />
+            )}
           </div>
-
-          {azureAuthSettings?.azureAuthSupported && (
-            <div className="gf-form-inline">
-              <InlineField
-                label="Azure Authentication"
-                tooltip={<>Use Azure authentication for Azure endpoint.</>}
-                labelWidth={LABEL_WIDTH}
-                disabled={dataSourceConfig.readOnly}
-              >
-                <InlineSwitch
-                  id="http-settings-azure-auth"
-                  value={azureAuthEnabled}
-                  onChange={(event) => {
-                    onSettingsChange(
-                      azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
-                    );
-                  }}
-                />
-              </InlineField>
-            </div>
-          )}
-
-          {sigV4AuthToggleEnabled && (
-            <div className="gf-form-inline">
-              <InlineField
-                label="SigV4 auth"
-                labelWidth={LABEL_WIDTH}
-                disabled={dataSourceConfig.readOnly}
-                tooltip={
-                  <>
-                    If you use an AWS Identity and Access Management (IAM) policy to control access to your Amazon
-                    Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests
-                    to that domain.{' '}
-                    {docsTip(
-                      'https://grafana.com/docs/grafana/latest/datasources/prometheus/#amazon-managed-service-for-prometheus'
-                    )}
-                  </>
-                }
-              >
-                <InlineSwitch
-                  id="http-settings-sigv4-auth"
-                  value={dataSourceConfig.jsonData.sigV4Auth || false}
-                  onChange={(event) => {
-                    onSettingsChange({
-                      jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
-                    });
-                  }}
-                />
-              </InlineField>
-            </div>
-          )}
-
-          {dataSourceConfig.access === 'proxy' && (
-            <HttpProxySettings
-              dataSourceConfig={dataSourceConfig}
-              onChange={(jsonData) => onSettingsChange({ jsonData })}
-              showForwardOAuthIdentityOption={showForwardOAuthIdentityOption}
-            />
-          )}
         </div>
         {dataSourceConfig.basicAuth && (
           <>
@@ -302,8 +302,8 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         )}
         <>
           <hr />
-          <h3 className="page-heading">Access options</h3>
-          <p className={`${styles.description}`}>Configure access options for this datasource.</p>
+          <h3 className={overhaulStyles.sectionHeaderPadding}>Access options</h3>
+          <p className={`${overhaulStyles.description}`}>Configure access options for this datasource.</p>
           {showAccessOptions && (
             <>
               <div className="gf-form-inline">
@@ -326,7 +326,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
           )}
 
           {dataSourceConfig.access === 'proxy' && (
-            <div className="gf-form-group">
+            <div>
               <div className="gf-form">
                 <InlineFormLabel
                   width={13}
@@ -371,14 +371,14 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         </>
 
         {dataSourceConfig.access === 'proxy' && (
-          <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+          <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} overhaulStyle={true} />
         )}
       </>
     </div>
   );
 };
 
-const styles = {
+export const overhaulStyles = {
   additionalSettings: css`
     margin-bottom: 25px;
   `,
@@ -390,5 +390,11 @@ const styles = {
   `,
   switchField: css`
     align-items: center;
+  `,
+  sectionHeaderPadding: css`
+    padding-top: 32px;
+  `,
+  sectionBottomPadding: css`
+    padding-bottom: 32px;
   `,
 };

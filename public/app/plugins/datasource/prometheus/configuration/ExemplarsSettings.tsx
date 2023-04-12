@@ -6,6 +6,7 @@ import { Button } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
+import { overhaulStyles } from './DataSourceHttpSettingsOverhaul';
 import ExemplarSetting from './ExemplarSetting';
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 
 export function ExemplarsSettings({ options, onChange, disabled }: Props) {
   return (
-    <>
+    <div className={overhaulStyles.sectionBottomPadding}>
       <h3 className="page-heading">Exemplars</h3>
 
       {options &&
@@ -57,6 +58,6 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
           Add
         </Button>
       )}
-    </>
+    </div>
   );
 }

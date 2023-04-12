@@ -10,7 +10,7 @@ import { PromOptions } from '../types';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
-import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
+import { DataSourceHttpSettingsOverhaul, overhaulStyles } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
@@ -50,7 +50,7 @@ export const ConfigEditor = (props: Props) => {
       )}
       <>
         <hr />
-        <h3 className="page-heading">Additional Settings</h3>
+        <h3 className={overhaulStyles.sectionHeaderPadding}>Additional Settings</h3>
         <p className={`${styles.description}`}>
           Additional settings are optional settings that can be configured for more control over your data source.
         </p>
