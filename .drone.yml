@@ -4119,7 +4119,7 @@ steps:
   image: golang:1.20.1
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts publish --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/build artifacts packages --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -4131,10 +4131,21 @@ steps:
       from_secret: prerelease_bucket
     SECURITY_DEST_BUCKET:
       from_secret: security_dest_bucket
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-artifacts
+- commands:
+  - ./bin/build artifacts static-assets --tag ${DRONE_TAG}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
     STATIC_ASSET_EDITIONS:
       from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-artifacts
+  name: publish-static-assets
 trigger:
   event:
   - promote
@@ -4170,7 +4181,7 @@ steps:
   image: golang:1.20.1
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts publish --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -4182,10 +4193,32 @@ steps:
       from_secret: prerelease_bucket
     SECURITY_DEST_BUCKET:
       from_secret: security_dest_bucket
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-artifacts
+- commands:
+  - ./bin/build artifacts static-assets --tag ${DRONE_TAG}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
     STATIC_ASSET_EDITIONS:
       from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-artifacts
+  name: publish-static-assets
+- commands:
+  - ./bin/build artifacts storybook --tag ${DRONE_TAG}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-storybook
 trigger:
   event:
   - promote
@@ -6653,6 +6686,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 9b71733a5b0ba599d7863d6b4b8398f512d6b23f5fb4b70771ded64cbdec08f1
+hmac: cf4c62a39dcda88dd6df1cfb62c848527c7df5ee8936c7fb0da5822617a56f3a
 
 ...
