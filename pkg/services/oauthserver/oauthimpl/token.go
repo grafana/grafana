@@ -302,6 +302,12 @@ func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessR
 	}
 	currentOAuthSessionData.Username = sa.Login
 
+	// For client credentials, scopes are not marked as granted by fosite but the request would have been rejected
+	// already if the client was not allowed to request them
+	for _, scope := range accessRequest.GetRequestedScopes() {
+		accessRequest.GrantScope(scope)
+	}
+
 	// Split scopes into actions and claims
 	actionsFilter, claimsFilter := splitOAuthScopes(accessRequest.GetGrantedScopes())
 

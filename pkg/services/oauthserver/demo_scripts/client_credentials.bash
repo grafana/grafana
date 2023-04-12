@@ -36,9 +36,9 @@ cat $current_dir/client_credentials_token.json | jq
 
 pause
 
-echo "===================="
+echo "================="
 echo "==    token    =="
-echo "===================="
+echo "================="
 
 at=$( cat $current_dir/client_credentials_token.json | jq -r '.access_token' )
 header=$( echo $at | cut -d "." -f 1|base64 -d 2>/dev/null)

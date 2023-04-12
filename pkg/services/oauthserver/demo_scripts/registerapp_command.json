@@ -11,9 +11,9 @@
     {"action": "dashboards.permissions:write", "scope": "dashboards:uid:JyhVSXA4k"}
   ],
   "impersonatePermissions": [
-    {"action": "users:read", "scope": "oauth:user:self"},
-    {"action": "users.permissions:read", "scope": "oauth:user:self"},
-    {"action": "teams:read", "scope": "oauth:user:self"},
+    {"action": "users:read", "scope": "global.users:self"},
+    {"action": "users.permissions:read", "scope": "users:self"},
+    {"action": "teams:read", "scope": "teams:self"},
 
     {"action": "dashboards:create", "scope": "folders:*"},
     {"action": "dashboards:read", "scope": "dashboards:*"},
