@@ -1,4 +1,4 @@
-import { getByTestId, render, screen } from '@testing-library/react';
+import { getByTestId, render, screen, waitFor } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -141,11 +141,13 @@ describe('PromQueryField', () => {
 
     // If we check the label browser right away it should be in loading state
     let labelBrowser = screen.getByRole('button');
-    expect(labelBrowser.textContent).toContain('Loading');
+    expect(labelBrowser).toHaveTextContent('Loading');
 
     // wait for component to rerender
     labelBrowser = await screen.findByRole('button');
-    expect(labelBrowser.textContent).toContain('Metrics browser');
+    await waitFor(() => {
+      expect(labelBrowser).toHaveTextContent('Metrics browser');
+    });
   });
 
   it('should not run query onBlur', async () => {

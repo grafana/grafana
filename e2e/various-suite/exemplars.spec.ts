@@ -69,6 +69,14 @@ describe('Exemplars', () => {
     e2e.components.TimePicker.applyTimeRange().click();
     e2e.components.QueryField.container().should('be.visible').type('exemplar-query_bucket{shift}{enter}');
 
+    cy.wait(1000);
+
+    cy.get('body').then((body) => {
+      if (body.find(`[data-testid="time-series-zoom-to-data"]`).length > 0) {
+        cy.get(`[data-testid="time-series-zoom-to-data"]`).click();
+      }
+    });
+
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
     e2e().contains('Query with gdev-tempo').click();
     e2e.components.TraceViewer.spanBar().should('have.length', 11);

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,13 +41,15 @@ type Service struct {
 	cfg               *setting.Cfg
 	dataService       backend.QueryDataHandler
 	dataSourceService datasources.DataSourceService
+	features          featuremgmt.FeatureToggles
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
 		cfg:               cfg,
 		dataService:       pluginClient,
 		dataSourceService: dataSourceService,
+		features:          features,
 	}
 }
 
