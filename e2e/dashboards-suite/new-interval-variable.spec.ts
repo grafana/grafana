@@ -2,6 +2,7 @@ import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
+const DASHBOARD_NAME = 'Test variable output';
 
 function assertPreviewValues(expectedValues: string[]) {
   for (const expected of expectedValues) {
@@ -14,6 +15,7 @@ describe('Variables - Interval', () => {
   it('can add a new interval variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Interval" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
