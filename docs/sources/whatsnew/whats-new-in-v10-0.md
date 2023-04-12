@@ -41,7 +41,7 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 _Available in preview in all editions of Grafana._
 
-You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality that enables you to link from any data source, to any data source.
+You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality and now enables you to link from any data source, to any data source.
 
 Correlations enable you to seamlessly jump from one data source to another. You define relationships between your different data sources, and when Exploring simply click a button next to a related field in one data source and Grafana will run the corresponding query in the other datasource.
 
