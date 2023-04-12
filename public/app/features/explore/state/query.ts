@@ -10,7 +10,6 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
@@ -622,27 +621,6 @@ export const runQueries = (
           );
 
           if (dataProvider) {
-            dispatch(
-              storeSupplementaryQueryDataProviderAction({
-                exploreId,
-                type,
-                dataProvider,
-              })
-            );
-
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
-              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-              if (supplementaryQueries[type].enabled) {
-                dispatch(loadSupplementaryQueryData(exploreId, type));
-              }
-            }
-            // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
-            // TODO: Remove in next major version - v10 (https://github.com/grafana/grafana/issues/61845)
-          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
-            const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
-              ...transaction.request,
-              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
-            });
             dispatch(
               storeSupplementaryQueryDataProviderAction({
                 exploreId,

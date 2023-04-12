@@ -16,14 +16,10 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/gobwas/glob"
-
-	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
-	// nolint:staticcheck
-	"golang.org/x/crypto/openpgp"
-	// nolint:staticcheck
-	"golang.org/x/crypto/openpgp/clearsign"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -337,7 +333,7 @@ func validateManifest(m PluginManifest, block *clearsign.Block) error {
 
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
+		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
 		return fmt.Errorf("%v: %w", "failed to check signature", err)
 	}
 
