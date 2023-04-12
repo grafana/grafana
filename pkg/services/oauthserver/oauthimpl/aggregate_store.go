@@ -149,7 +149,7 @@ func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer strin
 	if err != nil {
 		return nil, err
 	}
-	return s.computeClientScopesOnUser(ctx, app, userID)
+	return app.GetScopesOnUser(ctx, s.accessControl, userID), nil
 }
 
 // IsJWTUsed returns true, if JWT is not known yet or it can not be considered valid, because it must be already

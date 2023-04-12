@@ -577,21 +577,3 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 	}
 	return saID, nil
 }
-
-// TODO cache scopes
-// ComputeClientScopesOnTarget computes the scopes that a client has on a specific user (targetLogin) only searching in the subset of scopes provided
-func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, client *oauthserver.Client, userID int64) (fosite.Arguments, error) {
-	// TODO I used userID here as we used it for the ext jwt service, but it would be better to use login as app shouldn't know the user id
-	// Check user existence
-	_, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
-	if err != nil {
-		return nil, err
-	}
-
-	// Compute the scopes on the target user
-	scopes := client.GetOpenIDScope()
-	scopes = append(scopes, client.GetOrgScopes()...)
-	scopes = append(scopes, client.GetScopesOnUser(ctx, s.accessControl, userID)...)
-
-	return scopes, nil
-}

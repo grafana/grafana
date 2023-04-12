@@ -60,8 +60,10 @@ type Client struct {
 	SelfPermissions        []ac.Permission `xorm:"self_permissions"`
 	ImpersonatePermissions []ac.Permission `xorm:"impersonate_permissions"`
 	RedirectURI            string          `xorm:"redirect_uri"`
-	SignedInUser           *user.SignedInUser
-	// Domain           string `xorm:"domain"`
+
+	SignedInUser      *user.SignedInUser
+	Scopes            []string
+	ImpersonateScopes []string
 }
 
 func (c *Client) ToDTO() *ClientDTO {
@@ -125,61 +127,63 @@ func (c *Client) GetOrgScopes() fosite.Arguments {
 	return fosite.Arguments(ret)
 }
 
-// GetScopes returns the scopes this client is allowed to request.
+// GetScopes returns the scopes this client is allowed to request on its behalf.
 func (c *Client) GetScopes() fosite.Arguments {
-	// TODO cache scopes in client
-	ret := c.GetOrgScopes()
+	if c.Scopes != nil {
+		return fosite.Arguments(c.Scopes)
+	}
 
-	// Org Scope
+	ret := c.GetOrgScopes()
+	ret = append(ret, "profile", "email", "groups", "entitlements")
+
 	if c.SignedInUser != nil && c.SignedInUser.Permissions != nil {
-		if permissions, permOk := c.SignedInUser.Permissions[TmpOrgID]; permOk {
-			if _, ok := permissions[ac.ActionUsersImpersonate]; ok {
-				ret = append(ret, "impersonate")
-			}
-			if _, ok := permissions[ac.ActionUsersRead]; ok {
-				ret = append(ret, "profile", "email")
-			}
-			if _, ok := permissions[ac.ActionUsersPermissionsRead]; ok {
-				ret = append(ret, "permissions")
-			}
-			if _, ok := permissions[ac.ActionTeamsRead]; ok {
-				ret = append(ret, "teams")
-			}
+		perms := c.SignedInUser.Permissions[TmpOrgID]
+		for action := range perms {
+			// Add all other action that the plugin is allowed to request
+			ret = append(ret, action)
 		}
 	}
 
+	c.Scopes = ret
 	return fosite.Arguments(ret)
 }
 
 // GetScopes returns the scopes this client is allowed to request on a specific user.
 func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessControl, userID int64) fosite.Arguments {
-	ret := []string{}
-	id := strconv.FormatInt(userID, 10)
-	userScope := ac.Scope("users", "id", id)
-	globalUserScope := ac.Scope("global.users", "id", id)
+	ev := ac.EvalPermission(ac.ActionUsersImpersonate, ac.Scope("users", "id", strconv.FormatInt(userID, 10)))
+	hasAccess, errAccess := accessControl.Evaluate(ctx, c.SignedInUser, ev)
+	if errAccess != nil || !hasAccess {
+		return nil
+	}
 
-	hasAccess := func(action string, scope *string) bool {
-		ev := ac.EvalPermission(action)
-		if scope != nil {
-			ev = ac.EvalPermission(action, *scope)
+	if c.ImpersonateScopes != nil {
+		return fosite.Arguments(c.ImpersonateScopes)
+	}
+
+	// Org Scope
+	ret := c.GetOrgScopes()
+
+	if c.ImpersonatePermissions != nil {
+		perms := c.ImpersonatePermissions
+		for i := range perms {
+			if perms[i].Action == ac.ActionUsersRead && perms[i].Scope == ScopeGlobalUsersSelf {
+				ret = append(ret, "profile", "email")
+				continue
+			}
+			if perms[i].Action == ac.ActionUsersPermissionsRead && perms[i].Scope == ScopeUsersSelf {
+				ret = append(ret, "entitlements")
+				continue
+			}
+			if perms[i].Action == ac.ActionTeamsRead && perms[i].Scope == ScopeTeamsSelf {
+				ret = append(ret, "groups")
+				continue
+			}
+			// Add all other action that the plugin is allowed to request
+			ret = append(ret, perms[i].Action)
 		}
-		hasAccess, errAccess := accessControl.Evaluate(ctx, c.SignedInUser, ev)
-		return errAccess == nil && hasAccess
 	}
 
-	if hasAccess(ac.ActionUsersImpersonate, &userScope) {
-		ret = append(ret, "impersonate")
-	}
-	if hasAccess(ac.ActionUsersRead, &globalUserScope) {
-		ret = append(ret, "profile", "email")
-	}
-	if hasAccess(ac.ActionUsersPermissionsRead, &userScope) {
-		ret = append(ret, "permissions")
-	}
-	if hasAccess(ac.ActionTeamsRead, nil) {
-		ret = append(ret, "teams")
-	}
-
+	c.ImpersonateScopes = ret
 	return fosite.Arguments(ret)
 }
 

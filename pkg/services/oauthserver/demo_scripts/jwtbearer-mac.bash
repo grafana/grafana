@@ -28,7 +28,8 @@ echo -e $publicKey | tr -d '"' > $public_key_file
 # Todo add jku and kid
 header="{
     \"alg\": \"$alg\",
-    \"typ\": \"JWT\"
+    \"typ\": \"JWT\",
+    \"kid\": \"1\"
 }"
 
 payload="{
@@ -61,10 +62,10 @@ rm payload.b64
 
 if [[ "$alg" == "ES256" ]]
 then
-    echo "ES256"
+    echo "Creating ES256 signature"
     sign-jwt-ecdsa -pk $private_key_file -payload unsigned.b64 > sig.b64
 else
-    echo "RS256"
+    echo "Creating RS256 signature"
     openssl dgst -sha256 -sign $private_key_file -out sig.txt unsigned.b64
     cat sig.txt | basenc --base64url | tr +/ -_ | tr -d '=' | tr -d '\n' > sig.b64
     rm sig.txt
@@ -73,6 +74,7 @@ fi
 assertion2=$(printf "%s" "$(<unsigned.b64)" "." "$(<sig.b64)")
 rm unsigned.b64
 rm sig.b64
+
 
 echo "assertion:"
 echo -e ${blue}$(echo $assertion2 | cut -d '.' -f 1)${reset}.${green}$(echo $assertion2 | cut -d '.' -f 2)${reset}.${red}$(echo $assertion2 | cut -d '.' -f 3)${reset}
@@ -89,7 +91,7 @@ echo -e "curl -X ${blue}POST${reset} -H ${blue}\"Content-type: application/x-www
 -d assertion=${blue}\"$assertion2\"${reset} \
 -d client_id=${blue}\"$client_id\"${reset} \
 -d client_secret=${blue}\"$client_secret\"${reset} \
--d scope=${blue}\"profile email teams permissions org.1\"${reset} \
+-d scope=${blue}\"profile email groups entitlements org.1\"${reset} \
 ${red}http://localhost:3000/oauth2/token"${reset}
 echo
 
@@ -99,7 +101,7 @@ curl -X POST -H 'Content-type: application/x-www-form-urlencoded' \
 -d assertion="$assertion2" \
 -d client_id="$client_id" \
 -d client_secret="$client_secret" \
--d scope="profile email teams permissions org.1" \
+-d scope="profile email groups entitlements org.1" \
 http://localhost:3000/oauth2/token | jq > $current_dir/jwtbearer_token.json
 
 pause
@@ -111,9 +113,9 @@ cat $current_dir/jwtbearer_token.json | jq
 
 pause
 
-echo "===================="
-echo "==  access_token  =="
-echo "===================="
+echo "================="
+echo "==    token    =="
+echo "================="
 
 at=$( cat $current_dir/jwtbearer_token.json | jq -r '.access_token' )
 header=$( echo $at | gcut -d "." -f 1 | basenc --base64url -d 2>/dev/null)

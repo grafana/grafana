@@ -19,7 +19,6 @@ func NewAPI(
 	router routing.RouteRegister,
 	oauthService oauthserver.OAuth2Service,
 ) *api {
-
 	return &api{
 		router:       router,
 		oauthService: oauthService,

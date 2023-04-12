@@ -3,9 +3,6 @@
   "redirect_uri": "https://localhost:3000/a/test-app/",
   "permissions": [
     {"action": "users:impersonate", "scope": "users:*"},
-    {"action": "users:read", "scope": "global.users:*"},
-    {"action": "users.permissions:read", "scope": "users:*"},
-    {"action": "teams:read", "scope": "teams:*"},
 
     {"action": "dashboards:read", "scope": "dashboards:uid:JyhVSXA4k"},
     {"action": "dashboards:write", "scope": "dashboards:uid:JyhVSXA4k"},
@@ -14,6 +11,10 @@
     {"action": "dashboards.permissions:write", "scope": "dashboards:uid:JyhVSXA4k"}
   ],
   "impersonatePermissions": [
+    {"action": "users:read", "scope": "global.users:self"},
+    {"action": "users.permissions:read", "scope": "users:self"},
+    {"action": "teams:read", "scope": "teams:self"},
+
     {"action": "dashboards:create", "scope": "folders:*"},
     {"action": "dashboards:read", "scope": "dashboards:*"},
     {"action": "dashboards:read", "scope": "folders:*"},
