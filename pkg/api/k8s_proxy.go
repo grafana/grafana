@@ -41,6 +41,7 @@ func ReverseProxyK8sReq(logger log.Logger, proxyPath string) *httputil.ReversePr
 		signedInUser := appcontext.MustUser(ctx)
 
 		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+		req.Header.Set("X-Remote-Group", "grafana")
 		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
 		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
 		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))

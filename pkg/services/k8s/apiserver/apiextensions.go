@@ -34,8 +34,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/request/anonymous"
+	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
+	"k8s.io/apiserver/pkg/authentication/request/union"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/options"
 	serveroptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/util/proxy"
@@ -52,7 +57,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{"system:unauthenticated", "system:apiserver"}
+	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{"system:unauthenticated", "system:apiserver", "grafana"}
 	o.RecommendedOptions.CoreAPI = nil
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
@@ -85,7 +90,6 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	if err != nil {
 		return apiextensionsapiserver.Config{}, err
 	}
-
 	serverConfig.Authentication.Authenticator = authenticator
 
 	serverConfig.LoopbackClientConfig = &rest.Config{
@@ -104,11 +108,11 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 		return apiextensionsapiserver.Config{}, err
 	}
 
+	serverConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 	serviceResolver := &serviceResolver{serverConfig.SharedInformerFactory.Core().V1().Services().Lister()}
 	serverConfig.RESTOptionsGetter = &restOptionsGetter{
 		codec: apiextensionsapiserver.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion, v1.SchemeGroupVersion),
 	}
-	serverConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	apiextensionsConfig := apiextensionsapiserver.Config{
 		GenericConfig: serverConfig,
@@ -151,4 +155,28 @@ func (r restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generi
 			},
 		},
 	}, nil
+}
+
+func newAuthenticator() (authenticator.Request, error) {
+	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
+		ClientCAFile:        "data/k8s/ca.crt",
+		UsernameHeaders:     []string{"X-Remote-User"},
+		GroupHeaders:        []string{"X-Remote-Group"},
+		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
+	}
+
+	reqHeaderConfig, err := reqHeaderOptions.ToAuthenticationRequestHeaderConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	requestHeaderAuthenticator := headerrequest.NewDynamicVerifyOptionsSecure(
+		reqHeaderConfig.CAContentProvider.VerifyOptions,
+		reqHeaderConfig.AllowedClientNames,
+		reqHeaderConfig.UsernameHeaders,
+		reqHeaderConfig.GroupHeaders,
+		reqHeaderConfig.ExtraHeaderPrefixes,
+	)
+
+	return union.New(requestHeaderAuthenticator, anonymous.NewAuthenticator()), nil
 }
