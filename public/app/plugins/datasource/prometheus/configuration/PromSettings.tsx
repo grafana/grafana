@@ -160,7 +160,7 @@ export const PromSettings = (props: Props) => {
 
   return (
     <>
-      <h3 className="page-heading">Prometheus Behavioural</h3>
+      <h6 className="page-heading">Prometheus Behavioural</h6>
       <div className="gf-form-group">
         {/* Scrape interval */}
         <div className="gf-form-inline">
@@ -211,7 +211,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h3 className="page-heading">UI</h3>
+      <h6 className="page-heading">UI</h6>
       <div className="gf-form-group">
         <div className="gf-form">
           <FormField
@@ -256,7 +256,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h3 className="page-heading">Performance</h3>
+      <h6 className="page-heading">Performance</h6>
       {/* <h4 className="page-heading">Type and version</h4> */}
       {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
         <div style={{ marginBottom: '12px' }}>
@@ -363,7 +363,7 @@ export const PromSettings = (props: Props) => {
         )}
       </div>
 
-      <h3 className="page-heading">Advanced</h3>
+      <h6 className="page-heading">Advanced</h6>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">

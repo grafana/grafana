@@ -18,7 +18,7 @@ type Props = {
 export function ExemplarsSettings({ options, onChange, disabled }: Props) {
   return (
     <div className={overhaulStyles.sectionBottomPadding}>
-      <h3 className="page-heading">Exemplars</h3>
+      <h6 className="page-heading">Exemplars</h6>
 
       {options &&
         options.map((option, index) => {
