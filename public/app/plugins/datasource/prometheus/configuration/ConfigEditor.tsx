@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
@@ -51,7 +50,7 @@ export const ConfigEditor = (props: Props) => {
       <>
         <hr />
         <h3 className={overhaulStyles.sectionHeaderPadding}>Additional Settings</h3>
-        <p className={`${styles.description}`}>
+        <p className={`${overhaulStyles.description}`}>
           Additional settings are optional settings that can be configured for more control over your data source.
         </p>
         <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
@@ -60,19 +59,4 @@ export const ConfigEditor = (props: Props) => {
       </>
     </>
   );
-};
-
-const styles = {
-  additionalSettings: css`
-    margin-bottom: 25px;
-  `,
-  description: css`
-    font-size: 12px;
-  `,
-  inlineError: css`
-    margin: 0px 0px 4px 245px;
-  `,
-  switchField: css`
-    align-items: center;
-  `,
 };

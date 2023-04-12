@@ -384,6 +384,8 @@ export const overhaulStyles = {
   `,
   description: css`
     font-size: 12px;
+    color: #ccccdc;
+    opacity: 65%;
   `,
   inlineError: css`
     margin: 0px 0px 4px 245px;

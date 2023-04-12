@@ -335,7 +335,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
   );
 };
 
-const styles = {
+const overhaulStyles = {
   additionalSettings: css`
     margin-bottom: 25px;
   `,
