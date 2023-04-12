@@ -197,7 +197,7 @@ const Filter = (
   const loadOptions = async () => {
     setLoading(true);
     if (item.property && item.property !== '') {
-      const vals = addValueToOptions(propertyMap.get(item.property ?? '') ?? [], variableOptionGroup);
+      const vals = propertyMap.get(item.property ?? '');
       if (!vals) {
         const promise = await getTraceProperties(
           query,
@@ -212,7 +212,7 @@ const Filter = (
         setLoading(false);
         return promise;
       } else {
-        setValues(vals);
+        setValues(addValueToOptions(vals, variableOptionGroup));
         setLoading(false);
         return Promise.resolve(vals);
       }
