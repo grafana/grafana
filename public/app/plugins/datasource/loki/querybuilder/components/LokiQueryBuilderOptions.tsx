@@ -23,7 +23,7 @@ export interface Props {
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats }) => {
-    const [chunkRangeValid, setChunkRangeValid] = useState(true);
+    const [splitDurationValid, setsplitDurationValid] = useState(true);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -42,11 +42,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
       const value = evt.currentTarget.value;
       if (!isValidDuration(value)) {
-        setChunkRangeValid(false);
+        setsplitDurationValid(false);
         return;
       }
-      setChunkRangeValid(true);
-      onChange({ ...query, chunkDuration: value });
+      setsplitDurationValid(true);
+      onChange({ ...query, splitDuration: value });
       onRunQuery();
     };
 
@@ -101,7 +101,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               />
             </EditorField>
           )}
-          <EditorField label="Resolution">
+          <EditorField
+            label="Resolution"
+            tooltip="Sets the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
+          >
             <Select
               isSearchable={false}
               onChange={onResolutionChange}
@@ -112,16 +115,16 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           </EditorField>
           {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
             <EditorField
-              label="Chunk Duration"
-              tooltip="Defines the duration of a single query chunk when query chunking is used."
+              label="Split Duration"
+              tooltip="Defines the duration of a single query when query splitting is enabled."
             >
               <AutoSizeInput
                 minWidth={14}
                 type="string"
                 min={0}
-                defaultValue={query.chunkDuration ?? '1d'}
+                defaultValue={query.splitDuration ?? '1d'}
                 onCommitChange={onChunkRangeChange}
-                invalid={!chunkRangeValid}
+                invalid={!splitDurationValid}
               />
             </EditorField>
           )}

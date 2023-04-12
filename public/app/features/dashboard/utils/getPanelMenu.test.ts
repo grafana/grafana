@@ -163,6 +163,31 @@ describe('getPanelMenu()', () => {
       );
     });
 
+    it('should pass onClick from plugin extension link to menu item', () => {
+      const expectedOnClick = jest.fn();
+
+      (getPluginExtensions as jest.Mock).mockReturnValue({
+        extensions: [
+          {
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            onClick: expectedOnClick,
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+      const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
+
+      menuItem?.onClick?.({} as React.MouseEvent);
+      expect(expectedOnClick).toBeCalledTimes(1);
+    });
+
     it('should pass context with correct values when configuring extension', () => {
       const panel = new PanelModel({
         type: 'timeseries',
@@ -203,7 +228,9 @@ describe('getPanelMenu()', () => {
         targets: [
           {
             refId: 'A',
-            pluginId: 'testdata',
+            datasource: {
+              type: 'testdata',
+            },
           },
         ],
         dashboard: {

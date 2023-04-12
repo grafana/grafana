@@ -77,7 +77,7 @@ enum PluginRequestHeaders {
   DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
   DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
   PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
-  QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query chunking
+  QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
 }
 
@@ -202,10 +202,16 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
-    let url = '/api/ds/query';
+    let url = '/api/ds/query?ds_type=' + this.type;
+
     if (hasExpr) {
       headers[PluginRequestHeaders.FromExpression] = 'true';
-      url += '?expression=true';
+      url += '&expression=true';
+    }
+
+    // Appending request ID to url to facilitate client-side performance metrics. See #65244 for more context.
+    if (requestId) {
+      url += `&requestId=${requestId}`;
     }
 
     if (request.dashboardUID) {

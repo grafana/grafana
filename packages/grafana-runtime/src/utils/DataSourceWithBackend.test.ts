@@ -98,7 +98,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query",
+        "url": "/api/ds/query?ds_type=dummy",
       }
     `);
   });
@@ -153,7 +153,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query?expression=true",
+        "url": "/api/ds/query?ds_type=dummy&expression=true",
       }
     `);
   });
@@ -222,7 +222,7 @@ describe('DataSourceWithBackend', () => {
         "hideFromInspector": true,
         "method": "POST",
         "requestId": undefined,
-        "url": "/api/ds/query",
+        "url": "/api/ds/query?ds_type=dummy",
       }
     `);
   });
@@ -307,6 +307,8 @@ describe('DataSourceWithBackend', () => {
       expect(isExpressionReference('Expression')).toBeTruthy(); // Name
       expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
       expect(isExpressionReference({ type: '-100' })).toBeTruthy();
+      expect(isExpressionReference(null)).toBeFalsy();
+      expect(isExpressionReference(undefined)).toBeFalsy();
     });
   });
 });

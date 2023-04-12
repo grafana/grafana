@@ -73,8 +73,10 @@ export const Components = {
       title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       menuItems: (item: string) => `data-testid Panel menu item ${item}`,
+      menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
+      loadingBar: () => `Panel loading bar`,
     },
     Visualization: {
       Graph: {

@@ -106,6 +106,20 @@ func (c *fakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlar
 	return c.describeAlarmsOutput, nil
 }
 
+type mockEC2Client struct {
+	mock.Mock
+}
+
+func (c *mockEC2Client) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+	args := c.Called(in)
+	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
+}
+
+func (c *mockEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+	args := c.Called(in, fn)
+	return args.Error(0)
+}
+
 type fakeEC2Client struct {
 	ec2iface.EC2API
 

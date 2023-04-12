@@ -1,14 +1,14 @@
 import type { PluginPreloadResult } from '../pluginPreloader';
 
-import { MAX_EXTENSIONS_PER_PLACEMENT_PER_PLUGIN } from './constants';
-import { PlacementsPerPlugin } from './placementsPerPlugin';
+import { MAX_EXTENSIONS_PER_POINT } from './constants';
+import { ExtensionsPerPlugin } from './extensionsPerPlugin';
 import type { PluginExtensionRegistryItem, PluginExtensionRegistry } from './types';
 import { deepFreeze, logWarning } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
 
 export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
   const registry: PluginExtensionRegistry = {};
-  const placementsPerPlugin = new PlacementsPerPlugin();
+  const extensionsPerPlugin = new ExtensionsPerPlugin();
 
   for (const { pluginId, extensionConfigs, error } of pluginPreloadResults) {
     if (error) {
@@ -17,11 +17,11 @@ export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloa
     }
 
     for (const extensionConfig of extensionConfigs) {
-      const { placement } = extensionConfig;
+      const { extensionPointId } = extensionConfig;
 
-      if (!placementsPerPlugin.allowedToAdd(extensionConfig)) {
+      if (!extensionsPerPlugin.allowedToAdd(extensionConfig)) {
         logWarning(
-          `"${pluginId}" plugin has reached the limit of ${MAX_EXTENSIONS_PER_PLACEMENT_PER_PLUGIN} for "${placement}", skip registering extension "${extensionConfig.title}".`
+          `"${pluginId}" plugin has reached the limit of ${MAX_EXTENSIONS_PER_POINT} for "${extensionPointId}", skip registering extension "${extensionConfig.title}".`
         );
         continue;
       }
@@ -37,10 +37,10 @@ export function createPluginExtensionRegistry(pluginPreloadResults: PluginPreloa
         pluginId,
       };
 
-      if (!Array.isArray(registry[placement])) {
-        registry[placement] = [registryItem];
+      if (!Array.isArray(registry[extensionPointId])) {
+        registry[extensionPointId] = [registryItem];
       } else {
-        registry[placement].push(registryItem);
+        registry[extensionPointId].push(registryItem);
       }
     }
   }
