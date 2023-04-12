@@ -113,9 +113,11 @@ func TestWarmStateCache(t *testing.T) {
 		},
 	}
 
+	instances := make([]models.AlertInstance, 0)
+
 	labels := models.InstanceLabels{"test1": "testValue1"}
 	_, hash, _ := labels.StringAndHash()
-	instance1 := models.AlertInstance{
+	instances = append(instances, models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  rule.OrgID,
 			RuleUID:    rule.UID,
@@ -126,11 +128,11 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
-	}
+	})
 
 	labels = models.InstanceLabels{"test2": "testValue2"}
 	_, hash, _ = labels.StringAndHash()
-	instance2 := models.AlertInstance{
+	instances = append(instances, models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  rule.OrgID,
 			RuleUID:    rule.UID,
@@ -141,11 +143,11 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
-	}
+	})
 
 	labels = models.InstanceLabels{"test3": "testValue3"}
 	_, hash, _ = labels.StringAndHash()
-	instance3 := models.AlertInstance{
+	instances = append(instances, models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  rule.OrgID,
 			RuleUID:    rule.UID,
@@ -156,11 +158,11 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
-	}
+	})
 
 	labels = models.InstanceLabels{"test4": "testValue4"}
 	_, hash, _ = labels.StringAndHash()
-	instance4 := models.AlertInstance{
+	instances = append(instances, models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  rule.OrgID,
 			RuleUID:    rule.UID,
@@ -171,11 +173,11 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
-	}
+	})
 
 	labels = models.InstanceLabels{"test5": "testValue5"}
 	_, hash, _ = labels.StringAndHash()
-	instance5 := models.AlertInstance{
+	instances = append(instances, models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  rule.OrgID,
 			RuleUID:    rule.UID,
@@ -186,8 +188,10 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
+	})
+	for _, instance := range instances {
+		_ = dbstore.SaveAlertInstance(ctx, instance)
 	}
-	_ = dbstore.SaveAlertInstances(ctx, instance1, instance2, instance3, instance4, instance5)
 
 	cfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
@@ -2370,7 +2374,9 @@ func TestStaleResultsHandler(t *testing.T) {
 		},
 	}
 
-	_ = dbstore.SaveAlertInstances(ctx, instances...)
+	for _, instance := range instances {
+		_ = dbstore.SaveAlertInstance(ctx, instance)
+	}
 
 	testCases := []struct {
 		desc               string
@@ -2621,7 +2627,9 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	_ = dbstore.SaveAlertInstances(ctx, instances...)
+	for _, instance := range instances {
+		_ = dbstore.SaveAlertInstance(ctx, instance)
+	}
 
 	testCases := []struct {
 		desc          string
@@ -2755,7 +2763,9 @@ func TestResetStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	_ = dbstore.SaveAlertInstances(ctx, instances...)
+	for _, instance := range instances {
+		_ = dbstore.SaveAlertInstance(ctx, instance)
+	}
 
 	testCases := []struct {
 		desc          string

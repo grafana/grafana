@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "alertingBigTransactions",
-			Description: "Use big transactions for alerting database writes",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -310,8 +304,8 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "elasticsearchBackendMigration",
-			Description: "Use Elasticsearch as backend data source",
+			Name:        "showTraceId",
+			Description: "Show trace ids for requests",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
@@ -458,12 +452,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "disableElasticsearchBackendExploreQuery",
-			Description: "Disable executing of Elasticsearch Explore queries trough backend",
-			State:       FeatureStateBeta,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			State:       FeatureStateAlpha,
@@ -498,6 +486,32 @@ var (
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			State:       FeatureStateBeta,
 			Owner:       grafanaAsCodeSquad,
+		},
+		{
+			Name:        "pyroscopeFlameGraph",
+			Description: "Changes flame graph to pyroscope one",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:            "externalServiceAuth",
+			Description:     "Starts an OAuth2 authentication provider for external services",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "disableElasticsearchBackendQuerying",
+			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateStable,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )

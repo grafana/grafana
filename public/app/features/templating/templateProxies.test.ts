@@ -1,4 +1,4 @@
-import { toDataFrame } from '../dataframe';
+import { toDataFrame } from '@grafana/data';
 
 import { getTemplateProxyForField } from './templateProxies';
 

@@ -71,6 +71,16 @@ The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
 {{ end }}
 ```
 
+## The index function
+
+To print a specific annotation or label use the `index` function.
+
+```
+{{ range .Alerts }}
+The name of the alert is {{ index .Labels "alertname" }}
+{{ end }}
+```
+
 ## If statements
 
 You can use if statements in templates. For example, to print `There are no alerts` if there are no alerts in `.Alerts` you would write the following:

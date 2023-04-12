@@ -3,8 +3,10 @@ import React from 'react';
 
 import { FieldType, LogRowModel, MutableDataFrame, DataQueryResponse } from '@grafana/data';
 
-import { getRowContexts, LogRowContextProvider, RowContextOptions } from './LogRowContextProvider';
-import { createLogRow } from './__mocks__/logRow';
+import { createLogRow } from '../__mocks__/logRow';
+
+import { getRowContexts, LogRowContextProvider } from './LogRowContextProvider';
+import { RowContextOptions } from './types';
 
 const row = createLogRow({ entry: '4', timeEpochMs: 4 });
 
