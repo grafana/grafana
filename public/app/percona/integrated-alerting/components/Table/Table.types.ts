@@ -44,6 +44,7 @@ export interface TableProps {
   columns: Array<ExtendedColumn<any>>;
   pendingRequest?: boolean;
   emptyMessage?: React.ReactNode;
+  overlayClassName?: string;
   showPagination?: boolean;
   totalItems: number;
   totalPages?: number;
@@ -53,6 +54,10 @@ export interface TableProps {
   pagesPerView?: number;
   autoResetPage?: boolean;
   autoResetExpanded?: boolean;
+  autoResetSelectedRows?: boolean;
+  rowSelection?: boolean;
+  allRowsSelectionMode?: 'all' | 'page';
+  onRowSelection?: (rows: Array<Row<any>>) => void;
   onPaginationChanged?: (pageSize: number, pageIndex: number) => void;
   children?: (rows: Row[], table: TableInstance) => React.ReactNode;
   renderExpandedRow?: (row: Row<any>) => React.ReactNode;

@@ -15,7 +15,6 @@ const alwaysMonoIcons: IconName[] = [
   'percona-dashboard',
   'percona-kubernetes',
   'percona-summary',
-  'percona-inventory',
   'percona-add',
   'percona-alert',
   'percona-disk',

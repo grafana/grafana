@@ -21,27 +21,39 @@ export interface Props {
   getAriaLabel?: (name: string, i: number) => string;
   /** Icon to show next to tag label */
   icon?: IconName;
+  /** @Percona */
+  /** Set same color for all tags */
+  colorIndex?: number;
 }
 
 export const TagList = memo(
-  forwardRef<HTMLUListElement, Props>(({ displayMax, tags, icon, onClick, className, getAriaLabel }, ref) => {
-    const theme = useTheme2();
-    const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
-    const numTags = tags.length;
-    const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
-    return (
-      <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
-        {tagsToDisplay.map((tag, i) => (
-          <li className={styles.li} key={tag}>
-            <Tag name={tag} icon={icon} onClick={onClick} aria-label={getAriaLabel?.(tag, i)} data-tag-id={i} />
-          </li>
-        ))}
-        {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-          <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
-        )}
-      </ul>
-    );
-  })
+  forwardRef<HTMLUListElement, Props>(
+    ({ displayMax, tags, icon, onClick, className, getAriaLabel, colorIndex }, ref) => {
+      const theme = useTheme2();
+      const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
+      const numTags = tags.length;
+      const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
+      return (
+        <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
+          {tagsToDisplay.map((tag, i) => (
+            <li className={styles.li} key={tag}>
+              <Tag
+                colorIndex={colorIndex}
+                name={tag}
+                icon={icon}
+                onClick={onClick}
+                aria-label={getAriaLabel?.(tag, i)}
+                data-tag-id={i}
+              />
+            </li>
+          ))}
+          {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
+            <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
+          )}
+        </ul>
+      );
+    }
+  )
 );
 
 TagList.displayName = 'TagList';

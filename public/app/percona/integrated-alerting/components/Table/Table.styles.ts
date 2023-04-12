@@ -57,6 +57,7 @@ export const getStyles = (theme: GrafanaTheme) => {
           max-width: 200px;
           overflow: hidden;
           text-overflow: ellipsis;
+          white-space: nowrap;
 
           :last-child {
             border-right: 0;

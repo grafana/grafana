@@ -46,3 +46,12 @@ export const PRIMARY_LABELS = [
 ];
 export const HIDDEN_LABELS = ['alertname', 'job', 'rule_id', 'template_name', 'severity', 'ia'];
 export const SETTINGS_TIMEOUT = 1500;
+
+export const DATABASE_ICONS: Record<Databases, string> = {
+  [Databases.mysql]: 'percona-database-mysql',
+  [Databases.mongodb]: 'percona-database-mongodb',
+  [Databases.postgresql]: 'percona-database-postgresql',
+  [Databases.proxysql]: 'percona-database-proxysql',
+  [Databases.mariadb]: 'percona-database-mysql',
+  [Databases.haproxy]: 'percona-database-haproxy',
+};

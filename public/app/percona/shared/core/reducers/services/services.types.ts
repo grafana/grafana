@@ -1,10 +1,10 @@
 import { CancelToken } from 'axios';
 
-import { ServiceListPayload, ServiceType } from 'app/percona/shared/services/services/Services.types';
+import { Service, ServiceType } from 'app/percona/shared/services/services/Services.types';
 
 export interface ServicesState {
   activeTypes: ServiceType[];
-  services: ServiceListPayload;
+  services: Service[];
   isLoading: boolean;
 }
 

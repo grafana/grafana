@@ -1,11 +1,11 @@
 import { Databases } from '../shared/core';
 
-export interface ServicePayload {
+export interface CompatibleServicePayload {
   service_id: string;
   service_name: string;
 }
 
-export type ServiceListPayload = { [key in Databases]?: ServicePayload[] };
+export type CompatibleServiceListPayload = { [key in Databases]?: CompatibleServicePayload[] };
 
 export interface Service {
   id: string;
@@ -14,7 +14,7 @@ export interface Service {
 
 export type DBServiceList = { [key in Databases]?: Service[] };
 
-export enum InventoryType {
+export enum AgentType {
   amazonRdsMysql = 'amazon_rds_mysql',
   container = 'container',
   externalExporter = 'externalExporter',
@@ -40,19 +40,38 @@ export enum InventoryType {
   vmAgent = 'vm_agent',
 }
 
-export type InventoryNode = {};
+export enum ServiceAgentStatus {
+  STARTING = 'STARTING',
+  RUNNING = 'RUNNING',
+  WAITING = 'WAITING',
+  STOPPING = 'STOPPING',
+  DONE = 'DONE',
+  UNKNOWN = 'UNKNOWN',
+}
 
-export type InventoryList = {
-  [key in InventoryType]: InventoryNode[];
+export interface ServiceAgentPayload {
+  agent_id: string;
+  agent_type: AgentType;
+  status?: ServiceAgentStatus;
+  is_connected?: boolean;
+  custom_labels?: Record<string, string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+export type ServiceAgentListPayload = {
+  agents: ServiceAgentPayload[];
 };
 
-export type ServicesList = InventoryList;
+export interface ServiceAgent {
+  agentId: string;
+  status?: ServiceAgentStatus;
+  customLabels?: Record<string, string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
 
-export type NodesList = InventoryList;
-
-export type AgentsList = InventoryList;
-
-export interface CustomLabel {
-  key: string;
-  value: string;
+export interface Agent {
+  type: AgentType;
+  params: ServiceAgent;
 }

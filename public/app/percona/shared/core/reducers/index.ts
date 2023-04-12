@@ -23,6 +23,7 @@ import perconaDBaaSReducer from './dbaas/dbaas';
 import perconaK8SCluster from './dbaas/k8sCluster/k8sCluster';
 import perconaK8SClusterListReducer, { fetchK8sListAction } from './dbaas/k8sClusterList/k8sClusterList';
 import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
+import nodesReducer from './nodes';
 import rolesReducers from './roles/roles';
 import servicesReducer from './services';
 import tourReducer from './tour/tour';
@@ -246,6 +247,7 @@ export default {
     server: perconaServerReducers,
     templates: templatesReducer,
     services: servicesReducer,
+    nodes: nodesReducer,
     backupLocations: perconaBackupLocations,
     tour: tourReducer,
     telemetry: uiEventsReducer,

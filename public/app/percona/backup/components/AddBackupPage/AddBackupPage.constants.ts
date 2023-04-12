@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { DataModel, RetryMode } from 'app/percona/backup/Backup.types';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { MONTHS, WEEKDAYS } from 'app/percona/shared/helpers/cron/constants';
 
 import { Messages } from './AddBackupPage.messages';
@@ -59,7 +60,7 @@ export const RETRY_MODE_OPTIONS: Array<SelectableValue<RetryMode>> = [
 
 export const MONTH_OPTIONS: Array<SelectableValue<number>> = MONTHS.map((month, idx) => ({
   value: idx + 1,
-  label: `${month[0].toUpperCase()}${month.substr(1).toLowerCase()}`,
+  label: capitalizeText(month),
 }));
 
 export const DAY_OPTIONS: Array<SelectableValue<number>> = Array.from(Array(31).keys()).map((value) =>
@@ -68,7 +69,7 @@ export const DAY_OPTIONS: Array<SelectableValue<number>> = Array.from(Array(31).
 
 export const WEEKDAY_OPTIONS: Array<SelectableValue<number>> = WEEKDAYS.map((day, idx) => ({
   value: idx,
-  label: `${day[0].toUpperCase()}${day.substr(1).toLowerCase()}`,
+  label: capitalizeText(day),
 }));
 
 export const HOUR_OPTIONS: Array<SelectableValue<number>> = Array.from(Array(24).keys()).map((value) =>

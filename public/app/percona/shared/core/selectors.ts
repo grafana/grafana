@@ -19,6 +19,7 @@ export const getPerconaDBClusters = (state: StoreState) => state.percona.dbClust
 export const getPerconaServer = (state: StoreState) => state.percona.server;
 export const getTemplates = (state: StoreState) => state.percona.templates;
 export const getServices = (state: StoreState) => state.percona.services;
+export const getNodes = (state: StoreState) => state.percona.nodes;
 export const getBackupLocations = (state: StoreState) => state.percona.backupLocations;
 export const getTour = (state: StoreState) => state.percona.tour;
 export const getAccessRoles = (state: StoreState) => state.percona.roles;

@@ -279,7 +279,7 @@
     "@opentelemetry/api": "1.2.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.7.0",
-    "@percona/platform-core": "^1.0.12",
+    "@percona/platform-core": "1.0.13",
     "@popperjs/core": "2.11.5",
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
     "@react-aria/button": "3.6.1",

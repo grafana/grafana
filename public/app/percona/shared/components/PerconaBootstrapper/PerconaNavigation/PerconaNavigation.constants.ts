@@ -85,7 +85,7 @@ export const PMM_ALERTING_PERCONA_ALERTS: NavModelItem[] = [
 
 export const PMM_INVENTORY_PAGE: NavModelItem = {
   id: 'inventory',
-  icon: 'percona-inventory',
+  icon: 'server-network',
   text: 'PMM Inventory',
   url: `${config.appSubUrl}/inventory`,
   subTitle: 'Percona PMM Inventory',
@@ -100,12 +100,6 @@ export const PMM_INVENTORY_PAGE: NavModelItem = {
       id: 'inventory-services',
       text: 'Services',
       url: `${config.appSubUrl}/inventory/services`,
-      hideFromMenu: true,
-    },
-    {
-      id: 'inventory-agents',
-      text: 'Agents',
-      url: `${config.appSubUrl}/inventory/agents`,
       hideFromMenu: true,
     },
     {

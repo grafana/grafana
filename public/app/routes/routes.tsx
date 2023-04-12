@@ -742,7 +742,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/inventory/agents',
+      path: '/inventory/services/:id/agents',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "InventoryAgentsPage" */ 'app/percona/inventory/Tabs/Agents')
       ),

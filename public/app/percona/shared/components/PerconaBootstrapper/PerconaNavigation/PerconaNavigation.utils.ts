@@ -53,7 +53,7 @@ export const removeAlertingMenuItem = (mainLinks: NavModelItem[]) => {
 export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: Settings): NavModelItem[] => {
   const inventoryLink: NavModelItem = {
     id: 'inventory',
-    icon: 'percona-inventory',
+    icon: 'server-network',
     text: 'Inventory',
     url: `${config.appSubUrl}/inventory`,
     hideFromTabs: true,

@@ -171,7 +171,6 @@
   "mono/percona-database-checks",
   "mono/percona-database",
   "mono/percona-disk",
-  "mono/percona-inventory",
   "mono/percona-kubernetes",
   "mono/percona-memory",
   "mono/percona-network",

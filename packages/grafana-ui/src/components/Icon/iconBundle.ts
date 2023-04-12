@@ -179,7 +179,6 @@ import u1168 from '../../../../../public/img/icons/mono/percona-dashboard.svg';
 import u1169 from '../../../../../public/img/icons/mono/percona-database-checks.svg';
 import u1170 from '../../../../../public/img/icons/mono/percona-database.svg';
 import u1171 from '../../../../../public/img/icons/mono/percona-disk.svg';
-import u1172 from '../../../../../public/img/icons/mono/percona-inventory.svg';
 import u1173 from '../../../../../public/img/icons/mono/percona-kubernetes.svg';
 import u1174 from '../../../../../public/img/icons/mono/percona-memory.svg';
 import u1175 from '../../../../../public/img/icons/mono/percona-network.svg';
@@ -402,7 +401,6 @@ export function initIconCache() {
   cacheItem(u1169, 'mono/percona-database-checks.svg');
   cacheItem(u1170, 'mono/percona-database.svg');
   cacheItem(u1171, 'mono/percona-disk.svg');
-  cacheItem(u1172, 'mono/percona-inventory.svg');
   cacheItem(u1173, 'mono/percona-kubernetes.svg');
   cacheItem(u1174, 'mono/percona-memory.svg');
   cacheItem(u1175, 'mono/percona-network.svg');
