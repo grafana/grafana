@@ -17,7 +17,7 @@ const HandleTooltip = (props: {
   children: React.ReactElement;
   visible: boolean;
   placement: 'top' | 'right';
-  tipFormatter?: (value: number) => React.ReactNode;
+  tipFormatter?: () => React.ReactNode;
 }) => {
   const { value, children, visible, placement, tipFormatter, ...restProps } = props;
 
@@ -71,6 +71,7 @@ const tooltipStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       opacity: 0.9,
       padding: 3,
+      zIndex: theme.zIndex.tooltip,
     }),
   };
 };

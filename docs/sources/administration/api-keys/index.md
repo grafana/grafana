@@ -17,7 +17,7 @@ An API key is a randomly generated string that external systems use to interact 
 
 When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.
 
-> **Note:** If you use Grafana v8.5 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
+> **Note:** If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
 
 {{< section >}}
 
