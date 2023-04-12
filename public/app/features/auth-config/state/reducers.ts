@@ -5,6 +5,7 @@ import { AuthConfigState, AuthProviderStatus, Settings, SettingsError } from 'ap
 export const initialState: AuthConfigState = {
   settings: {},
   providerStatuses: {},
+  isLoading: false,
 };
 
 const authConfigSlice = createSlice({
@@ -16,6 +17,12 @@ const authConfigSlice = createSlice({
     },
     providerStatusesLoaded: (state, action: PayloadAction<{ [key: string]: AuthProviderStatus }>): AuthConfigState => {
       return { ...state, providerStatuses: action.payload };
+    },
+    loadingBegin: (state: AuthConfigState) => {
+      return { ...state, isLoading: true };
+    },
+    loadingEnd: (state: AuthConfigState) => {
+      return { ...state, isLoading: false };
     },
     setError: (state, action: PayloadAction<SettingsError>): AuthConfigState => {
       return { ...state, updateError: action.payload };
@@ -32,8 +39,16 @@ const authConfigSlice = createSlice({
   },
 });
 
-export const { settingsUpdated, providerStatusesLoaded, setError, resetError, setWarning, resetWarning } =
-  authConfigSlice.actions;
+export const {
+  settingsUpdated,
+  providerStatusesLoaded,
+  loadingBegin,
+  loadingEnd,
+  setError,
+  resetError,
+  setWarning,
+  resetWarning,
+} = authConfigSlice.actions;
 
 export const authConfigReducer = authConfigSlice.reducer;
 

@@ -3,6 +3,7 @@ import { Settings } from 'app/types';
 export interface AuthConfigState {
   settings: Settings;
   providerStatuses: Record<string, AuthProviderStatus>;
+  isLoading?: boolean;
   updateError?: SettingsError;
   warning?: SettingsError;
 }

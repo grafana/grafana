@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -9,7 +10,7 @@ import { StoreState } from 'app/types';
 
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
-import { loadSettings, loadProviderStatuses } from './state/actions';
+import { loadSettings } from './state/actions';
 import { filterAuthSettings } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
@@ -19,15 +20,16 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
+  const { settings, isLoading, providerStatuses } = state.authConfig;
   return {
-    settings: state.authConfig.settings,
-    providerStatuses: state.authConfig.providerStatuses,
+    settings,
+    isLoading,
+    providerStatuses,
   };
 }
 
 const mapDispatchToProps = {
   loadSettings,
-  loadProviderStatuses,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -35,15 +37,14 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export const AuthConfigPageUnconnected = ({
   settings,
   providerStatuses,
+  isLoading,
   loadSettings,
-  loadProviderStatuses,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     loadSettings();
-    loadProviderStatuses();
-  }, [loadSettings, loadProviderStatuses]);
+  }, [loadSettings]);
 
   const authProviders = getRegisteredAuthProviders();
   const enabledProviders = authProviders.filter((p) => providerStatuses[p.id]?.enabled);
@@ -58,7 +59,7 @@ export const AuthConfigPageUnconnected = ({
 
   return (
     <Page navId="authentication">
-      <Page.Contents>
+      <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
         {!!enabledProviders?.length && (
           <div className={styles.cardsContainer}>
@@ -74,7 +75,7 @@ export const AuthConfigPageUnconnected = ({
             ))}
           </div>
         )}
-        {!enabledProviders?.length && firstAvailableProvider && (
+        {!enabledProviders?.length && firstAvailableProvider && !isEmpty(providerStatuses) && (
           <ConfigureAuthCTA
             title={`You have no ${firstAvailableProvider.type} configuration created at the moment`}
             buttonIcon="plus-circle"

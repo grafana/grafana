@@ -13,14 +13,16 @@ import {
 
 import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
 
-import { providerStatusesLoaded, resetError, setError, settingsUpdated } from './reducers';
+import { loadingBegin, loadingEnd, providerStatusesLoaded, resetError, setError, settingsUpdated } from './reducers';
 
 export function loadSettings(): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
+      dispatch(loadingBegin());
       const result = await getBackendSrv().get('/api/admin/settings');
       dispatch(settingsUpdated(result));
-      dispatch(loadProviderStatuses());
+      await dispatch(loadProviderStatuses());
+      dispatch(loadingEnd());
       return result;
     }
   };
