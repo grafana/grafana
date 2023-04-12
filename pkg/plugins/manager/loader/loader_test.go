@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -1080,9 +1082,16 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 
 		reg := fakes.NewFakePluginRegistry()
 		storage := fakes.NewFakePluginStorage()
-		// Cause an initialization error
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procPrvdr.RejectID = "test-datasource"
+		// Cause an initialization error
+		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+			return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+				if pluginID == "test-datasource" {
+					return nil, fmt.Errorf("failed to initialize")
+				}
+				return &fakes.FakePluginClient{}, nil
+			}
+		}
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
