@@ -25,7 +25,7 @@ func newTempFileScenario() (tempFileScenario, error) {
 	if err != nil {
 		return tempFileScenario{}, err
 	}
-	defer tf.Close()
+	defer tf.Close() //nolint:errcheck
 	if _, err := tf.Write([]byte("hello\n")); err != nil {
 		return tempFileScenario{}, err
 	}
