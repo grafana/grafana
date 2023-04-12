@@ -72,8 +72,8 @@ export class QueryCache {
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
-  // @todo change to 5 minutes before push
-  sendEventsInterval = 60000;
+  // send profile events every 5 minutes
+  sendEventsInterval = 60000 * 5;
 
   pendingRequestIdsToTargSigs = new Map<
     RequestID,
@@ -189,6 +189,7 @@ export class QueryCache {
 
       setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
 
+      // Send any pending profile information when the user navigates away
       window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
   }
