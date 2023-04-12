@@ -370,8 +370,6 @@ export class QueryCache {
               }
 
               cachedFrame.length = cachedFrame.fields[0].values.length;
-            } else {
-              console.warn('No table, invalid merge!');
             }
           }
         });
