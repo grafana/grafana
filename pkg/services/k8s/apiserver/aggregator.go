@@ -88,7 +88,6 @@ func createAggregatorConfig(
 }
 
 func createAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget, apiExtensionInformers apiextensionsinformers.SharedInformerFactory) (*aggregatorapiserver.APIAggregator, error) {
-	aggregatorConfig.GenericConfig.Config.SecureServing = nil
 	aggregatorServer, err := aggregatorConfig.Complete().NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err

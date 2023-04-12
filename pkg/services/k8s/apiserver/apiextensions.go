@@ -48,7 +48,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	corev1 "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 )
 
 func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, error) {
@@ -84,13 +83,6 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	serverConfig := genericapiserver.NewRecommendedConfig(apiextensionsapiserver.Codecs)
 	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 		return apiextensionsapiserver.Config{}, err
-	}
-	serverConfig.LoopbackClientConfig = &rest.Config{
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true,
-		},
-		Host:        "https://localhost:2999/k8s/",
-		BearerToken: "glsa_c4q6slmv92YMkya2uNLdIF84o431p58v_2819eb90",
 	}
 
 	rootCert, err := certUtil.GetK8sCACert()
