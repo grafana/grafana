@@ -176,9 +176,9 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
-export function getParserFromQuery(query: string) {
+export function getParserFromQuery(query: string): string | undefined {
   const tree = parser.parse(query);
-  let logParser;
+  let logParser: string | undefined = undefined;
   tree.iterate({
     enter: (node: SyntaxNode): false | void => {
       if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {

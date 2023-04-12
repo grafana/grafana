@@ -6,7 +6,7 @@ import { LokiContextUi } from './components/LokiContextUi';
 import { REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
-import { getParserFromQuery, isLokiQuery } from './queryUtils';
+import { getParserFromQuery, isLokiQuery, isQueryWithParser } from './queryUtils';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export class LogContextProvider {
@@ -132,7 +132,8 @@ export class LogContextProvider {
     let expr = `{${labelFilters}}`;
 
     // We need to have original query to get parser and include parsed labels
-    if (query) {
+    // We only add parser and parsed labels if there is only one parser in query
+    if (query && query && isQueryWithParser(query.expr).parserCount === 1) {
       const parser = getParserFromQuery(query.expr);
       if (parser) {
         expr = addParserToQuery(expr, parser);
@@ -163,7 +164,7 @@ export class LogContextProvider {
     let expr = `{${labelFilters}}`;
 
     // We also want to include parser, if it exists in original query
-    if (query) {
+    if (query && isQueryWithParser(query.expr).parserCount === 1) {
       const parser = getParserFromQuery(query.expr);
       if (parser) {
         expr = addParserToQuery(expr, parser);
