@@ -449,20 +449,18 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var ids []int64
-		if len(st.Cfg.DisabledOrgs) > 0 {
-			for orgID := range st.Cfg.DisabledOrgs {
-				ids = append(ids, orgID)
-			}
+		var disabledOrgs []int64
+		for orgID := range st.Cfg.DisabledOrgs {
+			disabledOrgs = append(disabledOrgs, orgID)
 		}
 
 		alertRulesSql := sess.Table("alert_rule").Select("*")
-		if len(ids) > 0 {
-			alertRulesSql.NotIn("org_id", ids)
+		if len(disabledOrgs) > 0 {
+			alertRulesSql.NotIn("org_id", disabledOrgs)
 		}
 
 		if len(query.RuleGroups) > 0 {
-			alertRulesSql = alertRulesSql.In("rule_group", query.RuleGroups)
+			alertRulesSql.In("rule_group", query.RuleGroups)
 		}
 
 		rule := new(ngmodels.AlertRule)
@@ -470,6 +468,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		if err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
+		defer rows.Close()
 
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
@@ -488,8 +487,8 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			foldersSql := sess.Table("dashboard").Alias("d").Select("d.uid, d.title").
 				Where("is_folder = ?", true).
 				And(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid)`)
-			if len(ids) > 0 {
-				foldersSql = foldersSql.NotIn("org_id", ids)
+			if len(disabledOrgs) > 0 {
+				foldersSql.NotIn("org_id", disabledOrgs)
 			}
 
 			if err := foldersSql.Find(&folders); err != nil {
