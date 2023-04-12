@@ -91,7 +91,7 @@ This improves Prometheus query editor performance, with the biggest performance 
 
 ## Removal of API key creation from the UI
 
-With this update we are going one step further in deprecating API Keys in favor of [service accounts]({{< relref "../administration/service-accounts/" >}}). We've removed the button for creating new API keys through Grafana's user interface, and now only allow the creation of API keys using our HTTP API. We recommend that you migrate your existing API keys to service accounts, and opt for new service accounts instead of new API keys. This change is part of our long-term strategy for sunsetting API keys.
+With this update we are going one step further in deprecating API keys in favor of [service accounts]({{< relref "../administration/service-accounts/" >}}). We've removed the button for creating new API keys through Grafana's user interface, and now only allow the creation of API keys using our HTTP API. We recommend that you migrate your existing API keys to service accounts, and opt for new service accounts instead of new API keys. This change is part of our long-term strategy for sunsetting API keys.
 
 Learn more about the deprecation strategy for API keys and how to manage them in our [Sunsetting API keys](https://github.com/grafana/grafana/issues/53567) GitHub issue.
 
@@ -183,10 +183,10 @@ _Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 We updated the reporting UI to better fit the new navigation style, adding a horizontal slider and moving the **Preview** and **Send** buttons to the Action section in the page. We also fixed the alignment of the different sections.
 
-{{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="Grafana new report UI" >}}
+{{< figure src="/media/docs/grafana/Screenshot-newUI-report.png" max-width="750px" caption="New Grafana report UI" >}}
 
 ## Experimental support for using JWTs as auth method
 
 _Experimental in Grafana Open Source and Enterprise._
 
-This feature adds support for using JWT tokens to store rendering keys instead of relying on “remote caching”. It covers most of the rendering use cases, though some still rely on the remote cache as a store. You can enable this by enabling the feature flag `renderAuthJWT` in the `custom.ini` configuration file.
+This feature adds support for using JWT tokens to store rendering keys instead of relying on “remote caching”. It covers most rendering use cases, though some still rely on the remote cache as a store. You can enable this by enabling the feature flag `renderAuthJWT` in the `custom.ini` configuration file.

@@ -18,7 +18,7 @@ weight: 1800
 
 ### InfluxDB provisioning change
 
-Beginning in v9.5, the InfluxDB data source deprecates the database field in provisioning files.
+Beginning in v9.5, the InfluxDB data source deprecates the `database` field in provisioning files.
 The `dbName` field under `jsonData` must be used to store the database information.
 For more information and examples, please refer to [InfluxDB Provisioning]({{< relref "../../datasources/influxdb/#provision-the-data-source" >}}).
 
@@ -28,4 +28,4 @@ We are deprecating the [Dashboard previews]({{< relref "../../search/dashboard-p
 
 ### Migrate your API keys to service accounts
 
-We are upgrading Grafana [API keys]({{< relref "../../administration/api-keys/" >}}) to Service accounts. Service accounts are a superset of API Keys that include token rotation and compatibility with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}). In a future release, we'll automatically migrate all existing API keys to Service accounts. All of your existing tokens will continue to work; they will simply be migrated to Service Accounts. You can preempt this change by migrating your existing API keys to Service accounts using Grafana's UI or API. Learn how to do this in the [API keys documentation]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts" >}}).
+We are upgrading Grafana [API keys]({{< relref "../../administration/api-keys/" >}}) to service accounts. Service accounts are a superset of API keys that include token rotation and compatibility with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}). In a future release, we'll automatically migrate all existing API keys to service accounts. All of your existing tokens will continue to work; they will simply be migrated to service accounts. You can preempt this change by migrating your existing API keys to service accounts using Grafana's UI or API. Learn how to do this in the [API keys documentation]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts" >}}).
