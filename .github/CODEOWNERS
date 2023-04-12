@@ -304,7 +304,6 @@
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Logs/ @grafana/observability-logs
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
@@ -377,6 +376,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/sandbox/ @grafana/grafana-frontend-platform
 /public/app/features/scenes/ @grafana/dashboards-squad
+/public/app/features/browse-dashboards/ @grafana/grafana-frontend-platform
 /public/app/features/search/ @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
