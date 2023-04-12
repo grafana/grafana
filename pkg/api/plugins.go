@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -393,15 +394,13 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-
-	pCtx, found, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
+		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+			return response.Error(404, "Plugin not found", nil)
+		}
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
-	if !found {
-		return response.Error(404, "Plugin not found", nil)
-	}
-
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
 		Headers:       map[string]string{},

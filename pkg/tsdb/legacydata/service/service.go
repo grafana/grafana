@@ -74,12 +74,9 @@ func (h *Service) generateRequest(ctx context.Context, ds *datasources.DataSourc
 		query.Headers = make(map[string]string)
 	}
 
-	pCtx, exists, err := h.pCtxProvider.GetWithDataSource(ctx, ds.Type, query.User, ds)
+	pCtx, err := h.pCtxProvider.GetWithDataSource(ctx, ds.Type, query.User, ds)
 	if err != nil {
 		return nil, err
-	}
-	if !exists {
-
 	}
 
 	req := &backend.QueryDataRequest{

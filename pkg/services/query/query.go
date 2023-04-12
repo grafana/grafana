@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -225,12 +224,9 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user *use
 		}
 	}
 
-	pCtx, exists, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
+	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 	if err != nil {
 		return nil, err
-	}
-	if !exists {
-		return nil, errors.New("foobar")
 	}
 	req := &backend.QueryDataRequest{
 		PluginContext: pCtx,

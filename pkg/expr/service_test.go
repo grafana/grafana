@@ -14,7 +14,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +29,11 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{}, nil, nil, nil)
+	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{
+		PluginList: []plugins.PluginDTO{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeDataSourceService{}, nil, nil)
 
 	s := Service{
 		cfg:          setting.NewCfg(),
@@ -56,7 +62,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &Request{Queries: queries}
+	req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)

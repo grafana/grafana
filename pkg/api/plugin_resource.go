@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -27,13 +28,13 @@ func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
-	pCtx, found, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
+		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+			c.JsonApiErr(404, "Plugin not found", nil)
+			return
+		}
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
-		return
-	}
-	if !found {
-		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
 
@@ -49,13 +50,13 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 }
 
 func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
-	pCtx, found, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
+	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
 	if err != nil {
+		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+			c.JsonApiErr(404, "Plugin not found", nil)
+			return
+		}
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
-		return
-	}
-	if !found {
-		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
 

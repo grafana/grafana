@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+var ErrPluginNotFound = errors.New("plugin not found")
+
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
 	keyProvider KeyProvider) *Provider {
@@ -40,10 +42,10 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, bool, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
-		return backend.PluginContext{}, false, nil
+		return backend.PluginContext{}, ErrPluginNotFound
 	}
 
 	pCtx := backend.PluginContext{
@@ -55,34 +57,31 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedIn
 	if plugin.IsApp() {
 		appSettings, err := p.appInstanceSettings(ctx, pluginID, user)
 		if err != nil {
-			return backend.PluginContext{}, false, err
+			return backend.PluginContext{}, err
 		}
 		pCtx.AppInstanceSettings = appSettings
 		//pCtx.Key = p.keyProvider.AppKey(ctx, pluginID, user.OrgID)
 	}
 
-	return pCtx, true, nil
+	return pCtx, nil
 }
 
 // GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
 // resolved and appended to the returned context.
-func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, bool, error) {
-	pCtx, exists, err := p.Get(ctx, pluginID, user)
-	if !exists {
-		return backend.PluginContext{}, false, nil
-	}
+func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, error) {
+	pCtx, err := p.Get(ctx, pluginID, user)
 	if err != nil {
-		return backend.PluginContext{}, false, err
+		return backend.PluginContext{}, err
 	}
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return pCtx, exists, err
+		return pCtx, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 	//pCtx.Key = p.keyProvider.DataSourceKey(ctx, datasourceSettings)
 
-	return pCtx, true, nil
+	return pCtx, nil
 }
 
 const pluginSettingsCacheTTL = 5 * time.Second

@@ -72,14 +72,14 @@ func NewContextGetter(pluginContextProvider *plugincontext.Provider, dataSourceC
 	}
 }
 
-func (g *ContextGetter) GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+func (g *ContextGetter) GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error) {
 	if datasourceUID == "" {
 		return g.pluginContextProvider.Get(ctx, pluginID, user)
 	}
 
 	ds, err := g.dataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 	if err != nil {
-		return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get datasource", err)
+		return backend.PluginContext{}, fmt.Errorf("%v: %w", "Failed to get datasource", err)
 	}
 	return g.pluginContextProvider.GetWithDataSource(ctx, pluginID, user, ds)
 }
