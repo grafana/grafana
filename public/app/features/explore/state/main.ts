@@ -190,7 +190,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload;
     const panes = {
-      left: itemId === 'left' ? state.panes.right : state.panes.left,
+      left: itemId === ExploreId.left ? state.panes.right : state.panes.left,
     };
     return {
       ...state,
@@ -265,7 +265,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
   if (resetExploreAction.match(action)) {
     // FIXME: reducers should REALLY not have side effects.
-    for (const [, pane] of Object.entries(state.panes).filter(([exploreId]) => exploreId !== 'left')) {
+    for (const [, pane] of Object.entries(state.panes).filter(([exploreId]) => exploreId !== ExploreId.left)) {
       stopQueryState(pane!.querySubscription);
     }
 

@@ -195,7 +195,7 @@ export const tearDown = () => {
 
 export const withinExplore = (exploreId: ExploreId) => {
   const container = screen.getAllByTestId('data-testid Explore');
-  return within(container[exploreId === 'left' ? 0 : 1]);
+  return within(container[exploreId === ExploreId.left ? 0 : 1]);
 };
 
 export const localStorageHasAlreadyBeenMigrated = () => {

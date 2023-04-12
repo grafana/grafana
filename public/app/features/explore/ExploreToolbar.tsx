@@ -35,7 +35,7 @@ const getStyles = (exploreId: ExploreId, isLargerExploreId: boolean) => {
     rotateIcon: css({
       '> div > svg': {
         transform:
-          (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+          (exploreId === ExploreId.left && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
             ? 'rotate(180deg)'
             : 'none',
       },
@@ -269,7 +269,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const toolbarLeftItems = [
       // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
-      !isTopnav && exploreId === 'left' && shareButton,
+      !isTopnav && exploreId === ExploreId.left && shareButton,
       getDataSourcePicker(),
     ].filter(Boolean);
 
@@ -283,8 +283,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         )}
         <PageToolbar
           aria-label="Explore toolbar"
-          title={exploreId === 'left' && !isTopnav ? 'Explore' : undefined}
-          pageIcon={exploreId === 'left' && !isTopnav ? 'compass' : undefined}
+          title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
+          pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
           leftItems={toolbarLeftItems}
           forceShowLeftItems
         >
