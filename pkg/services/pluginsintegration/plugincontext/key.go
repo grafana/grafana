@@ -16,8 +16,7 @@ func ProvideKeyService() *KeyService {
 	return &KeyService{}
 }
 
-type KeyService struct {
-}
+type KeyService struct{}
 
 func (s *KeyService) DataSourceKey(_ context.Context, dsSettings *backend.DataSourceInstanceSettings) string {
 	return fmt.Sprint(dsSettings.ID)

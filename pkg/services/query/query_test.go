@@ -258,7 +258,6 @@ func TestParseMetricRequest(t *testing.T) {
 func TestQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t)
-
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {

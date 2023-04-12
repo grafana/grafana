@@ -273,8 +273,6 @@ func TestDataSourceQueryError(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
-			db := dbtest.NewFakeDB()
-			db.ExpectedError = pluginsettings.ErrPluginSettingNotFound
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: "grafana",
