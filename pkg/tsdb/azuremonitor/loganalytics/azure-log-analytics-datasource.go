@@ -199,6 +199,21 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponseErrorWithExecuted(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
 	}
 
+	queryJSONModel := dataquery.AzureMonitorQuery{}
+	err := json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
+
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && *queryJSONModel.AzureTraces.OperationId != "" {
+		query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
+		}
+	}
+
 	req, err := e.createRequest(ctx, logger, url, query)
 	if err != nil {
 		dataResponse.Error = err
@@ -419,6 +434,86 @@ func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error
 	return portalUrl, nil
 }
 
+func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (*AzureLogAnalyticsQuery, error) {
+	azMonService := dsInfo.Services["Azure Monitor"]
+	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", query.Resources[0], operationId)
+
+	callCorrelationAPI := func(url string) (AzureCorrelationAPIResponse, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer([]byte{}))
+		if err != nil {
+			logger.Debug("Failed to create request", "error", err)
+			return AzureCorrelationAPIResponse{}, fmt.Errorf("%v: %w", "failed to create request", err)
+		}
+		req.URL.Path = url
+		req.Header.Set("Content-Type", "application/json")
+		values := req.URL.Query()
+		values.Add("api-version", "2019-10-17-preview")
+		req.URL.RawQuery = values.Encode()
+		req.Method = "GET"
+
+		ctx, span := tracer.Start(ctx, "azure traces correlation request")
+		span.SetAttributes("target", req.URL, attribute.Key("target").String(req.URL.String()))
+		span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+		span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
+
+		defer span.End()
+
+		tracer.Inject(ctx, req.Header, span)
+
+		logger.Debug("AzureLogAnalytics", "Traces Correlation ApiURL", req.URL.String())
+		res, err := azMonService.HTTPClient.Do(req)
+		if err != nil {
+			return AzureCorrelationAPIResponse{}, err
+		}
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return AzureCorrelationAPIResponse{}, err
+		}
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				logger.Warn("failed to close response body", "error", err)
+			}
+		}()
+
+		if res.StatusCode/100 != 2 {
+			logger.Debug("Request failed", "status", res.Status, "body", string(body))
+			return AzureCorrelationAPIResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
+		}
+		var data AzureCorrelationAPIResponse
+		d := json.NewDecoder(bytes.NewReader(body))
+		d.UseNumber()
+		err = d.Decode(&data)
+		if err != nil {
+			logger.Debug("Failed to unmarshal Azure Traces correlation API response", "error", err, "status", res.Status, "body", string(body))
+			return AzureCorrelationAPIResponse{}, err
+		}
+
+		return data, nil
+	}
+
+	var nextLink *string
+	var correlationResponse AzureCorrelationAPIResponse
+
+	correlationResponse, err := callCorrelationAPI(correlationUrl)
+	if err != nil {
+		return query, err
+	}
+	nextLink = correlationResponse.Properties.NextLink
+	query.Resources = correlationResponse.Properties.Resources
+
+	for nextLink != nil {
+		correlationResponse, err := callCorrelationAPI(correlationUrl)
+		if err != nil {
+			return query, err
+		}
+		query.Resources = append(query.Resources, correlationResponse.Properties.Resources...)
+		nextLink = correlationResponse.Properties.NextLink
+	}
+
+	return query, nil
+}
+
 // Error definition has been inferred from real data and other model definitions like
 // https://github.com/Azure/azure-sdk-for-go/blob/3640559afddbad452d265b54fb1c20b30be0b062/services/preview/virtualmachineimagebuilder/mgmt/2019-05-01-preview/virtualmachineimagebuilder/models.go
 type AzureLogAnalyticsAPIError struct {
@@ -444,6 +539,19 @@ type AzureLogAnalyticsInnerError struct {
 type AzureLogAnalyticsResponse struct {
 	Tables []types.AzureResponseTable `json:"tables"`
 	Error  *AzureLogAnalyticsAPIError `json:"error,omitempty"`
+}
+
+type AzureCorrelationAPIResponse struct {
+	ID         string                                `json:"id"`
+	Name       string                                `json:"name"`
+	Type       string                                `json:"type"`
+	Properties AzureCorrelationAPIResponseProperties `json:"properties"`
+	Error      *AzureLogAnalyticsAPIError            `json:"error,omitempty"`
+}
+
+type AzureCorrelationAPIResponseProperties struct {
+	Resources []string `json:"resources"`
+	NextLink  *string  `json:"nextLink,omitempty"`
 }
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
