@@ -19,11 +19,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-interface ActionsProps {
+interface Props {
   uid: string;
 }
 
-export function EditDataSourceActions({ uid }: ActionsProps) {
+export function EditDataSourceActions({ uid }: Props) {
   const styles = useStyles2(getStyles);
   const dataSource = useDataSource(uid);
   const onDelete = useDeleteLoadedDataSource();
