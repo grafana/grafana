@@ -121,12 +121,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
-  renderLogRow(
-    updateLimit?: () => void,
-    logsSortOrder?: LogsSortOrder | null,
-    getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'],
-    runContextQuery?: () => void
-  ) {
+  render() {
     const {
       getRows,
       onClickFilterLabel,
@@ -204,10 +199,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           ) : (
             <LogRowMessage
               row={processedRow}
-              getRows={getRows}
-              getLogRowContextUi={getLogRowContextUi}
-              runContextQuery={runContextQuery}
-              updateLimit={updateLimit}
               showContextToggle={showContextToggle}
               showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
@@ -215,7 +206,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onOpenContext={this.onOpenContext}
               app={app}
               scrollElement={scrollElement}
-              logsSortOrder={logsSortOrder}
               styles={styles}
             />
           )}
@@ -240,10 +230,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         )}
       </>
     );
-  }
-
-  render() {
-    return this.renderLogRow();
   }
 }
 

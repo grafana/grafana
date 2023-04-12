@@ -3,13 +3,7 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import {
-  LogRowModel,
-  findHighlightChunksInText,
-  LogsSortOrder,
-  CoreApp,
-  DataSourceWithLogsContextSupport,
-} from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, CoreApp } from '@grafana/data';
 import { IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -25,12 +19,7 @@ interface Props {
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
-  getRows: () => LogRowModel[];
   onOpenContext: (row: LogRowModel, method: string) => void;
-  updateLimit?: () => void;
-  runContextQuery?: () => void;
-  logsSortOrder?: LogsSortOrder | null;
   styles: LogRowStyles;
 }
 
