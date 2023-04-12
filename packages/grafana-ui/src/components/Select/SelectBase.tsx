@@ -144,7 +144,7 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
-  hideSelectedOptions = true,
+  hideSelectedOptions,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
