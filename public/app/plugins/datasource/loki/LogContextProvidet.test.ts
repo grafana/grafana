@@ -1,4 +1,4 @@
-import { FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
+import { FieldType, LogRowContextQueryDirection, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import LokiLanguageProvider from './LanguageProvider';
 import { LogContextProvider } from './LogContextProvider';
@@ -47,14 +47,18 @@ describe('new context ui', () => {
 describe('prepareLogRowContextQueryTarget', () => {
   const lcp = new LogContextProvider(defaultLanguageProviderMock);
   it('creates query with only labels from /labels API', async () => {
-    const contextQuery = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+    const contextQuery = await lcp.prepareLogRowContextQueryTarget(
+      defaultLogRow,
+      10,
+      LogRowContextQueryDirection.Backward
+    );
 
     expect(contextQuery.query.expr).toContain('uniqueParsedLabel');
     expect(contextQuery.query.expr).not.toContain('baz');
   });
 
   it('should call languageProvider.start to fetch labels', async () => {
-    await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+    await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, LogRowContextQueryDirection.Backward);
     expect(lcp.languageProvider.start).toBeCalled();
   });
 });
