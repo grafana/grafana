@@ -1,4 +1,4 @@
-import { Meta, Canvas, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Preview, ArgsTypes } from '@storybook/blocks';
 import { PanelChrome } from './PanelChrome';
 import { LoadingIndicator } from './LoadingIndicator';
 
@@ -43,7 +43,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     description="Here I will put a description that explains a bit more this panel"
@@ -67,7 +67,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 
 ### Menu: Standard & Hover
 
@@ -107,7 +107,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
 
   <HorizontalGroup spacing="md" align="flex-start" wrap>
   <PanelChrome
@@ -183,7 +183,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
   </PanelChrome>
 </HorizontalGroup>
-</Canvas>
+</Preview>
 
 ### States: Loading , Streaming, Error
 
@@ -215,7 +215,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
 
   <HorizontalGroup spacing="md" align="flex-start" wrap>
   <PanelChrome
@@ -298,7 +298,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
   </PanelChrome>
 </HorizontalGroup>
-</Canvas>
+</Preview>
 
 ### Extra options? Title items and actions
 
@@ -338,7 +338,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     titleItems={
@@ -372,7 +372,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 
 ### Migration from old PanelChrome (before v9.4.0)
 
@@ -404,7 +404,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     leftItems={[
@@ -434,7 +434,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 #### After
 
 ```tsx
@@ -464,7 +464,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     loadingState={LoadingState.Loading}
@@ -489,4 +489,4 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>

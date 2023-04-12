@@ -1,4 +1,4 @@
-import { Meta, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Preview, ArgsTypes } from '@storybook/blocks';
 import { RefreshPicker } from './RefreshPicker';
 
 <Meta title="MDX|RefreshPicker" component={RefreshPicker} />
@@ -16,4 +16,5 @@ This component is used on dashboards to refresh visualizations. Grafana does not
   <RefreshPicker text="Run query" tooltip="Run query" />
   <RefreshPicker text="Run query" isLoading={true} tooltip="Run query" value="1h" />
 </Preview>
-<Props of={RefreshPicker} />
+
+<ArgsTypes of={RefreshPicker} />
