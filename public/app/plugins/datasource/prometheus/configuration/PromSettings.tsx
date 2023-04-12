@@ -14,10 +14,10 @@ import {
   EventsWithValidation,
   InlineField,
   InlineFormLabel,
-  InlineSwitch,
   LegacyForms,
   regexValidation,
   Select,
+  Switch,
 } from '@grafana/ui';
 
 import config from '../../../../core/config';
@@ -27,7 +27,7 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PrometheusCacheLevel, PromOptions } from '../types';
 
-import { docsTip } from './DataSourceHttpSettingsOverhaul';
+import { docsTip, overhaulStyles } from './DataSourceHttpSettingsOverhaul';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
@@ -249,8 +249,9 @@ export const PromSettings = (props: Props) => {
               </>
             }
             disabled={options.readOnly}
+            className={overhaulStyles.switchField}
           >
-            <InlineSwitch
+            <Switch
               value={options.jsonData.disableMetricsLookup ?? false}
               onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
             />
@@ -363,15 +364,16 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form max-width-30">
             <FormField
               label="Incremental querying (beta)"
-              labelWidth={14}
+              labelWidth={13}
               tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
               inputEl={
-                <InlineSwitch
+                <Switch
                   value={options.jsonData.incrementalQuerying ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
                   disabled={options.readOnly}
                 />
               }
+              className={overhaulStyles.switchField}
             />
           </div>
         </div>
