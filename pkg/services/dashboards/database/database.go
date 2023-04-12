@@ -764,14 +764,11 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 	}
 
 	if len(dashIds) > 0 {
-		for _, id := range dashIds {
-			if err := d.deleteAlertDefinition(id.Id, sess); err != nil {
+		for _, dash := range dashIds {
+			if err := d.deleteAlertDefinition(dash.Id, sess); err != nil {
 				return err
 			}
-		}
 
-		// #TODO combine this with previous range block?
-		for _, dash := range dashIds {
 			// remove all access control permission with child dashboard scopes
 			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dash.Uid))
 			if err != nil {
@@ -1072,8 +1069,6 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 			return dashboards.ErrFolderNotFound
 		}
 
-		// #TODO figure out where the steps taking place in deleteChildrenAssociations() should live
-		// in the context of the registry service. Other implementations for example...
 		if err := d.deleteChildrenDashboardAssociations(sess, dashboard); err != nil {
 			return err
 		}

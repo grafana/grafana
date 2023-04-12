@@ -501,7 +501,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		err := dashboardStore.DeleteDashboardsInFolder(
 			context.Background(),
 			&dashboards.DeleteDashboardsInFolderRequest{
-				FolderUID: folder.UID, //figure out how to deal with the requirement for another database table and how to insert it properly with uid
+				FolderUID: folder.UID,
 				OrgID:     1,
 			})
 		require.NoError(t, err)
