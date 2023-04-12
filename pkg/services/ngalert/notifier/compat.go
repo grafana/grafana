@@ -34,7 +34,7 @@ func PostableApiReceiverToApiReceiver(r *apimodels.PostableApiReceiver) *alertin
 }
 
 func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConfig) []*alertingNotify.APIReceiver {
-	apiReceivers := make([]*alertingNotify.APIReceiver, len(c.Receivers))
+	apiReceivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, receiver := range c.Receivers {
 		apiReceivers = append(apiReceivers, PostableApiReceiverToApiReceiver(receiver))
 	}
