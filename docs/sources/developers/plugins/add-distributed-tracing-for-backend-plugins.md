@@ -59,18 +59,10 @@ func main() {
 }
 ```
 
-If you are not using automatic instance management, you have to configure the global tracer manually before your plugin starts serving requests.
-
-You can do so with:
-
-```go
-backend.SetupTracer("MY_PLUGIN_ID", tracing.Opts{})
-```
-
 </li>
 
 <li>
-Once tracing is configured (either manually or by calling <code>Manage</code>), you can access the global tracer with:
+Once tracing is configured, you can access the global tracer with:
 
 ```go
 tracing.DefaultTracer()
