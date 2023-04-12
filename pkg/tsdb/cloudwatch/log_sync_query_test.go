@@ -261,7 +261,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		cli.On("GetQueryResultsWithContext", mock.Anything, mock.MatchedBy(func(input *cloudwatchlogs.GetQueryResultsInput) bool {
 			return *input.QueryId == "queryId for B"
 		}), mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{
-			// this result will only be returned when the argument is QueryId = "query string for B"
+			// this result will only be returned when the argument is QueryId = "queryId for B"
 			Results: [][]*cloudwatchlogs.ResultField{{{
 				Field: utils.Pointer("@log"),
 				Value: utils.Pointer("B result"),
