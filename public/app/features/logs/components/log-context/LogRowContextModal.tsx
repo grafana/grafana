@@ -58,6 +58,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       max-height: 75%;
       align-self: stretch;
       display: inline-block;
+      & > table {
+        min-width: 100%;
+      }
     `,
     flexColumn: css`
       display: flex;
