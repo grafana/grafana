@@ -454,7 +454,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			disabledOrgs = append(disabledOrgs, orgID)
 		}
 
-		alertRulesSql := sess.Table("alert_rule").Select("*")
+		alertRulesSql := sess.Table("alert_rule")
 		if len(disabledOrgs) > 0 {
 			alertRulesSql.NotIn("org_id", disabledOrgs)
 		}
