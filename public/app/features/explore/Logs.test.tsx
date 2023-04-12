@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc, EventBusSrv } from '@grafana/data';
+import { ExploreId } from 'app/types';
 
 import { Logs } from './Logs';
 
@@ -16,7 +17,7 @@ describe('Logs', () => {
 
     return render(
       <Logs
-        exploreId={'left'}
+        exploreId={ExploreId.left}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -68,7 +69,7 @@ describe('Logs', () => {
     const scanningStarted = jest.fn();
     render(
       <Logs
-        exploreId={'left'}
+        exploreId={ExploreId.left}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -105,7 +106,7 @@ describe('Logs', () => {
   it('should render a stop scanning button', () => {
     render(
       <Logs
-        exploreId={'left'}
+        exploreId={ExploreId.left}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -145,7 +146,7 @@ describe('Logs', () => {
 
     render(
       <Logs
-        exploreId={'left'}
+        exploreId={ExploreId.left}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}

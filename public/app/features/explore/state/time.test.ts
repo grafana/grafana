@@ -2,7 +2,7 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime, LoadingState } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreItemState } from 'app/types';
+import { ExploreId, ExploreItemState } from 'app/types';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
@@ -37,7 +37,7 @@ describe('Explore item reducer', () => {
       const { dispatch } = configureStore({
         ...(createDefaultInitialState() as any),
       });
-      await dispatch(updateTime({ exploreId: 'left' }));
+      await dispatch(updateTime({ exploreId: ExploreId.left }));
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
     });
@@ -62,7 +62,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: 'left', refreshInterval: 'LIVE' }))
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
         .thenStateShouldEqual(expectedState);
     });
 
@@ -82,7 +82,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: 'left', refreshInterval: '' }))
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
         .thenStateShouldEqual(expectedState);
     });
   });
@@ -97,7 +97,7 @@ describe('Explore item reducer', () => {
           } as unknown as ExploreItemState)
           .whenActionIsDispatched(
             changeRangeAction({
-              exploreId: 'left',
+              exploreId: ExploreId.left,
               absoluteRange: { from: 1546297200000, to: 1546383600000 },
               range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
             })

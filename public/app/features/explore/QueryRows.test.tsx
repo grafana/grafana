@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState } from 'app/types';
+import { ExploreId, ExploreState } from 'app/types';
 
 import { UserState } from '../profile/state/reducers';
 
@@ -78,7 +78,7 @@ describe('Explore QueryRows', () => {
 
     render(
       <Provider store={store}>
-        <QueryRows exploreId={'left'} />
+        <QueryRows exploreId={ExploreId.left} />
       </Provider>
     );
 

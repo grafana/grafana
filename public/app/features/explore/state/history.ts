@@ -74,7 +74,7 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
 
 const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemState, exploreId: ExploreId) => void) => {
   Object.entries(state.panes).forEach(([exploreId, item]) => {
-    callback(item!, exploreId);
+    callback(item!, exploreId as ExploreId);
   });
 };
 
@@ -126,8 +126,12 @@ export const deleteHistoryItem = (id: string): ThunkResult<void> => {
 export const deleteRichHistory = (): ThunkResult<void> => {
   return async (dispatch) => {
     await deleteAllFromRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: 'left' }));
-    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: 'right' }));
+    dispatch(
+      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.left })
+    );
+    dispatch(
+      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.right })
+    );
   };
 };
 

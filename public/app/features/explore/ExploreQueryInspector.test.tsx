@@ -3,6 +3,7 @@ import React, { ComponentProps } from 'react';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
+import { ExploreId } from 'app/types';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
 
@@ -37,7 +38,7 @@ const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
     loading: false,
     width: 100,
-    exploreId: 'left',
+    exploreId: ExploreId.left,
     onClose: jest.fn(),
     timeZone: InternalTimeZones.utc,
     queryResponse: {

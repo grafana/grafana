@@ -5,6 +5,7 @@ import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
+import { ExploreId } from 'app/types';
 
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
@@ -60,7 +61,7 @@ const dummyProps: Props = {
     },
   } as DataSourceApi,
   datasourceMissing: false,
-  exploreId: 'left',
+  exploreId: ExploreId.left,
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),

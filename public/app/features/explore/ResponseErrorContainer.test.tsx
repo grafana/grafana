@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 
 import { DataQueryError, LoadingState, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../store/configureStore';
 
@@ -64,7 +65,7 @@ function setup(error: DataQueryError) {
   };
   render(
     <Provider store={store}>
-      <ResponseErrorContainer exploreId={'left'} />
+      <ResponseErrorContainer exploreId={ExploreId.left} />
     </Provider>
   );
 }

@@ -3,6 +3,7 @@ import React from 'react';
 
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
+import { ExploreId } from 'app/types';
 
 import { RichHistoryQueriesTab, RichHistoryQueriesTabProps } from './RichHistoryQueriesTab';
 
@@ -29,7 +30,7 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
       lastUsedDatasourceFilters: [],
       starredTabAsFirstTab: false,
     },
-    exploreId: 'left',
+    exploreId: ExploreId.left,
     height: 100,
   };
 

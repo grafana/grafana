@@ -44,8 +44,8 @@ export const updateTimeRange = (options: {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
       Object.keys(getState().explore.panes).forEach((exploreId) => {
-        dispatch(updateTime({ ...options, exploreId }));
-        dispatch(runQueries(exploreId, { preserveCache: true }));
+        dispatch(updateTime({ ...options, exploreId: exploreId as ExploreId }));
+        dispatch(runQueries(exploreId as ExploreId, { preserveCache: true }));
       });
     } else {
       dispatch(updateTime({ ...options }));
@@ -121,7 +121,7 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
     Object.keys(getState().explore.panes)
       .filter((key) => key !== exploreId)
       .forEach((exploreId) => {
-        dispatch(updateTimeRange({ exploreId, rawRange: range }));
+        dispatch(updateTimeRange({ exploreId: exploreId as ExploreId, rawRange: range }));
       });
 
     const isTimeSynced = getState().explore.syncedTimes;
@@ -143,7 +143,7 @@ export function makeAbsoluteTime(): ThunkResult<void> {
     Object.entries(getState().explore.panes).forEach(([exploreId, exploreItemState]) => {
       const range = getTimeRange(timeZone, exploreItemState!.range.raw, fiscalYearStartMonth);
       const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-      dispatch(updateTime({ exploreId, absoluteRange }));
+      dispatch(updateTime({ exploreId: exploreId as ExploreId, absoluteRange }));
     });
 
     dispatch(stateSave());

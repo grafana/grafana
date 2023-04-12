@@ -445,7 +445,7 @@ async function handleHistory(
   // used filters. Instead, we refresh the query history list.
   // TODO: run only if Query History list is opened (#47252)
   for (const exploreId in state.panes) {
-    await dispatch(loadRichHistory(exploreId));
+    await dispatch(loadRichHistory(exploreId as ExploreId));
   }
 }
 

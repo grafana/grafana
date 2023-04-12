@@ -6,8 +6,8 @@ import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from 
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { ExploreId, RichHistoryQuery } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { RichHistoryQuery } from 'app/types/explore';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
 
@@ -120,7 +120,7 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     deleteHistoryItem: deleteRichHistoryMock,
     commentHistoryItem: jest.fn(),
     setQueries: jest.fn(),
-    exploreId: 'left',
+    exploreId: ExploreId.left,
     datasourceInstance: dsStore.loki,
   };
 

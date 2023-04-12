@@ -1,6 +1,6 @@
 import { DataSourceApi } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { ExploreItemState } from 'app/types';
+import { ExploreId, ExploreItemState } from 'app/types';
 
 import { updateDatasourceInstanceAction, datasourceReducer } from './datasource';
 import { createEmptyQueryResponse } from './utils';
@@ -27,7 +27,7 @@ describe('Datasource reducer', () => {
 
     const result = datasourceReducer(
       initialState,
-      updateDatasourceInstanceAction({ exploreId: 'left', datasourceInstance, history: [] })
+      updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance, history: [] })
     );
 
     const expectedState: Partial<ExploreItemState> = {

@@ -181,7 +181,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
   };
 }
 
-export const waitForExplore = async (exploreId: ExploreId = 'left', multi = false) => {
+export const waitForExplore = async (exploreId: ExploreId = ExploreId.left, multi = false) => {
   if (multi) {
     return await withinExplore(exploreId).findAllByText(/Editor/i);
   } else {

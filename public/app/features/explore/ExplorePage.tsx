@@ -12,7 +12,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreQueryParams } from 'app/types/explore';
+import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
 import { Branding } from '../../core/components/Branding/Branding';
 import { useCorrelations } from '../correlations/useCorrelations';
@@ -110,7 +110,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     } else {
       dispatch(
         splitSizeUpdateAction({
-          largerExploreId: size > evenSplitWidth ? 'right' : 'left',
+          largerExploreId: size > evenSplitWidth ? ExploreId.right : ExploreId.left,
         })
       );
     }
@@ -122,7 +122,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   let widthCalc = 0;
   if (hasSplit) {
     if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-      widthCalc = exploreState.maxedExploreId === 'right' ? windowWidth - minWidth : minWidth;
+      widthCalc = exploreState.maxedExploreId === ExploreId.right ? windowWidth - minWidth : minWidth;
     } else if (exploreState.evenSplitPanes) {
       widthCalc = Math.floor(windowWidth / 2);
     } else if (rightPaneWidthRatio !== undefined) {
@@ -132,7 +132,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
 
   return (
     <div className={styles.pageScrollbarWrapper}>
-      <ExploreActions exploreIdLeft={'left'} exploreIdRight={'right'} />
+      <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
 
       <SplitPaneWrapper
         splitOrientation="vertical"
@@ -149,11 +149,15 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         }}
       >
         <ErrorBoundaryAlert style="page">
-          <ExplorePaneContainer exploreId={'left'} urlQuery={queryParams.left} eventBus={eventBus.current} />
+          <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
         </ErrorBoundaryAlert>
         {hasSplit && (
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer exploreId={'right'} urlQuery={queryParams.right} eventBus={eventBus.current} />
+            <ExplorePaneContainer
+              exploreId={ExploreId.right}
+              urlQuery={queryParams.right}
+              eventBus={eventBus.current}
+            />
           </ErrorBoundaryAlert>
         )}
       </SplitPaneWrapper>

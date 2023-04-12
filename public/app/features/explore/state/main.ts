@@ -171,7 +171,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {
-    left: initialExploreItemState,
+    [ExploreId.left]: initialExploreItemState,
   },
   correlations: undefined,
   richHistoryStorageFull: false,
@@ -315,9 +315,9 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         ...state,
         panes: Object.entries(state.panes).reduce<ExploreState['panes']>((acc, [id, pane]) => {
           if (id === exploreId) {
-            acc[id] = paneReducer(pane, action);
+            acc[id as ExploreId] = paneReducer(pane, action);
           } else {
-            acc[id] = pane;
+            acc[id as ExploreId] = pane;
           }
           return acc;
         }, {}),

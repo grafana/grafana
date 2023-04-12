@@ -11,7 +11,7 @@ import { Echo } from 'app/core/services/echo/Echo';
 import * as initDashboard from 'app/features/dashboard/state/initDashboard';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState } from 'app/types';
+import { ExploreId, ExploreState } from 'app/types';
 
 import { createEmptyQueryResponse } from '../state/utils';
 
@@ -52,7 +52,7 @@ describe('AddToDashboardButton', () => {
   });
 
   it('Is disabled if explore pane has no queries', async () => {
-    setup(<AddToDashboard exploreId={'left'} />, []);
+    setup(<AddToDashboard exploreId={ExploreId.left} />, []);
 
     const button = await screen.findByRole('button', { name: /add to dashboard/i });
     expect(button).toBeDisabled();
@@ -81,7 +81,7 @@ describe('AddToDashboardButton', () => {
     });
 
     it('Opens and closes the modal correctly', async () => {
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
 
@@ -96,7 +96,7 @@ describe('AddToDashboardButton', () => {
         const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
         const pushSpy = jest.spyOn(locationService, 'push');
 
-        setup(<AddToDashboard exploreId={'left'} />);
+        setup(<AddToDashboard exploreId={ExploreId.left} />);
 
         await openModal();
 
@@ -115,7 +115,7 @@ describe('AddToDashboardButton', () => {
         const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
         const pushSpy = jest.spyOn(locationService, 'push');
 
-        setup(<AddToDashboard exploreId={'left'} />);
+        setup(<AddToDashboard exploreId={ExploreId.left} />);
 
         await openModal();
 
@@ -134,7 +134,7 @@ describe('AddToDashboardButton', () => {
           // @ts-expect-error global.open should return a Window, but is not implemented in js-dom.
           const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
 
-          setup(<AddToDashboard exploreId={'left'} />);
+          setup(<AddToDashboard exploreId={ExploreId.left} />);
 
           await openModal();
 
@@ -148,7 +148,7 @@ describe('AddToDashboardButton', () => {
         it('Navigates to the new dashboard', async () => {
           const pushSpy = jest.spyOn(locationService, 'push');
 
-          setup(<AddToDashboard exploreId={'left'} />);
+          setup(<AddToDashboard exploreId={ExploreId.left} />);
 
           await openModal();
 
@@ -165,7 +165,7 @@ describe('AddToDashboardButton', () => {
 
     describe('Save to existing dashboard', () => {
       it('Renders the dashboard picker when switching to "Existing Dashboard"', async () => {
-        setup(<AddToDashboard exploreId={'left'} />);
+        setup(<AddToDashboard exploreId={ExploreId.left} />);
 
         await openModal();
 
@@ -178,7 +178,7 @@ describe('AddToDashboardButton', () => {
       it('Does not submit if no dashboard is selected', async () => {
         locationService.push = jest.fn();
 
-        setup(<AddToDashboard exploreId={'left'} />);
+        setup(<AddToDashboard exploreId={ExploreId.left} />);
 
         await openModal();
 
@@ -211,7 +211,7 @@ describe('AddToDashboardButton', () => {
             },
           ]);
 
-          setup(<AddToDashboard exploreId={'left'} />);
+          setup(<AddToDashboard exploreId={ExploreId.left} />);
 
           await openModal();
 
@@ -252,7 +252,7 @@ describe('AddToDashboardButton', () => {
             },
           ]);
 
-          setup(<AddToDashboard exploreId={'left'} />);
+          setup(<AddToDashboard exploreId={ExploreId.left} />);
 
           await openModal();
 
@@ -290,7 +290,7 @@ describe('AddToDashboardButton', () => {
           return true;
         }
       });
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
       await openModal('Add panel to existing dashboard');
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     });
@@ -303,7 +303,7 @@ describe('AddToDashboardButton', () => {
           return true;
         }
       });
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
       await openModal('Add panel to new dashboard');
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     });
@@ -322,7 +322,7 @@ describe('AddToDashboardButton', () => {
       jest.spyOn(global, 'open').mockReturnValue(null);
       const removeDashboardSpy = jest.spyOn(initDashboard, 'removeDashboardToFetchFromLocalStorage');
 
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -341,7 +341,7 @@ describe('AddToDashboardButton', () => {
         throw 'SOME ERROR';
       });
 
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -367,7 +367,7 @@ describe('AddToDashboardButton', () => {
         },
       ]);
 
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -391,7 +391,7 @@ describe('AddToDashboardButton', () => {
     it('Shows an error if an unknown error happens', async () => {
       jest.spyOn(api, 'setDashboardInLocalStorage').mockRejectedValue('SOME ERROR');
 
-      setup(<AddToDashboard exploreId={'left'} />);
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
