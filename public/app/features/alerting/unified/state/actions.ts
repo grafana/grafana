@@ -111,7 +111,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       rulesSourceName: string;
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
-      matcher?: string;
+      matcher?: string[];
       state?: string[];
     },
     thunkAPI
@@ -354,7 +354,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 interface FetchPromRulesRulesActionProps {
   filter?: FetchPromRulesFilter;
   limitAlerts?: number;
-  matcher?: string;
+  matcher?: string[];
   state?: string[];
 }
 

@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
-import { GrafanaAlertState, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -14,8 +14,6 @@ export interface FetchPromRulesFilter {
 export interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
-  matcher?: string;
-  state?: GrafanaAlertState[];
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
@@ -58,7 +56,7 @@ export function prepareRulesFilterQueryParams(
 export function paramsWithMatcherAndState(
   params: Record<string, string | string[]>,
   state?: string[],
-  matcher?: string
+  matcher?: string[]
 ) {
   let paramsResult = { ...params };
 
@@ -66,15 +64,10 @@ export function paramsWithMatcherAndState(
     paramsResult = { ...paramsResult, state };
   }
 
-  //we need to remove curly braces and change the separated-coma format to an array of strings
-  //otherwise the API throws 400
-  if (matcher) {
+  if (matcher?.length) {
     paramsResult = {
       ...paramsResult,
-      matcher: matcher
-        ?.replace(/[{}]/g, '')
-        .split(',')
-        .map((value) => value.trim()),
+      matcher,
     };
   }
 
@@ -85,14 +78,14 @@ export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
   limitAlerts?: number,
-  matcher?: string,
+  matcher?: string[],
   state?: string[]
 ): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
   }
 
-  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts, matcher }).rules(filter);
+  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts }).rules(filter);
 
   // adding state param here instead of adding it in prometheusUrlBuilder, for being a possible multiple query param
   const response = await lastValueFrom(

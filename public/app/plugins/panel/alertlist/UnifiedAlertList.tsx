@@ -53,6 +53,17 @@ function getStateList(state: StateFilter) {
   };
   return Object.entries(state).reduce(reducer, []);
 }
+function getMatcherList(matcher: string) {
+  //we need to remove curly braces and change the separated-coma format to an array of strings
+  //otherwise the API throws 400
+  if (matcher?.length === 0) {
+    return [];
+  }
+  return matcher
+    ?.replace(/[{}]/g, '')
+    .split(',')
+    .map((value) => value.trim());
+}
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -72,13 +83,18 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     dashboard = getDashboardSrv().getCurrent();
   });
 
+  const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
+  const matcherList = useMemo(
+    () => getMatcherList(props.options.alertInstanceLabelFilter),
+    [props.options.alertInstanceLabelFilter]
+  );
+
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
-    const stateList = getStateList(props.options.stateFilter);
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
         limitAlerts: INSTANCES_DISPLAY_LIMIT,
-        matcher: props.options.alertInstanceLabelFilter,
+        matcher: matcherList,
         state: stateList,
       })
     );
@@ -86,7 +102,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       dispatch(
         fetchAllPromAndRulerRulesAction(false, {
           limitAlerts: INSTANCES_DISPLAY_LIMIT,
-          matcher: props.options.alertInstanceLabelFilter,
+          matcher: matcherList,
           state: stateList,
         })
       )
@@ -94,13 +110,13 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard, props.options.alertInstanceLabelFilter, props.options.stateFilter]);
+  }, [dispatch, dashboard, matcherList, stateList]);
 
   const handleRemoveInstancesLimit = () => {
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
-        matcher: props.options.alertInstanceLabelFilter,
-        state: getStateList(props.options.stateFilter),
+        matcher: matcherList,
+        state: stateList,
       })
     );
   };

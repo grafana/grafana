@@ -12,11 +12,11 @@ describe('paramsWithMatcherAndState method', () => {
   });
   it('Should return params object with state if there are matchers and no states', () => {
     const params: Record<string, string | string[]> = { hello: 'there', bye: 'bye' };
-    expect(paramsWithMatcherAndState(params, undefined, '{severity=critical}')).toStrictEqual({
+    expect(paramsWithMatcherAndState(params, undefined, ['severity=critical'])).toStrictEqual({
       ...params,
       matcher: ['severity=critical'],
     });
-    expect(paramsWithMatcherAndState(params, undefined, '{severity=critical,label1=hello there}')).toStrictEqual({
+    expect(paramsWithMatcherAndState(params, undefined, ['severity=critical', 'label1=hello there'])).toStrictEqual({
       ...params,
       matcher: ['severity=critical', 'label1=hello there'],
     });
@@ -24,7 +24,7 @@ describe('paramsWithMatcherAndState method', () => {
   it('Should return params object with stateand matchers if there are states and matchers', () => {
     const params: Record<string, string | string[]> = { hello: 'there', bye: 'bye' };
     const state: string[] = ['firing', 'pending'];
-    const matchers = '{severity=critical,label1=hello there}';
+    const matchers = ['severity=critical', 'label1=hello there'];
     expect(paramsWithMatcherAndState(params, state, matchers)).toStrictEqual({
       ...params,
       state: state,

@@ -9,7 +9,6 @@ import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
@@ -74,19 +73,17 @@ const RuleList = withErrorBoundary(
     const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
     const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
-    const matcher = '';
-    const state: GrafanaAlertState[] = useMemo(() => [], []);
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts, matcher, state }));
+        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
-    }, [loading, limitAlerts, matcher, state, dispatch]);
+    }, [loading, limitAlerts, dispatch]);
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts, matcher, state }));
-    }, [dispatch, limitAlerts, matcher, state]);
+      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+    }, [dispatch, limitAlerts]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
