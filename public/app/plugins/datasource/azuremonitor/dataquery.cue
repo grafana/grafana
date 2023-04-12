@@ -43,6 +43,8 @@ composableKinds: DataQuery: {
 							azureLogAnalytics?: #AzureLogsQuery
 							// Azure Resource Graph sub-query properties.
 							azureResourceGraph?: #AzureResourceGraphQuery
+							// Application Insights Traces sub-query properties.
+							azureTraces?: #AzureTracesQuery
 							// @deprecated Legacy template variable support.
 							grafanaTemplateVariableFn?: #GrafanaTemplateVariableQuery
 
@@ -116,11 +118,34 @@ composableKinds: DataQuery: {
 							resources?: [...string]
 							// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
 							workspace?: string
-							// Operation ID. Used only for Traces queries.
-							operationId?: string
 
 							// @deprecated Use resources instead 
 							resource?: string
+						} @cuetsy(kind="interface")
+
+						// Application Insights Traces sub-query properties
+						#AzureTracesQuery: {
+							// Specifies the format results should be returned as.
+							resultFormat?: #ResultFormat
+							// Array of resource URIs to be queried.
+							resources?: [...string]
+							// Operation ID. Used only for Traces queries.
+							operationId?: string
+							// Types of events to filter by.
+							traceTypes?: [...string]
+							// Filters for property values.
+							filters?: [...#AzureTracesFilter]
+							// KQL query to be executed.
+							query?: string
+						} @cuetsy(kind="interface")
+
+						#AzureTracesFilter: {
+							// Property name, auto-populated based on available traces.
+							property: string
+							// Comparison operator to use. Either equals or not equals.
+							operation: string
+							// Values to filter by.
+							filters: [...string]
 						} @cuetsy(kind="interface")
 
 						#ResultFormat: "table" | "time_series" | "trace" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace")

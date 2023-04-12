@@ -8,7 +8,6 @@ import { selectors } from '../e2e/selectors';
 import { FormatAsFieldProps, ResultFormat } from '../types';
 
 import { Field } from './Field';
-import { setFormatAs } from './LogsQueryEditor/setQueryValue';
 
 const FormatAsField = ({
   query,
@@ -17,6 +16,8 @@ const FormatAsField = ({
   inputId,
   options: formatOptions,
   defaultValue,
+  setFormatAs,
+  resultFormat,
 }: FormatAsFieldProps) => {
   const options = useMemo(() => [...formatOptions, variableOptionGroup], [variableOptionGroup, formatOptions]);
 
@@ -30,17 +31,14 @@ const FormatAsField = ({
       const newQuery = setFormatAs(query, value);
       onQueryChange(newQuery);
     },
-    [onQueryChange, query]
+    [onQueryChange, query, setFormatAs]
   );
 
   useEffectOnce(() => {
-    if (!query.azureLogAnalytics?.resultFormat) {
+    if (!resultFormat) {
       handleChange({ value: defaultValue });
     } else {
-      if (
-        !formatOptions.find((item) => item.value === query.azureLogAnalytics?.resultFormat) &&
-        !query.azureLogAnalytics?.resultFormat.includes('$')
-      ) {
+      if (!formatOptions.find((item) => item.value === resultFormat) && !resultFormat.includes('$')) {
         handleChange({ value: defaultValue });
       }
     }
@@ -50,7 +48,7 @@ const FormatAsField = ({
     <Field label="Format as" data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}>
       <Select
         inputId={`${inputId}-format-as-field`}
-        value={query.azureLogAnalytics?.resultFormat ?? defaultValue}
+        value={resultFormat ?? defaultValue}
         onChange={handleChange}
         options={options}
         width={38}

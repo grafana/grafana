@@ -84,6 +84,7 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                                                    |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                                                |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                                            |
+| `showTraceId`                      | Show trace ids for requests                                                                                                                                                                         |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                                                  |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                                        |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                                                      |
@@ -106,6 +107,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
+| `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
 
 ## Development feature toggles
 

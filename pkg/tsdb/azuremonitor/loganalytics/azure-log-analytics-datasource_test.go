@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -45,6 +46,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					}`, types.TimeSeries)),
 					RefID:     "A",
 					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
@@ -63,6 +65,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Query:     "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
 					Resources: []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			Err: require.NoError,
@@ -80,7 +83,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s"
 						}
 					}`, types.TimeSeries)),
-					RefID: "A",
+					RefID:     "A",
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
@@ -98,6 +102,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					}`, types.TimeSeries)),
 					Query:     "Perf",
 					Resources: []string{},
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			Err: require.NoError,
@@ -115,7 +120,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s"
 						}
 					}`, types.TimeSeries)),
-					RefID: "A",
+					RefID:     "A",
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
@@ -133,6 +139,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					}`, types.TimeSeries)),
 					Query:     "Perf",
 					Resources: []string{},
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			Err: require.NoError,
@@ -150,7 +157,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s"
 						}
 					}`, types.TimeSeries)),
-					RefID: "A",
+					RefID:     "A",
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
@@ -168,6 +176,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					}`, types.TimeSeries)),
 					Query:     "Perf",
 					Resources: []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			Err: require.NoError,
@@ -186,6 +195,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					}`, types.TimeSeries)),
 					RefID:     "A",
 					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
@@ -204,6 +214,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Query:     "Perf",
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
 			},
 			Err: require.NoError,

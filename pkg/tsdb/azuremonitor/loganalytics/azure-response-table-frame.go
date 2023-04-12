@@ -128,7 +128,7 @@ var tagsConverter = data.FieldConverter{
 			return nil, nil
 		}
 
-		m := map[string]interface{}{}
+		m := map[string]any{}
 		err := json.Unmarshal([]byte(v.(string)), &m)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal trace tags: %s", err)

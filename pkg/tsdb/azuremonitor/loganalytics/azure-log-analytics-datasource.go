@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -33,14 +34,15 @@ type AzureLogAnalyticsDatasource struct {
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
 type AzureLogAnalyticsQuery struct {
-	RefID        string
-	ResultFormat string
-	URL          string
-	JSON         json.RawMessage
-	TimeRange    backend.TimeRange
-	Query        string
-	Resources    []string
-	QueryType    string
+	RefID             string
+	ResultFormat      string
+	URL               string
+	TraceExploreQuery string
+	JSON              json.RawMessage
+	TimeRange         backend.TimeRange
+	Query             string
+	Resources         []string
+	QueryType         string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -66,22 +68,7 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func getApiURL(queryJSONModel types.LogJSONQuery) string {
-	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
-	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
-	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
-	// to a resource URI, so they should use the new resource-centric.
-	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-	var resourceOrWorkspace string
-
-	if len(azureLogAnalyticsTarget.Resources) > 0 {
-		resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
-	} else if azureLogAnalyticsTarget.Resource != "" {
-		resourceOrWorkspace = azureLogAnalyticsTarget.Resource
-	} else {
-		resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
-	}
-
+func getApiURL(resourceOrWorkspace string) string {
 	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
 
 	if matchesResourceURI {
@@ -95,42 +82,95 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryJSONModel := types.LogJSONQuery{}
-		err := json.Unmarshal(query.JSON, &queryJSONModel)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
+		resources := []string{}
+		var resourceOrWorkspace string
+		var queryString string
+		var resultFormat string
+		traceExploreQuery := ""
+		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+			queryJSONModel := types.LogJSONQuery{}
+			err := json.Unmarshal(query.JSON, &queryJSONModel)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
+			}
+
+			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
+			logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
+
+			resultFormat = azureLogAnalyticsTarget.ResultFormat
+			if resultFormat == "" {
+				resultFormat = types.TimeSeries
+			}
+
+			// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
+			// API URL for, and newer queries specifying a resource URI should use resource-centric API.
+			// However, legacy workspace queries using a `workspaces()` template variable will be resolved
+			// to a resource URI, so they should use the new resource-centric.
+			if len(azureLogAnalyticsTarget.Resources) > 0 {
+				resources = azureLogAnalyticsTarget.Resources
+				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
+			} else if azureLogAnalyticsTarget.Resource != "" {
+				resources = []string{azureLogAnalyticsTarget.Resource}
+				resourceOrWorkspace = azureLogAnalyticsTarget.Resource
+			} else {
+				resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
+			}
+
+			queryString = azureLogAnalyticsTarget.Query
 		}
 
-		azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-		logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
+		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+			queryJSONModel := types.TracesJSONQuery{}
+			err := json.Unmarshal(query.JSON, &queryJSONModel)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode the Azure Traces query object from JSON: %w", err)
+			}
 
-		resultFormat := azureLogAnalyticsTarget.ResultFormat
-		if resultFormat == "" {
-			resultFormat = types.TimeSeries
+			azureTracesTarget := queryJSONModel.AzureTraces
+			logger.Debug("AzureTraces", "target", azureTracesTarget)
+
+			if azureTracesTarget.ResultFormat == nil {
+				resultFormat = types.Table
+			} else {
+				resultFormat = string(*azureTracesTarget.ResultFormat)
+				if resultFormat == "" {
+					resultFormat = types.Table
+				}
+			}
+
+			resources = azureTracesTarget.Resources
+			resourceOrWorkspace = azureTracesTarget.Resources[0]
+
+			queryString = buildTracesQuery(queryJSONModel.AzureTraces.OperationId, queryJSONModel.AzureTraces.TraceTypes)
+			traceIdVariable := "${__data.fields.traceID}"
+			if queryJSONModel.AzureTraces.OperationId == nil {
+				traceExploreQuery = buildTracesQuery(&traceIdVariable, queryJSONModel.AzureTraces.TraceTypes)
+			} else {
+				traceExploreQuery = queryString
+			}
+			traceExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceExploreQuery, "TimeGenerated")
+			if err != nil {
+				return nil, fmt.Errorf("failed to create traces explore query: %s", err)
+			}
 		}
 
-		apiURL := getApiURL(queryJSONModel)
+		apiURL := getApiURL(resourceOrWorkspace)
 
-		rawQuery, err := macros.KqlInterpolate(logger, query, dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := macros.KqlInterpolate(logger, query, dsInfo, queryString, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
 
-		resources := []string{}
-		if len(azureLogAnalyticsTarget.Resources) > 0 {
-			resources = azureLogAnalyticsTarget.Resources
-		} else if azureLogAnalyticsTarget.Resource != "" {
-			resources = []string{azureLogAnalyticsTarget.Resource}
-		}
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
-			RefID:        query.RefID,
-			ResultFormat: resultFormat,
-			URL:          apiURL,
-			JSON:         query.JSON,
-			TimeRange:    query.TimeRange,
-			Query:        rawQuery,
-			Resources:    resources,
-			QueryType:    query.QueryType,
+			RefID:             query.RefID,
+			ResultFormat:      resultFormat,
+			URL:               apiURL,
+			JSON:              query.JSON,
+			TimeRange:         query.TimeRange,
+			Query:             rawQuery,
+			Resources:         resources,
+			QueryType:         query.QueryType,
+			TraceExploreQuery: traceExploreQuery,
 		})
 	}
 
@@ -265,18 +305,30 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		linkTitle := "View E2E transaction in Application Insights"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
 
-		resultFormat := dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormatTrace
-		queryJSONModel.AzureLogAnalytics.ResultFormat = &resultFormat
-		queryJSONModel.AzureLogAnalytics.Query = &query.Query
-		AddCustomDataLink(*frame, data.DataLink{
-			Title: "Explore Trace: ${__data.fields.traceID}",
-			URL:   "",
-			Internal: &data.InternalDataLink{
-				DatasourceUID:  dsInfo.DatasourceUID,
-				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
-			},
-		})
+		if query.TraceExploreQuery != "" {
+			queryJSONModel := dataquery.AzureMonitorQuery{}
+			err = json.Unmarshal(query.JSON, &queryJSONModel)
+			if err != nil {
+				dataResponse.Error = err
+				return dataResponse
+			}
+			traceIdVariable := "${__data.fields.traceID}"
+			resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
+			queryJSONModel.AzureTraces.ResultFormat = &resultFormat
+			queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
+			if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
+				queryJSONModel.AzureTraces.OperationId = &traceIdVariable
+			}
+			AddCustomDataLink(*frame, data.DataLink{
+				Title: "Explore Trace: ${__data.fields.traceID}",
+				URL:   "",
+				Internal: &data.InternalDataLink{
+					DatasourceUID:  dsInfo.DatasourceUID,
+					DatasourceName: dsInfo.DatasourceName,
+					Query:          queryJSONModel,
+				},
+			})
+		}
 	}
 
 	dataResponse.Frames = data.Frames{frame}
@@ -559,4 +611,36 @@ func encodeQuery(rawQuery string) (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
+}
+
+func buildTracesQuery(operationId *string, traceTypes []string) string {
+	eventTypes := traceTypes
+	if len(eventTypes) == 0 {
+		eventTypes = Tables
+	}
+
+	var tags []string
+	for _, t := range eventTypes {
+		tags = append(tags, getTagsForTable(t)...)
+	}
+
+	whereClause := ""
+
+	if *operationId != "" {
+		whereClause = fmt.Sprintf("| where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", *operationId, *operationId)
+	}
+
+	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000;
+	set truncationmaxsize=67108864;
+	union isfuzzy=true %s
+	| where $__timeFilter()`, strings.Join(eventTypes, ","))
+	propertiesQuery := fmt.Sprintf(`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))
+	| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))
+	| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))
+	| extend tags = bag_pack_columns(%s)
+	| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
+	| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
+	| order by startTime asc`, strings.Join(tags, ","))
+
+	return baseQuery + whereClause + propertiesQuery
 }
