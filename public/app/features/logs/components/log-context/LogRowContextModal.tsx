@@ -14,7 +14,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { LoadingBar, Modal, Spinner, useTheme2 } from '@grafana/ui';
+import { LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
@@ -54,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     logRowGroups: css`
-      overflow: scroll;
+      overflow: auto;
       max-height: 75%;
       align-self: stretch;
       display: inline-block;
