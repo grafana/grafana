@@ -26,7 +26,9 @@ export function useURLSync() {
           const orgId = getState().user.orgId.toString();
           const urlStates: { [index: string]: string | null } = { orgId };
 
-          urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left!));
+          if (left) {
+            urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
+          }
 
           if (right) {
             urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));

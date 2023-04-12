@@ -61,6 +61,8 @@ export interface SetPaneStateActionPayload {
 }
 export const setPaneState = createAction<SetPaneStateActionPayload>('explore/setPaneState');
 
+export const clearPanes = createAction('explore/clearPanes');
+
 //
 // Action creators
 //
@@ -239,6 +241,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         ...state.panes,
         [action.meta.arg.exploreId]: initialExploreItemState,
       },
+    };
+  }
+
+  if (clearPanes.match(action)) {
+    return {
+      ...state,
+      panes: {},
     };
   }
 
