@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
 
+import { selectors } from '../../e2e/selectors';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { findOptions } from '../../utils/common';
 import { Field } from '../Field';
@@ -28,12 +29,14 @@ const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQuer
   return (
     <Field label="Trace Type">
       <MultiSelect
+        placeholder="Choose event types"
         inputId="azure-monitor-traces-type-field"
         value={findOptions([...tables, ...variableOptionGroup.options], query.azureTraces?.traceTypes ?? [])}
         onChange={handleChange}
         options={options}
         allowCustomValue
         isClearable
+        aria-label={selectors.components.queryEditor.tracesQueryEditor.traceTypes.select}
       />
     </Field>
   );
