@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"testing"
 
@@ -22,26 +21,26 @@ type FakeImageStore struct {
 	images map[string]*models.Image
 }
 
-func (s *FakeImageStore) GetImage(_ context.Context, token string) (*models.Image, error) {
+func (s *FakeImageStore) GetImage(_ context.Context, url string) (*models.Image, error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
-	if image, ok := s.images[token]; ok {
+	if image, ok := s.images[url]; ok {
 		return image, nil
 	}
 	return nil, models.ErrImageNotFound
 }
 
-func (s *FakeImageStore) GetImages(_ context.Context, tokens []string) ([]models.Image, []string, error) {
+func (s *FakeImageStore) GetImages(_ context.Context, urls []string) ([]models.Image, []string, error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
-	images := make([]models.Image, 0, len(tokens))
-	for _, token := range tokens {
-		if image, ok := s.images[token]; ok {
+	images := make([]models.Image, 0, len(urls))
+	for _, url := range urls {
+		if image, ok := s.images[url]; ok {
 			images = append(images, *image)
 		}
 	}
-	if len(images) < len(tokens) {
-		return images, unmatchedTokens(tokens, images), models.ErrImageNotFound
+	if len(images) < len(urls) {
+		return images, unmatchedURLs(urls, images), models.ErrImageNotFound
 	}
 	return images, nil, nil
 }
@@ -52,11 +51,8 @@ func (s *FakeImageStore) SaveImage(_ context.Context, image *models.Image) error
 	if image.ID == 0 {
 		image.ID = int64(len(s.images)) + 1
 	}
-	if image.Token == "" {
-		tmp := strings.Split(image.Path, ".")
-		image.Token = strings.Join(tmp[:len(tmp)-1], ".")
-	}
-	s.images[image.Token] = image
+	s.images[image.URL] = image
+
 	return nil
 }
 

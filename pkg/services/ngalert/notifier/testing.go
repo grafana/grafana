@@ -27,11 +27,11 @@ func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) erro
 	return models.ErrImageNotFound
 }
 
-func (f *fakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+func (f *fakeConfigStore) GetImage(ctx context.Context, url string) (*models.Image, error) {
 	return nil, models.ErrImageNotFound
 }
 
-func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
+func (f *fakeConfigStore) GetImages(ctx context.Context, urls []string) ([]models.Image, []string, error) {
 	return nil, nil, models.ErrImageNotFound
 }
 

@@ -176,7 +176,6 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		// Create a URL from the path.
 		screenshotURL := url.URL{Scheme: "file", Path: screenshot.Path}
 		image := models.Image{
-			// TODO: do we even need Path anymore?
 			Path: screenshot.Path,
 			URL:  screenshotURL.String(),
 		}

@@ -30,14 +30,13 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// create an image with a path on disk
 	image1 := models.Image{Path: "example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	require.NotEqual(t, "", image1.Token)
 
 	// image should not have expired
 	assert.False(t, image1.HasExpired())
 	assert.Equal(t, image1.ExpiresAt, image1.CreatedAt.Add(24*time.Hour))
 
 	// should return the image with a path on disk
-	result1, err := dbstore.GetImage(ctx, image1.Token)
+	result1, err := dbstore.GetImage(ctx, image1.URL)
 	require.NoError(t, err)
 	assert.Equal(t, image1, *result1)
 
@@ -49,21 +48,20 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// create an image with a URL
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
-	require.NotEqual(t, "", image2.Token)
 
 	// image should not have expired
 	assert.False(t, image2.HasExpired())
 	assert.Equal(t, image2.ExpiresAt, image2.CreatedAt.Add(24*time.Hour))
 
 	// should return the image with a URL
-	result2, err := dbstore.GetImage(ctx, image2.Token)
+	result2, err := dbstore.GetImage(ctx, image2.URL)
 	require.NoError(t, err)
 	assert.Equal(t, image2, *result2)
 
 	// expired image should not be returned
 	image1.ExpiresAt = time.Now().Add(-time.Second)
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	result1, err = dbstore.GetImage(ctx, image1.Token)
+	result1, err = dbstore.GetImage(ctx, image1.URL)
 	assert.EqualError(t, err, "image not found")
 	assert.Nil(t, result1)
 }
@@ -86,7 +84,7 @@ func TestIntegrationGetImages(t *testing.T) {
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
 
 	// should return the first image
-	images, mismatched, err := dbstore.GetImages(ctx, []string{image1.Token})
+	images, mismatched, err := dbstore.GetImages(ctx, []string{image1.URL})
 	require.NoError(t, err)
 	assert.Len(t, mismatched, 0)
 	assert.Equal(t, []models.Image{image1}, images)
@@ -106,36 +104,36 @@ func TestIntegrationGetImages(t *testing.T) {
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
 	// should return both images
-	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.Token, image2.Token})
+	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.URL, image2.URL})
 	require.NoError(t, err)
 	assert.Len(t, mismatched, 0)
 	assert.ElementsMatch(t, []models.Image{image1, image2}, images)
 
 	// should return the first image
-	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.Token})
+	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.URL})
 	require.NoError(t, err)
 	assert.Len(t, mismatched, 0)
 	assert.Equal(t, []models.Image{image1}, images)
 
 	// should return the second image
-	images, mismatched, err = dbstore.GetImages(ctx, []string{image2.Token})
+	images, mismatched, err = dbstore.GetImages(ctx, []string{image2.URL})
 	require.NoError(t, err)
 	assert.Len(t, mismatched, 0)
 	assert.Equal(t, []models.Image{image2}, images)
 
 	// should return the first image and an error
-	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.Token, "unknown"})
+	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.URL, "unknown"})
 	assert.EqualError(t, err, "image not found")
 	assert.Equal(t, []string{"unknown"}, mismatched)
 	assert.Equal(t, []models.Image{image1}, images)
 
-	// should return no images for no tokens
+	// should return no images for no urls
 	images, mismatched, err = dbstore.GetImages(ctx, []string{})
 	require.NoError(t, err)
 	assert.Len(t, mismatched, 0)
 	assert.Len(t, images, 0)
 
-	// should return no images for nil tokens
+	// should return no images for nil urls
 	images, mismatched, err = dbstore.GetImages(ctx, nil)
 	require.NoError(t, err)
 	assert.Len(t, mismatched, 0)
@@ -144,9 +142,9 @@ func TestIntegrationGetImages(t *testing.T) {
 	// expired image should not be returned
 	image1.ExpiresAt = time.Now().Add(-time.Second)
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.Token, image2.Token})
+	images, mismatched, err = dbstore.GetImages(ctx, []string{image1.URL, image2.URL})
 	assert.EqualError(t, err, "image not found")
-	assert.Equal(t, []string{image1.Token}, mismatched)
+	assert.Equal(t, []string{image1.URL}, mismatched)
 	assert.Equal(t, []models.Image{image2}, images)
 }
 
@@ -172,10 +170,10 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// should return both images
 		var result1, result2 models.Image
-		ok, err := sess.Where("token = ?", image1.Token).Get(&result1)
+		ok, err := sess.Where("url = ?", image1.URL).Get(&result1)
 		require.NoError(t, err)
 		assert.True(t, ok)
-		ok, err = sess.Where("token = ?", image2.Token).Get(&result2)
+		ok, err = sess.Where("url = ?", image2.URL).Get(&result2)
 		require.NoError(t, err)
 		assert.True(t, ok)
 
@@ -187,10 +185,10 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 		assert.Equal(t, int64(1), n)
 
 		// should return just the second image
-		ok, err = sess.Where("token = ?", image1.Token).Get(&result1)
+		ok, err = sess.Where("url = ?", image1.URL).Get(&result1)
 		require.NoError(t, err)
 		assert.False(t, ok)
-		ok, err = sess.Where("token = ?", image2.Token).Get(&result2)
+		ok, err = sess.Where("url = ?", image2.URL).Get(&result2)
 		require.NoError(t, err)
 		assert.True(t, ok)
 

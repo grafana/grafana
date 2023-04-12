@@ -56,10 +56,9 @@ func TestScreenshotImageService(t *testing.T) {
 
 		// assert that the image is saved into the database
 		expected := models.Image{
-			ID:    1,
-			Token: "foo",
-			Path:  "foo.png",
-			URL:   "https://example.com/foo.png",
+			ID:   1,
+			Path: "foo.png",
+			URL:  "https://example.com/foo.png",
 		}
 
 		// assert that the image is saved into the cache
@@ -92,14 +91,14 @@ func TestScreenshotImageService(t *testing.T) {
 		uploads.EXPECT().Upload(gomock.Any(), "bar.png").
 			Return("", errors.New("failed to upload bar.png"))
 
-		// and then saved into the database, but without a URL
+		// and then saved into the database with a URL using `file` scheme
 		expected := models.Image{
-			ID:    2,
-			Token: "bar",
-			Path:  "bar.png",
+			ID:   2,
+			Path: "bar.png",
+			URL:  "file://bar.png",
 		}
 
-		// assert that the image is saved into the cache, but without a URL
+		// assert that the image is saved into the cache with a URL using `file` scheme
 		cache.EXPECT().Set(gomock.Any(), "yszV9tgmKAo=", expected).Return(nil)
 
 		image, err := s.NewImage(ctx, &models.AlertRule{
