@@ -1,4 +1,4 @@
-import { TimeRange, DataFrame, FieldType, ArrayVector, getTimeZoneInfo, DataFrameType, DataTopic } from '@grafana/data';
+import { TimeRange, DataFrame, FieldType, ArrayVector, getTimeZoneInfo, DataFrameType } from '@grafana/data';
 import { calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 import { TimeRegionConfig } from './types';
