@@ -78,7 +78,7 @@ func getRoleByUID(ctx context.Context, sess *db.Session, uid string) (*accesscon
 	return &role, nil
 }
 
-func getAssignments(ctx context.Context, sess *db.Session, roleID int64) ([]accesscontrol.UserRole, error) {
+func getRoleAssignments(ctx context.Context, sess *db.Session, roleID int64) ([]accesscontrol.UserRole, error) {
 	var assignements []accesscontrol.UserRole
 	if err := sess.Where("role_id = ?", roleID).Find(&assignements); err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session
 
 func (*AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Session, assignment accesscontrol.UserRole) error {
 	// alreadyAssigned checks if the assignment already exists without accounting for the organization
-	assignments, errGetAssigns := getAssignments(ctx, sess, assignment.RoleID)
+	assignments, errGetAssigns := getRoleAssignments(ctx, sess, assignment.RoleID)
 	if errGetAssigns != nil {
 		return errGetAssigns
 	}
