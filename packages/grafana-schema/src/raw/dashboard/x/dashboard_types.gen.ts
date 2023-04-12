@@ -9,17 +9,14 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 /**
- * TODO docs
+ * TODO -- should not be a public interface on its own, but required for Veneer
  */
-export interface AnnotationTarget {
-  limit: number;
-  matchAny: boolean;
-  tags: Array<string>;
-  type: string;
+export interface AnnotationContainer {
+  list?: Array<AnnotationQuery>;
 }
 
-export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
-  tags: [],
+export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
+  list: [],
 };
 
 /**
@@ -27,7 +24,6 @@ export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
  */
 export interface AnnotationQuery {
-  builtIn: number;
   /**
    * Datasource to use for annotation.
    */
@@ -36,37 +32,68 @@ export interface AnnotationQuery {
     uid?: string;
   };
   /**
-   * Whether annotation is enabled.
+   * When enabled the annotation query is issued with every dashboard refresh
    */
   enable: boolean;
   /**
-   * Whether to hide annotation.
+   * Optionally
+   */
+  filter?: {
+    /**
+     * Should the specified panels be included or excluded
+     */
+    exclude?: boolean;
+    /**
+     * Panel IDs that should be included or excluded
+     */
+    ids: Array<number>;
+  };
+  /**
+   * Annotation queries can be toggled on or off at the top of the dashboard.
+   * When hide is true, the toggle is not shown in the dashboard.
    */
   hide?: boolean;
   /**
-   * Annotation icon color.
+   * Color to use for the annotation event markers
    */
-  iconColor?: string;
+  iconColor: string;
   /**
    * Name of annotation.
    */
-  name?: string;
+  name: string;
   /**
-   * Query for annotation data.
+   * TODO.. this should just be a normal query target
    */
-  rawQuery?: string;
-  showIn: number;
-  target?: AnnotationTarget;
-  type: string;
+  target?: {
+    /**
+     * These exist because it is the -- grafana -- datasource
+     */
+    limit: number;
+    matchAny: boolean;
+    tags: Array<string>;
+    type: string;
+  };
+  /**
+   * TODO????
+   */
+  /**
+   * TODO -- this should not exist here, it is based on the --grafana-- datasource
+   */
+  type?: string;
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
-  builtIn: 0,
   enable: true,
   hide: false,
-  showIn: 0,
-  type: 'dashboard',
 };
+
+export enum LoadingState {
+  Done = 'Done',
+  Error = 'Error',
+  Loading = 'Loading',
+  NotStarted = 'NotStarted',
+  Streaming = 'Streaming',
+}
 
 /**
  * FROM: packages/grafana-data/src/types/templateVars.ts
@@ -105,14 +132,6 @@ export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
-}
-
-export enum LoadingState {
-  Done = 'Done',
-  Error = 'Error',
-  Loading = 'Loading',
-  NotStarted = 'NotStarted',
-  Streaming = 'Streaming',
 }
 
 /**
@@ -662,9 +681,7 @@ export interface Dashboard {
   /**
    * TODO docs
    */
-  annotations?: {
-    list?: Array<AnnotationQuery>;
-  };
+  annotations?: AnnotationContainer;
   /**
    * Description of dashboard.
    */

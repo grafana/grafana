@@ -111,6 +111,9 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         >
           <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
         </Field>
+        <Field label="Show in">
+          <div>TODO.. select: All panels / Panel / All panels except</div>
+        </Field>
         <Field label="Color" description="Color to use for the annotation event markers">
           <HorizontalGroup>
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />

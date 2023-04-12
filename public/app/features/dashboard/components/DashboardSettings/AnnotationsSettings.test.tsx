@@ -80,14 +80,12 @@ describe('AnnotationsSettings', () => {
       annotations: {
         list: [
           {
-            builtIn: 1,
             datasource: { uid: 'uid1', type: 'grafana' },
             enable: true,
             hide: true,
             iconColor: 'rgba(0, 211, 255, 1)',
             name: 'Annotations & Alerts',
             type: 'dashboard',
-            showIn: 1,
           },
         ],
       },

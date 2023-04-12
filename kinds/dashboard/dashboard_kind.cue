@@ -85,10 +85,18 @@ lineage: seqs: [
 				templating?: {
 					list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 				}
-				// TODO docs
-				annotations?: {
+
+				// TODO -- should not be a public interface on its own, but required for Veneer
+				#AnnotationContainer: {
+					// anoying... but required so that the list is defined using the nested Veneer
+					@grafana(TSVeneer="type")
+
 					list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
-				}
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				annotations?: #AnnotationContainer
+
 				// TODO docs
 				links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
 
@@ -97,38 +105,59 @@ lineage: seqs: [
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
-				// TODO docs
-				#AnnotationTarget: {
-					limit:    int64
-					matchAny: bool
-					tags: [...string]
-					type: string
-				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+				#AnnotationPanelFilter: {
+					// Should the specified panels be included or excluded
+					exclude?: bool | *false
+
+					// Panel IDs that should be included or excluded
+					ids: [...uint8]
+				}
 
 				// TODO docs
 				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 				#AnnotationQuery: {
+					@grafana(TSVeneer="type")
+
+					// Name of annotation.
+					name: string @grafanamaturity(NeedsExpertReview)
+
 					// Datasource to use for annotation.
 					datasource: {
 						type?: string
 						uid?:  string
 					} @grafanamaturity(NeedsExpertReview)
 
-					// Whether annotation is enabled.
+					// When enabled the annotation query is issued with every dashboard refresh
 					enable: bool | *true @grafanamaturity(NeedsExpertReview)
-					// Name of annotation.
-					name?:   string     @grafanamaturity(NeedsExpertReview)
-					builtIn: uint8 | *0 @grafanamaturity(NeedsExpertReview) // TODO should this be persisted at all?
-					// Whether to hide annotation.
+
+					// Annotation queries can be toggled on or off at the top of the dashboard.  
+					// When hide is true, the toggle is not shown in the dashboard.
 					hide?: bool | *false @grafanamaturity(NeedsExpertReview)
-					// Annotation icon color.
-					iconColor?: string                @grafanamaturity(NeedsExpertReview)
-					type:       string | *"dashboard" @grafanamaturity(NeedsExpertReview)
-					// Query for annotation data.
-					rawQuery?: string            @grafanamaturity(NeedsExpertReview)
-					showIn:    uint8 | *0        @grafanamaturity(NeedsExpertReview)
-					target?:   #AnnotationTarget @grafanamaturity(NeedsExpertReview)
+
+					// Color to use for the annotation event markers
+					iconColor: string
+
+					// TODO????
+					type?: string @grafanamaturity(NeedsExpertReview)
+
+					// Optionally   
+					filter?: #AnnotationPanelFilter
+
+					// TODO.. this should just be a normal query target
+					target?: {
+						// These exist because it is the -- grafana -- datasource
+						limit:    int64
+						matchAny: bool
+						tags: [...string]
+						type: string
+						...
+					}
+
+					// TODO -- this should not exist here, it is based on the --grafana-- datasource
+					type?: string @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
+
+				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
 				// TODO docs

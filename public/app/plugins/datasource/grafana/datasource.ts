@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  DataSourceRef,
   isValidLiveChannelAddress,
   MutableDataFrame,
   parseLiveChannelAddress,
@@ -25,6 +24,7 @@ import {
   getTemplateSrv,
   StreamingFrameOptions,
 } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
@@ -60,8 +60,9 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         } else {
           datasource = anno.datasource as DataSourceRef;
         }
+        const { filter, ...rest } = anno;
 
-        return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };
+        return { ...rest, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };
       },
     };
   }

@@ -60,7 +60,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
-      hideAliasField: hideAlias.includes(v.id),
+      hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
     }));
   }, []);
 
