@@ -15,8 +15,8 @@ describe('Range Utils', () => {
     };
 
     it('should serialize the default format by default', () => {
-      const serialized = rangeUtil.convertRawToRange(defaultRawTimeRange);
-      expect(serialized.from.format()).toBe(DEFAULT_DATE_VALUE_FORMATTED);
+      const deserialized = rangeUtil.convertRawToRange(defaultRawTimeRange);
+      expect(deserialized.from.format()).toBe(DEFAULT_DATE_VALUE_FORMATTED);
     });
 
     it('should serialize using custom formats', () => {
@@ -26,18 +26,18 @@ describe('Range Utils', () => {
         to: '30-07-1996 16:20:00',
       };
 
-      const serializedTimeRange = rangeUtil.convertRawToRange(
+      const deserializedTimeRange = rangeUtil.convertRawToRange(
         nonDefaultRawTimeRange,
         undefined,
         undefined,
         NON_DEFAULT_FORMAT
       );
-      expect(serializedTimeRange.from.format()).toBe(DEFAULT_DATE_VALUE_FORMATTED);
+      expect(deserializedTimeRange.from.format()).toBe(DEFAULT_DATE_VALUE_FORMATTED);
     });
 
     it('should take timezone into account', () => {
-      const serializedTimeRange = rangeUtil.convertRawToRange(defaultRawTimeRange, 'UTC');
-      expect(serializedTimeRange.from.format()).toBe('1996-07-30T16:00:00Z');
+      const deserializedTimeRange = rangeUtil.convertRawToRange(defaultRawTimeRange, 'UTC');
+      expect(deserializedTimeRange.from.format()).toBe('1996-07-30T16:00:00Z');
     });
 
     it('should leave the raw part intact if it has calulactions', () => {
@@ -46,9 +46,9 @@ describe('Range Utils', () => {
         to: 'now',
       };
 
-      const serialized = rangeUtil.convertRawToRange(timeRange);
-      expect(serialized.raw).toStrictEqual(timeRange);
-      expect(serialized.to.toString()).not.toBe(serialized.raw.to);
+      const deserialized = rangeUtil.convertRawToRange(timeRange);
+      expect(deserialized.raw).toStrictEqual(timeRange);
+      expect(deserialized.to.toString()).not.toBe(deserialized.raw.to);
     });
   });
 
