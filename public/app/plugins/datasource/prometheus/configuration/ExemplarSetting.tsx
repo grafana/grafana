@@ -7,6 +7,8 @@ import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
+import { docsTip } from './DataSourceHttpSettingsOverhaul';
+
 type Props = {
   value: ExemplarTraceIdDestination;
   onChange: (value: ExemplarTraceIdDestination) => void;
@@ -47,7 +49,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
         <InlineField
           label="Data source"
           labelWidth={24}
-          tooltip="The data source the exemplar is going to navigate to."
+          tooltip={<>The data source the exemplar is going to navigate to. {docsTip()}</>}
           disabled={disabled}
         >
           <DataSourcePicker
@@ -68,7 +70,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
         <InlineField
           label="URL"
           labelWidth={24}
-          tooltip="The URL of the trace backend the user would go to see its trace."
+          tooltip={<>The URL of the trace backend the user would go to see its trace. {docsTip()}</>}
           disabled={disabled}
         >
           <Input
@@ -90,7 +92,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
       <InlineField
         label="URL Label"
         labelWidth={24}
-        tooltip="Use to override the button label on the exemplar traceID field."
+        tooltip={<>Use to override the button label on the exemplar traceID field. {docsTip()}</>}
         disabled={disabled}
       >
         <Input
@@ -109,7 +111,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
       <InlineField
         label="Label name"
         labelWidth={24}
-        tooltip="The name of the field in the labels object that should be used to get the traceID."
+        tooltip={<>The name of the field in the labels object that should be used to get the traceID. {docsTip()}</>}
         disabled={disabled}
       >
         <Input

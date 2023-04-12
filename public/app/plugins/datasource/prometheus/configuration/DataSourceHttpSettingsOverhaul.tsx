@@ -61,6 +61,16 @@ const HttpAccessHelp = () => (
 
 const LABEL_WIDTH = 26;
 
+export function docsTip(url?: string) {
+  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
+
+  return (
+    <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">
+      Visit docs for more details here.
+    </a>
+  );
+}
+
 export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
   const {
     defaultUrl,
@@ -92,6 +102,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
       urlTooltip = (
         <>
           Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          {docsTip()}
         </>
       );
       break;
@@ -100,6 +111,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         <>
           Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
           backend/server.
+          {docsTip()}
         </>
       );
       break;
@@ -161,8 +173,10 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
           <a
             style={{ textDecoration: 'underline' }}
             href="https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            documentation.
+            documentation
           </a>
           .
         </div>
@@ -174,7 +188,12 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         <p className={`${styles.description}`}>Provide information to grant access to this datasource.</p>
         <div className="gf-form-group">
           <div className="gf-form-inline">
-            <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+            <InlineField
+              label="Basic auth"
+              labelWidth={LABEL_WIDTH}
+              disabled={dataSourceConfig.readOnly}
+              tooltip={<>Enable basic authentication to the Prometheus data source. {docsTip()}</>}
+            >
               <InlineSwitch
                 id="http-settings-basic-auth"
                 value={dataSourceConfig.basicAuth}
@@ -186,7 +205,12 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
 
             <InlineField
               label="With Credentials"
-              tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
+              tooltip={
+                <>
+                  Whether credentials such as cookies or auth headers should be sent with cross-site requests.{' '}
+                  {docsTip()}
+                </>
+              }
               labelWidth={LABEL_WIDTH}
               disabled={dataSourceConfig.readOnly}
             >
@@ -204,7 +228,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
             <div className="gf-form-inline">
               <InlineField
                 label="Azure Authentication"
-                tooltip="Use Azure authentication for Azure endpoint."
+                tooltip={<>Use Azure authentication for Azure endpoint.</>}
                 labelWidth={LABEL_WIDTH}
                 disabled={dataSourceConfig.readOnly}
               >
@@ -223,7 +247,21 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
 
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
-              <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+              <InlineField
+                label="SigV4 auth"
+                labelWidth={LABEL_WIDTH}
+                disabled={dataSourceConfig.readOnly}
+                tooltip={
+                  <>
+                    If you use an AWS Identity and Access Management (IAM) policy to control access to your Amazon
+                    Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests
+                    to that domain.{' '}
+                    {docsTip(
+                      'https://grafana.com/docs/grafana/latest/datasources/prometheus/#amazon-managed-service-for-prometheus'
+                    )}
+                  </>
+                }
+              >
                 <InlineSwitch
                   id="http-settings-sigv4-auth"
                   value={dataSourceConfig.jsonData.sigV4Auth || false}
@@ -292,7 +330,12 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
               <div className="gf-form">
                 <InlineFormLabel
                   width={13}
-                  tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
+                  tooltip={
+                    <>
+                      Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be
+                      forwarded to the data source. {docsTip()}
+                    </>
+                  }
                 >
                   Allowed cookies
                 </InlineFormLabel>
@@ -311,7 +354,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
                   type="number"
                   labelWidth={13}
                   inputWidth={20}
-                  tooltip="HTTP request timeout in seconds"
+                  tooltip={<>HTTP request timeout in seconds. {docsTip()}</>}
                   placeholder="Timeout in seconds"
                   data-testid="Timeout in seconds"
                   value={dataSourceConfig.jsonData.timeout}

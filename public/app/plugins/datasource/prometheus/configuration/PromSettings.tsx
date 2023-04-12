@@ -25,6 +25,7 @@ import { PromApplication, PromBuildInfoResponse } from '../../../../types/unifie
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PrometheusCacheLevel, PromOptions } from '../types';
 
+import { docsTip } from './DataSourceHttpSettingsOverhaul';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
@@ -178,7 +179,12 @@ export const PromSettings = (props: Props) => {
                   disabled={options.readOnly}
                 />
               }
-              tooltip="Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s."
+              tooltip={
+                <>
+                  Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.{' '}
+                  {docsTip()}
+                </>
+              }
             />
           </div>
         </div>
@@ -199,7 +205,7 @@ export const PromSettings = (props: Props) => {
                   disabled={options.readOnly}
                 />
               }
-              tooltip="Set the Prometheus query timeout."
+              tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
             />
           </div>
         </div>
@@ -221,14 +227,25 @@ export const PromSettings = (props: Props) => {
                 disabled={options.readOnly}
               />
             }
-            tooltip={`Set default editor option (builder/code) for all users of this datasource. If no option was selected, the default editor will be the "builder". If they switch to other option rather than the specified with this setting on the panel we always show the selected editor for that user.`}
+            tooltip={
+              <>
+                Set default editor option (builder/code) for all users of this datasource. If no option was selected,
+                the default editor will be the &quot;builder&quot;. If a user switches to other option rather than the
+                specified with this setting on the panel we always show the selected editor for that user. {docsTip()}
+              </>
+            }
           />
         </div>
         <div className="gf-form">
           <InlineField
             labelWidth={LABEL_WIDTH}
             label="Disable metrics lookup"
-            tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
+            tooltip={
+              <>
+                Checking this option will disable the metrics chooser and metric/label support in the query field&apos;s
+                autocomplete. This helps if you have performance issues with bigger Prometheus instances. {docsTip()}
+              </>
+            }
             disabled={options.readOnly}
           >
             <InlineSwitch
@@ -283,7 +300,12 @@ export const PromSettings = (props: Props) => {
                   disabled={options.readOnly}
                 />
               }
-              tooltip="Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
+              tooltip={
+                <>
+                  Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
+                  this field will save your current settings, and attempt to detect the version. {docsTip()}
+                </>
+              }
             />
           </div>
         </div>
@@ -305,7 +327,12 @@ export const PromSettings = (props: Props) => {
                     disabled={options.readOnly}
                   />
                 }
-                tooltip={`Use this to set the version of your ${options.jsonData.prometheusType} instance if it is not automatically configured.`}
+                tooltip={
+                  <>
+                    Use this to set the version of your {options.jsonData.prometheusType} instance if it is not
+                    automatically configured. {docsTip()}
+                  </>
+                }
               />
             </div>
           )}
@@ -316,7 +343,12 @@ export const PromSettings = (props: Props) => {
               <FormField
                 label="Cache level"
                 labelWidth={13}
-                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
+                tooltip={
+                  <>
+                    Sets the browser caching level for editor queries. Higher cache settings are recommended for high
+                    cardinality data sources. {docsTip()}
+                  </>
+                }
                 inputEl={
                   <Select
                     width={40}
@@ -338,7 +370,7 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Custom query parameters"
               labelWidth={13}
-              tooltip="Add custom parameters to all Prometheus or Thanos queries."
+              tooltip={<>Add custom parameters to all Prometheus or Thanos queries. {docsTip()}</>}
               inputEl={
                 <Input
                   className="width-20"
@@ -357,7 +389,13 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form">
             <InlineFormLabel
               width={13}
-              tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
+              tooltip={
+                <>
+                  You can use either POST or GET HTTP method to query your Prometheus data source. POST is the
+                  recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version
+                  older than 2.1 or if POST requests are restricted in your network. {docsTip()}
+                </>
+              }
             >
               HTTP method
             </InlineFormLabel>
