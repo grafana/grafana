@@ -99,7 +99,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
-	s.restConfig.Host = DefaultAPIServerHost
 	err = s.writeKubeConfiguration(s.restConfig)
 	if err != nil {
 		return err
@@ -130,10 +129,11 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
+
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                restConfig.Host,
 		InsecureSkipTLSVerify: true,
+		Server:                restConfig.Host,
 	}
 
 	contexts := make(map[string]*clientcmdapi.Context)
@@ -145,8 +145,7 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Username: restConfig.Username,
-		Password: restConfig.Password,
+		Token: restConfig.BearerToken,
 	}
 
 	clientConfig := clientcmdapi.Config{
