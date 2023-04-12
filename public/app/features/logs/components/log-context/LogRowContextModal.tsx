@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import {
@@ -12,7 +12,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Modal, useTheme2 } from '@grafana/ui';
+import { Modal, Spinner, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
@@ -75,6 +75,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin-bottom: 0;
       }
     `,
+    hidden: css`
+      display: none;
+    `,
   };
 };
 
@@ -107,7 +110,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const entryElement = React.createRef<HTMLTableRowElement>();
 
   const theme = useTheme2();
-  const { modal, flexColumn, flexRow, entry, datasourceUi, logRowGroups, noMarginBottom } = getStyles(theme);
+  const { modal, flexColumn, flexRow, entry, datasourceUi, logRowGroups, noMarginBottom, hidden } = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
@@ -117,7 +120,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     setLimit(option.value!);
   };
 
-  const [_, fetchResults] = useAsyncFn(async () => {
+  const [{ loading }, fetchResults] = useAsyncFn(async () => {
     if (open && row && limit) {
       const rawResults = await Promise.all([
         getRowContext(row, {
@@ -177,74 +180,89 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   };
 
+  useLayoutEffect(() => {
+    if (scrollElement.current && entryElement.current) {
+      entryElement.current.scrollIntoView({ block: 'center', inline: 'center' });
+    }
+  }, [scrollElement, entryElement, context]);
+
   return (
     <Modal isOpen={open} title="Log context" contentClassName={flexColumn} className={modal} onDismiss={onClose}>
       {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
         <div className={datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
       <div className={flexRow}>
-        <div>{/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match */}</div>
+        <div className={loading ? hidden : ''}>
+          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
+        </div>
         <div>
           <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
         </div>
       </div>
       <div ref={scrollElement} className={logRowGroups}>
-        <table>
-          <tr>
-            <td className={noMarginBottom}>
-              <LogRows
-                logRows={context.after}
-                dedupStrategy={LogsDedupStrategy.none}
-                showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-                prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                enableLogDetails={true}
-                timeZone={timeZone}
-                displayedFields={displayedFields}
-                onClickShowField={showField}
-                onClickHideField={hideField}
-              />
-            </td>
-          </tr>
-          <tr ref={entryElement} className={entry}>
-            <td className={noMarginBottom}>
-              <LogRows
-                logRows={[row]}
-                dedupStrategy={LogsDedupStrategy.none}
-                showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-                prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                enableLogDetails={true}
-                timeZone={timeZone}
-                displayedFields={displayedFields}
-                onClickShowField={showField}
-                onClickHideField={hideField}
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <LogRows
-                logRows={context.before}
-                dedupStrategy={LogsDedupStrategy.none}
-                showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-                prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                enableLogDetails={true}
-                timeZone={timeZone}
-                displayedFields={displayedFields}
-                onClickShowField={showField}
-                onClickHideField={hideField}
-              />
-            </td>
-          </tr>
+        <div className={loading ? '' : hidden}>
+          <Spinner />
+        </div>
+        <table className={loading ? hidden : ''}>
+          <tbody>
+            <tr>
+              <td className={noMarginBottom}>
+                <LogRows
+                  logRows={context.after}
+                  dedupStrategy={LogsDedupStrategy.none}
+                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                  enableLogDetails={true}
+                  timeZone={timeZone}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                />
+              </td>
+            </tr>
+            <tr ref={entryElement} className={entry}>
+              <td className={noMarginBottom}>
+                <LogRows
+                  logRows={[row]}
+                  dedupStrategy={LogsDedupStrategy.none}
+                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                  enableLogDetails={true}
+                  timeZone={timeZone}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <LogRows
+                  logRows={context.before}
+                  dedupStrategy={LogsDedupStrategy.none}
+                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                  enableLogDetails={true}
+                  timeZone={timeZone}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                />
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
       <div>
-        <div>{/* Showing {limit} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match */}</div>
+        <div className={loading ? hidden : ''}>
+          Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
+        </div>
       </div>
     </Modal>
   );
