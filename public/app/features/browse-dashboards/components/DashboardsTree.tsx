@@ -4,21 +4,12 @@ import { CellProps, Column, TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, Link, useStyles2 } from '@grafana/ui';
-import { getIconForKind } from 'app/features/search/service/utils';
-import { DashboardViewItem as OrigDashboardViewItem } from 'app/features/search/types';
+import { useStyles2 } from '@grafana/ui';
 
-interface UIDashboardViewItem {
-  kind: 'ui-empty-folder';
-}
+import { DashboardsTreeItem, INDENT_AMOUNT_CSS_VAR } from '../types';
 
-type DashboardViewItem = OrigDashboardViewItem | UIDashboardViewItem;
-
-export interface DashboardsTreeItem {
-  item: DashboardViewItem;
-  level: number;
-  isOpen: boolean;
-}
+import { NameCell } from './NameCell';
+import { TypeCell } from './TypeCell';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
@@ -27,17 +18,10 @@ interface DashboardsTreeProps {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
 }
 
-interface VirtualListData {
-  items: DashboardsTreeItem[];
-  tableInstance: TableInstance<DashboardsTreeItem>;
-  onFolderClick: (uid: string, newOpenState: boolean) => void;
-}
-
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
 
 const HEADER_HEIGHT = 35;
 const ITEM_HEIGHT = 35;
-const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';
 
 export function DashboardsTree({ items, width, height, onFolderClick }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
@@ -51,14 +35,12 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
-      accessor: (row) => row,
       Header: <span style={{ paddingLeft: 20 }}>Name</span>,
       Cell: (props: CellProps<DashboardsTreeItem, unknown>) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const typeColumn: DashboardsTreeColumn = {
       id: 'type',
-      accessor: (row) => row.item.kind,
       Header: 'Type',
       Cell: TypeCell,
     };
@@ -66,16 +48,8 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
     return [checkboxColumn, nameColumn, typeColumn];
   }, [onFolderClick]);
 
-  const tableInstance = useTable({ columns: tableColumns, data: items });
-  const { getTableProps, getTableBodyProps, headerGroups } = tableInstance;
-
-  const virtualData = useMemo((): VirtualListData => {
-    return {
-      items,
-      tableInstance,
-      onFolderClick,
-    };
-  }, [items, tableInstance, onFolderClick]);
+  const table = useTable({ columns: tableColumns, data: items });
+  const { getTableProps, getTableBodyProps, headerGroups } = table;
 
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">
@@ -104,82 +78,25 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
           height={height - HEADER_HEIGHT}
           width={width}
           itemCount={items.length}
-          itemData={virtualData}
+          itemData={table}
           itemSize={ITEM_HEIGHT}
         >
-          {Row}
+          {VirtualListRow}
         </List>
       </div>
     </div>
   );
 }
 
-type TypeCellProps = CellProps<DashboardsTreeItem, unknown>;
-
-function TypeCell({ row: { original: data } }: TypeCellProps) {
-  const iconName = getIconForKind(data.item.kind);
-
-  switch (data.item.kind) {
-    case 'dashboard':
-      return (
-        <>
-          <Icon name={iconName} /> Dashboard
-        </>
-      );
-    case 'folder':
-      return (
-        <>
-          <Icon name={iconName} /> Folder
-        </>
-      );
-    case 'panel':
-      return (
-        <>
-          <Icon name={iconName} /> Panel
-        </>
-      );
-    default:
-      return null;
-  }
+interface VirtualListRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: TableInstance<DashboardsTreeItem>;
 }
 
-type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
-  onFolderClick: (uid: string, newOpenState: boolean) => void;
-};
-
-function NameCell({ row: { original: data }, onFolderClick }: NameCellProps) {
+function VirtualListRow({ index, style, data: table }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { item, level, isOpen } = data;
-
-  let body = <></>;
-
-  if (item.kind === 'ui-empty-folder') {
-    body = <em>Empty folder</em>;
-  } else {
-    body = (
-      <>
-        {item.kind === 'folder' ? (
-          <IconButton onClick={() => onFolderClick(item.uid, !isOpen)} name={isOpen ? 'angle-down' : 'angle-right'} />
-        ) : (
-          <span style={{ paddingRight: 20 }} />
-        )}
-        <Icon name={item.kind === 'folder' ? (isOpen ? 'folder-open' : 'folder') : 'apps'} />{' '}
-        <Link
-          href={item.kind === 'folder' ? `/nested-dashboards/f/${item.uid}` : `/d/${item.uid}`}
-          className={styles.link}
-        >
-          {item.title}
-        </Link>
-      </>
-    );
-  }
-
-  return <span style={{ paddingLeft: `calc(var(${INDENT_AMOUNT_CSS_VAR}) * ${level})` }}>{body}</span>;
-}
-
-const Row = ({ index, style, data }: { index: number; style: React.CSSProperties; data: VirtualListData }) => {
-  const styles = useStyles2(getStyles);
-  const { rows, prepareRow } = data.tableInstance;
+  const { rows, prepareRow } = table;
 
   const row = rows[index];
   prepareRow(row);
@@ -197,7 +114,7 @@ const Row = ({ index, style, data }: { index: number; style: React.CSSProperties
       })}
     </div>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

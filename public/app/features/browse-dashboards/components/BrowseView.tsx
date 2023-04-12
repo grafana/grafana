@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getFolderChildren } from 'app/features/search/service/folders';
 import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTree, DashboardsTreeItem } from './DashboardsTree';
+import { DashboardsTreeItem } from '../types';
+
+import { DashboardsTree } from './DashboardsTree';
 
 interface BrowseViewProps {
   height: number;
@@ -12,7 +14,7 @@ interface BrowseViewProps {
 }
 
 export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
-  const [openFolders, setOpenFolders] = useState<string[]>([]);
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({ [folderUID ?? '$$root']: true });
 
   // Rather than storing an actual tree structure (requiring traversing the tree to update children), instead
   // we keep track of children for each UID and then later combine them in the format required to display them
@@ -29,49 +31,50 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
     loadChildrenForUID(folderUID);
   }, [folderUID]);
 
-  const flatTree = useMemo(() => {
-    function mapItem(item: DashboardViewItem, level: number): DashboardsTreeItem[] {
-      const isOpen = openFolders.includes(item.uid);
-      const rawChildren = isOpen && childrenByUID[item.uid];
-      const mappedChildren = mapItems(rawChildren || [], level + 1);
-
-      const emptyFolder = rawChildren ? rawChildren.length === 0 : null;
-
-      if (isOpen && emptyFolder) {
-        mappedChildren.push({ isOpen: false, level: level + 2, item: { kind: 'ui-empty-folder' } });
-      }
-
-      const thisItem = {
-        item,
-        level,
-        isOpen,
-      };
-
-      return [thisItem, ...mappedChildren];
-    }
-
-    function mapItems(items: DashboardViewItem[], level: number): DashboardsTreeItem[] {
-      return items.flatMap((item) => mapItem(item, level));
-    }
-
-    const items = childrenByUID[folderUID ?? '$$root'] ?? [];
-    const mappedItems = mapItems(items, 0);
-    return mappedItems;
-  }, [openFolders, childrenByUID, folderUID]);
+  const flatTree = useMemo(
+    () => createFlatTree(folderUID, childrenByUID, openFolders),
+    [folderUID, childrenByUID, openFolders]
+  );
 
   const handleFolderClick = useCallback((uid: string, folderIsOpen: boolean) => {
     if (folderIsOpen) {
       loadChildrenForUID(uid);
     }
 
-    setOpenFolders((v) => {
-      if (folderIsOpen) {
-        return [...v, uid];
-      } else {
-        return v.filter((v) => v !== uid);
-      }
-    });
+    setOpenFolders((v) => ({ ...v, [uid]: folderIsOpen }));
   }, []);
 
   return <DashboardsTree items={flatTree} width={width} height={height} onFolderClick={handleFolderClick} />;
+}
+
+// Creates a flat list of items, with nested children indicated by its increasing level
+function createFlatTree(
+  rootFolderUID: string | undefined,
+  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  openFolders: Record<string, boolean>,
+  level = 0
+): DashboardsTreeItem[] {
+  function mapItem(item: DashboardViewItem, level: number): DashboardsTreeItem[] {
+    const mappedChildren = createFlatTree(item.uid, childrenByUID, openFolders, level + 1);
+
+    const isOpen = Boolean(openFolders[item.uid]);
+    const emptyFolder = childrenByUID[item.uid]?.length === 0;
+    if (isOpen && emptyFolder) {
+      mappedChildren.push({ isOpen: false, level: level + 2, item: { kind: 'ui-empty-folder' } });
+    }
+
+    const thisItem = {
+      item,
+      level,
+      isOpen,
+    };
+
+    return [thisItem, ...mappedChildren];
+  }
+
+  const folderKey = rootFolderUID ?? '$$root';
+  const isOpen = Boolean(openFolders[folderKey]);
+  const items = (isOpen && childrenByUID[folderKey]) || [];
+
+  return items.flatMap((item) => mapItem(item, level));
 }
