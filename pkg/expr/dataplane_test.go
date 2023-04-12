@@ -3,13 +3,12 @@ package expr
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/grafana/dataplane/examples"
-	"github.com/grafana/dataplane/sdata"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -81,10 +80,10 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 func TestShouldUseDataplane(t *testing.T) {
 	t.Run("zero frames returns no data and is allowed", func(t *testing.T) {
 		f := data.Frames{}
-		k, use, err := shouldUseDataplane(f)
+		dt, use, err := shouldUseDataplane(f, log.New(""), false)
 		require.NoError(t, err)
 		require.True(t, use)
-		require.Equal(t, data.KindUnknown, k)
+		require.Equal(t, data.KindUnknown, dt.Kind())
 	})
 
 	t.Run("a frame with Type and TypeVersion 0.0 will not use dataplane", func(t *testing.T) {
@@ -94,7 +93,7 @@ func TestShouldUseDataplane(t *testing.T) {
 				Type:        data.FrameTypeTimeSeriesMulti,
 			},
 		)}
-		_, use, err := shouldUseDataplane(f)
+		_, use, err := shouldUseDataplane(f, log.New(""), false)
 		require.NoError(t, err)
 		require.False(t, use)
 	})
@@ -105,14 +104,14 @@ func TestShouldUseDataplane(t *testing.T) {
 				TypeVersion: data.FrameTypeVersion{0, 1},
 			},
 		)}
-		_, use, err := shouldUseDataplane(f)
+		_, use, err := shouldUseDataplane(f, log.New(""), false)
 		require.NoError(t, err)
 		require.False(t, use)
 	})
 
 	t.Run("a frame with no metadata will not use dataplane", func(t *testing.T) {
 		f := data.Frames{&data.Frame{}}
-		_, use, err := shouldUseDataplane(f)
+		_, use, err := shouldUseDataplane(f, log.New(""), false)
 		require.NoError(t, err)
 		require.False(t, use)
 	})
@@ -126,15 +125,12 @@ func TestShouldUseDataplane(t *testing.T) {
 				TypeVersion: v,
 			},
 		)}
-		k, use, err := shouldUseDataplane(f)
+		dt, use, err := shouldUseDataplane(f, log.New(""), false)
 
-		require.Error(t, err)
-
-		var mockWarning *sdata.VersionWarning
-		require.True(t, errors.As(err, &mockWarning))
+		require.NoError(t, err)
 
 		require.True(t, use)
-		require.Equal(t, data.KindTimeSeries, k)
+		require.Equal(t, data.KindTimeSeries, dt.Kind())
 	})
 
 	t.Run("all valid dataplane examples should use dataplane", func(t *testing.T) {
@@ -217,7 +213,7 @@ func TestHandleDataplaneTS(t *testing.T) {
 
 		for _, example := range validNoDataTSExamples.AsSlice() {
 			t.Run(example.Info().ID, func(t *testing.T) {
-				res, err := handleDataplaneTS(example.Frames("A"))
+				res, err := handleDataplaneTimeseries(example.Frames("A"))
 				require.NoError(t, err)
 				require.Len(t, res.Values, 1)
 			})
@@ -237,7 +233,7 @@ func TestHandleDataplaneTS(t *testing.T) {
 
 		for _, example := range tsExamples.AsSlice() {
 			t.Run(example.Info().ID, func(t *testing.T) {
-				res, err := handleDataplaneTS(example.Frames("A"))
+				res, err := handleDataplaneTimeseries(example.Frames("A"))
 				require.NoError(t, err)
 				require.Len(t, res.Values, example.Info().ItemCount)
 			})

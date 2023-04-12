@@ -1289,6 +1289,8 @@ github.com/grafana/dataplane/sdata v0.0.4 h1:GumUrUHsdCkGTjXbzy5uBmjLYavUYHPZ18a
 github.com/grafana/dataplane/sdata v0.0.4/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dataplane/sdata v0.0.5 h1:RIfwNCd5777nSOyw5C7nRFlWhO2cjVJaHmKjUQNiTn4=
 github.com/grafana/dataplane/sdata v0.0.5/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
+github.com/grafana/dataplane/sdata v0.0.6 h1:Ejlj8d1Hvy/uDLeI4sOvL34Y8WLlVDd9iN270F+8aTw=
+github.com/grafana/dataplane/sdata v0.0.6/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc h1:lQFgXpsZNDdi0whUROW15r/akzLIdXAn6xr5vqlZucI=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc/go.mod h1:ulYLLoSd71AWIjxgifLO86Lndx82Yj+IcV+fFnh8tkI=
 github.com/grafana/go-mssqldb v0.9.1 h1:3CqteWF0CadwXV9f3FxoI+i3uSW3azjTlQipyOJtWtQ=

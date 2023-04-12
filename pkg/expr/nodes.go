@@ -3,11 +3,10 @@ package expr
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/dataplane/sdata"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"gonum.org/v1/gonum/graph/simple"
@@ -261,22 +260,10 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
 	}
 
-	if !s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane) {
-		k, use, err := shouldUseDataplane(response.Frames)
-		if use {
-			if err != nil {
-				var vw *sdata.VersionWarning
-				if errors.As(err, &vw) {
-					logger.Warn("attempting to read mismatched version dataplane data", "error", err)
-				}
-			}
-			logger.Debug("handling SSE data source query through dataplane", "query", dn.refID)
-			return handleDataplaneFrames(k, response.Frames)
-		}
-		if err != nil {
-			// TODO remove as more confidence is gained in dataplane data handling
-			logger.Warn("dataplane data detected but falling back to old processing due to error", "error", err)
-		}
+	if dt, use, _ := shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane)); use {
+		spew.Dump(dn.refID)
+		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
+		return handleDataplaneFrames(dt.Kind(), response.Frames)
 	}
 
 	dataSource := dn.datasource.Type

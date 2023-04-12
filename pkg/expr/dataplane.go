@@ -10,12 +10,16 @@ import (
 	"github.com/grafana/dataplane/sdata/timeseries"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func shouldUseDataplane(frames data.Frames) (k data.FrameTypeKind, b bool, e error) {
-	k = data.KindUnknown
+func shouldUseDataplane(frames data.Frames, logger *log.ConcreteLogger, disable bool) (dt data.FrameType, b bool, e error) {
+	if disable {
+		return
+	}
+	dt = data.FrameTypeUnknown
 	if len(frames) == 0 {
-		return data.KindUnknown, true, nil
+		return data.FrameTypeUnknown, true, nil
 	}
 
 	firstFrame := frames[0]
@@ -35,15 +39,20 @@ func shouldUseDataplane(frames data.Frames) (k data.FrameTypeKind, b bool, e err
 		return
 	}
 
-	k, err := reader.CanReadBasedOnMeta(frames)
+	dt, err := reader.CanReadBasedOnMeta(frames)
 	if err != nil {
 		var vw *sdata.VersionWarning
 		if errors.As(err, &vw) {
-			return k, true, err
+			logger.Warn("Attempting to read mismatched version dataplane data", "error", err, "datatype", dt)
+			return dt, true, nil
 		}
-		return k, false, err
+		// TODO: Remove as more confidence is gained in dataplane data handling and return the error
+		logger.Warn("Dataplane data detected but falling back to old processing due to error",
+			"error", err)
+
+		return dt, false, err
 	}
-	return k, true, nil
+	return dt, true, nil
 }
 
 func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Results, error) {
@@ -51,7 +60,7 @@ func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Re
 	case data.KindUnknown:
 		return mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
 	case data.KindTimeSeries:
-		return handleDataplaneTS(frames)
+		return handleDataplaneTimeseries(frames)
 	case data.KindNumeric:
 		return handleDataplaneNumeric(frames)
 	default:
@@ -59,7 +68,7 @@ func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Re
 	}
 }
 
-func handleDataplaneTS(frames data.Frames) (mathexp.Results, error) {
+func handleDataplaneTimeseries(frames data.Frames) (mathexp.Results, error) {
 	dps, err := timeseries.CollectionReaderFromFrames(frames)
 	if err != nil {
 		return mathexp.Results{}, err
@@ -71,6 +80,7 @@ func handleDataplaneTS(frames data.Frames) (mathexp.Results, error) {
 	if sc.NoData() {
 		noData := mathexp.NoData{}.New()
 		if len(dps.Frames()) == 1 {
+			// If single frame form of nodata, copy the frame to pass through metadata
 			noData.Frame = dps.Frames()[0]
 		}
 		return mathexp.Results{Values: mathexp.Values{noData}}, nil
@@ -100,6 +110,7 @@ func handleDataplaneNumeric(frames data.Frames) (mathexp.Results, error) {
 	if nc.NoData() {
 		noData := mathexp.NoData{}.New()
 		if len(dn.Frames()) == 1 {
+			// If single frame form of nodata, copy the frame to pass through metadata
 			noData.Frame = dn.Frames()[0]
 		}
 		return mathexp.Results{Values: mathexp.Values{noData}}, nil
