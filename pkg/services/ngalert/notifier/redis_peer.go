@@ -64,6 +64,7 @@ type redisPeer struct {
 	nodePingDuration     *prometheus.HistogramVec
 
 	activeMembers []string
+	membersMtx    sync.Mutex
 
 	// Last known position in the cluster.
 	position int
@@ -222,12 +223,16 @@ func (p *redisPeer) membersSyncLoop() {
 			members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
 			if err != nil {
 				p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
+				p.membersMtx.Lock()
 				p.activeMembers = []string{}
+				p.membersMtx.Unlock()
 				continue
 			}
 			// This might happen on startup, when no value is in the store yet.
 			if len(members) == 0 {
+				p.membersMtx.Lock()
 				p.activeMembers = []string{}
+				p.membersMtx.Unlock()
 				continue
 			}
 			values := p.redis.MGet(context.Background(), members...)
@@ -256,7 +261,9 @@ func (p *redisPeer) membersSyncLoop() {
 			sort.Strings(peers)
 			dur := time.Since(startTime)
 			p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
+			p.membersMtx.Lock()
 			p.activeMembers = peers
+			p.membersMtx.Unlock()
 		case <-p.shutdownc:
 			ticker.Stop()
 			return
@@ -271,11 +278,11 @@ func (p *redisPeer) Position() int {
 	// To prevent a spike of duplicate messages, we return for the duration of
 	// lastPositionValidFor the last known position and only failover to position
 	// 0 afterwards if we do not eventually recover.
-	if len(p.activeMembers) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
+	if len(p.Members()) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
 		p.logger.Warn("failed to fetch position from redis, falling back to last know position", "last_known", p.position)
 		return p.position
 	}
-	for i, peer := range p.activeMembers {
+	for i, peer := range p.Members() {
 		if peer == p.withPrefix(p.name) {
 			p.position = i
 			p.positionFetchedAt = time.Now()
@@ -312,6 +319,8 @@ func (p *redisPeer) GetHealthScore() int {
 
 // Members returns a list of active cluster Members.
 func (p *redisPeer) Members() []string {
+	p.membersMtx.Lock()
+	defer p.membersMtx.Unlock()
 	return p.activeMembers
 }
 
