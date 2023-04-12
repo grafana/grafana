@@ -112,6 +112,9 @@ func addMigrationLogMigrations(mg *Migrator) {
 			{Name: "success", Type: DB_Bool},
 			{Name: "error", Type: DB_Text},
 			{Name: "timestamp", Type: DB_DateTime},
+
+			// Added at version 10 -- migration log includes what version it was running
+			{Name: "version", Type: DB_Text, Nullable: true},
 		},
 	}
 
