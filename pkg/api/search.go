@@ -81,7 +81,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Sort:          sort,
 	}
 
-	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}
@@ -89,10 +89,10 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	defer c.TimeRequest(metrics.MApiDashboardSearch)
 
 	if !c.QueryBool("accesscontrol") {
-		return response.JSON(http.StatusOK, searchQuery.Result)
+		return response.JSON(http.StatusOK, hits)
 	}
 
-	return hs.searchHitsWithMetadata(c, searchQuery.Result)
+	return hs.searchHitsWithMetadata(c, hits)
 }
 
 func (hs *HTTPServer) searchHitsWithMetadata(c *contextmodel.ReqContext, hits model.HitList) response.Response {

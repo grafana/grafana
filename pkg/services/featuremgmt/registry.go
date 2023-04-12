@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "alertingBigTransactions",
-			Description: "Use big transactions for alerting database writes",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -132,7 +126,7 @@ var (
 		{
 			Name:        "correlations",
 			Description: "Correlations page",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
 		},
 		{
@@ -231,16 +225,16 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "Displays new top nav and page layouts",
-			State:       FeatureStateBeta,
+			Description: "Enables new top navigation and page layouts",
+			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
-			Name:            "grpcServer",
-			Description:     "Run GRPC server",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
+			Name:        "grpcServer",
+			Description: "Run the GRPC server",
+			State:       FeatureStateBeta,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:            "entityStore",
@@ -273,8 +267,9 @@ var (
 		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
@@ -309,8 +304,8 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "elasticsearchBackendMigration",
-			Description: "Use Elasticsearch as backend data source",
+			Name:        "showTraceId",
+			Description: "Show trace ids for requests",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
@@ -323,8 +318,9 @@ var (
 		{
 			Name:         "emptyDashboardPage",
 			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
@@ -436,6 +432,13 @@ var (
 			Owner:        appO11ySquad,
 		},
 		{
+			Name:         "prometheusResourceBrowserCache",
+			Description:  "Displays browser caching options in Prometheus data source configuration",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
@@ -449,9 +452,65 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "disableElasticsearchBackendExploreQuery",
-			Description: "Disable executing of Elasticsearch Explore queries trough backend",
+			Name:        "prometheusDataplane",
+			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiSecondary",
+			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiPrimary",
+			Description: "Enable a remote Loki instance as the primary source for state history reads.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertStateHistoryLokiOnly",
+			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "unifiedRequestLog",
+			Description: "Writes error logs to the request logger",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
+			Name:        "renderAuthJWT",
+			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAsCodeSquad,
+		},
+		{
+			Name:        "pyroscopeFlameGraph",
+			Description: "Changes flame graph to pyroscope one",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:            "externalServiceAuth",
+			Description:     "Starts an OAuth2 authentication provider for external services",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "disableElasticsearchBackendQuerying",
+			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}

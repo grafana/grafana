@@ -24,6 +24,7 @@ describe('Variables - Custom', () => {
   it('can add a custom template variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Custom" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
@@ -36,7 +37,7 @@ describe('Variables - Custom', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }
@@ -51,6 +52,7 @@ describe('Variables - Custom', () => {
   it('can add a custom template variable with labels', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Custom" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
@@ -68,7 +70,7 @@ describe('Variables - Custom', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb('Test variable output').click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }
