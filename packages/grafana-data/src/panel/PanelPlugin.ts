@@ -16,6 +16,7 @@ import {
 } from '../types';
 import { deprecationWarning } from '../utils';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { withSandboxWrapper } from '../utils/sandbox';
 
 import { createFieldConfigRegistry } from './registryFactories';
 
@@ -130,17 +131,7 @@ export class PanelPlugin<
   }
 
   get panel(): typeof this._panel {
-    const pluginId = this.meta.id;
-    const PanelComponent = this._panel;
-    function PanelWrapper(props: PanelProps<TOptions>) {
-      return (
-        <div data-sandbox-id={pluginId}>
-          {/* @ts-ignore */}
-          <PanelComponent {...props} />
-        </div>
-      );
-    }
-    return PanelWrapper;
+    return withSandboxWrapper(this._panel);
   }
 
   get defaults() {
