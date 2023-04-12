@@ -55,10 +55,10 @@ export function prepareRulesFilterQueryParams(
   return Object.fromEntries(params);
 }
 
-function paramsWithMatcherAndState(
-  state: string[] | undefined,
-  matcher: string | undefined,
-  params: Record<string, string | string[]>
+export function paramsWithMatcherAndState(
+  params: Record<string, string | string[]>,
+  state?: string[],
+  matcher?: string
 ) {
   let paramsResult = { ...params };
 
@@ -98,7 +98,7 @@ export async function fetchRules(
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
       url,
-      params: paramsWithMatcherAndState(state, matcher, params),
+      params: paramsWithMatcherAndState(params, state, matcher),
       showErrorAlert: false,
       showSuccessAlert: false,
     })
