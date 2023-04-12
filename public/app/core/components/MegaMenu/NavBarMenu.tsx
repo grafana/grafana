@@ -61,8 +61,8 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         timeout={{ enter: animationSpeed, exit: 0 }}
         onExited={onClose}
       >
-        <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
-          <FocusScope contain autoFocus>
+        <FocusScope contain autoFocus>
+          <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
             <div className={styles.mobileHeader}>
               <Icon name="bars" size="xl" />
               <IconButton
@@ -82,8 +82,8 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
                 </ul>
               </CustomScrollbar>
             </nav>
-          </FocusScope>
-        </div>
+          </div>
+        </FocusScope>
       </CSSTransition>
       <CSSTransition
         nodeRef={backdropRef}

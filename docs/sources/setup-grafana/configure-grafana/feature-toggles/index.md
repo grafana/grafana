@@ -60,7 +60,6 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                                         |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                                                   |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                                             |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                                                    |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                                               |
@@ -84,6 +83,7 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                                                    |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                                                |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                                            |
+| `showTraceId`                      | Show trace ids for requests                                                                                                                                                                         |
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                                                  |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                                        |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                                                      |
@@ -106,13 +106,16 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
+| `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
+| `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `k8s`               | Explore native k8s integrations                     |
-| `entityStore`       | SQL-based entity store (requires storage flag also) |
-| `nestedFolders`     | Enable folder nesting                               |
+| Feature toggle name   | Description                                                    |
+| --------------------- | -------------------------------------------------------------- |
+| `k8s`                 | Explore native k8s integrations                                |
+| `entityStore`         | SQL-based entity store (requires storage flag also)            |
+| `nestedFolders`       | Enable folder nesting                                          |
+| `externalServiceAuth` | Starts an OAuth2 authentication provider for external services |

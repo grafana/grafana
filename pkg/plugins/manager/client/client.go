@@ -40,11 +40,16 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
 
+	var totalBytes float64
+	for _, v := range req.Queries {
+		totalBytes += float64(len(v.JSON))
+	}
+
 	var resp *backend.QueryDataResponse
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, totalBytes, func() (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
@@ -86,10 +91,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
+
+	totalBytes := float64(len(req.Body))
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() error {
+	}, totalBytes, func() error {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
 
