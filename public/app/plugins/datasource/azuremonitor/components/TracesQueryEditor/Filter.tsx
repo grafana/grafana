@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { RefCallback, useState } from 'react';
+import React, { RefCallback, SyntheticEvent, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, SelectableValue, TimeRange } from '@grafana/data';
@@ -140,11 +140,19 @@ interface OptionProps {
   innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   data: SelectableValue<string>;
+  selectOption: (data: SelectableValue<string>) => void;
 }
 
-const Option = ({ data, innerProps, innerRef, isFocused, isSelected }: React.PropsWithChildren<OptionProps>) => {
+const Option = (props: React.PropsWithChildren<OptionProps>) => {
+  const { data, innerProps, innerRef, isFocused, isSelected } = props;
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
+  const onClickMultiOption = (e: SyntheticEvent) => {
+    props.selectOption({ ...data });
+    e.stopPropagation();
+    e.preventDefault();
+  };
 
   return (
     <div
@@ -158,6 +166,7 @@ const Option = ({ data, innerProps, innerRef, isFocused, isSelected }: React.Pro
       {...innerProps}
       aria-label="Select option"
       title={data.title}
+      onClick={onClickMultiOption}
     >
       <div className={styles.optionBody}>
         <Checkbox value={isSelected} label={data.label ? `${data.label} - (${data.count})` : ''} />
