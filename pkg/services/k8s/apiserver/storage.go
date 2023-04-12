@@ -520,6 +520,8 @@ func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object)
 	var err error
 	userQuery := userpkg.GetSignedInUserQuery{}
 
+	s.log.Info("user", "user", user)
+
 	if user.GetName() == authnz.ApiServerUser || user.GetName() == authnz.ApiServerAnonymous {
 		userQuery.OrgID = 1
 		userQuery.UserID = 1

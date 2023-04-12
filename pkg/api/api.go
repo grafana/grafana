@@ -655,7 +655,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// k8s proxy
-	r.Any("/k8s/*", reqSignedIn, hs.ProxyK8sRequest)
+	//r.Any("/k8s/*", reqSignedIn, hs.ProxyK8sRequest)
 
 	// Gravatar service
 	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)

@@ -35,10 +35,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
-	clientCertAuth "k8s.io/apiserver/pkg/authentication/request/x509"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -50,6 +48,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	corev1 "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/rest"
 )
 
 func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, error) {
@@ -58,7 +57,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup}
+	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.CoreAPI = nil
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
@@ -85,6 +84,13 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	serverConfig := genericapiserver.NewRecommendedConfig(apiextensionsapiserver.Codecs)
 	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 		return apiextensionsapiserver.Config{}, err
+	}
+	serverConfig.LoopbackClientConfig = &rest.Config{
+		TLSClientConfig: rest.TLSClientConfig{
+			Insecure: true,
+		},
+		Host:        "https://localhost:2999/k8s/",
+		BearerToken: "glsa_c4q6slmv92YMkya2uNLdIF84o431p58v_2819eb90",
 	}
 
 	rootCert, err := certUtil.GetK8sCACert()
@@ -156,31 +162,19 @@ func (r restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generi
 
 func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
 	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
-		ClientCAFile:        "data/k8s/ca.crt",
 		UsernameHeaders:     []string{"X-Remote-User"},
 		GroupHeaders:        []string{"X-Remote-Group"},
 		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
 	}
 
-	reqHeaderConfig, err := reqHeaderOptions.ToAuthenticationRequestHeaderConfig()
+	requestHeaderAuthenticator, err := headerrequest.New(
+		reqHeaderOptions.UsernameHeaders,
+		reqHeaderOptions.GroupHeaders,
+		reqHeaderOptions.ExtraHeaderPrefixes,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	requestHeaderAuthenticator := headerrequest.NewDynamicVerifyOptionsSecure(
-		reqHeaderConfig.CAContentProvider.VerifyOptions,
-		reqHeaderConfig.AllowedClientNames,
-		reqHeaderConfig.UsernameHeaders,
-		reqHeaderConfig.GroupHeaders,
-		reqHeaderConfig.ExtraHeaderPrefixes,
-	)
-
-	roots := x509.NewCertPool()
-	roots.AddCert(cert)
-	opts := x509.VerifyOptions{
-		Roots:     roots,
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-	}
-
-	return clientCertAuth.NewVerifier(opts, requestHeaderAuthenticator, sets.NewString()), nil
+	return requestHeaderAuthenticator, nil
 }

@@ -3,20 +3,26 @@ package apiserver
 import (
 	"context"
 	"path"
-
-	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"strconv"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresourcedefinition"
+	customStorage "k8s.io/apiextensions-apiserver/pkg/storage"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 	aggregator "k8s.io/kube-aggregator/pkg/registry/apiservice/storage"
 )
@@ -43,20 +49,33 @@ type service struct {
 
 	restConfig *rest.Config
 	newStorage customStorage.NewStorageFunc
+	rr         routing.RouteRegister
 
+	handler   web.Handler
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, newStorage customStorage.NewStorageFunc) (*service, error) {
+func ProvideService(cfg *setting.Cfg, newStorage customStorage.NewStorageFunc, rr routing.RouteRegister) (*service, error) {
 	s := &service{
+		rr:         rr,
 		dataPath:   path.Join(cfg.DataPath, "k8s"),
 		stopCh:     make(chan struct{}),
 		newStorage: newStorage,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
+
+	s.rr.Any("/k8s/*", middleware.ReqSignedIn, func(c *contextmodel.ReqContext) {
+		if s.handler != nil {
+			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
+				handle(c)
+				return
+			}
+		}
+		panic("k8s api handler not added")
+	})
 
 	return s, nil
 }
@@ -96,7 +115,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
-	s.restConfig.Host = DefaultAPIServerHost
+	//s.restConfig.Host = DefaultAPIServerHost
 	err = s.writeKubeConfiguration(s.restConfig)
 	if err != nil {
 		return err
@@ -105,6 +124,21 @@ func (s *service) start(ctx context.Context) error {
 	prepared, err := server.PrepareRun()
 	if err != nil {
 		return err
+	}
+
+	s.handler = func(c *contextmodel.ReqContext) {
+		req := c.Req
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
+		ctx := req.Context()
+		signedInUser := appcontext.MustUser(ctx)
+
+		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+		req.Header.Set("X-Remote-Group", "grafana")
+		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
+		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
+		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
+		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
+		prepared.GenericAPIServer.Handler.ServeHTTP(c.Resp, req)
 	}
 
 	go func() {
@@ -142,8 +176,7 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Username: restConfig.Username,
-		Password: restConfig.Password,
+		Token: restConfig.BearerToken,
 	}
 
 	clientConfig := clientcmdapi.Config{
