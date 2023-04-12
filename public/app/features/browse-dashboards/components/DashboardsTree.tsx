@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { CellProps, Column, TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Checkbox, useStyles2 } from '@grafana/ui';
 
 import { DashboardsTreeItem, INDENT_AMOUNT_CSS_VAR } from '../types';
 
@@ -21,7 +21,7 @@ interface DashboardsTreeProps {
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
 
 const HEADER_HEIGHT = 35;
-const ITEM_HEIGHT = 35;
+const ROW_HEIGHT = 35;
 
 export function DashboardsTree({ items, width, height, onFolderClick }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
@@ -29,8 +29,8 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
-      Header: () => <input type="checkbox" />,
-      Cell: () => <input type="checkbox" />,
+      Header: () => <Checkbox value={false} />,
+      Cell: () => <Checkbox value={false} />,
     };
 
     const nameColumn: DashboardsTreeColumn = {
@@ -59,7 +59,7 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
         });
 
         return (
-          <div key={key} {...headerGroupProps} className={styles.headerRow}>
+          <div key={key} {...headerGroupProps} className={cx(styles.row, styles.headerRow)}>
             {headerGroup.headers.map((column) => {
               const { key, ...headerProps } = column.getHeaderProps();
 
@@ -79,7 +79,7 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
           width={width}
           itemCount={items.length}
           itemData={table}
-          itemSize={ITEM_HEIGHT}
+          itemSize={ROW_HEIGHT}
         >
           {VirtualListRow}
         </List>
@@ -102,7 +102,7 @@ function VirtualListRow({ index, style, data: table }: VirtualListRowProps) {
   prepareRow(row);
 
   return (
-    <div {...row.getRowProps({ style })} className={styles.rowContainer}>
+    <div {...row.getRowProps({ style })} className={cx(styles.row, styles.bodyRow)}>
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();
 
@@ -117,9 +117,17 @@ function VirtualListRow({ index, style, data: table }: VirtualListRowProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const columnSizing = 'auto 2fr 1fr';
+
   return {
     tableRoot: css({
-      [INDENT_AMOUNT_CSS_VAR]: `24px`,
+      // The Indented component uses this css variable to indent items to their position
+      // in the tree
+      [INDENT_AMOUNT_CSS_VAR]: theme.spacing(1),
+
+      [theme.breakpoints.up('md')]: {
+        [INDENT_AMOUNT_CSS_VAR]: theme.spacing(3),
+      },
     }),
 
     cell: css({
@@ -129,17 +137,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
     }),
 
-    headerRow: css({
-      label: 'header-row',
+    row: css({
       display: 'grid',
-      gridTemplateColumns: 'auto 2fr 1fr',
+      gridTemplateColumns: columnSizing,
+      alignItems: 'center',
+    }),
+
+    headerRow: css({
       backgroundColor: theme.colors.background.secondary,
       height: HEADER_HEIGHT,
     }),
 
-    rowContainer: css({
-      display: 'grid',
-      gridTemplateColumns: 'auto 2fr 1fr',
+    bodyRow: css({
+      height: ROW_HEIGHT,
 
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),

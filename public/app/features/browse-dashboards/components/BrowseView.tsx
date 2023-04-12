@@ -60,7 +60,7 @@ function createFlatTree(
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.length === 0;
     if (isOpen && emptyFolder) {
-      mappedChildren.push({ isOpen: false, level: level + 2, item: { kind: 'ui-empty-folder' } });
+      mappedChildren.push({ isOpen: false, level: level + 1, item: { kind: 'ui-empty-folder' } });
     }
 
     const thisItem = {
