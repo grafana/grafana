@@ -21,13 +21,14 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { formatRegistry, VariableValue, VariableValueSingle } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 formatRegistry.register({
-  id: 'percentencodeasuri',
+  id: VariableFormatID.UriEncode,
   name: 'Percent encode as URI',
   description: 'Useful for URL escaping values, taking into URI syntax characters',
   formatter: (value: VariableValue) => {
@@ -323,7 +324,7 @@ export class LinkSrv implements LinkService {
     };
 
     if (replaceVariables) {
-      info.href = replaceVariables(info.href, undefined, 'percentencodeasuri');
+      info.href = replaceVariables(info.href, undefined, VariableFormatID.UriEncode);
       info.title = replaceVariables(link.title);
     }
 
