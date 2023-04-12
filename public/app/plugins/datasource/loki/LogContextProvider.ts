@@ -69,7 +69,7 @@ export class LogContextProvider {
         raw: range,
       },
     };
-  };
+  }
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
