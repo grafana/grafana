@@ -125,7 +125,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
-			SkipCache:      false,
+			SkipDSCache:    false,
 			Logger:         log.New("context"),
 		}
 
