@@ -42,6 +42,10 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     timeout,
   } = fullConfig;
 
+  e2e()
+    .intercept(/health/)
+    .as('health');
+
   e2e().logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
   e2e.pages.AddDataSource.dataSourcePluginsV2(type)
@@ -75,6 +79,8 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   form();
 
   e2e.pages.DataSource.saveAndTest().click();
+
+  e2e().wait('@health', { timeout: timeout ?? e2e.config().defaultCommandTimeout });
 
   // use the timeout passed in if it exists, otherwise, continue to use the default
   e2e.pages.DataSource.alert()
