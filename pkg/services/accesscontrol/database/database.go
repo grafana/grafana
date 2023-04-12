@@ -249,7 +249,7 @@ func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd ac
 			return errSaveRole
 		}
 		// Update permissions
-		errSavePerm := s.savePermissions(ctx, sess, existingRole, cmd.Permissions)
+		errSavePerm := s.savePermissions(ctx, sess, existingRole.ID, cmd.Permissions)
 		if errSavePerm != nil {
 			return errSavePerm
 		}
@@ -363,6 +363,7 @@ func (*AccessControlStore) saveRole(ctx context.Context, sess *db.Session, role 
 		}
 	} else {
 		role.ID = existingRole.ID
+		role.Created = existingRole.Created
 		if _, err := sess.Where("id = ?", existingRole.ID).MustCols("org_id").Update(role); err != nil {
 			return nil, err
 		}
@@ -370,16 +371,16 @@ func (*AccessControlStore) saveRole(ctx context.Context, sess *db.Session, role 
 	return getRoleByUID(ctx, sess, role.UID)
 }
 
-func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session, role *accesscontrol.Role, permissions []accesscontrol.Permission) error {
+func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session, roleID int64, permissions []accesscontrol.Permission) error {
 	now := time.Now()
-	storedPermissions, err := getRolePermissions(ctx, sess, role.ID)
+	storedPermissions, err := getRolePermissions(ctx, sess, roleID)
 	if err != nil {
 		return err
 	}
 	added, removed := permissionDiff(storedPermissions, permissions)
 	if len(added) > 0 {
 		for i := range added {
-			added[i].RoleID = role.ID
+			added[i].RoleID = roleID
 			added[i].Created = now
 			added[i].Updated = now
 		}
@@ -404,6 +405,7 @@ func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session
 }
 
 func (*AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Session, assignment accesscontrol.UserRole) error {
+	// alreadyAssigned checks if the assignment already exists without accounting for the organization
 	has, err := alreadyAssigned(ctx, sess, assignment.RoleID, assignment.UserID)
 	if err != nil {
 		return err
@@ -413,6 +415,7 @@ func (*AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Sess
 			return err
 		}
 	} else {
+		// Ensure the assignment is in the correct organization
 		_, err := sess.Where("role_id = ? AND user_id = ?", assignment.RoleID, assignment.UserID).MustCols("org_id").Update(&assignment)
 		if err != nil {
 			return err

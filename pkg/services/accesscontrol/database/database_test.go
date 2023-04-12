@@ -658,8 +658,8 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 					Global:            true,
 					ServiceAccountID:  1,
 					Permissions: []accesscontrol.Permission{
+						{Action: "users:write", Scope: "users:id:1"},
 						{Action: "users:write", Scope: "users:id:2"},
-						{Action: "users:read", Scope: "users:id:2"},
 					},
 				},
 			},
@@ -688,12 +688,33 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				},
 				{
 					ExternalServiceID: "app1",
+					OrgID:             1,
+					ServiceAccountID:  1,
+					Permissions: []accesscontrol.Permission{
+						{Action: "users:read", Scope: "users:id:1"},
+						{Action: "users:read", Scope: "users:id:2"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "edge case - remove all permissions",
+			cmds: []accesscontrol.SaveExternalServiceRoleCommand{
+				{
+					ExternalServiceID: "app1",
 					Global:            true,
 					ServiceAccountID:  1,
 					Permissions: []accesscontrol.Permission{
 						{Action: "users:read", Scope: "users:id:1"},
 						{Action: "users:read", Scope: "users:id:2"},
 					},
+				},
+				{
+					ExternalServiceID: "app1",
+					Global:            true,
+					ServiceAccountID:  1,
+					Permissions:       []accesscontrol.Permission{},
 				},
 			},
 			wantErr: false,
