@@ -38,7 +38,7 @@ const FormatAsField = ({
     if (!resultFormat) {
       handleChange({ value: defaultValue });
     } else {
-      if (!formatOptions.find((item) => item.value === resultFormat) && !resultFormat.includes('$')) {
+      if (!formatOptions.find((item) => item.value === resultFormat)) {
         handleChange({ value: defaultValue });
       }
     }
