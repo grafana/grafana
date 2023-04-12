@@ -25,8 +25,6 @@ replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.
 // hoist a replace statement.
 replace k8s.io/client-go => k8s.io/client-go v0.25.3
 
-replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
-
 require (
 	k8s.io/apiextensions-apiserver v0.26.2 // indirect
 	k8s.io/apimachinery v0.26.2
@@ -69,7 +67,7 @@ require (
 	github.com/grafana/cuetsy v0.1.6
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
-	github.com/grafana/grafana-plugin-sdk-go v0.158.0
+	github.com/grafana/grafana-plugin-sdk-go v0.159.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-hclog v1.2.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -129,7 +127,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -352,7 +350,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20191112132149-a4c4c47bc57f // indirect

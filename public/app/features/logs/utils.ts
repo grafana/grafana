@@ -12,6 +12,7 @@ import {
   FieldType,
   MutableDataFrame,
   QueryResultMeta,
+  LogsVolumeType,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -163,12 +164,37 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
   });
 }
 
-export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] => {
+export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
+  let widestRange = { from: Infinity, to: -Infinity };
+
+  dataFrames.forEach((dataFrame: DataFrame) => {
+    const meta = dataFrame.meta?.custom || {};
+    if (meta.absoluteRange?.from && meta.absoluteRange?.to) {
+      widestRange = {
+        from: Math.min(widestRange.from, meta.absoluteRange.from),
+        to: Math.max(widestRange.to, meta.absoluteRange.to),
+      };
+    }
+  });
+
+  return widestRange;
+};
+
+/**
+ * Merge data frames by level and calculate maximum total value for all levels together
+ */
+export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames: DataFrame[]; maximum: number } => {
   if (dataFrames.length === 0) {
     throw new Error('Cannot aggregate data frames: there must be at least one data frame to aggregate');
   }
 
+  // aggregate by level (to produce data frames)
   const aggregated: Record<string, Record<number, number>> = {};
+
+  // aggregate totals to align Y axis when multiple log volumes are shown
+  const totals: Record<number, number> = {};
+  let maximumValue = -Infinity;
+
   const configs: Record<
     string,
     { meta?: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
@@ -201,6 +227,9 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
       const value: number = valueField.values.get(pointIndex);
       aggregated[level] ??= {};
       aggregated[level][time] = (aggregated[level][time] || 0) + value;
+
+      totals[time] = (totals[time] || 0) + value;
+      maximumValue = Math.max(totals[time], maximumValue);
     }
   });
 
@@ -225,5 +254,21 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): DataFrame[] 
     results.push(levelDataFrame);
   });
 
-  return results;
+  return { dataFrames: results, maximum: maximumValue };
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName) {
+    return {
+      name: customMeta.datasourceName,
+    };
+  }
+
+  return null;
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };

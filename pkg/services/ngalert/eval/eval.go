@@ -220,7 +220,7 @@ func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
-func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
+func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
 		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
@@ -233,7 +233,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		models.CacheSkipHeaderName: "true",
 	}
 
-	key, ok := models.RuleKeyFromContext(ctx.Ctx)
+	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
 		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
@@ -246,7 +246,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.OrgID,
-		Headers: buildDatasourceHeaders(ctx),
+		Headers: buildDatasourceHeaders(ctx.Ctx),
 		User:    ctx.User,
 	}
 
@@ -296,7 +296,8 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 type NumberValueCapture struct {
 	Var    string // RefID
 	Labels data.Labels
-	Value  *float64
+
+	Value *float64
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {

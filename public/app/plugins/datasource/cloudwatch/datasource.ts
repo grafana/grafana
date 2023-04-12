@@ -16,7 +16,7 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
