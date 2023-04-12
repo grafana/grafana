@@ -11,7 +11,7 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { filterAuthSettings } from './utils';
+import { filterAuthSettings, getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
 
@@ -79,7 +79,7 @@ export const AuthConfigPageUnconnected = ({
           <ConfigureAuthCTA
             title={`You have no ${firstAvailableProvider.type} configuration created at the moment`}
             buttonIcon="plus-circle"
-            buttonLink={firstAvailableProvider.configPath}
+            buttonLink={getProviderUrl(firstAvailableProvider)}
             buttonTitle={`Configure ${firstAvailableProvider.type}`}
             description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
               Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.

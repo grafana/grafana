@@ -4,6 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Card, useStyles2 } from '@grafana/ui';
 
+import { BASE_PATH } from '../constants';
+
 export const LOGO_SIZE = '48px';
 
 type Props = {
@@ -17,8 +19,7 @@ type Props = {
 
 export function ProviderCard({ providerId, displayName, enabled, configPath, authType, badges }: Props) {
   const styles = useStyles2(getStyles);
-  const basePath = 'admin/authentication/';
-  configPath = basePath + (configPath || providerId);
+  configPath = BASE_PATH + (configPath || providerId);
 
   return (
     <Card href={configPath} className={styles.container}>
