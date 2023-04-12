@@ -397,7 +397,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           )}
         </Collapse>
         <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions} ref={this.topLogsRef}>
+          <div className={styles.logOptions}>
             <InlineFieldRow>
               <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
                 <InlineSwitch
@@ -471,6 +471,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </InlineField>
             </div>
           </div>
+          <div ref={this.topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
             meta={logsMeta || []}
