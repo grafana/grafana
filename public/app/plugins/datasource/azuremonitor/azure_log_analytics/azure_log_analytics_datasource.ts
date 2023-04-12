@@ -146,13 +146,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
       const traceTypes = item.traceTypes?.map((t) => templateSrv.replace(t, scopedVars));
       const filters = (item.filters ?? [])
-        .filter((f) => f.property)
+        .filter((f) => !!f.property)
         .map((f) => {
-          const filters = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
+          const filtersReplaced = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
           return {
             property: templateSrv.replace(f.property, scopedVars),
             operation: f.operation || 'eq',
-            filters: filters || [],
+            filters: filtersReplaced || [],
           };
         });
 

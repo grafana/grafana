@@ -32,6 +32,8 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       resultFormat: ResultFormat.Trace,
       resources: ['test-resource'],
       operationId: 'operationId',
+      traceTypes: ['trace'],
+      filters: [{ filters: ['filter'], operation: 'eq', property: 'property' }],
       ...overrides?.azureTraces,
     },
 
