@@ -33,6 +33,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*
 		allowedAuth,
 		aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		grafanaCfg.Azure,
+		grafanaCfg.SecureSocksDSProxy,
 		grafanaCfg.BuildVersion,
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
