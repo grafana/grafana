@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { toString, isEmpty } from 'lodash';
 
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
@@ -96,6 +96,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   const data = options.data ?? [];
   const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
+  const scopedVars: ScopedVars = {};
 
   let hitLimit = false;
 
@@ -124,7 +125,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         };
       }
 
-      let displayName = field.config.displayName ?? '';
+      const displayName = field.config.displayName ?? '';
 
       const display =
         field.display ??
@@ -136,10 +137,23 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       // Show all rows
       if (reduceOptions.values) {
+        const usesCellValues = displayName.indexOf(VAR_CELL_PREFIX) >= 0;
+
         for (let j = 0; j < field.values.length; j++) {
+          // Add all the row variables
+          if (usesCellValues) {
+            for (let k = 0; k < dataFrame.fields.length; k++) {
+              const f = dataFrame.fields[k];
+              const v = f.values.get(j);
+              scopedVars[VAR_CELL_PREFIX + k] = {
+                value: v,
+                text: toString(v),
+              };
+            }
+          }
+
           field.state = setIndexForPaletteColor(field, values.length);
 
-          const scopedVars = getFieldScopedVarsWithDataContexAndRowIndex(field, j);
           const displayValue = display(field.values.get(j));
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
           const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
@@ -176,13 +190,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         });
 
         for (const calc of calcs) {
-          const scopedVars = field.state?.scopedVars ?? {};
           scopedVars[VAR_CALC] = { value: calc, text: calc };
-
           const displayValue = display(results[calc]);
 
           if (displayName !== '') {
-            displayValue.title = replaceVariables(displayName, scopedVars);
+            displayValue.title = replaceVariables(displayName, {
+              ...field.state?.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
           } else {
             displayValue.title = getFieldDisplayName(field, dataFrame, data);
           }
@@ -232,21 +247,17 @@ function getSmartDisplayNameForRow(
   field: Field,
   rowIndex: number,
   replaceVariables: InterpolateFunction,
-  scopedVars: ScopedVars | undefined
+  scopedVars: ScopedVars
 ): string {
-  const displayName = field.config.displayName;
-
-  if (displayName) {
-    // Handle old __cell_n syntax
-    if (displayName.indexOf(VAR_CELL_PREFIX)) {
-      return replaceVariables(fixCellTemplateExpressions(displayName), scopedVars);
-    }
-
-    return replaceVariables(displayName, scopedVars);
-  }
-
   let parts: string[] = [];
   let otherNumericFields = 0;
+
+  if (field.config.displayName) {
+    return replaceVariables(field.config.displayName, {
+      ...field.state?.scopedVars, // series and field scoped vars
+      ...scopedVars,
+    });
+  }
 
   for (const otherField of frame.fields) {
     if (otherField === field) {
@@ -370,29 +381,4 @@ function getDisplayText(display: DisplayValue, fallback: string): string {
     return fallback;
   }
   return display.text;
-}
-
-export function fixCellTemplateExpressions(str: string) {
-  return str.replace(/\${__cell_(\d+)}|\[\[__cell_(\d+)\]\]|\$__cell_(\d+)/g, (match, fmt1, fmt2, fmt3) => {
-    return `\${__data.fields[${fmt1 ?? fmt2 ?? fmt3}]}`;
-  });
-}
-
-/**
- * Clones the existing dataContext and adds rowIndex to it
- */
-function getFieldScopedVarsWithDataContexAndRowIndex(field: Field, rowIndex: number): ScopedVars | undefined {
-  if (field.state?.scopedVars?.__dataContext) {
-    return {
-      ...field.state?.scopedVars,
-      __dataContext: {
-        value: {
-          ...field.state?.scopedVars?.__dataContext.value,
-          rowIndex,
-        },
-      },
-    };
-  }
-
-  return field.state?.scopedVars;
 }

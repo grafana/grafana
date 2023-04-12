@@ -1,17 +1,7 @@
-import {
-  DisplayProcessor,
-  FieldType,
-  formattedValueToString,
-  getDisplayProcessor,
-  getFieldDisplayValuesProxy,
-  getFrameDisplayName,
-  ScopedVars,
-} from '@grafana/data';
+import { DisplayProcessor, FieldType, formattedValueToString, getDisplayProcessor, ScopedVars } from '@grafana/data';
 import { VariableCustomFormatterFn } from '@grafana/scenes';
 
-import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
-import { getTemplateProxyForField } from './templateProxies';
 
 /**
  * ${__value.raw/nummeric/text/time} macro
@@ -75,41 +65,6 @@ function getValueForValueMacro(match: string, fieldPath?: string, scopedVars?: S
   }
 }
 
-/**
- * Macro support doing things like.
- * ${__data.name}
- * ${__data.fields[0].name}
- * ${__data.fields["Value"].labels.cluster}
- *
- * Requires rowIndex on dataContext
- */
-export function dataMacro(
-  match: string,
-  fieldPath?: string,
-  scopedVars?: ScopedVars,
-  format?: string | VariableCustomFormatterFn
-) {
-  const dataContext = scopedVars?.__dataContext;
-  if (!dataContext || !fieldPath) {
-    return match;
-  }
-
-  const { frame, rowIndex } = dataContext.value;
-
-  if (rowIndex === undefined || fieldPath === undefined) {
-    return match;
-  }
-
-  const obj = {
-    name: frame.name,
-    refId: frame.refId,
-    fields: getFieldDisplayValuesProxy({ frame, rowIndex }),
-  };
-
-  const value = getFieldAccessor(fieldPath)(obj) ?? '';
-  return formatVariableValue(value, format);
-}
-
 let fallbackDisplayProcessor: DisplayProcessor | undefined;
 
 function getFallbackDisplayProcessor() {
@@ -118,54 +73,4 @@ function getFallbackDisplayProcessor() {
   }
 
   return fallbackDisplayProcessor;
-}
-
-/**
- * ${__series} = frame display name
- */
-export function seriesNameMacro(
-  match: string,
-  fieldPath?: string,
-  scopedVars?: ScopedVars,
-  format?: string | VariableCustomFormatterFn
-) {
-  const dataContext = scopedVars?.__dataContext;
-  if (!dataContext) {
-    return match;
-  }
-
-  if (fieldPath !== 'name') {
-    return match;
-  }
-
-  const { frame, frameIndex } = dataContext.value;
-  const value = getFrameDisplayName(frame, frameIndex);
-  return formatVariableValue(value, format);
-}
-
-/**
- * Handles expressions like
- * ${__field.name}
- * ${__field.labels.cluster}
- */
-export function fieldMacro(
-  match: string,
-  fieldPath?: string,
-  scopedVars?: ScopedVars,
-  format?: string | VariableCustomFormatterFn
-) {
-  const dataContext = scopedVars?.__dataContext;
-  if (!dataContext) {
-    return match;
-  }
-
-  if (fieldPath === undefined || fieldPath === '') {
-    return match;
-  }
-
-  const { frame, field, data } = dataContext.value;
-  const obj = getTemplateProxyForField(field, frame, data);
-
-  const value = getFieldAccessor(fieldPath)(obj) ?? '';
-  return formatVariableValue(value, format);
 }

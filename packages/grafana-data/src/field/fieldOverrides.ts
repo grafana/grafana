@@ -39,7 +39,10 @@ import { mapInternalLinkToExplore } from '../utils/dataLinks';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getFrameDisplayName } from './fieldState';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { getTemplateProxyForField } from './templateProxies';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -119,17 +122,18 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       };
     });
 
+    const scopedVars: ScopedVars = {
+      __series: { text: 'Series', value: { name: getFrameDisplayName(newFrame, index) } }, // might be missing
+    };
+
     for (const field of newFrame.fields) {
       const config = field.config;
 
       field.state!.scopedVars = {
-        __dataContext: {
-          value: {
-            data: options.data!,
-            frame: newFrame,
-            frameIndex: index,
-            field: field,
-          },
+        ...scopedVars,
+        __field: {
+          text: 'Field',
+          value: getTemplateProxyForField(field, newFrame, options.data),
         },
       };
 
@@ -372,29 +376,49 @@ export const getLinksSupplier =
     }
 
     return field.config.links.map((link: DataLink) => {
-      const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
-      const dataLinkScopedVars = {
-        ...fieldScopedVars,
-        __dataContext: dataContext,
-      };
+      let dataFrameVars = {};
+      let dataContext: DataContextScopedVar = { value: { frame, field } };
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
         dataContext.value.rowIndex = config.valueRowIndex;
+
+        const fieldsProxy = getFieldDisplayValuesProxy({
+          frame,
+          rowIndex: config.valueRowIndex,
+          timeZone: timeZone,
+        });
+
+        dataFrameVars = {
+          __data: {
+            value: {
+              name: frame.name,
+              refId: frame.refId,
+              fields: fieldsProxy,
+            },
+            text: 'Data',
+          },
+        };
       } else {
         dataContext.value.calculatedValue = config.calculatedValue;
       }
 
+      const variables: ScopedVars = {
+        ...fieldScopedVars,
+        ...dataFrameVars,
+        __dataContext: dataContext,
+      };
+
       if (link.onClick) {
         return {
           href: link.url,
-          title: replaceVariables(link.title || '', dataLinkScopedVars),
+          title: replaceVariables(link.title || '', variables),
           target: link.targetBlank ? '_blank' : undefined,
           onClick: (evt, origin) => {
             link.onClick!({
               origin: origin ?? field,
               e: evt,
-              replaceVariables: (v) => replaceVariables(v, dataLinkScopedVars),
+              replaceVariables: (v) => replaceVariables(v, variables),
             });
           },
           origin: field,
@@ -406,7 +430,7 @@ export const getLinksSupplier =
         return mapInternalLinkToExplore({
           link,
           internalLink: link.internal,
-          scopedVars: dataLinkScopedVars,
+          scopedVars: variables,
           field,
           range: link.internal.range ?? ({} as any),
           replaceVariables,
@@ -421,13 +445,13 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.PercentEncode);
+        href = replaceVariables(href, variables, VariableFormatID.PercentEncode);
         href = locationUtil.processUrl(href);
       }
 
       const info: LinkModel<Field> = {
         href,
-        title: replaceVariables(link.title || '', dataLinkScopedVars),
+        title: replaceVariables(link.title || '', variables),
         target: link.targetBlank ? '_blank' : undefined,
         origin: field,
       };
@@ -510,19 +534,4 @@ export function useFieldOverrides(
       }),
     };
   }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace]);
-}
-
-/**
- * Clones the existing dataContext or creates a new one
- */
-function getFieldDataContextClone(frame: DataFrame, field: Field, fieldScopedVars: ScopedVars) {
-  if (fieldScopedVars?.__dataContext) {
-    return {
-      value: {
-        ...fieldScopedVars.__dataContext.value,
-      },
-    };
-  }
-
-  return { value: { frame, field, data: [frame] } };
 }
