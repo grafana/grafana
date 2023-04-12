@@ -14,7 +14,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Modal, Spinner, useTheme2 } from '@grafana/ui';
+import { LoadingBar, Modal, Spinner, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
@@ -116,6 +116,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const { modal, flexColumn, flexRow, entry, datasourceUi, logRowGroups, noMarginBottom, hidden } = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
+  const [loadingWidth, setLoadingWidth] = useState(0);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
@@ -193,6 +194,16 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   }, [scrollElement, entryElement, context]);
 
+  useLayoutEffect(() => {
+    if (
+      scrollElement.current &&
+      scrollElement.current.parentElement &&
+      scrollElement.current.parentElement.clientWidth > 0
+    ) {
+      setLoadingWidth(scrollElement.current.parentElement.clientWidth);
+    }
+  }, [scrollElement]);
+
   return (
     <Modal isOpen={open} title="Log context" contentClassName={flexColumn} className={modal} onDismiss={onClose}>
       {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
@@ -206,11 +217,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
         </div>
       </div>
+      <div className={loading ? '' : hidden}>
+        <LoadingBar width={loadingWidth} />
+      </div>
       <div ref={scrollElement} className={logRowGroups}>
-        <div className={loading ? '' : hidden}>
-          <Spinner />
-        </div>
-        <table className={loading ? hidden : ''}>
+        <table>
           <tbody>
             <tr>
               <td className={noMarginBottom}>
