@@ -12,14 +12,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
-	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,14 +27,12 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 
-	ds := &datafakes.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{}, ds, pluginSettings.ProvideService(dbtest.NewFakeDB(), fakeSecrets.NewFakeSecretsService()), plugincontext.ProvideKeyService())
+	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{}, nil, nil, nil)
 
 	s := Service{
-		cfg:               setting.NewCfg(),
-		dataService:       me,
-		dataSourceService: ds,
-		pCtxProvider:      pCtxProvider,
+		cfg:          setting.NewCfg(),
+		dataService:  me,
+		pCtxProvider: pCtxProvider,
 	}
 
 	queries := []Query{

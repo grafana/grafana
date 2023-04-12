@@ -134,7 +134,15 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), plugincontext.ProvideKeyService())
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
+		PluginList: []plugins.PluginDTO{
+			{
+				JSONData: plugins.JSONData{
+					ID: "mysql",
+				},
+			},
+		},
+	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), plugincontext.ProvideKeyService())
 
 	return query.ProvideService(
 		setting.NewCfg(),

@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -27,7 +26,6 @@ func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.S
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
-		logger:                log.New("plugincontext"),
 	}
 }
 
@@ -37,22 +35,44 @@ type Provider struct {
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
 	keyProvider           KeyProvider
-	logger                log.Logger
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
 func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, bool, error) {
-	return p.pluginContext(ctx, pluginID, user)
+	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
+	if !exists {
+		return backend.PluginContext{}, false, nil
+	}
+
+	pCtx := backend.PluginContext{
+		OrgID:    user.OrgID,
+		PluginID: pluginID,
+		User:     adapters.BackendUserFromSignedInUser(user),
+	}
+
+	if plugin.IsApp() {
+		appSettings, err := p.appInstanceSettings(ctx, pluginID, user)
+		if err != nil {
+			return backend.PluginContext{}, false, err
+		}
+		pCtx.AppInstanceSettings = appSettings
+		//pCtx.Key = p.keyProvider.AppKey(ctx, pluginID, user.OrgID)
+	}
+
+	return pCtx, true, nil
 }
 
 // GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
 // resolved and appended to the returned context.
 func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, bool, error) {
-	pCtx, exists, err := p.pluginContext(ctx, pluginID, user)
+	pCtx, exists, err := p.Get(ctx, pluginID, user)
+	if !exists {
+		return backend.PluginContext{}, false, nil
+	}
 	if err != nil {
-		return pCtx, exists, err
+		return backend.PluginContext{}, false, err
 	}
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
@@ -60,7 +80,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		return pCtx, exists, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
-	pCtx.Key = p.keyProvider.DataSourceKey(ctx, datasourceSettings)
+	//pCtx.Key = p.keyProvider.DataSourceKey(ctx, datasourceSettings)
 
 	return pCtx, true, nil
 }
@@ -68,12 +88,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, bool, error) {
-	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
-	if !exists {
-		return backend.PluginContext{}, false, nil
-	}
-
+func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, user *user.SignedInUser) (*backend.AppInstanceSettings, error) {
 	jsonData := json.RawMessage{}
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
@@ -83,28 +98,22 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *use
 		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
 		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-			return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
+			return &backend.AppInstanceSettings{}, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
 		}
 	} else {
 		jsonData, err = json.Marshal(ps.JSONData)
 		if err != nil {
-			return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to unmarshal plugin json data", err)
+			return &backend.AppInstanceSettings{}, fmt.Errorf("%v: %w", "Failed to unmarshal plugin json data", err)
 		}
 		decryptedSecureJSONData = p.pluginSettingsService.DecryptedValues(ps)
 		updated = ps.Updated
 	}
 
-	return backend.PluginContext{
-		OrgID:    user.OrgID,
-		PluginID: plugin.ID,
-		User:     adapters.BackendUserFromSignedInUser(user),
-		AppInstanceSettings: &backend.AppInstanceSettings{
-			JSONData:                jsonData,
-			DecryptedSecureJSONData: decryptedSecureJSONData,
-			Updated:                 updated,
-		},
-		Key: p.keyProvider.AppKey(ctx, plugin.ID, user.OrgID),
-	}, true, nil
+	return &backend.AppInstanceSettings{
+		JSONData:                jsonData,
+		DecryptedSecureJSONData: decryptedSecureJSONData,
+		Updated:                 updated,
+	}, nil
 }
 
 func (p *Provider) InvalidateSettingsCache(_ context.Context, pluginID string) {

@@ -455,6 +455,7 @@ func setup(t *testing.T) *testContext {
 			PluginList: []plugins.PluginDTO{
 				{JSONData: plugins.JSONData{ID: "postgres"}},
 				{JSONData: plugins.JSONData{ID: "testdata"}},
+				{JSONData: plugins.JSONData{ID: "mysql"}},
 			},
 		}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), plugincontext.ProvideKeyService(),

@@ -66,9 +66,16 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{},
-			&fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-				secretstest.NewFakeSecretsService()), plugincontext.ProvideKeyService(),
+		plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
+					JSONData: plugins.JSONData{
+						ID: "grafana",
+					},
+				},
+			},
+		}, &fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
+			secretstest.NewFakeSecretsService()), plugincontext.ProvideKeyService(),
 		),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
