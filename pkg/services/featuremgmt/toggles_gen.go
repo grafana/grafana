@@ -291,6 +291,10 @@ const (
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
+
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
 	FlagUnifiedRequestLog = "unifiedRequestLog"

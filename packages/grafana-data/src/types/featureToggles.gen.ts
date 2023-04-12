@@ -89,6 +89,7 @@ export interface FeatureToggles {
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
+  disableSSEDataplane?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
