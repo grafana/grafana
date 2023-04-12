@@ -34,6 +34,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `emptyDashboardPage`                | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
+| `useCachingService`                 | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                |                    |
 
 ## Beta feature toggles
 
