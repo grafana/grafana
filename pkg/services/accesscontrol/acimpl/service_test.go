@@ -751,7 +751,21 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 		runs []run
 	}{
 		{
-			name: "can create and update a role",
+			name: "can create a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "can update a role",
 			runs: []run{
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
@@ -768,11 +782,24 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 						ServiceAccountID:  2,
 						ExternalServiceID: "App 1",
 						Permissions: []accesscontrol.Permission{
-							{Action: "users:read", Scope: "users:id:1"},
-							{Action: "users:read", Scope: "users:id:2"},
+							{Action: "users:write", Scope: "users:id:1"},
+							{Action: "users:write", Scope: "users:id:2"},
 						},
 					},
 					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "test command validity - no service account ID",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: true,
 				},
 			},
 		},
@@ -789,6 +816,11 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 					continue
 				}
 				require.NoError(t, err)
+
+				// Check that the permissions and assignment are stored correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				assert.ElementsMatch(t, r.cmd.Permissions, perms)
 			}
 		})
 	}
