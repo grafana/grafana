@@ -7,39 +7,6 @@ import { getGrafanaSearcher } from './searcher';
 import { NestedFolderDTO } from './types';
 import { queryResultToViewItem } from './utils';
 
-export const PAGE_SIZE = 1000;
-
-interface PaginatedResponse {
-  folders: DashboardViewItem[];
-  dashboards: DashboardViewItem[];
-}
-
-export async function getPaginatedFolderChildren(parentUid?: string, parentTitle?: string): Promise<PaginatedResponse> {
-  if (!config.featureToggles.nestedFolders) {
-    throw new Error('getPaginatedFolderChildren requires nestedFolders feature toggle');
-  }
-
-  const searcher = getGrafanaSearcher();
-  const dashboardsResults = await searcher.search({
-    kind: ['dashboard'],
-    query: '*',
-    location: parentUid ?? 'general',
-    limit: PAGE_SIZE,
-  });
-
-  const dashboards = dashboardsResults.view.map((item) => {
-    return queryResultToViewItem(item, dashboardsResults.view);
-  });
-
-  if (dashboards.length === PAGE_SIZE) {
-    return { folders: [], dashboards };
-  }
-
-  const folders = await getChildFolders(parentUid, parentTitle);
-
-  return { folders, dashboards };
-}
-
 export async function getFolderChildren(
   parentUid?: string,
   parentTitle?: string,
