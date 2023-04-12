@@ -16,7 +16,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> extends S
   mappings?: AnnotationEventMappings;
 
   // When using the 'grafana' datasource, this may be dashboard
-  type?: 'dashboard';
+  type?: string;
 
   // Sadly plugins can set any property directly on the main object
   [key: string]: any;
