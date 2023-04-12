@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
@@ -64,7 +63,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
-  elasticsearchBackendMigration?: boolean;
   showTraceId?: boolean;
   datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
@@ -87,12 +85,16 @@ export interface FeatureToggles {
   prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
-  disableElasticsearchBackendExploreQuery?: boolean;
   prometheusDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
+  disableSSEDataplane?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
+  externalServiceAuth?: boolean;
+  dataplaneFrontendFallback?: boolean;
+  useCachingService?: boolean;
+  disableElasticsearchBackendQuerying?: boolean;
 }
