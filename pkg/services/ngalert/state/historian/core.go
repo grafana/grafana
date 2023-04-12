@@ -47,7 +47,7 @@ func removePrivateLabels(labels data.Labels) data.Labels {
 // labelFingerprint calculates a stable Prometheus-style signature for a label set.
 func labelFingerprint(labels data.Labels) string {
 	sig := prometheus.LabelsToSignature(labels)
-	return fmt.Sprintf("%016x", uint64(sig))
+	return fmt.Sprintf("%016x", sig)
 }
 
 // panelKey uniquely identifies a panel.
