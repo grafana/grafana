@@ -5,13 +5,20 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { GrafanaPlugin } from '@grafana/data';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
-import { createSandboxDocument, fabricateMockElement, isDomElement } from './document_sandbox';
+import {
+  createSandboxDocument,
+  fabricateMockElement,
+  isDomElement,
+  isDomElementInsideSandbox,
+} from './document_sandbox';
 import { getSandboxedWebApis } from './web_apis';
 
+// Keeping this as an alias type for future changes
 type CompartmentDependencyModule = unknown;
 export const availableCompartmentDependenciesMap = new Map<string, CompartmentDependencyModule>();
 
 const importSandboxCache = new Map<string, Promise<{ plugin: GrafanaPlugin }>>();
+
 /**
  * Implements a cache to prevent a plugin loading twice in the same session
  * This happens when several parts of grafana tries to load the same plugin
@@ -31,6 +38,9 @@ async function getPluginCode(path: string) {
   return await response.text();
 }
 
+/**
+ * Do the actual import of the plugin inside a sandbox
+ */
 export async function doImportPluginInsideSandbox(path: string): Promise<{ plugin: GrafanaPlugin }> {
   let resolved = false;
   return new Promise(async (resolve, reject) => {
@@ -50,10 +60,9 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback(v) {
-        if (isDomElement(v)) {
-          if (v.closest(`[data-sandbox-id="${pluginId}"]`)) {
-            return v;
-          }
+        // only allow to pass elements that are inside the sandbox
+        if (isDomElement(v) && !isDomElementInsideSandbox(v)) {
+          console.log('distortionCallback: isDomElement(v) && !isDomElementInsideSandbox(v)', v);
           return fabricateMockElement(v.nodeName, sandboxDocument);
         }
         // //@ts-ignore

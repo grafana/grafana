@@ -1,10 +1,10 @@
 export function createSandboxDocument(): Document {
   const sandboxDocument = document.implementation.createDocument('http://www.w3.org/1999/xhtml', 'html', null);
   const body = document.createElementNS('http://www.w3.org/1999/xhtml', 'body');
-  body.setAttribute('id', 'grafana-plugin-sanbox');
+  body.setAttribute('id', 'grafana-plugin-sandbox');
   sandboxDocument.documentElement.appendChild(body);
   const head = document.createElementNS('http://www.w3.org/1999/xhtml', 'head');
-  head.setAttribute('id', 'grafana-plugin-sanbox');
+  head.setAttribute('id', 'grafana-plugin-sandbox');
   sandboxDocument.documentElement.appendChild(head);
   return sandboxDocument;
 }
@@ -32,4 +32,8 @@ export function isDomElement(obj: unknown): obj is Element {
     }
   }
   return false;
+}
+
+export function isDomElementInsideSandbox(el: Element): boolean {
+  return el.closest(`[data-plugin-sandbox]`) !== null;
 }
