@@ -61,11 +61,13 @@ export const components = {
       },
     },
     metricsQueryEditor: {
+      container: { input: 'azure-monitor-metrics-query-editor-with-experimental-ui' },
       metricName: {
         input: 'data-testid metric-name',
       },
     },
     logsQueryEditor: {
+      container: { input: 'azure-monitor-logs-query-editor-with-experimental-ui' },
       formatSelection: {
         input: 'data-testid format-selection',
       },
@@ -73,6 +75,14 @@ export const components = {
     argsQueryEditor: {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor',
+      },
+      subscriptions: {
+        input: 'data-testid azure-monitor-args-subscription',
+      },
+    },
+    tracesQueryEditor: {
+      container: {
+        input: 'azure-monitor-traces-query-editor-with-experimental-ui',
       },
       subscriptions: {
         input: 'data-testid azure-monitor-args-subscription',

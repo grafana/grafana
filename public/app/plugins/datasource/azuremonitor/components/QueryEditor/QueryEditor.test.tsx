@@ -7,6 +7,7 @@ import * as ui from '@grafana/ui';
 import createMockDatasource from '../../__mocks__/datasource';
 import { invalidNamespaceError } from '../../__mocks__/errors';
 import createMockQuery from '../../__mocks__/query';
+import { selectors } from '../../e2e/selectors';
 import { AzureQueryType } from '../../types';
 
 import QueryEditor from './QueryEditor';
@@ -29,7 +30,9 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
-      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument()
+      expect(
+        screen.getByTestId(selectors.components.queryEditor.metricsQueryEditor.container.input)
+      ).toBeInTheDocument()
     );
   });
 
@@ -42,7 +45,35 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
-      expect(screen.queryByTestId('azure-monitor-logs-query-editor-with-experimental-ui')).toBeInTheDocument()
+      expect(screen.queryByTestId(selectors.components.queryEditor.logsQueryEditor.container.input)).toBeInTheDocument()
+    );
+  });
+
+  it('renders the ARG query editor when the query type is ARG', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureResourceGraph,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() =>
+      expect(screen.queryByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)).toBeInTheDocument()
+    );
+  });
+
+  it('renders the Traces query editor when the query type is Traces', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureTraces,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.tracesQueryEditor.container.input)
+      ).toBeInTheDocument()
     );
   });
 

@@ -5,6 +5,7 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
 import { Field } from '../Field';
 import FormatAsField from '../FormatAsField';
@@ -74,7 +75,7 @@ const TracesQueryEditor = ({
   );
 
   return (
-    <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
+    <span data-testid={selectors.components.queryEditor.tracesQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>
