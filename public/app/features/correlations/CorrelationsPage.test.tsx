@@ -2,57 +2,27 @@ import { render, waitFor, screen, fireEvent, within, Matcher, getByRole } from '
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
-import { DeepPartial } from 'react-hook-form';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourcePluginMeta } from '@grafana/data';
-import {
-  BackendSrv,
-  FetchError,
-  FetchResponse,
-  setDataSourceSrv,
-  BackendSrvRequest,
-  reportInteraction,
-} from '@grafana/runtime';
+import { BackendSrv, setDataSourceSrv, BackendSrvRequest, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
 
 import CorrelationsPage from './CorrelationsPage';
+import {
+  createCreateCorrelationResponse,
+  createFetchCorrelationsError,
+  createFetchCorrelationsResponse,
+  createRemoveCorrelationResponse,
+  createUpdateCorrelationResponse,
+} from './__mocks__/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams } from './types';
-
-function createFetchResponse<T>(overrides?: DeepPartial<FetchResponse>): FetchResponse<T> {
-  return merge(
-    {
-      data: undefined,
-      status: 200,
-      url: '',
-      config: { url: '' },
-      type: 'basic',
-      statusText: 'Ok',
-      redirected: false,
-      headers: {} as unknown as Headers,
-      ok: true,
-    },
-    overrides
-  );
-}
-
-function createFetchError(overrides?: DeepPartial<FetchError>): FetchError {
-  return merge(
-    createFetchResponse(),
-    {
-      status: 500,
-      statusText: 'Internal Server Error',
-      ok: false,
-    },
-    overrides
-  );
-}
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -67,19 +37,10 @@ const renderWithContext = async (
       if (matches?.groups) {
         const { dsUid, correlationUid } = matches.groups;
         correlations = correlations.filter((c) => c.uid !== correlationUid || c.sourceUID !== dsUid);
-        return createFetchResponse({
-          data: {
-            message: 'Correlation deleted',
-          },
-        });
+        return createRemoveCorrelationResponse();
       }
 
-      throw createFetchError({
-        data: {
-          message: 'Correlation not found',
-        },
-        status: 404,
-      });
+      throw createFetchCorrelationsError();
     },
     post: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
@@ -87,15 +48,10 @@ const renderWithContext = async (
         const { sourceUID } = matches.groups;
         const correlation = { sourceUID, ...data, uid: uniqueId() };
         correlations.push(correlation);
-        return correlation;
+        return createCreateCorrelationResponse(correlation);
       }
 
-      throw createFetchError({
-        status: 404,
-        data: {
-          message: 'Source datasource not found',
-        },
-      });
+      throw createFetchCorrelationsError();
     },
     patch: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(
@@ -109,20 +65,14 @@ const renderWithContext = async (
           }
           return c;
         });
-        return createFetchResponse({
-          data: { sourceUID, ...data },
-        });
+        return createUpdateCorrelationResponse({ sourceUID, ...data, uid: uniqueId() });
       }
 
-      throw createFetchError({
-        data: { message: 'either correlation uid or source id not found' },
-        status: 404,
-      });
+      throw createFetchCorrelationsError();
     },
     fetch: (options: BackendSrvRequest) => {
       return new Observable((s) => {
-        s.next(merge(createFetchResponse({ url: options.url, data: correlations })));
-
+        s.next(merge(createFetchCorrelationsResponse({ url: options.url, data: correlations })));
         s.complete();
       });
     },
