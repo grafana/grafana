@@ -200,7 +200,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       )}
       <div className={flexRow}>
         <div className={loading ? hidden : ''}>
-          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
+          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
           <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
