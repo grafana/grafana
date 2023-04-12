@@ -154,7 +154,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}) configuration setting.
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}) configuration setting.
 
 ## Update react-hook-form from v6 to v7
 
@@ -196,7 +196,7 @@ import { cx, css } from '@emotion/css';
 
 ## Update needed for app plugins using dashboards
 
-To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "../../plugins/metadata/#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "../../metadata/#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
 
 **`plugin.json`**
 
