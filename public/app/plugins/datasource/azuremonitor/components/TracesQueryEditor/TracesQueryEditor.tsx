@@ -13,6 +13,7 @@ import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
+import Filters from './Filters';
 import TraceTypeField from './TraceTypeField';
 import { setFormatAs, setQueryOperationId } from './setQueryValue';
 
@@ -115,6 +116,17 @@ const TracesQueryEditor = ({
         <EditorRow>
           <EditorFieldGroup>
             <TraceTypeField
+              datasource={datasource}
+              onQueryChange={onChange}
+              query={query}
+              setError={setError}
+              variableOptionGroup={variableOptionGroup}
+            />
+          </EditorFieldGroup>
+        </EditorRow>
+        <EditorRow>
+          <EditorFieldGroup>
+            <Filters
               datasource={datasource}
               onQueryChange={onChange}
               query={query}

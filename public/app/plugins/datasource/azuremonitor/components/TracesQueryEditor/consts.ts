@@ -141,7 +141,7 @@ export const tracesSchema = omit(
   ['duration', 'id', 'name', 'performanceBucket', 'success']
 );
 
-export const tablesSchema = {
+export const tablesSchema: { [key: string]: { [key: string]: string } } = {
   availabilityResults: availabilityResultsSchema,
   dependencies: dependenciesSchema,
   customEvents: eventsSchema,

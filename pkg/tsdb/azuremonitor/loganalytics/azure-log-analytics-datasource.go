@@ -141,10 +141,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 			resources = azureTracesTarget.Resources
 			resourceOrWorkspace = azureTracesTarget.Resources[0]
 
-			queryString = buildTracesQuery(queryJSONModel.AzureTraces.OperationId, queryJSONModel.AzureTraces.TraceTypes)
+			queryString = buildTracesQuery(queryJSONModel.AzureTraces.OperationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
 			traceIdVariable := "${__data.fields.traceID}"
 			if queryJSONModel.AzureTraces.OperationId == nil {
-				traceExploreQuery = buildTracesQuery(&traceIdVariable, queryJSONModel.AzureTraces.TraceTypes)
+				traceExploreQuery = buildTracesQuery(&traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
 			} else {
 				traceExploreQuery = queryString
 			}
@@ -613,14 +613,14 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId *string, traceTypes []string) string {
-	eventTypes := traceTypes
-	if len(eventTypes) == 0 {
-		eventTypes = Tables
+func buildTracesQuery(operationId *string, traceTypes []string, filters []types.TracesFilters) string {
+	types := traceTypes
+	if len(types) == 0 {
+		types = Tables
 	}
 
 	var tags []string
-	for _, t := range eventTypes {
+	for _, t := range types {
 		tags = append(tags, getTagsForTable(t)...)
 	}
 
@@ -630,17 +630,36 @@ func buildTracesQuery(operationId *string, traceTypes []string) string {
 		whereClause = fmt.Sprintf("| where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", *operationId, *operationId)
 	}
 
+	filtersClause := ""
+
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			if len(filter.Filters) == 0 {
+				continue
+			}
+			operation := "in"
+			if filter.Operation == "ne" {
+				operation = "!in"
+			}
+			filterValues := []string{}
+			for _, val := range filter.Filters {
+				filterValues = append(filterValues, fmt.Sprintf(`"%s"`, val))
+			}
+			filtersClause += fmt.Sprintf("| where %s %s (%s) \n", filter.Property, operation, strings.Join(filterValues, ","))
+		}
+	}
+
 	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000;
 	set truncationmaxsize=67108864;
 	union isfuzzy=true %s
-	| where $__timeFilter()`, strings.Join(eventTypes, ","))
+	| where $__timeFilter()`, strings.Join(types, ","))
 	propertiesQuery := fmt.Sprintf(`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))
 	| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))
 	| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))
-	| extend tags = bag_pack_columns(%s)
-	| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
+	| extend tags = bag_pack_columns(%s)`, strings.Join(tags, ","))
+	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
 	| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
-	| order by startTime asc`, strings.Join(tags, ","))
+	| order by startTime asc`
 
-	return baseQuery + whereClause + propertiesQuery
+	return baseQuery + whereClause + propertiesQuery + filtersClause + projectClause
 }
