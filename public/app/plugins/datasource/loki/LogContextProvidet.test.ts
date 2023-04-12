@@ -2,10 +2,11 @@ import { FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import LokiLanguageProvider from './LanguageProvider';
 import { LogContextProvider } from './LogContextProvider';
+import { LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {
   start: jest.fn(),
-  getLabelKeys: jest.fn(() => ['foo']),
+  getLabelKeys: jest.fn(() => ['bar']),
 } as unknown as LokiLanguageProvider;
 
 const defaultLogRow = {
@@ -19,42 +20,63 @@ const defaultLogRow = {
       },
     ],
   }),
-  labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
+  labels: { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
   uid: '1',
 } as unknown as LogRowModel;
 
-describe('new context ui', () => {
-  it('returns expression with 1 label', async () => {
-    const lcp = new LogContextProvider(defaultLanguageProviderMock);
-    const result = await lcp.prepareContextExpr(defaultLogRow);
-
-    expect(result).toEqual('{foo="uniqueParsedLabel"}');
-  });
-
-  it('returns empty expression for parsed labels', async () => {
-    const languageProviderMock = {
-      ...defaultLanguageProviderMock,
-      getLabelKeys: jest.fn(() => []),
-    } as unknown as LokiLanguageProvider;
-
-    const lcp = new LogContextProvider(languageProviderMock);
-    const result = await lcp.prepareContextExpr(defaultLogRow);
-
-    expect(result).toEqual('{}');
-  });
-});
-
-describe('prepareLogRowContextQueryTarget', () => {
+describe('LogContextProvider', () => {
   const lcp = new LogContextProvider(defaultLanguageProviderMock);
-  it('creates query with only labels from /labels API', async () => {
-    const contextQuery = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+  describe('prepareLogRowContextQueryTarget', () => {
+    it('returns expression with 1 label returned by language provider', async () => {
+      const result = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+      expect(result.query.expr).toEqual('{bar="baz"}');
+    });
 
-    expect(contextQuery.query.expr).toContain('uniqueParsedLabel');
-    expect(contextQuery.query.expr).not.toContain('baz');
-  });
+    it('returns empty expression if no label keys from language provider', async () => {
+      const languageProviderMock = {
+        ...defaultLanguageProviderMock,
+        getLabelKeys: jest.fn(() => []),
+      } as unknown as LokiLanguageProvider;
 
-  it('should call languageProvider.start to fetch labels', async () => {
-    await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
-    expect(lcp.languageProvider.start).toBeCalled();
+      const lcp = new LogContextProvider(languageProviderMock);
+      const result = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+      expect(result.query.expr).toEqual('{}');
+    });
+
+    it('creates query with only labels from /labels API', async () => {
+      const contextQuery = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+
+      expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
+      expect(contextQuery.query.expr).toContain('baz');
+    });
+
+    it('should call languageProvider.start to fetch labels', async () => {
+      await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD');
+      expect(lcp.languageProvider.start).toBeCalled();
+    });
+
+    it('should add parser to query if it exists in original query', async () => {
+      const contextQuery = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD', {
+        expr: '{bar="baz"} | logfmt',
+      } as unknown as LokiQuery);
+
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt`);
+    });
+
+    it('should use context filters if they exist for row', async () => {
+      const lcp = new LogContextProvider(defaultLanguageProviderMock);
+      lcp.contextFilters = {
+        1: [
+          { value: 'bar', enabled: true, fromParser: false, label: 'bar' },
+          { value: 'foo', enabled: true, fromParser: true, label: 'foo' },
+          { value: 'xyz', enabled: true, fromParser: true, label: 'xyz' },
+        ],
+      };
+      const contextQuery = await lcp.prepareLogRowContextQueryTarget(defaultLogRow, 10, 'BACKWARD', {
+        expr: '{bar="baz"} | logfmt',
+      } as unknown as LokiQuery);
+
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | foo=\`uniqueParsedLabel\` | xyz=\`abc\``);
+    });
   });
 });

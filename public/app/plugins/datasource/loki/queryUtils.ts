@@ -18,6 +18,7 @@ import {
   Matcher,
   Identifier,
 } from '@grafana/lezer-logql';
+import { DataQuery } from '@grafana/schema';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -304,3 +305,12 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
 
   return queries.length > 0;
 }
+
+export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
+  if (!query) {
+    return false;
+  }
+
+  const isLokiQuery = query as LokiQuery;
+  return isLokiQuery.expr !== undefined;
+};

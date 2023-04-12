@@ -6,15 +6,17 @@ import { LokiContextUi } from './components/LokiContextUi';
 import { REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
-import { getParserFromQuery } from './queryUtils';
+import { getParserFromQuery, isLokiQuery } from './queryUtils';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export class LogContextProvider {
   languageProvider: LokiLanguageProvider;
+  contextFilters: { [key: string]: ContextFilter[] };
   onContextClose: (() => void) | undefined;
 
   constructor(languageProvider: LokiLanguageProvider) {
     this.languageProvider = languageProvider;
+    this.contextFilters = {};
   }
 
   async prepareLogRowContextQueryTarget(
@@ -23,7 +25,12 @@ export class LogContextProvider {
     direction: 'BACKWARD' | 'FORWARD',
     origQuery?: DataQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    let expr = await this.prepareContextExpr(row, origQuery);
+    let originalLokiQuery: LokiQuery | undefined = undefined;
+    // Type guard for LokiQuery
+    if (origQuery && isLokiQuery(origQuery)) {
+      originalLokiQuery = origQuery;
+    }
+    let expr = await this.prepareContextExpr(row, originalLokiQuery);
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
@@ -73,42 +80,8 @@ export class LogContextProvider {
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
-      this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-        await this.languageProvider.start();
-        const labels = this.languageProvider.getLabelKeys();
+      this.contextFilters[row.uid] = contextFilters;
 
-        let expr = contextFilters
-          .map((filter) => {
-            const label = filter.value;
-            if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-              // escape backslashes in label as users can't escape them by themselves
-              return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-            }
-            return '';
-          })
-          // Filter empty strings
-          .filter((label) => !!label)
-          .join(',');
-
-        expr = `{${expr}}`;
-
-        const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-        if (parserContextFilters.length) {
-          // we should also filter for labels from parsers, let's find the right parser
-          if (origQuery) {
-            const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-            if (parser) {
-              expr = addParserToQuery(expr, parser);
-            }
-          }
-          for (const filter of parserContextFilters) {
-            if (filter.enabled) {
-              expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-            }
-          }
-        }
-        return expr;
-      };
       if (runContextQuery) {
         runContextQuery();
       }
@@ -118,7 +91,7 @@ export class LogContextProvider {
     this.onContextClose =
       this.onContextClose ??
       (() => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
+        delete this.contextFilters[row.uid];
       });
 
     return LokiContextUi({
@@ -129,16 +102,56 @@ export class LogContextProvider {
     });
   }
 
-  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    return await this.prepareContextExprWithoutParsedLabels(row, origQuery);
+  private async prepareContextExpr(row: LogRowModel, query: LokiQuery | undefined): Promise<string> {
+    await this.languageProvider.start();
+    const labelKeys = this.languageProvider.getLabelKeys();
+
+    if (this.contextFilters[row.uid]) {
+      // If we have context filters, use them to create query expr
+      return this.processContextFiltersToExpr(row, query);
+    } else {
+      // Otherwise use labels from row
+      return this.processRowToExpr(labelKeys, row, query);
+    }
   }
 
-  private async prepareContextExprWithoutParsedLabels(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    await this.languageProvider.start();
-    const labels = this.languageProvider.getLabelKeys();
-    const expr = Object.keys(row.labels)
+  private processContextFiltersToExpr = (row: LogRowModel, query: LokiQuery | undefined) => {
+    const labelFilters = this.contextFilters[row.uid]
+      .map((filter) => {
+        const label = filter.value;
+        if (filter && !filter.fromParser && filter.enabled) {
+          // escape backslashes in label as users can't escape them by themselves
+          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+        }
+        return '';
+      })
+      // Filter empty strings
+      .filter((label) => !!label)
+      .join(',');
+
+    let expr = `{${labelFilters}}`;
+
+    // We need to have original query to get parser and include parsed labels
+    if (query) {
+      const parser = getParserFromQuery(query.expr);
+      if (parser) {
+        expr = addParserToQuery(expr, parser);
+        const parsedLabels = this.contextFilters[row.uid].filter((filter) => filter.fromParser && filter.enabled);
+        for (const parsedLabel of parsedLabels) {
+          if (parsedLabel.enabled) {
+            expr = addLabelToQuery(expr, parsedLabel.label, '=', row.labels[parsedLabel.label]);
+          }
+        }
+      }
+    }
+
+    return expr;
+  };
+
+  private processRowToExpr = (labelKeys: string[], row: LogRowModel, query: LokiQuery | undefined) => {
+    const labelFilters = Object.keys(row.labels)
       .map((label: string) => {
-        if (labels.includes(label)) {
+        if (labelKeys.includes(label)) {
           // escape backslashes in label as users can't escape them by themselves
           return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
         }
@@ -147,6 +160,15 @@ export class LogContextProvider {
       .filter((label) => !!label)
       .join(',');
 
-    return `{${expr}}`;
-  }
+    let expr = `{${labelFilters}}`;
+
+    // We also want to include parser, if it exists in original query
+    if (query) {
+      const parser = getParserFromQuery(query.expr);
+      if (parser) {
+        expr = addParserToQuery(expr, parser);
+      }
+    }
+    return expr;
+  };
 }
