@@ -515,9 +515,6 @@ export class ElasticDatasource
               statusText: err.statusText,
             };
             throw error;
-          }),
-          switchMap((res) => {
-            return of(processToLogContextDataFrames(res));
           })
         )
       );
@@ -1221,44 +1218,6 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
         },
       },
     ],
-  };
-}
-
-function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
-  const frames = result.data.map((frame) => sortDataFrame(frame, 0, true));
-  const processedFrames = frames.map((frame) => {
-    // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-    const cache = new FieldCache(frame);
-    const timestampField = cache.getFirstFieldOfType(FieldType.time);
-    const lineField = cache.getFirstFieldOfType(FieldType.string);
-    const idField = cache.getFieldByName('_id');
-
-    if (!timestampField || !lineField || !idField) {
-      return { ...frame, fields: [] };
-    }
-
-    return {
-      ...frame,
-      fields: [
-        {
-          ...timestampField,
-          name: 'ts',
-        },
-        {
-          ...lineField,
-          name: 'line',
-        },
-        {
-          ...idField,
-          name: 'id',
-        },
-      ],
-    };
-  });
-
-  return {
-    ...result,
-    data: processedFrames,
   };
 }
 
