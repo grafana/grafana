@@ -126,7 +126,7 @@ var (
 		{
 			Name:        "correlations",
 			Description: "Correlations page",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
 		},
 		{

@@ -44,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `panelTitleSearch`                | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
 | `migrationLocking`                | Lock database during migrations                                                                                                                                                              |
+| `correlations`                    | Correlations page                                                                                                                                                                            |
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
 | `autoMigrateOldPanels`            | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
@@ -52,7 +53,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `accessControlOnCall`             | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                   | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
-| `correlations`                    | Correlations page                                                                                                                                                                            |
 
 ## Alpha feature toggles
 
