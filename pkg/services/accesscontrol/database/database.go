@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -347,7 +348,7 @@ func permissionDiff(previous, new []accesscontrol.Permission) (added, removed []
 
 func (*AccessControlStore) saveRole(ctx context.Context, sess *db.Session, role *accesscontrol.Role) (*accesscontrol.Role, error) {
 	existingRole, err := getRoleByUID(ctx, sess, role.UID)
-	if err != nil && err != accesscontrol.ErrRoleNotFound {
+	if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
 		return nil, err
 	}
 
