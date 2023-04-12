@@ -468,7 +468,11 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		if err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("unable to close rows session", "error", err)
+			}
+		}()
 
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
