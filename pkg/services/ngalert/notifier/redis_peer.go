@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -64,6 +63,8 @@ type redisPeer struct {
 	messagesSentSize     *prometheus.CounterVec
 	nodePingDuration     *prometheus.HistogramVec
 
+	activeMembers []string
+
 	// Last known position in the cluster.
 	position int
 	// The time when we computed the position in the cluster the last time successfully.
@@ -106,6 +107,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		heartbeatInterval: time.Second * 5,
 		heartbeatTimeout:  time.Minute,
 		positionValidFor:  time.Minute,
+		activeMembers:     make([]string, 0),
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -175,6 +177,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	p.subs[fullStateChannelReq] = p.redis.Subscribe(context.Background(), p.withPrefix(fullStateChannelReq))
 
 	go p.heartbeatLoop()
+	go p.membersSyncLoop()
 	go p.fullStateSyncPublishLoop()
 	go p.fullStateSyncReceiveLoop()
 	go p.fullStateReqReceiveLoop()
@@ -206,26 +209,81 @@ func (p *redisPeer) heartbeatLoop() {
 	}
 }
 
+func (p *redisPeer) membersSyncLoop() {
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		select {
+		case <-ticker.C:
+			startTime := time.Now()
+			// The 100 is a hint for the server, how many records there might be for the
+			// provided pattern. It _might_ only return the first 100 records, which should
+			// be more than enough for our use case.
+			// More here: https://redis.io/commands/scan/
+			members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
+			if err != nil {
+				p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
+				p.activeMembers = []string{}
+				continue
+			}
+			// This might happen on startup, when no value is in the store yet.
+			if len(members) == 0 {
+				p.activeMembers = []string{}
+				continue
+			}
+			values := p.redis.MGet(context.Background(), members...)
+			if values.Err() != nil {
+				p.logger.Error("error getting values from redis", "err", values.Err(), "keys", members)
+			}
+			peers := []string{}
+			// After getting the list of possible members from redis, we filter
+			// those out that have failed to send a heartbeat during the heartbeatTimeout.
+			for i, peer := range members {
+				val := values.Val()[i]
+				if val == nil {
+					continue
+				}
+				ts, err := strconv.ParseInt(val.(string), 10, 64)
+				if err != nil {
+					p.logger.Error("error parsing timestamp value", "err", err, "peer", peer, "val", val)
+					continue
+				}
+				tm := time.Unix(ts, 0)
+				if tm.Before(time.Now().Add(-p.heartbeatTimeout)) {
+					continue
+				}
+				peers = append(peers, peer)
+			}
+			sort.Strings(peers)
+			dur := time.Since(startTime)
+			p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
+			p.activeMembers = peers
+		case <-p.shutdownc:
+			ticker.Stop()
+			return
+		}
+	}
+}
+
 func (p *redisPeer) Position() int {
-	members := p.Members()
+	startTime := time.Now()
 	// When the members array is empty and we fetched our position successfully
 	// prior, we can assume that currently the network is down.
 	// To prevent a spike of duplicate messages, we return for the duration of
 	// lastPositionValidFor the last known position and only failover to position
 	// 0 afterwards if we do not eventually recover.
-	if len(members) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
+	if len(p.activeMembers) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
 		p.logger.Warn("failed to fetch position from redis, falling back to last know position", "last_known", p.position)
 		return p.position
 	}
-	for i, peer := range members {
+	for i, peer := range p.activeMembers {
 		if peer == p.withPrefix(p.name) {
-			p.logger.Debug("cluster position found", "name", p.name, "position", i)
 			p.position = i
 			p.positionFetchedAt = time.Now()
+			p.logger.Debug("cluster position found", "name", p.name, "position", i, "dur_ms", time.Since(startTime).Milliseconds())
 			return i
 		}
 	}
-
+	p.logger.Warn("failed to look up position, empty members and postion timeout reached")
 	return 0
 }
 
@@ -254,43 +312,7 @@ func (p *redisPeer) GetHealthScore() int {
 
 // Members returns a list of active cluster Members.
 func (p *redisPeer) Members() []string {
-	// The 100 is a hint for the server, how many records there might be for the
-	// provided pattern. It _might_ only return the first 100 records, which should
-	// be more than enough for our use case.
-	// More here: https://redis.io/commands/scan/
-	members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
-	if err != nil {
-		p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
-		return []string{}
-	}
-	// This might happen on startup, when no value is in the store yet.
-	if len(members) == 0 {
-		return []string{}
-	}
-	values := p.redis.MGet(context.Background(), members...)
-	if values.Err() != nil {
-		p.logger.Error("error getting values from redis", "err", values.Err(), "keys", members)
-	}
-	peers := []string{}
-	// After getting the list of possible members from redis, we filter
-	// those out that have failed to send a heartbeat during the heartbeatTimeout.
-	for i, peer := range members {
-		val := values.Val()[i]
-		if val == nil {
-			continue
-		}
-		ts, err := strconv.ParseInt(val.(string), 10, 64)
-		if err != nil {
-			panic(err)
-		}
-		tm := time.Unix(ts, 0)
-		if tm.Before(time.Now().Add(-p.heartbeatTimeout)) {
-			continue
-		}
-		peers = append(peers, peer)
-	}
-	sort.Strings(peers)
-	return peers
+	return p.activeMembers
 }
 
 func (p *redisPeer) WaitReady(ctx context.Context) error {
@@ -375,16 +397,9 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 			}
 			p.messagesReceived.WithLabelValues(update).Inc()
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
-			var envelop envelop
-			if err := json.Unmarshal([]byte(data.Payload), &envelop); err != nil {
-				p.logger.Warn("error decoding the received broadcast message", "err", err)
-				continue
-			}
-			if envelop.Sender == p.name {
-				continue
-			}
+
 			var part clusterpb.Part
-			if err := proto.Unmarshal(envelop.Payload, &part); err != nil {
+			if err := proto.Unmarshal([]byte(data.Payload), &part); err != nil {
 				p.logger.Warn("error decoding the received broadcast message", "err", err)
 				continue
 			}
@@ -454,17 +469,8 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 			p.messagesReceived.WithLabelValues(fullState).Inc()
 			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
 
-			var envelop envelop
-			if err := json.Unmarshal([]byte(data.Payload), &envelop); err != nil {
-				p.logger.Warn("error decoding the received broadcast message", "err", err)
-				continue
-			}
-			if envelop.Sender == p.name {
-				continue
-			}
-
 			var fs clusterpb.FullState
-			if err := proto.Unmarshal(envelop.Payload, &fs); err != nil {
+			if err := proto.Unmarshal([]byte(data.Payload), &fs); err != nil {
 				p.logger.Warn("error unmarshaling the received remote state", "err", err)
 				continue
 			}
@@ -534,10 +540,6 @@ func (p *redisPeer) LocalState() []byte {
 	if err != nil {
 		p.logger.Warn("error encoding the local state to proto", "err", err)
 	}
-	b, err = json.Marshal(envelop{Sender: p.name, Payload: b})
-	if err != nil {
-		p.logger.Warn("error encoding the local state to json", "err", err)
-	}
 	p.messagesSent.WithLabelValues(fullState).Inc()
 	p.messagesSentSize.WithLabelValues(fullState).Add(float64(len(b)))
 	return b
@@ -553,14 +555,6 @@ func (p *redisPeer) Shutdown() {
 	}
 }
 
-// The envelop is a simple wrapper for a message that we send through redis
-// pub/sub. This wrapper enables us to know from which peer the message is
-// coming and therfore we can ignoring our own message.
-type envelop struct {
-	Sender  string `json:"sender"`
-	Payload []byte `json:"payload"`
-}
-
 type RedisChannel struct {
 	p       *redisPeer
 	key     string
@@ -573,14 +567,7 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	if err != nil {
 		return
 	}
-	data, err := json.Marshal(envelop{
-		Sender:  c.p.name,
-		Payload: b,
-	})
-	if err != nil {
-		return
-	}
-	pub := c.p.redis.Publish(context.Background(), c.channel, string(data))
+	pub := c.p.redis.Publish(context.Background(), c.channel, string(b))
 	// An error here might not be as critical as one might think on first sight.
 	// The state will eventually be propagted to other members by the full sync.
 	if pub.Err() != nil {
