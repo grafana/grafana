@@ -206,8 +206,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponse
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && *queryJSONModel.AzureLogAnalytics.OperationId != "" {
-		query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureLogAnalytics.OperationId, tracer)
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && *queryJSONModel.AzureTraces.OperationId != "" {
+		query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
 		if err != nil {
 			dataResponse.Error = err
 			return dataResponse
