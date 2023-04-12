@@ -264,7 +264,6 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
         dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
       }
     }
-    // dispatch(stateSave());
   };
 }
 
@@ -489,8 +488,6 @@ export const runQueries = (exploreId: ExploreId, options?: { preserveCache?: boo
       handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
     }
 
-    // dispatch(stateSave({ replace: options?.replaceUrl }));
-
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
     // If we have results saved in cache, we are going to use those results instead of running queries
@@ -502,21 +499,12 @@ export const runQueries = (exploreId: ExploreId, options?: { preserveCache?: boo
       );
 
       newQuerySubscription = newQuerySource.subscribe((data) => {
-        if (!data.error) {
-          // dispatch(stateSave());
-        }
-
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
       });
 
       // If we don't have results saved in cache, run new queries
     } else {
-      if (!hasNonEmptyQuery(queries)) {
-        // dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
-        return;
-      }
-
-      if (!datasourceInstance) {
+      if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
         return;
       }
 

@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import { parseUrlState } from 'app/core/utils/explore';
@@ -9,17 +10,14 @@ import { splitClose, syncTimesAction } from '../state/main';
 import { runQueries, setQueriesAction } from '../state/query';
 import { updateTime } from '../state/time';
 
-import { getTimeRangeFromUrl, getUrlStateFromPaneState } from './utils';
-import { isEqual } from 'lodash';
+import { getUrlStateFromPaneState } from './utils';
 
 /**
  * Syncs URL changes with Explore's panes state by reacting to URL changes and updating the state.
  */
 export function useStateSync(params: ExploreQueryParams) {
   const dispatch = useDispatch();
-  const panes = useSelector((state) => state.explore.panes);
-
-  const timeZone = useSelector((state) => state.user.timeZone);
+  const statePanes = useSelector((state) => state.explore.panes);
 
   useEffect(() => {
     (async () => {
@@ -43,16 +41,14 @@ export function useStateSync(params: ExploreQueryParams) {
         dispatch(syncTimesAction({ syncedTimes: false }));
       }
 
-      for (const [id, pane] of Object.entries(urlPanes)) {
+      for (const [id, urlPane] of Object.entries(urlPanes)) {
         const exploreId = id as ExploreId;
         /**
          * We want to initialize the pane only if:
          * */
-        const { datasource, queries, range: initialRange, panelsState } = pane;
-        const range = getTimeRangeFromUrl(initialRange, timeZone);
+        const { datasource, queries, range, panelsState } = urlPane;
 
-        if (panes[exploreId] === undefined) {
-          // TODO: default query
+        if (statePanes[exploreId] === undefined) {
           dispatch(
             initializeExplore({
               exploreId,
@@ -67,18 +63,18 @@ export function useStateSync(params: ExploreQueryParams) {
 
           continue;
         } else {
-          const update = urlDiff(pane, getUrlStateFromPaneState(panes[exploreId]!));
+          const update = urlDiff(urlPane, getUrlStateFromPaneState(statePanes[exploreId]!));
 
           if (update.datasource) {
             await dispatch(changeDatasource(exploreId, datasource));
           }
 
           if (update.range) {
-            dispatch(updateTime({ exploreId, rawRange: range.raw }));
+            dispatch(updateTime({ exploreId, rawRange: range }));
           }
 
           if (update.queries) {
-            dispatch(setQueriesAction({ exploreId, queries: pane.queries }));
+            dispatch(setQueriesAction({ exploreId, queries: urlPane.queries }));
           }
 
           if (update.queries || update.range) {
@@ -89,7 +85,7 @@ export function useStateSync(params: ExploreQueryParams) {
 
       // Close all the panes that are not in the URL but are still in the store
       // ie. because the user has navigated back after oprning the split view.
-      Object.keys(panes)
+      Object.keys(statePanes)
         .filter((keyInStore) => !Object.keys(urlPanes).includes(keyInStore))
         .forEach((paneId) => dispatch(splitClose(paneId as ExploreId)));
     })();

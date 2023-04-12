@@ -33,7 +33,8 @@ export function ExplorePaneContainer({ exploreId }: Props) {
   const ref = useRef(null);
 
   useEffect(() => {
-    return () => eventBus.current.removeAllListeners();
+    const bus = eventBus.current;
+    return () => bus.removeAllListeners();
   }, []);
 
   return (

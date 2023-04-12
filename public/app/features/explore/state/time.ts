@@ -144,8 +144,6 @@ export function makeAbsoluteTime(): ThunkResult<void> {
       const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
       dispatch(updateTime({ exploreId: exploreId as ExploreId, absoluteRange }));
     });
-
-    // dispatch(stateSave());
   };
 }
 

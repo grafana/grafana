@@ -9,10 +9,12 @@ import {
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  RawTimeRange,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { DEFAULT_RANGE, getQueryKeys } from 'app/core/utils/explore';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
@@ -21,7 +23,7 @@ import { historyReducer } from './history';
 import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse } from './utils';
+import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
 // Types
 
 //
@@ -104,10 +106,9 @@ interface InitializeExploreOptions {
   exploreId: ExploreId;
   datasource: DataSourceRef | string;
   queries: DataQuery[];
-  range: TimeRange;
+  range: RawTimeRange;
   containerWidth: number;
   panelsState?: ExplorePanelsState;
-  isFromCompactUrl?: boolean;
 }
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -120,7 +121,7 @@ interface InitializeExploreOptions {
 export const initializeExplore = createAsyncThunk(
   'explore/initializeExplore',
   async (
-    { exploreId, datasource, queries, range, containerWidth, panelsState, isFromCompactUrl }: InitializeExploreOptions,
+    { exploreId, datasource, queries, range, containerWidth, panelsState }: InitializeExploreOptions,
     { dispatch, getState }
   ) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -139,7 +140,7 @@ export const initializeExplore = createAsyncThunk(
         exploreId,
         containerWidth,
         queries,
-        range,
+        range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
       })

@@ -51,12 +51,10 @@ export const maximizePaneAction = createAction<{
 export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
 
 /**
- * Close the split view and save URL state.
+ * Close the pane with the given id.
  */
-export interface SplitCloseActionPayload {
-  itemId: ExploreId;
-}
-export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
+type SplitCloseActionPayload = ExploreId;
+export const splitClose = createAction<SplitCloseActionPayload>('explore/splitClose');
 
 export interface SetPaneStateActionPayload {
   [itemId: string]: Partial<ExploreItemState>;
@@ -90,19 +88,6 @@ export const splitOpen = createAsyncThunk(
     );
   }
 );
-
-/**
- * Close the split view and save URL state. We need to update the state here because when closing we cannot just
- * update the URL and let the components handle it because if we swap panes from right to left it is not easily apparent
- * from the URL.
- */
-// FIXME: this is superfluous, we can just use splitCloseAction
-export function splitClose(itemId: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(splitCloseAction({ itemId }));
-    // dispatch(stateSave());
-  };
-}
 
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
@@ -154,10 +139,9 @@ export const initialExploreState: ExploreState = {
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
-  if (splitCloseAction.match(action)) {
-    const { itemId } = action.payload;
+  if (splitClose.match(action)) {
     const panes = {
-      left: itemId === ExploreId.left ? state.panes.right : state.panes.left,
+      left: action.payload === ExploreId.left ? state.panes.right : state.panes.left,
     };
     return {
       ...state,
