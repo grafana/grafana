@@ -9,7 +9,7 @@ weight: 1150
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) version 10.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML using the Grafana configuration file, refer to [Configure SAML authentication in Grafana]({{< relref "../saml/" >}}).
+You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML using the Grafana configuration file, refer to [Configure SAML authentication using the configuration file]({{< relref "../saml/" >}}).
 
 The Grafana SAML UI provides the following advantages over configuring SAML in the Grafana configuration file:
 
@@ -55,5 +55,6 @@ Follow these steps to configure and enable SAML integration:
 1. Click **Next: User mapping**. If you wish to [map user information from SAML assertions]({{< relref "../saml/#assertion-mapping" >}}), complete this section. This section also allows you to set up SAML [team synchronization]({{< relref "../saml/#configure-team-sync" >}}), [role synchronization]({{< relref "../saml/#configure-role-sync" >}}) and [organization mapping]({{< relref "../saml/#configure-organization-mapping" >}}).
 1. Click **Next: Test and enable** and then click **Save and enable**.
    1. If there are issues with your configuration, an error message will appear. Refer back to the previous steps to correct the issues and click on `Save and apply` on the top right corner once you are done.
-1. If there are no configuration issues, SAML integration status will change to `Enabled`. Congratulations! You nave successfully configured your SAML integration.
-1. If you wish to disable SAML integration, click on `Disable` on the top right corner. SAML integration status will change to `Saved, not enabled`.
+1. If there are no configuration issues, SAML integration status will change to `Enabled`.
+   Your SAML configuration is now enabled.
+1. To disable SAML integration, click `Disable` in the top right corner.
