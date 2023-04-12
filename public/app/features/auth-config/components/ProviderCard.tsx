@@ -26,11 +26,7 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
       <div className={styles.footer}>
         {authType && <Badge text={authType} color="blue" icon="info-circle" />}
-        {enabled ? (
-          <Badge text="Enabled" color="green" icon="check" />
-        ) : (
-          <Badge text="Disabled" color="red" icon="times" />
-        )}
+        {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="red" />}
       </div>
     </Card>
   );
