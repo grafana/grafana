@@ -15,7 +15,7 @@ title: Data source HTTP API
 
 # Data source API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.  <--------  This link does not show the permissions needed.  It just leads to the RBAC permissions page.  Either listing these permissions or a link to the specific permissions would be great.
 
 ## Get all data sources
 
