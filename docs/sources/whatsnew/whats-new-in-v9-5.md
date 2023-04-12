@@ -187,6 +187,6 @@ We updated the reporting UI to better fit the new navigation style, adding a hor
 
 ## Experimental support for using JWTs as auth method
 
-_Experimental in all editions of Grafana, for on-prem users only._
+_Experimental in Grafana Open Source and Enterprise._
 
-This feature adds support for using JWT tokens to store rendering keys instead of relying on “remote caching”. It covers most of the rendering use cases, though some still rely on the remote cache as a store. You can enable this by enabling the feature flag `renderAuthJWT` in the `custom.ini` configuration file. It allows you to use JWT in rendering service instead of the main remote cache configured.
+This feature adds support for using JWT tokens to store rendering keys instead of relying on “remote caching”. It covers most of the rendering use cases, though some still rely on the remote cache as a store. You can enable this by enabling the feature flag `renderAuthJWT` in the `custom.ini` configuration file. 
