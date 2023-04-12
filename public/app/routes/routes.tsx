@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
+import { isTruthy } from '@grafana/data';
 import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -139,6 +140,9 @@ export function getAppRoutes(): RouteDescriptor[] {
             )
       ),
     },
+
+    ...(config.featureToggles.nestedFolders ? getNestedFoldersRoutes() : []),
+
     {
       path: '/dashboards',
       component: SafeDynamicImport(
@@ -503,7 +507,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // TODO[Router]
     // ...playlistRoutes,
-  ];
+  ].filter(isTruthy);
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
@@ -552,6 +556,25 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes/:name',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
+    },
+  ];
+}
+
+function getNestedFoldersRoutes(): RouteDescriptor[] {
+  return [
+    {
+      path: '/nested-dashboards',
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
+    },
+
+    {
+      path: '/nested-dashboards/f/:uid',
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
+    },
+
+    {
+      path: '/nested-dashboards/f/:uid/:slug',
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
   ];
 }
