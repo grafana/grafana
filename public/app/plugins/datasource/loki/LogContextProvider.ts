@@ -17,12 +17,12 @@ export class LogContextProvider {
     this.languageProvider = languageProvider;
   }
 
-  prepareLogRowContextQueryTarget = async (
+  async prepareLogRowContextQueryTarget(
     row: LogRowModel,
     limit: number,
     direction: 'BACKWARD' | 'FORWARD',
     origQuery?: DataQuery
-  ): Promise<{ query: LokiQuery; range: TimeRange }> => {
+  ): Promise<{ query: LokiQuery; range: TimeRange }> {
     let expr = await this.prepareContextExpr(row, origQuery);
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
