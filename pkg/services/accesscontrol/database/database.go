@@ -239,7 +239,8 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 }
 
 func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	role, assignment := genExternalServiceRoleAndAssignment(cmd)
+	role := genExternalServiceRole(cmd)
+	assignment := genExternalServiceAssignment(cmd)
 
 	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		// Create or update the role
@@ -263,7 +264,19 @@ func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd ac
 	})
 }
 
-func genExternalServiceRoleAndAssignment(cmd accesscontrol.SaveExternalServiceRoleCommand) (accesscontrol.Role, accesscontrol.UserRole) {
+func genExternalServiceAssignment(cmd accesscontrol.SaveExternalServiceRoleCommand) accesscontrol.UserRole {
+	assignment := accesscontrol.UserRole{
+		OrgID:   cmd.OrgID,
+		UserID:  cmd.ServiceAccountID,
+		Created: time.Now(),
+	}
+	if cmd.Global {
+		assignment.OrgID = accesscontrol.GlobalOrgID
+	}
+	return assignment
+}
+
+func genExternalServiceRole(cmd accesscontrol.SaveExternalServiceRoleCommand) accesscontrol.Role {
 	role := accesscontrol.Role{
 		OrgID:       cmd.OrgID,
 		Version:     1,
@@ -279,16 +292,7 @@ func genExternalServiceRoleAndAssignment(cmd accesscontrol.SaveExternalServiceRo
 	if cmd.Global {
 		role.OrgID = accesscontrol.GlobalOrgID
 	}
-
-	assignment := accesscontrol.UserRole{
-		OrgID:   cmd.OrgID,
-		UserID:  cmd.ServiceAccountID,
-		Created: time.Now(),
-	}
-	if cmd.Global {
-		assignment.OrgID = accesscontrol.GlobalOrgID
-	}
-	return role, assignment
+	return role
 }
 
 func getRoleByUID(ctx context.Context, sess *db.Session, uid string) (*accesscontrol.Role, error) {
