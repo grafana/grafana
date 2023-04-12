@@ -8,9 +8,9 @@ import { buildNavModel } from '../folders/state/navModel';
 import { parseRouteParams } from '../search/utils';
 
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
-import BrowseActions from './components/BrowseActions';
-import BrowseView from './components/BrowseView';
-import SearchView from './components/SearchView';
+import { BrowseActions } from './components/BrowseActions';
+import { BrowseView } from './components/BrowseView';
+import { SearchView } from './components/SearchView';
 
 export interface BrowseDashboardsPageRouteParams {
   uid?: string;
@@ -45,5 +45,3 @@ export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
 });
 
 BrowseDashboardsPage.displayName = 'BrowseDashboardsPage';
-
-export default BrowseDashboardsPage;

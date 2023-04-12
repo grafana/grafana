@@ -6,7 +6,7 @@ interface SearchViewProps {
   searchState: ReturnType<typeof parseRouteParams>;
 }
 
-export default function SearchView({ searchState }: SearchViewProps) {
+export function SearchView({ searchState }: SearchViewProps) {
   return (
     <div>
       <p>SearchView</p>

@@ -6,11 +6,11 @@ import { DashboardViewItem } from 'app/features/search/types';
 
 type NestedData = Record<string, DashboardViewItem[] | undefined>;
 
-interface BrowseDashboardsViewProps {
+interface BrowseViewProps {
   folderUID: string | undefined;
 }
 
-export default function BrowseDashboardsView({ folderUID }: BrowseDashboardsViewProps) {
+export function BrowseView({ folderUID }: BrowseViewProps) {
   const [nestedData, setNestedData] = useState<NestedData>({});
 
   // Note: entire implementation of this component must be replaced.

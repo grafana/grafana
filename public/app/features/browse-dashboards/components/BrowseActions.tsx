@@ -4,7 +4,7 @@ import { Input } from '@grafana/ui';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { SearchLayout } from 'app/features/search/types';
 
-export default function BrowseActions() {
+export function BrowseActions() {
   const fakeState = useMemo(() => {
     return {
       query: '',
