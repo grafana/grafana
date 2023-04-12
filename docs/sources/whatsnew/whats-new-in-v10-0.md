@@ -35,3 +35,18 @@ To try out the nested folders feature, you'll need to enable the `nestedFolders`
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Nested folders in Grafana" >}}
+
+
+## Correlations
+
+_Available in preview in all editions of Grafana._
+
+You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality that enables you to link from any data source, to any data source.
+
+Correlations enable you to seamlessly jump from one data source to another. You define relationships between your different data sources, and when Exploring simply click a button next to a related field in one data source and Grafana will run the corresponding query in the other datasource.
+
+It's worth noting that Correlations is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
+
+To try out Correlations, you'll need to enable the `correlations` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+In subsequent releases, we’ll be refining and enhancing the user interface for Correlations, to provide a more streamlined user experience.
