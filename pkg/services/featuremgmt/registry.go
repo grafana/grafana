@@ -112,8 +112,9 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaExploreSquad,
 		},
 		{
