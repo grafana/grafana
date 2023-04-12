@@ -403,7 +403,6 @@
     "sass": "link:./public/sass",
     "selecto": "1.22.0",
     "semver": "7.3.8",
-    "ses": "^0.18.2",
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
