@@ -344,16 +344,11 @@ export const PromSettings = (props: Props) => {
             <div className="gf-form max-width-30">
               <FormField
                 label="Cache level"
-                labelWidth={13}
-                tooltip={
-                  <>
-                    Sets the browser caching level for editor queries. Higher cache settings are recommended for high
-                    cardinality data sources. {docsTip()}
-                  </>
-                }
+                labelWidth={14}
+                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
                 inputEl={
                   <Select
-                    width={40}
+                    className={`width-25`}
                     onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
                     options={cacheValueOptions}
                     value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
@@ -363,6 +358,50 @@ export const PromSettings = (props: Props) => {
             </div>
           </div>
         )}
+
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <FormField
+              label="Incremental querying (beta)"
+              labelWidth={14}
+              tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
+              inputEl={
+                <InlineSwitch
+                  value={options.jsonData.incrementalQuerying ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          </div>
+        </div>
+
+        <div className="gf-form-inline">
+          {options.jsonData.incrementalQuerying && (
+            <FormField
+              label="Query overlap window"
+              labelWidth={14}
+              tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
+              inputEl={
+                <Input
+                  validationEvents={{
+                    onBlur: [
+                      {
+                        rule: (value) => isValidDuration(value),
+                        errorMessage: 'Invalid duration. Example values: 100s, 10m',
+                      },
+                    ],
+                  }}
+                  className="width-25"
+                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                  spellCheck={false}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          )}
+        </div>
       </div>
 
       <h6 className="page-heading">Advanced</h6>
@@ -410,50 +449,6 @@ export const PromSettings = (props: Props) => {
               disabled={options.readOnly}
             />
           </div>
-        )}
-
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-30">
-            <FormField
-              label="Incremental querying (beta)"
-              labelWidth={14}
-              tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
-              inputEl={
-                <InlineSwitch
-                  value={options.jsonData.incrementalQuerying ?? false}
-                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
-                  disabled={options.readOnly}
-                />
-              }
-            />
-          </div>
-        </div>
-
-        <div className="gf-form-inline">
-          {options.jsonData.incrementalQuerying && (
-            <FormField
-              label="Query overlap window"
-              labelWidth={14}
-              tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
-              inputEl={
-                <Input
-                  validationEvents={{
-                    onBlur: [
-                      {
-                        rule: (value) => isValidDuration(value),
-                        errorMessage: 'Invalid duration. Example values: 100s, 10m',
-                      },
-                    ],
-                  }}
-                  className="width-25"
-                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
-                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
-                  spellCheck={false}
-                  disabled={options.readOnly}
-                />
-              }
-            />
-          )}
         </div>
       </div>
       <ExemplarsSettings
