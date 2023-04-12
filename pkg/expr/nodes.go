@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"gonum.org/v1/gonum/graph/simple"
@@ -261,7 +260,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	if dt, use, _ := shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane)); use {
-		spew.Dump(dn.refID)
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
 		return handleDataplaneFrames(dt.Kind(), response.Frames)
 	}
