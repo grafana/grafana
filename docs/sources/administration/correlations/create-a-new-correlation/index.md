@@ -88,7 +88,7 @@ Description of provisioning properties:
 : regex, or logfmt
 
 **transformation.field**
-: Input field for the transformation
+: The field that will be transformed. If this is not defined, it will apply the transformation to the data from the correlation's config.field.
 
 **transformation.expression**
 : Regex expression (regex transformation only)
