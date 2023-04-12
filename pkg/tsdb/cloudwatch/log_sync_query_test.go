@@ -153,7 +153,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		executeSyncLogQuery = origExecuteSyncLogQuery
 	})
 }
-func Test_executeSyncLogQueryMocks(t *testing.T) {
+func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
