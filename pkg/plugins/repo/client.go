@@ -48,7 +48,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 
 	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
+	err = c.downloadFile(tmpFile, pluginZipURL, checksum, opts{compatOpts})
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
@@ -66,7 +66,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 	}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, opts ...opts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -104,7 +104,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts)
+				err = c.downloadFile(tmpFile, pluginURL, checksum, opts...)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -124,7 +124,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
+	bodyReader, err := c.sendReqNoTimeout(u, opts...)
 	if err != nil {
 		return err
 	}
@@ -148,8 +148,12 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *Client) sendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts)
+type opts struct {
+	compatOpts CompatOpts
+}
+
+func (c *Client) sendReq(url *url.URL, opts ...opts) ([]byte, error) {
+	req, err := c.createReq(url, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +162,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	bodyReader, err := c.handleResp(res, compatOpts)
+	bodyReader, err := c.handleResp(res, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +174,8 @@ func (c *Client) sendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
 	return io.ReadAll(bodyReader)
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
-	req, err := c.createReq(url, compatOpts)
+func (c *Client) sendReqNoTimeout(url *url.URL, opts ...opts) (io.ReadCloser, error) {
+	req, err := c.createReq(url, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -180,24 +184,27 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadC
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResp(res, compatOpts)
+	return c.handleResp(res, opts...)
 }
 
-func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, error) {
+func (c *Client) createReq(url *url.URL, opts ...opts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", compatOpts.GrafanaVersion)
-	req.Header.Set("grafana-os", compatOpts.OS)
-	req.Header.Set("grafana-arch", compatOpts.Arch)
-	req.Header.Set("User-Agent", "grafana "+compatOpts.GrafanaVersion)
+	if len(opts) > 0 {
+		compatOpts := opts[0].compatOpts
+		req.Header.Set("grafana-version", compatOpts.GrafanaVersion)
+		req.Header.Set("grafana-os", compatOpts.OS)
+		req.Header.Set("grafana-arch", compatOpts.Arch)
+		req.Header.Set("User-Agent", "grafana "+compatOpts.GrafanaVersion)
+	}
 
 	return req, err
 }
 
-func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, opts ...opts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := io.ReadAll(res.Body)
 		defer func() {
@@ -206,7 +213,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 			}
 		}()
 		if err != nil || len(body) == 0 {
-			return nil, Response4xxError{StatusCode: res.StatusCode}
+			return nil, newErrResponse4xx(res.StatusCode)
 		}
 		var message string
 		var jsonBody map[string]string
@@ -216,7 +223,12 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: compatOpts.String()}
+
+		var err4xx = newErrResponse4xx(res.StatusCode).WithMessage(message)
+		if len(opts) > 0 {
+			err4xx = err4xx.WithSystemInfo(opts[0].compatOpts.String())
+		}
+		return nil, err4xx
 	}
 
 	if res.StatusCode/100 != 2 {

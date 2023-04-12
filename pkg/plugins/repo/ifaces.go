@@ -30,6 +30,10 @@ func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
 	}
 }
 
+func (co CompatOpts) AnyGrafanaVersion() bool {
+	return co.GrafanaVersion == "*"
+}
+
 func (co CompatOpts) OSAndArch() string {
 	return fmt.Sprintf("%s-%s", strings.ToLower(co.OS), co.Arch)
 }

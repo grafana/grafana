@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -11,24 +12,33 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+const defaultBaseURL = "https://grafana.com/api/plugins"
+
 type Manager struct {
-	client  *Client
-	baseURL string
+	cfg    Cfg
+	client *Client
 
 	log log.PrettyLogger
 }
 
 func ProvideService() *Manager {
-	defaultBaseURL := "https://grafana.com/api/plugins"
-	return New(false, defaultBaseURL, log.NewPrettyLogger("plugin.repository"))
+	return New(Cfg{
+		BaseURL:       defaultBaseURL,
+		SkipTLSVerify: false,
+	}, log.NewPrettyLogger("plugin.repository"))
 }
 
-func New(skipTLSVerify bool, baseURL string, logger log.PrettyLogger) *Manager {
+func New(cfg Cfg, logger log.PrettyLogger) *Manager {
 	return &Manager{
-		client:  newClient(skipTLSVerify, logger),
-		baseURL: baseURL,
-		log:     logger,
+		cfg:    cfg,
+		client: newClient(cfg.SkipTLSVerify, logger),
+		log:    logger,
 	}
+}
+
+type Cfg struct {
+	BaseURL       string
+	SkipTLSVerify bool
 }
 
 // GetPluginArchive fetches the requested plugin archive
@@ -48,12 +58,12 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 
 // GetPluginDownloadOptions returns the options for downloading the requested plugin (with optional `version`)
 func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
-	plugin, err := m.pluginMetadata(pluginID, compatOpts)
+	versions, err := m.pluginVersions(pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := m.selectVersion(&plugin, version, compatOpts)
+	v, err := m.selectVersion(versions, pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -71,32 +81,33 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 	return &PluginDownloadOptions{
 		Version:      v.Version,
 		Checksum:     checksum,
-		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, v.Version),
+		PluginZipURL: m.downloadURL(pluginID, v.Version),
 	}, nil
 }
 
-func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatOpts) (Plugin, error) {
-	m.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, m.baseURL)
-
-	u, err := url.Parse(m.baseURL)
-	if err != nil {
-		return Plugin{}, err
-	}
-	u.Path = path.Join(u.Path, "repo", pluginID)
-
-	body, err := m.client.sendReq(u, compatOpts)
-	if err != nil {
-		return Plugin{}, err
-	}
-
-	var data Plugin
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		m.log.Error("Failed to unmarshal plugin repo response error", err)
-		return Plugin{}, err
+// pluginVersions
+func (m *Manager) pluginVersions(pluginID, version string, compatOpts CompatOpts) ([]Version, error) {
+	if compatOpts.AnyGrafanaVersion() {
+		// if no explicit version requested, get latest version
+		if version == "" {
+			var err error
+			version, err = m.latestPluginVersionNumber(pluginID)
+			if err != nil {
+				return nil, err
+			}
+		}
+		v, err := m.versionInfo(version)
+		if err != nil {
+			return nil, err
+		}
+		return []Version{v}, nil
 	}
 
-	return data, nil
+	v, err := m.repoInfo(pluginID, compatOpts)
+	if err != nil {
+		return nil, err
+	}
+	return v.Versions, nil
 }
 
 // selectVersion selects the most appropriate plugin version
@@ -105,14 +116,14 @@ func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatOpts) (Plugin
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts CompatOpts) (*Version, error) {
+func (m *Manager) selectVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (*Version, error) {
 	version = normalizeVersion(version)
 
 	var ver Version
-	latestForArch := latestSupportedVersion(plugin, compatOpts)
+	latestForArch := latestSupportedVersion(versions, compatOpts)
 	if latestForArch == nil {
 		return nil, ErrVersionUnsupported{
-			PluginID:         plugin.ID,
+			PluginID:         pluginID,
 			RequestedVersion: version,
 			SystemInfo:       compatOpts.String(),
 		}
@@ -121,7 +132,7 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	if version == "" {
 		return latestForArch, nil
 	}
-	for _, v := range plugin.Versions {
+	for _, v := range versions {
 		if v.Version == version {
 			ver = v
 			break
@@ -130,9 +141,9 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 
 	if len(ver.Version) == 0 {
 		m.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch.Version)
+			pluginID, version, latestForArch.Version)
 		return nil, ErrVersionNotFound{
-			PluginID:         plugin.ID,
+			PluginID:         pluginID,
 			RequestedVersion: version,
 			SystemInfo:       compatOpts.String(),
 		}
@@ -140,9 +151,9 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 
 	if !supportsCurrentArch(&ver, compatOpts) {
 		m.log.Debugf("Requested plugin version %s v%s is not supported on your system but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch.Version)
+			pluginID, version, latestForArch.Version)
 		return nil, ErrVersionUnsupported{
-			PluginID:         plugin.ID,
+			PluginID:         pluginID,
 			RequestedVersion: version,
 			SystemInfo:       compatOpts.String(),
 		}
@@ -163,8 +174,8 @@ func supportsCurrentArch(version *Version, compatOpts CompatOpts) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *Plugin, compatOpts CompatOpts) *Version {
-	for _, v := range plugin.Versions {
+func latestSupportedVersion(versions []Version, compatOpts CompatOpts) *Version {
+	for _, v := range versions {
 		ver := v
 		if supportsCurrentArch(&ver, compatOpts) {
 			return &ver
@@ -180,4 +191,85 @@ func normalizeVersion(version string) string {
 	}
 
 	return normalized
+}
+
+func (m *Manager) downloadURL(pluginID, version string) string {
+	return fmt.Sprintf("%s/%s/version/%s/download", m.cfg.BaseURL, pluginID, version)
+}
+
+// versionInfo returns the plugin version information from /api/plugins/$pluginID/version/$version
+func (m *Manager) versionInfo(version string) (Version, error) {
+	u, err := url.Parse(m.cfg.BaseURL)
+	if err != nil {
+		return Version{}, err
+	}
+	u.Path = path.Join(u.Path, "version", version)
+
+	body, err := m.client.sendReq(u)
+	if err != nil {
+		return Version{}, err
+	}
+
+	var pv PluginVersion
+	err = json.Unmarshal(body, &pv)
+	if err != nil {
+		m.log.Error("Failed to unmarshal plugin version response", err)
+		return Version{}, err
+	}
+
+	archMeta := make(map[string]ArchMeta)
+	for _, p := range pv.Packages {
+		archMeta[p.PackageName] = ArchMeta{SHA256: p.Sha256}
+	}
+
+	return Version{Version: version, Arch: archMeta}, nil
+}
+
+// latestPluginVersionNumber will get latest version from /api/plugins/$pluginID
+func (m *Manager) latestPluginVersionNumber(pluginID string) (string, error) {
+	u, err := url.Parse(m.cfg.BaseURL)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, pluginID)
+
+	body, err := m.client.sendReq(u)
+	if err != nil {
+		return "", err
+	}
+	var pv Plugin
+	err = json.Unmarshal(body, &pv)
+	if err != nil {
+		m.log.Error("Failed to unmarshal plugin version response", err)
+		return "", err
+	}
+
+	if pv.Status != "active" || pv.VersionStatus != "active" {
+		return "", errors.New("plugin is not active")
+	}
+
+	return pv.Version, nil
+}
+
+func (m *Manager) repoInfo(pluginID string, compatOpts CompatOpts) (PluginRepo, error) {
+	u, err := url.Parse(m.cfg.BaseURL)
+	if err != nil {
+		return PluginRepo{}, err
+	}
+
+	u.Path = path.Join(u.Path, "repo", pluginID)
+
+	body, err := m.client.sendReq(u, opts{compatOpts})
+	if err != nil {
+		return PluginRepo{}, err
+	}
+
+	var v PluginRepo
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		m.log.Error("Failed to unmarshal plugin repo response", err)
+		return PluginRepo{}, err
+	}
+
+	return v, nil
 }

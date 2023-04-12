@@ -51,7 +51,7 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 
 func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv := []string{
-		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
+		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion), //REMOVE THIS IN PR THIS WEEK BRO PLZ
 	}
 
 	if i.license != nil {
