@@ -6,6 +6,8 @@ import {
   DataQueryResponse,
   DataSourceWithLogsContextSupport,
   GrafanaTheme2,
+  LogRowContextOptions,
+  LogRowContextQueryDirection,
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -16,12 +18,10 @@ import { Modal, Spinner, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
 import { LogRows } from '../LogRows';
 
 import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
-import { RowContextOptions } from './types';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -94,7 +94,7 @@ interface LogRowContextModalProps {
   open: boolean;
   timeZone: string;
   onClose: () => void;
-  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -129,12 +129,16 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         getRowContext(row, {
           limit: logsSortOrder === LogsSortOrder.Descending ? limit + 1 : limit,
           direction:
-            logsSortOrder === LogsSortOrder.Descending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward,
+            logsSortOrder === LogsSortOrder.Descending
+              ? LogRowContextQueryDirection.Forward
+              : LogRowContextQueryDirection.Backward,
         }),
         getRowContext(row, {
           limit: logsSortOrder === LogsSortOrder.Ascending ? limit + 1 : limit,
           direction:
-            logsSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward,
+            logsSortOrder === LogsSortOrder.Ascending
+              ? LogRowContextQueryDirection.Forward
+              : LogRowContextQueryDirection.Backward,
         }),
       ]);
 
