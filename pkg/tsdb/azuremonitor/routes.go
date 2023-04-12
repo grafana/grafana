@@ -32,7 +32,7 @@ var azChinaManagement = types.AzRoute{
 }
 
 var azLogAnalytics = types.AzRoute{
-	URL:     "https://api.loganalytics.io",
+	URL:     "https://api.loganalytics.azure.com",
 	Scopes:  []string{"https://api.loganalytics.io/.default"},
 	Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
 }
