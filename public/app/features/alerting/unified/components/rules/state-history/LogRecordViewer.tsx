@@ -19,45 +19,48 @@ interface LogRecordViewerProps {
   onLabelClick?: (label: string) => void;
 }
 
-export function LogRecordViewerByTimestamp({ records, commonLabels, logsRef, onLabelClick }: LogRecordViewerProps) {
-  const styles = useStyles2(getStyles);
+export const LogRecordViewerByTimestamp = React.memo(
+  ({ records, commonLabels, logsRef, onLabelClick }: LogRecordViewerProps) => {
+    const styles = useStyles2(getStyles);
 
-  const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
+    const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
 
-  return (
-    <div className={styles.logsScrollable}>
-      {Object.entries(groupedLines).map(([key, records]) => {
-        return (
-          <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
-            <div>
-              <Timestamp time={parseInt(key, 10)} />
-              <div className={styles.logsContainer}>
-                {records.map((logRecord) => (
-                  <React.Fragment key={uniqueId()}>
-                    <AlertStateTag state={logRecord.line.previous} size="sm" muted />
-                    <Icon name="arrow-right" size="sm" />
-                    <AlertStateTag state={logRecord.line.current} />
-                    <Stack direction="row">
-                      <AlertInstanceValues record={logRecord.line.values} />
-                    </Stack>
-                    <div>
-                      <TagList
-                        tags={omitLabels(Object.entries(logRecord.line.labels), commonLabels).map(
-                          ([key, value]) => `${key}=${value}`
+    return (
+      <div className={styles.logsScrollable}>
+        {Object.entries(groupedLines).map(([key, records]) => {
+          return (
+            <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
+              <div>
+                <Timestamp time={parseInt(key, 10)} />
+                <div className={styles.logsContainer}>
+                  {records.map(({ line }) => (
+                    <React.Fragment key={uniqueId()}>
+                      <AlertStateTag state={line.previous} size="sm" muted />
+                      <Icon name="arrow-right" size="sm" />
+                      <AlertStateTag state={line.current} />
+                      <Stack direction="row">{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                      <div>
+                        {line.labels && (
+                          <TagList
+                            tags={omitLabels(Object.entries(line.labels), commonLabels).map(
+                              ([key, value]) => `${key}=${value}`
+                            )}
+                            onClick={onLabelClick}
+                          />
                         )}
-                        onClick={onLabelClick}
-                      />
-                    </div>
-                  </React.Fragment>
-                ))}
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+          );
+        })}
+      </div>
+    );
+  }
+);
+LogRecordViewerByTimestamp.displayName = 'LogRecordViewerByTimestamp';
 
 export function LogRecordViewerByInstance({ records, commonLabels, logsRef }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
@@ -73,21 +76,19 @@ export function LogRecordViewerByInstance({ records, commonLabels, logsRef }: Lo
           <Stack direction="column" key={key}>
             <h4>
               <TagList
-                tags={omitLabels(Object.entries(records[0].line.labels), commonLabels).map(
+                tags={omitLabels(Object.entries(records[0].line.labels ?? {}), commonLabels).map(
                   ([key, value]) => `${key}=${value}`
                 )}
               />
             </h4>
             <div className={styles.logsContainer}>
-              {records.map((logRecord) => (
+              {records.map(({ line, timestamp }) => (
                 <div key={uniqueId()} ref={(ref) => ref && logsRef.current.push(ref)}>
-                  <AlertStateTag state={logRecord.line.previous} size="sm" muted />
+                  <AlertStateTag state={line.previous} size="sm" muted />
                   <Icon name="arrow-right" size="sm" />
-                  <AlertStateTag state={logRecord.line.current} />
-                  <Stack direction="row">
-                    <AlertInstanceValues record={logRecord.line.values} />
-                  </Stack>
-                  <div>{dateTimeFormat(logRecord.timestamp)}</div>
+                  <AlertStateTag state={line.current} />
+                  <Stack direction="row">{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                  <div>{dateTimeFormat(timestamp)}</div>
                 </div>
               ))}
             </div>

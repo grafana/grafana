@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { groupBy, isEmpty, last, sortBy, take, uniq } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { BehaviorSubject } from 'rxjs';
 
@@ -19,14 +20,15 @@ import {
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
-import { Alert, FilterInput, Icon, TagList, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Icon, Input, TagList, useStyles2, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
-import { extractCommonLabels, LogRecord, omitLabels } from './common';
+import { extractCommonLabels, Line, LogRecord, omitLabels } from './common';
 
 interface Props {
   ruleUID: string;
@@ -36,6 +38,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const { useGetRuleHistoryQuery } = stateHistoryApi;
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
+
+  const { setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
 
   const frameSubsetRef = useRef<DataFrame[]>([]);
 
@@ -52,11 +56,18 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     error,
   } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from: timeRange.from.unix(), to: timeRange.to.unix() });
 
-  const { dataFrames, historyRecords, commonLabels } = useInstanceHistoryRecords(stateHistory);
+  const { dataFrames, historyRecords, commonLabels } = useInstanceHistoryRecords(stateHistory, instancesFilter);
 
-  const onLogRecordLabelClick = (label: string) => {
-    setInstancesFilter(label);
-  };
+  const frameSubset = useMemo(() => take(dataFrames, 20), [dataFrames]);
+
+  // TODO hack
+  const onLogRecordLabelClick = useCallback(
+    (label: string) => {
+      setInstancesFilter(label);
+      setValue('query', label);
+    },
+    [setInstancesFilter, setValue]
+  );
 
   useEffect(() => {
     const subject = pointerSubject.current;
@@ -75,8 +86,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       subject.unsubscribe();
     };
   }, []);
-
-  const frameSubset = useMemo(() => take(dataFrames, 20), [dataFrames]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -116,7 +125,14 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
               </Stack>
             </div>
           )}
-          <FilterInput label="Filter instances" value={instancesFilter} onChange={setInstancesFilter} />
+          <form onSubmit={handleSubmit((data) => setInstancesFilter(data.query))}>
+            <Input
+              label="Filter instances"
+              {...register('query')}
+              prefix={<Icon name="search" />}
+              placeholder="Filter instances"
+            />
+          </form>
           <LogRecordViewerByTimestamp
             records={historyRecords}
             commonLabels={commonLabels}
@@ -129,7 +145,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   );
 };
 
-function useInstanceHistoryRecords(stateHistory?: DataFrameJSON) {
+function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
   const theme = useTheme2();
 
   return useMemo(() => {
@@ -139,9 +155,11 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON) {
     const lines = stateHistory?.data?.values[1] ?? [];
 
     const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      // @ts-ignore
-      const line: Line = lines[index];
-      acc.push({ timestamp, line });
+      const line = lines[index];
+      // values property can be undefined for some instance states (e.g. NoData)
+      if (isLine(line)) {
+        acc.push({ timestamp, line });
+      }
 
       return acc;
     }, []);
@@ -151,19 +169,32 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON) {
       return JSON.stringify(record.line.labels);
     });
 
+    // CommonLabels should not be affected by the filter
     // find common labels so we can extract those from the instances
     const commonLabels = extractCommonLabels(groupedLines);
 
-    const dataFrames: DataFrame[] = Object.entries(groupedLines).map<DataFrame>(([key, records]) => {
+    const filterMatchers = filter ? parseMatchers(filter) : [];
+    const filteredGroupedLines = Object.entries(groupedLines).filter(([key]) => {
+      const labels = JSON.parse(key);
+      return labelsMatchMatchers(labels, filterMatchers);
+    });
+
+    const dataFrames: DataFrame[] = filteredGroupedLines.map<DataFrame>(([key, records]) => {
       return logRecordsToDataFrame(key, records, commonLabels, theme);
     });
 
     return {
-      historyRecords: linesWithTimestamp,
+      historyRecords: linesWithTimestamp.filter(
+        ({ line }) => line.labels && labelsMatchMatchers(line.labels, filterMatchers)
+      ),
       dataFrames,
       commonLabels,
     };
-  }, [stateHistory, theme]);
+  }, [stateHistory, filter, theme]);
+}
+
+function isLine(value: unknown): value is Line {
+  return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
 }
 
 interface LogTimelineViewerProps {

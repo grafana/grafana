@@ -5,8 +5,8 @@ import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 export interface Line {
   previous: GrafanaAlertStateWithReason;
   current: GrafanaAlertStateWithReason;
-  values: Record<string, number>;
-  labels: Record<string, string>;
+  values?: Record<string, number>;
+  labels?: Record<string, string>;
 }
 
 export interface LogRecord {
