@@ -15,6 +15,9 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> extends S
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
 
+  // When using the 'grafana' datasource, this may be dashboard
+  type?: 'dashboard';
+
   // Sadly plugins can set any property directly on the main object
   [key: string]: any;
 }
@@ -41,7 +44,7 @@ export interface AnnotationEvent {
   newState?: string;
 
   // Currently used to merge annotations from alerts and dashboard
-  source?: any; // source.type === 'dashboard'
+  source?: any; // source.type === 'dashboard' -- should be AnnotationQuery
 }
 
 export interface AnnotationEventUIModel {

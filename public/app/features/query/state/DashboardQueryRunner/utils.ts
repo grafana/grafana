@@ -44,8 +44,30 @@ function notifyWithError(title: string, err: any) {
 }
 
 export function getAnnotationsByPanelId(annotations: AnnotationEvent[], panelId?: number) {
+  if (panelId == null) {
+    return annotations;
+  }
+
   return annotations.filter((item) => {
-    if (panelId !== undefined && item.panelId && item.source?.type === 'dashboard') {
+    const source = item.source as AnnotationQuery;
+    if (!source) {
+      return true; // should not happen
+    }
+
+    // generic panel filtering
+    if (source.filter) {
+      const includes = (source.filter.ids ?? []).includes(panelId);
+      if (source.filter.exclude) {
+        if (includes) {
+          return false;
+        }
+      } else if (!includes) {
+        return false;
+      }
+    }
+
+    // this is valid for the main 'grafana' datasource
+    if (item.panelId && item.source.type === 'dashboard') {
       return item.panelId === panelId;
     }
     return true;
