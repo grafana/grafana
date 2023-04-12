@@ -6,7 +6,7 @@ import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
 
-import LogsQueryEditor from './LogsQueryEditor';
+import TracesQueryEditor from './TracesQueryEditor';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -22,7 +22,7 @@ const variableOptionGroup = {
   options: [],
 };
 
-describe('LogsQueryEditor', () => {
+describe('TracesQueryEditor', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
 
   beforeEach(() => {
@@ -36,11 +36,11 @@ describe('LogsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
+    delete query?.azureTraces?.resources;
     const onChange = jest.fn();
 
     render(
-      <LogsQueryEditor
+      <TracesQueryEditor
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -58,11 +58,11 @@ describe('LogsQueryEditor', () => {
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
     await userEvent.click(resourceGroupButton);
 
-    const checkbox = await screen.findByLabelText('web-server');
+    const checkbox = await screen.findByLabelText('app-insights-1');
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
 
-    const checkbox2 = await screen.findByLabelText('db-server');
+    const checkbox2 = await screen.findByLabelText('app-insights-2');
     await userEvent.click(checkbox2);
     expect(checkbox2).toBeChecked();
 
@@ -70,10 +70,10 @@ describe('LogsQueryEditor', () => {
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
-        azureLogAnalytics: expect.objectContaining({
+        azureTraces: expect.objectContaining({
           resources: [
-            '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/web-server',
-            '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server',
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.insights/components/app-insights-1',
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.insights/components/app-insights-2',
           ],
         }),
       })
@@ -84,11 +84,11 @@ describe('LogsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
+    delete query?.azureTraces?.resources;
     const onChange = jest.fn();
 
     render(
-      <LogsQueryEditor
+      <TracesQueryEditor
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -106,7 +106,7 @@ describe('LogsQueryEditor', () => {
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
     await userEvent.click(resourceGroupButton);
 
-    const checkbox = await screen.findByLabelText('web-server');
+    const checkbox = await screen.findByLabelText('app-insights-1');
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
 
@@ -117,11 +117,11 @@ describe('LogsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
+    delete query?.azureTraces?.resources;
     const onChange = jest.fn();
 
     render(
-      <LogsQueryEditor
+      <TracesQueryEditor
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -139,7 +139,7 @@ describe('LogsQueryEditor', () => {
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
     await userEvent.click(resourceGroupButton);
 
-    const checkbox = await screen.findByLabelText('web-server');
+    const checkbox = await screen.findByLabelText('app-insights-1');
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
 
@@ -150,11 +150,11 @@ describe('LogsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
+    delete query?.azureTraces?.resources;
     const onChange = jest.fn();
 
     render(
-      <LogsQueryEditor
+      <TracesQueryEditor
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -178,7 +178,7 @@ describe('LogsQueryEditor', () => {
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
-        azureLogAnalytics: expect.objectContaining({
+        azureTraces: expect.objectContaining({
           resources: ['/subscriptions/def-123'],
         }),
       })
