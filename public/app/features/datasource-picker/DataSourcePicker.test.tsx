@@ -4,7 +4,7 @@ import React from 'react';
 
 import { DataSourcePicker } from './DataSourcePicker';
 
-jest.mock('../services/dataSourceSrv');
+jest.mock('@grafana/runtime/src/services/dataSourceSrv');
 
 describe('DataSourcePicker', () => {
   describe('onClear', () => {
