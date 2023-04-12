@@ -18,11 +18,11 @@ weight: 1700
 
 ### Role-based access control changes
 
-Role-based access control (RBAC) is always enabled and we removed the option to disable it. If you just upgrade you have no further action to take.
+Role-based access control (RBAC) is always enabled and we removed the option to disable it.
 When you upgrade to Grafana 10, no action needs to be taken. However, if you decide to **downgrade again** for any reason and **disable RBAC**, you would need to take some action next time you upgrade.
 
 The aforementioned sequence of actions (upgrade, downgrade, disable RBAC, upgrade again) causes legacy access control and role-based access control systems to be out of sync.
-As a side effect, some permissions might be lost in Grafana resources, like dashboards.
+As a side effect, permissions for some Grafana resources, like dashboards, might be lost.
 To prevent that from happening, before you upgrading Grafana back again, please follow the following steps:
 
 1. Stop Grafana

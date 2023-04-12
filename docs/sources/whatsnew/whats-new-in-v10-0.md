@@ -26,16 +26,16 @@ Description. Include an overview of the feature and problem it solves, and where
 
 [Role-based access control (RBAC)](({{< relref "../administration/roles-and-permissions/access-control/" >}})) is now always enabled and you can't disable it anymore using configuration option in Grafana.
 
-We understand that this may affect some users who have relied on the ability to disable role-based access control (RBAC) in the past. However, we believe that this change is necessary to ensure the best possible security and user experience for our community and customers.
+We understand that this may affect some users who have relied on the ability to disable RBAC in the past. However, we believe that this change is necessary to ensure the best possible security and user experience for our community and customers.
 
-Check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}) to check if the change is impacting you and what you can do to mitigate any potential issues.
+If you have disabled RBAC for you Grafana instance, refer to our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}) to check if the change is impacting you and what you can do to mitigate any potential issues.
 
 ### SAML UI
 
 You can now configure SAML using our new user interface, making the process easier and more convenient than ever before.
 With the new user interface, you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control/" >}}). which makes the process much faster and more efficient.
 
-The SAML UI is available in all Grafana editions, it is intuitive and user-friendly, with clear instructions and helpful prompts to guide you through the process.
+The SAML UI is available in Grafana Enterprise and Grafana Cloud Pro and Advanced. It is intuitive and user-friendly, with clear instructions and helpful prompts to guide you through the process.
 
 For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../setup-grafana/configure-security/configure-authentication/saml-ui/" >}}).
 
