@@ -40,7 +40,7 @@ const queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
   {
     label: 'Annotations & Alerts',
     value: GrafanaQueryType.Annotations,
-    description: '',
+    description: 'Show annotations or alerts managed by grafana',
   },
   {
     label: 'Time regions',
@@ -95,8 +95,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
     if (newQuery.queryType === GrafanaQueryType.TimeRegions) {
       if (!newQuery.timeRegion) {
         newQuery.timeRegion = {
-          name: 'T1',
-          color: 'dark-green',
           timezone: defaultTimezone,
         };
       }

@@ -31,7 +31,7 @@ import {
   SortOrder,
   GraphTransform,
 } from '@grafana/schema';
-import { GrafanaQuery, GrafanaQueryType, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { defaultGraphConfig } from './config';
@@ -388,15 +388,7 @@ export function graphToTimeseriesOptions(angular: any): {
       timezone: 'utc',
     }));
 
-    target = {
-      refId: 'TimeRegion',
-      datasource: {
-        type: 'datasource',
-        uid: 'grafana',
-      },
-      queryType: GrafanaQueryType.TimeRegions,
-      timeRegion: regions,
-    };
+    console.log('TODO Add annotation queries', regions);
   }
 
   const tooltipConfig = angular.tooltip;

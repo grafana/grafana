@@ -53,6 +53,8 @@ export const TimeSeriesPanel = ({
       }
     }
 
+    console.log('annotations', annotations);
+
     return { annotations, exemplars, regions };
   }, [data.annotations]);
 

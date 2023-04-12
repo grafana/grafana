@@ -28,37 +28,19 @@ exports[`grafana data source supports time region query 1`] = `
       ],
     },
     {
-      "config": {
-        "color": {
-          "fixedColor": "green",
-          "mode": "fixed",
-        },
-      },
-      "labels": undefined,
-      "name": "color",
-      "type": "string",
-      "values": [
-        "green",
-        "green",
-        "green",
-        "green",
-      ],
-    },
-    {
       "config": {},
       "labels": undefined,
-      "name": "line",
-      "type": "boolean",
+      "name": "text",
+      "type": "string",
       "values": [
-        true,
-        true,
-        true,
-        true,
+        "test",
+        "test",
+        "test",
+        "test",
       ],
     },
   ],
   "meta": {
-    "dataTopic": "annotations",
     "type": "timeranges",
   },
   "name": undefined,

@@ -1,7 +1,7 @@
 import moment, { Moment } from 'moment/moment';
 import React from 'react';
 
-import { HorizontalGroup, InlineField, InlineFieldRow, Input, Select, TimeZonePicker } from '@grafana/ui';
+import { HorizontalGroup, InlineField, InlineFieldRow, Select, TimeZonePicker } from '@grafana/ui';
 
 import { TimeRegionConfig } from '../types';
 
@@ -36,25 +36,6 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
 
   return (
     <InlineFieldRow>
-      <InlineField label="Region" labelWidth={12}>
-        <Input
-          placeholder="enter name"
-          value={value.name}
-          onChange={(v) => onChange({ ...value, name: v.currentTarget.value })}
-          width={10}
-        />
-      </InlineField>
-      {/*<InlineField label="Color">*/}
-      {/*  <ColorValueEditor value={value.color} onChange={(color) => onChange({ ...value, color: color! })} />*/}
-      {/*</InlineField>*/}
-      {/*<InlineField>*/}
-      {/*  <InlineSwitch*/}
-      {/*    label="Line"*/}
-      {/*    showLabel={true}*/}
-      {/*    value={value.line}*/}
-      {/*    onChange={(e) => onChange({ ...value, line: e.currentTarget.checked })}*/}
-      {/*  />*/}
-      {/*</InlineField>*/}
       <InlineField label="From">
         <HorizontalGroup spacing="xs">
           <Select

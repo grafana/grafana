@@ -16,7 +16,6 @@ import {
   toDataFrame,
   dataFrameFromJSON,
   LoadingState,
-  DataFrame,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -105,25 +104,15 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         continue;
       }
       if (target.queryType === GrafanaQueryType.TimeRegions) {
-        // // TODO?  should this be a single frame
-        // const regions: DataFrame[] = [];
-        // for (const region of target.timeRegions ?? []) {
-        //   const frame = doTimeRegionQuery(region, request.range, request.timezone);
-        //   if (frame) {
-        //     frame.refId = target.refId;
-        //     regions.push(frame);
-        //   }
-        // }
-        // results.push(
-        //   of({
-        //     //    key: target.refId,
-        //     data: regions,
-        //     state: LoadingState.Done,
-        //   })
-        // );
-        // continue;
+        const frame = doTimeRegionQuery('', target.timeRegion!, request.range, request.timezone);
+        results.push(
+          of({
+            data: frame ? [frame] : [],
+            state: LoadingState.Done,
+          })
+        );
+        continue;
       }
-
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
         const { filter } = target;
@@ -199,7 +188,12 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   }
 
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
-    const templateSrv = getTemplateSrv();
+    const query = options.annotation.target as GrafanaQuery;
+    if (query?.queryType === GrafanaQueryType.TimeRegions) {
+      const frame = doTimeRegionQuery(options.annotation.name, query.timeRegion!, options.range, 'utc'); // << dashboard timezone?
+      return Promise.resolve({ data: frame ? [frame] : [] });
+    }
+
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
     const params: any = {
@@ -224,6 +218,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       if (!Array.isArray(target.tags) || target.tags.length === 0) {
         return Promise.resolve({ data: [] });
       }
+      const templateSrv = getTemplateSrv();
       const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {

@@ -33,9 +33,6 @@ export interface GrafanaQuery extends DataQuery {
 }
 
 export interface TimeRegionConfig extends BaseTimeRegionConfig {
-  name: string;
-  color: string;
-  line?: boolean;
   timezone?: string;
 }
 

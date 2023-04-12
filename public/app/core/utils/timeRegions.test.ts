@@ -9,8 +9,6 @@ describe('timeRegions', () => {
     it('returns regions with 4 Mondays in March 2023', () => {
       const cfg: TimeRegionConfig = {
         fromDayOfWeek: 1,
-        name: 'T0',
-        color: 'rgba(235, 113, 113, 0.40)',
       };
 
       const tr: TimeRange = {
@@ -50,8 +48,6 @@ describe('timeRegions', () => {
       const cfg: TimeRegionConfig = {
         fromDayOfWeek: 1,
         from: '20:00',
-        name: 'T0',
-        color: 'rgba(235, 113, 113, 0.40)',
       };
 
       const tr: TimeRange = {
@@ -91,8 +87,6 @@ describe('timeRegions', () => {
       const cfg: TimeRegionConfig = {
         fromDayOfWeek: 1,
         toDayOfWeek: 3,
-        name: 'T0',
-        color: 'rgba(235, 113, 113, 0.40)',
       };
 
       const tr: TimeRange = {
@@ -132,8 +126,6 @@ describe('timeRegions', () => {
         from: '20:00',
         toDayOfWeek: 2,
         to: '10:00',
-        name: 'T1',
-        color: 'rgba(235, 113, 113, 0.40)',
       };
 
       const tr: TimeRange = {

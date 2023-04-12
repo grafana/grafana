@@ -5,7 +5,8 @@ import { doTimeRegionQuery } from './timeRegions';
 describe('grafana data source', () => {
   it('supports time region query', () => {
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, toDayOfWeek: 2, line: true },
+      'test',
+      { fromDayOfWeek: 1, toDayOfWeek: 2 },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-31'),
@@ -26,7 +27,8 @@ describe('grafana data source', () => {
     // Mon Mar 06 2023 00:00:00 GMT+0000 -> Mon Mar 06 2023 23:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'utc' },
+      'test',
+      { fromDayOfWeek: 1, timezone: 'utc' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -59,26 +61,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            true,
+            "test",
           ],
         },
       ]
@@ -92,7 +80,8 @@ describe('grafana data source', () => {
     // Mon Mar 06 2023 06:00:00 GMT+0000 -> Mon Mar 06 2023 05:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'browser' },
+      'test',
+      { fromDayOfWeek: 1, timezone: 'browser' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -125,26 +114,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            true,
+            "test",
           ],
         },
       ]
@@ -158,7 +133,8 @@ describe('grafana data source', () => {
     // Mon Mar 06 2023 06:00:00 GMT+0000 -> Tue Mar 07 2023 05:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'America/Chicago' },
+      'test',
+      { fromDayOfWeek: 1, timezone: 'America/Chicago' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -191,26 +167,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            true,
+            "test",
           ],
         },
       ]
@@ -224,7 +186,8 @@ describe('grafana data source', () => {
     // Sun Mar 05 2023 23:00:00 GMT+0000 -> Mon Mar 06 2023 22:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: true, timezone: 'Europe/Amsterdam' },
+      'test',
+      { fromDayOfWeek: 1, timezone: 'Europe/Amsterdam' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -257,26 +220,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            true,
+            "test",
           ],
         },
       ]
@@ -290,7 +239,8 @@ describe('grafana data source', () => {
     // Sun Mar 05 2023 17:00:00 GMT+0000 -> Mon Mar 06 2023 16:59:59 GMT+0000
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'blue', fromDayOfWeek: 1, line: true, timezone: 'Asia/Hovd' },
+      'test',
+      { fromDayOfWeek: 1, timezone: 'Asia/Hovd' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -323,26 +273,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "blue",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "blue",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            true,
+            "test",
           ],
         },
       ]
@@ -356,7 +292,8 @@ describe('grafana data source', () => {
     // Mon Mar 06 2023 04:00:00 GMT+0400 -> Mon Mar 06 2023 03:59:59 GMT+0400 (Asia/Dubai)
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, line: false, timezone: 'utc' },
+      'test',
+      { fromDayOfWeek: 1, timezone: 'utc' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -389,26 +326,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            false,
+            "test",
           ],
         },
       ]
@@ -422,7 +345,8 @@ describe('grafana data source', () => {
     // Mon Mar 06 2023 02:00:00 GMT-0600 -> Mon Mar 06 2023 02:00:00 GMT-0600 (CST)
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, from: '08:00', line: false, timezone: 'utc' },
+      'test',
+      { fromDayOfWeek: 1, from: '08:00', timezone: 'utc' },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-08'),
@@ -455,26 +379,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            false,
+            "test",
           ],
         },
       ]
@@ -488,7 +398,8 @@ describe('grafana data source', () => {
     // Mon Apr 03 2023 03:00:00 GMT-0500 -> Mon Apr 03 2023 03:00:00 GMT-0500 (CDT)
 
     const frame = doTimeRegionQuery(
-      { name: 'T1', color: 'green', fromDayOfWeek: 1, from: '08:00', line: false, timezone: 'utc' },
+      'test',
+      { fromDayOfWeek: 1, from: '08:00', timezone: 'utc' },
       {
         from: dateTime('2023-03-30'),
         to: dateTime('2023-04-06'),
@@ -521,26 +432,12 @@ describe('grafana data source', () => {
           ],
         },
         {
-          "config": {
-            "color": {
-              "fixedColor": "green",
-              "mode": "fixed",
-            },
-          },
-          "labels": undefined,
-          "name": "color",
-          "type": "string",
-          "values": [
-            "green",
-          ],
-        },
-        {
           "config": {},
           "labels": undefined,
-          "name": "line",
-          "type": "boolean",
+          "name": "text",
+          "type": "string",
           "values": [
-            false,
+            "test",
           ],
         },
       ]
