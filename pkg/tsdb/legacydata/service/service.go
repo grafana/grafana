@@ -76,7 +76,7 @@ func (h *Service) generateRequest(ctx context.Context, ds *datasources.DataSourc
 
 	pCtx, exists, err := h.pCtxProvider.GetWithDataSource(ctx, ds.Type, query.User, ds)
 	if err != nil {
-
+		return nil, err
 	}
 	if !exists {
 

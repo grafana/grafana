@@ -850,12 +850,6 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
-	return func(ds *datasources.DataSource) (map[string]string, error) {
-		return hs.DataSourcesService.DecryptedValues(ctx, ds)
-	}
-}
-
 func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, user *user.SignedInUser, ds []*datasources.DataSource) ([]*datasources.DataSource, error) {
 	query := datasources.DatasourcesPermissionFilterQuery{
 		User:        user,

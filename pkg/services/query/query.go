@@ -68,7 +68,6 @@ type ServiceImpl struct {
 	dataSourceCache        datasources.CacheService
 	expressionService      *expr.Service
 	pluginRequestValidator validations.PluginRequestValidator
-	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
 	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
