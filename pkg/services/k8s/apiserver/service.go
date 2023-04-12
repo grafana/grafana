@@ -72,7 +72,7 @@ func (s *service) start(ctx context.Context) error {
 	aggregator.Storage = s.newStorage
 
 	logger := logr.New(newLogAdapter())
-	logger.V(1)
+	logger.V(5)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	extensionsConfig, err := createAPIExtensionsConfig(s.dataPath)
@@ -130,7 +130,7 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
 		Server:                restConfig.Host,
-		InsecureSkipTLSVerify: restConfig.Insecure,
+		InsecureSkipTLSVerify: true,
 	}
 
 	contexts := make(map[string]*clientcmdapi.Context)

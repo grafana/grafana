@@ -20,6 +20,7 @@ limitations under the License.
 package apiserver
 
 import (
+	"crypto/x509"
 	"net"
 	"net/url"
 	"os"
@@ -34,10 +35,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
-	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
-	"k8s.io/apiserver/pkg/authentication/request/union"
+	clientCertAuth "k8s.io/apiserver/pkg/authentication/request/x509"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -48,7 +50,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	corev1 "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 )
 
 func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, error) {
@@ -57,7 +58,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{"system:unauthenticated", "system:apiserver", "grafana"}
+	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup}
 	o.RecommendedOptions.CoreAPI = nil
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
@@ -86,20 +87,16 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 		return apiextensionsapiserver.Config{}, err
 	}
 
-	authenticator, err := newAuthenticator()
+	rootCert, err := certUtil.GetK8sCACert()
+	if err != nil {
+		return apiextensionsapiserver.Config{}, err
+	}
+
+	authenticator, err := newAuthenticator(rootCert)
 	if err != nil {
 		return apiextensionsapiserver.Config{}, err
 	}
 	serverConfig.Authentication.Authenticator = authenticator
-
-	serverConfig.LoopbackClientConfig = &rest.Config{
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true,
-		},
-		Host:     DefaultAPIServerHost,
-		Username: "grafana",
-		Password: "grafana",
-	}
 
 	if err := o.APIEnablement.ApplyTo(
 		&serverConfig.Config,
@@ -157,7 +154,7 @@ func (r restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generi
 	}, nil
 }
 
-func newAuthenticator() (authenticator.Request, error) {
+func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
 	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
 		ClientCAFile:        "data/k8s/ca.crt",
 		UsernameHeaders:     []string{"X-Remote-User"},
@@ -178,5 +175,12 @@ func newAuthenticator() (authenticator.Request, error) {
 		reqHeaderConfig.ExtraHeaderPrefixes,
 	)
 
-	return union.New(requestHeaderAuthenticator, anonymous.NewAuthenticator()), nil
+	roots := x509.NewCertPool()
+	roots.AddCert(cert)
+	opts := x509.VerifyOptions{
+		Roots:     roots,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	return clientCertAuth.NewVerifier(opts, requestHeaderAuthenticator, sets.NewString()), nil
 }

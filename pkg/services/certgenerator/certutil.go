@@ -73,6 +73,13 @@ func (cu *CertUtil) K8sAuthzClientKeyFile() string {
 	return filepath.Join(cu.K8sDataPath, "embedded-k8s-authz-plugin.key")
 }
 
+func (cu *CertUtil) GetK8sCACert() (*x509.Certificate, error) {
+	if err := cu.InitializeCACertPKI(); err != nil {
+		return nil, err
+	}
+	return cu.caCert, nil
+}
+
 // Lifted from kube-apiserver package as it's a dependency of external cert generation
 // https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go#L671
 func getServiceIPAndRanges(serviceClusterIPRanges string) (net.IP, net.IPNet, net.IPNet, error) {
