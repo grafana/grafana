@@ -555,17 +555,54 @@ def publish_artifacts_step(mode):
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
             "ENTERPRISE2_SECURITY_PREFIX": from_secret("enterprise2_security_prefix"),
             "SECURITY_DEST_BUCKET": from_secret("security_dest_bucket"),
-            "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
         "commands": [
-            "./bin/build artifacts publish {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
+            "./bin/build artifacts packages {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
                 security,
             ),
         ],
         "depends_on": ["compile-build-cmd"],
     }
 
+def publish_static_assets_step():
+    return {
+        "name": "publish-static-assets",
+        "image": publish_image,
+        "environment": {
+            "GCP_KEY": from_secret("gcp_key"),
+            "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
+            "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
+        },
+        "commands": [
+            "./bin/build artifacts static-assets --tag ${DRONE_TAG}",
+        ],
+        "depends_on": ["compile-build-cmd"],
+    }
+
+def publish_storybook_step():
+    return {
+        "name": "publish-storybook",
+        "image": publish_image,
+        "environment": {
+            "GCP_KEY": from_secret("gcp_key"),
+            "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
+        },
+        "commands": [
+            "./bin/build artifacts storybook --tag ${DRONE_TAG}",
+        ],
+        "depends_on": ["compile-build-cmd"],
+    }
+
 def publish_artifacts_pipelines(mode):
+    """Published artifacts after they've been stored and tested in prerelease buckets.
+
+    Args:
+      mode: public or security.
+        Defaults to ''.
+
+    Returns:
+      List of Drone pipelines.
+    """
     trigger = {
         "event": ["promote"],
         "target": [mode],
@@ -573,7 +610,10 @@ def publish_artifacts_pipelines(mode):
     steps = [
         compile_build_cmd(),
         publish_artifacts_step(mode),
+        publish_static_assets_step(),
     ]
+    if mode != "security":
+        steps.extend([publish_storybook_step()])
 
     return [
         pipeline(
