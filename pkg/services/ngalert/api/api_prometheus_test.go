@@ -1165,6 +1165,28 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, rg.Rules, 1)
 			require.Len(t, rg.Rules[0].Alerts, 1)
 		})
+
+		t.Run("then with multiple matchers that don't match", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=alertname=test_title_0&matcher=test=value3", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// There should no alerts
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Len(t, rg.Rules[0].Alerts, 0)
+		})
 	})
 }
 
