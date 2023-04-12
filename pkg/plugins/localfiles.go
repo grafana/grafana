@@ -127,7 +127,9 @@ func (p *LocalFile) Read(b []byte) (int, error) {
 	return p.f.Read(b)
 }
 
-// Close closes the file. If the file is already closed, nil is returned.
+// Close closes the file.
+// If the file was never open, nil is returned.
+// If the file is already closed, an error is returned.
 func (p *LocalFile) Close() error {
 	if p.f != nil {
 		return p.f.Close()
