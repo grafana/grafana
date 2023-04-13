@@ -146,8 +146,9 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 	currentOAuthSessionData.Username = dbUser.Login
 
 	teams := []*team.TeamDTO{}
-	// Fetch teams is the groups scope is requested or if we need to populate it in the entitlements
-	if claimsFilter["groups"] || len(actionsFilter) == 0 || actionsFilter["teams:read"] {
+	// Fetch teams if the groups scope is requested or if we need to populate it in the entitlements
+	if claimsFilter["groups"] ||
+		(claimsFilter["entitlements"] && (len(actionsFilter) == 0 || actionsFilter["teams:read"])) {
 		var errGetTeams error
 		teams, errGetTeams = s.teamService.GetTeamsByUser(ctx, &team.GetTeamsByUserQuery{
 			OrgID:  oauthserver.TmpOrgID,
@@ -272,10 +273,10 @@ func (*OAuth2ServiceImpl) filteredImpersonatePermissions(impersonatePermissions 
 				Scope:  ac.Scope("users", "id", strconv.FormatInt(userID, 10)),
 			})
 		case oauthserver.ScopeTeamsSelf:
-			for i := range teams {
+			for t := range teams {
 				correctScopes = append(correctScopes, ac.Permission{
 					Action: impPerms[i].Action,
-					Scope:  ac.Scope("teams", "id", strconv.FormatInt(teams[i].ID, 10)),
+					Scope:  ac.Scope("teams", "id", strconv.FormatInt(teams[t].ID, 10)),
 				})
 			}
 		default:
