@@ -1,7 +1,6 @@
 import { toDataFrame } from '../../dataframe';
 import { DataTransformerConfig, DisplayProcessor, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
