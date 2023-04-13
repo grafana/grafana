@@ -1,4 +1,4 @@
-import { screen, render, act } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -119,18 +119,17 @@ describe('<EditDataSourcePage>', () => {
     expect(await screen.findByText(name)).toBeVisible();
   });
 
-  it('should show updated action buttons when topnav is on', () => {
-    act(() => {
-      config.featureToggles.topnav = true;
-    });
-
+  it('should show updated action buttons when topnav is on', async () => {
+    config.featureToggles.topnav = true;
     setup(uid, store);
 
-    // Buttons
-    expect(screen.queryAllByRole('button', { name: /Back/i })).toHaveLength(0);
-    expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
-    expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
-    expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
-    expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(2);
+    await waitFor(() => {
+      // Buttons
+      expect(screen.queryAllByRole('button', { name: /Back/i })).toHaveLength(0);
+      expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
+      expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
+      expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(2);
+    });
   });
 });
