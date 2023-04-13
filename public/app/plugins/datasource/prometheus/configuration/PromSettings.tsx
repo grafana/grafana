@@ -422,7 +422,12 @@ export const PromSettings = (props: Props) => {
             <InlineField
               label="Custom query parameters"
               labelWidth={26}
-              tooltip={<>Add custom parameters to all Prometheus or Thanos queries. {docsTip()}</>}
+              tooltip={
+                <>
+                  Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or
+                  max_source_resolution. Multiple parameters should be concatenated together with an ‘&’. {docsTip()}
+                </>
+              }
             >
               <Input
                 className="width-20"
