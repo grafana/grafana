@@ -49,7 +49,7 @@ The `$labels` variable contains the labels from the query. For example, a query 
 ```
 Instance {{ $labels.instance }} has been down for more than 5 minutes
 ```
-
+> **Note** The $labels variable is unavailable when the rule uses a classic condition.
 ### Labels with dots
 
 If the label you want to print contains a dot (full stop or period) in its name using the same dot in the template will not work:
