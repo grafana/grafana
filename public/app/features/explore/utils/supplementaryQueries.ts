@@ -132,12 +132,12 @@ const getSupplementaryQueryFallback = (
 };
 
 export const getSupplementaryQueryProvider = (
-  datasources: Array<{ datasource: DataSourceApi; targets: DataQuery[] }>,
+  groupedQueries: Array<{ datasource: DataSourceApi; targets: DataQuery[] }>,
   type: SupplementaryQueryType,
   request: DataQueryRequest,
   explorePanelData: Observable<ExplorePanelData>
 ): Observable<DataQueryResponse> | undefined => {
-  const providers = datasources.map(({ datasource, targets }, i) => {
+  const providers = groupedQueries.map(({ datasource, targets }, i) => {
     const dsRequest = cloneDeep(request);
     dsRequest.requestId = `${dsRequest.requestId || ''}_${i}`;
     dsRequest.targets = targets;

@@ -674,18 +674,18 @@ const handleSupplementaryQueries = createAsyncThunk(
     }: HandleSupplementaryQueriesOptions,
     { dispatch }
   ) => {
-    let datasources;
+    let groupedQueries;
     if (datasourceInstance.meta.mixed) {
-      datasources = await groupDataQueries(transaction.request.targets, transaction.request.scopedVars);
+      groupedQueries = await groupDataQueries(transaction.request.targets, transaction.request.scopedVars);
     } else {
-      datasources = [{ datasource: datasourceInstance, targets: transaction.request.targets }];
+      groupedQueries = [{ datasource: datasourceInstance, targets: transaction.request.targets }];
     }
 
     for (const type of supplementaryQueryTypes) {
       // We always prepare provider, even is supplementary query is disabled because when the user
       // enables the query, we need to load the data, so we need the provider
       const dataProvider = getSupplementaryQueryProvider(
-        datasources,
+        groupedQueries,
         type,
         {
           ...transaction.request,
