@@ -3049,6 +3049,7 @@ __metadata:
     "@types/react": 18.0.28
     "@types/react-dom": 18.0.11
     "@types/sinon": 10.0.13
+    "@types/string-hash": 1.1.1
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 3.0.1
@@ -3076,6 +3077,7 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     rxjs: 7.8.0
     sinon: 15.0.1
+    string-hash: ^1.1.3
     tinycolor2: 1.6.0
     tslib: 2.5.0
     typescript: 4.8.4
@@ -10388,6 +10390,13 @@ __metadata:
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
   checksum: 205fdbe3326b7046d7eaf5e494d8084f2659086a266f3f9cf00bccc549c8e36e407f88168ad4383c8b07099957ad669f75f2532ed4bc70be2b037330f7bae019
+  languageName: node
+  linkType: hard
+
+"@types/string-hash@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@types/string-hash@npm:1.1.1"
+  checksum: e7cdba66dc1cfd88033d66a0fd301abd1434f8e3fc22826443073e5c33a26e5c53a26ef4e062d0ebf3f8590f506dec2351c4b952df1d04ba188bc0a48f411f17
   languageName: node
   linkType: hard
 
