@@ -87,7 +87,7 @@ describe('LogRowContextModal', () => {
     const tenLinesButton = screen.getByRole('button', {
       name: /10 lines/i,
     });
-    userEvent.click(tenLinesButton);
+    await userEvent.click(tenLinesButton);
     const twentyLinesButton = screen.getByRole('menuitemradio', {
       name: /20 lines/i,
     });

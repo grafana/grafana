@@ -20,11 +20,11 @@ describe('LogContextButtons', () => {
     expect(buttons.length).toBe(1);
   });
 
-  it('should render a ButtonSelect with LoadMoreOptions', () => {
+  it('should render a ButtonSelect with LoadMoreOptions', async () => {
     const tenLinesButton = screen.getByRole('button', {
       name: /10 lines/i,
     });
-    userEvent.click(tenLinesButton);
+    await userEvent.click(tenLinesButton);
     const options = screen.getAllByRole('menuitemradio');
     expect(options.length).toBe(LoadMoreOptions.length);
     options.forEach((optionEl, index) => {
@@ -32,15 +32,15 @@ describe('LogContextButtons', () => {
     });
   });
 
-  it('should call onChangeOption when an option is selected', () => {
+  it('should call onChangeOption when an option is selected', async () => {
     const tenLinesButton = screen.getByRole('button', {
       name: /10 lines/i,
     });
-    userEvent.click(tenLinesButton);
+    await userEvent.click(tenLinesButton);
     const twentyLinesButton = screen.getByRole('menuitemradio', {
       name: /20 lines/i,
     });
-    userEvent.click(twentyLinesButton);
+    await userEvent.click(twentyLinesButton);
     const newOption = { label: '20 lines', value: 20 };
     expect(onChangeOption).toHaveBeenCalledWith(newOption);
   });
