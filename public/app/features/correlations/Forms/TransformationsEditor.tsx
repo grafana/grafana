@@ -41,220 +41,229 @@ export const TransformationsEditor = (props: Props) => {
   const styles = useStyles2(getStyles);
 
   const transformOptions = getTransformOptions();
-
   return (
-    <FieldArray name="config.transformations" control={control}>
-      {({ fields, append, remove }) => (
-        <>
-          <Stack direction="column" alignItems="flex-start">
-            <div className={styles.heading}>Transformations</div>
-            {fields.length === 0 && <div> No transformations defined.</div>}
-            {fields.length > 0 && (
-              <div>
-                {fields.map((field, index) => {
-                  return (
-                    <Stack direction="row" key={field.id} alignItems="top">
-                      <Field
-                        label={
-                          <Stack gap={0.5}>
-                            <Label>Type</Label>
-                            <Tooltip
-                              content={
-                                <div>
-                                  <p>The type of transformation that will be applied to the source data.</p>
-                                </div>
-                              }
-                            >
-                              <Icon name="info-circle" size="sm" />
-                            </Tooltip>
-                          </Stack>
-                        }
-                        invalid={!!formState.errors?.config?.transformations?.[index]?.type}
-                        error={formState.errors?.config?.transformations?.[index]?.type?.message}
-                        validationMessageHorizontalOverflow={true}
-                      >
-                        <InputControl
-                          render={({ field: { onChange, ref, ...field } }) => (
-                            <Select
-                              {...field}
-                              onChange={(value) => {
-                                if (!readOnly) {
-                                  const currentValues = getValues().config.transformations[index];
-                                  let keptValsCopy = fill(Array(index + 1), {});
-                                  keptVals.forEach((keptVal, i) => (keptValsCopy[i] = keptVal));
-                                  keptValsCopy[index] = {
-                                    expression: currentValues.expression,
-                                    mapValue: currentValues.mapValue,
-                                  };
-
-                                  setKeptVals(keptValsCopy);
-
-                                  const newValueDetails = getSupportedTransTypeDetails(value.value);
-
-                                  if (newValueDetails.showExpression) {
-                                    setValue(
-                                      `config.transformations.${index}.expression`,
-                                      keptVals[index]?.expression || ''
-                                    );
-                                  } else {
-                                    setValue(`config.transformations.${index}.expression`, '');
-                                  }
-
-                                  if (newValueDetails.showMapValue) {
-                                    setValue(
-                                      `config.transformations.${index}.mapValue`,
-                                      keptVals[index]?.mapValue || ''
-                                    );
-                                  } else {
-                                    setValue(`config.transformations.${index}.mapValue`, '');
-                                  }
-
-                                  onChange(value.value);
+    <>
+      <input type="hidden" {...register('id')} />
+      <FieldArray name="config.transformations" control={control}>
+        {({ fields, append, remove }) => (
+          <>
+            <Stack direction="column" alignItems="flex-start">
+              <div className={styles.heading}>Transformations</div>
+              {fields.length === 0 && <div> No transformations defined.</div>}
+              {fields.length > 0 && (
+                <div>
+                  {fields.map((field, index) => {
+                    return (
+                      <Stack direction="row" key={field.id} alignItems="top">
+                        <Field
+                          label={
+                            <Stack gap={0.5}>
+                              <Label htmlFor={`config.transformations.${index}.type`}>Type</Label>
+                              <Tooltip
+                                content={
+                                  <div>
+                                    <p>The type of transformation that will be applied to the source data.</p>
+                                  </div>
                                 }
-                              }}
-                              options={transformOptions}
-                              width={25}
-                              aria-label="Type"
-                            />
-                          )}
-                          defaultValue={field.type}
-                          control={control}
-                          name={`config.transformations.${index}.type`}
-                          rules={{ required: { value: true, message: 'Please select a transformation type' } }}
-                        />
-                      </Field>
-                      <Field
-                        label={
-                          <Stack gap={0.5}>
-                            <Label>Field</Label>
-                            <Tooltip
-                              content={
-                                <div>
-                                  <p>
-                                    Optional. The field to transform. If not specified, the transformation will be
-                                    applied to the results field.
-                                  </p>
-                                </div>
-                              }
-                            >
-                              <Icon name="info-circle" size="sm" />
-                            </Tooltip>
-                          </Stack>
-                        }
-                      >
-                        <Input
-                          {...register(`config.transformations.${index}.field`)}
-                          readOnly={readOnly}
-                          defaultValue={field.field}
-                        />
-                      </Field>
-                      <Field
-                        label={
-                          <Stack gap={0.5}>
-                            <Label>
-                              Expression
-                              {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                .requireExpression
-                                ? ' *'
-                                : ''}
-                            </Label>
-                            <Tooltip
-                              content={
-                                <div>
-                                  <p>
-                                    Required for regular expression. The expression the transformation will use. Logfmt
-                                    does not use further specifications.
-                                  </p>
-                                </div>
-                              }
-                            >
-                              <Icon name="info-circle" size="sm" />
-                            </Tooltip>
-                          </Stack>
-                        }
-                        invalid={!!formState.errors?.config?.transformations?.[index]?.expression}
-                        error={formState.errors?.config?.transformations?.[index]?.expression?.message}
-                      >
-                        <Input
-                          {...register(`config.transformations.${index}.expression`, {
-                            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                              .requireExpression
-                              ? 'Please define an expression'
-                              : undefined,
-                          })}
-                          defaultValue={field.expression}
-                          readOnly={readOnly}
-                          disabled={
-                            !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showExpression
+                              >
+                                <Icon name="info-circle" size="sm" />
+                              </Tooltip>
+                            </Stack>
                           }
-                        />
-                      </Field>
-                      <Field
-                        label={
-                          <Stack gap={0.5}>
-                            <Label>Map value</Label>
-                            <Tooltip
-                              content={
-                                <div>
-                                  <p>
-                                    Optional. Defines the name of the variable. This is currently only valid for regular
-                                    expressions with a single, unnamed capture group.
-                                  </p>
-                                </div>
-                              }
-                            >
-                              <Icon name="info-circle" size="sm" />
-                            </Tooltip>
-                          </Stack>
-                        }
-                      >
-                        <Input
-                          {...register(`config.transformations.${index}.mapValue`)}
-                          defaultValue={field.mapValue}
-                          readOnly={readOnly}
-                          disabled={
-                            !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue
-                          }
-                        />
-                      </Field>
-                      {!readOnly && (
-                        <div className={styles.removeButton}>
-                          <IconButton
-                            type="button"
-                            tooltip="Remove transformation"
-                            name={'trash-alt'}
-                            onClick={() => {
-                              const keptValsCopy: Array<{ expression?: string; mapValue?: string } | undefined> = [
-                                ...keptVals,
-                              ];
-                              keptValsCopy[index] = undefined;
-                              setKeptVals(compact(keptValsCopy));
-                              remove(index);
+                          invalid={!!formState.errors?.config?.transformations?.[index]?.type}
+                          error={formState.errors?.config?.transformations?.[index]?.type?.message}
+                          validationMessageHorizontalOverflow={true}
+                        >
+                          <InputControl
+                            render={({ field: { onChange, ref, ...field } }) => {
+                              return (
+                                <Select
+                                  {...field}
+                                  onChange={(value) => {
+                                    if (!readOnly) {
+                                      const currentValues = getValues().config.transformations[index];
+                                      let keptValsCopy = fill(Array(index + 1), {});
+                                      keptVals.forEach((keptVal, i) => (keptValsCopy[i] = keptVal));
+                                      keptValsCopy[index] = {
+                                        expression: currentValues.expression,
+                                        mapValue: currentValues.mapValue,
+                                      };
+
+                                      setKeptVals(keptValsCopy);
+
+                                      const newValueDetails = getSupportedTransTypeDetails(value.value);
+
+                                      if (newValueDetails.showExpression) {
+                                        setValue(
+                                          `config.transformations.${index}.expression`,
+                                          keptVals[index]?.expression || ''
+                                        );
+                                      } else {
+                                        setValue(`config.transformations.${index}.expression`, '');
+                                      }
+
+                                      if (newValueDetails.showMapValue) {
+                                        setValue(
+                                          `config.transformations.${index}.mapValue`,
+                                          keptVals[index]?.mapValue || ''
+                                        );
+                                      } else {
+                                        setValue(`config.transformations.${index}.mapValue`, '');
+                                      }
+
+                                      onChange(value.value);
+                                    }
+                                  }}
+                                  options={transformOptions}
+                                  width={25}
+                                  aria-label="Type"
+                                />
+                              );
                             }}
-                          >
-                            Remove
-                          </IconButton>
-                        </div>
-                      )}
-                    </Stack>
-                  );
-                })}
-              </div>
-            )}
-            {!readOnly && (
-              <Button
-                icon="plus"
-                onClick={() => append({ type: undefined }, { shouldFocus: false })}
-                variant="secondary"
-                type="button"
-              >
-                Add transformation
-              </Button>
-            )}
-          </Stack>
-        </>
-      )}
-    </FieldArray>
+                            defaultValue={field.type}
+                            control={control}
+                            name={`config.transformations.${index}.type`}
+                            rules={{ required: { value: true, message: 'Please select a transformation type' } }}
+                          />
+                        </Field>
+                        <Field
+                          label={
+                            <Stack gap={0.5}>
+                              <Label aria-labelledby={`config.transformations.${index}.field`}>Field</Label>
+                              <Tooltip
+                                content={
+                                  <div>
+                                    <p>
+                                      Optional. The field to transform. If not specified, the transformation will be
+                                      applied to the results field.
+                                    </p>
+                                  </div>
+                                }
+                              >
+                                <Icon name="info-circle" size="sm" />
+                              </Tooltip>
+                            </Stack>
+                          }
+                        >
+                          <Input
+                            {...register(`config.transformations.${index}.field`)}
+                            readOnly={readOnly}
+                            defaultValue={field.field}
+                            label="field"
+                            aria-label="field"
+                          />
+                        </Field>
+                        <Field
+                          label={
+                            <Stack gap={0.5}>
+                              <Label>
+                                Expression
+                                {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                  .requireExpression
+                                  ? ' *'
+                                  : ''}
+                              </Label>
+                              <Tooltip
+                                content={
+                                  <div>
+                                    <p>
+                                      Required for regular expression. The expression the transformation will use.
+                                      Logfmt does not use further specifications.
+                                    </p>
+                                  </div>
+                                }
+                              >
+                                <Icon name="info-circle" size="sm" />
+                              </Tooltip>
+                            </Stack>
+                          }
+                          invalid={!!formState.errors?.config?.transformations?.[index]?.expression}
+                          error={formState.errors?.config?.transformations?.[index]?.expression?.message}
+                        >
+                          <Input
+                            {...register(`config.transformations.${index}.expression`, {
+                              required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                .requireExpression
+                                ? 'Please define an expression'
+                                : undefined,
+                            })}
+                            defaultValue={field.expression}
+                            readOnly={readOnly}
+                            disabled={
+                              !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                .showExpression
+                            }
+                            aria-label="expression"
+                          />
+                        </Field>
+                        <Field
+                          label={
+                            <Stack gap={0.5}>
+                              <Label>Map value</Label>
+                              <Tooltip
+                                content={
+                                  <div>
+                                    <p>
+                                      Optional. Defines the name of the variable. This is currently only valid for
+                                      regular expressions with a single, unnamed capture group.
+                                    </p>
+                                  </div>
+                                }
+                              >
+                                <Icon name="info-circle" size="sm" />
+                              </Tooltip>
+                            </Stack>
+                          }
+                        >
+                          <Input
+                            {...register(`config.transformations.${index}.mapValue`)}
+                            defaultValue={field.mapValue}
+                            readOnly={readOnly}
+                            disabled={
+                              !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue
+                            }
+                            aria-label="map value"
+                          />
+                        </Field>
+                        {!readOnly && (
+                          <div className={styles.removeButton}>
+                            <IconButton
+                              type="button"
+                              tooltip="Remove transformation"
+                              name={'trash-alt'}
+                              onClick={() => {
+                                remove(index);
+                                const keptValsCopy: Array<{ expression?: string; mapValue?: string } | undefined> = [
+                                  ...keptVals,
+                                ];
+                                keptValsCopy[index] = undefined;
+                                setKeptVals(compact(keptValsCopy));
+                              }}
+                            >
+                              Remove
+                            </IconButton>
+                          </div>
+                        )}
+                      </Stack>
+                    );
+                  })}
+                </div>
+              )}
+              {!readOnly && (
+                <Button
+                  icon="plus"
+                  onClick={() => append({ type: undefined }, { shouldFocus: false })}
+                  variant="secondary"
+                  type="button"
+                >
+                  Add transformation
+                </Button>
+              )}
+            </Stack>
+          </>
+        )}
+      </FieldArray>
+    </>
   );
 };
 
