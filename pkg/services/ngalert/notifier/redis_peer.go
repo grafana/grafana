@@ -309,7 +309,7 @@ func (p *redisPeer) Position() int {
 			return i
 		}
 	}
-	p.logger.Warn("failed to look up position, empty members and postion timeout reached")
+	p.logger.Warn("failed to look up position, empty members and position timeout reached")
 	return 0
 }
 
