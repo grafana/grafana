@@ -550,12 +550,12 @@ func TestResolve(t *testing.T) {
 
 func TestShouldTakeImage(t *testing.T) {
 	tests := []struct {
-		name          string
-		state         eval.State
-		previousState eval.State
-		previousImage *ngmodels.Image
-		resolved      bool
-		expected      bool
+		name             string
+		state            eval.State
+		previousState    eval.State
+		previousImageURL string
+		resolved         bool
+		expected         bool
 	}{{
 		name:          "should take image for state that just transitioned to alerting",
 		state:         eval.Alerting,
@@ -581,15 +581,15 @@ func TestShouldTakeImage(t *testing.T) {
 		state:         eval.Pending,
 		previousState: eval.Normal,
 	}, {
-		name:          "should not take image for alerting state with image",
-		state:         eval.Alerting,
-		previousState: eval.Alerting,
-		previousImage: &ngmodels.Image{Path: "foo.png", URL: "https://example.com/foo.png"},
+		name:             "should not take image for alerting state with image",
+		state:            eval.Alerting,
+		previousState:    eval.Alerting,
+		previousImageURL: "https://example.com/foo.png",
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImage, test.resolved))
+			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImageURL, test.resolved))
 		})
 	}
 }

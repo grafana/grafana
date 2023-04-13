@@ -307,7 +307,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
-	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
+	if shouldTakeImage(currentState.State, oldState, currentState.ImageURL, currentState.Resolved) {
 		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
@@ -315,7 +315,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
-			currentState.Image = image
+			currentState.ImageURL = image.URL
 		}
 	}
 
@@ -422,8 +422,6 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
-	var resolvedImage *ngModels.Image
-
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
@@ -442,18 +440,15 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 		if oldState == eval.Alerting {
 			s.Resolved = true
 			// If there is no resolved image for this rule then take one
-			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.images, alertRule)
-				if err != nil {
-					logger.Warn("Failed to take an image",
-						"dashboard", alertRule.GetDashboardUID(),
-						"panel", alertRule.GetPanelID(),
-						"error", err)
-				} else if image != nil {
-					resolvedImage = image
-				}
+			image, err := takeImage(ctx, st.images, alertRule)
+			if err != nil {
+				logger.Warn("Failed to take an image",
+					"dashboard", alertRule.GetDashboardUID(),
+					"panel", alertRule.GetPanelID(),
+					"error", err)
+			} else if image != nil {
+				s.ImageURL = image.URL
 			}
-			s.Image = resolvedImage
 		}
 
 		record := StateTransition{

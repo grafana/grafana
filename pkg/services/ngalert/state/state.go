@@ -42,9 +42,9 @@ type State struct {
 	// All subsequent states will be false until the next transition from Firing to Normal.
 	Resolved bool
 
-	// Image contains an optional image for the state. It tends to be included in notifications
+	// Image contains a URL for an optional image for the state. It tends to be included in notifications
 	// as a visualization to show why the alert fired.
-	Image *models.Image
+	ImageURL string
 
 	// Annotations contains the annotations from the alert rule. If an annotation is templated
 	// then the template is first evaluated to derive the final annotation.
@@ -369,10 +369,10 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 // shouldTakeImage returns true if the state just has transitioned to alerting from another state,
 // transitioned to alerting in a previous evaluation but does not have a screenshot, or has just
 // been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) bool {
+func shouldTakeImage(state, previousState eval.State, previousImageURL string, resolved bool) bool {
 	return resolved ||
 		state == eval.Alerting && previousState != eval.Alerting ||
-		state == eval.Alerting && previousImage == nil
+		state == eval.Alerting && previousImageURL == ""
 }
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or

@@ -122,7 +122,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 				t.Run("add __alertImageToken__ if there is an image url", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Annotations = randomMapOfStrings()
-					alertState.Image = &ngModels.Image{URL: "http://localhost:3000/test-url"}
+					alertState.ImageURL = "http://localhost:3000/test-url"
 
 					result := stateToPostableAlert(alertState, appURL)
 
@@ -130,7 +130,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					for k, v := range alertState.Annotations {
 						expected[k] = v
 					}
-					expected["__alertImageToken__"] = alertState.Image.URL
+					expected["__alertImageToken__"] = alertState.ImageURL
 
 					require.Equal(t, expected, result.Annotations)
 				})
