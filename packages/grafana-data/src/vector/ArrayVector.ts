@@ -1,9 +1,9 @@
-import { FunctionalVector } from './FunctionalVector';
-
 /**
  * @public
+ *
+ * @deprecated use a simple Array<T>
  */
-export class ArrayVector<T = any> extends FunctionalVector<T> {
+export class ArrayVector<T = any> extends Array<T> {
   buffer: T[];
 
   // This constructor needs to accept any otherwise the value takes over the definition
