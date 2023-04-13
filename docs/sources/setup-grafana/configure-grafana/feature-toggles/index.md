@@ -34,6 +34,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `emptyDashboardPage`                  | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling`   | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`                 | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
+| `useCachingService`                   | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                |                    |
 | `disableElasticsearchBackendQuerying` | Disable the processing of queries and responses in the Elasticsearch data source through backend                                                                             |                    |
 
 ## Beta feature toggles
@@ -104,6 +105,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
+| `disableSSEDataplane`              | Disables dataplane specific processing in server side expressions.                                                                                                                                  |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
 | `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |

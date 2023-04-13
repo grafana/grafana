@@ -291,6 +291,10 @@ const (
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
+
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
 	FlagUnifiedRequestLog = "unifiedRequestLog"
@@ -310,6 +314,10 @@ const (
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagUseCachingService
+	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	FlagUseCachingService = "useCachingService"
 
 	// FlagDisableElasticsearchBackendQuerying
 	// Disable the processing of queries and responses in the Elasticsearch data source through backend
