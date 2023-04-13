@@ -116,7 +116,7 @@ export function MetricStatEditor({
                 if (
                   !statistic ||
                   (!standardStatistics.includes(statistic) &&
-                    !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
+                    !/^(p\d{2}(?:\.\d{1,2})?|tc|ts|wm|tm|pr)$/.test(statistic) &&
                     !statistic.startsWith('$'))
                 ) {
                   return;
