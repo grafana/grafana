@@ -43,7 +43,7 @@ const FlameGraphTopTableContainer = ({
   setRangeMin,
   setRangeMax,
 }: Props) => {
-  const styles = useStyles2(() => getStyles(selectedView, app));
+  const styles = useStyles2(getStyles);
 
   const onSymbolClick = (symbol: string) => {
     if (search === symbol) {
@@ -148,18 +148,12 @@ function buildTableDataFrame(
   return dataFrames[0];
 }
 
-const getStyles = (selectedView: SelectedView, app: CoreApp) => {
-  const marginRight = '20px';
-
+const getStyles = () => {
   return {
     topTableContainer: css`
-      cursor: pointer;
-      float: left;
-      margin-right: ${marginRight};
-      width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore
-        ? 'height: calc(100% - 50px)'
-        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
+      flex-grow: 1;
+      flex-basis: 50%;
+      overflow: hidden;
     `,
   };
 };
