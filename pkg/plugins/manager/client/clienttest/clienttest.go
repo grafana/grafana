@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -238,7 +239,9 @@ func WithReqContext(req *http.Request, user *user.SignedInUser) ClientDecoratorT
 	return ClientDecoratorTestOption(func(cdt *ClientDecoratorTest) {
 		if cdt.ReqContext == nil {
 			cdt.ReqContext = &contextmodel.ReqContext{
-				Context:      &web.Context{},
+				Context: &web.Context{
+					Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+				},
 				SignedInUser: user,
 			}
 		}
