@@ -651,4 +651,9 @@ func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64,
 	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
 }
 
+// #TODO: replace CountDashboardsInFolder?
+func (dr *DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, UID string) (int64, error) {
+	return dr.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{OrgID: orgID, FolderUID: UID})
+}
+
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
