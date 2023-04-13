@@ -72,6 +72,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showDetails: false,
   };
 
+  // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
   debouncedContextClose = debounce(() => {
     this.setState({ showContext: false });
   }, 3000);
