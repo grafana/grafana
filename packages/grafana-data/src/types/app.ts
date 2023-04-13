@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { withSandboxWrapper } from '../utils/sandbox';
+
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
@@ -70,7 +72,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
    * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
    */
   setRootPage(root: ComponentType<AppRootProps<T>>) {
-    this.root = root;
+    this.root = withSandboxWrapper(root);
     return this;
   }
 
