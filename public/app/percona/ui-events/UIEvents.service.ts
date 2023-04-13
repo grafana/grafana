@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/consistent-type-assertions, */
 
-import { logger } from '@percona/platform-core';
-
 import { ApiRequest } from 'app/percona/shared/helpers/api';
 import { DashboardUsageEvent } from 'app/percona/ui-events/events/dashboard';
 import { FetchingEvent } from 'app/percona/ui-events/events/fetching';
@@ -19,10 +17,6 @@ interface UIEventsStoreRequest {
 
 export const UIEventsService = {
   async store(body: UIEventsStoreRequest): Promise<void> {
-    try {
-      await api.post('/Store', body, true);
-    } catch (e) {
-      logger.error(e);
-    }
+    await api.post('/Store', body, true);
   },
 };
