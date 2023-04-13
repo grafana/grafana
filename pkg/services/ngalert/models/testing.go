@@ -78,6 +78,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			For:             forInterval,
 			Annotations:     annotations,
 			Labels:          labels,
+			IsPaused:        rand.Int()%2 == 0,
 		}
 
 		for _, mutator := range mutators {
@@ -256,6 +257,7 @@ func CopyRule(r *AlertRule) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		IsPaused:        r.IsPaused,
 	}
 
 	if r.DashboardUID != nil {
