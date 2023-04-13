@@ -318,4 +318,8 @@ const (
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagSqlDatasourceDatabaseSelection
+	// Disables dataset dropdown in the QueryEditor if previous dataset has already been configured
+	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 )

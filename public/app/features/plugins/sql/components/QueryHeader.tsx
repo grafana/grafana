@@ -3,6 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
@@ -40,6 +41,8 @@ export function QueryHeader({
   isQueryRunnable,
   disableDatasetSelector,
 }: QueryHeaderProps) {
+  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
+
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -89,6 +92,16 @@ export function QueryHeader({
       rawSql: '',
     };
     onChange(next);
+  };
+
+  const isDatasetDropdownEnabled = () => {
+    // If the feature flag is DISABLED, && the datasource is Postgres (disableDatasetSelector),
+    // we want to hide the dropdown - as per previous behavior.
+    if (!sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled && disableDatasetSelector) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -207,15 +220,17 @@ export function QueryHeader({
         <>
           <Space v={0.5} />
           <EditorRow>
-            <EditorField label="Dataset" width={25}>
-              <DatasetSelector
-                db={db}
-                dataset={query.dataset === undefined ? null : query.dataset}
-                disableDatasetSelector={disableDatasetSelector}
-                preconfiguredDataset={preconfiguredDataset}
-                onChange={onDatasetChange}
-              />
-            </EditorField>
+            {isDatasetDropdownEnabled() && (
+              <EditorField label="Dataset" width={25}>
+                <DatasetSelector
+                  db={db}
+                  dataset={query.dataset === undefined ? null : query.dataset}
+                  disableDatasetSelector={disableDatasetSelector}
+                  preconfiguredDataset={preconfiguredDataset}
+                  onChange={onDatasetChange}
+                />
+              </EditorField>
+            )}
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}

@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
 import { EditorMode, Space } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
@@ -26,6 +27,8 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
+  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
+
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
   const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
 
@@ -42,25 +45,27 @@ export function SqlQueryEditor({
   }, [datasource]);
 
   useEffect(() => {
-    /*
+    if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
+      /*
       This checks if
-        1) there is a preconfigured database (freshly created MSSQL/MYSQL datasources may or may not have a preconfigured database)?
-        2) there is a previously-chosen database from the DatasetSelector (freshly created datasources will NOT have a previously-chosen database,
-           and we don't want this alert to be displayed on all newly created datasources)?
-      Iff yes to both,
+      1) there is a preconfigured database (freshly created MSSQL/MYSQL datasources may or may not have a preconfigured database)?
+      2) there is a previously-chosen database from the DatasetSelector (freshly created datasources will NOT have a previously-chosen database,
+        and we don't want this alert to be displayed on all newly created datasources)?
+        Iff yes to both,
         3) is that preconfigured database different than they previously-chosen one?
-      If so, display the alert.
-    */
-    if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
-      setHasDatabaseConfigIssue(true);
-    }
+        If so, display the alert.
+        */
+      if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
+        setHasDatabaseConfigIssue(true);
+      }
 
-    // This tests the Postgres datasource - all Postgres datasources are passed a default prop of `disableDatasetSelector`.
-    // 1) Is it indeed a Posgres datasource, and 2) is it configured with a default database? If os, then display appropriate alert.
-    if (queryHeaderProps?.disableDatasetSelector && !preconfiguredDatabase) {
-      setHasNoPostgresDefaultDatabaseConfig(true);
+      // This tests the Postgres datasource - all Postgres datasources are passed a default prop of `disableDatasetSelector`.
+      // 1) Is it indeed a Posgres datasource, and 2) is it configured with a default database? If os, then display appropriate alert.
+      if (queryHeaderProps?.disableDatasetSelector && !preconfiguredDatabase) {
+        setHasNoPostgresDefaultDatabaseConfig(true);
+      }
     }
-  }, [preconfiguredDatabase, query, onChange, queryHeaderProps]);
+  }, [preconfiguredDatabase, query, onChange, queryHeaderProps, sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({

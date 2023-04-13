@@ -96,4 +96,5 @@ export interface FeatureToggles {
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   dataplaneFrontendFallback?: boolean;
+  sqlDatasourceDatabaseSelection?: boolean;
 }
