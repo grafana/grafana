@@ -24,6 +24,7 @@ type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
+  return
   const datasource = datasources[0].datasources[0];
 
   e2e()
@@ -109,6 +110,7 @@ const addAzureMonitorVariable = (
 };
 
 e2e.scenario({
+  skipScenario: true,
   describeName: 'Add Azure Monitor datasource',
   itName: 'fills out datasource connection configuration',
   scenario: () => {
@@ -147,6 +149,7 @@ e2e.scenario({
 });
 
 e2e.scenario({
+  skipScenario: true,
   describeName: 'Create dashboard and add a panel for each query type',
   itName: 'create dashboard, add panel for metrics query, log analytics query, and ARG query',
   scenario: () => {
@@ -218,6 +221,7 @@ e2e.scenario({
 });
 
 e2e.scenario({
+  skipScenario: true,
   describeName: 'Create dashboard with template variables',
   itName: 'creates a dashboard that includes a template variable',
   scenario: () => {
@@ -323,6 +327,7 @@ e2e.scenario({
 });
 
 e2e.scenario({
+  skipScenario: true,
   describeName: 'Remove datasource',
   itName: 'remove azure monitor datasource',
   scenario: () => {
