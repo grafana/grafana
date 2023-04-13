@@ -266,7 +266,6 @@ func createFolder(t *testing.T, store *DBstore, namespace, title string, orgID i
 	})
 
 	require.NoError(t, err)
-
 }
 
 func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) folder.Service {
