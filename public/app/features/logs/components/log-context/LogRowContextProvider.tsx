@@ -6,13 +6,13 @@ import {
   DataQueryResponse,
   Field,
   FieldCache,
+  LogRowContextOptions,
+  LogRowContextQueryDirection,
   LogRowModel,
   LogsSortOrder,
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-
-import { RowContextOptions } from './types';
 
 export interface LogRowContextRows {
   before?: string[];
@@ -37,7 +37,7 @@ interface ResultType {
 interface LogRowContextProviderProps {
   row: LogRowModel;
   logsSortOrder?: LogsSortOrder | null;
-  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
     errors: LogRowContextQueryErrors;
@@ -50,7 +50,7 @@ interface LogRowContextProviderProps {
 }
 
 export const getRowContexts = async (
-  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
+  getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
   limit: number,
   logsSortOrder?: LogsSortOrder | null
@@ -62,7 +62,7 @@ export const getRowContexts = async (
     getRowContext(row, {
       // The start time is inclusive so we will get the one row we are using as context entry
       limit: limit + 1,
-      direction: 'FORWARD',
+      direction: LogRowContextQueryDirection.Forward,
     }),
   ];
 
