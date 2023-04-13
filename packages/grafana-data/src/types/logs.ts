@@ -1,9 +1,10 @@
 import { Observable } from 'rxjs';
 
+import { DataQuery } from '@grafana/schema';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
-import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
