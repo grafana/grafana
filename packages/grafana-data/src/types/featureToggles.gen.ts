@@ -97,4 +97,5 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   useCachingService?: boolean;
   disableElasticsearchBackendQuerying?: boolean;
+  authenticationConfigUI?: boolean;
 }

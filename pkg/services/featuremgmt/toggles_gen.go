@@ -322,4 +322,8 @@ const (
 	// FlagDisableElasticsearchBackendQuerying
 	// Disable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
 )

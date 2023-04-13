@@ -526,5 +526,11 @@ var (
 			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:        "authenticationConfigUI",
+			Description: "Enables authentication configuration UI",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
 	}
 )
