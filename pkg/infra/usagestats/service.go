@@ -10,6 +10,8 @@ type Report struct {
 	Os              string                 `json:"os"`
 	Arch            string                 `json:"arch"`
 	Edition         string                 `json:"edition"`
+	DatabaseCreated int64                  `json:"databaseCreated"`
+	InstallVersion  string                 `json:"installVersion"`
 	HasValidLicense bool                   `json:"hasValidLicense"`
 	Packaging       string                 `json:"packaging"`
 	UsageStatsId    string                 `json:"usageStatsId"`
