@@ -546,7 +546,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onClickShowField={this.showField}
                 onClickHideField={this.hideField}
                 app={CoreApp.Explore}
-                scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
                 onOpenContext={this.onOpenContext}
               />

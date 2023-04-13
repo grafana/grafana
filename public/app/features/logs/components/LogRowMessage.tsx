@@ -17,7 +17,6 @@ interface Props {
   prettifyLogMessage: boolean;
   showRowMenu?: boolean;
   app?: CoreApp;
-  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
   styles: LogRowStyles;
@@ -61,18 +60,10 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 });
 
 export class LogRowMessage extends PureComponent<Props> {
-  logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
-
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
-    const { scrollElement } = this.props;
+    const { onOpenContext } = this.props;
     e.stopPropagation();
-    this.props.onOpenContext(this.props.row);
-    if (scrollElement && this.logRowRef.current) {
-      scrollElement.scroll({
-        behavior: 'smooth',
-        top: scrollElement.scrollTop + this.logRowRef.current.getBoundingClientRect().top - window.innerHeight / 2,
-      });
-    }
+    onOpenContext(this.props.row);
   };
 
   render() {
@@ -87,7 +78,7 @@ export class LogRowMessage extends PureComponent<Props> {
           // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
           // overwrite the more sepecific style definition from `styles.logsRowMessage`.
         }
-        <td ref={this.logRowRef} className={styles.logsRowMessage}>
+        <td className={styles.logsRowMessage}>
           <div
             className={cx(
               { [styles.positionRelative]: wrapLogMessage },
