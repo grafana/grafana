@@ -6,8 +6,8 @@ interface UIDashboardViewItem {
 
 type DashboardViewItem = OrigDashboardViewItem | UIDashboardViewItem;
 
-export interface DashboardsTreeItem {
-  item: DashboardViewItem;
+export interface DashboardsTreeItem<T extends DashboardViewItem = DashboardViewItem> {
+  item: T;
   level: number;
   isOpen: boolean;
 }

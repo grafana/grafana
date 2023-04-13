@@ -35,7 +35,12 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
       <Indent level={level} />
 
       {item.kind === 'folder' ? (
-        <IconButton size="md" onClick={() => onFolderClick(item.uid, !isOpen)} name={chevronIcon} />
+        <IconButton
+          size="md"
+          onClick={() => onFolderClick(item.uid, !isOpen)}
+          name={chevronIcon}
+          ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+        />
       ) : (
         <span className={styles.folderButtonSpacer} />
       )}
