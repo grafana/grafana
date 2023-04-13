@@ -162,7 +162,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         <hr />
         <h3 className={styles.sectionHeaderPadding}>Connection</h3>
         <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
-          Provide information to connect to this datasource.
+          Provide information to connect to this data source.
         </p>
         <div className="gf-form-group">
           <div className="gf-form">
@@ -172,7 +172,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
           </div>
         </div>
         <div className={`${styles.sectionBottomPadding} ${styles.secondaryGrey}`}>
-          For more information on configuring the Grafana Prometheus datasource see the{' '}
+          For more information on configuring the Grafana Prometheus data source see the{' '}
           <a
             style={{ textDecoration: 'underline' }}
             href="https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source"
@@ -189,7 +189,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         <hr />
         <h3 className={styles.sectionHeaderPadding}>Authentication</h3>
         <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
-          Provide information to grant access to this datasource.
+          Provide information to grant access to this data source.
         </p>
         <div className={styles.sectionBottomPadding}>
           <div className="gf-form-inline">
@@ -309,7 +309,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
           <hr />
           <h3 className={styles.sectionHeaderPadding}>Access options</h3>
           <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
-            Configure access options for this datasource.
+            Configure access options for this data source.
           </p>
           {showAccessOptions && (
             <>

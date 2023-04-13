@@ -168,7 +168,7 @@ export const PromSettings = (props: Props) => {
 
   return (
     <>
-      <h6 className="page-heading">Prometheus Behavioural</h6>
+      <h6 className="page-heading">Interval Behaviour</h6>
       <div className="gf-form-group">
         {/* Scrape interval */}
         <div className="gf-form-inline">
@@ -223,7 +223,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h6 className="page-heading">UI</h6>
+      <h6 className="page-heading">Query Editor</h6>
       <div className="gf-form-group">
         <div className="gf-form">
           <InlineField
@@ -231,7 +231,7 @@ export const PromSettings = (props: Props) => {
             labelWidth={26}
             tooltip={
               <>
-                Set default editor option (builder/code) for all users of this datasource. If no option was selected,
+                Set default editor option (builder/code) for all users of this data source. If no option was selected,
                 the default editor will be the &quot;builder&quot;. If a user switches to other option rather than the
                 specified with this setting on the panel we always show the selected editor for that user. {docsTip()}
               </>
@@ -412,7 +412,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h6 className="page-heading">Advanced</h6>
+      <h6 className="page-heading">Other</h6>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
