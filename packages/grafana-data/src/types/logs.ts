@@ -103,35 +103,6 @@ export interface LogLabelStatsModel {
   value: string;
 }
 
-/** @deprecated will be removed in the next major version */
-export interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
 export enum LogsDedupDescription {
   none = 'No de-duplication',
   exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
