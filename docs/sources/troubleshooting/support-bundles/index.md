@@ -90,7 +90,7 @@ Ensure [age](https://github.com/FiloSottile/age#installation) is installed on yo
 Add the public key to the `public_keys` setting in the `support_bundle` section of the Grafana configuration file.
 
 ```ini
-[support_bundle]
+[support_bundles]
 public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
 ```
 
@@ -100,7 +100,7 @@ public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
 Example:
 
 ```ini
-[support_bundle]
+[support_bundles]
 public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p age1yu8vzu554pv3klw46yhdv4raz36k5w3vy30lpxn46923lqngudyqvxacer"
 ```
 
