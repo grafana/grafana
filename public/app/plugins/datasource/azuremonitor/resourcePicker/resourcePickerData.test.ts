@@ -34,8 +34,8 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   resourcePickerData.postResource = postResource;
   const logLocationsMap = mockGetValidLocations();
   const getLogsLocations = jest.spyOn(resourcePickerData, 'getLogsLocations').mockResolvedValue(logLocationsMap);
-  resourcePickerData.logLocationsMap = logLocationsMap;
-  resourcePickerData.logLocations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
+  resourcePickerData.locationsMap = logLocationsMap;
+  resourcePickerData.locations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
   return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLogsLocations };
 };
 
@@ -403,7 +403,6 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(locations.has('northeurope')).toBe(true);
       expect(locations.get('northeurope')?.name).toBe('northeurope');
       expect(locations.get('northeurope')?.displayName).toBe('North Europe');
-      expect(locations.get('northeurope')?.supportsLogs).toBe(true);
     });
 
     it('returns the raw locations map if provider is undefined', async () => {
@@ -419,7 +418,6 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(locations.has('northeurope')).toBe(true);
       expect(locations.get('northeurope')?.name).toBe('northeurope');
       expect(locations.get('northeurope')?.displayName).toBe('North Europe');
-      expect(locations.get('northeurope')?.supportsLogs).toBe(false);
     });
   });
 
