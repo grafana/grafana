@@ -1,4 +1,4 @@
-package keyimpl
+package signingkeysimpl
 
 import (
 	"crypto"

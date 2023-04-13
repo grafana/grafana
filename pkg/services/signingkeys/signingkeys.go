@@ -1,4 +1,4 @@
-package auth
+package signingkeys
 
 import (
 	"crypto"
@@ -6,7 +6,7 @@ import (
 	"github.com/go-jose/go-jose/v3"
 )
 
-type KeyService interface {
+type Service interface {
 	GetJWKS() jose.JSONWebKeySet
 	GetJWK(keyID string) (jose.JSONWebKey, error)
 	GetPublicKey(keyID string) (crypto.PublicKey, error)

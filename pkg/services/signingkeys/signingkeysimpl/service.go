@@ -1,22 +1,21 @@
-package keyimpl
+package signingkeysimpl
 
 import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"fmt"
 
 	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
 const (
-	ServerPrivateKeyID = "default"
+	serverPrivateKeyID = "default"
 )
 
-var _ auth.KeyService = new(EmbeddedKeyService)
+var _ signingkeys.Service = new(EmbeddedKeyService)
 
 func ProvideEmbeddedKeyService() *EmbeddedKeyService {
 	s := &EmbeddedKeyService{
@@ -29,7 +28,7 @@ func ProvideEmbeddedKeyService() *EmbeddedKeyService {
 	}
 
 	s.keys = map[string]crypto.Signer{}
-	s.keys[ServerPrivateKeyID] = privateKey
+	s.keys[serverPrivateKeyID] = privateKey
 
 	return s
 }
@@ -54,8 +53,8 @@ func (s *EmbeddedKeyService) GetJWKS() jose.JSONWebKeySet {
 func (s *EmbeddedKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
-		s.log.Error("the specified key was not found", "keyID", keyID)
-		return jose.JSONWebKey{}, fmt.Errorf("the specified key was not found: %s", keyID)
+		s.log.Error("The specified key was not found", "keyID", keyID)
+		return jose.JSONWebKey{}, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
 	}
 
 	result := jose.JSONWebKey{
@@ -69,8 +68,8 @@ func (s *EmbeddedKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
 func (s *EmbeddedKeyService) GetPublicKey(keyID string) (crypto.PublicKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
-		s.log.Error("the specified key was not found", "keyID", keyID)
-		return nil, fmt.Errorf("the specified key was not found")
+		s.log.Error("The specified key was not found", "keyID", keyID)
+		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
 	}
 
 	return privateKey.Public(), nil
@@ -80,12 +79,12 @@ func (s *EmbeddedKeyService) GetPrivateKey(keyID string) (crypto.PrivateKey, err
 	privateKey, ok := s.keys[keyID]
 	if !ok {
 		s.log.Error("The specified key was not found", "keyID", keyID)
-		return nil, fmt.Errorf("The specified key was not found")
+		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
 	}
 
 	return privateKey, nil
 }
 
 func (s *EmbeddedKeyService) GetServerPrivateKey() (crypto.PrivateKey, error) {
-	return s.GetPrivateKey(ServerPrivateKeyID)
+	return s.GetPrivateKey(serverPrivateKeyID)
 }
