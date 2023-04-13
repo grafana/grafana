@@ -26,11 +26,8 @@ import {
   CoreApp,
   SupplementaryQueryType,
   DataQueryError,
-  FieldCache,
-  FieldType,
   rangeUtil,
   Field,
-  sortDataFrame,
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
