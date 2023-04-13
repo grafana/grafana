@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { FieldType, LogRowModel, MutableDataFrame, DataQueryResponse } from '@grafana/data';
+import { FieldType, LogRowModel, MutableDataFrame, DataQueryResponse, LogRowContextOptions } from '@grafana/data';
 
 import { createLogRow } from '../__mocks__/logRow';
 
 import { getRowContexts, LogRowContextProvider } from './LogRowContextProvider';
-import { RowContextOptions } from './types';
 
 const row = createLogRow({ entry: '4', timeEpochMs: 4 });
 
@@ -35,7 +34,7 @@ describe('getRowContexts', () => {
         ],
       });
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.resolve({ data: [firstResult] });
@@ -70,7 +69,7 @@ describe('getRowContexts', () => {
         ],
       });
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.resolve({ data: [firstResult] });
@@ -95,7 +94,7 @@ describe('getRowContexts', () => {
       const firstError = new Error('Error 1');
       const secondError = new Error('Error 2');
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.reject(firstError);
@@ -142,7 +141,7 @@ describe('LogRowContextProvider', () => {
       });
 
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.resolve({ data: [firstResult] });
