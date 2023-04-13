@@ -178,8 +178,10 @@ export const PromSettings = (props: Props) => {
               labelWidth={26}
               tooltip={
                 <>
-                  Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.{' '}
-                  {docsTip()}
+                  This interval is how frequently Prometheus scrapes targets. Set this to the typical scrape and
+                  evaluation interval configured in your Prometheus config file. If you set this to a greater value than
+                  your Prometheus config file interval, Grafana will evaluate the data according to this interval and
+                  you will see less data points. Defaults to 15s. {docsTip()}
                 </>
               }
             >
