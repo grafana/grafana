@@ -1,30 +1,23 @@
-import { css } from '@emotion/css';
 import DataEditor, {
   GridCell,
   Item,
   GridColumn,
-  GridCellKind,
   EditableGridCell,
-  GridColumnIcon,
   GridSelection,
   CellClickedEventArgs,
   Rectangle,
   HeaderClickedEventArgs,
-  SizedGridColumn,
 } from '@glideapps/glide-data-grid';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 
 import {
   ArrayVector,
   Field,
   MutableDataFrame,
   PanelProps,
-  GrafanaTheme2,
-  getFieldDisplayName,
   FieldType,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-// eslint-disable-next-line import/order
 import { useTheme2 } from '@grafana/ui';
 
 import '@glideapps/glide-data-grid/dist/index.css';
@@ -33,79 +26,40 @@ import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { RenameColumnCell } from './components/RenameColumnCell';
 import { PanelOptions } from './panelcfg.gen';
+import { DatagridActionType, datagridReducer, initialState } from './state';
 import {
-  RenameColumnInputData,
   clearCellsFromRangeSelection,
-  DatagridContextMenuData,
   deleteRows,
   EMPTY_CELL,
-  EMPTY_GRID_SELECTION,
-  getCellWidth,
+  getGridCellKind,
+  getGridTheme,
   isDatagridEditEnabled,
   publishSnapshot,
   RIGHT_ELEMENT_PROPS,
   TRAILING_ROW_OPTIONS,
+  getStyles,
+  ROW_MARKER_BOTH,
+  ROW_MARKER_NUMBER
 } from './utils';
 
 interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
-  const [columns, setColumns] = useState<SizedGridColumn[]>([]);
-  const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
-  const [renameColumnInputData, setRenameColumnInputData] = useState<RenameColumnInputData>({ isInputOpen: false });
-  const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_GRID_SELECTION);
-  const [columnFreezeIndex, setColumnFreezeIndex] = useState<number>(0);
-  const [toggleSearch, setToggleSearch] = useState<boolean>(false);
-  const [isResizeInProgress, setIsResizeInProgress] = useState<boolean>(false);
+  const [state, dispatch] = useReducer(datagridReducer, initialState);
+  const { columns, contextMenuData, renameColumnInputData, gridSelection, columnFreezeIndex, toggleSearch, isResizeInProgress } = state;
 
   const frame = data.series[options.selectedSeries ?? 0];
 
   const theme = useTheme2();
-  const gridTheme = {
-    accentColor: theme.colors.primary.main,
-    accentFg: theme.colors.secondary.main,
-    textDark: theme.colors.text.primary,
-    textMedium: theme.colors.text.primary,
-    textLight: theme.colors.text.primary,
-    textBubble: theme.colors.text.primary,
-    textHeader: theme.colors.text.primary,
-    bgCell: theme.colors.background.primary,
-    bgCellMedium: theme.colors.background.primary,
-    bgHeader: theme.colors.background.secondary,
-    bgHeaderHasFocus: theme.colors.background.secondary,
-    bgHeaderHovered: theme.colors.background.secondary,
-  };
+  const gridTheme = getGridTheme(theme);
 
-  const setGridColumns = useCallback(() => {
+  useEffect(() => {
     if (!frame) {
       return;
     }
 
-    const typeToIconMap: Map<string, GridColumnIcon> = new Map([
-      [FieldType.number, GridColumnIcon.HeaderNumber],
-      [FieldType.string, GridColumnIcon.HeaderTextTemplate],
-      [FieldType.boolean, GridColumnIcon.HeaderBoolean],
-      [FieldType.time, GridColumnIcon.HeaderDate],
-      [FieldType.other, GridColumnIcon.HeaderReference],
-    ]);
-
-    setColumns((prevColumns) => [
-      ...frame.fields.map((f, i) => {
-        const displayName = getFieldDisplayName(f, frame);
-        return {
-          title: displayName,
-          width: prevColumns[i]?.width ?? getCellWidth(f),
-          icon: typeToIconMap.get(f.type),
-          hasMenu: isDatagridEditEnabled(),
-          trailingRowOptions: { targetColumn: --i },
-        };
-      }),
-    ]);
+    dispatch({ type: DatagridActionType.updateColumns, payload: { frame }})
   }, [frame]);
-
-  useEffect(() => {
-    setGridColumns();
-  }, [frame, setGridColumns]);
 
   const getCellContent = ([col, row]: Item): GridCell => {
     const field: Field = frame.fields[col];
@@ -114,41 +68,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       return EMPTY_CELL;
     }
 
-    const value = field.values.get(row);
-
-    switch (field.type) {
-      case FieldType.boolean:
-        return {
-          kind: GridCellKind.Boolean,
-          data: value ? value : false,
-          allowOverlay: false,
-          readonly: false,
-        };
-      case FieldType.number:
-        return {
-          kind: GridCellKind.Number,
-          data: value ? value : 0,
-          allowOverlay: isDatagridEditEnabled()!,
-          readonly: false,
-          displayData: value !== null && value !== undefined ? value.toString() : '',
-        };
-      case FieldType.string:
-        return {
-          kind: GridCellKind.Text,
-          data: value ? value : '',
-          allowOverlay: isDatagridEditEnabled()!,
-          readonly: false,
-          displayData: value !== null && value !== undefined ? value.toString() : '',
-        };
-      default:
-        return {
-          kind: GridCellKind.Text,
-          data: value ? value : '',
-          allowOverlay: isDatagridEditEnabled()!,
-          readonly: false,
-          displayData: value !== null && value !== undefined ? value.toString() : '',
-        };
-    }
+    return getGridCellKind(field, row);
   };
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
@@ -201,27 +121,17 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     publishSnapshot(newFrame, id);
   };
 
-  const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
-    setColumns((prevColumns) => {
-      const newColumns = [...prevColumns];
-
-      newColumns[colIndex] = {
-        ...column,
-        width: newSize,
-      };
-
-      return newColumns;
-    });
-
-    setIsResizeInProgress(true);
+  const onColumnResize = (column: GridColumn, width: number, columnIndex: number, newSizeWithGrow: number) => {
+    dispatch({ type: DatagridActionType.columnResizeStart, payload: { columnIndex, width} });
   };
 
+  //Hack used to allow resizing last column, near add column btn. This is a workaround for a bug in the grid component
   const onColumnResizeEnd = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
-    setIsResizeInProgress(false);
+    dispatch({ type: DatagridActionType.columnResizeEnd })
   };
 
   const closeContextMenu = () => {
-    setContextMenuData({ isContextMenuOpen: false });
+    dispatch({ type: DatagridActionType.closeContextMenu })
   };
 
   const onDeletePressed = (selection: GridSelection) => {
@@ -240,47 +150,16 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onCellContextMenu = (cell: Item, event: CellClickedEventArgs) => {
     event.preventDefault();
-    setContextMenuData({
-      x: event.bounds.x + event.localEventX,
-      y: event.bounds.y + event.localEventY,
-      column: cell[0] === -1 ? undefined : cell[0], //row numbers
-      row: cell[1],
-      isContextMenuOpen: true,
-      isHeaderMenu: false,
-    });
+    dispatch({ type: DatagridActionType.openCellContextMenu, payload: { event, cell } });
   };
 
-  const onHeaderContextMenu = (colIndex: number, event: HeaderClickedEventArgs) => {
+  const onHeaderContextMenu = (columnIndex: number, event: HeaderClickedEventArgs) => {
     event.preventDefault();
-    setContextMenuData({
-      x: event.bounds.x + event.localEventX,
-      y: event.bounds.y + event.localEventY,
-      column: colIndex,
-      row: undefined, //header
-      isContextMenuOpen: true,
-      isHeaderMenu: false,
-    });
+    dispatch({ type: DatagridActionType.openHeaderContextMenu, payload: { event, columnIndex } });
   };
 
   const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
-    setContextMenuData({
-      x: screenPosition.x + screenPosition.width,
-      y: screenPosition.y + screenPosition.height,
-      column: col,
-      row: undefined, //header
-      isContextMenuOpen: true,
-      isHeaderMenu: true,
-    });
-
-    setRenameColumnInputData({
-      x: screenPosition.x,
-      y: screenPosition.y,
-      width: screenPosition.width,
-      height: screenPosition.height,
-      columnIdx: col,
-      isInputOpen: false,
-      inputValue: frame.fields[col].name,
-    });
+    dispatch({ type: DatagridActionType.openHeaderDropdownMenu, payload: { screenPosition, columnIndex: col, value: frame.fields[col].name  } })
   };
 
   const onColumnMove = (from: number, to: number) => {
@@ -289,24 +168,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     newFrame.fields.splice(from, 1);
     newFrame.fields.splice(to, 0, field);
 
-    setColumns((prevColumns) => {
-      const newColumns = [...prevColumns];
-      const widthFrom = newColumns[from].width;
-      const widthTo = newColumns[to].width;
-
-      newColumns[from] = {
-        ...newColumns[from],
-        width: widthTo,
-      };
-
-      newColumns[to] = {
-        ...newColumns[to],
-        width: widthFrom,
-      };
-
-      return newColumns;
-    });
-
+    dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
     publishSnapshot(newFrame, id);
   };
 
@@ -325,27 +187,28 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnRename = () => {
-    setRenameColumnInputData((prevData) => {
-      return {
-        ...prevData,
-        isInputOpen: true,
-      };
-    });
+    dispatch({ type: DatagridActionType.showColumnRenameInput })
   };
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
     const newFrame = new MutableDataFrame(frame);
     newFrame.fields[columnIdx].name = columnName;
 
+    dispatch({ type: DatagridActionType.hideColumnRenameInput })
     publishSnapshot(newFrame, id);
-
-    setRenameColumnInputData((prevData) => {
-      return {
-        ...prevData,
-        isInputOpen: false,
-      };
-    });
   };
+
+  const onSearchClose = () => {
+    dispatch({ type: DatagridActionType.closeSearch });
+  }
+
+  const onGridSelectionChange = (selection: GridSelection) => {
+    dispatch({ type: DatagridActionType.multipleCellsSelected, payload: { selection } });
+  }
+
+  if (!frame) {
+    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
+  }
 
   if (!document.getElementById('portal')) {
     const portal = document.createElement('div');
@@ -353,11 +216,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     document.body.appendChild(portal);
   }
 
-  if (!frame) {
-    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
-  }
-
-  const numRows = frame.length;
   const styles = getStyles(theme, isResizeInProgress);
 
   return (
@@ -366,7 +224,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         className={styles.dataEditor}
         getCellContent={getCellContent}
         columns={columns}
-        rows={numRows}
+        rows={frame.length}
         width={'100%'}
         height={'100%'}
         theme={gridTheme}
@@ -376,13 +234,13 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
         onCellEdited={isDatagridEditEnabled() ? onCellEdited : undefined}
         getCellsForSelection={isDatagridEditEnabled() ? true : undefined}
         showSearch={isDatagridEditEnabled() ? toggleSearch : false}
-        onSearchClose={() => setToggleSearch(false)}
+        onSearchClose={onSearchClose}
         onPaste={isDatagridEditEnabled() ? true : undefined}
         gridSelection={gridSelection}
-        onGridSelectionChange={isDatagridEditEnabled() ? setGridSelection : undefined}
+        onGridSelectionChange={isDatagridEditEnabled() ? onGridSelectionChange : undefined}
         onRowAppended={isDatagridEditEnabled() ? addNewRow : undefined}
         onDelete={isDatagridEditEnabled() ? onDeletePressed : undefined}
-        rowMarkers={isDatagridEditEnabled() ? 'both' : 'number'}
+        rowMarkers={isDatagridEditEnabled() ? ROW_MARKER_BOTH : ROW_MARKER_NUMBER}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
         onCellContextMenu={isDatagridEditEnabled() ? onCellContextMenu : undefined}
@@ -405,10 +263,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
           data={frame}
           saveData={(data) => publishSnapshot(data, id)}
           closeContextMenu={closeContextMenu}
-          setToggleSearch={setToggleSearch}
+          dispatch={dispatch}
           gridSelection={gridSelection}
-          setGridSelection={setGridSelection}
-          setColumnFreezeIndex={setColumnFreezeIndex}
           columnFreezeIndex={columnFreezeIndex}
           renameColumnClicked={onColumnRename}
         />
@@ -422,64 +278,4 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       ) : null}
     </>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
-  return {
-    dataEditor: css`
-      .dvn-scroll-inner > div:nth-child(2) {
-        pointer-events: none !important;
-      }
-      scrollbar-color: ${theme.colors.background.secondary} ${theme.colors.background.primary};
-      ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: ${theme.colors.background.primary};
-      }
-      ::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-corner {
-        display: none;
-      }
-    `,
-    addColumnDiv: css`
-      width: 120px;
-      display: flex;
-      flex-direction: column;
-      background-color: ${theme.colors.background.primary};
-      button {
-        pointer-events: ${isResizeInProgress ? 'none' : 'auto'};
-        border: none;
-        outline: none;
-        height: 37px;
-        font-size: 20px;
-        background-color: ${theme.colors.background.secondary};
-        color: ${theme.colors.text.primary};
-        border-right: 1px solid ${theme.components.panel.borderColor};
-        border-bottom: 1px solid ${theme.components.panel.borderColor};
-        transition: background-color 200ms;
-        cursor: pointer;
-        :hover {
-          background-color: ${theme.colors.secondary.shade};
-        }
-      }
-      input {
-        height: 37px;
-        border: 1px solid ${theme.colors.primary.main};
-        :focus {
-          outline: none;
-        }
-      }
-    `,
-    renameColumnInput: css`
-      height: 37px;
-      border: 1px solid ${theme.colors.primary.main};
-      :focus {
-        outline: none;
-      }
-    `,
-  };
 };

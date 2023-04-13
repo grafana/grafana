@@ -7,23 +7,21 @@ import { convertFieldType } from '@grafana/data/src/transformations/transformers
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
+import { DatagridAction, DatagridActionType } from '../state';
 import {
   cleanStringFieldAfterConversion,
   DatagridContextMenuData,
   deleteRows,
   EMPTY_DF,
-  EMPTY_GRID_SELECTION,
 } from '../utils';
 
 interface Props {
   menuData: DatagridContextMenuData;
   data: DataFrame;
   saveData: (data: DataFrame) => void;
+  dispatch: React.Dispatch<DatagridAction>;
   closeContextMenu: () => void;
-  setToggleSearch: (toggleSearch: boolean) => void;
   gridSelection: GridSelection;
-  setGridSelection: (gridSelection: GridSelection) => void;
-  setColumnFreezeIndex: (index: number) => void;
   columnFreezeIndex: number;
   renameColumnClicked: () => void;
 }
@@ -33,10 +31,8 @@ export const DatagridContextMenu = ({
   data,
   saveData,
   closeContextMenu,
-  setToggleSearch,
+  dispatch,
   gridSelection,
-  setGridSelection,
-  setColumnFreezeIndex,
   columnFreezeIndex,
   renameColumnClicked,
 }: Props) => {
@@ -75,7 +71,7 @@ export const DatagridContextMenu = ({
           onClick={() => {
             if (selectedRows.length) {
               saveData(deleteRows(data, selectedRows, true));
-              setGridSelection(EMPTY_GRID_SELECTION);
+              dispatch({ type: DatagridActionType.gridSelectionCleared });
               return;
             }
 
@@ -135,7 +131,7 @@ export const DatagridContextMenu = ({
           saveData(EMPTY_DF);
         }}
       />
-      <MenuItem label="Search..." onClick={() => setToggleSearch(true)} />
+      <MenuItem label="Search..." onClick={() => dispatch({ type: DatagridActionType.openSearch })} />
     </>
   );
 
@@ -179,8 +175,8 @@ export const DatagridContextMenu = ({
     }
 
     let columnFreezeLabel = 'Set column freeze position';
-    const columnIdx = column + 1;
-    if (columnFreezeIndex === columnIdx) {
+    const columnIndex = column + 1;
+    if (columnFreezeIndex === columnIndex) {
       columnFreezeLabel = 'Unset column freeze';
     }
 
@@ -215,10 +211,10 @@ export const DatagridContextMenu = ({
         <MenuItem
           label={columnFreezeLabel}
           onClick={() => {
-            if (columnFreezeIndex === columnIdx) {
-              setColumnFreezeIndex(0);
+            if (columnFreezeIndex === columnIndex) {
+              dispatch({ type: DatagridActionType.columnFreezeReset })
             } else {
-              setColumnFreezeIndex(columnIdx);
+              dispatch({ type: DatagridActionType.columnFreezeChanged, payload: { columnIndex } })
             }
           }}
         />

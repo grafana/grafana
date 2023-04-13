@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { CompactSelection, GridCell, GridCellKind } from '@glideapps/glide-data-grid';
 
 import {
@@ -8,6 +9,8 @@ import {
   DatagridDataChangeEvent,
   MutableDataFrame,
   Field,
+  GrafanaTheme2,
+  FieldType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -19,6 +22,11 @@ const MAX_COLUMN_WIDTH = 300;
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
 const TEXT_CANVAS = document.createElement('canvas');
+
+export const ROW_MARKER_BOTH = 'both';
+export const ROW_MARKER_NUMBER = 'number';
+export const DEFAULT_CONTEXT_MENU = { isContextMenuOpen: false };
+export const DEFAULT_RENAME_INPUT_DATA = { isInputOpen: false };
 
 export const EMPTY_DF = {
   name: 'A',
@@ -180,4 +188,119 @@ export const cleanStringFieldAfterConversion = (field: Field): void => {
   const valuesArray = field.values.toArray();
   field.values = new ArrayVector(valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val)));
   return;
+};
+
+export const getGridTheme = (theme: GrafanaTheme2) => {
+  return {
+    accentColor: theme.colors.primary.main,
+    accentFg: theme.colors.secondary.main,
+    textDark: theme.colors.text.primary,
+    textMedium: theme.colors.text.primary,
+    textLight: theme.colors.text.primary,
+    textBubble: theme.colors.text.primary,
+    textHeader: theme.colors.text.primary,
+    bgCell: theme.colors.background.primary,
+    bgCellMedium: theme.colors.background.primary,
+    bgHeader: theme.colors.background.secondary,
+    bgHeaderHasFocus: theme.colors.background.secondary,
+    bgHeaderHovered: theme.colors.background.secondary,
+  };
+};
+
+export const getGridCellKind = (field: Field, row: number): GridCell => {
+  const value = field.values.get(row);
+
+  switch (field.type) {
+    case FieldType.boolean:
+      return {
+        kind: GridCellKind.Boolean,
+        data: value ? value : false,
+        allowOverlay: false,
+        readonly: false,
+      };
+    case FieldType.number:
+      return {
+        kind: GridCellKind.Number,
+        data: value ? value : 0,
+        allowOverlay: isDatagridEditEnabled()!,
+        readonly: false,
+        displayData: value !== null && value !== undefined ? value.toString() : '',
+      };
+    case FieldType.string:
+      return {
+        kind: GridCellKind.Text,
+        data: value ? value : '',
+        allowOverlay: isDatagridEditEnabled()!,
+        readonly: false,
+        displayData: value !== null && value !== undefined ? value.toString() : '',
+      };
+    default:
+      return {
+        kind: GridCellKind.Text,
+        data: value ? value : '',
+        allowOverlay: isDatagridEditEnabled()!,
+        readonly: false,
+        displayData: value !== null && value !== undefined ? value.toString() : '',
+      };
+  }
+};
+
+export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
+  return {
+    dataEditor: css`
+      .dvn-scroll-inner > div:nth-child(2) {
+        pointer-events: none !important;
+      }
+      scrollbar-color: ${theme.colors.background.secondary} ${theme.colors.background.primary};
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: ${theme.colors.background.primary};
+      }
+      ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-corner {
+        display: none;
+      }
+    `,
+    addColumnDiv: css`
+      width: 120px;
+      display: flex;
+      flex-direction: column;
+      background-color: ${theme.colors.background.primary};
+      button {
+        pointer-events: ${isResizeInProgress ? 'none' : 'auto'};
+        border: none;
+        outline: none;
+        height: 37px;
+        font-size: 20px;
+        background-color: ${theme.colors.background.secondary};
+        color: ${theme.colors.text.primary};
+        border-right: 1px solid ${theme.components.panel.borderColor};
+        border-bottom: 1px solid ${theme.components.panel.borderColor};
+        transition: background-color 200ms;
+        cursor: pointer;
+        :hover {
+          background-color: ${theme.colors.secondary.shade};
+        }
+      }
+      input {
+        height: 37px;
+        border: 1px solid ${theme.colors.primary.main};
+        :focus {
+          outline: none;
+        }
+      }
+    `,
+    renameColumnInput: css`
+      height: 37px;
+      border: 1px solid ${theme.colors.primary.main};
+      :focus {
+        outline: none;
+      }
+    `,
+  };
 };
