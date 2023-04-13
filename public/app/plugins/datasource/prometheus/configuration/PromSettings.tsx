@@ -419,8 +419,8 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form-inline">
           {/* HTTP Method */}
           <div className="gf-form">
-            <InlineFormLabel
-              width={13}
+            <InlineField
+              labelWidth={26}
               tooltip={
                 <>
                   You can use either POST or GET HTTP method to query your Prometheus data source. POST is the
@@ -428,17 +428,17 @@ export const PromSettings = (props: Props) => {
                   older than 2.1 or if POST requests are restricted in your network. {docsTip()}
                 </>
               }
+              label="HTTP method"
             >
-              HTTP method
-            </InlineFormLabel>
-            <Select
-              width={40}
-              aria-label="Select HTTP method"
-              options={httpOptions}
-              value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
-              onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-              disabled={options.readOnly}
-            />
+              <Select
+                width={40}
+                aria-label="Select HTTP method"
+                options={httpOptions}
+                value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
+                onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+                disabled={options.readOnly}
+              />
+            </InlineField>
           </div>
         </div>
       </div>

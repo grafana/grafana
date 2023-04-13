@@ -5,7 +5,6 @@ import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   useTheme2,
-  InlineFormLabel,
   InlineField,
   Input,
   Icon,
@@ -18,7 +17,6 @@ import {
 import { BasicAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/BasicAuthSettings';
 import { HttpProxySettings } from '@grafana/ui/src/components/DataSourceSettings/HttpProxySettings';
 import { HttpSettingsProps } from '@grafana/ui/src/components/DataSourceSettings/types';
-import { FormField } from '@grafana/ui/src/components/FormField/FormField';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -122,7 +120,8 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
   const accessSelect = (
     <Select
       data-testid="Access"
-      className="width-20 gf-form-input"
+      width={40}
+      className="gf-form-input"
       options={ACCESS_OPTIONS}
       value={
         ACCESS_OPTIONS.filter((o: SelectableValue) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION
@@ -165,7 +164,9 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         <p className={`${overhaulStyles.description}`}>Provide information to connect to this datasource.</p>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
+            <InlineField label="URL" labelWidth={26} tooltip={urlTooltip}>
+              {urlInput}
+            </InlineField>
           </div>
         </div>
         <div className={overhaulStyles.sectionBottomPadding}>
@@ -308,7 +309,9 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
-                  <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
+                  <InlineField label="Access" labelWidth={26}>
+                    {accessSelect}
+                  </InlineField>
                 </div>
                 <div className="gf-form">
                   <button
@@ -328,43 +331,46 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
           {dataSourceConfig.access === 'proxy' && (
             <div>
               <div className="gf-form">
-                <InlineFormLabel
-                  width={13}
+                <InlineField
+                  labelWidth={26}
                   tooltip={
                     <>
                       Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be
                       forwarded to the data source. {docsTip()}
                     </>
                   }
+                  label="Allowed cookies"
                 >
-                  Allowed cookies
-                </InlineFormLabel>
-                <TagsInput
-                  tags={dataSourceConfig.jsonData.keepCookies}
-                  width={40}
-                  onChange={(cookies) =>
-                    onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
-                  }
-                  disabled={dataSourceConfig.readOnly}
-                />
+                  <TagsInput
+                    tags={dataSourceConfig.jsonData.keepCookies}
+                    width={40}
+                    onChange={(cookies) =>
+                      onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
+                    }
+                    disabled={dataSourceConfig.readOnly}
+                  />
+                </InlineField>
               </div>
               <div className="gf-form">
-                <FormField
+                <InlineField
                   label="Timeout"
-                  type="number"
-                  labelWidth={13}
-                  inputWidth={20}
+                  labelWidth={26}
                   tooltip={<>HTTP request timeout in seconds. {docsTip()}</>}
-                  placeholder="Timeout in seconds"
-                  data-testid="Timeout in seconds"
-                  value={dataSourceConfig.jsonData.timeout}
-                  onChange={(event) => {
-                    onSettingsChange({
-                      jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
-                    });
-                  }}
-                  disabled={dataSourceConfig.readOnly}
-                />
+                >
+                  <Input
+                    type="number"
+                    placeholder="Timeout in seconds"
+                    data-testid="Timeout in seconds"
+                    value={dataSourceConfig.jsonData.timeout}
+                    onChange={(event) => {
+                      onSettingsChange({
+                        jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
+                      });
+                    }}
+                    width={40}
+                    disabled={dataSourceConfig.readOnly}
+                  />
+                </InlineField>
               </div>
             </div>
           )}
