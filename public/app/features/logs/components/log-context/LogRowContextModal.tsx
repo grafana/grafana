@@ -114,7 +114,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const entryElement = React.createRef<HTMLTableRowElement>();
 
   const theme = useTheme2();
-  const { modal, flexColumn, flexRow, entry, datasourceUi, logRowGroups, noMarginBottom, hidden } = getStyles(theme);
+  const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
@@ -206,26 +206,32 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   }, [scrollElement]);
 
   return (
-    <Modal isOpen={open} title="Log context" contentClassName={flexColumn} className={modal} onDismiss={onClose}>
+    <Modal
+      isOpen={open}
+      title="Log context"
+      contentClassName={styles.flexColumn}
+      className={styles.modal}
+      onDismiss={onClose}
+    >
       {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-        <div className={datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
+        <div className={styles.datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
-      <div className={flexRow}>
-        <div className={loading ? hidden : ''}>
+      <div className={styles.flexRow}>
+        <div className={loading ? styles.hidden : ''}>
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
           <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
         </div>
       </div>
-      <div className={loading ? '' : hidden}>
+      <div className={loading ? '' : styles.hidden}>
         <LoadingBar width={loadingWidth} />
       </div>
-      <div ref={scrollElement} className={logRowGroups}>
+      <div ref={scrollElement} className={styles.logRowGroups}>
         <table>
           <tbody>
             <tr>
-              <td className={noMarginBottom}>
+              <td className={styles.noMarginBottom}>
                 <LogRows
                   logRows={context.after}
                   dedupStrategy={LogsDedupStrategy.none}
@@ -241,8 +247,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 />
               </td>
             </tr>
-            <tr ref={entryElement} className={entry}>
-              <td className={noMarginBottom}>
+            <tr ref={entryElement} className={styles.entry}>
+              <td className={styles.noMarginBottom}>
                 <LogRows
                   logRows={[row]}
                   dedupStrategy={LogsDedupStrategy.none}
@@ -279,7 +285,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         </table>
       </div>
       <div>
-        <div className={loading ? hidden : ''}>
+        <div className={loading ? styles.hidden : ''}>
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
       </div>
