@@ -3,9 +3,8 @@ import arrayMutators from 'final-form-arrays';
 import React from 'react';
 import { Form } from 'react-final-form';
 
-import { Messages } from '../DBClusterAdvancedOptions.messages';
-
 import NetworkAndSecurity from './NetworkAndSecurity';
+import { Messages } from './NetworkAndSecurity.messages';
 import { NetworkAndSecurityFields } from './NetworkAndSecurity.types';
 
 describe('DBClusterAdvancedOptions NetworkAndSecurity::', () => {
@@ -15,15 +14,16 @@ describe('DBClusterAdvancedOptions NetworkAndSecurity::', () => {
         initialValues={{ [NetworkAndSecurityFields.sourceRanges]: [{}] }}
         onSubmit={jest.fn()}
         mutators={{ ...arrayMutators }}
-        render={() => <NetworkAndSecurity />}
+        render={({ form }) => <NetworkAndSecurity form={form} />}
       />
     );
-    expect(screen.getByTestId('network-and-security').querySelector('legend')).toHaveTextContent(
-      Messages.fieldSets.networkAndSecurity
-    );
-    expect(screen.getByTestId('expose-checkbox-input')).toBeInTheDocument();
-    expect(screen.getByTestId('expose-checkbox-input')).not.toBeDisabled();
-    expect(screen.getByTestId('expose-field-label')).toHaveTextContent(Messages.labels.expose);
+
+    expect(screen.getByTestId('toggle-network-and-security')).toBeInTheDocument();
+    const checkbox = screen.getByTestId('toggle-network-and-security');
+
+    fireEvent.click(checkbox);
+
+    expect(screen.getByTestId('network-and-security')).toHaveTextContent(Messages.fieldSets.expose);
 
     expect(screen.getByTestId('internetFacing-checkbox-input')).toBeInTheDocument();
     expect(screen.getByTestId('internetFacing-checkbox-input')).not.toBeDisabled();
@@ -40,9 +40,14 @@ describe('DBClusterAdvancedOptions NetworkAndSecurity::', () => {
         initialValues={{ [NetworkAndSecurityFields.sourceRanges]: [{ sourceRange: '1' }] }}
         onSubmit={jest.fn()}
         mutators={{ ...arrayMutators }}
-        render={() => <NetworkAndSecurity />}
+        render={({ form }) => <NetworkAndSecurity form={form} />}
       />
     );
+    expect(screen.getByTestId('toggle-network-and-security')).toBeInTheDocument();
+    const checkbox = screen.getByTestId('toggle-network-and-security');
+
+    fireEvent.click(checkbox);
+
     expect(screen.getByTestId('sourceRanges[0].sourceRange-text-input')).toBeInTheDocument();
     const deleteBtn = screen.getByTestId('deleteButton-0');
     fireEvent.click(deleteBtn);
@@ -54,9 +59,14 @@ describe('DBClusterAdvancedOptions NetworkAndSecurity::', () => {
         initialValues={{ [NetworkAndSecurityFields.sourceRanges]: [{ sourceRange: '1' }, { sourceRange: '2' }] }}
         onSubmit={jest.fn()}
         mutators={{ ...arrayMutators }}
-        render={() => <NetworkAndSecurity />}
+        render={({ form }) => <NetworkAndSecurity form={form} />}
       />
     );
+    expect(screen.getByTestId('toggle-network-and-security')).toBeInTheDocument();
+    const checkbox = screen.getByTestId('toggle-network-and-security');
+
+    fireEvent.click(checkbox);
+
     expect(screen.getByTestId('sourceRanges[1].sourceRange-text-input')).toBeInTheDocument();
     const deleteBtn = screen.getByTestId('deleteButton-1');
     fireEvent.click(deleteBtn);

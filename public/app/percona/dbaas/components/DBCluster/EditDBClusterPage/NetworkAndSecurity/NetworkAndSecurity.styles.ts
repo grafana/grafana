@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme } from '@grafana/data';
-
 export const getStyles = ({ spacing }: GrafanaTheme) => ({
-  errorWrapper: css`
-    div:only-child > div {
-      display: none;
-    },
-
-    margin-bottom: ${spacing.sm};
+  fieldSetSwitch: css`
+    label {
+      position: absolute;
+    }
+  `,
+  fieldSetLabel: css`
+    display: flex;
+    align-items: center;
+    column-gap: 10px;
   `,
   fieldsWrapper: css`
     position: relative;
@@ -19,13 +21,11 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
       }
     }
   `,
-
   button: css`
     position: absolute;
     right: 0;
     top: -${spacing.md};
   `,
-
   fieldWrapper: css`
     display: flex;
     width: 100%;

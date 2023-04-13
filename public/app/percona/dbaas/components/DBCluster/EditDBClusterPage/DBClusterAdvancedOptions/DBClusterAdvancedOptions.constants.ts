@@ -36,7 +36,7 @@ export const INITIAL_VALUES: AddDBClusterFormValues = {
   memory: DEFAULT_SIZES.small.memory,
   cpu: DEFAULT_SIZES.small.cpu,
   disk: DEFAULT_SIZES.small.disk,
-  sourceRanges: [{}],
+  sourceRanges: [{ sourceRange: '' }],
   day: [],
   month: [],
   period: { value: 'year', label: 'every year' },

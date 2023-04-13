@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 
-import { DBClusterService } from '../../../DBCluster.service';
-import { DBaaSBackupService } from '../../DBaaSBackups/DBaaSBackups.service';
+import { DBClusterService } from '../../DBCluster.service';
+import { DBaaSBackupService } from '../DBaaSBackups/DBaaSBackups.service';
 
 export const RestoreService = {
   async loadBackupArtifacts(locationId: string): Promise<Array<SelectableValue<string>>> {

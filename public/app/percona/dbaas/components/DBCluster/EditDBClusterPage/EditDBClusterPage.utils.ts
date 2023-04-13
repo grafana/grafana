@@ -69,7 +69,7 @@ export const getEditInitialValues = (
 ): UpdateDBClusterFormValues => {
   const { template, clusterSize, sourceRanges, databaseType, cpu, disk, memory } = selectedDBCluster;
   const isCluster = clusterSize > 1;
-  const sourceRangesArray = sourceRanges?.map((item) => ({ sourceRange: item })) || [{}];
+  const sourceRangesArray = sourceRanges?.map((item) => ({ sourceRange: item })) || [{ sourceRange: '' }];
   const storageClass = configuration?.params?.replicaset?.storage_class || configuration?.params?.pxc?.storage_class;
   const clusterParameters: UpdateDBClusterFormValues = {
     nodes: isCluster ? clusterSize : MIN_NODES,

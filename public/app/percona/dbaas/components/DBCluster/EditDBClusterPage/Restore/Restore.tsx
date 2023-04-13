@@ -4,9 +4,9 @@ import { Field } from 'react-final-form';
 
 import { FieldSet, useStyles, Switch } from '@grafana/ui';
 
-import { useSelector } from '../../../../../../../types';
-import { SelectField } from '../../../../../../shared/components/Form/SelectField';
-import { getBackupLocations } from '../../../../../../shared/core/selectors';
+import { useSelector } from '../../../../../../types';
+import { SelectField } from '../../../../../shared/components/Form/SelectField';
+import { getBackupLocations } from '../../../../../shared/core/selectors';
 
 import { Messages } from './Restore.messages';
 import { RestoreService } from './Restore.service';

@@ -4,8 +4,6 @@ import { Databases } from 'app/percona/shared/core';
 
 import { Kubernetes, OperatorsList } from '../../../Kubernetes/Kubernetes.types';
 
-import { RestoreFieldsProps } from './Restore/Restore.types';
-
 export interface DBClusterBasicOptionsProps {
   kubernetes: Kubernetes[];
   form: FormApi;
@@ -46,7 +44,7 @@ export enum BasicOptionsFields {
   databaseVersion = 'databaseVersion',
 }
 
-export interface BasicOptionsFieldsProps extends RestoreFieldsProps {
+export interface BasicOptionsFieldsProps {
   [BasicOptionsFields.name]?: string;
   [BasicOptionsFields.kubernetesCluster]?: KubernetesOption;
   [BasicOptionsFields.databaseType]?: DatabaseOptionInitial;

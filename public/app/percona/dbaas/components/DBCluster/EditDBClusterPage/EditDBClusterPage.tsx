@@ -33,6 +33,8 @@ import { Messages } from './EditDBClusterPage.messages';
 import { getStyles } from './EditDBClusterPage.styles';
 import { EditDBClusterPageProps } from './EditDBClusterPage.types';
 import { generateUID } from './EditDBClusterPage.utils';
+import NetworkAndSecurity from './NetworkAndSecurity/NetworkAndSecurity';
+import Restore from './Restore/Restore';
 import { useDefaultMode } from './hooks/useDefaultMode';
 import { useEditDBClusterFormSubmit } from './hooks/useEditDBClusterFormSubmit';
 import { useEditDBClusterPageDefaultValues } from './hooks/useEditDBClusterPageDefaultValues';
@@ -115,15 +117,19 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
                 {showPMMAddressWarning && <PMMServerUrlWarning />}
                 <div className={styles.optionsWrapper}>
                   {mode === 'create' && <DBClusterBasicOptions kubernetes={kubernetes} form={form} />}
-                  {settings?.backupEnabled && mode === 'create' && (
-                    <DBaaSBackups
-                      handleSubmit={handleSubmit}
-                      pristine={pristine}
-                      valid={valid}
-                      form={form}
-                      {...props}
-                    />
-                  )}
+                  <div className={styles.switchOptionsWrapper}>
+                    {!!settings?.backupEnabled && <Restore form={form} />}
+                    <NetworkAndSecurity form={form} />
+                    {!!settings?.backupEnabled && mode === 'create' && (
+                      <DBaaSBackups
+                        handleSubmit={handleSubmit}
+                        pristine={pristine}
+                        valid={valid}
+                        form={form}
+                        {...props}
+                      />
+                    )}
+                  </div>
                   <DBClusterAdvancedOptions
                     showUnsafeConfigurationWarning={showUnsafeConfigurationWarning}
                     mode={mode}

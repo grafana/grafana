@@ -62,6 +62,7 @@ describe('EditDBClusterPage::', () => {
     expect(screen.getByTestId('db-cluster-cancel-button')).toBeInTheDocument();
     expect(screen.getByTestId('db-cluster-submit-button')).toBeInTheDocument();
     expect(screen.getByTestId('db-cluster-submit-button')).toHaveTextContent('Create');
+    expect(screen.getByTestId('network-and-security')).toBeInTheDocument();
     expect(screen.getByText('Create DB Cluster')).toBeInTheDocument();
   });
 
@@ -105,6 +106,7 @@ describe('EditDBClusterPage::', () => {
     expect(screen.getByTestId('db-cluster-cancel-button')).toBeInTheDocument();
     expect(screen.getByTestId('db-cluster-submit-button')).toBeInTheDocument();
     expect(screen.getByTestId('db-cluster-submit-button')).toHaveTextContent('Edit');
+    expect(screen.getByTestId('network-and-security')).toBeInTheDocument();
     expect(screen.getByText('Edit DB Cluster')).toBeInTheDocument();
   });
 

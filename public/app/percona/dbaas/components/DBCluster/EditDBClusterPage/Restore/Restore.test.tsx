@@ -3,8 +3,8 @@ import React from 'react';
 import { Form } from 'react-final-form';
 import { Provider } from 'react-redux';
 
-import { configureStore } from '../../../../../../../store/configureStore';
-import { StoreState } from '../../../../../../../types';
+import { configureStore } from '../../../../../../store/configureStore';
+import { StoreState } from '../../../../../../types';
 
 import { Restore } from './Restore';
 
