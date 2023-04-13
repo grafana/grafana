@@ -26,6 +26,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { appEvents } from 'app/core/core';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
+import { removePanel } from 'app/features/dashboard/utils/panel';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
@@ -131,6 +132,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
+    // if this is a newly created panel we want to remove it from the dashboard
+    // todo how do we check it's a new panel?
+    removePanel(this.props.dashboard, this.props.panel, true);
+
     this.props.discardPanelChanges();
     this.onBack();
   };
