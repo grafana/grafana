@@ -643,11 +643,11 @@ type HandleSupplementaryQueriesOptions = {
   absoluteRange: AbsoluteTimeRange;
 };
 
-const groupDataQueries = async (queries: DataQuery[], scopedVars: ScopedVars) => {
-  queries = queries.filter((t) => {
+const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars) => {
+  const nonMixedDataSources = datasources.filter((t) => {
     return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
   });
-  const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
+  const sets: { [key: string]: DataQuery[] } = groupBy(nonMixedDataSources, 'datasource.uid');
 
   return await Promise.all(
     Object.values(sets).map(async (targets) => {
