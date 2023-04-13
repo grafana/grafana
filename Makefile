@@ -161,7 +161,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	DOCKER_BUILDKIT=1 \
 	docker build \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.19.4 \
+	--build-arg GO_IMAGE=golang:1.20.1 \
 	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services

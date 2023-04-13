@@ -150,9 +150,7 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return fmt.Errorf("failed to bulk-create roles: %w", err)
 	}
 
-	for i := range createdRoles {
-		allRoles = append(allRoles, createdRoles[i])
-	}
+	allRoles = append(allRoles, createdRoles...)
 
 	if err := m.bulkAssignRoles(createdRoles); err != nil {
 		return fmt.Errorf("failed to bulk-assign roles: %w", err)
