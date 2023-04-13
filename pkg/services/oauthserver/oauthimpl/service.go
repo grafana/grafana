@@ -314,53 +314,6 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 	return nil, fmt.Errorf("at least one key option must be specified")
 }
 
-func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
-	entry, ok := s.cache.Get(id)
-	if ok {
-		app, ok := entry.(oauthserver.Client)
-		if ok {
-			s.logger.Debug("GetExternalService: cache hit", "client id", id)
-			return &app, nil
-		}
-	}
-
-	app, err := s.sqlstore.GetExternalService(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO Handle case where the external service does not have a service account
-	// Retrieve self permissions and generate a signed in user
-	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
-	if err != nil {
-		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
-		return nil, err
-	}
-
-	app.SignedInUser = &user.SignedInUser{
-		UserID:      sa.Id,
-		OrgID:       oauthserver.TmpOrgID,
-		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
-		Login:       sa.Login,
-		Name:        sa.Name,
-		Permissions: map[int64]map[string][]string{},
-	}
-	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
-	if err != nil {
-		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
-		return nil, err
-	}
-	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
-
-	// TODO: Retrieve org memberships
-	app.OrgIDs = []int64{oauthserver.TmpOrgID}
-
-	s.cache.Set(id, *app, cacheExpirationTime)
-
-	return app, nil
-}
-
 // saveServiceAccount creates a service account if the service account ID is NoServiceAccountID, otherwise it updates the service account's permissions
 func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, selfPermissions []ac.Permission) (int64, error) {
 	if saID == oauthserver.NoServiceAccountID {
@@ -523,4 +476,51 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	}
 	s.logger.Debug("Registered app", "client", client.LogID())
 	return dto, nil
+}
+
+func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
+	entry, ok := s.cache.Get(id)
+	if ok {
+		app, ok := entry.(oauthserver.Client)
+		if ok {
+			s.logger.Debug("GetExternalService: cache hit", "client id", id)
+			return &app, nil
+		}
+	}
+
+	app, err := s.sqlstore.GetExternalService(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO Handle case where the external service does not have a service account
+	// Retrieve self permissions and generate a signed in user
+	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
+	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
+	if err != nil {
+		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
+		return nil, err
+	}
+
+	app.SignedInUser = &user.SignedInUser{
+		UserID:      sa.Id,
+		OrgID:       oauthserver.TmpOrgID,
+		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
+		Login:       sa.Login,
+		Name:        sa.Name,
+		Permissions: map[int64]map[string][]string{},
+	}
+	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
+	if err != nil {
+		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
+		return nil, err
+	}
+	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
+
+	// TODO: Retrieve org memberships
+	app.OrgIDs = []int64{oauthserver.TmpOrgID}
+
+	s.cache.Set(id, *app, cacheExpirationTime)
+
+	return app, nil
 }
