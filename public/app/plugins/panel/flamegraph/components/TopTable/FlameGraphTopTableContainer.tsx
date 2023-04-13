@@ -61,7 +61,7 @@ const FlameGraphTopTableContainer = ({
   const initialSortBy = [{ displayName: 'Self', desc: true }];
 
   return (
-    <div className={styles.topTableContainer}>
+    <div className={styles.topTableContainer} data-testid="topTable">
       <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
         {({ width, height }) => {
           if (width < 3 || height < 3) {
