@@ -68,7 +68,7 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
     );
   } else if (promRule && isAlertingRule(promRule)) {
     return (
-      <HorizontalGroup align="flex-start">
+      <HorizontalGroup align="flex-start" height={'auto'}>
         <AlertStateTag state={promRule.state} isPaused={isPaused} />
         {forTime}
       </HorizontalGroup>
