@@ -95,19 +95,42 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   unshift(...items: T[]): number {
     throw new Error('Method not implemented.');
   }
-  indexOf(searchElement: T, fromIndex?: number | undefined): number {
+  fill(value: T, start?: number | undefined, end?: number | undefined): this {
     throw new Error('Method not implemented.');
   }
-  lastIndexOf(searchElement: T, fromIndex?: number | undefined): number {
+  copyWithin(target: number, start: number, end?: number | undefined): this {
     throw new Error('Method not implemented.');
+  }
+
+  [Symbol.unscopables](): {
+    copyWithin: boolean;
+    entries: boolean;
+    fill: boolean;
+    find: boolean;
+    findIndex: boolean;
+    keys: boolean;
+    values: boolean;
+  } {
+    throw new Error('Method not implemented.');
+  }
+
+  //--------------------------------------------------------------------------------
+  // Delegated Array function -- these will not be efficient :grimmice:
+  //--------------------------------------------------------------------------------
+
+  indexOf(searchElement: T, fromIndex?: number | undefined): number {
+    return this.toArray().indexOf(searchElement, fromIndex);
+  }
+  lastIndexOf(searchElement: T, fromIndex?: number | undefined): number {
+    return this.toArray().lastIndexOf(searchElement, fromIndex);
   }
   every<S extends T>(predicate: (value: T, index: number, array: T[]) => value is S, thisArg?: any): this is S[];
   every(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: any): boolean;
-  every(predicate: unknown, thisArg?: unknown): boolean {
-    throw new Error('Method not implemented.');
+  every(predicate: any, thisArg?: unknown): boolean {
+    return this.toArray().every(predicate, thisArg);
   }
   some(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: any): boolean {
-    throw new Error('Method not implemented.');
+    return this.toArray().some(predicate, thisArg);
   }
   reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: T[]) => T): T;
   reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: T[]) => T, initialValue: T): T;
@@ -131,18 +154,11 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     predicate: (this: void, value: T, index: number, obj: T[]) => value is S,
     thisArg?: any
   ): S | undefined;
-  find(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): T | undefined;
-  find(predicate: unknown, thisArg?: unknown): T | undefined {
-    throw new Error('Method not implemented.');
+  find(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): T | undefined {
+    return this.toArray().find(predicate, thisArg);
   }
   findIndex(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): number {
-    throw new Error('Method not implemented.');
-  }
-  fill(value: T, start?: number | undefined, end?: number | undefined): this {
-    throw new Error('Method not implemented.');
-  }
-  copyWithin(target: number, start: number, end?: number | undefined): this {
-    throw new Error('Method not implemented.');
+    return this.toArray().findIndex(predicate, thisArg);
   }
   entries(): IterableIterator<[number, T]> {
     return this.toArray().entries();
@@ -160,20 +176,9 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
     thisArg?: This | undefined
   ): U[] {
-    throw new Error('Method not implemented.');
+    return this.toArray().flatMap(callback, thisArg);
   }
   flat<A, D extends number = 1>(this: A, depth?: D | undefined): Array<FlatArray<A, D>> {
-    throw new Error('Method not implemented.');
-  }
-  [Symbol.unscopables](): {
-    copyWithin: boolean;
-    entries: boolean;
-    fill: boolean;
-    find: boolean;
-    findIndex: boolean;
-    keys: boolean;
-    values: boolean;
-  } {
     throw new Error('Method not implemented.');
   }
 }
