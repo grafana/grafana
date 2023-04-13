@@ -49,7 +49,6 @@ RUN go mod download && \
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
-COPY kinds kinds
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
