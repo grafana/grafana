@@ -1,4 +1,5 @@
 import { interpolateRgbBasis } from 'd3-interpolate';
+import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
@@ -243,73 +244,38 @@ function getFixedColor(field: Field, theme: GrafanaTheme2) {
   };
 }
 
-const fractions: number[] = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4];
-const black: number[] = [0, 0, 0];
-const white: number[] = [255, 255, 255];
-
 function getShadedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
     const baseColorString: string = theme.visualization.getColorByName(
       field.config.color?.fixedColor ?? FALLBACK_COLOR
     );
-    const baseColor = colorStringToRgbArray(baseColorString);
 
     const colors: string[] = [
       baseColorString, // start with base color
     ];
 
-    for (const fraction of fractions) {
+    const shadesCount = 6;
+    const maxHueSpin = 10; // hue spin, max is 360
+    const maxDarken = 35; // max 100%
+    const maxBrighten = 35; // max 100%
+
+    for (let i = 1; i < shadesCount; i++) {
       // push alternating darker and brighter shades
       colors.push(
-        rgbArrayToColorString(interpolateColorComponents(baseColor, black, fraction)),
-        rgbArrayToColorString(interpolateColorComponents(baseColor, white, fraction))
+        tinycolor(baseColorString)
+          .spin((i / shadesCount) * maxHueSpin)
+          .brighten((i / shadesCount) * maxDarken)
+          .toHexString()
+      );
+      colors.push(
+        tinycolor(baseColorString)
+          .spin(-(i / shadesCount) * maxHueSpin)
+          .darken((i / shadesCount) * maxBrighten)
+          .toHexString()
       );
     }
 
     const seriesIndex = field.state?.seriesIndex ?? 0;
     return colors[seriesIndex % colors.length];
   };
-}
-
-function colorStringToRgbArray(color: string): number[] {
-  if (color[0] !== '#') {
-    return [127, 127, 127];
-  }
-  if (color.length !== 7) {
-    return [127, 127, 127];
-  }
-  const red: number = parseInt(color.substring(1, 3), 16);
-  const green: number = parseInt(color.substring(3, 5), 16);
-  const blue: number = parseInt(color.substring(5, 7), 16);
-
-  return [red, green, blue];
-}
-
-function rgbArrayToColorString(rgb: number[]): string {
-  return '#' + toTwoDigitHex(rgb[0]) + toTwoDigitHex(rgb[1]) + toTwoDigitHex(rgb[2]);
-}
-
-function toTwoDigitHex(n: number): string {
-  const s = n.toString(16);
-
-  if (s.length < 2) {
-    return '0' + s;
-  } else {
-    return s;
-  }
-}
-
-function interpolateColorComponents(left: number[], right: number[], leftFraction: number): number[] {
-  const rightFraction = 1 - leftFraction;
-
-  const newColor: number[] = [];
-  for (let i = 0; i < 3; i++) {
-    newColor.push(normalizeToUInt8(left[i] * leftFraction + right[i] * rightFraction));
-  }
-
-  return newColor;
-}
-
-function normalizeToUInt8(n: number): number {
-  return Math.max(0, Math.min(Math.round(n), 255));
 }
