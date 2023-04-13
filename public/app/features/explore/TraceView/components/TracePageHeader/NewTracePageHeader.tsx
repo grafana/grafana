@@ -54,10 +54,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       color: #aaa;
       margin: 0 0.75em;
     `,
-    tooltip: css`
-      color: #aaa;
-      margin: -14px 0.5em 0 0;
-    `,
     timestamp: css`
       vertical-align: middle;
     `,
