@@ -139,6 +139,16 @@ export enum LogsDedupDescription {
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
 
+export interface LogRowContextOptions {
+  direction?: LogRowContextQueryDirection;
+  limit?: number;
+}
+
+export enum LogRowContextQueryDirection {
+  Backward = 'BACKWARD',
+  Forward = 'FORWARD',
+}
+
 /**
  * Data sources that allow showing context rows around the provided LowRowModel should implement this method.
  * This will enable "context" button in Logs Panel.
@@ -147,11 +157,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions,
-    query?: TQuery
-  ) => Promise<DataQueryResponse>;
+  getLogRowContext: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<DataQueryResponse>;
 
   /**
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
