@@ -2,7 +2,6 @@
 title = "Usage insights"
 description = "Understand how your Grafana instance is used"
 keywords = ["grafana", "usage-insights", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
 weight = 200
 +++
 
