@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
@@ -66,10 +66,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     flexColumn: css`
       display: flex;
       flex-direction: column;
+      padding: 0 ${theme.spacing(3)} ${theme.spacing(3)} ${theme.spacing(3)};
     `,
     flexRow: css`
       display: flex;
       flex-direction: row;
+      align-items: center;
       & > div:last-child {
         margin-left: auto;
       }
@@ -81,6 +83,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     hidden: css`
       display: none;
+    `,
+    paddingTop: css`
+      padding-top: ${theme.spacing(1)};
+    `,
+    paddingBottom: css`
+      padding-bottom: ${theme.spacing(1)};
     `,
   };
 };
@@ -216,7 +224,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
         <div className={styles.datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
-      <div className={styles.flexRow}>
+      <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div className={loading ? styles.hidden : ''}>
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
@@ -285,7 +293,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         </table>
       </div>
       <div>
-        <div className={loading ? styles.hidden : ''}>
+        <div className={cx(styles.paddingTop, loading ? styles.hidden : '')}>
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
       </div>
