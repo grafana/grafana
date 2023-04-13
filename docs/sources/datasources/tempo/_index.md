@@ -228,13 +228,13 @@ datasources:
         hide: false
       lokiSearch:
         datasourceUid: 'loki'
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
       spanBar:
         type: 'Tag'
         tag: 'http.path'
-      traceQuery:
-        timeShiftEnabled: true
-        spanStartTimeShift: 15m
-        spanEndTimeShift: 20m
 ```
 
 ## Query the data source

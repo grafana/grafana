@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -260,9 +261,10 @@ export function getVariableUsageInfo<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
-  const variables: VariableInterpolation[] = [];
+  let variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
+  variables = uniqBy(variables, 'variableName');
   return {
     variables: variables,
     allVariablesDefined: variables.every((variable) => variable.found),
