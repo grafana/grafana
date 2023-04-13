@@ -93,7 +93,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 }
 ```
 
-Please refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
+Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
 
 If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
 
