@@ -425,17 +425,20 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
-		if len(st.Cfg.DisabledOrgs) > 0 {
-			var ids []int64
-			for orgID := range st.Cfg.DisabledOrgs {
-				ids = append(ids, orgID)
-			}
+		var disabledOrgs []int64
 
-			alertRulesSql = alertRulesSql.NotIn("org_id", ids)
+		for orgID := range st.Cfg.DisabledOrgs {
+			disabledOrgs = append(disabledOrgs, orgID)
 		}
+
+		if len(disabledOrgs) > 0 {
+			alertRulesSql = alertRulesSql.NotIn("org_id", disabledOrgs)
+		}
+
 		if err := alertRulesSql.Find(&result); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	return result, err
