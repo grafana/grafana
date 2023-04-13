@@ -10,7 +10,8 @@ import {
   DataFrame,
   DataFrameJSON,
   dateTime,
-  Field,
+  escapeStringForRegex,
+  Field as DataFrameField,
   FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
@@ -20,12 +21,12 @@ import {
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
-import { Alert, Icon, Input, TagList, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, TagList, useStyles2, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
 import { extractCommonLabels, Line, LogRecord, omitLabels } from './common';
@@ -39,7 +40,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
 
-  const { setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
+  const { getValues, setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
 
   const frameSubsetRef = useRef<DataFrame[]>([]);
 
@@ -60,14 +61,19 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   const frameSubset = useMemo(() => take(dataFrames, 20), [dataFrames]);
 
-  // TODO hack
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
-      setInstancesFilter(label);
-      setValue('query', label);
+      const matcherString = combineMatcherStrings(...getValues('query'), label);
+      setInstancesFilter(matcherString);
+      setValue('query', matcherString);
     },
-    [setInstancesFilter, setValue]
+    [setInstancesFilter, setValue, getValues]
   );
+
+  const onFilterCleared = useCallback(() => {
+    setInstancesFilter('');
+    setValue('query', '');
+  }, [setInstancesFilter, setValue]);
 
   useEffect(() => {
     const subject = pointerSubject.current;
@@ -104,6 +110,21 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   return (
     <div className={styles.fullSize}>
+      <form onSubmit={handleSubmit((data) => setInstancesFilter(escapeStringForRegex(data.query)))}>
+        <Field label="Filter instances">
+          <Input
+            {...register('query')}
+            prefix={<Icon name="search" />}
+            suffix={
+              <Button fill="text" icon="times" size="sm" onClick={onFilterCleared}>
+                Clear
+              </Button>
+            }
+            placeholder="Filter instances"
+          />
+        </Field>
+        <input type="submit" hidden />
+      </form>
       {!isEmpty(commonLabels) && (
         <Stack direction="row" alignItems="center">
           <strong>Common labels</strong>
@@ -125,14 +146,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
               </Stack>
             </div>
           )}
-          <form onSubmit={handleSubmit((data) => setInstancesFilter(data.query))}>
-            <Input
-              label="Filter instances"
-              {...register('query')}
-              prefix={<Icon name="search" />}
-              placeholder="Filter instances"
-            />
-          </form>
           <LogRecordViewerByTimestamp
             records={historyRecords}
             commonLabels={commonLabels}
@@ -274,7 +287,7 @@ function logRecordsToDataFrame(
   const parsedInstanceLabels = Object.entries<string>(JSON.parse(instanceLabels));
 
   const timeIndex = records.map((_, index) => index);
-  const timeField: Field = {
+  const timeField: DataFrameField = {
     name: 'time',
     type: FieldType.time,
     values: new ArrayVector([...records.map((record) => record.timestamp), Date.now()]),
@@ -352,7 +365,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   fullSize: css`
     min-width: 100%;
     height: 100%;
-    overflow: hidden;
 
     display: flex;
     flex-direction: column;

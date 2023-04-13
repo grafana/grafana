@@ -1,3 +1,5 @@
+import { isEqual, uniqWith } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
@@ -204,6 +206,12 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
       return nameMatches && valueMatches;
     });
   });
+}
+
+export function combineMatcherStrings(...matcherStrings: string[]): string {
+  const matchers = matcherStrings.map(parseMatchers).flat();
+  const uniqueMatchers = uniqWith(matchers, isEqual);
+  return matchersToString(uniqueMatchers);
 }
 
 export function getAllAlertmanagerDataSources() {

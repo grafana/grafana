@@ -76,7 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   modalContent: css`
     height: 100%;
     width: 100%;
-    overflow: hidden;
     padding: ${theme.spacing(2)};
   `,
 });
