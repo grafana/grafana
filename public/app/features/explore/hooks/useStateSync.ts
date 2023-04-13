@@ -48,8 +48,6 @@ export function useStateSync(params: ExploreQueryParams) {
             datasource,
             queries,
             range,
-            // FIXME: get the actual width
-            containerWidth: 1000,
             panelsState,
           })
         );
@@ -90,8 +88,6 @@ export function useStateSync(params: ExploreQueryParams) {
               datasource,
               queries,
               range,
-              // FIXME: get the actual width
-              containerWidth: 1000,
               panelsState,
             })
           );

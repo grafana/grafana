@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { inRange } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
@@ -32,6 +32,8 @@ const styles = {
 };
 
 export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  const pageRef = useRef();
+  console.log(pageRef);
   useStateSync(props.queryParams);
   useURLSync();
   // FIXME: This should happen as part of URL changes, or at least only after URL has changed

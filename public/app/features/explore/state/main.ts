@@ -80,7 +80,6 @@ export const splitOpen = createAsyncThunk(
     dispatch(
       initializeExplore({
         exploreId: ExploreId.right,
-        containerWidth: 0,
         // TODO: fix this
         datasource: options?.datasourceUid || leftState.datasourceInstance?.uid!,
         queries: options?.queries ?? (options?.query ? [options?.query] : leftState.queries),

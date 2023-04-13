@@ -78,7 +78,6 @@ export function changePanelState(
  */
 interface InitializeExplorePayload {
   exploreId: ExploreId;
-  containerWidth: number;
   queries: DataQuery[];
   range: TimeRange;
   history: HistoryItem[];
@@ -107,7 +106,6 @@ interface InitializeExploreOptions {
   datasource: DataSourceRef | string;
   queries: DataQuery[];
   range: RawTimeRange;
-  containerWidth: number;
   panelsState?: ExplorePanelsState;
 }
 /**
@@ -120,10 +118,7 @@ interface InitializeExploreOptions {
  */
 export const initializeExplore = createAsyncThunk(
   'explore/initializeExplore',
-  async (
-    { exploreId, datasource, queries, range, containerWidth, panelsState }: InitializeExploreOptions,
-    { dispatch, getState }
-  ) => {
+  async ({ exploreId, datasource, queries, range, panelsState }: InitializeExploreOptions, { dispatch, getState }) => {
     const exploreDatasources = getDataSourceSrv().getList();
     let instance = undefined;
     let history: HistoryItem[] = [];
@@ -138,7 +133,6 @@ export const initializeExplore = createAsyncThunk(
     dispatch(
       initializeExploreAction({
         exploreId,
-        containerWidth,
         queries,
         range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
@@ -201,11 +195,10 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, queries, range, datasourceInstance, history } = action.payload;
+    const { queries, range, datasourceInstance, history } = action.payload;
 
     return {
       ...state,
-      containerWidth,
       range,
       queries,
       initialized: true,
