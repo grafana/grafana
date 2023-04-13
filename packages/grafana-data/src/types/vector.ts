@@ -15,7 +15,7 @@ declare global {
 // writable: true because Jest will re-exec this block multiple times (in a browser this only runs once)
 Object.defineProperties(Array.prototype, {
   get: {
-    value: function(idx: number): any {
+    value: function (idx: number): any {
       return (this as any)[idx];
     },
     writable: true,
@@ -23,7 +23,7 @@ Object.defineProperties(Array.prototype, {
     configurable: false,
   },
   set: {
-    value: function(idx: number, value: any) {
+    value: function (idx: number, value: any) {
       (this as any)[idx] = value;
     },
     writable: true,
@@ -31,7 +31,7 @@ Object.defineProperties(Array.prototype, {
     configurable: false,
   },
   add: {
-    value: function(value: any) {
+    value: function (value: any) {
       (this as any).push(value);
     },
     writable: true,
@@ -39,7 +39,7 @@ Object.defineProperties(Array.prototype, {
     configurable: false,
   },
   toArray: {
-    value: function() {
+    value: function () {
       return this;
     },
     writable: true,
