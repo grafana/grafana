@@ -4,9 +4,25 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
 import { getIconSubDir } from '../src/components/Icon/utils';
 
-const stories = ['../src/Intro.mdx', '../src/components/**/*.story.tsx'];
-if (process.env.NODE_ENV !== 'production') {
-  stories.push('../src/**/*.internal.story.@(tsx|mdx)');
+const STORY_REGEX = /(.+)?packages\/grafana-ui\/(.+)/;
+
+let stories: string[] = [];
+const defaultStories = ['../src/Intro.mdx', '../src/components/**/*.story.tsx'];
+
+// Use the STORY env var to work on an individual story / subset of stories
+// to speed up storybook.
+if (process.env.STORY) {
+  let story = process.env.STORY;
+  if (story.match(STORY_REGEX)) {
+    story = story.replace(STORY_REGEX, '$2');
+  }
+  const storySrc = path.relative(__dirname, story);
+  stories.push(storySrc);
+} else {
+  stories = defaultStories;
+  if (process.env.NODE_ENV !== 'production') {
+    stories.push('../src/**/*.internal.story.@(tsx|mdx)');
+  }
 }
 
 // We limit icon paths to only the available icons so publishing
