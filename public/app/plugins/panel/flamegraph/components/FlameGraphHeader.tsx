@@ -48,19 +48,13 @@ const FlameGraphHeader = ({
     });
   }
 
-  const onClearSearch = () => {
+  const onResetView = () => {
     setTopLevelIndex(0);
     setSelectedBarIndex(0);
     setRangeMin(0);
     setRangeMax(1);
     setSearch('');
   };
-
-  const clearButton = (
-    <Button size="sm" icon="times" fill="text" onClick={onClearSearch}>
-      Clear
-    </Button>
-  );
 
   return (
     <div className={styles.header}>
@@ -72,10 +66,12 @@ const FlameGraphHeader = ({
               setSearch(v.currentTarget.value);
             }}
             placeholder={'Search..'}
-            suffix={search && clearButton}
             width={44}
           />
         </div>
+        <Button type={'button'} variant="secondary" onClick={onResetView}>
+          Reset view
+        </Button>
       </div>
 
       <div className={styles.rightContainer}>

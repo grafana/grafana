@@ -11,7 +11,7 @@ import {
   Field,
   FieldType,
 } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Table, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL, TOP_TABLE_COLUMN_WIDTH } from '../../constants';
