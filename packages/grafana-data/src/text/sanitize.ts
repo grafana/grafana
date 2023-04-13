@@ -47,7 +47,7 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): string {
+export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): TrustedHTML {
   switch (conf) {
     case 'rss':
       return DOMPurify.sanitize(unsanitizedString, {
@@ -55,10 +55,10 @@ export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): 
         ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'],
         ADD_TAGS: ['rss', 'meta', 'channel', 'title', 'link', 'description', 'atom:link', 'item', 'pubDate', 'guid'],
         PARSER_MEDIA_TYPE: 'application/xhtml+xml',
-      }) as unknown as string;
+      });
   }
 
-  return DOMPurify.sanitize(unsanitizedString, {RETURN_TRUSTED_TYPE: true}) as unknown as string;
+  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true });
 }
 
 /**
