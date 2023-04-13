@@ -15,7 +15,6 @@ interface Props {
   row: LogRowModel;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
-  showRowMenu?: boolean;
   app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
@@ -67,7 +66,7 @@ export class LogRowMessage extends PureComponent<Props> {
   };
 
   render() {
-    const { row, showRowMenu, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
+    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -90,25 +89,23 @@ export class LogRowMessage extends PureComponent<Props> {
             </button>
           </div>
         </td>
-        {showRowMenu && (
-          <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-            <span
-              className={cx('log-row-menu', styles.rowMenu, {
-                [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-              })}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {shouldShowContextToggle && (
-                <Tooltip placement="top" content={'Show context'}>
-                  <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-                </Tooltip>
-              )}
-              <Tooltip placement="top" content={'Copy'}>
-                <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
+        <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
+          <span
+            className={cx('log-row-menu', styles.rowMenu, {
+              [styles.rowMenuWithContextButton]: shouldShowContextToggle,
+            })}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {shouldShowContextToggle && (
+              <Tooltip placement="top" content={'Show context'}>
+                <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
               </Tooltip>
-            </span>
-          </td>
-        )}
+            )}
+            <Tooltip placement="top" content={'Copy'}>
+              <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
+            </Tooltip>
+          </span>
+        </td>
       </>
     );
   }
