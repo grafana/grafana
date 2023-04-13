@@ -68,10 +68,9 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type ruleVersion int64
 type ruleVersionAndPauseStatus struct {
-	Version  ruleVersion
-	IsPaused bool
+	Fingerprint fingerprint
+	IsPaused    bool
 }
 
 type alertRuleInfo struct {
@@ -112,20 +111,15 @@ func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
 func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
 	// check if the channel is not empty.
-	msg := lastVersion
 	select {
-	case v := <-a.updateCh:
-		// if it has a version pick the greatest one.
-		if v.Version > msg.Version {
-			msg = v
-		}
+	case <-a.updateCh:
 	case <-a.ctx.Done():
 		return false
 	default:
 	}
 
 	select {
-	case a.updateCh <- msg:
+	case a.updateCh <- lastVersion:
 		return true
 	case <-a.ctx.Done():
 		return false

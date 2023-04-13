@@ -30,7 +30,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
+				resultCh <- r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 			}()
 			select {
 			case <-r.updateCh:
@@ -41,52 +41,26 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			version1 := ruleVersion(rand.Int31())
-			version2 := version1 + 1
+			version1 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
+			version2 := ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version1, false})
+				r.update(version1)
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version2, false})
+				r.update(version2)
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
-			case <-time.After(5 * time.Second):
-				t.Fatal("No message was received on eval channel")
-			}
-		})
-		t.Run("update should drop any concurrent sending to updateCh and use greater version", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			version1 := ruleVersion(rand.Int31())
-			version2 := version1 + 1
-
-			wg := sync.WaitGroup{}
-			wg.Add(1)
-			go func() {
-				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version2, false})
-				wg.Done()
-			}()
-			wg.Wait()
-			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
-			go func() {
-				wg.Done()
-				r.update(ruleVersionAndPauseStatus{version1, false})
-			}()
-			wg.Wait() // at this point tick 1 has already been dropped
-			select {
-			case version := <-r.updateCh:
-				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
+				require.Equal(t, version2, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -188,7 +162,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false}))
+			require.False(t, r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
@@ -240,7 +214,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
+						r.update(ruleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
 					case 2:
 						r.eval(&evaluation{
 							scheduledAt: time.Now(),
