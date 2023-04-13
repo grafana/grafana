@@ -319,9 +319,9 @@ const (
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
 	FlagUseCachingService = "useCachingService"
 
-	// FlagDisableElasticsearchBackendQuerying
-	// Disable the processing of queries and responses in the Elasticsearch data source through backend
-	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+	// FlagEnableElasticsearchBackendQuerying
+	// Enable the processing of queries and responses in the Elasticsearch data source through backend
+	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
 	// FlagAuthenticationConfigUI
 	// Enables authentication configuration UI

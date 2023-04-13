@@ -96,6 +96,6 @@ export interface FeatureToggles {
   externalServiceAuth?: boolean;
   dataplaneFrontendFallback?: boolean;
   useCachingService?: boolean;
-  disableElasticsearchBackendQuerying?: boolean;
+  enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
 }
