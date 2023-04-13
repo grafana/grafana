@@ -16,5 +16,12 @@ export const SimpleInput = ({ onBlur, placeholder }: Props) => {
     ref.current.focus();
   });
 
-  return <input type="text" placeholder={placeholder} onBlur={onBlur} ref={ref} />;
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      // @ts-ignore
+      e.target.blur();
+    }
+  };
+
+  return <input type="text" placeholder={placeholder} onBlur={onBlur} ref={ref} onKeyDown={onKeyDown} />;
 };

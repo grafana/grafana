@@ -47,6 +47,13 @@ export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur, classSty
     setValue(e.target.value);
   };
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      // @ts-ignore
+      e.target.blur();
+    }
+  };
+
   return (
     <Portal>
       <input
@@ -57,6 +64,7 @@ export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur, classSty
         ref={ref}
         style={styles}
         onChange={onChange}
+        onKeyDown={onKeyDown}
       />
     </Portal>
   );

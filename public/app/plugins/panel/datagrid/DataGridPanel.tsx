@@ -78,6 +78,10 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const setGridColumns = useCallback(() => {
+    if (!frame) {
+      return;
+    }
+
     const typeToIconMap: Map<string, GridColumnIcon> = new Map([
       [FieldType.number, GridColumnIcon.HeaderNumber],
       [FieldType.string, GridColumnIcon.HeaderTextTemplate],
@@ -85,10 +89,6 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       [FieldType.time, GridColumnIcon.HeaderDate],
       [FieldType.other, GridColumnIcon.HeaderReference],
     ]);
-
-    if (!frame) {
-      return;
-    }
 
     setColumns([
       ...frame.fields.map((f, i) => {
@@ -174,7 +174,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
     const newFrame = new MutableDataFrame(frame);
 
     const field: Field = {
-      name: newFrame.fields.find((f) => f.name === columnName) ? `Column ${newFrame.fields.length}` : columnName,
+      name: columnName,
       type: FieldType.string,
       config: {},
       values: new ArrayVector(new Array(len).fill('')),
@@ -273,9 +273,18 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const onColumnMove = (from: number, to: number) => {
     const newFrame = new MutableDataFrame(frame);
     const field = newFrame.fields[from];
+    const toField = newFrame.fields[to];
     newFrame.fields.splice(from, 1);
     newFrame.fields.splice(to, 0, field);
 
+    const colWidths = new Map(columnWidths);
+    const fromWidth = colWidths.get(from);
+    const toWidth = colWidths.get(to);
+
+    colWidths.set(from, toWidth ?? getCellWidth(toField));
+    colWidths.set(to, fromWidth ?? getCellWidth(field));
+
+    setColumnWidths(colWidths);
     publishSnapshot(newFrame, id);
   };
 
@@ -304,9 +313,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
     const newFrame = new MutableDataFrame(frame);
-    newFrame.fields[columnIdx].name = newFrame.fields.find((f) => f.name === columnName)
-      ? `Column ${columnIdx}`
-      : columnName;
+    newFrame.fields[columnIdx].name = columnName;
 
     publishSnapshot(newFrame, id);
 

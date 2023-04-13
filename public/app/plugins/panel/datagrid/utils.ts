@@ -88,10 +88,12 @@ export const getTextWidth = (text: string, isHeader = false): number => {
 };
 
 export const getCellWidth = (field: Field): number => {
-  return Math.min(
-    MAX_COLUMN_WIDTH,
-    Math.max(
-      getTextWidth(field.name, true) + ICON_AND_MENU_WIDTH, //header text
+  //If header is longer than cell text, get header width that will always fully show the header text
+  //otherwise get the longest cell text width if it's shorter than the max column width, or the max column width
+  return Math.max(
+    getTextWidth(field.name, true) + ICON_AND_MENU_WIDTH, //header text
+    Math.min(
+      MAX_COLUMN_WIDTH,
       field.values.toArray().reduce((acc: number, val: string | number) => {
         const textWidth = getTextWidth(val?.toString() ?? '');
 
