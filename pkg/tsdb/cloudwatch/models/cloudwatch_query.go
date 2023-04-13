@@ -242,43 +242,35 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	result := make([]*CloudWatchQuery, 0, len(metricDataQueries))
 
 	for refId, mdq := range metricDataQueries {
-		alias := ""
-		if mdq.Alias != nil {
-			alias = *mdq.Alias
-		}
-
-		metricName := ""
-		if mdq.MetricName != nil {
-			metricName = *mdq.MetricName
-		}
-
 		metricQueryType := MetricQueryTypeSearch
 		if mdq.MetricQueryType != nil {
 			metricQueryType = *mdq.MetricQueryType
 		}
 
-		sqlExpression := ""
-		if mdq.SqlExpression != nil {
-			sqlExpression = *mdq.SqlExpression
-		}
-
-		expression := ""
-		if mdq.Expression != nil {
-			expression = *mdq.Expression
-		}
-
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
-			Alias:             alias,
 			RefId:             refId,
 			Id:                mdq.Id,
 			Region:            mdq.Region,
 			Namespace:         mdq.Namespace,
-			MetricName:        metricName,
 			MetricQueryType:   metricQueryType,
-			SqlExpression:     sqlExpression,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
-			Expression:        expression,
+		}
+
+		if mdq.Alias != nil {
+			cwQuery.Alias = *mdq.Alias
+		}
+
+		if mdq.MetricName != nil {
+			cwQuery.MetricName = *mdq.MetricName
+		}
+
+		if mdq.SqlExpression != nil {
+			cwQuery.SqlExpression = *mdq.SqlExpression
+		}
+
+		if mdq.Expression != nil {
+			cwQuery.Expression = *mdq.Expression
 		}
 
 		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion, crossAccountQueryingEnabled); err != nil {

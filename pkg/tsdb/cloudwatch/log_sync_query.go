@@ -30,11 +30,9 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 		}
 
 		logsQuery.Subtype = "StartQuery"
-		expression := ""
 		if logsQuery.Expression != nil {
-			expression = *logsQuery.Expression
+			logsQuery.QueryString = *logsQuery.Expression
 		}
-		logsQuery.QueryString = expression
 
 		region := logsQuery.Region
 		if logsQuery.Region == "" || region == defaultRegion {
