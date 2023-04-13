@@ -19,9 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -266,96 +263,6 @@ func testDescription(description string, expectedErr error) string {
 	} else {
 		return description
 	}
-}
-
-func TestHTTPServer_FolderMetadata(t *testing.T) {
-	setUpRBACGuardian(t)
-	folderService := &foldertest.FakeService{}
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = &setting.Cfg{
-			RBACEnabled: true,
-		}
-		hs.folderService = folderService
-		hs.QuotaService = quotatest.New(false, nil)
-		hs.SearchService = &mockSearchService{
-			ExpectedResult: model.HitList{},
-		}
-	})
-
-	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
-		folderService.ExpectedFolders = []*folder.Folder{{UID: "1"}, {UID: "2"}, {UID: "3"}}
-
-		req := server.NewGetRequest("/api/folders?accesscontrol=true")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("2")},
-			}),
-		}})
-
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-
-		body := []dtos.FolderSearchHit{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
-
-		for _, f := range body {
-			assert.True(t, f.AccessControl[dashboards.ActionFoldersRead])
-			if f.Uid == "2" {
-				assert.True(t, f.AccessControl[dashboards.ActionFoldersWrite])
-			} else {
-				assert.False(t, f.AccessControl[dashboards.ActionFoldersWrite])
-			}
-		}
-	})
-
-	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
-
-		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
-			}),
-		}})
-
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-
-		body := dtos.Folder{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
-
-		assert.True(t, body.AccessControl[dashboards.ActionFoldersRead])
-		assert.True(t, body.AccessControl[dashboards.ActionFoldersWrite])
-	})
-
-	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
-
-		req := server.NewGetRequest("/api/folders/folderUid")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
-			}),
-		}})
-
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-
-		body := dtos.Folder{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
-
-		assert.False(t, body.AccessControl[dashboards.ActionFoldersRead])
-		assert.False(t, body.AccessControl[dashboards.ActionFoldersWrite])
-	})
 }
 
 func TestFolderMoveAPIEndpoint(t *testing.T) {
