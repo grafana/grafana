@@ -592,7 +592,7 @@ const createField = (
   config = {},
   display?: DisplayProcessor
 ): Field => {
-  return { name, type, values: new ArrayVector(values), config, labels: undefined, display };
+  return { name, type, values: values, config, labels: undefined, display };
 };
 
 const unwrap = (fields: Field[]): Field[] => {
