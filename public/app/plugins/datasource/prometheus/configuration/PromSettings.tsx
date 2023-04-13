@@ -1,16 +1,15 @@
-import React, { SyntheticEvent } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 import semver from 'semver/preload';
 
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings as DataSourceSettingsType,
-  // isValidDuration,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime/src';
-import { EventsWithValidation, InlineField, Input, regexValidation, Select, Switch } from '@grafana/ui';
+import { FieldValidationMessage, InlineField, Input, Select, Switch } from '@grafana/ui';
 
 import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
@@ -52,6 +51,8 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 const LABEL_WIDTH = 26;
+
+export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
@@ -150,6 +151,18 @@ export const PromSettings = (props: Props) => {
     options.jsonData.httpMethod = 'POST';
   }
 
+  type ValidDuration = {
+    timeInterval: string;
+    queryTimeout: string;
+    incrementalQueryOverlapWindow: string;
+  };
+
+  const [validDuration, updateValidDuration] = useState<ValidDuration>({
+    timeInterval: '',
+    queryTimeout: '',
+    incrementalQueryOverlapWindow: '',
+  });
+
   return (
     <>
       <h6 className="page-heading">Prometheus Behavioural</h6>
@@ -167,15 +180,18 @@ export const PromSettings = (props: Props) => {
                 </>
               }
             >
-              <Input
-                className="width-20"
-                value={options.jsonData.timeInterval}
-                spellCheck={false}
-                placeholder="15s"
-                onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
-                // validationEvents={promSettingsValidationEvents}
-                disabled={options.readOnly}
-              />
+              <>
+                <Input
+                  className="width-20"
+                  value={options.jsonData.timeInterval}
+                  spellCheck={false}
+                  placeholder="15s"
+                  onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
+                  onBlur={(e) => updateValidDuration({ ...validDuration, timeInterval: e.currentTarget.value })}
+                  disabled={options.readOnly}
+                />
+                {validateDurationInput(validDuration.timeInterval, DURATION_REGEX)}
+              </>
             </InlineField>
           </div>
         </div>
@@ -187,15 +203,18 @@ export const PromSettings = (props: Props) => {
               labelWidth={26}
               tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
             >
-              <Input
-                className="width-20"
-                value={options.jsonData.queryTimeout}
-                onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
-                spellCheck={false}
-                placeholder="60s"
-                // validationEvents={promSettingsValidationEvents}
-                disabled={options.readOnly}
-              />
+              <>
+                <Input
+                  className="width-20"
+                  value={options.jsonData.queryTimeout}
+                  onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
+                  spellCheck={false}
+                  placeholder="60s"
+                  onBlur={(e) => updateValidDuration({ ...validDuration, queryTimeout: e.currentTarget.value })}
+                  disabled={options.readOnly}
+                />
+                {validateDurationInput(validDuration.queryTimeout, DURATION_REGEX)}
+              </>
             </InlineField>
           </div>
         </div>
@@ -368,21 +387,23 @@ export const PromSettings = (props: Props) => {
               labelWidth={26}
               tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
             >
-              <Input
-                // validationEvents={{
-                //   onBlur: [
-                //     {
-                //       rule: (value) => isValidDuration(value),
-                //       errorMessage: 'Invalid duration. Example values: 100s, 10m',
-                //     },
-                //   ],
-                // }}
-                className="width-25"
-                value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
-                onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
-                spellCheck={false}
-                disabled={options.readOnly}
-              />
+              <>
+                <Input
+                  onBlur={(e) =>
+                    updateValidDuration({ ...validDuration, incrementalQueryOverlapWindow: e.currentTarget.value })
+                  }
+                  className="width-25"
+                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                  spellCheck={false}
+                  disabled={options.readOnly}
+                />
+                {validateDurationInput(
+                  validDuration.incrementalQueryOverlapWindow,
+                  DURATION_REGEX,
+                  'Invalid duration. Example values: 100s, 10m'
+                )}
+              </>
             </InlineField>
           )}
         </div>
@@ -449,13 +470,17 @@ export const PromSettings = (props: Props) => {
   );
 };
 
-export const promSettingsValidationEvents = {
-  [EventsWithValidation.onBlur]: [
-    regexValidation(
-      /^$|^\d+(ms|[Mwdhmsy])$/,
-      'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-    ),
-  ],
+export const validateDurationInput = (
+  input: string,
+  pattern: string | RegExp,
+  errorMessage?: string
+): boolean | JSX.Element => {
+  const defaultErrorMessage = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
+  if (input && !input.match(pattern)) {
+    return <FieldValidationMessage>{errorMessage ? errorMessage : defaultErrorMessage}</FieldValidationMessage>;
+  } else {
+    return true;
+  }
 };
 
 export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
