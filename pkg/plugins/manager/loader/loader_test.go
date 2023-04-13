@@ -1071,7 +1071,6 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		// Cause an initialization error
 		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
@@ -1085,7 +1084,6 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -1103,7 +1101,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
