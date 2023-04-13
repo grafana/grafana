@@ -17,7 +17,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     table: css`
       border-radius: ${theme.shape.borderRadius()};
-      // border: solid 1px ${theme.colors.border.weak};
       width: 100%;
 
       td {
