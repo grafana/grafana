@@ -172,7 +172,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.retentionPolicies.length) {
       return Promise.resolve(this.retentionPolicies);
     } else {
-      return getAllPolicies(this);
+      return getAllPolicies(this).catch((err) => {
+        console.error(
+          'Unable to fetch retention policies. Queries will be run without specifying retention policy.',
+          err
+        );
+        return Promise.resolve(this.retentionPolicies);
+      });
     }
   }
 
