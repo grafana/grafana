@@ -152,11 +152,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		// verify module.js exists for SystemJS to load.
 		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			_, err := plugin.FS.Open("module.js")
+			f, err := plugin.FS.Open("module.js")
 			if err != nil {
 				if errors.Is(err, plugins.ErrFileNotExist) && !l.pluginsCDN.PluginSupported(plugin.ID) {
 					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
+				}
+			} else if f != nil {
+				if err := f.Close(); err != nil {
+					l.log.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
 				}
 			}
 		}
