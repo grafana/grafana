@@ -188,13 +188,9 @@ const AmRoutes = () => {
     );
   }
 
-  const readOnlyPolicies = alertManagerSourceName
-    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
-    : true;
-
-  const readOnlyMuteTimings = alertManagerSourceName
-    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName)
-    : true;
+  const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  const readOnlyPolicies = alertManagerSourceName ? vanillaPrometheusAlertManager || isProvisioned : true;
+  const readOnlyMuteTimings = alertManagerSourceName ? vanillaPrometheusAlertManager : true;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
