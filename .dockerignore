@@ -2,7 +2,6 @@
 .dockerignore
 .git
 .gitignore
-.github
 .vscode
 bin
 data*
