@@ -56,7 +56,6 @@ enable = [
   "typecheck",
   "asciicheck",
   "errorlint",
-  "sqlclosecheck",
   "revive",
 ]
 

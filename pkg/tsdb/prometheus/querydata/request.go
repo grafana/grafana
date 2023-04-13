@@ -151,6 +151,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 }
 
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	//nolint:bodyclose // fixed in main
 	res, err := c.QueryRange(ctx, q, sdkHeaderToHttpHeader(headers))
 	if err != nil {
 		return nil, err
@@ -159,6 +160,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 }
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	//nolint:bodyclose // fixed in main
 	res, err := c.QueryInstant(ctx, q, sdkHeaderToHttpHeader(headers))
 	if err != nil {
 		return nil, err
@@ -167,6 +169,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 }
 
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+	//nolint:bodyclose // fixed in main
 	res, err := c.QueryExemplars(ctx, q, sdkHeaderToHttpHeader(headers))
 	if err != nil {
 		return nil, err

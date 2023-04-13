@@ -16,7 +16,7 @@ alpine_image = "alpine:3.17.1"
 curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.19.4"
+go_image = "golang:1.20.1"
 
 trigger_oss = {
     "repo": [

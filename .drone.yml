@@ -24,7 +24,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -74,7 +74,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-starlark .
@@ -302,7 +302,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -379,7 +379,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -414,7 +414,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: lint-backend
 trigger:
   event:
@@ -469,7 +469,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -812,7 +812,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -980,7 +980,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build shellcheck
@@ -1207,7 +1207,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1276,7 +1276,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -1290,7 +1290,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: lint-backend
 - commands:
   - ./bin/build verify-drone
@@ -1344,7 +1344,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1767,7 +1767,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -2074,7 +2074,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}
@@ -2411,7 +2411,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2579,7 +2579,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -2954,7 +2954,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3143,7 +3143,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -3397,7 +3397,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -3618,7 +3618,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -3714,7 +3714,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise
@@ -3793,7 +3793,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise
@@ -3862,7 +3862,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise2
@@ -3925,7 +3925,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise2
@@ -3989,7 +3989,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafanaenterprise
@@ -4040,7 +4040,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
@@ -4102,7 +4102,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
@@ -4175,7 +4175,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - yarn install --immutable
@@ -4241,7 +4241,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4332,7 +4332,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4453,7 +4453,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts-page
@@ -4525,7 +4525,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -4832,7 +4832,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5091,7 +5091,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -5465,7 +5465,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5799,7 +5799,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -6399,7 +6399,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.19.4
+  image: golang:1.20.1
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss
@@ -6550,6 +6550,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 045942c929c88a95bc528d2b4b41a0590cd74d70315f4533cdc015c94f6d7376
+hmac: 15fc4331f320c448618fe5180ead12512088c65bd0cd38d80303990b797cbd78
 
 ...
