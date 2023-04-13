@@ -63,10 +63,10 @@ func notServiceAccount(dialect migrator.Dialect) string {
 }
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
+	dialect := ss.db.GetDialect()
 	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
-		dialect := ss.db.GetDialect()
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
@@ -140,6 +140,17 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 
 		return nil
 	})
+
+	if err == nil {
+		result.DatabaseDriver = dialect.DriverName()
+		ts := time.Time{}
+		err = ss.db.GetSqlxSession().Get(ctx,
+			&ts,
+			`SELECT timestamp as database_created_time from `+dialect.Quote("migration_log")+` ORDER BY timestamp asc LIMIT 1`)
+		if err == nil {
+			result.DatabaseCreatedTime = ts.Unix()
+		}
+	}
 	return result, err
 }
 
