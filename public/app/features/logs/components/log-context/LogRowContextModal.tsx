@@ -204,11 +204,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   }, [scrollElement, entryElement, context]);
 
   useLayoutEffect(() => {
-    if (
-      scrollElement.current &&
-      scrollElement.current.parentElement &&
-      scrollElement.current.parentElement.clientWidth > 0
-    ) {
+    if (scrollElement?.current?.parentElement?.clientWidth > 0) {
       setLoadingWidth(scrollElement.current.parentElement.clientWidth);
     }
   }, [scrollElement]);
