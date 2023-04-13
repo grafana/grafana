@@ -14,7 +14,7 @@ weight: 300
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log]({{< relref "#create-a-logs-query" >}}) and [metric]({{< relref "#create-a-metrics-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
 This topic explains querying specific to the Loki data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
@@ -187,8 +187,7 @@ You can use the Loki label browser to navigate through your labels and values, a
 
    The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
 
-1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
-   You can also validate the selector.
+1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button.
 
 {{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 

@@ -9,7 +9,11 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e().intercept('/api/ds/query').as('query');
+    e2e()
+      .intercept({
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     e2e().wait('@query');
 

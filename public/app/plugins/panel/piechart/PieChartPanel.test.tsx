@@ -16,6 +16,11 @@ import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schem
 import { PieChartPanel } from './PieChartPanel';
 import { PanelOptions, PieChartType, PieChartLegendValues } from './panelcfg.gen';
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useMeasure: () => [() => {}, { width: 100, height: 100 }],
+}));
+
 type PieChartPanelProps = ComponentProps<typeof PieChartPanel>;
 
 describe('PieChartPanel', () => {

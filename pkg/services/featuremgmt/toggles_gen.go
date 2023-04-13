@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagAlertingBigTransactions
-	// Use big transactions for alerting database writes
-	FlagAlertingBigTransactions = "alertingBigTransactions"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -54,10 +50,6 @@ const (
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
-
-	// FlagLokiDataframeApi
-	// Use experimental loki api for WebSocket streaming (early prototype)
-	FlagLokiDataframeApi = "lokiDataframeApi"
 
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
@@ -191,10 +183,6 @@ const (
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
 
-	// FlagElasticsearchBackendMigration
-	// Use Elasticsearch as backend data source
-	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
-
 	// FlagShowTraceId
 	// Show trace ids for requests
 	FlagShowTraceId = "showTraceId"
@@ -283,13 +271,13 @@ const (
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
 
-	// FlagDisableElasticsearchBackendExploreQuery
-	// Disable executing of Elasticsearch Explore queries trough backend
-	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
-
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagLokiMetricDataplane
+	// Changes responses from Loki to be compliant with the dataplane specification.
+	FlagLokiMetricDataplane = "lokiMetricDataplane"
 
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
@@ -303,6 +291,10 @@ const (
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
+
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
 	FlagUnifiedRequestLog = "unifiedRequestLog"
@@ -314,4 +306,24 @@ const (
 	// FlagPyroscopeFlameGraph
 	// Changes flame graph to pyroscope one
 	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagExternalServiceAuth
+	// Starts an OAuth2 authentication provider for external services
+	FlagExternalServiceAuth = "externalServiceAuth"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagUseCachingService
+	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	FlagUseCachingService = "useCachingService"
+
+	// FlagDisableElasticsearchBackendQuerying
+	// Disable the processing of queries and responses in the Elasticsearch data source through backend
+	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
 )
