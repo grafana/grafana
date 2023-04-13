@@ -106,9 +106,9 @@ To migrate a single API key to a service account, complete the following steps:
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
 
-### Migrate API keys to Grafana service accounts using the API
+### Migrate API keys to Grafana service accounts for API calls
 
-This section shows you how to migrate API keys to Grafana service accounts using the Grafana API.
+This section shows you how to migrate API keys to Grafana service accounts specifically for the Grafana API. For references see: [Grafana Service Accounts for the Grafana API](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/).
 
 #### Before you begin
 
@@ -120,7 +120,7 @@ To follow these instructions, you need one of the following:
 
 #### Steps
 
-Complete the following steps to migrate from API keys to service accounts using the API:
+Complete the following steps to migrate from API keys to service accounts for API:
 
 1. Call the `POST /api/serviceaccounts` endpoint and the `POST /api/serviceaccounts/<id>/tokens`.
 
@@ -135,9 +135,24 @@ Complete the following steps to migrate from API keys to service accounts using 
 1. Remove code that handles the old `/api/auth/keys` endpoint.
 1. Track the [API keys](http://localhost:3000/org/apikeys) in use and migrate them to SATs.
 
-### Migrate API keys to Grafana service accounts using Terraform
+Example:
 
-This section shows you how to migrate API keys to Grafana service accounts using Terraform.
+```sh
+curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account", "role": "Viewer"}' http://admin:admin@localhost:3000/api/serviceaccounts
+
+# response from the api
+{"id":1,"name":"my-service-account","login":"sa-my-service-account","orgId":1,"isDisabled":false,"role":"Viewer","tokens":0,"avatarUrl":""}%
+
+curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/1/tokens
+
+# response from api
+{"id":2,"name":"my-service-account-token","key":"glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939"}%
+
+```
+
+### Migrate API keys to Grafana service accounts in Terraform
+
+This section shows you how to migrate your terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
 
 #### Steps
 
@@ -147,3 +162,72 @@ Complete the following steps to migrate from API keys to service accounts using 
 1. Specify the desired scopes and expiration date when creating the service account.
 1. Use the token returned from `grafana_service_account_token` to authenticate the API requests.
 1. Remove the terraform configuration for creating your `grafana_api_key` resources.
+
+**Example: your current terraform configuration**
+
+```tf
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+    }
+  }
+}
+
+# configure the provider with basic auth
+provider "grafana" {
+  url  = "http://localhost:3000"
+  auth = "admin:admin"
+}
+
+resource "grafana_api_key" "foo" {
+  name = "key_foo"
+  role = "Viewer"
+}
+
+resource "grafana_api_key" "bar" {
+  name            = "key_bar"
+  role            = "Admin"
+  seconds_to_live = 30
+}
+```
+
+**Your new terraform configuration**
+
+_Note:_ that we can create multiple tokens using one service account.
+
+```tf
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+    }
+  }
+}
+
+# configure the provider with basic auth
+provider "grafana" {
+  url  = "http://localhost:3000"
+  auth = "admin:admin"
+}
+
+# Creating a service account in Grafana instance to be used as auth and attach tokens
+# notice we can attach multiple tokens to one service account
+resource "grafana_service_account" "sa-admin" {
+  name             = "sa-admin"
+  role             = "Admin"
+}
+
+# Creating a service account token in Grafana instance to be used for creating resources in Grafana instance
+resource "grafana_service_account_token" "sat-bar" {
+  name           = "sat-bar"
+  service_account_id = grafana_service_account.sa-admin.id
+}
+
+# Creating a service account token in Grafana instance to be used for creating resources in Grafana instance
+resource "grafana_service_account_token" "sat-foo" {
+  name           = "sat-foo"
+  service_account_id = grafana_service_account.sa-admin.id
+  seconds_to_live    = 30
+}
+```
