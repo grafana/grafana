@@ -237,52 +237,6 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, i
 	return grantTypes
 }
 
-// createServiceAccount creates a service account with the given permissions
-// and returns the ID of the service account
-// When no permission is given, the account isn't created and oauthserver.NoServiceAccountID is returned
-// TODO we should use a single transaction for the whole service account creation process
-func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
-	if len(permissions) == 0 {
-		// No permissions, no service account
-		s.logger.Debug("No permissions, no service account", "external service name", extSvcName)
-		return oauthserver.NoServiceAccountID, nil
-	}
-
-	newRole := func(r roletype.RoleType) *roletype.RoleType {
-		return &r
-	}
-	newBool := func(b bool) *bool {
-		return &b
-	}
-
-	slug := slugify.Slugify(extSvcName)
-
-	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
-	// FIXME currently using orgID 1
-	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
-	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
-		Name:       slug,
-		Role:       newRole(roletype.RoleViewer), // FIXME: Use empty role
-		IsDisabled: newBool(false),
-	})
-	if err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	s.logger.Debug("create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
-	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-		OrgID:             ac.GlobalOrgID,
-		Global:            true,
-		ExternalServiceID: slug,
-		ServiceAccountID:  sa.Id,
-		Permissions:       permissions,
-	}); err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	return sa.Id, nil
-}
-
 func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
 	if keyOption == nil {
 		return nil, nil
@@ -292,7 +246,21 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 
 	if keyOption.Generate {
 		switch s.cfg.OAuth2ServerGeneratedKeyTypeForClient {
-		case "ECDSA":
+		case "RSA":
+			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+			if err != nil {
+				return nil, err
+			}
+			publicPem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "RSA PUBLIC KEY",
+				Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
+			}))
+			privatePem = string(pem.EncodeToMemory(&pem.Block{
+				Type:  "RSA PRIVATE KEY",
+				Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+			}))
+			s.logger.Debug("RSA key has been generated")
+		default: // default to ECDSA
 			privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 			if err != nil {
 				return nil, err
@@ -316,20 +284,6 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 				Bytes: privateDer,
 			}))
 			s.logger.Debug("ECDSA key has been generated")
-		case "RSA":
-			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-			if err != nil {
-				return nil, err
-			}
-			publicPem = string(pem.EncodeToMemory(&pem.Block{
-				Type:  "RSA PUBLIC KEY",
-				Bytes: x509.MarshalPKCS1PublicKey(&privateKey.PublicKey),
-			}))
-			privatePem = string(pem.EncodeToMemory(&pem.Block{
-				Type:  "RSA PRIVATE KEY",
-				Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-			}))
-			s.logger.Debug("RSA key has been generated")
 		}
 
 		return &oauthserver.KeyResult{
@@ -405,6 +359,92 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	s.cache.Set(id, *app, cacheExpirationTime)
 
 	return app, nil
+}
+
+// saveServiceAccount creates a service account if the service account ID is NoServiceAccountID, otherwise it updates the service account's permissions
+func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, selfPermissions []ac.Permission) (int64, error) {
+	if saID == oauthserver.NoServiceAccountID {
+		// Create a service account
+		s.logger.Debug("Create service account", "external service name", extSvcName)
+		return s.createServiceAccount(ctx, extSvcName, selfPermissions)
+	}
+
+	// check if the service account exists
+	s.logger.Debug("Update service account", "external service name", extSvcName)
+	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, saID)
+	if err != nil {
+		s.logger.Error("Error retrieving service account", "external service name", extSvcName, "error", err)
+		return oauthserver.NoServiceAccountID, err
+	}
+
+	// update the service account's permissions
+	if len(selfPermissions) > 0 {
+		s.logger.Debug("Update role permissions", "external service name", extSvcName, "saID", saID)
+		if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
+			OrgID:             ac.GlobalOrgID,
+			Global:            true,
+			ExternalServiceID: extSvcName,
+			ServiceAccountID:  sa.Id,
+			Permissions:       selfPermissions,
+		}); err != nil {
+			return oauthserver.NoServiceAccountID, err
+		}
+		return saID, nil
+	}
+
+	// remove the service account
+	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
+	// TODO check that it's also deleting the role and its assignment
+	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
+		return oauthserver.NoServiceAccountID, err
+	}
+	return oauthserver.NoServiceAccountID, nil
+}
+
+// createServiceAccount creates a service account with the given permissions
+// and returns the ID of the service account
+// When no permission is given, the account isn't created and NoServiceAccountID is returned
+// TODO we should use a single transaction for the whole service account creation process
+func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
+	if len(permissions) == 0 {
+		// No permissions, no service account
+		s.logger.Debug("No permissions, no service account", "external service name", extSvcName)
+		return oauthserver.NoServiceAccountID, nil
+	}
+
+	newRole := func(r roletype.RoleType) *roletype.RoleType {
+		return &r
+	}
+	newBool := func(b bool) *bool {
+		return &b
+	}
+
+	slug := slugify.Slugify(extSvcName)
+
+	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
+	// FIXME currently using orgID 1
+	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
+	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
+		Name:       slug,
+		Role:       newRole(roletype.RoleViewer), // FIXME: Use empty role
+		IsDisabled: newBool(false),
+	})
+	if err != nil {
+		return oauthserver.NoServiceAccountID, err
+	}
+
+	s.logger.Debug("create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
+	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
+		OrgID:             ac.GlobalOrgID,
+		Global:            true,
+		ExternalServiceID: slug,
+		ServiceAccountID:  sa.Id,
+		Permissions:       permissions,
+	}); err != nil {
+		return oauthserver.NoServiceAccountID, err
+	}
+
+	return sa.Id, nil
 }
 
 // TODO it would be great to create the service account in the same DB session as the client
@@ -483,43 +523,4 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	}
 	s.logger.Debug("Registered app", "client", client.LogID())
 	return dto, nil
-}
-
-func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, selfPermissions []ac.Permission) (int64, error) {
-	if saID == oauthserver.NoServiceAccountID {
-		// Create a service account
-		s.logger.Debug("Create service account", "external service name", extSvcName)
-		return s.createServiceAccount(ctx, extSvcName, selfPermissions)
-	}
-
-	// check if the service account exists
-	s.logger.Debug("Update service account", "external service name", extSvcName)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, saID)
-	if err != nil {
-		s.logger.Error("Error retrieving service account", "external service name", extSvcName, "error", err)
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	// update the service account's permissions
-	if len(selfPermissions) > 0 {
-		s.logger.Debug("Update role permissions", "external service name", extSvcName, "saID", saID)
-		if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-			OrgID:             ac.GlobalOrgID,
-			Global:            true,
-			ExternalServiceID: extSvcName,
-			ServiceAccountID:  sa.Id,
-			Permissions:       selfPermissions,
-		}); err != nil {
-			return oauthserver.NoServiceAccountID, err
-		}
-		return saID, nil
-	}
-
-	// remove the service account
-	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
-	// TODO check that it's also deleting the role and its assignment
-	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-	return saID, nil
 }
