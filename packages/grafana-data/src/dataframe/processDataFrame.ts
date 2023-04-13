@@ -24,7 +24,6 @@ import {
   LoadingState,
   GraphSeriesValue,
 } from '../types/index';
-import { vectorToArray } from '../vector/vectorToArray';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
@@ -391,7 +390,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
     return {
       alias: fields[0].name || frame.name,
       target: fields[0].name || frame.name,
-      datapoints: fields[0].values.toArray(),
+      datapoints: fields[0].values,
       filterable: fields[0].config ? fields[0].config.filterable : undefined,
       type: 'docs',
     } as TimeSeries;
@@ -448,7 +447,7 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
   return {
     ...data,
     fields: data.fields.map((f) => {
-      const values = [...f.values.toArray()];
+      const values = [...f.values];
       values.reverse();
       return {
         ...f,
@@ -479,11 +478,7 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
 export function toFilteredDataFrameDTO(data: DataFrame, fieldPredicate?: (f: Field) => boolean): DataFrameDTO {
   const filteredFields = fieldPredicate ? data.fields.filter(fieldPredicate) : data.fields;
   const fields: FieldDTO[] = filteredFields.map((f) => {
-    let values = f.values.toArray();
-    // The byte buffers serialize like objects
-    if (values instanceof Float64Array) {
-      values = vectorToArray(f.values);
-    }
+    let values = f.values;
     return {
       name: f.name,
       type: f.type,

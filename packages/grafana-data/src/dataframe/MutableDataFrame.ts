@@ -76,7 +76,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
-      buffer = f.values.toArray();
+      buffer = f.values;
     }
 
     let type = f.type;
