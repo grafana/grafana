@@ -45,10 +45,6 @@ type SystemStats struct {
 	ActiveDataKeys            int64
 	PublicDashboards          int64
 	Correlations              int64
-	DatabaseCreatedTime       int64
-
-	// name of the driver
-	DatabaseDriver string
 }
 
 type DataSourceStats struct {
