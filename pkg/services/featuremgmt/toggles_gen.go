@@ -51,10 +51,6 @@ const (
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
 
-	// FlagLokiDataframeApi
-	// Use experimental loki api for WebSocket streaming (early prototype)
-	FlagLokiDataframeApi = "lokiDataframeApi"
-
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
@@ -279,6 +275,10 @@ const (
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
 
+	// FlagLokiMetricDataplane
+	// Changes responses from Loki to be compliant with the dataplane specification.
+	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
@@ -322,6 +322,10 @@ const (
 	// FlagDisableElasticsearchBackendQuerying
 	// Disable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
 
 	// FlagPluginsAPIManifestKey
 	// Use grafana.com API to retrieve the public manifest key

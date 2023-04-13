@@ -10,7 +10,6 @@ prometheusAzureOverrideAudience,beta,@grafana/observability-metrics,false,false,
 publicDashboards,alpha,@grafana/dashboards-squad,false,false,false,false
 publicDashboardsEmailSharing,alpha,@grafana/dashboards-squad,false,true,false,false
 lokiLive,alpha,@grafana/observability-logs,false,false,false,false
-lokiDataframeApi,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
@@ -67,6 +66,7 @@ prometheusResourceBrowserCache,alpha,@grafana/observability-metrics,false,false,
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 prometheusDataplane,alpha,@grafana/observability-metrics,false,false,false,false
+lokiMetricDataplane,alpha,@grafana/observability-logs,false,false,false,false
 alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
@@ -78,4 +78,5 @@ externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
 dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false,true
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
 disableElasticsearchBackendQuerying,stable,@grafana/observability-logs,false,false,false,false
+authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
 pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,false
