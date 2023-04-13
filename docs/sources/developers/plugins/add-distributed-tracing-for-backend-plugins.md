@@ -37,69 +37,61 @@ When OpenTelemetry tracing is enabled on the main Grafana instance and tracing i
 the OpenTelemetry endpoint address and propagation format will be passed to the plugin during startup,
 which will be used to configure a global tracer.
 
-<ol>
-<li>The global tracer is configured automatically if you use <code>datasource.Manage</code> or <code>app.Manage</code> to run your plugin.
+1. The global tracer is configured automatically if you use <code>datasource.Manage</code> or <code>app.Manage</code> to run your plugin.
 
-This also allows you to specify custom attributes for the default tracer:
+   This also allows you to specify custom attributes for the default tracer:
 
-```go
-func main() {
-    if err := datasource.Manage("MY_PLUGIN_ID", plugin.NewDatasource, datasource.ManageOpts{
-        TracingOpts: tracing.Opts{
-            // Optional custom attributes attached to the tracer's resource.
-            // The tracer will already have some SDK and runtime ones pre-populated.
-            CustomAttributes: []attribute.KeyValue{
-                attribute.String("my_plugin.my_attribute", "custom value"),
-            },
-        },
-    }); err != nil {
-        log.DefaultLogger.Error(err.Error())
-        os.Exit(1)
-    }
-}
-```
+   ```go
+   func main() {
+       if err := datasource.Manage("MY_PLUGIN_ID", plugin.NewDatasource, datasource.ManageOpts{
+           TracingOpts: tracing.Opts{
+               // Optional custom attributes attached to the tracer's resource.
+               // The tracer will already have some SDK and runtime ones pre-populated.
+               CustomAttributes: []attribute.KeyValue{
+                   attribute.String("my_plugin.my_attribute", "custom value"),
+               },
+           },
+       }); err != nil {
+           log.DefaultLogger.Error(err.Error())
+           os.Exit(1)
+       }
+   }
+   ```
 
-</li>
+1. Once tracing is configured, you can access the global tracer with:
 
-<li>
-Once tracing is configured, you can access the global tracer with:
+   ```go
+   tracing.DefaultTracer()
+   ```
 
-```go
-tracing.DefaultTracer()
-```
+   this returns an [OpenTelemetry trace.Tracer](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer), and can be used to create spans.
 
-this returns an [OpenTelemetry trace.Tracer](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer), and can be used to create spans.
+   For example:
 
-For example:
+   ```go
+   func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (backend.DataResponse, error) {
+       ctx, span := tracing.DefaultTracer().Start(
+           ctx,
+           "query processing",
+           trace.WithAttributes(
+               attribute.String("query.ref_id", query.RefID),
+               attribute.String("query.type", query.QueryType),
+               attribute.Int64("query.max_data_points", query.MaxDataPoints),
+               attribute.Int64("query.interval_ms", query.Interval.Milliseconds()),
+               attribute.Int64("query.time_range.from", query.TimeRange.From.Unix()),
+               attribute.Int64("query.time_range.to", query.TimeRange.To.Unix()),
+           ),
+       )
+       defer span.End()
+       log.DefaultLogger.Debug("query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
 
-```go
-func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (backend.DataResponse, error) {
-    ctx, span := tracing.DefaultTracer().Start(
-        ctx,
-        "query processing",
-        trace.WithAttributes(
-            attribute.String("query.ref_id", query.RefID),
-            attribute.String("query.type", query.QueryType),
-            attribute.Int64("query.max_data_points", query.MaxDataPoints),
-            attribute.Int64("query.interval_ms", query.Interval.Milliseconds()),
-            attribute.Int64("query.time_range.from", query.TimeRange.From.Unix()),
-            attribute.Int64("query.time_range.to", query.TimeRange.To.Unix()),
-        ),
-    )
-    defer span.End()
-    log.DefaultLogger.Debug("query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
+       // ...
+   }
+   ```
 
-    // ...
-}
-```
+   Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
 
-Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
-
-If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
-
-</li>
-
-</ol>
+   If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
 
 ### Tracing GRPC calls
 
