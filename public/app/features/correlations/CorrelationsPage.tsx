@@ -40,7 +40,15 @@ const loaderWrapper = css`
 
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAdding, setIsAddingValue] = useState(false);
+
+  const setIsAdding = (value: boolean) => {
+    setIsAddingValue(value);
+    if (value) {
+      reportInteraction('grafana_correlations_adding_started');
+    }
+  };
+
   const {
     remove,
     get: { execute: fetchCorrelations, ...get },
