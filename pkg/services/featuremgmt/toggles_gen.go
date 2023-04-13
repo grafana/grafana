@@ -51,10 +51,6 @@ const (
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
 
-	// FlagLokiDataframeApi
-	// Use experimental loki api for WebSocket streaming (early prototype)
-	FlagLokiDataframeApi = "lokiDataframeApi"
-
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
