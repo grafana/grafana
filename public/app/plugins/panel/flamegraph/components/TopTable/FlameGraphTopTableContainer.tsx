@@ -64,6 +64,10 @@ const FlameGraphTopTableContainer = ({
     <div className={styles.topTableContainer}>
       <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
         {({ width, height }) => {
+          if (width < 3 || height < 3) {
+            return null;
+          }
+
           const frame = buildTableDataFrame(data, width, onSymbolClick);
           return <Table initialSortBy={initialSortBy} data={frame} width={width} height={height} />;
         }}
@@ -137,7 +141,7 @@ function buildTableDataFrame(
       defaults: {},
       overrides: [],
     },
-    replaceVariables: (value: string, scopedVars) => getTemplateSrv().replace(value, scopedVars),
+    replaceVariables: (value: string) => value,
     theme: config.theme2,
   });
 

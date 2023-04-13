@@ -39,6 +39,7 @@ const FlameGraphHeader = ({
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
   ];
+
   if (containerWidth >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH) {
     viewOptions.push({
       value: SelectedView.Both,
@@ -46,6 +47,20 @@ const FlameGraphHeader = ({
       description: 'Show both the top table and flame graph',
     });
   }
+
+  const onClearSearch = () => {
+    setTopLevelIndex(0);
+    setSelectedBarIndex(0);
+    setRangeMin(0);
+    setRangeMax(1);
+    setSearch('');
+  };
+
+  const clearButton = (
+    <Button size="sm" icon="times" fill="text" onClick={onClearSearch}>
+      Clear
+    </Button>
+  );
 
   return (
     <div className={styles.header}>
@@ -57,23 +72,10 @@ const FlameGraphHeader = ({
               setSearch(v.currentTarget.value);
             }}
             placeholder={'Search..'}
-            width={24}
+            suffix={search && clearButton}
+            width={44}
           />
         </div>
-        <Button
-          type={'button'}
-          variant={'secondary'}
-          size={'md'}
-          onClick={() => {
-            setTopLevelIndex(0);
-            setSelectedBarIndex(0);
-            setRangeMin(0);
-            setRangeMax(1);
-            setSearch('');
-          }}
-        >
-          Reset View
-        </Button>
       </div>
 
       <div className={styles.rightContainer}>
