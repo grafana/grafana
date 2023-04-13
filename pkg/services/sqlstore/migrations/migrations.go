@@ -114,6 +114,10 @@ func addMigrationLogMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("create migration_log table", NewAddTableMigration(migrationLogV1))
+
+	mg.AddMigration("add version column to migration_log table", NewAddColumnMigration(migrationLogV1, &Column{
+		Name: "version", Type: DB_Text, Nullable: true,
+	}))
 }
 
 func addStarMigrations(mg *Migrator) {

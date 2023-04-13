@@ -1,8 +1,8 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -12,6 +12,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,36 +21,41 @@ var (
 	ErrMigratorIsUnlocked = fmt.Errorf("migrator is unlocked")
 )
 
+type sessionProvider = func() *session.SessionDB
+
 type Migrator struct {
-	DBEngine     *xorm.Engine
-	Dialect      Dialect
-	migrations   []Migration
-	migrationIds map[string]struct{}
-	Logger       log.Logger
-	Cfg          *setting.Cfg
-	isLocked     atomic.Bool
-	version      string
+	sessionGetter sessionProvider
+	DBEngine      *xorm.Engine
+	Dialect       Dialect
+	migrations    []Migration
+	migrationIds  map[string]struct{}
+	Logger        log.Logger
+	Cfg           *setting.Cfg
+	isLocked      atomic.Bool
+	version       string
 }
 
 type MigrationLog struct {
 	Id          int64
-	MigrationID string `xorm:"migration_id"`
-	SQL         string `xorm:"sql"`
+	MigrationID string `xorm:"migration_id" db:"migration_id"`
+	SQL         string `xorm:"sql" db:"sql"`
 	Success     bool
 	Error       string
 	Timestamp   time.Time
 	Version     string // version when the process ran
 }
 
-func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
-	mg := &Migrator{}
+func NewMigrator(engine *xorm.Engine, sessionGetter sessionProvider, cfg *setting.Cfg) *Migrator {
+	mg := &Migrator{
+		sessionGetter: sessionGetter,
+		version:       fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
+	}
 	mg.DBEngine = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
 	mg.migrationIds = make(map[string]struct{})
 	mg.Dialect = NewDialect(mg.DBEngine)
 	mg.Cfg = cfg
-	mg.version = fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
 	return mg
 }
 
@@ -90,18 +96,9 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 		return logMap, nil
 	}
 
-	if err = mg.DBEngine.Find(&logItems); err != nil {
-		// Find will fail if the version is missing
-		// We need to insert the column and try again
-		if strings.Contains(err.Error(), "version") {
-			err = mg.addVersionToMigrationLog()
-			if err == nil {
-				err = mg.DBEngine.Find(&logItems)
-			}
-		}
-		if err != nil {
-			return nil, err
-		}
+	err = mg.sessionGetter().Select(context.Background(), &logItems, "SELECT * FROM migration_log")
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "unable to read migration_log", err)
 	}
 
 	for _, logItem := range logItems {
@@ -238,20 +235,6 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	}
 
 	return nil
-}
-
-func (mg *Migrator) addVersionToMigrationLog() error {
-	return mg.InTransaction(func(sess *xorm.Session) error {
-		m := NewAddColumnMigration(Table{Name: "migration_log"}, &Column{
-			Name: "version", Type: DB_Text, Nullable: true,
-		})
-		m.SetId("add vertion inception")
-		err := mg.exec(m, sess)
-		if err == nil {
-			_, err = sess.Exec("UPDATE migration_log SET version=?", "before: "+mg.version)
-		}
-		return err
-	})
 }
 
 type dbTransactionFunc func(sess *xorm.Session) error

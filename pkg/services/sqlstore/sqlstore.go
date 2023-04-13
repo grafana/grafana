@@ -136,7 +136,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrator := migrator.NewMigrator(ss.engine, ss.GetSqlxSession, ss.Cfg)
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
