@@ -376,7 +376,7 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 	}
 
 	//nolint:bodyclose // fixed in main
-	promRes, err := toAPIResponse(qr)
+	promRes, err := toAPIResponse(qr) //nolint:bodyclose // fixed in main
 	if err != nil {
 		return nil, err
 	}
