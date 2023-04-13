@@ -141,7 +141,6 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
     if (queriesForm) {
       queriesForm(fullConfig);
-      e2e().wait('@chartData');
 
       // Wait for a possible complex visualization to render (or something related, as this isn't necessary on the dashboard page)
       // Can't assert that its HTML changed because a new query could produce the same results
@@ -157,8 +156,6 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
     // Avoid annotations flakiness
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
-
-    e2e().wait('@chartData');
 
     // Wait for RxJS
     e2e().wait(500);
