@@ -11,7 +11,7 @@ export async function fetchFeedText(url: string) {
 
 export function isAtomFeed(txt: string) {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'rss'), 'text/xml');
+  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypesRSS(txt), 'text/xml');
   return doc.querySelector('feed') !== null;
 }
 

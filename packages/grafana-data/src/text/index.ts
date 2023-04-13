@@ -9,6 +9,7 @@ import {
   sanitizeTextPanelContent,
   sanitizeSVGContent,
   sanitizeTrustedTypes,
+  sanitizeTrustedTypesRSS,
 } from './sanitize';
 
 export const textUtil = {
@@ -19,4 +20,5 @@ export const textUtil = {
   sanitizeUrl,
   sanitizeSVGContent,
   sanitizeTrustedTypes,
+  sanitizeTrustedTypesRSS,
 };

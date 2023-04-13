@@ -5,7 +5,7 @@ import { Feed } from './types';
 
 export function parseRSSFeed(txt: string): Feed {
   const domParser = new DOMParser();
-  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypes(txt, 'rss'), 'text/xml');
+  const doc = domParser.parseFromString(textUtil.sanitizeTrustedTypesRSS(txt), 'text/xml');
   const feed: Feed = {
     items: Array.from(doc.querySelectorAll('item')).map((node) => ({
       title: getProperty(node, 'title'),
