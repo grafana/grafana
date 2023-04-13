@@ -2022,7 +2022,7 @@ ha_engine_address = 127.0.0.1:6379
 
 ## [plugin.plugin_id]
 
-This section allows to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
+This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
 
 Properties described in this section are available for all plugins, but you must set them individually for each plugin.
 
