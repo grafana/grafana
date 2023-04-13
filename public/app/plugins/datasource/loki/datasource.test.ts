@@ -13,8 +13,6 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  LogRowModel,
-  MutableDataFrame,
   SupplementaryQueryType,
 } from '@grafana/data';
 import {
@@ -839,57 +837,6 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('prepareLogRowContextQueryTarget', () => {
-    const ds = createLokiDatasource(templateSrvStub);
-    it('creates query with only labels from /labels API', async () => {
-      const row: LogRowModel = {
-        rowIndex: 0,
-        dataFrame: new MutableDataFrame({
-          fields: [
-            {
-              name: 'ts',
-              type: FieldType.time,
-              values: [0],
-            },
-          ],
-        }),
-        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-        uid: '1',
-      } as unknown as LogRowModel;
-
-      //Mock stored labels to only include "bar" label
-      jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-      jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
-      const contextQuery = await ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
-
-      expect(contextQuery.query.expr).toContain('baz');
-      expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
-    });
-
-    it('should call languageProvider.start to fetch labels', async () => {
-      const row: LogRowModel = {
-        rowIndex: 0,
-        dataFrame: new MutableDataFrame({
-          fields: [
-            {
-              name: 'ts',
-              type: FieldType.time,
-              values: [0],
-            },
-          ],
-        }),
-        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-        uid: '1',
-      } as unknown as LogRowModel;
-
-      //Mock stored labels to only include "bar" label
-      jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-      await ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
-
-      expect(ds.languageProvider.start).toBeCalled();
-    });
-  });
-
   describe('logs volume data provider', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
@@ -1228,57 +1175,3 @@ function makeAnnotationQueryRequest(options = {}): AnnotationQueryRequest<LokiQu
     rangeRaw: timeRange,
   };
 }
-
-describe('new context ui', () => {
-  it('returns expression with 1 label', async () => {
-    const ds = createLokiDatasource(templateSrvStub);
-
-    const row: LogRowModel = {
-      rowIndex: 0,
-      dataFrame: new MutableDataFrame({
-        fields: [
-          {
-            name: 'ts',
-            type: FieldType.time,
-            values: [0],
-          },
-        ],
-      }),
-      labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-      uid: '1',
-    } as unknown as LogRowModel;
-
-    jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-    jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['foo']);
-
-    const result = await ds.prepareContextExpr(row);
-
-    expect(result).toEqual('{foo="uniqueParsedLabel"}');
-  });
-
-  it('returns empty expression for parsed labels', async () => {
-    const ds = createLokiDatasource(templateSrvStub);
-
-    const row: LogRowModel = {
-      rowIndex: 0,
-      dataFrame: new MutableDataFrame({
-        fields: [
-          {
-            name: 'ts',
-            type: FieldType.time,
-            values: [0],
-          },
-        ],
-      }),
-      labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-      uid: '1',
-    } as unknown as LogRowModel;
-
-    jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-    jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => []);
-
-    const result = await ds.prepareContextExpr(row);
-
-    expect(result).toEqual('{}');
-  });
-});

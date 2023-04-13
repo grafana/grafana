@@ -31,7 +31,6 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
-  toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -48,10 +47,10 @@ import { replaceVariables, returnVariables } from '../prometheus/querybuilder/sh
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
+import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { LokiContextUi } from './components/LokiContextUi';
-import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
+import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -72,7 +71,6 @@ import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
-  getParserFromQuery,
   isLogsQuery,
   isValidQuery,
   requestSupportsSplitting,
@@ -81,10 +79,8 @@ import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
-  ContextFilter,
   LokiOptions,
   LokiQuery,
-  LokiQueryDirection,
   LokiQueryType,
   LokiVariableQuery,
   LokiVariableQueryType,
@@ -135,8 +131,8 @@ export class LokiDatasource
 {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
+  logContextProvider: LogContextProvider;
   maxLines: number;
-  onContextClose: (() => void) | undefined;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -152,6 +148,7 @@ export class LokiDatasource
       QueryEditor: LokiAnnotationsQueryEditor,
     };
     this.variables = new LokiVariableSupport(this);
+    this.logContextProvider = new LogContextProvider(this.languageProvider);
   }
 
   getDataProvider(
@@ -654,7 +651,12 @@ export class LokiDatasource
   ): Promise<{ data: DataFrame[] }> => {
     const direction = (options && options.direction) || 'BACKWARD';
     const limit = (options && options.limit) || 10;
-    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+    const { query, range } = await this.logContextProvider.prepareLogRowContextQueryTarget(
+      row,
+      limit,
+      direction,
+      origQuery
+    );
 
     const processDataFrame = (frame: DataFrame): DataFrame => {
       // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
@@ -717,137 +719,8 @@ export class LokiDatasource
     );
   };
 
-  prepareLogRowContextQueryTarget = async (
-    row: LogRowModel,
-    limit: number,
-    direction: 'BACKWARD' | 'FORWARD',
-    origQuery?: DataQuery
-  ): Promise<{ query: LokiQuery; range: TimeRange }> => {
-    let expr = await this.prepareContextExpr(row, origQuery);
-
-    const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
-
-    const queryDirection = direction === 'FORWARD' ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
-
-    const query: LokiQuery = {
-      expr,
-      queryType: LokiQueryType.Range,
-      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
-      maxLines: limit,
-      direction: queryDirection,
-    };
-
-    const fieldCache = new FieldCache(row.dataFrame);
-    const tsField = fieldCache.getFirstFieldOfType(FieldType.time);
-    if (tsField === undefined) {
-      throw new Error('loki: dataframe missing time-field, should never happen');
-    }
-    const tsValue = tsField.values.get(row.rowIndex);
-    const timestamp = toUtc(tsValue);
-
-    const range =
-      queryDirection === LokiQueryDirection.Forward
-        ? {
-            // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
-            // and any other that were logged in the same ns but before the row. Right now these rows will be lost
-            // because the are before but came it he response that should return only rows after.
-            from: timestamp,
-            // convert to ns, we lose some precision here but it is not that important at the far points of the context
-            to: toUtc(row.timeEpochMs + contextTimeBuffer),
-          }
-        : {
-            // convert to ns, we lose some precision here but it is not that important at the far points of the context
-            from: toUtc(row.timeEpochMs - contextTimeBuffer),
-            to: timestamp,
-          };
-
-    return {
-      query,
-      range: {
-        from: range.from,
-        to: range.to,
-        raw: range,
-      },
-    };
-  };
-
-  async prepareContextExprWithoutParsedLabels(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    await this.languageProvider.start();
-    const labels = this.languageProvider.getLabelKeys();
-    const expr = Object.keys(row.labels)
-      .map((label: string) => {
-        if (labels.includes(label)) {
-          // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-        }
-        return '';
-      })
-      .filter((label) => !!label)
-      .join(',');
-
-    return `{${expr}}`;
-  }
-
-  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    return await this.prepareContextExprWithoutParsedLabels(row, origQuery);
-  }
-
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    const updateFilter = (contextFilters: ContextFilter[]) => {
-      this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-        await this.languageProvider.start();
-        const labels = this.languageProvider.getLabelKeys();
-
-        let expr = contextFilters
-          .map((filter) => {
-            const label = filter.value;
-            if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-              // escape backslashes in label as users can't escape them by themselves
-              return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-            }
-            return '';
-          })
-          // Filter empty strings
-          .filter((label) => !!label)
-          .join(',');
-
-        expr = `{${expr}}`;
-
-        const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-        if (parserContextFilters.length) {
-          // we should also filter for labels from parsers, let's find the right parser
-          if (origQuery) {
-            const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-            if (parser) {
-              expr = addParserToQuery(expr, parser);
-            }
-          }
-          for (const filter of parserContextFilters) {
-            if (filter.enabled) {
-              expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-            }
-          }
-        }
-        return expr;
-      };
-      if (runContextQuery) {
-        runContextQuery();
-      }
-    };
-
-    // we need to cache this function so that it doesn't get recreated on every render
-    this.onContextClose =
-      this.onContextClose ??
-      (() => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
-      });
-
-    return LokiContextUi({
-      row,
-      updateFilter,
-      languageProvider: this.languageProvider,
-      onClose: this.onContextClose,
-    });
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery);
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
