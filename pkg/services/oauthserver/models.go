@@ -25,7 +25,6 @@ var (
 )
 
 type OAuth2Service interface {
-	RegisterExternalService(ctx context.Context, app *ExternalServiceRegistration) (*ClientDTO, error)
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)

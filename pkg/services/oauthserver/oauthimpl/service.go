@@ -207,59 +207,6 @@ func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(res), nil
 }
 
-// TODO it would be great to create the service account in the same DB session as the client
-func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
-	registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
-	if registration == nil {
-		s.logger.Warn("RegisterExternalService called without registration")
-		return nil, nil
-	}
-
-	client := oauthserver.Client{
-		ExternalServiceName:    registration.ExternalServiceName,
-		ImpersonatePermissions: registration.ImpersonatePermissions,
-	}
-	if registration.RedirectURI != nil {
-		client.RedirectURI = *registration.RedirectURI
-	}
-
-	var errGenCred error
-	client.ClientID, client.Secret, errGenCred = s.genCredentials()
-	if errGenCred != nil {
-		s.logger.Error("Error generating credentials", "client", client, "error", errGenCred)
-		return nil, errGenCred
-	}
-
-	// Assign permissions to a service account that will be associated to the App
-	id, err := s.createServiceAccount(ctx, registration.ExternalServiceName, registration.Permissions)
-	if err != nil {
-		return nil, err
-	}
-	client.ServiceAccountID = id
-
-	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
-
-	// Handle RSA key options
-	s.logger.Debug("Handle key options")
-	keys, err := s.handleKeyOptions(ctx, registration.Key)
-	if err != nil {
-		s.logger.Error("Error handling key options", "client", client, "error", err)
-		return nil, err
-	}
-	if keys != nil {
-		client.PublicPem = []byte(keys.PublicPem)
-	}
-
-	s.logger.Info("Registering app", "client", client)
-	err = s.sqlstore.RegisterExternalService(ctx, &client)
-	if err != nil {
-		return nil, err
-	}
-	dto := client.ToDTO()
-	dto.KeyResult = keys
-	return dto, nil
-}
-
 func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
 	id, err := s.RandString(20)
 	if err != nil {
@@ -292,7 +239,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, i
 
 // createServiceAccount creates a service account with the given permissions
 // and returns the ID of the service account
-// When no permission is given, the account isn't created and -1 is returned
+// When no permission is given, the account isn't created and oauthserver.NoServiceAccountID is returned
 // TODO we should use a single transaction for the whole service account creation process
 func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
 	if len(permissions) == 0 {

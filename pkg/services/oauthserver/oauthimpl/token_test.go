@@ -2,92 +2,19 @@ package oauthimpl
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/ory/fosite"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oauthtest"
-	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/ory/fosite"
-	"github.com/ory/fosite/storage"
-	"github.com/stretchr/testify/require"
 )
-
-type TestEnv struct {
-	S           *OAuth2ServiceImpl
-	Cfg         *setting.Cfg
-	AcStore     *actest.FakeStore
-	OAuthStore  *oauthtest.FakeStore
-	UserService *usertest.FakeUserService
-	TeamService *teamtest.FakeService
-	SAService   *satests.MockServiceAccountService
-}
-
-func setupTestEnv(t *testing.T) *TestEnv {
-	t.Helper()
-
-	config := &fosite.Config{
-		AccessTokenLifespan: time.Hour,
-		TokenURL:            "test/oauth2/token",
-		AccessTokenIssuer:   "test",
-		IDTokenIssuer:       "test",
-		ScopeStrategy:       fosite.WildcardScopeStrategy,
-	}
-
-	env := &TestEnv{
-		Cfg:         setting.NewCfg(),
-		AcStore:     &actest.FakeStore{},
-		OAuthStore:  &oauthtest.FakeStore{},
-		UserService: usertest.NewUserServiceFake(),
-		TeamService: teamtest.NewFakeService(),
-		SAService:   &satests.MockServiceAccountService{},
-	}
-
-	cfg := setting.NewCfg()
-
-	// TODO: Replace this part with KeyService.GetServerPrivateKey()
-	var errGenKey error
-	privateKey, errGenKey := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, errGenKey)
-
-	// TODO: add feature toggle
-	fmgt := featuremgmt.WithFeatures()
-
-	s := &OAuth2ServiceImpl{
-		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
-		cfg:           cfg,
-		accessControl: acimpl.ProvideAccessControl(cfg),
-		acService:     acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt),
-		memstore:      storage.NewMemoryStore(),
-		sqlstore:      env.OAuthStore,
-		logger:        log.New("oauthserver.test"),
-		userService:   env.UserService,
-		saService:     env.SAService,
-		teamService:   env.TeamService,
-		publicKey:     &privateKey.PublicKey,
-	}
-
-	s.oauthProvider = newProvider(config, s, privateKey)
-
-	env.S = s
-
-	return env
-}
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 	client1 := &oauthserver.Client{
