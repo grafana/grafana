@@ -633,16 +633,6 @@ export const runQueries = (
   };
 };
 
-type HandleSupplementaryQueriesOptions = {
-  exploreId: ExploreId;
-  transaction: QueryTransaction;
-  datasourceInstance: DataSourceApi;
-  newQuerySource: Observable<ExplorePanelData>;
-  supplementaryQueries: SupplementaryQueries;
-  queries: DataQuery[];
-  absoluteRange: AbsoluteTimeRange;
-};
-
 const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars) => {
   const nonMixedDataSources = datasources.filter((t) => {
     return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
@@ -658,6 +648,16 @@ const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars
       };
     })
   );
+};
+
+type HandleSupplementaryQueriesOptions = {
+  exploreId: ExploreId;
+  transaction: QueryTransaction;
+  datasourceInstance: DataSourceApi;
+  newQuerySource: Observable<ExplorePanelData>;
+  supplementaryQueries: SupplementaryQueries;
+  queries: DataQuery[];
+  absoluteRange: AbsoluteTimeRange;
 };
 
 const handleSupplementaryQueries = createAsyncThunk(
