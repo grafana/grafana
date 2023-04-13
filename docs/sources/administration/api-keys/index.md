@@ -135,19 +135,29 @@ Complete the following steps to migrate from API keys to service accounts for AP
 1. Remove code that handles the old `/api/auth/keys` endpoint.
 1. Track the [API keys](http://localhost:3000/org/apikeys) in use and migrate them to SATs.
 
-Example:
+#### Example
+
+Your current setup
 
 ```sh
-curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account", "role": "Viewer"}' http://admin:admin@localhost:3000/api/serviceaccounts
+curl -X POST -H "Content-Type: application/json" -d '{"name": "my-api-key", "role": "Viewer"}' http://admin:admin@localhost:3000/api/auth/keys
 
 # response from the api
+{"id":2,"name":"my-api-key","key":"eyJrIjoiTFRSN1RBOVc3SGhjblc0bWZodXZ3MnNDcU92Um5VZUIiLKJuIjoibXktYXBpLWtleSIsImlkIjoxfQ=="}%
+```
+
+New setup
+
+```sh
+# create a service account
+curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account", "role": "Viewer"}' http://admin:admin@localhost:3000/api/serviceaccounts
+
 {"id":1,"name":"my-service-account","login":"sa-my-service-account","orgId":1,"isDisabled":false,"role":"Viewer","tokens":0,"avatarUrl":""}%
 
+# create the service account token with the service account id
 curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/1/tokens
 
-# response from api
 {"id":2,"name":"my-service-account-token","key":"glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939"}%
-
 ```
 
 ### Migrate API keys to Grafana service accounts in Terraform
