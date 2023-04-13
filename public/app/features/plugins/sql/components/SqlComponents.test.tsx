@@ -7,18 +7,19 @@ import { buildSqlQueryEditorProps, buildMockDataSelectorProps, buildMockDatasour
 
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
-    const database_update_text = 'Your default database configuration has been changed or updated';
-    const no_postgres_database_text = 'You do not currently have a database configured for this datasource';
-
     it('should ONLY render the `database update` alert', async () => {
       // @ts-ignore
       // Property 'templateSrv' is a protected type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
       render(<SqlQueryEditor {...buildSqlQueryEditorProps({ datasource: buildMockDatasource(true) })} />);
 
       await waitFor(() => {
-        const alert = screen.getByRole('alert');
-        expect(alert.textContent).toContain(database_update_text);
-        expect(alert.textContent).not.toContain(no_postgres_database_text);
+        const visableAlert = screen.getByRole('alert', { name: 'Default datasource update' });
+        expect(visableAlert).toBeInTheDocument();
+
+        // Use `queryBy<queryType>` syntax when attempting to find an element that will not exist on the virtual DOM.
+        // This will return `null` instead of throwing an error.
+        const invisableAlert = screen.queryByRole('alert', { name: 'Default datasource error' });
+        expect(invisableAlert).not.toBeInTheDocument();
       });
     });
 
@@ -26,9 +27,11 @@ describe('SqlQueryEditor', () => {
       render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { disableDatasetSelector: true } })} />);
 
       await waitFor(() => {
-        const alert = screen.getByRole('alert');
-        expect(alert.textContent).toContain(no_postgres_database_text);
-        expect(alert.textContent).not.toContain(database_update_text);
+        const alert = screen.getByRole('alert', { name: 'Default datasource error' });
+        expect(alert).toBeInTheDocument();
+
+        const invisableAlert = screen.queryByRole('alert', { name: 'Default datasource update' });
+        expect(invisableAlert).toBeNull();
       });
     });
   });
