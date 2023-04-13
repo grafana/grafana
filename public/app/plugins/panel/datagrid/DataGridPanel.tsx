@@ -50,7 +50,6 @@ import {
 interface Props extends PanelProps<PanelOptions> {}
 
 export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
-  const [columnWidths, setColumnWidths] = useState<Map<number, number>>(new Map());
   const [columns, setColumns] = useState<SizedGridColumn[]>([]);
   const [contextMenuData, setContextMenuData] = useState<DatagridContextMenuData>({ isContextMenuOpen: false });
   const [renameColumnInputData, setRenameColumnInputData] = useState<RenameColumnInputData>({ isInputOpen: false });
@@ -90,20 +89,19 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       [FieldType.other, GridColumnIcon.HeaderReference],
     ]);
 
-    setColumns([
+    setColumns((prevColumns) => [
       ...frame.fields.map((f, i) => {
         const displayName = getFieldDisplayName(f, frame);
-        const width = columnWidths.get(i) ?? getCellWidth(f);
         return {
           title: displayName,
-          width: width,
+          width: prevColumns[i]?.width ?? getCellWidth(f),
           icon: typeToIconMap.get(f.type),
           hasMenu: isDatagridEditEnabled(),
           trailingRowOptions: { targetColumn: --i },
         };
       }),
     ]);
-  }, [columnWidths, frame]);
+  }, [frame]);
 
   useEffect(() => {
     setGridColumns();
@@ -154,6 +152,17 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
+    // If there is a gridSelection, then the only possible action for it was a multiple cell clear edit, which
+    // is handled by the onDeletePressed handler. So, we can return early and avoid performance issues if
+    // gridSelection has height 1 and width 1, meaning the user activated a single cell for edit.
+    if (
+      gridSelection.current?.range &&
+      gridSelection.current.range.height > 1 &&
+      gridSelection.current.range.width > 1
+    ) {
+      return;
+    }
+
     const [col, row] = cell;
     const field: Field = frame.fields[col];
 
@@ -193,11 +202,15 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnResize = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
-    setColumnWidths((prevWidths) => {
-      const newWidths = new Map(prevWidths);
-      newWidths.set(colIndex, newSize);
+    setColumns((prevColumns) => {
+      const newColumns = [...prevColumns];
 
-      return newWidths;
+      newColumns[colIndex] = {
+        ...column,
+        width: newSize,
+      };
+
+      return newColumns;
     });
 
     setIsResizeInProgress(true);
@@ -273,18 +286,27 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   const onColumnMove = (from: number, to: number) => {
     const newFrame = new MutableDataFrame(frame);
     const field = newFrame.fields[from];
-    const toField = newFrame.fields[to];
     newFrame.fields.splice(from, 1);
     newFrame.fields.splice(to, 0, field);
 
-    const colWidths = new Map(columnWidths);
-    const fromWidth = colWidths.get(from);
-    const toWidth = colWidths.get(to);
+    setColumns((prevColumns) => {
+      const newColumns = [...prevColumns];
+      const widthFrom = newColumns[from].width;
+      const widthTo = newColumns[to].width;
 
-    colWidths.set(from, toWidth ?? getCellWidth(toField));
-    colWidths.set(to, fromWidth ?? getCellWidth(field));
+      newColumns[from] = {
+        ...newColumns[from],
+        width: widthTo,
+      };
 
-    setColumnWidths(colWidths);
+      newColumns[to] = {
+        ...newColumns[to],
+        width: widthFrom,
+      };
+
+      return newColumns;
+    });
+
     publishSnapshot(newFrame, id);
   };
 

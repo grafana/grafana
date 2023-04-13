@@ -74,7 +74,6 @@ export const DatagridContextMenu = ({
           label={rowDeletionLabel}
           onClick={() => {
             if (selectedRows.length) {
-              console.log(selectedRows);
               saveData(deleteRows(data, selectedRows, true));
               setGridSelection(EMPTY_GRID_SELECTION);
               return;
