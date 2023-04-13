@@ -7,175 +7,15 @@
   "required": ["type", "name", "id", "info", "dependencies"],
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string",
-      "description": "Schema definition for the plugin.json file."
-    },
     "id": {
       "type": "string",
-      "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
+      "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin `id` has to follow the naming conventions.",
       "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
     },
     "type": {
       "type": "string",
       "description": "Plugin type.",
-      "enum": ["app", "datasource", "panel", "secretsmanager"]
-    },
-    "name": {
-      "type": "string",
-      "description": "Human-readable name of the plugin that is shown to the user in the UI."
-    },
-    "category": {
-      "type": "string",
-      "description": "Plugin category used on the Add data source page.",
-      "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "enterprise", "other"]
-    },
-    "annotations": {
-      "type": "boolean",
-      "description": "For data source plugins, if the plugin supports annotation queries."
-    },
-    "alerting": {
-      "type": "boolean",
-      "description": "For data source plugins, if the plugin supports alerting."
-    },
-    "backend": {
-      "type": "boolean",
-      "description": "If the plugin has a backend component."
-    },
-    "executable": {
-      "type": "string",
-      "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
-    },
-    "preload": {
-      "type": "boolean",
-      "description": "Initialize plugin on startup. By default, the plugin initializes on first use."
-    },
-    "state": {
-      "type": "string",
-      "description": "Marks a plugin as a pre-release.",
-      "enum": ["alpha", "beta"]
-    },
-    "includes": {
-      "type": "array",
-      "description": "Resources to include in plugin.",
-      "items": {
-        "type": "object",
-        "additionalItems": false,
-        "properties": {
-          "uid": {
-            "type": "string",
-            "description": "Unique identifier of the included resource"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["dashboard", "page", "panel", "datasource", "secretsmanager"]
-          },
-          "name": {
-            "type": "string"
-          },
-          "component": {
-            "type": "string",
-            "description": "(Legacy) The Angular component to use for a page."
-          },
-          "role": {
-            "type": "string",
-            "description": "The minimum role a user must have to see this page in the navigation menu.",
-            "enum": ["Admin", "Editor", "Viewer"]
-          },
-          "path": {
-            "type": "string",
-            "description": "Used for app plugins."
-          },
-          "addToNav": {
-            "type": "boolean",
-            "description": "Add the include to the navigation menu."
-          },
-          "defaultNav": {
-            "type": "boolean",
-            "description": "Page or dashboard when user clicks the icon in the side menu."
-          },
-          "icon": {
-            "type": "string",
-            "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
-          }
-        }
-      }
-    },
-    "logs": {
-      "type": "boolean",
-      "description": "For data source plugins, if the plugin supports logs."
-    },
-    "skipDataQuery": {
-      "type": "boolean",
-      "description": "For panel plugins. Hides the query editor."
-    },
-    "metrics": {
-      "type": "boolean",
-      "description": "For data source plugins, if the plugin supports metric queries. Used in Explore."
-    },
-    "streaming": {
-      "type": "boolean",
-      "description": "For data source plugins, if the plugin supports streaming."
-    },
-    "tables": {
-      "type": "boolean",
-      "description": "This is an undocumented feature."
-    },
-    "tracing": {
-      "type": "boolean",
-      "description": "For data source plugins, if the plugin supports tracing."
-    },
-    "hiddenQueries": {
-      "type": "boolean",
-      "description": "For data source plugins, include hidden queries in the data request."
-    },
-    "autoEnabled": {
-      "type": "boolean",
-      "description": "Set to true for app plugins that should be enabled by default in all orgs"
-    },
-    "dependencies": {
-      "type": "object",
-      "description": "Dependencies needed by the plugin.",
-      "required": ["grafanaDependency"],
-      "additionalProperties": false,
-      "properties": {
-        "grafanaVersion": {
-          "type": "string",
-          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
-          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
-        },
-        "grafanaDependency": {
-          "type": "string",
-          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
-        },
-        "plugins": {
-          "type": "array",
-          "description": "An array of required plugins on which this plugin depends.",
-          "additionalItems": false,
-          "items": {
-            "type": "object",
-            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
-            "required": ["id", "name", "type", "version"],
-            "properties": {
-              "id": {
-                "type": "string",
-                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
-              },
-              "type": {
-                "type": "string",
-                "enum": ["app", "datasource", "panel", "secretsmanager"]
-              },
-              "name": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
+      "enum": ["app", "datasource", "panel", "renderer", "secretsmanager"]
     },
     "info": {
       "type": "object",
@@ -307,6 +147,166 @@
           "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
         }
       }
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the plugin that is shown to the user in the UI."
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Dependency information related to Grafana and other plugins.",
+      "required": ["grafanaDependency"],
+      "additionalProperties": false,
+      "properties": {
+        "grafanaVersion": {
+          "type": "string",
+          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
+          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+        },
+        "grafanaDependency": {
+          "type": "string",
+          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+        },
+        "plugins": {
+          "type": "array",
+          "description": "An array of required plugins on which this plugin depends.",
+          "additionalItems": false,
+          "items": {
+            "type": "object",
+            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
+            "required": ["id", "name", "type", "version"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["app", "datasource", "panel", "secretsmanager"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "$schema": {
+      "type": "string",
+      "description": "Schema definition for the plugin.json file. Used primarily for schema validation."
+    },
+    "alerting": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`."
+    },
+    "annotations": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports annotation queries."
+    },
+    "autoEnabled": {
+      "type": "boolean",
+      "description": "Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs."
+    },
+    "backend": {
+      "type": "boolean",
+      "description": "If the plugin has a backend component."
+    },
+    "builtIn": {
+      "type": "boolean",
+      "description": "[internal only] Indicates whether the plugin is developed and shipped as part of Grafana. Also known as a 'core plugin'."
+    },
+    "category": {
+      "type": "string",
+      "description": "Plugin category used on the Add data source page.",
+      "enum": ["tsdb", "logging", "cloud", "tracing", "profiling", "sql", "enterprise", "iot", "other"]
+    },
+    "enterpriseFeatures": {
+      "type": "object",
+      "description": "Grafana Enterprise specific features",
+      "additionalProperties": true,
+      "properties": {
+        "healthDiagnosticsErrors": {
+          "type": "boolean",
+          "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5.",
+          "default": false
+        }
+      }
+    },
+    "executable": {
+      "type": "string",
+      "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
+    },
+    "hideFromList": {
+      "type": "boolean",
+      "description": "[internal only] Excludes the plugin from listings in Grafana's UI. Only allowed for `builtIn` plugins."
+    },
+    "includes": {
+      "type": "array",
+      "description": "Resources to include in plugin.",
+      "items": {
+        "type": "object",
+        "additionalItems": false,
+        "properties": {
+          "uid": {
+            "type": "string",
+            "description": "Unique identifier of the included resource"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["dashboard", "page", "panel", "datasource", "secretsmanager"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string",
+            "description": "(Legacy) The Angular component to use for a page."
+          },
+          "role": {
+            "type": "string",
+            "description": "The minimum role a user must have to see this page in the navigation menu.",
+            "enum": ["Admin", "Editor", "Viewer"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Used for app plugins."
+          },
+          "addToNav": {
+            "type": "boolean",
+            "description": "Add the include to the navigation menu."
+          },
+          "defaultNav": {
+            "type": "boolean",
+            "description": "Page or dashboard when user clicks the icon in the side menu."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
+          }
+        }
+      }
+    },
+    "logs": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports logs. It may be used to filter logs only features."
+    },
+    "metrics": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor."
+    },
+    "pascalName": {
+      "type": "string",
+      "description": "[internal only] The PascalCase name for the plugin. Used for creating machine-friendly identifiers, typically in code generation. If not provided, defaults to name, but title-cased and sanitized (only alphabetical characters allowed).",
+      "pattern": "^([A-Z][a-zA-Z]{1,62})$"
+    },
+    "preload": {
+      "type": "boolean",
+      "description": "Initialize plugin on startup. By default, the plugin initializes on first use. Useful for app plugins that should load without user interaction."
     },
     "queryOptions": {
       "type": "object",
@@ -461,17 +461,22 @@
         }
       }
     },
-    "enterpriseFeatures": {
-      "type": "object",
-      "description": "Grafana Enterprise specific features.",
-      "additionalProperties": true,
-      "properties": {
-        "healthDiagnosticsErrors": {
-          "type": "boolean",
-          "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5.",
-          "default": false
-        }
-      }
+    "skipDataQuery": {
+      "type": "boolean",
+      "description": "For panel plugins. Hides the query editor."
+    },
+    "state": {
+      "type": "string",
+      "description": "Marks a plugin as a pre-release.",
+      "enum": ["alpha", "beta"]
+    },
+    "streaming": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming."
+    },
+    "tracing": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins."
     }
   }
 }

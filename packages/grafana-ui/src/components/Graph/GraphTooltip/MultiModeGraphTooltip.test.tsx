@@ -11,7 +11,7 @@ import { GraphDimensions } from './types';
 let dimensions: GraphDimensions;
 
 describe('MultiModeGraphTooltip', () => {
-  const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
+  const display: DisplayProcessor = (v) => ({ numeric: Number(v), text: String(v), color: 'red' });
   const theme = createTheme();
 
   describe('when shown when hovering over a datapoint', () => {

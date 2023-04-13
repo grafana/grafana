@@ -24,6 +24,17 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ## Configure the data source
 
+**To access the data source configuration page:**
+
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `MySQL` in the search bar.
+1. Select **MySQL**.
+
+   The **Settings** tab of the data source is displayed.
+
+1. Set the data source's basic configuration options.
+
 ### Data source options
 
 | Name               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -82,7 +93,9 @@ You can use wildcards (`*`) in place of database or table if you want to grant a
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-#### Provisioning example
+#### Provisioning examples
+
+##### Basic Provisioning
 
 ```yaml
 apiVersion: 1
@@ -99,6 +112,51 @@ datasources:
       connMaxLifetime: 14400 # Grafana v5.4+
     secureJsonData:
       password: ${GRAFANA_MYSQL_PASSWORD}
+```
+
+##### Using TLS Verificaiton
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: MySQL
+    type: mysql
+    url: localhost:3306
+    user: grafana
+    jsonData:
+      tlsAuth: true
+      database: grafana
+      maxOpenConns: 0 # Grafana v5.4+
+      maxIdleConns: 2 # Grafana v5.4+
+      connMaxLifetime: 14400 # Grafana v5.4+
+    secureJsonData:
+      password: ${GRAFANA_MYSQL_PASSWORD}
+      tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
+      tlsCACert: ${GRAFANA_TLS_CA_CERT}
+```
+
+##### Use TLS and Skip Certificate Verification
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: MySQL
+    type: mysql
+    url: localhost:3306
+    user: grafana
+    jsonData:
+      tlsAuth: true
+      skipTLSVerify: true
+      database: grafana
+      maxOpenConns: 0 # Grafana v5.4+
+      maxIdleConns: 2 # Grafana v5.4+
+      connMaxLifetime: 14400 # Grafana v5.4+
+    secureJsonData:
+      password: ${GRAFANA_MYSQL_PASSWORD}
+      tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
+      tlsCACert: ${GRAFANA_TLS_CA_CERT}
 ```
 
 ## Query builder

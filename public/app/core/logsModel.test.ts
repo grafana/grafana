@@ -13,6 +13,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsMetaKind,
+  LogsVolumeCustomMetaData,
   LogsVolumeType,
   MutableDataFrame,
   sortDataFrame,
@@ -29,8 +30,8 @@ import {
   getSeriesProperties,
   LIMIT_LABEL,
   logSeriesToLogsModel,
-  queryLogsVolume,
   queryLogsSample,
+  queryLogsVolume,
 } from './logsModel';
 
 const FROM = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
@@ -1123,8 +1124,9 @@ describe('logs volume', () => {
     datasource: MockObservableDataSourceApi,
     request: DataQueryRequest<TestDataQuery>;
 
-  function createFrame(labels: object, timestamps: number[], values: number[]) {
+  function createFrame(labels: object, timestamps: number[], values: number[], refId: string) {
     return toDataFrame({
+      refId,
       fields: [
         { name: 'Time', type: FieldType.time, values: timestamps },
         {
@@ -1137,20 +1139,13 @@ describe('logs volume', () => {
     });
   }
 
-  function createExpectedFields(levelName: string) {
-    return [
-      expect.objectContaining({ name: 'Time' }),
-      expect.objectContaining({
-        name: 'Value',
-        config: expect.objectContaining({ displayNameFromDS: levelName }),
-      }),
-    ];
-  }
-
   function setup(datasourceSetup: () => void) {
     datasourceSetup();
     request = {
-      targets: [{ target: 'volume query 1' }, { target: 'volume query 2' }],
+      targets: [
+        { refId: 'A', target: 'volume query 1' },
+        { refId: 'B', target: 'volume query 2' },
+      ],
       scopedVars: {},
     } as unknown as DataQueryRequest<TestDataQuery>;
     volumeProvider = queryLogsVolume(datasource, request, {
@@ -1168,19 +1163,21 @@ describe('logs volume', () => {
 
   function setupMultipleResults() {
     // level=unknown
-    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5]);
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
     // level=error
-    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0]);
+    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0], 'B');
     // level=unknown
-    const resultBFrame1 = createFrame({ app: 'app02' }, [100, 200, 300], [1, 2, 3]);
+    const resultBFrame1 = createFrame({ app: 'app02' }, [100, 200, 300], [1, 2, 3], 'A');
     // level=error
-    const resultBFrame2 = createFrame({ app: 'app02', level: 'error' }, [100, 200, 300], [1, 1, 1]);
+    const resultBFrame2 = createFrame({ app: 'app02', level: 'error' }, [100, 200, 300], [1, 1, 1], 'B');
 
     datasource = new MockObservableDataSourceApi('loki', [
       {
+        state: LoadingState.Loading,
         data: [resultAFrame1, resultAFrame2],
       },
       {
+        state: LoadingState.Done,
         data: [resultBFrame1, resultBFrame2],
       },
     ]);
@@ -1188,9 +1185,9 @@ describe('logs volume', () => {
 
   function setupMultipleResultsStreaming() {
     // level=unknown
-    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5]);
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
     // level=error
-    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0]);
+    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0], 'B');
 
     datasource = new MockObservableDataSourceApi('loki', [
       {
@@ -1198,7 +1195,7 @@ describe('logs volume', () => {
         data: [resultAFrame1],
       },
       {
-        state: LoadingState.Streaming,
+        state: LoadingState.Done,
         data: [resultAFrame1, resultAFrame2],
       },
     ]);
@@ -1211,6 +1208,16 @@ describe('logs volume', () => {
   it('applies correct meta data', async () => {
     setup(setupMultipleResults);
 
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
     await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
       expect(received).toContainEqual({
@@ -1220,21 +1227,7 @@ describe('logs volume', () => {
           expect.objectContaining({
             fields: expect.anything(),
             meta: {
-              custom: {
-                targets: [
-                  {
-                    target: 'volume query 1',
-                  },
-                  {
-                    target: 'volume query 2',
-                  },
-                ],
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: {
-                  from: FROM.valueOf(),
-                  to: TO.valueOf(),
-                },
-              },
+              custom: logVolumeCustomMeta,
             },
           }),
           expect.anything(),
@@ -1243,9 +1236,19 @@ describe('logs volume', () => {
     });
   });
 
-  it('applies correct meta datya when streaming', async () => {
+  it('applies correct meta data when streaming', async () => {
     setup(setupMultipleResultsStreaming);
 
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
     await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
       expect(received).toContainEqual({
@@ -1255,41 +1258,11 @@ describe('logs volume', () => {
           expect.objectContaining({
             fields: expect.anything(),
             meta: {
-              custom: {
-                targets: [
-                  {
-                    target: 'volume query 1',
-                  },
-                  {
-                    target: 'volume query 2',
-                  },
-                ],
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: {
-                  from: FROM.valueOf(),
-                  to: TO.valueOf(),
-                },
-              },
+              custom: logVolumeCustomMeta,
             },
           }),
           expect.anything(),
         ],
-      });
-    });
-  });
-
-  it('aggregates data frames by level', async () => {
-    setup(setupMultipleResults);
-
-    await expect(volumeProvider).toEmitValuesWith((received) => {
-      expect(received).toContainEqual({
-        state: LoadingState.Done,
-        error: undefined,
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            fields: expect.arrayContaining(createExpectedFields('error')),
-          }),
-        ]),
       });
     });
   });

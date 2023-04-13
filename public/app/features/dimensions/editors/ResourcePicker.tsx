@@ -40,7 +40,7 @@ export const ResourcePicker = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const pickerTriggerRef = createRef<any>();
+  const pickerTriggerRef = createRef<HTMLDivElement>();
   const popoverElement = (
     <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
   );

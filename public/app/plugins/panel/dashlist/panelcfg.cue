@@ -22,9 +22,9 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelLayout: "list" | "previews" @cuetsy(kind="enum")
 						PanelOptions: {
-							layout?:            PanelLayout | *"list"
+							keepTime:           bool | *false
+							includeVars:        bool | *false
 							showStarred:        bool | *true
 							showRecentlyViewed: bool | *false
 							showSearch:         bool | *false

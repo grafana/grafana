@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -112,6 +113,57 @@ func TestIntegrationPlugins(t *testing.T) {
 					}
 					t.FailNow()
 				}
+			})
+		}
+	})
+}
+
+func TestIntegrationPluginAssets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		desc            string
+		url             string
+		env             string
+		expStatus       int
+		expCacheControl string
+	}
+	t.Run("Assets", func(t *testing.T) {
+		testCases := []testCase{
+			{
+				desc:            "should return no-cache settings for Dev env",
+				env:             setting.Dev,
+				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
+				expStatus:       http.StatusOK,
+				expCacheControl: "max-age=0, must-revalidate, no-cache",
+			},
+			{
+				desc:            "should return cache settings for Prod env",
+				env:             setting.Prod,
+				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
+				expStatus:       http.StatusOK,
+				expCacheControl: "public, max-age=3600",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+					AppModeProduction: tc.env == setting.Prod,
+				})
+
+				grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, cfgPath)
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				// nolint:gosec
+				resp, err := http.Get(url)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				require.Equal(t, tc.expCacheControl, resp.Header.Get("Cache-Control"))
 			})
 		}
 	})

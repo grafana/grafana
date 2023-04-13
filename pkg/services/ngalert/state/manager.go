@@ -103,12 +103,13 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := rulesReader.ListAlertRules(ctx, &ruleCmd); err != nil {
+		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
+		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
-		ruleByUID := make(map[string]*ngModels.AlertRule, len(ruleCmd.Result))
-		for _, rule := range ruleCmd.Result {
+		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
+		for _, rule := range alertRules {
 			ruleByUID[rule.UID] = rule
 		}
 
@@ -119,11 +120,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
-		if err := st.instanceStore.ListAlertInstances(ctx, &cmd); err != nil {
+		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
-		for _, entry := range cmd.Result {
+		for _, entry := range alertInstances {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
 				// TODO Should we delete the orphaned state from the db?
@@ -222,7 +224,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 	}
 
 	ruleMeta := history_model.NewRuleMeta(rule, st.log)
-	errCh := st.historian.RecordStatesAsync(ctx, ruleMeta, transitions)
+	errCh := st.historian.Record(ctx, ruleMeta, transitions)
 	go func() {
 		err := <-errCh
 		if err != nil {
@@ -250,14 +252,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
-	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
+	currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
@@ -349,8 +351,6 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	}
 
 	logger.Debug("Saving alert states", "count", len(states))
-	instances := make([]ngModels.AlertInstance, 0, len(states))
-
 	for _, s := range states {
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
 		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
@@ -362,7 +362,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
-		fields := ngModels.AlertInstance{
+		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
@@ -371,23 +371,11 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
-		instances = append(instances, fields)
-	}
 
-	if len(instances) == 0 {
-		return
-	}
-
-	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
-		type debugInfo struct {
-			State  string
-			Labels string
+		err = st.instanceStore.SaveAlertInstance(ctx, instance)
+		if err != nil {
+			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
 		}
-		debug := make([]debugInfo, 0)
-		for _, inst := range instances {
-			debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
-		}
-		logger.Error("Failed to save alert states", "states", debug, "error", err)
 	}
 }
 

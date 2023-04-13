@@ -8,16 +8,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 )
 
 func BenchmarkProcessEvalResults(b *testing.B) {
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
-	hist := historian.NewAnnotationBackend(&as, nil, nil)
+	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	hist := historian.NewAnnotationBackend(&as, nil, nil, metrics)
 	cfg := state.ManagerCfg{
 		Historian: hist,
 	}

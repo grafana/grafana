@@ -18,7 +18,7 @@ const legacyRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
     component: () =>
-      config.featureToggles.topnav ? <NavLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
+      config.featureToggles.topnav ? <NavLandingPage navId="alerting-legacy" /> : <Redirect to="/alerting/list" />,
   },
   {
     path: '/alerting/list',

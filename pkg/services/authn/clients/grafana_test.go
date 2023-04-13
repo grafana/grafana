@@ -142,7 +142,12 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			password:             "password",
 			findUser:             true,
 			expectedSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: "Viewer"},
-			expectedIdentity:     &authn.Identity{ID: "user:1", OrgID: 1, OrgRoles: map[int64]org.RoleType{1: "Viewer"}, IsGrafanaAdmin: boolPtr(false)},
+			expectedIdentity: &authn.Identity{
+				ID:             "user:1",
+				OrgID:          1,
+				OrgRoles:       map[int64]org.RoleType{1: "Viewer"},
+				IsGrafanaAdmin: boolPtr(false),
+				ClientParams:   authn.ClientParams{SyncPermissions: true}},
 		},
 		{
 			desc:        "should fail for incorrect password",

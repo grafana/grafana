@@ -22,16 +22,16 @@ The most basic example for a dashboard for which there is no authentication. You
 curl http://localhost:3000/api/search
 ```
 
-Here's a cURL command that works for getting the home dashboard when you are running Grafana locally with [basic authentication]({{< relref "../../setup-grafana/configure-security/configure-authentication/#basic-auth" >}}) enabled using the default admin credentials:
+Here's a cURL command that works for getting the home dashboard when you are running Grafana locally with [basic authentication]({{< relref "/docs/grafana/latest/setup-grafana/configure-security/configure-authentication#basic-auth" >}}) enabled using the default admin credentials:
 
 ```
 curl http://admin:admin@localhost:3000/api/search
 ```
 
-To pass a username and password with [HTTP basic authorization]({{< relref "../../administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}), encode them as base64.
+To pass a username and password with [HTTP basic authorization]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/manage-rbac-roles" >}}), encode them as base64.
 You can't use authorization tokens in the request.
 
-For example, to [list permissions associated with roles]({{< relref "../../administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}) given a username of `user` and password of `password`, use:
+For example, to [list permissions associated with roles]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/manage-rbac-roles" >}}) given a username of `user` and password of `password`, use:
 
 ```
 curl --location '<grafana_url>/api/access-control/builtin-roles' --user 'user:password'

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -37,10 +37,10 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "9.5.0-pre",
-    "@grafana/e2e-selectors": "9.5.0-pre",
-    "@grafana/faro-web-sdk": "1.0.0-beta2",
-    "@grafana/ui": "9.5.0-pre",
+    "@grafana/data": "10.0.0-pre",
+    "@grafana/e2e-selectors": "10.0.0-pre",
+    "@grafana/faro-web-sdk": "1.0.2",
+    "@grafana/ui": "10.0.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
@@ -52,22 +52,21 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-node-resolve": "15.0.1",
-    "@testing-library/dom": "8.20.0",
-    "@testing-library/react": "12.1.4",
-    "@testing-library/react-hooks": "8.0.1",
+    "@testing-library/dom": "9.0.1",
+    "@testing-library/react": "14.0.0",
     "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
     "@types/jest": "29.2.3",
-    "@types/lodash": "4.14.187",
-    "@types/react": "17.0.42",
-    "@types/react-dom": "17.0.14",
+    "@types/lodash": "4.14.191",
+    "@types/react": "18.0.28",
+    "@types/react-dom": "18.0.11",
     "@types/systemjs": "^0.20.6",
     "esbuild": "0.16.17",
     "lodash": "4.17.21",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
-    "rimraf": "4.2.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "rimraf": "4.4.0",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
@@ -77,7 +76,7 @@
     "typescript": "4.8.4"
   },
   "peerDependencies": {
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0"
   }
 }

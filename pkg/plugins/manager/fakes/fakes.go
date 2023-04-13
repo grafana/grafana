@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -36,13 +37,13 @@ func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error
 }
 
 type FakeLoader struct {
-	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
+	LoadFunc   func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error)
 	UnloadFunc func(_ context.Context, _ string) error
 }
 
-func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
+func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	if l.LoadFunc != nil {
-		return l.LoadFunc(ctx, class, paths)
+		return l.LoadFunc(ctx, src)
 	}
 	return nil, nil
 }
@@ -298,29 +299,35 @@ func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
 }
 
 type FakeBackendProcessProvider struct {
-	Requested map[string]int
-	Invoked   map[string]int
+	Requested          map[string]int
+	Invoked            map[string]int
+	BackendFactoryFunc func(context.Context, *plugins.Plugin) backendplugin.PluginFactoryFunc
 }
 
 func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
-	return &FakeBackendProcessProvider{
+	f := &FakeBackendProcessProvider{
 		Requested: make(map[string]int),
 		Invoked:   make(map[string]int),
 	}
+	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+		f.Requested[p.ID]++
+		return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+			f.Invoked[pluginID]++
+			return &FakePluginClient{}, nil
+		}
+	}
+	return f
 }
 
-func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	pr.Requested[p.ID]++
-	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
-		pr.Invoked[pluginID]++
-		return &FakePluginClient{}, nil
-	}
+func (pr *FakeBackendProcessProvider) BackendFactory(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	return pr.BackendFactoryFunc(ctx, p)
 }
 
 type FakeLicensingService struct {
 	LicenseEdition string
 	TokenRaw       string
 	LicensePath    string
+	LicenseAppURL  string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -333,6 +340,10 @@ func (s *FakeLicensingService) Edition() string {
 
 func (s *FakeLicensingService) Path() string {
 	return s.LicensePath
+}
+
+func (s *FakeLicensingService) AppURL() string {
+	return s.LicenseAppURL
 }
 
 func (s *FakeLicensingService) Environment() []string {
@@ -351,13 +362,78 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 	return f.ExpectedErr
 }
 
-type FakeSources struct {
+type FakePluginFiles struct {
+	OpenFunc func(name string) (fs.File, error)
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	if f.OpenFunc != nil {
+		return f.OpenFunc(name)
+	}
+	return nil, nil
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Files() []string {
+	return []string{}
+}
+
+type FakeSourceRegistry struct {
 	ListFunc func(_ context.Context) []plugins.PluginSource
 }
 
-func (s *FakeSources) List(ctx context.Context) []plugins.PluginSource {
+func (s *FakeSourceRegistry) List(ctx context.Context) []plugins.PluginSource {
 	if s.ListFunc != nil {
 		return s.ListFunc(ctx)
 	}
 	return []plugins.PluginSource{}
+}
+
+type FakePluginSource struct {
+	PluginClassFunc      func(ctx context.Context) plugins.Class
+	PluginURIsFunc       func(ctx context.Context) []string
+	DefaultSignatureFunc func(ctx context.Context) (plugins.Signature, bool)
+}
+
+func (s *FakePluginSource) PluginClass(ctx context.Context) plugins.Class {
+	if s.PluginClassFunc != nil {
+		return s.PluginClassFunc(ctx)
+	}
+	return ""
+}
+
+func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
+	if s.PluginURIsFunc != nil {
+		return s.PluginURIsFunc(ctx)
+	}
+	return []string{}
+}
+
+func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
+	if s.DefaultSignatureFunc != nil {
+		return s.DefaultSignatureFunc(ctx)
+	}
+	return plugins.Signature{}, false
+}
+
+type FakePluginFileStore struct {
+	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+}
+
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+	if f.FileFunc != nil {
+		return f.FileFunc(ctx, pluginID, filename)
+	}
+	return nil, nil
 }

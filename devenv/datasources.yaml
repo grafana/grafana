@@ -124,6 +124,7 @@ datasources:
 
   - name: gdev-elasticsearch
     type: elasticsearch
+    uid: gdev-elasticsearch
     access: proxy
     database: "[logs-]YYYY.MM.DD"
     url: http://localhost:9200
@@ -132,7 +133,6 @@ datasources:
       timeField: "@timestamp"
       logLevelField: level
       logMessageField: line
-      esVersion: 8.1.4
 
   - name: gdev-elasticsearch-filebeat
     type: elasticsearch
@@ -142,7 +142,6 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 8.1.4
       timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
@@ -155,7 +154,6 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 8.1.4
       timeInterval: "10s"
 
   - name: gdev-mysql

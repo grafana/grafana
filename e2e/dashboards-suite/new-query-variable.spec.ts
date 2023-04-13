@@ -8,6 +8,7 @@ describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -78,6 +79,7 @@ describe('Variables - Query - Add variable', () => {
   it('adding a single value query variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -108,7 +110,7 @@ describe('Variables - Query - Add variable', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }
@@ -123,7 +125,7 @@ describe('Variables - Query - Add variable', () => {
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
-            e2e().get('.variable-option').should('have.length', 1);
+            e2e.components.Variables.variableOption().should('have.length', 1);
           });
 
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
@@ -133,6 +135,7 @@ describe('Variables - Query - Add variable', () => {
   it('adding a multi value query variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -180,7 +183,7 @@ describe('Variables - Query - Add variable', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }
@@ -195,7 +198,7 @@ describe('Variables - Query - Add variable', () => {
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
-            e2e().get('.variable-option').should('have.length', 2);
+            e2e.components.Variables.variableOption().should('have.length', 2);
           });
 
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');

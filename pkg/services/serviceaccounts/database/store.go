@@ -160,7 +160,7 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 		return err
 	}
 	if !has {
-		return serviceaccounts.ErrServiceAccountNotFound
+		return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %d not found", serviceAccountId)
 	}
 	for _, sql := range ServiceAccountDeletions(s.sqlStore.GetDialect()) {
 		_, err := sess.Exec(sql, user.ID)
@@ -211,7 +211,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
 		} else if !ok {
-			return serviceaccounts.ErrServiceAccountNotFound
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %d not found", serviceAccountId)
 		}
 
 		return nil
@@ -248,7 +248,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
 		} else if !ok {
-			return serviceaccounts.ErrServiceAccountNotFound
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with name %s not found", name)
 		}
 
 		return nil

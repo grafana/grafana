@@ -29,7 +29,7 @@ interface ExemplarMarkerProps {
   setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
+export const ExemplarMarker = ({
   timeZone,
   dataFrame,
   dataFrameFieldIndex,
@@ -38,7 +38,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   exemplarColor,
   clickedExemplarFieldIndex,
   setClickedExemplarFieldIndex,
-}) => {
+}: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);

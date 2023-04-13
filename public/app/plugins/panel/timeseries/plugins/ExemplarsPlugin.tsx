@@ -23,13 +23,13 @@ interface ExemplarsPluginProps {
   visibleSeries?: VisibleExemplarLabels;
 }
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
+export const ExemplarsPlugin = ({
   exemplars,
   timeZone,
   getFieldLinks,
   config,
   visibleSeries,
-}) => {
+}: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot>();
 
   const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();

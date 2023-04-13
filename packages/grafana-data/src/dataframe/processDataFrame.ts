@@ -20,6 +20,8 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
   DataQueryResponseData,
+  PanelData,
+  LoadingState,
 } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
 import { SortedVector } from '../vector/SortedVector';
@@ -536,4 +538,38 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   }
 
   return results.map((data) => getProcessedDataFrame(data));
+}
+
+/**
+ * Will process the panel data frames and in case of loading state with no data, will return the last result data but with loading state
+ * This is to have panels not flicker temporarily with "no data" while loading
+ */
+export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
+  const { series, annotations } = data;
+
+  //  for loading states with no data, use last result
+  if (data.state === LoadingState.Loading && series.length === 0) {
+    if (!lastResult) {
+      lastResult = data;
+    }
+
+    return {
+      ...lastResult,
+      state: LoadingState.Loading,
+      request: data.request,
+    };
+  }
+
+  // Make sure the data frames are properly formatted
+  const STARTTIME = performance.now();
+  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
+  const annotationsProcessed = getProcessedDataFrames(annotations);
+  const STOPTIME = performance.now();
+
+  return {
+    ...data,
+    series: processedDataFrames,
+    annotations: annotationsProcessed,
+    timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
 }

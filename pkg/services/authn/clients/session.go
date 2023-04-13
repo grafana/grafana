@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -17,19 +18,19 @@ import (
 var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(sessionService auth.UserTokenService, userService user.Service, cfg *setting.Cfg) *Session {
+func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService, features *featuremgmt.FeatureManager) *Session {
 	return &Session{
 		cfg:            cfg,
+		features:       features,
 		sessionService: sessionService,
-		userService:    userService,
 		log:            log.New(authn.ClientSession),
 	}
 }
 
 type Session struct {
 	cfg            *setting.Cfg
+	features       *featuremgmt.FeatureManager
 	sessionService auth.UserTokenService
-	userService    user.Service
 	log            log.Logger
 }
 
@@ -50,22 +51,23 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 
 	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("Failed to look up session from cookie", "error", err)
 		return nil, err
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(
-		ctx, &user.GetSignedInUserQuery{UserID: token.UserId, OrgID: r.OrgID},
-	)
-	if err != nil {
-		s.log.FromContext(ctx).Error("Failed to get user with id", "userId", token.UserId, "error", err)
-		return nil, err
+	if s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
+		}
 	}
 
-	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{})
-	identity.SessionToken = token
-
-	return identity, nil
+	return &authn.Identity{
+		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
+		SessionToken: token,
+		ClientParams: authn.ClientParams{
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+		},
+	}, nil
 }
 
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
@@ -85,7 +87,7 @@ func (s *Session) Priority() uint {
 }
 
 func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.SessionToken == nil {
+	if identity.SessionToken == nil || s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
 		return nil
 	}
 
@@ -114,7 +116,7 @@ func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.R
 			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
-			authn.WriteSessionCookie(w, s.cfg, identity)
+			authn.WriteSessionCookie(w, s.cfg, identity.SessionToken)
 		}
 	})
 

@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { extensionLinkConfigIsValid, PluginExtensionLink } from './pluginExtensions';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes } from './pluginExtensions';
 
 /**
  * @public
@@ -50,24 +50,8 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
   // TODO anything specific to apps?
 }
 
-/**
- * These types are towards the plugin developer when extending Grafana or other
- * plugins from the module.ts
- */
-export type AppConfigureExtension<T, C = object> = (extension: T, context: C) => Partial<T> | undefined;
-
-export type AppPluginExtensionLink = Pick<PluginExtensionLink, 'description' | 'path' | 'title'>;
-
-export type AppPluginExtensionLinkConfig<C extends object = object> = {
-  title: string;
-  description: string;
-  placement: string;
-  path: string;
-  configure?: AppConfigureExtension<AppPluginExtensionLink, C>;
-};
-
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  private linkExtensions: AppPluginExtensionLinkConfig[] = [];
+  private _extensionConfigs: PluginExtensionLinkConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -109,19 +93,16 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
   }
 
-  get extensionLinks(): AppPluginExtensionLinkConfig[] {
-    return this.linkExtensions;
+  get extensionConfigs() {
+    return this._extensionConfigs;
   }
 
-  configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
-    const { path, description, title, placement } = config;
+  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
+    this._extensionConfigs.push({
+      ...extension,
+      type: PluginExtensionTypes.link,
+    } as PluginExtensionLinkConfig);
 
-    if (!extensionLinkConfigIsValid({ path, description, title, placement })) {
-      console.warn('[Plugins] Disabled extension because configureExtensionLink was called with an invalid object.');
-      return this;
-    }
-
-    this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
     return this;
   }
 }

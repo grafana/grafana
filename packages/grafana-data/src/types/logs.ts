@@ -87,6 +87,7 @@ export interface LogsModel {
   // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
+  bucketSize?: number;
 }
 
 export interface LogSearchMatch {
@@ -193,6 +194,16 @@ export enum LogsVolumeType {
   FullRange = 'FullRange',
   Limited = 'Limited',
 }
+
+/**
+ * Custom meta information required by Logs Volume responses
+ */
+export type LogsVolumeCustomMetaData = {
+  absoluteRange: AbsoluteTimeRange;
+  logsVolumeType: LogsVolumeType;
+  datasourceName: string;
+  sourceQuery: DataQuery;
+};
 
 /**
  * Data sources that support supplementary queries in Explore.
