@@ -1750,6 +1750,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: release-canary-npm-packages
   when:
+    paths:
+      include:
+      - packages/**
     repo:
     - grafana/grafana
 - commands:
@@ -6820,6 +6823,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: bdee87f1e554cbb803387a7669701d6c69fb16fc6ca56e33de0b221fb14adc3c
+hmac: 7f282aaf4f3ba496f2d954241a16afd2facbf2cf1ef04dfb75cfec1b42fd39d1
 
 ...

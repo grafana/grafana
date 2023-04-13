@@ -13,9 +13,6 @@ if [ -z "$NPM_TOKEN" ]; then
   exit 1
 fi
 
-# check if there were any changes to packages between current and previous commit
-count=$(git diff HEAD~1..HEAD --name-only -- packages | awk '{c++} END {print c}')
-
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -37,17 +34,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -z "$count" ]; then
-  echo "No changes in packages, skipping packages publishing"
-else
-  echo "Changes detected in ${count} packages"
-  echo "Starting to release $dist_tag version"
+echo "Changes detected in ${count} packages"
+echo "Starting to release $dist_tag version"
 
-  echo "$registry/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+echo "$registry/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
 
-  # Loop over .tar files in directory and publish them to npm registry
-  for file in ./npm-artifacts/*.tgz; do
-      npm publish "$file" --tag "$dist_tag" --registry "$registry"
-  done
-
-fi
+# Loop over .tar files in directory and publish them to npm registry
+for file in ./npm-artifacts/*.tgz; do
+    npm publish "$file" --tag "$dist_tag" --registry "$registry"
+done
