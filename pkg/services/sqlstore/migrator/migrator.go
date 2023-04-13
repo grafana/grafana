@@ -145,6 +145,7 @@ func (mg *Migrator) run() (err error) {
 		return err
 	}
 
+	version := sql.NullString{String: mg.version}
 	migrationsPerformed := 0
 	migrationsSkipped := 0
 	start := time.Now()
@@ -157,19 +158,19 @@ func (mg *Migrator) run() (err error) {
 			continue
 		}
 
-		sqlcmd := m.SQL(mg.Dialect)
+		sql := m.SQL(mg.Dialect)
 
 		record := MigrationLog{
 			MigrationID: m.Id(),
-			SQL:         sqlcmd,
+			SQL:         sql,
 			Timestamp:   time.Now(),
-			Version:     sql.NullString{String: mg.version},
+			Version:     version,
 		}
 
 		err := mg.InTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
 			if err != nil {
-				mg.Logger.Error("Exec failed", "error", err, "sql", sqlcmd)
+				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
 				if !m.SkipMigrationLog() {
 					if _, err := sess.Insert(&record); err != nil {
