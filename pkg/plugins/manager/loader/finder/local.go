@@ -85,11 +85,13 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		if err != nil {
 			return nil, err
 		}
-
+		var opts []plugins.LocalFSOption
+		// TODO: only if dev mode...
+		opts = append(opts, plugins.LocalFSOptionAllowAll)
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
 				JSONData: data,
-				FS:       plugins.NewLocalFS(files, pluginDir),
+				FS:       plugins.NewLocalFS(files, pluginDir, opts...),
 			},
 		}
 	}

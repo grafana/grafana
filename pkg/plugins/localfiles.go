@@ -10,32 +10,49 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ fs.FS = (*LocalFS)(nil)
+var _ FS = (*LocalFS)(nil)
 
 // LocalFS is a plugins.FS that allows accessing files on the local file system.
 type LocalFS struct {
-	// m is a map of relative file paths that can be accessed on the local filesystem.
+	// allowList is a map of relative file paths that can be accessed on the local filesystem.
 	// The path separator must be os-specific.
-	m map[string]*LocalFile
+	allowList map[string]struct{}
 
-	// basePath is the basePath that will be prepended to all the files (in m map) before accessing them.
+	// basePath is the basePath that will be prepended to all the files (in allowList map) before accessing them.
 	basePath string
+
+	// allowAll is a flag that allows to bypass the allow-list checks when calling Open().
+	// If true, Open() will also allow accessing files that aren't in allowList (as long as it exists on the filesystem).
+	// If false, Open() will return ErrFileNotExist if the specified file is not explicitly allowed,
+	// even if the file exists on the underlying file system.
+	allowAll bool
+}
+
+// LocalFSOption mutates a LocalFS allowing to specify some options.
+type LocalFSOption func(*LocalFS)
+
+// LocalFSOptionAllowAll sets allowAll to true, disabling the allow-list on the LocalFS.
+func LocalFSOptionAllowAll(f *LocalFS) {
+	f.allowAll = true
 }
 
 // NewLocalFS returns a new LocalFS that can access the specified files in the specified base path.
 // Both the map keys and basePath should use the os-specific path separator for Open() to work properly.
-func NewLocalFS(m map[string]struct{}, basePath string) LocalFS {
-	pfs := make(map[string]*LocalFile, len(m))
-	for k := range m {
-		pfs[k] = &LocalFile{
-			path: k,
-		}
+func NewLocalFS(allowList map[string]struct{}, basePath string, opts ...LocalFSOption) LocalFS {
+	// Copy the allowList to make it read-only.
+	pfs := make(map[string]struct{}, len(allowList))
+	for k := range allowList {
+		pfs[k] = struct{}{}
 	}
-
-	return LocalFS{
-		m:        pfs,
-		basePath: basePath,
+	r := LocalFS{
+		allowList: pfs,
+		basePath:  basePath,
 	}
+	// Apply additional options.
+	for _, opt := range opts {
+		opt(&r)
+	}
+	return r
 }
 
 // Open opens the specified file on the local filesystem, and returns the corresponding fs.File.
@@ -45,21 +62,18 @@ func (f LocalFS) Open(name string) (fs.File, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	if kv, exists := f.m[filepath.Join(f.basePath, cleanPath)]; exists {
-		if kv.f != nil {
-			return kv.f, nil
+	fn := filepath.Join(f.basePath, cleanPath)
+	if _, exists := f.allowList[fn]; !exists {
+		if !f.allowAll {
+			return nil, ErrFileNotExist
 		}
-		file, err := os.Open(kv.path)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil, ErrFileNotExist
-			}
-			return nil, ErrPluginFileRead
+		// TODO: path traversal check
+		// Bypass allow-list
+		if _, err := os.Stat(fn); err != nil {
+			return nil, ErrFileNotExist
 		}
-		return file, nil
 	}
-	return nil, ErrFileNotExist
+	return &LocalFile{path: fn}, nil
 }
 
 // Base returns the base path for the LocalFS.
@@ -71,7 +85,7 @@ func (f LocalFS) Base() string {
 // The returned strings use the same path separator as the
 func (f LocalFS) Files() []string {
 	var files []string
-	for p := range f.m {
+	for p := range f.allowList {
 		r, err := filepath.Rel(f.basePath, p)
 		if strings.Contains(r, "..") || err != nil {
 			continue
