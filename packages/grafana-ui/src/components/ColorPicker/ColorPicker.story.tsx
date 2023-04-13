@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { Meta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2 } from '@grafana/ui';
@@ -33,7 +33,7 @@ const meta: Meta<typeof ColorPicker> = {
   },
 };
 
-export const Basic: ComponentStory<typeof ColorPicker> = ({ color, enableNamedColors }) => {
+export const Basic: StoryFn<typeof ColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
   return renderComponentWithTheme(ColorPicker, {
     enableNamedColors,
@@ -45,7 +45,7 @@ export const Basic: ComponentStory<typeof ColorPicker> = ({ color, enableNamedCo
   });
 };
 
-export const SeriesPicker: ComponentStory<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
+export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
   const clearButton = useStyles2(clearButtonStyles);
   return (
@@ -75,7 +75,7 @@ export const SeriesPicker: ComponentStory<typeof SeriesColorPicker> = ({ color, 
   );
 };
 
-export const Input: ComponentStory<typeof ColorPickerInput> = ({ color }) => {
+export const Input: StoryFn<typeof ColorPickerInput> = ({ color }) => {
   const [, updateArgs] = useArgs();
   return (
     <ColorPickerInput

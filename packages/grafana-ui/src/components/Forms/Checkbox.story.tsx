@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { VerticalGroup } from '../Layout/Layout';
@@ -7,7 +7,7 @@ import { Checkbox } from './Checkbox';
 import mdx from './Checkbox.mdx';
 import { Field } from './Field';
 
-const meta: ComponentMeta<typeof Checkbox> = {
+const meta: Meta<typeof Checkbox> = {
   title: 'Forms/Checkbox',
   component: Checkbox,
   parameters: {
@@ -20,7 +20,7 @@ const meta: ComponentMeta<typeof Checkbox> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Checkbox> = (args) => {
+export const Basic: StoryFn<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
@@ -64,7 +64,7 @@ export const StackedList = () => {
   );
 };
 
-export const InAField: ComponentStory<typeof Checkbox> = (args) => {
+export const InAField: StoryFn<typeof Checkbox> = (args) => {
   return (
     <div>
       <Field {...args}>

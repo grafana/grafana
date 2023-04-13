@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { Badge } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Badge.mdx';
 
-const meta: ComponentMeta<typeof Badge> = {
+const meta: Meta<typeof Badge> = {
   title: 'Data Display/Badge',
   component: Badge,
   decorators: [withCenteredStory],

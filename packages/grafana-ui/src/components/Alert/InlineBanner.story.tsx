@@ -1,12 +1,13 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentStory, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from '../Alert/Alert.mdx';
+
+import mdx from './Alert.mdx';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
@@ -27,7 +28,7 @@ const meta: Meta = {
   },
 };
 
-export const Basic: ComponentStory<typeof Alert> = (args) => {
+export const Basic: StoryFn<typeof Alert> = (args) => {
   return (
     <div>
       <Alert {...args}>
@@ -44,7 +45,7 @@ Basic.args = {
   title: 'Basic',
 };
 
-export const WithActions: ComponentStory<typeof Alert> = (args) => {
+export const WithActions: StoryFn<typeof Alert> = (args) => {
   return (
     <Alert {...args}>
       <VerticalGroup>
