@@ -32,7 +32,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { availableCompartmentDependenciesMap, importPluginInsideSandbox } from './sandbox/plugin_loader';
+import { availableCompartmentDependenciesMap, importPluginInsideSandbox } from './sandbox/sandbox_plugin_loader';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';

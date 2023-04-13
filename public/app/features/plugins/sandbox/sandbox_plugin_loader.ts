@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference types="ses" />
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 
 import { GrafanaPlugin } from '@grafana/data';

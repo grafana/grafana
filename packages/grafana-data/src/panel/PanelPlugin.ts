@@ -1,5 +1,5 @@
 import { set } from 'lodash';
-import React, { ComponentClass, ComponentType } from 'react';
+import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import {
