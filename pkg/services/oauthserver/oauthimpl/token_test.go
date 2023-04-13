@@ -89,6 +89,25 @@ func setupTestEnv(t *testing.T) *TestEnv {
 }
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
+	client1 := &oauthserver.Client{
+		ExternalServiceName: "testapp",
+		ClientID:            "RANDOMID",
+		GrantTypes:          string(fosite.GrantTypeClientCredentials),
+		ServiceAccountID:    2,
+		SignedInUser: &user.SignedInUser{
+			UserID:  2,
+			Name:    "Test App",
+			Login:   "testapp",
+			OrgRole: roletype.RoleViewer,
+			Permissions: map[int64]map[string][]string{
+				oauthserver.TmpOrgID: {
+					"dashboards:read":  {"dashboards:*", "folders:*"},
+					"dashboards:write": {"dashboards:uid:1"},
+				},
+			},
+		},
+	}
+
 	tests := []struct {
 		name           string
 		scopes         []string
@@ -108,88 +127,32 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "no claims without scopes",
-			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
-				SignedInUser:        &user.SignedInUser{},
-			},
+			name:    "no claims without scopes",
+			client:  client1,
 			wantErr: false,
 		},
 		{
-			name: "profile claims",
-			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
-				SignedInUser: &user.SignedInUser{
-					UserID:  2,
-					Name:    "Test App",
-					Login:   "testapp",
-					OrgRole: roletype.RoleViewer,
-				},
-			},
+			name:           "profile claims",
+			client:         client1,
 			scopes:         []string{"profile"},
 			expectedClaims: map[string]interface{}{"name": "Test App", "login": "testapp"},
 			wantErr:        false,
 		},
 		{
-			name: "email claims should be empty",
-			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
-				SignedInUser: &user.SignedInUser{
-					UserID:  2,
-					Name:    "Test App",
-					Login:   "testapp",
-					OrgRole: roletype.RoleViewer,
-				},
-			},
+			name:    "email claims should be empty",
+			client:  client1,
 			scopes:  []string{"email"},
 			wantErr: false,
 		},
 		{
-			name: "groups claims should be empty",
-			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
-				SignedInUser: &user.SignedInUser{
-					UserID:  2,
-					Name:    "Test App",
-					Login:   "testapp",
-					OrgRole: roletype.RoleViewer,
-				},
-			},
+			name:    "groups claims should be empty",
+			client:  client1,
 			scopes:  []string{"groups"},
 			wantErr: false,
 		},
 		{
-			name: "entitlements claims",
-			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
-				SignedInUser: &user.SignedInUser{
-					UserID:  2,
-					Name:    "Test App",
-					Login:   "testapp",
-					OrgRole: roletype.RoleViewer,
-					Permissions: map[int64]map[string][]string{
-						oauthserver.TmpOrgID: {
-							"dashboards:read":  {"dashboards:*", "folders:*"},
-							"dashboards:write": {"dashboards:uid:1"},
-						},
-					},
-				},
-			},
+			name:   "entitlements claims",
+			client: client1,
 			scopes: []string{"entitlements"},
 			expectedClaims: map[string]interface{}{"entitlements": map[string][]string{
 				"dashboards:read":  {"dashboards:*", "folders:*"},
@@ -198,25 +161,8 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "scoped entitlements claims",
-			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
-				SignedInUser: &user.SignedInUser{
-					UserID:  2,
-					Name:    "Test App",
-					Login:   "testapp",
-					OrgRole: roletype.RoleViewer,
-					Permissions: map[int64]map[string][]string{
-						oauthserver.TmpOrgID: {
-							"dashboards:read":  {"dashboards:*", "folders:*"},
-							"dashboards:write": {"dashboards:uid:1"},
-						},
-					},
-				},
-			},
+			name:   "scoped entitlements claims",
+			client: client1,
 			scopes: []string{"entitlements", "dashboards:write"},
 			expectedClaims: map[string]interface{}{"entitlements": map[string][]string{
 				"dashboards:write": {"dashboards:uid:1"},
