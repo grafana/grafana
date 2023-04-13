@@ -9,6 +9,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   hasSupplementaryQuerySupport,
+  isTruthy,
   LoadingState,
   LogsVolumeCustomMetaData,
   LogsVolumeType,
@@ -149,11 +150,7 @@ export const getSupplementaryQueryProvider = (
     }
   });
 
-  const definedProviders: Array<Observable<DataQueryResponse>> = providers.filter(
-    (item: Observable<DataQueryResponse> | undefined): item is Observable<DataQueryResponse> => {
-      return !!item;
-    }
-  );
+  const definedProviders = providers.filter(isTruthy);
 
   if (definedProviders.length === 0) {
     return undefined;
