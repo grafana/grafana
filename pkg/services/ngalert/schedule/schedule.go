@@ -271,16 +271,18 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
-		if isReadyToRun {
-			var folderTitle string
-			if !sch.disableGrafanaFolder {
-				title, ok := folderTitles[item.NamespaceUID]
-				if ok {
-					folderTitle = title
-				} else {
-					missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
-				}
+
+		var folderTitle string
+		if !sch.disableGrafanaFolder {
+			title, ok := folderTitles[item.NamespaceUID]
+			if ok {
+				folderTitle = title
+			} else {
+				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
 			}
+		}
+
+		if isReadyToRun {
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,
