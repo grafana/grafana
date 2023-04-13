@@ -1,6 +1,7 @@
 package migrations
 
-// This migration was run behind the `dashboardPreviews` flag. The feature flag and the whole dashboard previews feature was removed in https://github.com/grafana/grafana/pull/66176
+// This migration was run behind the `dashboardPreviews` flag.
+// The feature flag and the whole dashboard previews feature was removed in https://github.com/grafana/grafana/pull/66176
 
 //func addDashboardThumbsMigrations(mg *migrator.Migrator) {
 //	dashThumbs := migrator.Table{
