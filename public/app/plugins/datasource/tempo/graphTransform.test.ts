@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
