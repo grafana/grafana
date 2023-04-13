@@ -167,7 +167,7 @@ describe('PrometheusDatasource', () => {
       ).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
-      await expect(directDs.getLabelNames()).rejects.toMatchObject({
+      await expect(directDs.getTagKeys()).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
       await expect(directDs.getTagValues()).rejects.toMatchObject({
