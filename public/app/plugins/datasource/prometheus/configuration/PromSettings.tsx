@@ -10,15 +10,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime/src';
-import {
-  EventsWithValidation,
-  InlineField,
-  InlineFormLabel,
-  Input,
-  regexValidation,
-  Select,
-  Switch,
-} from '@grafana/ui';
+import { EventsWithValidation, InlineField, Input, regexValidation, Select, Switch } from '@grafana/ui';
 
 import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
