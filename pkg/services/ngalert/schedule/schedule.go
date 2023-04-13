@@ -452,6 +452,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 	evalRunning := false
 	var currentRuleVersion int64 = 0
+	var currentFingerprint Fingerprint
 	defer sch.stopApplied(key)
 	for {
 		select {
@@ -466,9 +467,19 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				continue
 			}
 
+			f := ctx.Fingerprint()
+			if currentFingerprint == f {
+				logger.Info("Rule version has changed but fingerprint is still the same. Skip resetting the state", "version", currentRuleVersion, "newVersion", ctx.rule.Version, "fingerprint", f)
+				currentRuleVersion = ctx.rule.Version
+				continue
+			}
+
 			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.rule.Version, "isPaused", ctx.rule.IsPaused)
 			// clear the state. So the next evaluation will start from the scratch.
 			resetState(grafanaCtx, ctx.rule.IsPaused)
+
+			currentRuleVersion = ctx.rule.Version
+			currentFingerprint = f
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -491,15 +502,21 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					isPaused := ctx.rule.IsPaused
 					// fetch latest alert rule version
 					if currentRuleVersion != newVersion {
+						f := ctx.Fingerprint()
 						// Do not clean up state if the eval loop has just started.
 						// We need to reset state if the loop has started and the alert is already paused. It can happen,
 						// if we have an alert with state and we do file provision with stateful Grafana, that state
 						// lingers in DB and won't be cleaned up until next alert rule update.
 						if currentRuleVersion > 0 || isPaused {
-							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
-							resetState(grafanaCtx, isPaused)
+							if currentFingerprint == f {
+								logger.Debug("Got a new version of alert rule but fingerprint has not changed. Skip resetting the state", "version", currentRuleVersion, "newVersion", newVersion, "fingerprint", f)
+							} else {
+								logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion, "fingerprint", f)
+								resetState(grafanaCtx, isPaused)
+							}
 						}
 						currentRuleVersion = newVersion
+						currentFingerprint = f
 					}
 					if isPaused {
 						return nil
@@ -510,6 +527,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					span.SetAttributes("rule_uid", ctx.rule.UID, attribute.String("rule_uid", ctx.rule.UID))
 					span.SetAttributes("org_id", ctx.rule.OrgID, attribute.Int64("org_id", ctx.rule.OrgID))
 					span.SetAttributes("rule_version", ctx.rule.Version, attribute.Int64("rule_version", ctx.rule.Version))
+
+					fpStr := currentFingerprint.String()
+					span.SetAttributes("rule_fingerprint", fpStr, attribute.String("rule_fingerprint", fpStr))
 					utcTick := ctx.scheduledAt.UTC().Format(time.RFC3339Nano)
 					span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
 
