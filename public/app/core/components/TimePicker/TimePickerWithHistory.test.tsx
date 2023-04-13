@@ -43,7 +43,6 @@ describe('TimePickerWithHistory', () => {
 
   afterEach(() => {
     window.localStorage.clear();
-    //systemDateFormats.useBrowserLocale();
   });
 
   it('Should load with no history', async () => {
