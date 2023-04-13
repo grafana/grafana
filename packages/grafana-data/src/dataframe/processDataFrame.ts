@@ -24,7 +24,6 @@ import {
   LoadingState,
   GraphSeriesValue,
 } from '../types/index';
-import { SortedVector } from '../vector/SortedVector';
 import { vectorToArray } from '../vector/vectorToArray';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
@@ -436,7 +435,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     fields: data.fields.map((f) => {
       return {
         ...f,
-        values: new SortedVector(f.values, index),
+        values: f.values.map((v, i) => f.values[index[i]]),
       };
     }),
   };
