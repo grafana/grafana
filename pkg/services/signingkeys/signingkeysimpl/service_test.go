@@ -77,8 +77,8 @@ func getPrivateKey(t *testing.T) *rsa.PrivateKey {
 	return privateKey
 }
 
-func setupTestService(t *testing.T) *EmbeddedKeyService {
-	svc := &EmbeddedKeyService{
+func setupTestService(t *testing.T) *Service {
+	svc := &Service{
 		log:  log.NewNopLogger(),
 		keys: map[string]crypto.Signer{"default": getPrivateKey(t)},
 	}
@@ -86,7 +86,7 @@ func setupTestService(t *testing.T) *EmbeddedKeyService {
 }
 
 func TestEmbeddedKeyService_GetJWKS(t *testing.T) {
-	svc := &EmbeddedKeyService{
+	svc := &Service{
 		log: log.NewNopLogger(),
 		keys: map[string]crypto.Signer{
 			"default": getPrivateKey(t),

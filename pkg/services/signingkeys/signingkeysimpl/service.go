@@ -15,10 +15,10 @@ const (
 	serverPrivateKeyID = "default"
 )
 
-var _ signingkeys.Service = new(EmbeddedKeyService)
+var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedKeyService() *EmbeddedKeyService {
-	s := &EmbeddedKeyService{
+func ProvideEmbeddedSigningKeysService() *Service {
+	s := &Service{
 		log: log.New("auth.key_service"),
 	}
 
@@ -33,12 +33,12 @@ func ProvideEmbeddedKeyService() *EmbeddedKeyService {
 	return s
 }
 
-type EmbeddedKeyService struct {
+type Service struct {
 	log  log.Logger
 	keys map[string]crypto.Signer
 }
 
-func (s *EmbeddedKeyService) GetJWKS() jose.JSONWebKeySet {
+func (s *Service) GetJWKS() jose.JSONWebKeySet {
 	result := jose.JSONWebKeySet{}
 
 	for keyID := range s.keys {
@@ -50,7 +50,7 @@ func (s *EmbeddedKeyService) GetJWKS() jose.JSONWebKeySet {
 	return result
 }
 
-func (s *EmbeddedKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
+func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
 		s.log.Error("The specified key was not found", "keyID", keyID)
@@ -65,7 +65,7 @@ func (s *EmbeddedKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	return result, nil
 }
 
-func (s *EmbeddedKeyService) GetPublicKey(keyID string) (crypto.PublicKey, error) {
+func (s *Service) GetPublicKey(keyID string) (crypto.PublicKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
 		s.log.Error("The specified key was not found", "keyID", keyID)
@@ -75,7 +75,7 @@ func (s *EmbeddedKeyService) GetPublicKey(keyID string) (crypto.PublicKey, error
 	return privateKey.Public(), nil
 }
 
-func (s *EmbeddedKeyService) GetPrivateKey(keyID string) (crypto.PrivateKey, error) {
+func (s *Service) GetPrivateKey(keyID string) (crypto.PrivateKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
 		s.log.Error("The specified key was not found", "keyID", keyID)
@@ -85,6 +85,6 @@ func (s *EmbeddedKeyService) GetPrivateKey(keyID string) (crypto.PrivateKey, err
 	return privateKey, nil
 }
 
-func (s *EmbeddedKeyService) GetServerPrivateKey() (crypto.PrivateKey, error) {
+func (s *Service) GetServerPrivateKey() (crypto.PrivateKey, error) {
 	return s.GetPrivateKey(serverPrivateKeyID)
 }

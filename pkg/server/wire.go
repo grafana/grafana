@@ -40,9 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/auth/keyimpl"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -117,6 +115,8 @@ import (
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
@@ -365,8 +365,8 @@ var wireBasicSet = wire.NewSet(
 	supportbundlesimpl.ProvideService,
 	loggermw.Provide,
 	modules.WireSet,
-	keyimpl.ProvideEmbeddedKeyService,
-	wire.Bind(new(auth.KeyService), new(*keyimpl.EmbeddedKeyService)),
+	signingkeysimpl.ProvideEmbeddedSigningKeysService,
+	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 )
 
 var wireSet = wire.NewSet(
