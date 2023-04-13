@@ -4,7 +4,7 @@ import semver from 'semver/preload';
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings as DataSourceSettingsType,
-  isValidDuration,
+  // isValidDuration,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -14,7 +14,7 @@ import {
   EventsWithValidation,
   InlineField,
   InlineFormLabel,
-  LegacyForms,
+  Input,
   regexValidation,
   Select,
   Switch,
@@ -30,8 +30,6 @@ import { PrometheusCacheLevel, PromOptions } from '../types';
 import { docsTip, overhaulStyles } from './DataSourceHttpSettingsOverhaul';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
-
-const { Input, FormField } = LegacyForms;
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -167,48 +165,46 @@ export const PromSettings = (props: Props) => {
         {/* Scrape interval */}
         <div className="gf-form-inline">
           <div className="gf-form">
-            <FormField
+            <InlineField
               label="Scrape interval"
-              labelWidth={13}
-              inputEl={
-                <Input
-                  className="width-20"
-                  value={options.jsonData.timeInterval}
-                  spellCheck={false}
-                  placeholder="15s"
-                  onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
-                  validationEvents={promSettingsValidationEvents}
-                  disabled={options.readOnly}
-                />
-              }
+              labelWidth={26}
               tooltip={
                 <>
                   Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.{' '}
                   {docsTip()}
                 </>
               }
-            />
+            >
+              <Input
+                className="width-20"
+                value={options.jsonData.timeInterval}
+                spellCheck={false}
+                placeholder="15s"
+                onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
+                // validationEvents={promSettingsValidationEvents}
+                disabled={options.readOnly}
+              />
+            </InlineField>
           </div>
         </div>
         {/* Query Timeout */}
         <div className="gf-form-inline">
           <div className="gf-form">
-            <FormField
+            <InlineField
               label="Query timeout"
-              labelWidth={13}
-              inputEl={
-                <Input
-                  className="width-20"
-                  value={options.jsonData.queryTimeout}
-                  onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
-                  spellCheck={false}
-                  placeholder="60s"
-                  validationEvents={promSettingsValidationEvents}
-                  disabled={options.readOnly}
-                />
-              }
+              labelWidth={26}
               tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
-            />
+            >
+              <Input
+                className="width-20"
+                value={options.jsonData.queryTimeout}
+                onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
+                spellCheck={false}
+                placeholder="60s"
+                // validationEvents={promSettingsValidationEvents}
+                disabled={options.readOnly}
+              />
+            </InlineField>
           </div>
         </div>
       </div>
@@ -216,19 +212,9 @@ export const PromSettings = (props: Props) => {
       <h6 className="page-heading">UI</h6>
       <div className="gf-form-group">
         <div className="gf-form">
-          <FormField
+          <InlineField
             label="Default editor"
-            labelWidth={13}
-            inputEl={
-              <Select
-                aria-label={`Default Editor (Code or Builder)`}
-                options={editorOptions}
-                value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
-                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
-                width={40}
-                disabled={options.readOnly}
-              />
-            }
+            labelWidth={26}
             tooltip={
               <>
                 Set default editor option (builder/code) for all users of this datasource. If no option was selected,
@@ -236,7 +222,16 @@ export const PromSettings = (props: Props) => {
                 specified with this setting on the panel we always show the selected editor for that user. {docsTip()}
               </>
             }
-          />
+          >
+            <Select
+              aria-label={`Default Editor (Code or Builder)`}
+              options={editorOptions}
+              value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
+              onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
+              width={40}
+              disabled={options.readOnly}
+            />
+          </InlineField>
         </div>
         <div className="gf-form">
           <InlineField
@@ -276,132 +271,127 @@ export const PromSettings = (props: Props) => {
       <div className="gf-form-group">
         <div className="gf-form">
           <div className="gf-form">
-            <FormField
+            <InlineField
               label="Prometheus type"
-              labelWidth={13}
-              inputEl={
-                <Select
-                  aria-label="Prometheus type"
-                  options={prometheusFlavorSelectItems}
-                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
-                  onChange={onChangeHandler(
-                    'prometheusType',
-                    {
-                      ...options,
-                      jsonData: { ...options.jsonData, prometheusVersion: undefined },
-                    },
-                    (options) => {
-                      // Check buildinfo api and set default version if we can
-                      setPrometheusVersion(options, onOptionsChange, onUpdate);
-                      return onOptionsChange({
-                        ...options,
-                        jsonData: { ...options.jsonData, prometheusVersion: undefined },
-                      });
-                    }
-                  )}
-                  width={40}
-                  disabled={options.readOnly}
-                />
-              }
+              labelWidth={26}
               tooltip={
                 <>
                   Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
                   this field will save your current settings, and attempt to detect the version. {docsTip()}
                 </>
               }
-            />
+            >
+              <Select
+                aria-label="Prometheus type"
+                options={prometheusFlavorSelectItems}
+                value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
+                onChange={onChangeHandler(
+                  'prometheusType',
+                  {
+                    ...options,
+                    jsonData: { ...options.jsonData, prometheusVersion: undefined },
+                  },
+                  (options) => {
+                    // Check buildinfo api and set default version if we can
+                    setPrometheusVersion(options, onOptionsChange, onUpdate);
+                    return onOptionsChange({
+                      ...options,
+                      jsonData: { ...options.jsonData, prometheusVersion: undefined },
+                    });
+                  }
+                )}
+                width={40}
+                disabled={options.readOnly}
+              />
+            </InlineField>
           </div>
         </div>
         <div className="gf-form">
           {options.jsonData.prometheusType && (
             <div className="gf-form">
-              <FormField
+              <InlineField
                 label={`${options.jsonData.prometheusType} version`}
-                labelWidth={13}
-                inputEl={
-                  <Select
-                    aria-label={`${options.jsonData.prometheusType} type`}
-                    options={PromFlavorVersions[options.jsonData.prometheusType]}
-                    value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
-                      (o) => o.value === options.jsonData.prometheusVersion
-                    )}
-                    onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
-                    width={40}
-                    disabled={options.readOnly}
-                  />
-                }
+                labelWidth={26}
                 tooltip={
                   <>
                     Use this to set the version of your {options.jsonData.prometheusType} instance if it is not
                     automatically configured. {docsTip()}
                   </>
                 }
-              />
+              >
+                <Select
+                  aria-label={`${options.jsonData.prometheusType} type`}
+                  options={PromFlavorVersions[options.jsonData.prometheusType]}
+                  value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
+                    (o) => o.value === options.jsonData.prometheusVersion
+                  )}
+                  onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
+                  width={40}
+                  disabled={options.readOnly}
+                />
+              </InlineField>
             </div>
           )}
         </div>
         {config.featureToggles.prometheusResourceBrowserCache && (
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
-              <FormField
+              <InlineField
                 label="Cache level"
-                labelWidth={14}
+                labelWidth={26}
                 tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
-                inputEl={
-                  <Select
-                    className={`width-25`}
-                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
-                    options={cacheValueOptions}
-                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
-                  />
-                }
-              />
+              >
+                <Select
+                  width={40}
+                  onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                  options={cacheValueOptions}
+                  value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                />
+              </InlineField>
             </div>
           </div>
         )}
 
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
-            <FormField
+            <InlineField
               label="Incremental querying (beta)"
-              labelWidth={13}
+              labelWidth={26}
               tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
-              inputEl={
-                <Switch
-                  value={options.jsonData.incrementalQuerying ?? false}
-                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
-                  disabled={options.readOnly}
-                />
-              }
               className={overhaulStyles.switchField}
-            />
+            >
+              <Switch
+                value={options.jsonData.incrementalQuerying ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                disabled={options.readOnly}
+              />
+            </InlineField>
           </div>
         </div>
 
         <div className="gf-form-inline">
           {options.jsonData.incrementalQuerying && (
-            <FormField
+            <InlineField
               label="Query overlap window"
-              labelWidth={14}
+              labelWidth={26}
               tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
-              inputEl={
-                <Input
-                  validationEvents={{
-                    onBlur: [
-                      {
-                        rule: (value) => isValidDuration(value),
-                        errorMessage: 'Invalid duration. Example values: 100s, 10m',
-                      },
-                    ],
-                  }}
-                  className="width-25"
-                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
-                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
-                  spellCheck={false}
-                  disabled={options.readOnly}
-                />
-              }
-            />
+            >
+              <Input
+                // validationEvents={{
+                //   onBlur: [
+                //     {
+                //       rule: (value) => isValidDuration(value),
+                //       errorMessage: 'Invalid duration. Example values: 100s, 10m',
+                //     },
+                //   ],
+                // }}
+                className="width-25"
+                value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                spellCheck={false}
+                disabled={options.readOnly}
+              />
+            </InlineField>
           )}
         </div>
       </div>
@@ -410,21 +400,20 @@ export const PromSettings = (props: Props) => {
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
-            <FormField
+            <InlineField
               label="Custom query parameters"
-              labelWidth={13}
+              labelWidth={26}
               tooltip={<>Add custom parameters to all Prometheus or Thanos queries. {docsTip()}</>}
-              inputEl={
-                <Input
-                  className="width-20"
-                  value={options.jsonData.customQueryParameters}
-                  onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
-                  spellCheck={false}
-                  placeholder="Example: max_source_resolution=5m&timeout=10"
-                  disabled={options.readOnly}
-                />
-              }
-            />
+            >
+              <Input
+                className="width-20"
+                value={options.jsonData.customQueryParameters}
+                onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
+                spellCheck={false}
+                placeholder="Example: max_source_resolution=5m&timeout=10"
+                disabled={options.readOnly}
+              />
+            </InlineField>
           </div>
         </div>
         <div className="gf-form-inline">
