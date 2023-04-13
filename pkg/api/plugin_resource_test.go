@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -77,6 +78,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.cachingService = &caching.OSSCachingService{}
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
@@ -106,7 +108,7 @@ func TestCallResource(t *testing.T) {
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
 		}),
-	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest())...)
+	}, pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, &featuremgmt.FeatureManager{})...)
 	require.NoError(t, err)
 
 	srv = SetupAPITestServer(t, func(hs *HTTPServer) {

@@ -56,6 +56,7 @@ import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
+import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
@@ -84,6 +85,7 @@ export class PrometheusDatasource
 {
   type: string;
   ruleMappings: { [index: string]: string };
+  hasIncrementalQuery: boolean;
   url: string;
   id: number;
   directUrl: string;
@@ -105,6 +107,7 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
   cacheLevel: PrometheusCacheLevel;
+  cache: QueryCache;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -129,6 +132,7 @@ export class PrometheusDatasource
     // here we "fall back" to this.url to make typescript happy, but it should never happen
     this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
+    this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -139,6 +143,9 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.cache = new QueryCache(
+      instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
+    );
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -447,12 +454,27 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      const targets = request.targets.map((target) => this.processTargetV2(target, request));
+      let fullOrPartialRequest: DataQueryRequest<PromQuery>;
+      let requestInfo: CacheRequestInfo | undefined = undefined;
+      if (this.hasIncrementalQuery) {
+        requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+        fullOrPartialRequest = requestInfo.requests[0];
+      } else {
+        fullOrPartialRequest = request;
+      }
+
+      const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
       const startTime = new Date();
-      return super.query({ ...request, targets: targets.flat() }).pipe(
-        map((response) =>
-          transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-        ),
+      return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
+        map((response) => {
+          const amendedResponse = {
+            ...response,
+            data: this.cache.procFrames(request, requestInfo, response.data),
+          };
+          return transformV2(amendedResponse, request, {
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
+        }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
         })

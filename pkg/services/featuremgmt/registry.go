@@ -126,7 +126,7 @@ var (
 		{
 			Name:        "correlations",
 			Description: "Correlations page",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
 		},
 		{
@@ -304,12 +304,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "elasticsearchBackendMigration",
-			Description: "Use Elasticsearch as backend data source",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "showTraceId",
 			Description: "Show trace ids for requests",
 			State:       FeatureStateAlpha,
@@ -458,12 +452,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "disableElasticsearchBackendExploreQuery",
-			Description: "Disable executing of Elasticsearch Explore queries trough backend",
-			State:       FeatureStateBeta,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			State:       FeatureStateAlpha,
@@ -486,6 +474,12 @@ var (
 			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "unifiedRequestLog",
@@ -518,6 +512,19 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:            "useCachingService",
+			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
+			State:           FeatureStateStable,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "disableElasticsearchBackendQuerying",
+			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateStable,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "pluginsAPIManifestKey",

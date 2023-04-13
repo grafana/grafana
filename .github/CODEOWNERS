@@ -304,7 +304,6 @@
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Logs/ @grafana/observability-logs
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
@@ -542,6 +541,7 @@ lerna.json @grafana/frontend-ops
 # Grafana Operator Experience Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
+/pkg/services/caching/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
