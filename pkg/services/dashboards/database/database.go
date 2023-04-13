@@ -723,7 +723,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		if err := deleteFolderRules(sess, dashboard, cmd.ForceDeleteFolderRules); err != nil {
+		if err := deleteFolderAlertRules(sess, dashboard, cmd.ForceDeleteFolderRules); err != nil {
 			return err
 		}
 	} else {
@@ -794,14 +794,14 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 	return nil
 }
 
-func deleteFolderRules(sess *db.Session, dashboard dashboards.Dashboard, forceDeleteFolderRules bool) error {
+func deleteFolderAlertRules(sess *db.Session, dashboard dashboards.Dashboard, forceDeleteFolderAlertRules bool) error {
 	var existingRuleID int64
 	exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.ID).Cols("id").Get(&existingRuleID)
 	if err != nil {
 		return err
 	}
 	if exists {
-		if !forceDeleteFolderRules {
+		if !forceDeleteFolderAlertRules {
 			return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
 		}
 
