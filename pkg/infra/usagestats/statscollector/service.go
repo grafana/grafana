@@ -115,6 +115,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	}
 
 	m["stats.dashboards.count"] = statsResult.Dashboards
+	m["stats.dashboards.bytes"] = statsResult.DashboardsBytes
 	m["stats.users.count"] = statsResult.Users
 	m["stats.admins.count"] = statsResult.Admins
 	m["stats.editors.count"] = statsResult.Editors

@@ -2,6 +2,7 @@ package stats
 
 type SystemStats struct {
 	Dashboards                int64
+	DashboardsBytes           int64
 	Datasources               int64
 	Users                     int64
 	ActiveUsers               int64
