@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent } from 'react';
 
 import {
   CoreApp,
@@ -25,12 +25,9 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { TABLE, TIMESERIES } from '../../utils/constants';
-import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
 
 import { VizWrapper } from './VizWrapper';
@@ -83,8 +80,6 @@ export const QueryWrapper = ({
   onChangeQueryOptions,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const isExpression = isExpressionQuery(query.model);
-  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -119,32 +114,28 @@ export const QueryWrapper = ({
       maxDataPoints: queryOptions.maxDataPoints,
     };
 
-    if (isExpressionQuery(query.model)) {
-      return null;
-    } else {
-      return (
-        <Stack direction="row" alignItems="baseline" gap={1}>
-          <SelectingDataSourceTooltip />
-          {onChangeTimeRange && (
-            <RelativeTimeRangePicker
-              timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-              onChange={(range) => onChangeTimeRange(range, index)}
-            />
-          )}
-          <div className={styles.queryOptions}>
-            <MaxDataPointsOption
-              options={alertQueryOptions}
-              onChange={(options) => onChangeQueryOptions(options, index)}
-            />
-          </div>
-          <AlertConditionIndicator
-            onSetCondition={() => onSetCondition(query.refId)}
-            enabled={condition === query.refId}
-            error={error}
+    return (
+      <Stack direction="row" alignItems="baseline" gap={1}>
+        <SelectingDataSourceTooltip />
+        {onChangeTimeRange && (
+          <RelativeTimeRangePicker
+            timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+            onChange={(range) => onChangeTimeRange(range, index)}
           />
-        </Stack>
-      );
-    }
+        )}
+        <div className={styles.queryOptions}>
+          <MaxDataPointsOption
+            options={alertQueryOptions}
+            onChange={(options) => onChangeQueryOptions(options, index)}
+          />
+        </div>
+        <AlertConditionIndicator
+          onSetCondition={() => onSetCondition(query.refId)}
+          enabled={condition === query.refId}
+          error={error}
+        />
+      </Stack>
+    );
   }
 
   return (
@@ -152,17 +143,13 @@ export const QueryWrapper = ({
       <QueryEditorRow<DataQuery>
         alerting
         dataSource={dsSettings}
-        onChangeDataSource={
-          !isExpression
-            ? (settings) => {
-                getDataSourceSrv()
-                  .get({ type: settings.type, uid: settings.uid })
-                  .then((instance) => {
-                    onChangeDataSource(instance, settings, index);
-                  });
-              }
-            : undefined
-        }
+        onChangeDataSource={(settings) => {
+          getDataSourceSrv()
+            .get({ type: settings.type, uid: settings.uid })
+            .then((instance) => {
+              onChangeDataSource(instance, settings, index);
+            });
+        }}
         id={query.refId}
         index={index}
         key={query.refId}
@@ -179,8 +166,6 @@ export const QueryWrapper = ({
           data.state !== LoadingState.NotStarted ? (
             <VizWrapper
               data={data}
-              changePanel={changePluginId}
-              currentPanel={pluginId}
               thresholds={thresholds}
               thresholdsType={thresholdsType}
               onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
