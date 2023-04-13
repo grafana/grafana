@@ -12,6 +12,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { DataSourcePicker, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Button,
   Checkbox,
@@ -107,7 +108,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
       return;
     }
 
-    const filter: Filter = {
+    const filter: AnnotationPanelFilter = {
       exclude: panelFilter === PanelFilterType.ExcludePanels,
       ids: [],
     };
@@ -237,11 +238,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 function goBackToList() {
   locationService.partial({ editIndex: null });
 }
-
-type Filter = {
-  exclude: boolean;
-  ids: number[];
-};
 
 // Synthetic type
 enum PanelFilterType {

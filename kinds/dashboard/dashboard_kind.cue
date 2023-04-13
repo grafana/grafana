@@ -129,7 +129,7 @@ lineage: seqs: [
 
 					// Panel IDs that should be included or excluded
 					ids: [...uint8]
-				}
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts

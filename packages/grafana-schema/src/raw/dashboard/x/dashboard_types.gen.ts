@@ -50,6 +50,22 @@ export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
   tags: [],
 };
 
+export interface AnnotationPanelFilter {
+  /**
+   * Should the specified panels be included or excluded
+   */
+  exclude?: boolean;
+  /**
+   * Panel IDs that should be included or excluded
+   */
+  ids: Array<number>;
+}
+
+export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
+  exclude: false,
+  ids: [],
+};
+
 /**
  * TODO docs
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
@@ -69,16 +85,7 @@ export interface AnnotationQuery {
   /**
    * Optionally
    */
-  filter?: {
-    /**
-     * Should the specified panels be included or excluded
-     */
-    exclude?: boolean;
-    /**
-     * Panel IDs that should be included or excluded
-     */
-    ids: Array<number>;
-  };
+  filter?: AnnotationPanelFilter;
   /**
    * Annotation queries can be toggled on or off at the top of the dashboard.
    * When hide is true, the toggle is not shown in the dashboard.

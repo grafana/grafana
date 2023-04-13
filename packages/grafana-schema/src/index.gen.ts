@@ -10,6 +10,7 @@
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
+  AnnotationPanelFilter,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -33,6 +34,7 @@ export type {
 // Raw generated enums and default consts from dashboard kind.
 export {
   defaultAnnotationTarget,
+  defaultAnnotationPanelFilter,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
