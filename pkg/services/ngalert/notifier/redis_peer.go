@@ -18,6 +18,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -31,24 +32,25 @@ type redisConfig struct {
 }
 
 const (
-	peerPattern          = "*"
-	fullState            = "full_state"
-	fullStateChannel     = fullState
-	fullStateChannelReq  = fullStateChannel + ":request"
-	update               = "update"
-	redisServerLabel     = "redis-server"
-	networkRetryInterval = time.Second * 10
-	membersSyncInterval  = time.Second * 5
+	peerPattern             = "*"
+	fullState               = "full_state"
+	fullStateChannel        = fullState
+	fullStateChannelReq     = fullStateChannel + ":request"
+	update                  = "update"
+	redisServerLabel        = "redis-server"
+	networkRetryIntervalMin = time.Millisecond * 100
+	networkRetryIntervalMax = time.Second * 10
+	membersSyncInterval     = time.Second * 5
 )
 
 type redisPeer struct {
-	name   string
-	redis  *redis.Client
-	prefix string
-	logger log.Logger
-	states map[string]cluster.State
-	subs   map[string]*redis.PubSub
-	mtx    sync.RWMutex
+	name      string
+	redis     *redis.Client
+	prefix    string
+	logger    log.Logger
+	states    map[string]cluster.State
+	subs      map[string]*redis.PubSub
+	statesMtx sync.RWMutex
 
 	heartbeatInterval time.Duration
 	heartbeatTimeout  time.Duration
@@ -74,6 +76,10 @@ type redisPeer struct {
 	positionFetchedAt time.Time
 	// The duration we want to return the position if the network is down.
 	positionValidFor time.Duration
+
+	receiveLoopBackoff       *backoff.Backoff
+	fullStateReqLoopBackoff  *backoff.Backoff
+	fullStateSyncLoopBackoff *backoff.Backoff
 }
 
 func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
@@ -111,6 +117,18 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		heartbeatTimeout:  time.Minute,
 		positionValidFor:  time.Minute,
 		members:           make([]string, 0),
+		receiveLoopBackoff: backoff.New(context.Background(), backoff.Config{
+			MinBackoff: networkRetryIntervalMin,
+			MaxBackoff: networkRetryIntervalMax,
+		}),
+		fullStateReqLoopBackoff: backoff.New(context.Background(), backoff.Config{
+			MinBackoff: networkRetryIntervalMin,
+			MaxBackoff: networkRetryIntervalMax,
+		}),
+		fullStateSyncLoopBackoff: backoff.New(context.Background(), backoff.Config{
+			MinBackoff: networkRetryIntervalMin,
+			MaxBackoff: networkRetryIntervalMax,
+		}),
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -274,21 +292,20 @@ func (p *redisPeer) membersSyncLoop() {
 }
 
 func (p *redisPeer) Position() int {
-	startTime := time.Now()
 	// When the members array is empty and we fetched our position successfully
 	// prior, we can assume that currently the network is down.
 	// To prevent a spike of duplicate messages, we return for the duration of
 	// lastPositionValidFor the last known position and only failover to position
 	// 0 afterwards if we do not eventually recover.
 	if len(p.Members()) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
-		p.logger.Warn("failed to fetch position from redis, falling back to last know position", "last_known", p.position)
+		p.logger.Warn("last members list fetched from redis was empty, falling back to last know position", "last_known", p.position)
 		return p.position
 	}
 	for i, peer := range p.Members() {
 		if peer == p.withPrefix(p.name) {
 			p.position = i
 			p.positionFetchedAt = time.Now()
-			p.logger.Debug("cluster position found", "name", p.name, "position", i, "dur_ms", time.Since(startTime).Milliseconds())
+			p.logger.Debug("cluster position found", "name", p.name, "position", i)
 			return i
 		}
 	}
@@ -374,13 +391,13 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 }
 
 func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Registerer) cluster.ClusterChannel {
-	p.mtx.Lock()
+	p.statesMtx.Lock()
 	p.states[key] = state
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
 	go p.receiveLoop(key, sub)
 	p.subs[key] = sub
-	p.mtx.Unlock()
+	p.statesMtx.Unlock()
 	return &RedisChannel{
 		p:       p,
 		key:     key,
@@ -398,14 +415,19 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 			data, err := channel.ReceiveMessage(context.Background())
 			var opErr *net.OpError
 			if errors.As(err, &opErr) {
-				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(name))
-				time.Sleep(networkRetryInterval)
+				wait := p.receiveLoopBackoff.NextDelay()
+				p.logger.Error("network error, waiting before retry", "err", err, "channel", p.withPrefix(name), "wait", wait)
+				time.Sleep(wait)
 				continue
+			}
+			if p.receiveLoopBackoff.Ongoing() {
+				p.receiveLoopBackoff.Reset()
 			}
 			if err != nil {
 				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(name))
 				continue
 			}
+
 			p.messagesReceived.WithLabelValues(update).Inc()
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
 
@@ -415,9 +437,9 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 				continue
 			}
 
-			p.mtx.RLock()
+			p.statesMtx.RLock()
 			s, ok := p.states[part.Key]
-			p.mtx.RUnlock()
+			p.statesMtx.RUnlock()
 
 			if !ok {
 				continue
@@ -440,9 +462,13 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 			data, err := p.subs[fullStateChannelReq].ReceiveMessage(context.Background())
 			var opErr *net.OpError
 			if errors.As(err, &opErr) {
-				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(fullStateChannelReq))
-				time.Sleep(networkRetryInterval)
+				wait := p.fullStateReqLoopBackoff.NextDelay()
+				p.logger.Error("network error, waiting before retry", "err", err, "channel", p.withPrefix(fullStateChannelReq), "wait", wait)
+				time.Sleep(wait)
 				continue
+			}
+			if p.fullStateReqLoopBackoff.Ongoing() {
+				p.fullStateReqLoopBackoff.Reset()
 			}
 			if err != nil {
 				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannelReq))
@@ -469,14 +495,19 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 			data, err := p.subs[fullStateChannel].ReceiveMessage(context.Background())
 			var opErr *net.OpError
 			if errors.As(err, &opErr) {
-				p.logger.Error("network error, waiting 10 seconds before retry", "err", err, "channel", p.withPrefix(fullStateChannel))
-				time.Sleep(networkRetryInterval)
+				wait := p.fullStateSyncLoopBackoff.NextDelay()
+				p.logger.Error("network error, waiting before retry", "err", err, "channel", p.withPrefix(fullStateChannel), "wait", wait)
+				time.Sleep(wait)
 				continue
+			}
+			if p.fullStateSyncLoopBackoff.Ongoing() {
+				p.fullStateSyncLoopBackoff.Reset()
 			}
 			if err != nil {
 				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannel))
 				continue
 			}
+
 			p.messagesReceived.WithLabelValues(fullState).Inc()
 			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
 
@@ -487,8 +518,8 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 			}
 			// This inline func is just a lazy workaround so we can use defer in the loop.
 			func() {
-				p.mtx.RLock()
-				defer p.mtx.RUnlock()
+				p.statesMtx.RLock()
+				defer p.statesMtx.RUnlock()
 				for _, part := range fs.Parts {
 					s, ok := p.states[part.Key]
 					if !ok {
@@ -534,8 +565,8 @@ func (p *redisPeer) requestFullState() {
 }
 
 func (p *redisPeer) LocalState() []byte {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
+	p.statesMtx.RLock()
+	defer p.statesMtx.RUnlock()
 	all := &clusterpb.FullState{
 		Parts: make([]clusterpb.Part, 0, len(p.states)),
 	}
@@ -560,7 +591,9 @@ func (p *redisPeer) Shutdown() {
 	p.logger.Info("Stopping redis peer...")
 	close(p.shutdownc)
 	p.fullStateSyncPublish()
-	del := p.redis.Del(context.Background(), p.withPrefix(p.name))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	del := p.redis.Del(ctx, p.withPrefix(p.name))
 	if del.Err() != nil {
 		p.logger.Error("error deleting the redis key on shutdown", "err", del.Err(), "key", p.withPrefix(p.name))
 	}
