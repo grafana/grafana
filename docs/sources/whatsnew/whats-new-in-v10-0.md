@@ -85,3 +85,11 @@ To try it out, you'll need to enable the `scenes` feature toggle. If you’re us
 <!--
 - TODO: Add link to docs and resources
 -->
+
+## Query multiple data sources in Explore
+
+_Available in preview in all editions of Grafana using the exploreMixedDatasource feature toggle in all editions of Grafana._
+
+You can now query multiple data sources in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
+
+Mixed data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the exploreMixedDatasource feature toggle.
