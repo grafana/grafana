@@ -21,7 +21,7 @@ interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRoutePara
 
 // New Browse/Manage/Search Dashboards views for nested folders
 
-export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
+const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   const { uid: folderUID } = match.params;
 
   const searchState = useMemo(() => {
@@ -45,3 +45,4 @@ export const BrowseDashboardsPage = memo(({ match, location }: Props) => {
 });
 
 BrowseDashboardsPage.displayName = 'BrowseDashboardsPage';
+export default BrowseDashboardsPage;
