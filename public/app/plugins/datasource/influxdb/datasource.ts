@@ -539,7 +539,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    const interpolated = this.templateSrv.replace(query, undefined, 'regex');
+    const interpolated = new InfluxQueryModel(
+      {
+        refId: 'metricFindQuery',
+        query,
+        rawQuery: true,
+      },
+      this.templateSrv,
+      options.scopedVars
+    ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
