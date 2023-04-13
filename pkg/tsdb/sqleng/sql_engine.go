@@ -145,7 +145,7 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 
 // Retrieve the default connection settings given access
 // to Grafana configuration. If these differ from the
-// prederminted defaults the defaults will be overriden
+// prederminted defaults the defaults will be overridden
 func GetDefaultConnectionSettings(cfg *setting.Cfg) *DefaultConnectionInfo {
 	// Allow override of default for max open connections
 	var maxOpenConnsDefault = MaxOpenConnsDefault
