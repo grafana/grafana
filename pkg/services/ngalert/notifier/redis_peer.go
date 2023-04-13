@@ -2,9 +2,7 @@ package notifier
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net"
 	"sort"
 	"strconv"
 	"sync"
@@ -41,6 +39,7 @@ const (
 	networkRetryIntervalMin = time.Millisecond * 100
 	networkRetryIntervalMax = time.Second * 10
 	membersSyncInterval     = time.Second * 5
+	waitForMsgIdle          = time.Millisecond * 100
 )
 
 type redisPeer struct {
@@ -406,23 +405,7 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 		select {
 		case <-p.shutdownc:
 			return
-		default:
-			data, err := channel.ReceiveMessage(context.Background())
-			var opErr *net.OpError
-			if errors.As(err, &opErr) {
-				wait := p.receiveLoopBackoff.NextDelay()
-				p.logger.Error("network error, waiting before retry", "err", err, "channel", p.withPrefix(name), "wait", wait)
-				time.Sleep(wait)
-				continue
-			}
-			if p.receiveLoopBackoff.Ongoing() {
-				p.receiveLoopBackoff.Reset()
-			}
-			if err != nil {
-				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(name))
-				continue
-			}
-
+		case data := <-channel.Channel():
 			p.messagesReceived.WithLabelValues(update).Inc()
 			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
 
@@ -444,6 +427,8 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 				continue
 			}
 			p.logger.Debug("partial state was successfully merged", "key", name)
+		default:
+			time.Sleep(waitForMsgIdle)
 		}
 	}
 }
@@ -453,22 +438,7 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 		select {
 		case <-p.shutdownc:
 			return
-		default:
-			data, err := p.subs[fullStateChannelReq].ReceiveMessage(context.Background())
-			var opErr *net.OpError
-			if errors.As(err, &opErr) {
-				wait := p.fullStateReqLoopBackoff.NextDelay()
-				p.logger.Error("network error, waiting before retry", "err", err, "channel", p.withPrefix(fullStateChannelReq), "wait", wait)
-				time.Sleep(wait)
-				continue
-			}
-			if p.fullStateReqLoopBackoff.Ongoing() {
-				p.fullStateReqLoopBackoff.Reset()
-			}
-			if err != nil {
-				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannelReq))
-				continue
-			}
+		case data := <-p.subs[fullStateChannelReq].Channel():
 			// The payload of a full state request is the name of the peer that is
 			// requesting the full state. In case we received our own request, we
 			// can just ignore it. Redis pub/sub fanouts to all clients, regardless
@@ -477,6 +447,8 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 				continue
 			}
 			p.fullStateSyncPublish()
+		default:
+			time.Sleep(waitForMsgIdle)
 		}
 	}
 }
@@ -486,22 +458,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 		select {
 		case <-p.shutdownc:
 			return
-		default:
-			data, err := p.subs[fullStateChannel].ReceiveMessage(context.Background())
-			var opErr *net.OpError
-			if errors.As(err, &opErr) {
-				wait := p.fullStateSyncLoopBackoff.NextDelay()
-				p.logger.Error("network error, waiting before retry", "err", err, "channel", p.withPrefix(fullStateChannel), "wait", wait)
-				time.Sleep(wait)
-				continue
-			}
-			if p.fullStateSyncLoopBackoff.Ongoing() {
-				p.fullStateSyncLoopBackoff.Reset()
-			}
-			if err != nil {
-				p.logger.Error("error receiving message from redis", "err", err, "channel", p.withPrefix(fullStateChannel))
-				continue
-			}
+		case data := <-p.subs[fullStateChannel].Channel():
 
 			p.messagesReceived.WithLabelValues(fullState).Inc()
 			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
@@ -528,6 +485,8 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 				}
 				p.logger.Debug("full state was successfully merged")
 			}()
+		default:
+			time.Sleep(waitForMsgIdle)
 		}
 	}
 }
