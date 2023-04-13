@@ -10,10 +10,10 @@ import {
   LogRowModel,
   TimeRange,
   toUtc,
+  LogRowContextQueryDirection,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { DataQuery, Labels } from '@grafana/schema';
-
-import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
@@ -35,10 +35,10 @@ export class LogContextProvider {
 
   getLogRowContext = async (
     row: LogRowModel,
-    options?: RowContextOptions,
+    options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    const direction = (options && options.direction) || 'BACKWARD';
+    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const limit = (options && options.limit) || 10;
 
     // This happens only on initial load, when user haven't applied any filters yet
@@ -114,7 +114,7 @@ export class LogContextProvider {
   async prepareLogRowContextQueryTarget(
     row: LogRowModel,
     limit: number,
-    direction: 'BACKWARD' | 'FORWARD',
+    direction: LogRowContextQueryDirection,
     origQuery?: DataQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
     let originalLokiQuery: LokiQuery | undefined = undefined;
@@ -124,7 +124,9 @@ export class LogContextProvider {
     }
     const expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, originalLokiQuery);
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
-    const queryDirection = direction === 'FORWARD' ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+
+    const queryDirection =
+      direction === LogRowContextQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
 
     const query: LokiQuery = {
       expr,
