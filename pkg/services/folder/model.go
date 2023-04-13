@@ -13,7 +13,7 @@ var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
-var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusBadRequest, "folder.target-registry-srv-conflict")
+var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusInternal, "folder.target-registry-srv-conflict")
 
 const (
 	GeneralFolderUID     = "general"
