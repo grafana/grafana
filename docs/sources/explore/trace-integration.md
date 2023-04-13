@@ -13,7 +13,7 @@ Explore allows you to visualize traces from tracing data sources. This is availa
 
 Supported data sources are:
 
-- [Tempo]({{< relref "../datasources/tempo/" >}})
+- [Tempo]({{< relref "../datasources/tempo/" >}}) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
 - [Jaeger]({{< relref "../datasources/jaeger/" >}})
 - [Zipkin]({{< relref "../datasources/zipkin/" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
