@@ -647,19 +647,17 @@ const groupDataQueries = async (queries: DataQuery[], scopedVars: ScopedVars) =>
   queries = queries.filter((t) => {
     return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
   });
-  // Build groups of queries to run in parallel
   const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
-  const mixed: Array<{ datasource: DataSourceApi; targets: DataQuery[] }> = [];
 
-  for (const key in sets) {
-    const targets = sets[key];
-    mixed.push({
-      datasource: await getDataSourceSrv().get(targets[0].datasource, scopedVars),
-      targets,
-    });
-  }
-
-  return mixed;
+  return await Promise.all(
+    Object.values(sets).map(async (targets) => {
+      const datasource = await getDataSourceSrv().get(targets[0].datasource, scopedVars);
+      return {
+        datasource,
+        targets,
+      };
+    })
+  );
 };
 
 const handleSupplementaryQueries = createAsyncThunk(

@@ -145,21 +145,20 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const setup = async (targetSources: string[], type: SupplementaryQueryType) => {
-  const datasources: Array<{ datasource: DataSourceApi; targets: DataQuery[] }> = [];
-
   const requestMock = new MockDataQueryRequest({
     targets: targetSources.map((source, i) => new MockQuery(`${i}`, 'a', { uid: source })),
   });
   const explorePanelDataMock: Observable<ExplorePanelData> = mockExploreDataWithLogs();
 
-  for (const i in targetSources) {
-    const source = targetSources[i];
-    const datasource = await getDataSourceSrv().get({ uid: source });
-    datasources.push({
-      datasource,
-      targets: [new MockQuery(`${i}`, 'a', { uid: source })],
-    });
-  }
+  const datasources = await Promise.all(
+    targetSources.map(async (source, i) => {
+      const datasource = await getDataSourceSrv().get({ uid: source });
+      return {
+        datasource,
+        targets: [new MockQuery(`${i}`, 'a', { uid: source })],
+      };
+    })
+  );
 
   return getSupplementaryQueryProvider(datasources, type, requestMock, explorePanelDataMock);
 };
