@@ -21,7 +21,12 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
 
   return (
     <div className="gf-form-group">
-      <InlineField label="Internal link" labelWidth={24} disabled={disabled}>
+      <InlineField
+        label="Internal link"
+        labelWidth={24}
+        disabled={disabled}
+        tooltip="Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data."
+      >
         <>
           <InlineSwitch
             value={isInternalLink}
