@@ -21,6 +21,7 @@ import {
 } from '../../api/templateApi';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
@@ -187,24 +188,31 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 </LinkButton>
               </div>
             </div>
-            <TemplatePreview
-              payload={payload}
-              payloadFormatError={payloadFormatError}
-              setPayloadFormatError={setPayloadFormatError}
-            />
+            {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME ? (
+              <TemplatePreview
+                payload={payload}
+                payloadFormatError={payloadFormatError}
+                setPayloadFormatError={setPayloadFormatError}
+              />
+            ) : (
+              <TemplateDataDocs />
+            )}
           </div>
         </FieldSet>
-
-        <ExpandableSection
-          title="Data Cheat sheet"
-          isOpen={isTemplateDataDocsOpen}
-          toggleOpen={toggleTemplateDataDocsOpen}
-        >
-          <TemplateDataDocs />
-        </ExpandableSection>
-        <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
-          <PayloadEditor payload={payload} setPayload={setPayload} />
-        </ExpandableSection>
+        {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+          <>
+            <ExpandableSection
+              title="Data Cheat sheet"
+              isOpen={isTemplateDataDocsOpen}
+              toggleOpen={toggleTemplateDataDocsOpen}
+            >
+              <TemplateDataDocs />
+            </ExpandableSection>
+            <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
+              <PayloadEditor payload={payload} setPayload={setPayload} />
+            </ExpandableSection>
+          </>
+        )}
       </form>
     </FormProvider>
   );
