@@ -22,6 +22,7 @@ import (
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/manifestverifier"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -54,7 +55,7 @@ func (m *PluginManifest) isV2() bool {
 
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func ReadPluginManifest(body []byte, publicKeyText string) (*PluginManifest, error) {
+func ReadPluginManifest(body []byte, manifestVerifier *manifestverifier.ManifestVerifier) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -67,14 +68,15 @@ func ReadPluginManifest(body []byte, publicKeyText string) (*PluginManifest, err
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	if err = validateManifest(manifest, block, publicKeyText); err != nil {
+	if err = validateManifest(manifest, block, manifestVerifier); err != nil {
 		return nil, err
 	}
 
 	return &manifest, nil
 }
 
-func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin, publicKeyText string) (plugins.Signature, error) {
+func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin,
+	manifestVerifier *manifestverifier.ManifestVerifier) (plugins.Signature, error) {
 	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
@@ -117,7 +119,7 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 		}, nil
 	}
 
-	manifest, err := ReadPluginManifest(byteValue, publicKeyText)
+	manifest, err := ReadPluginManifest(byteValue, manifestVerifier)
 	if err != nil {
 		mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
@@ -272,7 +274,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func validateManifest(m PluginManifest, block *clearsign.Block, publicKeyText string) error {
+func validateManifest(m PluginManifest, block *clearsign.Block, manifestVerifier *manifestverifier.ManifestVerifier) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}
@@ -299,7 +301,13 @@ func validateManifest(m PluginManifest, block *clearsign.Block, publicKeyText st
 			return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
 		}
 	}
-	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+
+	publicKey, err := manifestVerifier.GetPublicKey(m.KeyID)
+	if err != nil {
+		return err
+	}
+
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKey))
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to parse public key", err)
 	}

@@ -1,0 +1,32 @@
+	// since we don't have any public keys we need to load them first
+	dbContext := context.Background()
+	if len(pmv.publicKeys) == 0 {
+		err := pmv.sqlstore.WithDbSession(dbContext, func(session *db.Session) error {
+			var keys []ManifestKeys
+			err := session.Find(&keys)
+			if err != nil {
+				return err
+			}
+
+			pmv.publicKeys = make(map[string]ManifestKeys, len(keys))
+			for _, k := range keys {
+				pmv.publicKeys[k.KeyID] = k
+			}
+
+			return err
+		})
+		if err != nil {
+			return "", err
+		}
+		// defer session.Close()
+	}
+
+...
+
+	err = pmv.sqlstore.WithDbSession(dbContext, func(session *db.Session) error {
+		// TODO: Store the key in the database
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
