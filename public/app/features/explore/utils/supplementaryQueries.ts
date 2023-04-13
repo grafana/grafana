@@ -161,7 +161,7 @@ export const getSupplementaryQueryProvider = (
   return merge(...definedProviders).pipe(
     scan<DataQueryResponse, DataQueryResponse>(
       (acc, next) => {
-        if (acc.error || next.state === LoadingState.NotStarted) {
+        if ((acc.errors && acc.errors.length) || next.state === LoadingState.NotStarted) {
           return acc;
         }
 
