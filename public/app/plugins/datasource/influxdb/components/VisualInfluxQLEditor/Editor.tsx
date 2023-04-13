@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -8,6 +9,7 @@ import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 import InfluxDatasource from '../../datasource';
 import {
   getAllMeasurementsForTags,
+  getAllPolicies,
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
   getTagValues,
@@ -74,6 +76,9 @@ export const Editor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
+
+  const policyData = useAsync(() => getAllPolicies(datasource), [datasource]);
+  const retentionPolicies = !!policyData.error ? [] : policyData.value ?? [];
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
@@ -142,9 +147,9 @@ export const Editor = (props: Props): JSX.Element => {
     <div>
       <SegmentSection label="FROM" fill={true}>
         <FromSection
-          policy={policy ?? datasource.retentionPolicies[0]}
+          policy={policy ?? retentionPolicies[0]}
           measurement={measurement}
-          getPolicyOptions={() => Promise.resolve(datasource.retentionPolicies)}
+          getPolicyOptions={() => getAllPolicies(datasource)}
           getMeasurementOptions={(filter) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>
