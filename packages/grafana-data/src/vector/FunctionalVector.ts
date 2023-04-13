@@ -55,6 +55,10 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     return vectorToArray(this);
   }
 
+  join(separator?: string | undefined): string {
+    return this.toArray().join(separator);
+  }
+
   toJSON(): any {
     return this.toArray();
   }
@@ -70,9 +74,6 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   }
   concat(...items: Array<ConcatArray<T>>): T[];
   concat(...items: Array<T | ConcatArray<T>>): T[] {
-    throw new Error('Method not implemented.');
-  }
-  join(separator?: string | undefined): string {
     throw new Error('Method not implemented.');
   }
   reverse(): T[] {
@@ -144,16 +145,16 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     throw new Error('Method not implemented.');
   }
   entries(): IterableIterator<[number, T]> {
-    throw new Error('Method not implemented.');
+    return this.toArray().entries();
   }
   keys(): IterableIterator<number> {
-    throw new Error('Method not implemented.');
+    return this.toArray().keys();
   }
   values(): IterableIterator<T> {
-    throw new Error('Method not implemented.');
+    return this.toArray().values();
   }
   includes(searchElement: T, fromIndex?: number | undefined): boolean {
-    throw new Error('Method not implemented.');
+    return this.toArray().includes(searchElement, fromIndex);
   }
   flatMap<U, This = undefined>(
     callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
