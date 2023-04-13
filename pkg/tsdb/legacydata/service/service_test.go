@@ -51,8 +51,8 @@ func TestHandleRequest(t *testing.T) {
 		req := legacydata.DataQuery{
 			TimeRange: &legacydata.DataTimeRange{},
 			Queries: []legacydata.DataSubQuery{
-				{RefID: "A", DataSource: &datasources.DataSource{ID: 1, Type: "test"}, Model: simplejson.New()},
-				{RefID: "B", DataSource: &datasources.DataSource{ID: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "A", Model: simplejson.New()},
+				{RefID: "B", Model: simplejson.New()},
 			},
 			User: &user.SignedInUser{},
 		}
