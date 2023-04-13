@@ -71,7 +71,6 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
-  scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -376,7 +375,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       exploreId,
-      scrollElement,
       getRowContext,
       getLogRowContextUi,
     } = this.props;
