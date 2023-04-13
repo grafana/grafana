@@ -5,7 +5,7 @@ import { timeRangeToRelative } from './rangeutil';
 import { dateTime, rangeUtil } from './index';
 
 describe('Range Utils', () => {
-  // These test probably wraps the dateTimeParser tests to some extent
+  // These tests probably wrap the dateTimeParser tests to some extent
   describe('convertRawToRange', () => {
     const DEFAULT_DATE_VALUE = '1996-07-30 16:00:00'; // Default format YYYY-MM-DD HH:mm:ss
     const DEFAULT_DATE_VALUE_FORMATTED = '1996-07-30T16:00:00-06:00';
