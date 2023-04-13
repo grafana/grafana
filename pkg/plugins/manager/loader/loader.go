@@ -60,13 +60,12 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		signatureValidator: signature.NewValidator(authorizer),
 		processManager:     processManager,
 		pluginStorage:      pluginStorage,
-
-		errs:             make(map[string]*plugins.SignatureError),
-		log:              log.New("plugin.loader"),
-		roleRegistry:     roleRegistry,
-		cfg:              cfg,
-		assetPath:        assetPath,
-		manifestVerifier: manifestverifier.New(features, "https://grafana.com"),
+		errs:               make(map[string]*plugins.SignatureError),
+		log:                log.New("plugin.loader"),
+		roleRegistry:       roleRegistry,
+		cfg:                cfg,
+		assetPath:          assetPath,
+		manifestVerifier:   manifestverifier.New(features, "https://grafana.com"),
 	}
 }
 
