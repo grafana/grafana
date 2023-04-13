@@ -94,7 +94,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	//nolint:bodyclose // fixed in main
-	res, err := dsInfo.HTTPClient.Do(request)
+	res, err := dsInfo.HTTPClient.Do(request) //nolint:bodyclose // fixed in main
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
