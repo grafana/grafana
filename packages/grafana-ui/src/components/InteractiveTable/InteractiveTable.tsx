@@ -11,57 +11,90 @@ import { Icon } from '../Icon/Icon';
 import { Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    border-radius: ${theme.shape.borderRadius()};
-    border: solid 1px ${theme.colors.border.weak};
-    background-color: ${theme.colors.background.secondary};
-    width: 100%;
+const getStyles = (theme: GrafanaTheme2) => {
+  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
-    td {
-      padding: ${theme.spacing(1)};
-    }
-
-    td,
-    th {
-      min-width: ${theme.spacing(3)};
-    }
-  `,
-  evenRow: css`
-    background: ${theme.colors.background.primary};
-  `,
-  disableGrow: css`
-    width: 0%;
-  `,
-  header: css`
-    &,
-    & > button {
-      position: relative;
-      white-space: nowrap;
-      padding: ${theme.spacing(1)};
-    }
-    & > button {
-      &:after {
-        content: '\\00a0';
-      }
+  return {
+    table: css`
+      border-radius: ${theme.shape.borderRadius()};
+      // border: solid 1px ${theme.colors.border.weak};
       width: 100%;
-      height: 100%;
-      background: none;
-      border: none;
-      padding-right: ${theme.spacing(2.5)};
-      text-align: left;
-      &:hover {
-        background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.05)};
+
+      td {
+        padding: ${theme.spacing(1)};
       }
-    }
-  `,
-  sortableHeader: css`
-    /* increases selector's specificity so that it always takes precedence over default styles  */
-    && {
-      padding: 0;
-    }
-  `,
-});
+
+      td,
+      th {
+        min-width: ${theme.spacing(3)};
+      }
+    `,
+    disableGrow: css`
+      width: 0%;
+    `,
+    header: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
+      &,
+      & > button {
+        position: relative;
+        white-space: nowrap;
+        padding: ${theme.spacing(1)};
+      }
+      & > button {
+        &:after {
+          content: '\\00a0';
+        }
+        width: 100%;
+        height: 100%;
+        background: none;
+        border: none;
+        padding-right: ${theme.spacing(2.5)};
+        text-align: left;
+        font-weight: ${theme.typography.fontWeightMedium};
+      }
+    `,
+    row: css`
+      label: row;
+      border-bottom: 1px solid ${theme.colors.border.weak};
+
+      &:hover {
+        background-color: ${rowHoverBg};
+      }
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    `,
+    expandedRow: css`
+      label: expanded-row-content;
+      border-bottom: none;
+    `,
+    expandedContentRow: css`
+      label: expanded-row-content;
+      border-bottom: 1px solid ${theme.colors.border.weak};
+      position: relative;
+      padding: ${theme.spacing(2, 2, 2, 5)};
+
+      td {
+        &:before {
+          content: '';
+          position: absolute;
+          width: 1px;
+          top: 0;
+          left: 16px;
+          bottom: ${theme.spacing(2)};
+          background: ${theme.colors.border.medium};
+        }
+      }
+    `,
+    sortableHeader: css`
+      /* increases selector's specificity so that it always takes precedence over default styles  */
+      && {
+        padding: 0;
+      }
+    `,
+  };
+};
 
 interface Props<TableData extends object> {
   /**
@@ -161,14 +194,15 @@ export function InteractiveTable<TableData extends object>({
       </thead>
 
       <tbody {...getTableBodyProps()}>
-        {rows.map((row, rowIndex) => {
-          const className = cx(rowIndex % 2 === 0 && styles.evenRow);
+        {rows.map((row) => {
           const { key, ...otherRowProps } = row.getRowProps();
           const rowId = getRowHTMLID(row);
+          // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
+          const isExpanded = row.isExpanded;
 
           return (
             <Fragment key={key}>
-              <tr className={className} {...otherRowProps}>
+              <tr {...otherRowProps} className={cx(styles.row, isExpanded && styles.expandedRow)}>
                 {row.cells.map((cell) => {
                   const { key, ...otherCellProps } = cell.getCellProps();
                   return (
@@ -178,14 +212,11 @@ export function InteractiveTable<TableData extends object>({
                   );
                 })}
               </tr>
-              {
-                // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
-                row.isExpanded && renderExpandedRow && (
-                  <tr className={className} {...otherRowProps} id={rowId}>
-                    <td colSpan={row.cells.length}>{renderExpandedRow(row.original)}</td>
-                  </tr>
-                )
-              }
+              {isExpanded && renderExpandedRow && (
+                <tr {...otherRowProps} id={rowId} className={styles.expandedContentRow}>
+                  <td colSpan={row.cells.length}>{renderExpandedRow(row.original)}</td>
+                </tr>
+              )}
             </Fragment>
           );
         })}
