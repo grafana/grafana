@@ -47,22 +47,18 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): TrustedHTML {
+export function sanitizeTrustedTypes(unsanitizedString: string, conf?: string): string {
   switch (conf) {
-    case 'svg':
-      return DOMPurify.sanitize(unsanitizedString, {
-        RETURN_TRUSTED_TYPE: true,
-        USE_PROFILES: { svg: true, svgFilters: true },
-      });
     case 'rss':
       return DOMPurify.sanitize(unsanitizedString, {
         RETURN_TRUSTED_TYPE: true,
         ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'],
         ADD_TAGS: ['rss', 'meta', 'channel', 'title', 'link', 'description', 'atom:link', 'item', 'pubDate', 'guid'],
         PARSER_MEDIA_TYPE: 'application/xhtml+xml',
-      });
+      }) as unknown as string;
   }
-  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true, USE_PROFILES: { html: true } });
+
+  return DOMPurify.sanitize(unsanitizedString, {RETURN_TRUSTED_TYPE: true}) as unknown as string;
 }
 
 /**
