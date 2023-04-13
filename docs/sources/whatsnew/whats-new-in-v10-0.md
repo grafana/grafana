@@ -80,7 +80,7 @@ _This is an experiemental library_
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
-To try it out, you'll need to enable the `scenes` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To try it out, please check [@grafana/scenes](https://github.com/grafana/scenes).
 
 <!--
 - TODO: Add link to docs and resources
