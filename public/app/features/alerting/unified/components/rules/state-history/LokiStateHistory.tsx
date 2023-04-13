@@ -10,7 +10,6 @@ import {
   DataFrame,
   DataFrameJSON,
   dateTime,
-  escapeStringForRegex,
   Field as DataFrameField,
   FieldType,
   getDisplayProcessor,
@@ -63,7 +62,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
-      const matcherString = combineMatcherStrings(...getValues('query'), label);
+      const matcherString = combineMatcherStrings(getValues('query'), label);
       setInstancesFilter(matcherString);
       setValue('query', matcherString);
     },
@@ -110,7 +109,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   return (
     <div className={styles.fullSize}>
-      <form onSubmit={handleSubmit((data) => setInstancesFilter(escapeStringForRegex(data.query)))}>
+      <form onSubmit={handleSubmit((data) => setInstancesFilter(data.query))}>
         <Field label="Filter instances">
           <Input
             {...register('query')}
