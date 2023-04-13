@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -249,6 +250,11 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	if response.Error != nil {
 		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
+	}
+
+	if dt, use, _ := shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane)); use {
+		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
+		return handleDataplaneFrames(dt.Kind(), response.Frames)
 	}
 
 	dataSource := dn.datasource.Type

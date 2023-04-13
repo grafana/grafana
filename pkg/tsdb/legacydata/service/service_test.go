@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -46,13 +47,14 @@ func TestHandleRequest(t *testing.T) {
 		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService), plugincontext.ProvideKeyService())
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
-		ds := &datasources.DataSource{ID: 12, Type: "unregisteredType", JsonData: simplejson.New()}
+		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}
 		req := legacydata.DataQuery{
 			TimeRange: &legacydata.DataTimeRange{},
 			Queries: []legacydata.DataSubQuery{
 				{RefID: "A", DataSource: &datasources.DataSource{ID: 1, Type: "test"}, Model: simplejson.New()},
 				{RefID: "B", DataSource: &datasources.DataSource{ID: 1, Type: "test"}, Model: simplejson.New()},
 			},
+			User: &user.SignedInUser{},
 		}
 		res, err := s.HandleRequest(context.Background(), ds, req)
 		require.NoError(t, err)

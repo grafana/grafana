@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,6 +40,7 @@ func TestService(t *testing.T) {
 		cfg:          setting.NewCfg(),
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
+		features:     &featuremgmt.FeatureManager{},
 	}
 
 	queries := []Query{
@@ -74,6 +76,10 @@ func TestService(t *testing.T) {
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
+	bDF.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
 
 	expect := &backend.QueryDataResponse{
 		Responses: backend.Responses{

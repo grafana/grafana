@@ -15,6 +15,7 @@ import {
 import { Table } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -189,9 +190,9 @@ export const Basic: ComponentStory<typeof Table> = (args) => {
   const data = buildData(theme, {});
 
   return (
-    <div className="panel-container" style={{ width: 'auto' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
@@ -201,16 +202,19 @@ export const BarGaugeCell: ComponentStory<typeof Table> = (args) => {
     Progress: {
       custom: {
         width: 200,
-        displayMode: 'gradient-gauge',
+        cellOptions: {
+          type: 'gauge',
+          mode: 'gradient',
+        },
       },
       thresholds: defaultThresholds,
     },
   });
 
   return (
-    <div className="panel-container" style={{ width: 'auto' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
@@ -227,9 +231,9 @@ export const ColoredCells: ComponentStory<typeof Table> = (args) => {
   });
 
   return (
-    <div className="panel-container" style={{ width: 'auto' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
@@ -239,9 +243,9 @@ export const Footer: ComponentStory<typeof Table> = (args) => {
   const footer = buildFooterData(data);
 
   return (
-    <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} footerValues={footer} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
@@ -263,9 +267,9 @@ export const SubTables: ComponentStory<typeof Table> = (args) => {
   });
 
   return (
-    <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} subData={subData} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 

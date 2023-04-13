@@ -17,7 +17,7 @@ storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 exploreMixedDatasource,alpha,@grafana/explore-squad,false,false,false,true
 newTraceView,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
-correlations,alpha,@grafana/explore-squad,false,false,false,false
+correlations,beta,@grafana/explore-squad,false,false,false,false
 cloudWatchDynamicLabels,stable,@grafana/aws-plugins,false,false,false,false
 datasourceQueryMultiStatus,alpha,@grafana/plugins-platform-backend,false,false,false,false
 traceToMetrics,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
@@ -70,9 +70,11 @@ prometheusDataplane,alpha,@grafana/observability-metrics,false,false,false,false
 alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
+disableSSEDataplane,alpha,@grafana/observability-metrics,false,false,false,false
 unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
 renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
 pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,false,false,false
 externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
 dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false,true
+useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
 disableElasticsearchBackendQuerying,stable,@grafana/observability-logs,false,false,false,false
