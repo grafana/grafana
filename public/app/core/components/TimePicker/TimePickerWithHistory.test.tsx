@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { getDefaultTimeRange, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
+import { getDefaultTimeRange, localTimeFormat, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -43,7 +43,7 @@ describe('TimePickerWithHistory', () => {
 
   afterEach(() => {
     window.localStorage.clear();
-    systemDateFormats.useBrowserLocale();
+    //systemDateFormats.useBrowserLocale();
   });
 
   it('Should load with no history', async () => {
@@ -137,16 +137,28 @@ describe('TimePickerWithHistory', () => {
     await clearAndType(getToField(), '2022-12-10 23:59:59');
     await userEvent.click(getApplyButton());
 
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
     expect(screen.getByText(/2022-12-10 00:00:00 to 2022-12-10 23:59:59/i)).toBeInTheDocument();
-    expect(screen.queryByText(/2022-12-10 00:00:00 to 2022-12-10 23:59:59/i)).toBeInTheDocument();
   });
 
   it('Should display history correctly with custom time format', async () => {
     const timeRange = getDefaultTimeRange();
+
+    const interval = {
+      millisecond: 'HH:mm:ss.SSS',
+      second: 'HH:mm:ss',
+      minute: 'HH:mm',
+      hour: 'DD-MM HH:mm',
+      day: 'DD-MM',
+      month: 'MM-YYYY',
+      year: 'YYYY',
+    };
+
     systemDateFormats.update({
       fullDate: 'DD-MM-YYYY HH:mm:ss',
-      interval: {} as SystemDateFormatsState['interval'],
-      useBrowserLocale: true,
+      interval: interval,
+      useBrowserLocale: false,
     });
     render(<TimePickerWithHistory value={timeRange} {...props} />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
@@ -158,7 +170,6 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
-    expect(screen.queryByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
   });
 });
 
