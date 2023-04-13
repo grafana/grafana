@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,7 +23,6 @@ type UsageStats struct {
 
 	log    log.Logger
 	tracer tracing.Tracer
-	db     db.DB
 
 	externalMetrics     []usagestats.MetricsFunc
 	sendReportCallbacks []usagestats.SendReportCallbackFunc
@@ -37,7 +35,6 @@ func ProvideService(cfg *setting.Cfg,
 	accesscontrol ac.AccessControl,
 	accesscontrolService ac.Service,
 	bundleRegistry supportbundles.Service,
-	db db.DB,
 ) (*UsageStats, error) {
 	s := &UsageStats{
 		Cfg:           cfg,
@@ -46,7 +43,6 @@ func ProvideService(cfg *setting.Cfg,
 		log:           log.New("infra.usagestats"),
 		tracer:        tracer,
 		accesscontrol: accesscontrol,
-		db:            db,
 	}
 
 	if !accesscontrol.IsDisabled() {

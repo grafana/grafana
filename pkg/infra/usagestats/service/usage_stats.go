@@ -40,20 +40,6 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 		UsageStatsId: uss.GetUsageStatsId(ctx),
 	}
 
-	// Find the oldest migrations
-	rows, err := uss.db.GetSqlxSession().Query(ctx,
-		"SELECT timestamp,version from migration_log ORDER BY timestamp asc LIMIT 1")
-	if err == nil && rows.Next() {
-		ts := time.Now()
-		err = rows.Scan(&ts, &report.InstallVersion)
-		if err == nil {
-			report.DatabaseCreated = ts.UnixMilli()
-		}
-	}
-	if err != nil {
-		fmt.Printf("error reading oldest version: %v", err)
-	}
-
 	uss.gatherMetrics(ctx, metrics)
 
 	// must run after registration of external metrics
