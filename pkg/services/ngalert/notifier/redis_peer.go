@@ -16,7 +16,6 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -75,10 +74,6 @@ type redisPeer struct {
 	positionFetchedAt time.Time
 	// The duration we want to return the position if the network is down.
 	positionValidFor time.Duration
-
-	receiveLoopBackoff       *backoff.Backoff
-	fullStateReqLoopBackoff  *backoff.Backoff
-	fullStateSyncLoopBackoff *backoff.Backoff
 }
 
 func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
@@ -116,18 +111,6 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		heartbeatTimeout:  time.Minute,
 		positionValidFor:  time.Minute,
 		members:           make([]string, 0),
-		receiveLoopBackoff: backoff.New(context.Background(), backoff.Config{
-			MinBackoff: networkRetryIntervalMin,
-			MaxBackoff: networkRetryIntervalMax,
-		}),
-		fullStateReqLoopBackoff: backoff.New(context.Background(), backoff.Config{
-			MinBackoff: networkRetryIntervalMin,
-			MaxBackoff: networkRetryIntervalMax,
-		}),
-		fullStateSyncLoopBackoff: backoff.New(context.Background(), backoff.Config{
-			MinBackoff: networkRetryIntervalMin,
-			MaxBackoff: networkRetryIntervalMax,
-		}),
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
