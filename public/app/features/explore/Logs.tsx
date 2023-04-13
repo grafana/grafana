@@ -408,12 +408,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        {contextRow && (
+        {getRowContext && contextRow && (
           <LogRowContextModal
             open={contextOpen}
             row={contextRow}
             onClose={this.onCloseContext}
-            getRowContext={getRowContext ?? (() => Promise.resolve({}))}
+            getRowContext={getRowContext}
             getLogRowContextUi={getLogRowContextUi}
             logsSortOrder={logsSortOrder}
             timeZone={timeZone}
