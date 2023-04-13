@@ -97,9 +97,8 @@ export function changeGroupByPart(query: InfluxQuery, partIndex: number, newPara
 // Which means if a user has a default retention policy named `default` cannot use it.
 // In https://github.com/grafana/grafana/pull/63820 we introduced to use actual retention policies.
 // This did not consider that some users have hard coded `default` retention policy in their dashboards.
-// This function is checks whether the given target has hard coded retention policy not.
-// If it is hard coded it replaces it with actual default one.
-// removes it.
+// This function checks whether the given target has hard coded retention policy not.
+// If it is hardcoded it returns the actual default one.
 export function replaceHardCodedRetentionPolicy(policy: string | undefined, retentionPolicies: string[]): string {
   if (!policy || !retentionPolicies.includes(policy)) {
     return retentionPolicies[0] ?? '';
