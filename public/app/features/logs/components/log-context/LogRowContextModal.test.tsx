@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
@@ -86,12 +87,12 @@ describe('LogRowContextModal', () => {
     const tenLinesButton = screen.getByRole('button', {
       name: /10 lines/i,
     });
-    fireEvent.click(tenLinesButton);
+    userEvent.click(tenLinesButton);
     const twentyLinesButton = screen.getByRole('menuitemradio', {
       name: /20 lines/i,
     });
     act(() => {
-      fireEvent.click(twentyLinesButton);
+      userEvent.click(twentyLinesButton);
     });
 
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(4));

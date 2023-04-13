@@ -1,4 +1,5 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -23,7 +24,7 @@ describe('LogContextButtons', () => {
     const tenLinesButton = screen.getByRole('button', {
       name: /10 lines/i,
     });
-    fireEvent.click(tenLinesButton);
+    userEvent.click(tenLinesButton);
     const options = screen.getAllByRole('menuitemradio');
     expect(options.length).toBe(LoadMoreOptions.length);
     options.forEach((optionEl, index) => {
@@ -35,11 +36,11 @@ describe('LogContextButtons', () => {
     const tenLinesButton = screen.getByRole('button', {
       name: /10 lines/i,
     });
-    fireEvent.click(tenLinesButton);
+    userEvent.click(tenLinesButton);
     const twentyLinesButton = screen.getByRole('menuitemradio', {
       name: /20 lines/i,
     });
-    fireEvent.click(twentyLinesButton);
+    userEvent.click(twentyLinesButton);
     const newOption = { label: '20 lines', value: 20 };
     expect(onChangeOption).toHaveBeenCalledWith(newOption);
   });
