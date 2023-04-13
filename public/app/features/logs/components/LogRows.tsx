@@ -12,6 +12,7 @@ import {
   DataFrame,
   DataSourceWithLogsContextSupport,
   DataQueryResponse,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
@@ -20,7 +21,6 @@ import { sortLogRows } from '../utils';
 //Components
 import { LogRow } from './LogRow';
 import { getLogRowStyles } from './getLogRowStyles';
-import { RowContextOptions } from './log-context/types';
 
 export const PREVIEW_LIMIT = 100;
 
@@ -43,7 +43,7 @@ export interface Props extends Themeable2 {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
+  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;

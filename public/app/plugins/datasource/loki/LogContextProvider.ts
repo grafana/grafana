@@ -1,4 +1,4 @@
-import { FieldCache, FieldType, LogRowModel, TimeRange, toUtc } from '@grafana/data';
+import { FieldCache, FieldType, LogRowContextQueryDirection, LogRowModel, TimeRange, toUtc } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import LokiLanguageProvider from './LanguageProvider';
@@ -20,14 +20,15 @@ export class LogContextProvider {
   async prepareLogRowContextQueryTarget(
     row: LogRowModel,
     limit: number,
-    direction: 'BACKWARD' | 'FORWARD',
+    direction: LogRowContextQueryDirection,
     origQuery?: DataQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
     let expr = await this.prepareContextExpr(row, origQuery);
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
-    const queryDirection = direction === 'FORWARD' ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+    const queryDirection =
+      direction === LogRowContextQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
 
     const query: LokiQuery = {
       expr,

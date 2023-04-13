@@ -31,13 +31,14 @@ import {
   rangeUtil,
   Field,
   sortDataFrame,
+  LogRowContextQueryDirection,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -500,7 +501,7 @@ export class ElasticDatasource
     return true;
   }
 
-  getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
+  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
     const { disableElasticsearchBackendQuerying } = config.featureToggles;
     if (!disableElasticsearchBackendQuerying) {
       const contextRequest = this.makeLogContextDataRequest(row, options);
@@ -523,10 +524,10 @@ export class ElasticDatasource
     } else {
       const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
       const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
-      const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
+      const sort = options?.direction === LogRowContextQueryDirection.Forward ? 'asc' : 'desc';
 
       const header =
-        options?.direction === 'FORWARD'
+        options?.direction === LogRowContextQueryDirection.Forward
           ? this.getQueryHeader('query_then_fetch', dateTime(row.timeEpochMs))
           : this.getQueryHeader('query_then_fetch', undefined, dateTime(row.timeEpochMs));
 
@@ -539,7 +540,7 @@ export class ElasticDatasource
               {
                 range: {
                   [this.timeField]: {
-                    [options?.direction === 'FORWARD' ? 'gte' : 'lte']: row.timeEpochMs,
+                    [options?.direction === LogRowContextQueryDirection.Forward ? 'gte' : 'lte']: row.timeEpochMs,
                     format: 'epoch_millis',
                   },
                 },
@@ -1109,15 +1110,15 @@ export class ElasticDatasource
     return freshDatabaseVersion;
   }
 
-  private makeLogContextDataRequest = (row: LogRowModel, options?: RowContextOptions) => {
-    const direction = options?.direction || 'BACKWARD';
+  private makeLogContextDataRequest = (row: LogRowModel, options?: LogRowContextOptions) => {
+    const direction = options?.direction || LogRowContextQueryDirection.Backward;
     const logQuery: Logs = {
       type: 'logs',
       id: '1',
       settings: {
         limit: options?.limit ? options?.limit.toString() : '10',
         // Sorting of results in the context query
-        sortDirection: direction === 'BACKWARD' ? 'desc' : 'asc',
+        sortDirection: direction === LogRowContextQueryDirection.Backward ? 'desc' : 'asc',
         // Used to get the next log lines before/after the current log line using sort field of selected log line
         searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
       },
@@ -1266,7 +1267,7 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
   // For log context, we want to request data from 7 subsequent/previous indices
   if (intervalPattern) {
     const intervalInfo = intervalMap[intervalPattern];
-    if (direction === 'FORWARD') {
+    if (direction === LogRowContextQueryDirection.Forward) {
       return {
         from: dateTime(rowTimeEpochMs).utc(),
         to: dateTime(rowTimeEpochMs).add(offset, intervalInfo.amount).utc().startOf(intervalInfo.startOf),
@@ -1279,7 +1280,7 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
     }
     // If we don't have an interval pattern, we can't do this, so we just request data from 7h before/after
   } else {
-    if (direction === 'FORWARD') {
+    if (direction === LogRowContextQueryDirection.Forward) {
       return {
         from: dateTime(rowTimeEpochMs).utc(),
         to: dateTime(rowTimeEpochMs).add(offset, 'hours').utc(),
