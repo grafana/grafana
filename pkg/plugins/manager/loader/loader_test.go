@@ -2,7 +2,10 @@ package loader
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sort"
@@ -23,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1117,6 +1121,72 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
+	t.Run("Load duplicate plugin folders", func(t *testing.T) {
+		pluginDir, err := filepath.Abs("../testdata/manifest/plugin")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.features = featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...)
+		})
+		publicKey, err := os.ReadFile("../testdata/manifest/key.pub")
+		if err != nil {
+			panic(err)
+		}
+		apiCalled := false
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/api/plugins/manifests/keys" {
+				w.WriteHeader(http.StatusOK)
+				var data struct {
+					Items []struct {
+						Public string `json:"public"`
+					}
+				}
+				data.Items = []struct {
+					Public string `json:"public"`
+				}{
+					{Public: string(publicKey)},
+				}
+				b, err := json.Marshal(data)
+				require.NoError(t, err)
+				w.Write(b)
+				apiCalled = true
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		l.grafanaURL = s.URL
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir}
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, apiCalled)
+
+		// The fake signature is invalid so the plugin is not loaded
+		expected := []*plugins.Plugin{}
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+	})
+}
+
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	rootDir, err := filepath.Abs("../")
 	if err != nil {
@@ -1435,7 +1505,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder())
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(), featuremgmt.WithFeatures())
 
 	for _, cb := range cbs {
 		cb(l)

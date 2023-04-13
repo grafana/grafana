@@ -25,33 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Soon we can fetch keys from:
-//
-//	https://grafana.com/api/plugins/ci/keys
-const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
-Version: OpenPGP.js v4.10.1
-Comment: https://openpgpjs.org
-
-xpMEXpTXXxMFK4EEACMEIwQBiOUQhvGbDLvndE0fEXaR0908wXzPGFpf0P0Z
-HJ06tsq+0higIYHp7WTNJVEZtcwoYLcPRGaa9OQqbUU63BEyZdgAkPTz3RFd
-5+TkDWZizDcaVFhzbDd500yTwexrpIrdInwC/jrgs7Zy/15h8KA59XXUkdmT
-YB6TR+OA9RKME+dCJozNGUdyYWZhbmEgPGVuZ0BncmFmYW5hLmNvbT7CvAQQ
-EwoAIAUCXpTXXwYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BAAoJEH5NDGpw
-iGbnaWoCCQGQ3SQnCkRWrG6XrMkXOKfDTX2ow9fuoErN46BeKmLM4f1EkDZQ
-Tpq3SE8+My8B5BIH3SOcBeKzi3S57JHGBdFA+wIJAYWMrJNIvw8GeXne+oUo
-NzzACdvfqXAZEp/HFMQhCKfEoWGJE8d2YmwY2+3GufVRTI5lQnZOHLE8L/Vc
-1S5MXESjzpcEXpTXXxIFK4EEACMEIwQBtHX/SD5Qm3v4V92qpaIZQgtTX0sT
-cFPjYWAHqsQ1iENrYN/vg1wU3ADlYATvydOQYvkTyT/tbDvx2Fse8PL84MQA
-YKKQ6AJ3gLVvmeouZdU03YoV4MYaT8KbnJUkZQZkqdz2riOlySNI9CG3oYmv
-omjUAtzgAgnCcurfGLZkkMxlmY8DAQoJwqQEGBMKAAkFAl6U118CGwwACgkQ
-fk0ManCIZuc0jAIJAVw2xdLr4ZQqPUhubrUyFcqlWoW8dQoQagwO8s8ubmby
-KuLA9FWJkfuuRQr+O9gHkDVCez3aism7zmJBqIOi38aNAgjJ3bo6leSS2jR/
-x5NqiKVi83tiXDPncDQYPymOnMhW0l7CVA7wj75HrFvvlRI/4MArlbsZ2tBn
-N1c5v9v/4h6qeA==
-=DNbR
------END PGP PUBLIC KEY BLOCK-----
-`
-
 var (
 	runningWindows = runtime.GOOS == "windows"
 
@@ -81,7 +54,7 @@ func (m *PluginManifest) isV2() bool {
 
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func ReadPluginManifest(body []byte) (*PluginManifest, error) {
+func ReadPluginManifest(body []byte, publicKeyText string) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -94,14 +67,14 @@ func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	if err = validateManifest(manifest, block); err != nil {
+	if err = validateManifest(manifest, block, publicKeyText); err != nil {
 		return nil, err
 	}
 
 	return &manifest, nil
 }
 
-func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin, publicKeyText string) (plugins.Signature, error) {
 	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
@@ -144,7 +117,7 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 		}, nil
 	}
 
-	manifest, err := ReadPluginManifest(byteValue)
+	manifest, err := ReadPluginManifest(byteValue, publicKeyText)
 	if err != nil {
 		mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
@@ -299,7 +272,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func validateManifest(m PluginManifest, block *clearsign.Block) error {
+func validateManifest(m PluginManifest, block *clearsign.Block, publicKeyText string) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}

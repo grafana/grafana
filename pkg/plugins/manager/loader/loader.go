@@ -2,8 +2,10 @@ package loader
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -35,22 +37,24 @@ type Loader struct {
 	assetPath          *assetpath.Service
 	log                log.Logger
 	cfg                *config.Cfg
+	features           plugins.FeatureToggles
 
-	errs map[string]*plugins.SignatureError
+	errs       map[string]*plugins.SignatureError
+	grafanaURL string
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service) *Loader {
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, features plugins.FeatureToggles) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, assetPath,
-		pluginFinder)
+		pluginFinder, features)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder, features plugins.FeatureToggles) *Loader {
 	return &Loader{
 		pluginFinder:       pluginFinder,
 		pluginRegistry:     pluginRegistry,
@@ -58,11 +62,14 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		signatureValidator: signature.NewValidator(authorizer),
 		processManager:     processManager,
 		pluginStorage:      pluginStorage,
-		errs:               make(map[string]*plugins.SignatureError),
-		log:                log.New("plugin.loader"),
-		roleRegistry:       roleRegistry,
-		cfg:                cfg,
-		assetPath:          assetPath,
+		features:           features,
+
+		errs:         make(map[string]*plugins.SignatureError),
+		log:          log.New("plugin.loader"),
+		roleRegistry: roleRegistry,
+		cfg:          cfg,
+		assetPath:    assetPath,
+		grafanaURL:   "https://grafana.com",
 	}
 }
 
@@ -75,15 +82,75 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	return l.loadPlugins(ctx, src, found)
 }
 
+func (l *Loader) getPublicKey(features plugins.FeatureToggles) (string, error) {
+	// The fallback public key is used when the feature flag is not enabled.
+	publicKeyText := `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+	
+xpMEXpTXXxMFK4EEACMEIwQBiOUQhvGbDLvndE0fEXaR0908wXzPGFpf0P0Z
+HJ06tsq+0higIYHp7WTNJVEZtcwoYLcPRGaa9OQqbUU63BEyZdgAkPTz3RFd
+5+TkDWZizDcaVFhzbDd500yTwexrpIrdInwC/jrgs7Zy/15h8KA59XXUkdmT
+YB6TR+OA9RKME+dCJozNGUdyYWZhbmEgPGVuZ0BncmFmYW5hLmNvbT7CvAQQ
+EwoAIAUCXpTXXwYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BAAoJEH5NDGpw
+iGbnaWoCCQGQ3SQnCkRWrG6XrMkXOKfDTX2ow9fuoErN46BeKmLM4f1EkDZQ
+Tpq3SE8+My8B5BIH3SOcBeKzi3S57JHGBdFA+wIJAYWMrJNIvw8GeXne+oUo
+NzzACdvfqXAZEp/HFMQhCKfEoWGJE8d2YmwY2+3GufVRTI5lQnZOHLE8L/Vc
+1S5MXESjzpcEXpTXXxIFK4EEACMEIwQBtHX/SD5Qm3v4V92qpaIZQgtTX0sT
+cFPjYWAHqsQ1iENrYN/vg1wU3ADlYATvydOQYvkTyT/tbDvx2Fse8PL84MQA
+YKKQ6AJ3gLVvmeouZdU03YoV4MYaT8KbnJUkZQZkqdz2riOlySNI9CG3oYmv
+omjUAtzgAgnCcurfGLZkkMxlmY8DAQoJwqQEGBMKAAkFAl6U118CGwwACgkQ
+fk0ManCIZuc0jAIJAVw2xdLr4ZQqPUhubrUyFcqlWoW8dQoQagwO8s8ubmby
+KuLA9FWJkfuuRQr+O9gHkDVCez3aism7zmJBqIOi38aNAgjJ3bo6leSS2jR/
+x5NqiKVi83tiXDPncDQYPymOnMhW0l7CVA7wj75HrFvvlRI/4MArlbsZ2tBn
+N1c5v9v/4h6qeA==
+=DNbR
+-----END PGP PUBLIC KEY BLOCK-----
+`
+	if !features.IsEnabled("pluginsAPIManifestKey") {
+		return publicKeyText, nil
+	}
+
+	var data struct {
+		Items []struct {
+			KeyID  string `json:"keyId"`
+			Since  int64  `json:"since"`
+			Public string `json:"public"`
+		}
+	}
+
+	resp, err := http.Get(l.grafanaURL + "/api/plugins/ci/keys")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return "", err
+	}
+
+	if len(data.Items) == 0 {
+		return "", errors.New("missing public key")
+	}
+
+	return data.Items[0].Public, nil
+}
+
 func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
+
+	publicKeyText, err := l.getPublicKey(l.features)
+	if err != nil {
+		return nil, fmt.Errorf("could not get public key: %w", err)
+	}
+
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 			continue
 		}
 
-		sig, err := signature.Calculate(ctx, l.log, src, p.Primary)
+		sig, err := signature.Calculate(ctx, l.log, src, p.Primary, publicKeyText)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue

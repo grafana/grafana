@@ -318,4 +318,8 @@ const (
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagPluginsAPIManifestKey
+	// Use grafana.com API to retrieve the public manifest key
+	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
 )

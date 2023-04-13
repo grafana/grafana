@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -78,5 +79,10 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 
 // ProvideToggles allows read-only access to the feature state
 func ProvideToggles(mgmt *FeatureManager) FeatureToggles {
+	return mgmt
+}
+
+// Same as ProvideToggles but satisfying the interface in plugins package
+func ProvidePluginsToggles(mgmt *FeatureManager) plugins.FeatureToggles {
 	return mgmt
 }

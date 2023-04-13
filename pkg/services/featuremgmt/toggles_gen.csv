@@ -77,3 +77,4 @@ renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
 pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,false,false,false
 externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
 dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false,true
+pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,false

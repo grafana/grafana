@@ -108,6 +108,7 @@ Alpha features might be changed or removed without prior notice.
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
 | `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
+| `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                                                                                                             |
 
 ## Development feature toggles
 

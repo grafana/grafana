@@ -2,6 +2,7 @@ package signature
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -16,8 +17,32 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	publicKey    = ""
+	manifestText = []byte{}
+)
+
+func setup() {
+	if publicKey == "" {
+		publicKeyB, err := os.ReadFile("../testdata/manifest/key.pub")
+		if err != nil {
+			panic(err)
+		}
+		publicKey = string(publicKeyB)
+	}
+
+	if len(manifestText) == 0 {
+		var err error
+		manifestText, err = os.ReadFile("../testdata/manifest/plugin/MANIFEST.txt")
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func TestReadPluginManifest(t *testing.T) {
-	txt := `-----BEGIN PGP SIGNED MESSAGE-----
+	setup()
+	const manifestV1 = `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
 
 {
@@ -38,18 +63,22 @@ Hash: SHA512
   "keyId": "7e4d0c6a708866e7"
 }
 -----BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.1
-Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAl6U6o0ACgkQfk0ManCIZuevWAIHSvcxOy1SvvL5gC+HpYyG
-VbSsUvF2FsCoXUCTQflK6VdJfSPNzm8YdCdx7gNrBdly6HEs06ZaRp44F/ve
-NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
-74uuP5UXZxwK2YKJovdSknDIU7MhfuvvQIP/og==
-=hBea
+iQGzBAEBCgAdFiEExTyEKBsqv3uNtl8uLGhg/Q+lZ+cFAmQ2lRMACgkQLGhg/Q+l
+Z+dzcAv9E2AUY6j1RixUv9h8aHyFeD00Mi37cM0xnTV5+TxKTHnEZnxqLDbz7PfT
+sPzyr3Z8hOrr1CDGia6MAYR4qzmbA0z/vl9MgqIKoUJRmZ6H9B3cVWO2Bt+3WvLS
+VpPMtpelFbMAtH6lLz8ieJp1RhY/Zdv1yCEwkx7BlvJcqb2JNbK44pv7LexRsOOw
+08pbmeLpkxC95HqDZRq11e66jllvq3AkKLU5F76yZHWAjfnok2H2b9jbpQMOEyJz
+rpSMKrm9/dATN3RgXdfsBLbm8cpuJnMNg+lTfojGP93x8GSSiVAYeOHKS6NxZpDE
+B8i/tmRKdjpn0P+iyGqDMRgyAMMNGMN+vVLvIxVsR6JGkWgN3Y8HtK/wHER2mnu0
+T5iCHVLgj+J5/SBC03XeNa2GKPICjDddsppm0fPWuF05yW9HIiChpl87gpwkFGDs
+b2C9GFIq+zEWCn7WvMqkGljGCDIHnVjaX+CF0+uk3rsfOEyvdvYKBJSPOUltXeau
+/f8HqfVd
+=smd7
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest([]byte(txt))
+		manifest, err := ReadPluginManifest([]byte(manifestV1), publicKey)
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -64,56 +93,28 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 	})
 
 	t.Run("invalid manifest", func(t *testing.T) {
-		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		_, err := ReadPluginManifest([]byte(modified))
+		modified := strings.ReplaceAll(manifestV1, "README.md", "xxxxxxxxxx")
+		_, err := ReadPluginManifest([]byte(modified), publicKey)
 		require.Error(t, err)
 	})
 }
 
 func TestReadPluginManifestV2(t *testing.T) {
-	txt := `-----BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA512
-
-{
-  "manifestVersion": "2.0.0",
-  "signatureType": "private",
-  "signedByOrg": "willbrowne",
-  "signedByOrgName": "Will Browne",
-  "rootUrls": [
-    "http://localhost:3000/"
-  ],
-  "plugin": "test",
-  "version": "1.0.0",
-  "time": 1605807018050,
-  "keyId": "7e4d0c6a708866e7",
-  "files": {
-    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
-  }
-}
------BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.1
-Comment: https://openpgpjs.org
-
-wqIEARMKAAYFAl+2q6oACgkQfk0ManCIZudmzwIJAXWz58cd/91rTXszKPnE
-xbVEvERCbjKTtPBQBNQyqEvV+Ig3MuBSNOVy2SOGrMsdbS6lONgvgt4Cm+iS
-wV+vYifkAgkBJtg/9DMB7/iX5O0h49CtSltcpfBFXlGqIeOwRac/yENzRzAA
-khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
-=rLIE
------END PGP SIGNATURE-----`
+	setup()
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest([]byte(txt))
+		manifest, err := ReadPluginManifest(manifestText, publicKey)
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
-		assert.Equal(t, "test", manifest.Plugin)
+		assert.Equal(t, "test-datasource", manifest.Plugin)
 		assert.Equal(t, "1.0.0", manifest.Version)
-		assert.Equal(t, int64(1605807018050), manifest.Time)
+		assert.Equal(t, int64(1661171059101), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
-		assert.Equal(t, plugins.PrivateSignature, manifest.SignatureType)
-		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
-		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
+		assert.Equal(t, plugins.GrafanaSignature, manifest.SignatureType)
+		assert.Equal(t, "grafana", manifest.SignedByOrg)
+		assert.Equal(t, "Grafana Labs", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
 		assert.Equal(t, []string{"plugin.json"}, fileList(manifest))
 	})
@@ -128,9 +129,9 @@ func TestCalculate(t *testing.T) {
 			{
 				appURL: "https://dev.grafana.com",
 				expectedSignature: plugins.Signature{
-					Status:     plugins.SignatureValid,
-					Type:       plugins.GrafanaSignature,
-					SigningOrg: "Grafana Labs",
+					Status:     plugins.SignatureInvalid,
+					Type:       "",
+					SigningOrg: "",
 				},
 			},
 			{
@@ -170,7 +171,7 @@ func TestCalculate(t *testing.T) {
 					filepath.Join(basePath, "MANIFEST.txt"): {},
 					filepath.Join(basePath, "plugin.json"):  {},
 				}, basePath),
-			})
+			}, publicKey)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
 		}
@@ -202,12 +203,12 @@ func TestCalculate(t *testing.T) {
 				filepath.Join(basePath, "plugin.json"):          {},
 				filepath.Join(basePath, "chrome-win/debug.log"): {},
 			}, basePath),
-		})
+		}, publicKey)
 		require.NoError(t, err)
 		require.Equal(t, plugins.Signature{
-			Status:     plugins.SignatureValid,
-			Type:       plugins.GrafanaSignature,
-			SigningOrg: "Grafana Labs",
+			Status:     plugins.SignatureInvalid,
+			Type:       "",
+			SigningOrg: "",
 		}, sig)
 	})
 
@@ -250,12 +251,12 @@ func TestCalculate(t *testing.T) {
 						filepath.Join(basePath, "plugin.json"):       {},
 						filepath.Join(basePath, "child/plugin.json"): {},
 					}, basePath),
-				})
+				}, publicKey)
 				require.NoError(t, err)
 				require.Equal(t, plugins.Signature{
-					Status:     plugins.SignatureValid,
-					Type:       plugins.GrafanaSignature,
-					SigningOrg: "Grafana Labs",
+					Status:     plugins.SignatureInvalid,
+					Type:       "",
+					SigningOrg: "",
 				}, sig)
 			})
 		}
@@ -677,7 +678,7 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateManifest(*tc.manifest, nil)
+			err := validateManifest(*tc.manifest, nil, publicKey)
 			require.Errorf(t, err, tc.expectedErr)
 		})
 	}

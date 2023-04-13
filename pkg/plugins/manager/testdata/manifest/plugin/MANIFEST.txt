@@ -1,0 +1,33 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "Grafana Labs",
+  "rootUrls": [
+    "http://localhost:3000/"
+  ],
+  "plugin": "test-datasource",
+  "version": "1.0.0",
+  "time": 1661171059101,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "plugin.json": "203ef4a613c5693c437a665cd67f95e2756a0f71b336b2ffb265db7c180d0b19"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+
+iQGzBAEBCgAdFiEExTyEKBsqv3uNtl8uLGhg/Q+lZ+cFAmQ2xTAACgkQLGhg/Q+l
+Z+dKawwAqVpaV1ibL5Zv4Q8FmwrRzjX07o6Ere0YHOcAK/ZVMSP6kbl4Uwz8umE2
+qeinLtplysR3LgCmwEc7AJ2OKwI2NQ5kQUY7Isoc1H712Mkk+pyEh/+oB2Thoto8
+Dgu0jk0jCDcUoTZDcaLzahxlX36TU6FRwOGo358GoAkuJTwgjKAztLZvv52DBUDF
+jutiII6L8U1bPxxTQKN9koWPdZ+VHvJJDuEsemuoOyCYqGmKJGpHo+y6VwWT1oX0
+BPcKuxOwImaZFKURQrlhDP1g9FmvViPXU6tTU40Gqsi7BuWtdRoVWCQChizwgfLt
+WQ4BGflryvbvmSansgpL42VMu8Kk2PF6UZzOk35AE//BwcLI+bRZc7xPrOThYZuc
+QlwWYmFUO+3IGMVzrLf4EpOV9zsUPZTAP/VWEoNU9MnwTpaY30Ef6SYR7VIRboNj
+DHknQSV9XN6QveOjoTWNlEdgDkSnmVTEw9RZtrnxSy8p+BviwmdmBH0N8qIOAl2B
+ewkxJS1d
+=NsjD
+-----END PGP SIGNATURE-----

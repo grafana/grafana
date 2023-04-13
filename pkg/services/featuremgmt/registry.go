@@ -519,5 +519,11 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "pluginsAPIManifestKey",
+			Description: "Use grafana.com API to retrieve the public manifest key",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )

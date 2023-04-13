@@ -136,3 +136,7 @@ type ClientMiddlewareFunc func(next Client) Client
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
 }
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
