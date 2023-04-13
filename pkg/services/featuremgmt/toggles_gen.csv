@@ -78,3 +78,4 @@ externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
 dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false,true
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
 disableElasticsearchBackendQuerying,stable,@grafana/observability-logs,false,false,false,false
+authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
