@@ -172,17 +172,20 @@ export const TransformationsEditor = (props: Props) => {
                             </Tooltip>
                           </Stack>
                         }
+                        invalid={!!formState.errors?.config?.transformations?.[index]?.expression}
+                        error={formState.errors?.config?.transformations?.[index]?.expression?.message}
                       >
                         <Input
-                          {...register(`config.transformations.${index}.expression`)}
+                          {...register(`config.transformations.${index}.expression`, {
+                            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                              .requireExpression
+                              ? 'Please define an expression'
+                              : undefined,
+                          })}
                           defaultValue={field.expression}
                           readOnly={readOnly}
                           disabled={
                             !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showExpression
-                          }
-                          required={
-                            getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                              .requireExpression
                           }
                         />
                       </Field>
