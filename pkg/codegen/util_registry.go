@@ -3,6 +3,7 @@ package codegen
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -40,8 +41,11 @@ func GetPublishedKind(name string, category string) (string, error) {
 		return "", nil
 	}
 
-	file, _, _, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, fmt.Sprintf("grafana/%s/%s/%s.cue", latestDir, category, name), nil)
+	file, _, resp, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, fmt.Sprintf("grafana/%s/%s/%s.cue", latestDir, category, name), nil)
 	if err != nil {
+		if resp.StatusCode == http.StatusNotFound {
+			return "", nil
+		}
 		return "", err
 	}
 	content, err := file.GetContent()

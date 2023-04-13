@@ -34,24 +34,26 @@ func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	oldKind, err := loadCoreKind(name, oldKindString, "core")
-	if err != nil {
-		return nil, err
+	var oldKind kindsys.Kind
+	if oldKindString != "" {
+		oldKind, err = loadCoreKind(name, oldKindString, "core")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// File is new - no need to compare with old lineage
+	if oldKind != nil && !thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage()) {
+		return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
 	}
 
 	core, ok := kind.(kindsys.Core)
 	if !ok {
 		return nil, fmt.Errorf("kind sent to SchemaRegistryJenny must be a core kind")
 	}
-
 	newKindBytes, err := KindToBytes(core.Def().V)
 	if err != nil {
 		return nil, err
-	}
-
-	// File is new - no need to compare with old lineage
-	if oldKind != nil && !thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage()) {
-		return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
 	}
 
 	path := filepath.Join(j.path, "next", "core", name+".cue")

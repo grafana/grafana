@@ -35,25 +35,28 @@ func (j *psrJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		return nil, nil
 	}
 
-	name := strings.ToLower(fmt.Sprintf("%s_%s", decl.PluginPath, decl.SchemaInterface.Name()))
+	name := strings.ToLower(fmt.Sprintf("%s/%s", decl.PluginMeta.PascalName, decl.SchemaInterface.Name()))
 	oldKindString, err := corecodegen.GetPublishedKind(name, "composable")
 	if err != nil {
 		return nil, err
 	}
 
-	oldKind, err := loadComposableKind(name, oldKindString, "composable")
-	if err != nil {
-		return nil, err
-	}
-
-	newKindBytes, err := corecodegen.KindToBytes(decl.KindDecl.V)
-	if err != nil {
-		return nil, err
+	var oldKind kindsys.Kind
+	if oldKindString != "" {
+		oldKind, err = loadComposableKind(name, oldKindString, "composable")
+		if err != nil {
+			return nil, err
+		}	
 	}
 
 	// File is new - no need to compare with old lineage
 	if oldKind != nil && !thema.IsAppendOnly(oldKind.Lineage(), decl.Lineage) {
 		return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
+	}
+
+	newKindBytes, err := corecodegen.KindToBytes(decl.KindDecl.V)
+	if err != nil {
+		return nil, err
 	}
 
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
