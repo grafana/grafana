@@ -24,14 +24,6 @@ trigger_oss = {
     ],
 }
 
-trigger_npm_publish = {
-    "paths": {
-        "include": [
-            "packages/**",
-        ],
-    },
-}
-
 def slack_step(channel, template, secret):
     return {
         "name": "slack",
