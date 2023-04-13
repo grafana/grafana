@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -42,7 +43,7 @@ type MigrationLog struct {
 	Success     bool
 	Error       string
 	Timestamp   time.Time
-	Version     string // version when the process ran
+	Version     sql.NullString // version when the process ran
 }
 
 func NewMigrator(engine *xorm.Engine, sessionGetter sessionProvider, cfg *setting.Cfg) *Migrator {
@@ -156,19 +157,19 @@ func (mg *Migrator) run() (err error) {
 			continue
 		}
 
-		sql := m.SQL(mg.Dialect)
+		sqlcmd := m.SQL(mg.Dialect)
 
 		record := MigrationLog{
 			MigrationID: m.Id(),
-			SQL:         sql,
+			SQL:         sqlcmd,
 			Timestamp:   time.Now(),
-			Version:     mg.version,
+			Version:     sql.NullString{String: mg.version},
 		}
 
 		err := mg.InTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
 			if err != nil {
-				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
+				mg.Logger.Error("Exec failed", "error", err, "sql", sqlcmd)
 				record.Error = err.Error()
 				if !m.SkipMigrationLog() {
 					if _, err := sess.Insert(&record); err != nil {
