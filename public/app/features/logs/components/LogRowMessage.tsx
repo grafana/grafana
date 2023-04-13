@@ -19,7 +19,7 @@ interface Props {
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onOpenContext: (row: LogRowModel, method: string) => void;
+  onOpenContext: (row: LogRowModel) => void;
   styles: LogRowStyles;
 }
 
@@ -66,7 +66,7 @@ export class LogRowMessage extends PureComponent<Props> {
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
     const { scrollElement } = this.props;
     e.stopPropagation();
-    this.props.onOpenContext(this.props.row, 'open');
+    this.props.onOpenContext(this.props.row);
     if (scrollElement && this.logRowRef.current) {
       scrollElement.scroll({
         behavior: 'smooth',
