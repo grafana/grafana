@@ -155,7 +155,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-accoun
 # response with the created service account id,name, login
 {"id":1,"name":"my-service-account","login":"sa-my-service-account","orgId":1,"isDisabled":false,"role":"Viewer","tokens":0,"avatarUrl":""}%
 
-# create the service account token with the service account id returned from the previous step
+# create the service account token with the service account id 1 - /serviceaccounts/{id} returned from the previous step
 curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/1/tokens
 
 # response with the created SAT id,name and key
