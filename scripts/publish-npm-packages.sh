@@ -34,7 +34,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "Changes detected in ${count} packages"
 echo "Starting to release $dist_tag version"
 
 echo "$registry/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
