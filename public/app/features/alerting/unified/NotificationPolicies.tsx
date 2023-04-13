@@ -189,8 +189,8 @@ const AmRoutes = () => {
   }
 
   const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-  const readOnlyPolicies = alertManagerSourceName ? vanillaPrometheusAlertManager || isProvisioned : true;
-  const readOnlyMuteTimings = alertManagerSourceName ? vanillaPrometheusAlertManager : true;
+  const readOnlyPolicies = vanillaPrometheusAlertManager || isProvisioned;
+  const readOnlyMuteTimings = vanillaPrometheusAlertManager;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
