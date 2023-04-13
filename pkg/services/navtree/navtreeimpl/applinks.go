@@ -16,6 +16,7 @@ import (
 )
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
+	topNavEnabled := s.features.IsEnabled(featuremgmt.FlagTopnav)
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
 
@@ -46,7 +47,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
-		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
+		if appNode := s.processAppPlugin(plugin, c, topNavEnabled, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
 	}
@@ -64,7 +65,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	return nil
 }
 
-func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
+func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
@@ -75,7 +76,12 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel
 		SortWeight: navtree.WeightPlugin,
 		IsSection:  true,
 		PluginID:   plugin.ID,
-		Url:        s.cfg.AppSubURL + "/a/" + plugin.ID,
+	}
+
+	if topNavEnabled {
+		appLink.Url = s.cfg.AppSubURL + "/a/" + plugin.ID
+	} else {
+		appLink.Url = path.Join(s.cfg.AppSubURL, plugin.DefaultNavURL)
 	}
 
 	for _, include := range plugin.Includes {
@@ -151,6 +157,10 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel
 	// If we only have one child and it's the app default nav then remove it from children
 	if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
 		appLink.Children = []*navtree.NavLink{}
+	}
+
+	if !topNavEnabled {
+		return appLink
 	}
 
 	// Remove default nav child

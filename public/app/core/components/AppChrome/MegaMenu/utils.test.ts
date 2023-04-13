@@ -23,12 +23,10 @@ describe('enrichConfigItems', () => {
       {
         id: 'profile',
         text: 'Profile',
-        hideFromMenu: true,
       },
       {
         id: 'help',
         text: 'Help',
-        hideFromMenu: true,
       },
     ];
   });

@@ -164,19 +164,12 @@ export const navIndex: NavIndex = {
         url: '/alerting/admin',
       },
       {
-        id: 'divider',
-        text: 'Divider',
-        divider: true,
-        hideFromTabs: true,
-      },
-      {
         id: 'alert',
         text: 'Create alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
         hideFromTabs: true,
-        showIconInNavbar: true,
       },
     ],
     parentItem: {
@@ -236,7 +229,6 @@ export const navIndex: NavIndex = {
     icon: 'plus',
     url: '/alerting/new',
     hideFromTabs: true,
-    showIconInNavbar: true,
   },
   connections: {
     id: 'connections',

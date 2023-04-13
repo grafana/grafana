@@ -14,10 +14,7 @@ export interface NavLinkDTO {
   url?: string;
   target?: LinkTarget;
   sortWeight?: number;
-  divider?: boolean;
-  hideFromMenu?: boolean;
   hideFromTabs?: boolean;
-  showIconInNavbar?: boolean;
   roundIcon?: boolean;
   /**
    * This is true for some sections that have no children (but is still a section)

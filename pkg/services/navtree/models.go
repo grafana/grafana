@@ -49,27 +49,24 @@ const (
 )
 
 type NavLink struct {
-	Id               string     `json:"id,omitempty"`
-	Text             string     `json:"text"`
-	Section          string     `json:"section,omitempty"`
-	SubTitle         string     `json:"subTitle,omitempty"`
-	Icon             string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
-	Img              string     `json:"img,omitempty"`
-	Url              string     `json:"url,omitempty"`
-	Target           string     `json:"target,omitempty"`
-	SortWeight       int64      `json:"sortWeight,omitempty"`
-	Divider          bool       `json:"divider,omitempty"`
-	HideFromMenu     bool       `json:"hideFromMenu,omitempty"`
-	HideFromTabs     bool       `json:"hideFromTabs,omitempty"`
-	ShowIconInNavbar bool       `json:"showIconInNavbar,omitempty"`
-	RoundIcon        bool       `json:"roundIcon,omitempty"`
-	IsSection        bool       `json:"isSection,omitempty"`
-	Children         []*NavLink `json:"children,omitempty"`
-	HighlightText    string     `json:"highlightText,omitempty"`
-	HighlightID      string     `json:"highlightId,omitempty"`
-	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
-	PluginID         string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
-	IsCreateAction   bool       `json:"isCreateAction,omitempty"`
+	Id             string     `json:"id,omitempty"`
+	Text           string     `json:"text"`
+	Section        string     `json:"section,omitempty"`
+	SubTitle       string     `json:"subTitle,omitempty"`
+	Icon           string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
+	Img            string     `json:"img,omitempty"`
+	Url            string     `json:"url,omitempty"`
+	Target         string     `json:"target,omitempty"`
+	SortWeight     int64      `json:"sortWeight,omitempty"`
+	HideFromTabs   bool       `json:"hideFromTabs,omitempty"`
+	RoundIcon      bool       `json:"roundIcon,omitempty"`
+	IsSection      bool       `json:"isSection,omitempty"`
+	Children       []*NavLink `json:"children,omitempty"`
+	HighlightText  string     `json:"highlightText,omitempty"`
+	HighlightID    string     `json:"highlightId,omitempty"`
+	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
+	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
+	IsCreateAction bool       `json:"isCreateAction,omitempty"`
 }
 
 func (node *NavLink) Sort() {
