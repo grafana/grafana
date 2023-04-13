@@ -18,7 +18,7 @@ Grafana allows you to create alerting rules that query one or more data sources,
 
 Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
-_Video shows Alerting in Grafana v9.0. Refer to [Add Grafana managed rule]({{< relref "#add-grafana-managed-rule" >}}) (following) for current directions._
+_Video shows Alerting in Grafana v9.0. Refer to [Add Grafana managed rule]({{< relref "#add-grafana-managed-rule" >}}) (following) for current instructions._
 
 ## Add Grafana managed rule
 
