@@ -3,7 +3,6 @@ import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
-import 'whatwg-fetch';
 import { BrowserRouter } from 'react-router-dom';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';

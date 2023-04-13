@@ -3,8 +3,6 @@ import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import 'whatwg-fetch';
-
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';

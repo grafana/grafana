@@ -8,7 +8,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { DataSourcePluginMeta } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import 'whatwg-fetch';
 
 import { EmptyStateNoDatasource } from './EmptyStateNoDatasource';
 

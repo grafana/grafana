@@ -18,8 +18,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, ContactPointsState } from 'app/types';
 
-import 'whatwg-fetch';
-
 import Receivers from './Receivers';
 import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from './api/alertmanager';
 import { AlertmanagersChoiceResponse } from './api/alertmanagerApi';
