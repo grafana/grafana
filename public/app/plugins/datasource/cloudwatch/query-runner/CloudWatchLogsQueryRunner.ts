@@ -31,7 +31,7 @@ import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQue
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../../features/logs/components/log-context/types';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,

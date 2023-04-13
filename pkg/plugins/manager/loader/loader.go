@@ -161,25 +161,32 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 
+	// initialize plugins
+	initializedPlugins := make([]*plugins.Plugin, 0)
 	for _, p := range verifiedPlugins {
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
-			return nil, err
+			l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
+			continue
 		}
-		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-
 		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
 			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", errDeclareRoles)
 		}
+
+		initializedPlugins = append(initializedPlugins, p)
 	}
 
-	for _, p := range verifiedPlugins {
+	for _, p := range initializedPlugins {
 		if err := l.load(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
+
+		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+		}
 	}
 
-	return verifiedPlugins, nil
+	return initializedPlugins, nil
 }
 
 func (l *Loader) Unload(ctx context.Context, pluginID string) error {

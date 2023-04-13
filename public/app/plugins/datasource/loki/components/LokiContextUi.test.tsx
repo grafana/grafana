@@ -118,14 +118,13 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
       expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3');
+    await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3');
     act(() => {
       jest.runAllTimers();
     });
     expect(props.updateFilter).toHaveBeenCalled();
-
     jest.useRealTimers();
   });
 
