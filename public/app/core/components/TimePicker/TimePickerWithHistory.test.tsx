@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { getDefaultTimeRange, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -41,7 +41,10 @@ describe('TimePickerWithHistory', () => {
     onZoom: () => {},
   };
 
-  afterEach(() => window.localStorage.clear());
+  afterEach(() => {
+    window.localStorage.clear();
+    systemDateFormats.useBrowserLocale();
+  });
 
   it('Should load with no history', async () => {
     const timeRange = getDefaultTimeRange();
@@ -123,6 +126,39 @@ describe('TimePickerWithHistory', () => {
 
     const newLsValue = JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]');
     expect(newLsValue).toEqual(expectedLocalStorage);
+  });
+
+  it('Should display handle timezones correctly', async () => {
+    const timeRange = getDefaultTimeRange();
+    render(<TimePickerWithHistory value={timeRange} {...props} {...{ timeZone: 'Eastern/Pacific' }} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
+    await clearAndType(getFromField(), '2022-12-10 00:00:00');
+    await clearAndType(getToField(), '2022-12-10 23:59:59');
+    await userEvent.click(getApplyButton());
+
+    expect(screen.getByText(/2022-12-10 00:00:00 to 2022-12-10 23:59:59/i)).toBeInTheDocument();
+    expect(screen.queryByText(/2022-12-10 00:00:00 to 2022-12-10 23:59:59/i)).toBeInTheDocument();
+  });
+
+  it('Should display history correctly with custom time format', async () => {
+    const timeRange = getDefaultTimeRange();
+    systemDateFormats.update({
+      fullDate: 'DD-MM-YYYY HH:mm:ss',
+      interval: {} as SystemDateFormatsState['interval'],
+      useBrowserLocale: true,
+    });
+    render(<TimePickerWithHistory value={timeRange} {...props} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
+    await clearAndType(getFromField(), '03-12-2022 00:00:00');
+    await clearAndType(getToField(), '03-12-2022 23:59:59');
+    await userEvent.click(getApplyButton());
+
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
+    expect(screen.getByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
+    expect(screen.queryByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
   });
 });
 
