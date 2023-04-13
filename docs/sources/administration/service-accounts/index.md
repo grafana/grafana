@@ -31,7 +31,8 @@ In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}})
 > **Note:** Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
 
 {{< vimeo 742056367 >}}
-<br>
+
+_Video shows service accounts in Grafana v9.1. Refer to [Create a service account in Grafana]({{< relref "#create-a-service-account-in-grafana" >}}) for current directions._
 
 ## Service account tokens
 
