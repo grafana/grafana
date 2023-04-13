@@ -14,6 +14,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
@@ -92,7 +93,7 @@ export enum LogGroupPosition {
 interface LogRowContextModalProps {
   row: LogRowModel;
   open: boolean;
-  timeZone: string;
+  timeZone: TimeZone;
   onClose: () => void;
   getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
   logsSortOrder?: LogsSortOrder | null;
