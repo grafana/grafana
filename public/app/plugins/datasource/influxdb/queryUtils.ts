@@ -90,3 +90,20 @@ export function changeGroupByPart(query: InfluxQuery, partIndex: number, newPara
   };
   return { ...query, groupBy: newGroupBy };
 }
+
+// Retention policy was hard coded as `default` in
+// public/app/plugins/datasource/influxdb/components/VisualInfluxQLEditor/FromSection.tsx
+// We opted out hard coded the policy in public/app/plugins/datasource/influxdb/influx_query_model.ts
+// Which means if a user has a default retention policy named `default` cannot use it.
+// In https://github.com/grafana/grafana/pull/63820 we introduced to use actual retention policies.
+// This did not consider that some users have hard coded `default` retention policy in their dashboards.
+// This function is checks whether the given target has hard coded retention policy not.
+// If it is hard coded it replaces it with actual default one.
+// removes it.
+export function replaceHardCodedRetentionPolicy(policy: string | undefined, retentionPolicies: string[]): string {
+  if (!policy || !retentionPolicies.includes(policy)) {
+    return retentionPolicies[0] ?? '';
+  }
+
+  return policy;
+}
