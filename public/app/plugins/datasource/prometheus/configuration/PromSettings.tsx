@@ -229,18 +229,15 @@ export const PromSettings = (props: Props) => {
           <InlineField
             label="Default editor"
             labelWidth={26}
-            tooltip={
-              <>
-                Set default editor option (builder/code) for all users of this data source. If no option was selected,
-                the default editor will be the &quot;builder&quot;. If a user switches to other option rather than the
-                specified with this setting on the panel we always show the selected editor for that user. {docsTip()}
-              </>
-            }
+            tooltip={<>Set default editor option for all users of this data source.</>}
           >
             <Select
               aria-label={`Default Editor (Code or Builder)`}
               options={editorOptions}
-              value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
+              value={
+                editorOptions.find((o) => o.value === options.jsonData.defaultEditor) ??
+                editorOptions.find((o) => o.value === QueryEditorMode.Builder)
+              }
               onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
               width={40}
               disabled={options.readOnly}
