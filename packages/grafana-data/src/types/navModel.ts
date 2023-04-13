@@ -7,7 +7,6 @@ export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
-  section?: NavSection;
   subTitle?: string;
   icon?: IconName;
   img?: string;
@@ -42,12 +41,6 @@ export interface NavModelItem extends NavLinkDTO {
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
   emptyMessage?: string;
-}
-
-export enum NavSection {
-  Core = 'core',
-  Plugin = 'plugin',
-  Config = 'config',
 }
 
 export enum NavMenuItemType {

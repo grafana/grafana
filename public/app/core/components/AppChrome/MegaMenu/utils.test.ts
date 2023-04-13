@@ -1,41 +1,26 @@
-import { Location } from 'history';
-
 import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch } from './utils';
+import { enrichHelpItem, getActiveItem, isMatchOrChildMatch } from './utils';
 
 jest.mock('../../../app_events', () => ({
   publish: jest.fn(),
 }));
 
 describe('enrichConfigItems', () => {
-  let mockItems: NavModelItem[];
-  const mockLocation: Location<unknown> = {
-    hash: '',
-    pathname: '/',
-    search: '',
-    state: '',
-  };
+  let mockHelpNode: NavModelItem;
 
   beforeEach(() => {
-    mockItems = [
-      {
-        id: 'profile',
-        text: 'Profile',
-      },
-      {
-        id: 'help',
-        text: 'Help',
-      },
-    ];
+    mockHelpNode = {
+      id: 'help',
+      text: 'Help',
+    };
   });
 
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const helpNode = enrichedConfigItems.find((item) => item.id === 'help');
+    const helpNode = enrichHelpItem(mockHelpNode);
     expect(helpNode!.children).toContainEqual(
       expect.objectContaining({
         text: 'Documentation',

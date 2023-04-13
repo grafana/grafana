@@ -18,20 +18,14 @@ const (
 	WeightExplore
 	WeightAlerting
 	WeightDataConnections
-	WeightPlugin
-	WeightConfig
 	WeightAlertsAndIncidents
 	WeightMonitoring
 	WeightApps
+	WeightPlugin
+	WeightConfig
 	WeightAdmin
 	WeightProfile
 	WeightHelp
-)
-
-const (
-	NavSectionCore   string = "core"
-	NavSectionPlugin string = "plugin"
-	NavSectionConfig string = "config"
 )
 
 const (
@@ -51,7 +45,6 @@ const (
 type NavLink struct {
 	Id             string     `json:"id,omitempty"`
 	Text           string     `json:"text"`
-	Section        string     `json:"section,omitempty"`
 	SubTitle       string     `json:"subTitle,omitempty"`
 	Icon           string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
 	Img            string     `json:"img,omitempty"`
