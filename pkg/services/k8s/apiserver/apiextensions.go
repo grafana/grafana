@@ -47,20 +47,21 @@ import (
 )
 
 func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, error) {
+	// Get the util to get the paths to pre-generated certs
+	certUtil := certgenerator.CertUtil{
+		K8sDataPath: dataPath,
+	}
+
 	o := apiextensionsserveroptions.NewCustomResourceDefinitionsServerOptions(os.Stdout, os.Stderr)
 	o.RecommendedOptions.SecureServing.BindPort = 6443
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
+	// o.RecommendedOptions.Authentication.ClientCert.ClientCA = certUtil.CACertFile()
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.CoreAPI = nil
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
-
-	// Get the util to get the paths to pre-generated certs
-	certUtil := certgenerator.CertUtil{
-		K8sDataPath: dataPath,
-	}
 
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 	o.RecommendedOptions.SecureServing.ServerCert.CertKey = serveroptions.CertKey{

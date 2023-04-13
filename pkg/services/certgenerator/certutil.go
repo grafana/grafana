@@ -182,32 +182,49 @@ func createNewCACertPKI() (*x509.Certificate, *rsa.PrivateKey, error) {
 // NOTE: the optional caCerts parameter is useful if you are preparing a server certificate and want to include CA cert in the cert bundle.
 // For client certificates, feel free to omit.
 func persistCertKeyPairToDisk(cert *x509.Certificate, certPath string, key *rsa.PrivateKey, keyPath string, caCerts ...*x509.Certificate) error {
-	keyBuffer := bytes.Buffer{}
-	if err := pem.Encode(&keyBuffer, &pem.Block{Type: keyutil.RSAPrivateKeyBlockType, Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+	keyPEM, err := KeyPEM(key)
+	if err != nil {
 		return err
 	}
 
 	// Generate cert optionally followed by a CA cert
-	certBuffer := bytes.Buffer{}
-	if err := pem.Encode(&certBuffer, &pem.Block{Type: certutil.CertificateBlockType, Bytes: cert.Raw}); err != nil {
+	certPEM, err := CertPEM(cert, caCerts...)
+	if err != nil {
 		return err
 	}
-	for _, caCert := range caCerts {
-		if err := pem.Encode(&certBuffer, &pem.Block{Type: certutil.CertificateBlockType, Bytes: caCert.Raw}); err != nil {
-			return err
-		}
-	}
 
-	err := certutil.WriteCert(certPath, certBuffer.Bytes())
+	err = certutil.WriteCert(certPath, certPEM)
 	if err != nil {
 		return fmt.Errorf("error persisting CA Cert: %s", err.Error())
 	}
-	err = keyutil.WriteKey(keyPath, keyBuffer.Bytes())
+	err = keyutil.WriteKey(keyPath, keyPEM)
 	if err != nil {
 		return fmt.Errorf("error persisting CA Key: %s", err.Error())
 	}
 
 	return nil
+}
+
+func CertPEM(cert *x509.Certificate, caCerts ...*x509.Certificate) ([]byte, error) {
+	// Generate cert optionally followed by a CA cert
+	certBuffer := bytes.Buffer{}
+	if err := pem.Encode(&certBuffer, &pem.Block{Type: certutil.CertificateBlockType, Bytes: cert.Raw}); err != nil {
+		return nil, err
+	}
+	for _, caCert := range caCerts {
+		if err := pem.Encode(&certBuffer, &pem.Block{Type: certutil.CertificateBlockType, Bytes: caCert.Raw}); err != nil {
+			return nil, err
+		}
+	}
+	return certBuffer.Bytes(), nil
+}
+
+func KeyPEM(key *rsa.PrivateKey) ([]byte, error) {
+	keyBuffer := bytes.Buffer{}
+	if err := pem.Encode(&keyBuffer, &pem.Block{Type: keyutil.RSAPrivateKeyBlockType, Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+		return nil, err
+	}
+	return keyBuffer.Bytes(), nil
 }
 
 func (cu *CertUtil) InitializeCACertPKI() error {

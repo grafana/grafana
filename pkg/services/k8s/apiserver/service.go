@@ -130,10 +130,23 @@ func (s *service) running(ctx context.Context) error {
 
 func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 
+	certUtil := certgenerator.CertUtil{
+		K8sDataPath: s.dataPath,
+	}
+	caCert, err := certUtil.GetK8sCACert()
+	if err != nil {
+		return err
+	}
+	caPEM, err := certgenerator.CertPEM(caCert)
+	if err != nil {
+		return err
+	}
+
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		InsecureSkipTLSVerify: true,
-		Server:                restConfig.Host,
+		InsecureSkipTLSVerify:    false,
+		CertificateAuthorityData: caPEM,
+		Server:                   restConfig.Host,
 	}
 
 	contexts := make(map[string]*clientcmdapi.Context)

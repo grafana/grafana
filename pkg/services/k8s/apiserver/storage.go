@@ -550,7 +550,7 @@ func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object)
 	if signedInUser.Permissions[signedInUser.OrgID] == nil {
 		permissions, err := s.acService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
 		if err != nil {
-			fmt.Errorf("failed fetching permissions for user: userID=%d, error=%s", signedInUser.UserID, err.Error())
+			fmt.Printf("failed fetching permissions for user: userID=%d, error=%s", signedInUser.UserID, err.Error())
 		}
 		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
