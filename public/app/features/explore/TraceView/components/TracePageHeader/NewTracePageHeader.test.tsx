@@ -42,13 +42,13 @@ describe('NewTracePageHeader test', () => {
     const header = document.querySelector('header');
     const method = getByText(header!, 'POST');
     const status = getByText(header!, '200');
-    const total = getByText(header!, 'Total Spans: 2');
+    const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
     const duration = getAllByText(header!, '2.36s');
     const timestampPart1 = getByText(header!, '2023-02-05 08:50');
     const timestampPart2 = getByText(header!, ':56.289');
     expect(method).toBeInTheDocument();
     expect(status).toBeInTheDocument();
-    expect(total).toBeInTheDocument();
+    expect(url).toBeInTheDocument();
     expect(duration.length).toBe(2);
     expect(timestampPart1).toBeInTheDocument();
     expect(timestampPart2).toBeInTheDocument();
