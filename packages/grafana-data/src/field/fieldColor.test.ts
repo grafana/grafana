@@ -1,6 +1,5 @@
 import { createTheme } from '../themes';
 import { Field, FieldColorModeId, FieldType } from '../types';
-import { ArrayVector } from '../vector/ArrayVector';
 
 import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 
@@ -8,7 +7,7 @@ function getTestField(mode: string): Field {
   return {
     name: 'name',
     type: FieldType.number,
-    values: new ArrayVector(),
+    values: [],
     config: {
       color: {
         mode: mode,
@@ -52,7 +51,7 @@ describe('fieldColorModeRegistry', () => {
     field.config.color!.seriesBy = 'last';
     // min = -10, max = 10, last = 5
     // last percent 75%
-    field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
+    field.values = [0, -10, 5, 10, 2, 5];
 
     const color = getFieldSeriesColor(field, createTheme());
     const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
@@ -63,7 +62,7 @@ describe('fieldColorModeRegistry', () => {
 
 describe('getFieldSeriesColor', () => {
   const field = getTestField('continuous-GrYlRd');
-  field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
+  field.values = [0, -10, 5, 10, 2, 5];
 
   it('When color.seriesBy is last use that to calc series color', () => {
     field.config.color!.seriesBy = 'last';
