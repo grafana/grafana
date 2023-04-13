@@ -13,28 +13,15 @@ import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { getInputId } from './utils';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  // show text color at 0.05% to show with alternating background colors of interactive table
-  const decomposedContrastColor = colorManipulator.decomposeColor(theme.colors.text.primary);
-
-  return {
-    label: css`
-      max-width: ${theme.spacing(80)};
-    `,
-    variable: css`
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
-    cardContainerBackground: css`
-      background-color: rgba(
-        ${decomposedContrastColor.values[0]},
-        ${decomposedContrastColor.values[1]},
-        ${decomposedContrastColor.values[2]},
-        0.05
-      );
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  label: css`
+    max-width: ${theme.spacing(80)};
+  `,
+  variable: css`
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-weight: ${theme.typography.fontWeightMedium};
+  `,
+});
 
 export const ConfigureCorrelationSourceForm = () => {
   const { control, formState, register, getValues } = useFormContext();
@@ -98,7 +85,7 @@ export const ConfigureCorrelationSourceForm = () => {
           />
         </Field>
         {variables.length > 0 && (
-          <Card className={styles.cardContainerBackground}>
+          <Card>
             <Card.Heading>Variables used in the target query</Card.Heading>
             <Card.Description>
               You have used following variables in the target query:{' '}
