@@ -151,9 +151,8 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 		config,
 		storage,
 		&compose.CommonStrategy{
-			CoreStrategy:               compose.NewOAuth2JWTStrategy(keyGetter, compose.NewOAuth2HMACStrategy(config), config),
-			OpenIDConnectTokenStrategy: compose.NewOpenIDConnectStrategy(keyGetter, config),
-			Signer:                     &jwt.DefaultSigner{GetPrivateKey: keyGetter},
+			CoreStrategy: compose.NewOAuth2JWTStrategy(keyGetter, compose.NewOAuth2HMACStrategy(config), config),
+			Signer:       &jwt.DefaultSigner{GetPrivateKey: keyGetter},
 		},
 		compose.OAuth2ClientCredentialsGrantFactory,
 		compose.RFC7523AssertionGrantFactory,

@@ -317,11 +317,9 @@ func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessR
 	}
 	if claimsFilter["email"] {
 		s.logger.Debug("Service accounts have no emails")
-		currentOAuthSessionData.JWTClaims.Add("email", "")
 	}
 	if claimsFilter["groups"] {
 		s.logger.Debug("Service accounts have no groups")
-		currentOAuthSessionData.JWTClaims.Add("groups", "")
 	}
 	if claimsFilter["entitlements"] {
 		s.logger.Debug("Processing client entitlements")
