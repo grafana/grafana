@@ -119,7 +119,7 @@ Select one of the following palettes:
 | Color mode                      | Description                                                                                                                                              |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Single color**                | Specify a single color, useful in an override rule                                                                                                       |
-| **Shades of a color**           | Selects shades of a single color, useful in an override rule                                                                                        |
+| **Shades of a color**           | Selects shades of a single color, useful in an override rule                                                                                             |
 | **From thresholds**             | Informs Grafana to take the color from the matching threshold                                                                                            |
 | **Classic palette**             | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
 | **Green-Yellow-Red (by value)** | Continuous color scheme                                                                                                                                  |
