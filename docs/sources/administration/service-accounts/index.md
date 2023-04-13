@@ -32,7 +32,7 @@ In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}})
 
 {{< vimeo 742056367 >}}
 
-_Video shows service accounts in Grafana v9.1. Refer to [Create a service account in Grafana]({{< relref "#create-a-service-account-in-grafana" >}}) for current directions._
+_Video shows service accounts in Grafana v9.1. Refer to [Create a service account in Grafana]({{< relref "#create-a-service-account-in-grafana" >}}) for current instructions._
 
 ## Service account tokens
 
