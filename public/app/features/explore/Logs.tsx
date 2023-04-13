@@ -308,6 +308,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onOpenContext = (row: LogRowModel, onClose: () => void) => {
+    // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     this.setState({
       contextOpen: true,
       contextRow: row,
