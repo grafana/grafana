@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/manifestverifier"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/manifestverifier"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1205,12 +1205,12 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 			}
 			w.WriteHeader(http.StatusNotFound)
 		}))
-		l := newLoader(&config.Cfg{}, func(l *Loader) {
+		l := newLoader(&config.Cfg{GrafanaComURL: s.URL}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
-			l.manifestVerifier = manifestverifier.New(featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...), s.URL)
+			l.features = featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...)
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {

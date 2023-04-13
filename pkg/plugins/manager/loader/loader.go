@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/manifestverifier"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -36,9 +35,8 @@ type Loader struct {
 	assetPath          *assetpath.Service
 	log                log.Logger
 	cfg                *config.Cfg
-
-	errs             map[string]*plugins.SignatureError
-	manifestVerifier *manifestverifier.ManifestVerifier
+	errs               map[string]*plugins.SignatureError
+	features           plugins.FeatureToggles
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
@@ -65,7 +63,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		roleRegistry:       roleRegistry,
 		cfg:                cfg,
 		assetPath:          assetPath,
-		manifestVerifier:   manifestverifier.New(features, "https://grafana.com"),
+		features:           features,
 	}
 }
 
@@ -87,7 +85,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			continue
 		}
 
-		sig, err := signature.Calculate(ctx, l.log, src, p.Primary, l.manifestVerifier)
+		sig, err := signature.Calculate(ctx, l.log, src, p.Primary, l.features, l.cfg.GrafanaComURL)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue

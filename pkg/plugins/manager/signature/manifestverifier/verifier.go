@@ -1,12 +1,16 @@
 package manifestverifier
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -102,4 +106,24 @@ N1c5v9v/4h6qeA==
 	}
 
 	return "", fmt.Errorf("missing public key for %s", keyID)
+}
+
+func (pmv *ManifestVerifier) Verify(keyID string, block *clearsign.Block) error {
+	publicKey, err := pmv.GetPublicKey(keyID)
+	if err != nil {
+		return err
+	}
+
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKey))
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse public key", err)
+	}
+
+	if _, err = openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
+		return fmt.Errorf("%v: %w", "failed to check signature", err)
+	}
+
+	return nil
 }

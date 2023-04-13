@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -18,8 +19,8 @@ type Manager struct {
 	log log.PrettyLogger
 }
 
-func ProvideService() *Manager {
-	defaultBaseURL := "https://grafana.com/api/plugins"
+func ProvideService(cfg *config.Cfg) *Manager {
+	defaultBaseURL := cfg.GrafanaComURL + "/api/plugins"
 	return New(false, defaultBaseURL, log.NewPrettyLogger("plugin.repository"))
 }
 

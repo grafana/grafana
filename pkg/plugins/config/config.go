@@ -34,6 +34,8 @@ type Cfg struct {
 	PluginsCDNURLTemplate string
 
 	Tracing Tracing
+
+	GrafanaComURL string
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
@@ -53,5 +55,6 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		LogDatasourceRequests:   logDatasourceRequests,
 		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
 		Tracing:                 tracing,
+		GrafanaComURL:           "https://grafana.com",
 	}
 }
