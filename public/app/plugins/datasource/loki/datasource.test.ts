@@ -336,7 +336,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'success',
-        message: 'Data source successfully connected and labels found.',
+        message: 'Data source successfully connected.',
       });
     });
 

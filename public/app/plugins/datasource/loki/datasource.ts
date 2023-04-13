@@ -735,7 +735,7 @@ export class LokiDatasource
     return this.metadataRequest('labels', params).then(
       (values) => {
         return values.length > 0
-          ? { status: 'success', message: 'Data source successfully connected and labels found.' }
+          ? { status: 'success', message: 'Data source successfully connected.' }
           : {
               status: 'error',
               message:
