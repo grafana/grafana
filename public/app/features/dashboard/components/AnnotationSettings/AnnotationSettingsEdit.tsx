@@ -1,12 +1,30 @@
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
+import {
+  AnnotationQuery,
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  GrafanaTheme2,
+  SelectableValue,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { DataSourcePicker, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, Checkbox, Field, FieldSet, HorizontalGroup, Input, Select, ValuePicker } from '@grafana/ui';
+import {
+  Button,
+  Checkbox,
+  Field,
+  FieldSet,
+  HorizontalGroup,
+  Input,
+  MultiSelect,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
+import config from 'app/core/config';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -28,6 +46,8 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     }
     return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
   }, [annotation.filter]);
+
+  const style = useStyles2(getStyles);
 
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
@@ -82,15 +102,17 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     onUpdate({ ...annotation, filter });
   };
 
-  const onAddFilterPanelID = (v: SelectableValue<number>) => {
-    if (!v.value) {
+  const onAddFilterPanelID = (selections: Array<SelectableValue<number>>) => {
+    if (!Array.isArray(selections)) {
       return;
     }
-    const filter = {
+
+    const filter: Filter = {
       exclude: panelFilter === PanelFilterType.ExcludePanels,
-      ids: annotation.filter?.ids ? [...annotation.filter.ids] : [],
+      ids: [],
     };
-    filter.ids.push(v.value);
+
+    selections.forEach((selection) => selection.value && filter.ids.push(selection.value));
     onUpdate({ ...annotation, filter });
   };
 
@@ -108,6 +130,19 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
 
   const isNewAnnotation = annotation.name === newAnnotationName;
   const formWidth = 50;
+
+  const panels: Array<SelectableValue<number>> = useMemo(
+    () =>
+      dashboard?.panels
+        .map((panel) => ({
+          value: panel.id,
+          label: panel.title ?? `Panel ${panel.id}`,
+          description: panel.description,
+          imgUrl: config.panels[panel.type].info.logos.small,
+        }))
+        .sort((a, b) => (a.label > b.label ? 1 : -1)) ?? [],
+    [dashboard]
+  );
 
   return (
     <div>
@@ -145,24 +180,16 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           <>
             <Select width={formWidth} options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} />
             {panelFilter !== PanelFilterType.AllPanels && (
-              <div>
-                <pre>{JSON.stringify(annotation.filter?.ids)}</pre>
-                <ValuePicker
-                  icon="plus"
-                  label="Select panel"
-                  variant="secondary"
-                  menuPlacement="auto"
-                  // isFullWidth={true}
-                  size="md"
-                  options={dashboard.panels.map<SelectableValue<number>>((p) => ({
-                    label: p.hasTitle() ? p.title : `Panel ${p.id}`,
-                    value: p.id,
-                    description: p.description,
-                    imgUrl: p.plugin?.meta?.info?.logos?.small,
-                  }))}
-                  onChange={onAddFilterPanelID}
-                />
-              </div>
+              <MultiSelect
+                options={panels}
+                value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                onChange={onAddFilterPanelID}
+                isClearable={true}
+                placeholder="Choose panel"
+                width={100}
+                closeMenuOnSelect={false}
+                className={style.select}
+              />
             )}
           </>
         </Field>
@@ -199,9 +226,22 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   );
 };
 
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    select: css`
+      margin-top: 8px;
+    `,
+  };
+};
+
 function goBackToList() {
   locationService.partial({ editIndex: null });
 }
+
+type Filter = {
+  exclude: boolean;
+  ids: number[];
+};
 
 // Synthetic type
 enum PanelFilterType {
