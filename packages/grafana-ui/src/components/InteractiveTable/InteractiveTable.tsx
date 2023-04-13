@@ -71,11 +71,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     expandedContentRow: css`
       label: expanded-row-content;
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      position: relative;
-      padding: ${theme.spacing(2, 2, 2, 5)};
 
       td {
+        border-bottom: 1px solid ${theme.colors.border.weak};
+        position: relative;
+        padding: ${theme.spacing(2, 2, 2, 5)};
+
         &:before {
           content: '';
           position: absolute;
