@@ -66,13 +66,6 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		})
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, uids)
-	if len(metadata) > 0 {
-		for i := range result {
-			result[i].AccessControl = metadata[result[i].Uid]
-		}
-	}
-
 	return response.JSON(http.StatusOK, result)
 }
 
@@ -308,6 +301,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
 	canDelete, _ := g.CanDelete()
+	canCreate, _ := g.CanCreate(folder.ID, false)
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
@@ -319,22 +313,22 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 	}
 
 	return dtos.Folder{
-		Id:            folder.ID,
-		Uid:           folder.UID,
-		Title:         folder.Title,
-		Url:           folder.URL,
-		HasACL:        folder.HasACL,
-		CanSave:       canSave,
-		CanEdit:       canEdit,
-		CanAdmin:      canAdmin,
-		CanDelete:     canDelete,
-		CreatedBy:     creator,
-		Created:       folder.Created,
-		UpdatedBy:     updater,
-		Updated:       folder.Updated,
-		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
-		ParentUID:     folder.ParentUID,
+		Id:        folder.ID,
+		Uid:       folder.UID,
+		Title:     folder.Title,
+		Url:       folder.URL,
+		HasACL:    folder.HasACL,
+		CanSave:   canSave,
+		CanEdit:   canEdit,
+		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
+		CanCreate: canCreate,
+		CreatedBy: creator,
+		Created:   folder.Created,
+		UpdatedBy: updater,
+		Updated:   folder.Updated,
+		Version:   folder.Version,
+		ParentUID: folder.ParentUID,
 	}
 }
 
