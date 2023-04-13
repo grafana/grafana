@@ -127,7 +127,7 @@ composableKinds: PanelCfg: {
 							// 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 							// }
 							// Controls the display of the value in the cell
-							showValue: ui.VisibilityMode | *"auto"
+							showValue: ui.VisibilityMode | (*"auto" | _)
 							// Controls gap between cells
 							cellGap?: uint8 & >=0 & <=25 | *1
 							// Controls cell radius

@@ -44,7 +44,7 @@ composableKinds: PanelCfg: {
 							common.HideableFieldConfig
 							common.AxisConfig
 
-							show?: ScatterShow | *"points"
+							show?: ScatterShow | (*"points" | _)
 
 							pointSize?:  common.ScaleDimensionConfig
 							lineColor?:  common.ColorDimensionConfig
@@ -53,7 +53,7 @@ composableKinds: PanelCfg: {
 
 							lineWidth?: int32 & >=0
 							lineStyle?: common.LineStyle
-							label?:     common.VisibilityMode | *"auto"
+							label?:     common.VisibilityMode | (*"auto" | _)
 						} @cuetsy(kind="interface",TSVeneer="type")
 
 						ScatterSeriesConfig: {

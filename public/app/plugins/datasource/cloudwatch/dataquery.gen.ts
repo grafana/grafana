@@ -146,7 +146,7 @@ export interface QueryEditorArrayExpression {
   /**
    * TODO this doesn't work; temporarily extended in veneer
    */
-  type: QueryEditorExpressionType;
+  type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
 }
 
 /**
