@@ -105,13 +105,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
       );
       break;
     case 'proxy':
-      urlTooltip = (
-        <>
-          Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
-          backend/server.
-          {docsTip()}
-        </>
-      );
+      urlTooltip = <>This URL must be accessible from the Grafana server.</>;
       break;
     default:
       urlTooltip = 'Specify a complete HTTP URL (for example http://your_server:8080)';
@@ -166,7 +160,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         </p>
         <div className="gf-form-group">
           <div className="gf-form">
-            <InlineField label="URL" labelWidth={26} tooltip={urlTooltip}>
+            <InlineField label="Prometheus Server URL" labelWidth={26} tooltip={urlTooltip}>
               {urlInput}
             </InlineField>
           </div>
