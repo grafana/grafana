@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button } from '@grafana/ui';
+import { Button, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
@@ -16,8 +16,10 @@ type Props = {
 };
 
 export function ExemplarsSettings({ options, onChange, disabled }: Props) {
+  const theme = useTheme2();
+  const styles = overhaulStyles(theme);
   return (
-    <div className={overhaulStyles.sectionBottomPadding}>
+    <div className={styles.sectionBottomPadding}>
       <h6 className="page-heading">Exemplars</h6>
 
       {options &&

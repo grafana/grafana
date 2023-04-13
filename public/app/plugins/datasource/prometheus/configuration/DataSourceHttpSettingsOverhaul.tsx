@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useCallback } from 'react';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   useTheme2,
@@ -83,7 +83,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme2();
-
+  const styles = overhaulStyles(theme);
   const onSettingsChange = useCallback(
     // eslint-disable-next-line
     (change: Partial<DataSourceSettings<any, any>>) => {
@@ -157,11 +157,13 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
 
   return (
-    <div className={overhaulStyles.sectionBottomPadding}>
+    <div className={styles.sectionBottomPadding}>
       <>
         <hr />
-        <h3 className={overhaulStyles.sectionHeaderPadding}>Connection</h3>
-        <p className={`${overhaulStyles.description}`}>Provide information to connect to this datasource.</p>
+        <h3 className={styles.sectionHeaderPadding}>Connection</h3>
+        <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
+          Provide information to connect to this datasource.
+        </p>
         <div className="gf-form-group">
           <div className="gf-form">
             <InlineField label="URL" labelWidth={26} tooltip={urlTooltip}>
@@ -169,7 +171,7 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
             </InlineField>
           </div>
         </div>
-        <div className={overhaulStyles.sectionBottomPadding}>
+        <div className={`${styles.sectionBottomPadding} ${styles.secondaryGrey}`}>
           For more information on configuring the Grafana Prometheus datasource see the{' '}
           <a
             style={{ textDecoration: 'underline' }}
@@ -185,9 +187,11 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
 
       <>
         <hr />
-        <h3 className={overhaulStyles.sectionHeaderPadding}>Authentication</h3>
-        <p className={`${overhaulStyles.description}`}>Provide information to grant access to this datasource.</p>
-        <div className={overhaulStyles.sectionBottomPadding}>
+        <h3 className={styles.sectionHeaderPadding}>Authentication</h3>
+        <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
+          Provide information to grant access to this datasource.
+        </p>
+        <div className={styles.sectionBottomPadding}>
           <div className="gf-form-inline">
             <InlineField
               label="Basic auth"
@@ -303,8 +307,10 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
         )}
         <>
           <hr />
-          <h3 className={overhaulStyles.sectionHeaderPadding}>Access options</h3>
-          <p className={`${overhaulStyles.description}`}>Configure access options for this datasource.</p>
+          <h3 className={styles.sectionHeaderPadding}>Access options</h3>
+          <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
+            Configure access options for this datasource.
+          </p>
           {showAccessOptions && (
             <>
               <div className="gf-form-inline">
@@ -384,25 +390,29 @@ export const DataSourceHttpSettingsOverhaul = (props: HttpSettingsProps) => {
   );
 };
 
-export const overhaulStyles = {
-  additionalSettings: css`
-    margin-bottom: 25px;
-  `,
-  description: css`
-    font-size: 12px;
-    color: #ccccdc;
-    opacity: 65%;
-  `,
-  inlineError: css`
-    margin: 0px 0px 4px 245px;
-  `,
-  switchField: css`
-    align-items: center;
-  `,
-  sectionHeaderPadding: css`
-    padding-top: 32px;
-  `,
-  sectionBottomPadding: css`
-    padding-bottom: 32px;
-  `,
-};
+export function overhaulStyles(theme: GrafanaTheme2) {
+  return {
+    additionalSettings: css`
+      margin-bottom: 25px;
+    `,
+    secondaryGrey: css`
+      color: ${theme.colors.secondary.text};
+      opacity: 65%;
+    `,
+    inlineError: css`
+      margin: 0px 0px 4px 245px;
+    `,
+    switchField: css`
+      align-items: center;
+    `,
+    sectionHeaderPadding: css`
+      padding-top: 32px;
+    `,
+    sectionBottomPadding: css`
+      padding-bottom: 32px;
+    `,
+    subsectionText: css`
+      font-size: 12px;
+    `,
+  };
+}

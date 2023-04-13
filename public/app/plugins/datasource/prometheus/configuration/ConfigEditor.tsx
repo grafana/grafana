@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, Alert, SecureSocksProxySettings } from '@grafana/ui';
+import { AlertingSettings, Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PromOptions } from '../types';
@@ -25,6 +25,9 @@ export const ConfigEditor = (props: Props) => {
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };
+
+  const theme = useTheme2();
+  const styles = overhaulStyles(theme);
 
   return (
     <>
@@ -49,8 +52,8 @@ export const ConfigEditor = (props: Props) => {
       )}
       <>
         <hr />
-        <h3 className={overhaulStyles.sectionHeaderPadding}>Additional Settings</h3>
-        <p className={`${overhaulStyles.description}`}>
+        <h3 className={styles.sectionHeaderPadding}>Additional Settings</h3>
+        <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
           Additional settings are optional settings that can be configured for more control over your data source.
         </p>
         <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />

@@ -9,7 +9,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime/src';
-import { FieldValidationMessage, InlineField, Input, Select, Switch } from '@grafana/ui';
+import { FieldValidationMessage, InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
@@ -151,6 +151,9 @@ export const PromSettings = (props: Props) => {
     options.jsonData.httpMethod = 'POST';
   }
 
+  const theme = useTheme2();
+  const styles = overhaulStyles(theme);
+
   type ValidDuration = {
     timeInterval: string;
     queryTimeout: string;
@@ -255,7 +258,7 @@ export const PromSettings = (props: Props) => {
               </>
             }
             disabled={options.readOnly}
-            className={overhaulStyles.switchField}
+            className={styles.switchField}
           >
             <Switch
               value={options.jsonData.disableMetricsLookup ?? false}
@@ -369,7 +372,7 @@ export const PromSettings = (props: Props) => {
               label="Incremental querying (beta)"
               labelWidth={26}
               tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
-              className={overhaulStyles.switchField}
+              className={styles.switchField}
             >
               <Switch
                 value={options.jsonData.incrementalQuerying ?? false}
