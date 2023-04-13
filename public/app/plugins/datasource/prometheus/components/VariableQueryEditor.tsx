@@ -72,7 +72,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       return;
     }
 
-    datasource.getLabelNames().then((labelNames: Array<{ text: string }>) => {
+    datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
       setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
     });
   }, [datasource, qryType]);
