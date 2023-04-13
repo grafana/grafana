@@ -73,6 +73,7 @@ export class AppChromeService {
     // Some updates can have new instance of sectionNav or pageNav but with same values
     if (newState.sectionNav !== current.sectionNav || newState.pageNav !== current.pageNav) {
       if (
+        newState.actions === current.actions &&
         navItemsAreTheSame(newState.sectionNav, current.sectionNav) &&
         navItemsAreTheSame(newState.pageNav, current.pageNav)
       ) {

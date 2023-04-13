@@ -28,12 +28,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:        "dashboardPreviews",
-			Description: "Create and show thumbnails for dashboard search results",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -75,12 +69,6 @@ var (
 		{
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:        "lokiDataframeApi",
-			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
@@ -458,6 +446,12 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:        "lokiMetricDataplane",
+			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiSecondary",
 			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
 			State:       FeatureStateAlpha,
@@ -525,6 +519,12 @@ var (
 			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
 			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "authenticationConfigUI",
+			Description: "Enables authentication configuration UI",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
 		},
 	}
 )

@@ -11,6 +11,7 @@ import {
   CoreApp,
   DataFrame,
   DataSourceWithLogsContextSupport,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -29,7 +30,6 @@ import {
   HasMoreContextRows,
   LogRowContextProvider,
 } from './log-context/LogRowContextProvider';
-import { RowContextOptions } from './log-context/types';
 
 interface Props extends Themeable2 {
   row: LogRowModel;
@@ -50,7 +50,7 @@ interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
   getLogRowContextUi?: (row: LogRowModel) => React.ReactNode;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
