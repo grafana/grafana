@@ -677,7 +677,7 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
 
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))
+  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid))
 );
 
 export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {

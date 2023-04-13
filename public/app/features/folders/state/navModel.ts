@@ -73,6 +73,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     canEdit: true,
     canAdmin: true,
     canDelete: true,
+    canCreate: true,
     version: 0,
   });
 

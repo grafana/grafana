@@ -46,10 +46,6 @@ export interface BackendSrvDependencies {
   logout: () => void;
 }
 
-export interface FolderRequestOptions {
-  withAccessControl?: boolean;
-}
-
 const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
 
 export class BackendSrv implements BackendService {
@@ -492,13 +488,8 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
-    const queryParams = new URLSearchParams();
-    if (options.withAccessControl) {
-      queryParams.set('accesscontrol', 'true');
-    }
-
-    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
+  getFolderByUid(uid: string) {
+    return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
 }
 
