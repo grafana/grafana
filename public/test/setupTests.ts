@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import 'whatwg-fetch';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
