@@ -37,6 +37,39 @@ const (
 	NodesTypeResponse    NodesType = "response"
 )
 
+// Defines values for ScenarioId.
+const (
+	ScenarioIdAnnotations                  ScenarioId = "annotations"
+	ScenarioIdArrow                        ScenarioId = "arrow"
+	ScenarioIdCsvContent                   ScenarioId = "csv_content"
+	ScenarioIdCsvFile                      ScenarioId = "csv_file"
+	ScenarioIdCsvMetricValues              ScenarioId = "csv_metric_values"
+	ScenarioIdDatapointsOutsideRange       ScenarioId = "datapoints_outside_range"
+	ScenarioIdExponentialHeatmapBucketData ScenarioId = "exponential_heatmap_bucket_data"
+	ScenarioIdFlameGraph                   ScenarioId = "flame_graph"
+	ScenarioIdGrafanaApi                   ScenarioId = "grafana_api"
+	ScenarioIdLinearHeatmapBucketData      ScenarioId = "linear_heatmap_bucket_data"
+	ScenarioIdLive                         ScenarioId = "live"
+	ScenarioIdLogs                         ScenarioId = "logs"
+	ScenarioIdManualEntry                  ScenarioId = "manual_entry"
+	ScenarioIdNoDataPoints                 ScenarioId = "no_data_points"
+	ScenarioIdNodeGraph                    ScenarioId = "node_graph"
+	ScenarioIdPredictableCsvWave           ScenarioId = "predictable_csv_wave"
+	ScenarioIdPredictablePulse             ScenarioId = "predictable_pulse"
+	ScenarioIdRandomWalk                   ScenarioId = "random_walk"
+	ScenarioIdRandomWalkTable              ScenarioId = "random_walk_table"
+	ScenarioIdRandomWalkWithError          ScenarioId = "random_walk_with_error"
+	ScenarioIdRawFrame                     ScenarioId = "raw_frame"
+	ScenarioIdServerError500               ScenarioId = "server_error_500"
+	ScenarioIdSimulation                   ScenarioId = "simulation"
+	ScenarioIdSlowQuery                    ScenarioId = "slow_query"
+	ScenarioIdStreamingClient              ScenarioId = "streaming_client"
+	ScenarioIdTableStatic                  ScenarioId = "table_static"
+	ScenarioIdTrace                        ScenarioId = "trace"
+	ScenarioIdUsa                          ScenarioId = "usa"
+	ScenarioIdVariablesQuery               ScenarioId = "variables-query"
+)
+
 // Defines values for StreamType.
 const (
 	StreamTypeFetch  StreamType = "fetch"
@@ -185,9 +218,9 @@ type TestDataDataQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId       string       `json:"refId"`
-	ScenarioId  *interface{} `json:"scenarioId,omitempty"`
-	SeriesCount *int32       `json:"seriesCount,omitempty"`
+	RefId       string      `json:"refId"`
+	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
+	SeriesCount *int32      `json:"seriesCount,omitempty"`
 	Sim         *struct {
 		Config map[string]interface{} `json:"config,omitempty"`
 		Key    struct {
@@ -221,6 +254,9 @@ type ErrorType string
 
 // NodesType defines model for TestDataDataQuery.Nodes.Type.
 type NodesType string
+
+// ScenarioId defines model for TestDataDataQuery.ScenarioId.
+type ScenarioId string
 
 // StreamType defines model for TestDataDataQuery.Stream.Type.
 type StreamType string

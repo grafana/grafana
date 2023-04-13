@@ -37,7 +37,7 @@ composableKinds: PanelCfg: {
 							// Use the color value for a sibling field to color each bar value.
 							colorByField?: string
 							// Controls the orientation of the bar chart, either vertical or horizontal.
-							orientation: common.VizOrientation | (*"auto" | _)
+							orientation: common.VizOrientation & (*"auto" | _)
 							// Controls the radius of each bar.
 							barRadius?: float64 & >=0 & <=0.5 | *0
 							// Controls the rotation of the x axis labels.
@@ -48,9 +48,9 @@ composableKinds: PanelCfg: {
 							// negative values indicate backwards skipping behavior
 							xTickLabelSpacing?: int32 | *0
 							// Controls whether bars are stacked or not, either normally or in percent mode.
-							stacking: common.StackingMode | (*"none" | _)
+							stacking: common.StackingMode & (*"none" | _)
 							// This controls whether values are shown on top or to the left of bars.
-							showValue: common.VisibilityMode | (*"auto" | _)
+							showValue: common.VisibilityMode & (*"auto" | _)
 							// Controls the width of bars. 1 = Max width, 0 = Min width.
 							barWidth: float64 & >=0 & <=1 | *0.97
 							// Controls the width of groups. 1 = max with, 0 = min width.
