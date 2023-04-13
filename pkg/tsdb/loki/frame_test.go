@@ -102,7 +102,6 @@ func TestAdjustFrame(t *testing.T) {
 	})
 
 	t.Run("naming inside metric fields should be correct", func(t *testing.T) {
-
 		makeFrame := func() *data.Frame {
 			field1 := data.NewField("", nil, make([]time.Time, 0))
 			field2 := data.NewField("", nil, make([]float64, 0))
