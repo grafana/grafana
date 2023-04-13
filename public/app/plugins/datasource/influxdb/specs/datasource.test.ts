@@ -200,6 +200,17 @@ describe('InfluxDataSource', () => {
     });
   });
 
+  // Some functions are required by the parent datasource class to provide functionality
+  // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
+  describe('Datasource contract', () => {
+    it('has function called getTagKeys', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
+    });
+    it('has function called getTagValues', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
+    });
+  });
+
   describe('Variables should be interpolated correctly', () => {
     const instanceSettings: any = {};
     const text = 'interpolationText';

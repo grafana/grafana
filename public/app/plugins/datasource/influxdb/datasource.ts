@@ -38,6 +38,7 @@ import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
+import { InfluxQueryBuilder } from './query_builder';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
@@ -590,6 +591,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
     });
+  }
+
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
+  // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
+  getTagKeys(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
+    const query = queryBuilder.buildExploreQuery('TAG_KEYS');
+    return this.metricFindQuery(query, options);
+  }
+
+  getTagValues(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
+    const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
+    return this.metricFindQuery(query, options);
   }
 
   _seriesQuery(query: string, options?: any) {
