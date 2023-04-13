@@ -12,18 +12,38 @@ declare global {
 }
 
 // JS original sin
-Object.assign(Array.prototype, {
-  get(idx: number): any {
-    return (this as any)[idx];
+Object.defineProperties(Array.prototype, {
+  get: {
+    value: function(idx: number): any {
+      return (this as any)[idx];
+    },
+    writable: false,
+    enumerable: false,
+    configurable: false,
   },
-  set(idx: number, value: any) {
-    (this as any)[idx] = value;
+  set: {
+    value: function(idx: number, value: any) {
+      (this as any)[idx] = value;
+    },
+    writable: false,
+    enumerable: false,
+    configurable: false,
   },
-  add(value: any) {
-    (this as any).push(value);
+  add: {
+    value: function(value: any) {
+      (this as any).push(value);
+    },
+    writable: false,
+    enumerable: false,
+    configurable: false,
   },
-  toArray() {
-    return this;
+  toArray: {
+    value: function() {
+      return this;
+    },
+    writable: false,
+    enumerable: false,
+    configurable: false,
   },
 });
 
