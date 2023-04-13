@@ -116,6 +116,17 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
+	if authConfigUIAvailable && hasAccess(ac.ReqGrafanaAdmin, evalAuthenticationSettings()) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text:     "Authentication",
+			Id:       "authentication",
+			SubTitle: "Manage your auth settings and configure single sign-on",
+			Icon:     "signin",
+			Url:      s.cfg.AppSubURL + "/admin/authentication",
+		})
+	}
+
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
@@ -168,4 +179,13 @@ func (s *ServiceImpl) ReqCanAdminTeams(c *contextmodel.ReqContext) bool {
 func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
+}
+
+func evalAuthenticationSettings() ac.Evaluator {
+	return ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
+	)
 }

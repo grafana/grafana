@@ -187,6 +187,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 			orgSettings.Text = "Default preferences"
 			adminNodeLinks = append(adminNodeLinks, orgSettings)
 		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("authentication"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
 
