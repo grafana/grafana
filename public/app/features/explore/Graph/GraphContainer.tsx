@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataFrame, EventBus, AbsoluteTimeRange, TimeZone, SplitOpen, LoadingState } from '@grafana/data';
-import { Collapse, useTheme2 } from '@grafana/ui';
+import { PanelChrome } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
@@ -25,7 +25,6 @@ interface Props {
 }
 
 export const GraphContainer = ({
-  loading,
   data,
   eventBus,
   height,
@@ -38,8 +37,6 @@ export const GraphContainer = ({
   loadingState,
 }: Props) => {
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
-  const theme = useTheme2();
-  const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
     storeGraphStyle(graphStyle);
@@ -47,24 +44,28 @@ export const GraphContainer = ({
   }, []);
 
   return (
-    <Collapse
-      label={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
-      loading={loading}
-      isOpen
+    <PanelChrome
+      title="Graph"
+      width={width}
+      height={height}
+      loadingState={loadingState}
+      actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
     >
-      <ExploreGraph
-        graphStyle={graphStyle}
-        data={data}
-        height={height}
-        width={width - spacing}
-        absoluteRange={absoluteRange}
-        onChangeTime={onChangeTime}
-        timeZone={timeZone}
-        annotations={annotations}
-        splitOpenFn={splitOpenFn}
-        loadingState={loadingState}
-        eventBus={eventBus}
-      />
-    </Collapse>
+      {(innerWidth, innerHeight) => (
+        <ExploreGraph
+          graphStyle={graphStyle}
+          data={data}
+          height={innerHeight}
+          width={innerWidth}
+          absoluteRange={absoluteRange}
+          onChangeTime={onChangeTime}
+          timeZone={timeZone}
+          annotations={annotations}
+          splitOpenFn={splitOpenFn}
+          loadingState={loadingState}
+          eventBus={eventBus}
+        />
+      )}
+    </PanelChrome>
   );
 };
