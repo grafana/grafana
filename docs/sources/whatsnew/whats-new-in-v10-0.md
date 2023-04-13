@@ -122,3 +122,20 @@ _Available in preview in all editions of Grafana using the exploreMixedDatasourc
 You can now query multiple data sources in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
 
 Mixed data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the exploreMixedDatasource feature toggle.
+
+## Span filtering for traces
+
+_Available in preview in all editions of Grafana._
+
+You can now work much more efficiently with traces that consist of a large number of spans.
+
+The span filters exist above the trace view, and allow you to filter the spans that are shown in the trace view. The more filters you add, the more specific are the filtered spans.
+
+Currently, you can add one or more of the following filters:
+
+- Service name,
+- Span name,
+- Duration,
+- Tags (which include tags, process tags, and log fields).
+
+To try it out, you'll need to enable the `newTraceView` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
