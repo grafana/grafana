@@ -66,13 +66,15 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   }
 
   const pluginRoot = plugin.root && (
-    <plugin.root
-      meta={plugin.meta}
-      basename={match.url}
-      onNavChanged={onNavChanged}
-      query={queryParams}
-      path={location.pathname}
-    />
+    <div data-plugin-sandbox="true">
+      <plugin.root
+        meta={plugin.meta}
+        basename={match.url}
+        onNavChanged={onNavChanged}
+        query={queryParams}
+        path={location.pathname}
+      />
+    </div>
   );
 
   if (config.featureToggles.topnav && !pluginNav) {
