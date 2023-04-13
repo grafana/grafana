@@ -290,7 +290,11 @@ export const PromSettings = (props: Props) => {
               tooltip={
                 <>
                   Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
-                  this field will save your current settings, and attempt to detect the version. {docsTip()}
+                  this field will save your current settings, and attempt to detect the version. Certain types of
+                  Prometheus support or do not support various APIs. For example, some types support regex matching for
+                  label queries to improve performance. Some types have an API for metadata. If you set this incorrectly
+                  you may experience odd behavior when querying metrics and labels. Please check your Prometheus
+                  documentation to ensure you enter the correct type. {docsTip()}
                 </>
               }
             >
