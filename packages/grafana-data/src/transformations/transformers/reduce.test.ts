@@ -418,7 +418,7 @@ describe('Reducer Transformer', () => {
               "CA",
               "NY",
               "CA",
-              ,
+              undefined,
             ],
           },
           {
@@ -426,8 +426,8 @@ describe('Reducer Transformer', () => {
             "name": "country",
             "type": "string",
             "values": [
-              ,
-              ,
+              undefined,
+              undefined,
               "USA",
               "USA",
             ],

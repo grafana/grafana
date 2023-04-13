@@ -29,6 +29,6 @@ export class ArrayVector<T = any> extends Array<T> {
   }
 
   toJSON(): T[] {
-    return [...this]; // this copy prevents extending classes from returning their own species
+    return [...this]; // copy to avoid circular reference (only for jest)
   }
 }

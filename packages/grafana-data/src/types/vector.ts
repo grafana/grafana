@@ -41,7 +41,7 @@ if (!Object.getOwnPropertyDescriptor(Array.prototype, 'toArray')) {
     },
     toArray: {
       value: function () {
-        return [...this]; // this copy prevents extending classes from returning their own species
+        return this;
       },
       writable: false,
       enumerable: false,
