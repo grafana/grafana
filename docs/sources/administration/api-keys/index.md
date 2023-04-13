@@ -108,7 +108,7 @@ To migrate a single API key to a service account, complete the following steps:
 
 ### Migrate API keys to Grafana service accounts for API calls
 
-This section shows you how to migrate API keys to Grafana service accounts specifically for the Grafana API. For references see: [Grafana Service Accounts for the Grafana API](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/).
+This section shows you how to migrate API keys to Grafana service accounts specifically for the Grafana API. For references see: [Grafana Service Accounts for the Grafana API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
 
 #### Before you begin
 
@@ -152,11 +152,13 @@ New setup
 # create a service account
 curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account", "role": "Viewer"}' http://admin:admin@localhost:3000/api/serviceaccounts
 
+# response with the created service account id,name, login
 {"id":1,"name":"my-service-account","login":"sa-my-service-account","orgId":1,"isDisabled":false,"role":"Viewer","tokens":0,"avatarUrl":""}%
 
-# create the service account token with the service account id
+# create the service account token with the service account id returned from the previous step
 curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/1/tokens
 
+# response with the created SAT id,name and key
 {"id":2,"name":"my-service-account-token","key":"glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939"}%
 ```
 
