@@ -22,6 +22,7 @@ import {
   DataQueryResponseData,
   PanelData,
   LoadingState,
+  GraphSeriesValue,
 } from '../types/index';
 import { SortedVector } from '../vector/SortedVector';
 import { vectorToArray } from '../vector/vectorToArray';
@@ -37,7 +38,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: new Array(0),
+      values: [] as any[],
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -117,8 +118,8 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
  * to DataFrame.  See: https://github.com/grafana/grafana/issues/18528
  */
 function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
-  const x = new Array(0);
-  const y = new Array(0);
+  const x: GraphSeriesValue[] = [];
+  const y: GraphSeriesValue[] = [];
 
   for (let i = 0; i < graphSeries.data.length; i++) {
     const row = graphSeries.data[i];
@@ -158,7 +159,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
       },
-      values: new Array(0),
+      values: [] as TimeSeriesValue[][],
     },
   ];
 

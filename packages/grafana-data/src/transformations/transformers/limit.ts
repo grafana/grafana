@@ -1,7 +1,6 @@
 import { map } from 'rxjs/operators';
 
 import { DataTransformerInfo } from '../../types';
-import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
 
