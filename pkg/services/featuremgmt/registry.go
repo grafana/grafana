@@ -476,6 +476,12 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:        "unifiedRequestLog",
 			Description: "Writes error logs to the request logger",
 			State:       FeatureStateAlpha,
@@ -506,6 +512,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:            "useCachingService",
+			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
+			State:           FeatureStateStable,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "disableElasticsearchBackendQuerying",
