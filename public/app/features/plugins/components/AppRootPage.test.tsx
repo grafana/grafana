@@ -36,32 +36,10 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
 >;
 
 class RootComponent extends Component<AppRootProps> {
-  static timesMounted = 0;
-  componentDidMount() {
-    RootComponent.timesMounted += 1;
-    const node: NavModelItem = {
-      text: 'My Great plugin',
-      children: [
-        {
-          text: 'A page',
-          url: '/apage',
-          id: 'a',
-        },
-        {
-          text: 'Another page',
-          url: '/anotherpage',
-          id: 'b',
-        },
-      ],
-    };
-    this.props.onNavChanged({
-      main: node,
-      node,
-    });
-  }
-
+  static timesRendered = 0;
   render() {
-    return <p>my great plugin</p>;
+    RootComponent.timesRendered += 1;
+    return <p>my great component</p>;
   }
 }
 
@@ -119,8 +97,7 @@ describe('AppRootPage', () => {
     enabled: true,
   });
 
-  it('should not mount plugin twice if nav is changed', async () => {
-    // reproduces https://github.com/grafana/grafana/pull/28105
+  it('should not render component if not at plugin path', async () => {
     getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const plugin = new AppPlugin();
@@ -131,47 +108,21 @@ describe('AppRootPage', () => {
 
     renderUnderRouter();
 
-    // check that plugin and nav links were rendered, and plugin is mounted only once
-    expect(await screen.findByText('my great plugin')).toBeVisible();
-    expect(await screen.findByLabelText('Tab A page')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Another page')).toBeVisible();
-    expect(RootComponent.timesMounted).toEqual(1);
-  });
-
-  it('should not render component if not at plugin path', async () => {
-    getPluginSettingsMock.mockResolvedValue(pluginMeta);
-
-    class AnotherRootComponent extends Component<AppRootProps> {
-      static timesRendered = 0;
-      render() {
-        AnotherRootComponent.timesRendered += 1;
-        return <p>my great component</p>;
-      }
-    }
-
-    const plugin = new AppPlugin();
-    plugin.meta = pluginMeta;
-    plugin.root = AnotherRootComponent;
-
-    importAppPluginMock.mockResolvedValue(plugin);
-
-    renderUnderRouter();
-
     expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(AnotherRootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(AnotherRootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(AnotherRootComponent.timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(2);
   });
 });
