@@ -651,7 +651,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore)
-
+	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 
@@ -660,6 +660,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		store:              publicdashboardStore,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   fakeQueryService,
+		serviceWrapper:     serviceWrapper,
 	}
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
@@ -1180,7 +1181,7 @@ func TestBuildMetricRequest(t *testing.T) {
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore)
-
+	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	from, to := internal.GetTimeRangeFromDashboard(t, publicDashboard.Data)
@@ -1189,6 +1190,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		log:                log.New("test.logger"),
 		store:              publicdashboardStore,
 		intervalCalculator: intervalv2.NewCalculator(),
+		serviceWrapper:     serviceWrapper,
 	}
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{

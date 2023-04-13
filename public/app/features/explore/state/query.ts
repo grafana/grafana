@@ -10,11 +10,11 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
+  LogsVolumeType,
   PanelEvents,
   QueryFixAction,
   SupplementaryQueryType,
@@ -338,7 +338,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<Promise<void>> => {
+): ThunkResult<Promise<DataQuery[] | void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
@@ -395,6 +395,7 @@ export const importQueries = (
     }
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
+    return nextQueries;
   };
 };
 
@@ -634,27 +635,6 @@ export const runQueries = (
                 dispatch(loadSupplementaryQueryData(exploreId, type));
               }
             }
-            // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
-            // TODO: Remove in next major version - v10 (https://github.com/grafana/grafana/issues/61845)
-          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
-            const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
-              ...transaction.request,
-              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
-            });
-            dispatch(
-              storeSupplementaryQueryDataProviderAction({
-                exploreId,
-                type,
-                dataProvider,
-              })
-            );
-
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
-              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-              if (supplementaryQueries[type].enabled) {
-                dispatch(loadSupplementaryQueryData(exploreId, type));
-              }
-            }
           } else {
             // If data source instance doesn't support this supplementary query, we clean the data provider
             dispatch(
@@ -695,6 +675,12 @@ function canReuseSupplementaryQueryData(
     head
   );
 
+  const allSupportZoomingIn = supplementaryQueryData.data.every((data: DataFrame) => {
+    // If log volume is based on returned log lines (i.e. LogsVolumeType.Limited),
+    // zooming in may return different results, so we don't want to reuse the data
+    return data.meta?.custom?.logsVolumeType === LogsVolumeType.FullRange;
+  });
+
   const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
 
   const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
@@ -707,7 +693,7 @@ function canReuseSupplementaryQueryData(
     return hasWiderRange;
   });
 
-  return allQueriesAreTheSame && allResultsHaveWiderRange;
+  return allSupportZoomingIn && allQueriesAreTheSame && allResultsHaveWiderRange;
 }
 
 /**

@@ -37,7 +37,7 @@ import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -501,8 +501,8 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const { disableElasticsearchBackendExploreQuery, elasticsearchBackendMigration } = config.featureToggles;
-    if (!disableElasticsearchBackendExploreQuery || elasticsearchBackendMigration) {
+    const { disableElasticsearchBackendQuerying } = config.featureToggles;
+    if (!disableElasticsearchBackendQuerying) {
       const contextRequest = this.makeLogContextDataRequest(row, options);
 
       return lastValueFrom(
@@ -561,7 +561,7 @@ export class ElasticDatasource
         return { data: [] };
       }
       /**
-       * The LogRowContextProvider requires there is a field in the dataFrame.fields
+       * The LogRowContext requires there is a field in the dataFrame.fields
        * named `ts` for timestamp and `line` for the actual log line to display.
        * Unfortunatly these fields are hardcoded and are required for the lines to
        * be properly displayed. This code just copies the fields based on this.timeField
@@ -679,13 +679,8 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-    // Run request through backend if it is coming from Explore and disableElasticsearchBackendExploreQuery is not set
-    // or if elasticsearchBackendMigration feature toggle is enabled
-    const { elasticsearchBackendMigration, disableElasticsearchBackendExploreQuery } = config.featureToggles;
-    const shouldRunTroughBackend =
-      (request.app === CoreApp.Explore && !disableElasticsearchBackendExploreQuery) || elasticsearchBackendMigration;
-
-    if (shouldRunTroughBackend) {
+    const { disableElasticsearchBackendQuerying } = config.featureToggles;
+    if (!disableElasticsearchBackendQuerying) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
