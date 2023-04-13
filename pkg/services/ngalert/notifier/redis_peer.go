@@ -67,13 +67,10 @@ type redisPeer struct {
 	// List of active members of the cluster. Should be accessed through the Members function.
 	members    []string
 	membersMtx sync.Mutex
-
-	// Last known position in the cluster.
-	position int
-	// The time when we computed the position in the cluster the last time successfully.
-	positionFetchedAt time.Time
-	// The duration we want to return the position if the network is down.
-	positionValidFor time.Duration
+	// The time when we fetched the members from redis the last time successfully.
+	membersFetchedAt time.Time
+	// The duration we want to return the members if the network is down.
+	membersValidFor time.Duration
 }
 
 func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
@@ -109,8 +106,8 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		prefix:            cfg.prefix,
 		heartbeatInterval: time.Second * 5,
 		heartbeatTimeout:  time.Minute,
-		positionValidFor:  time.Minute,
 		members:           make([]string, 0),
+		membersValidFor:   time.Minute,
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -225,9 +222,16 @@ func (p *redisPeer) membersSyncLoop() {
 			members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
 			if err != nil {
 				p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
-				p.membersMtx.Lock()
-				p.members = []string{}
-				p.membersMtx.Unlock()
+				// To prevent a spike of duplicate messages, we return for the duration of
+				// membersValidFor the last known members and only empty the list if we do
+				// not eventually recover.
+				if p.membersFetchedAt.Before(time.Now().Add(-p.membersValidFor)) {
+					p.membersMtx.Lock()
+					p.members = []string{}
+					p.membersMtx.Unlock()
+					continue
+				}
+				p.logger.Warn("fetching members from redis failed, falling back to last known members", "last_known", p.members)
 				continue
 			}
 			// This might happen on startup, when no value is in the store yet.
@@ -266,6 +270,7 @@ func (p *redisPeer) membersSyncLoop() {
 			p.membersMtx.Lock()
 			p.members = peers
 			p.membersMtx.Unlock()
+			p.membersFetchedAt = time.Now()
 		case <-p.shutdownc:
 			ticker.Stop()
 			return
@@ -274,24 +279,13 @@ func (p *redisPeer) membersSyncLoop() {
 }
 
 func (p *redisPeer) Position() int {
-	// When the members array is empty and we fetched our position successfully
-	// prior, we can assume that currently the network is down.
-	// To prevent a spike of duplicate messages, we return for the duration of
-	// lastPositionValidFor the last known position and only failover to position
-	// 0 afterwards if we do not eventually recover.
-	if len(p.Members()) == 0 && p.positionFetchedAt.After(time.Now().Add(-p.positionValidFor)) {
-		p.logger.Warn("last members list fetched from redis was empty, falling back to last know position", "last_known", p.position)
-		return p.position
-	}
 	for i, peer := range p.Members() {
 		if peer == p.withPrefix(p.name) {
-			p.position = i
-			p.positionFetchedAt = time.Now()
 			p.logger.Debug("cluster position found", "name", p.name, "position", i)
 			return i
 		}
 	}
-	p.logger.Warn("failed to look up position, empty members and position timeout reached")
+	p.logger.Warn("failed to look up position, falling back to poistion 0")
 	return 0
 }
 
