@@ -1,4 +1,4 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, act } from '@testing-library/react';
 import React from 'react';
 import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -120,7 +120,9 @@ describe('<EditDataSourcePage>', () => {
   });
 
   it('should show updated action buttons when topnav is on', () => {
-    config.featureToggles.topnav = true;
+    act(() => {
+      config.featureToggles.topnav = true;
+    });
 
     setup(uid, store);
 
