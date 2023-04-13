@@ -78,7 +78,12 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, 
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			slog.Warn("Failed to close response body", "err", err)
+			return
+		}
+	}()
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
