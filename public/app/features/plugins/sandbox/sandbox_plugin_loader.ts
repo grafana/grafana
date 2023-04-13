@@ -60,7 +60,6 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
       distortionCallback(v) {
         // only allow to pass elements that are inside the sandbox
         if (isDomElement(v) && !isDomElementInsideSandbox(v)) {
-          console.log('distortionCallback: isDomElement(v) && !isDomElementInsideSandbox(v)', v);
           return fabricateMockElement(v.nodeName, sandboxDocument);
         }
         // //@ts-ignore
@@ -86,7 +85,7 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
           const pluginExports: { plugin: GrafanaPlugin } = code.apply(null, resolvedDeps);
 
           if (!pluginExports.plugin) {
-            throw new Error(`[sandbox] Plugin ${path} did not export a plugin`);
+            throw new Error(`[sandbox] Plugin ${pluginId} did not export a plugin`);
           }
 
           if (!resolved) {
@@ -100,12 +99,49 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
         }),
         document: sandboxDocument,
       }),
+      instrumentation: {
+        startActivity() {
+          return {
+            stop: () => {},
+            async error(data?: Error) {
+              if (!data) {
+                return;
+              }
+              const newError = new Error(data.toString());
+              if (data.stack) {
+                // Parse the error stack trace
+                const stackFrames = data.stack.split('\n').map((frame) => frame.trim());
+
+                // remove not useful stack frames
+                const filterOut = ['sandbox', 'proxyhandler', 'trap', 'redconnector'];
+                const filteredStackFrames = stackFrames.filter((frame) => {
+                  return !filterOut.some((filter) => frame.toLowerCase().includes(filter));
+                });
+
+                // Join the filtered stack frames back into a string
+                const modifiedStack = filteredStackFrames.join('\n');
+                newError.stack = modifiedStack;
+              }
+
+              // If you are seeing this is because
+              // the plugin is throwing an error
+              // and it is not being caught by the plugin code
+              // This is a sandbox wrapper error.
+              // and not the real error
+              console.log(`[sandbox] Error from plugin ${pluginId}`);
+              console.error(newError);
+            },
+          };
+        },
+        log: () => {},
+        error: () => {},
+      },
     });
 
     try {
       env.evaluate(pluginCode);
     } catch (e) {
-      console.error(`[sandbox] Error loading plugin ${path}`, e);
+      console.error(`[sandbox] Error loading plugin ${pluginId}`, e);
       reject(e);
     }
   });
