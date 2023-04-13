@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import {
@@ -16,6 +16,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 
+import { ExemplarModalHeader } from '../../heatmap/ExemplarModalHeader';
+
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
   dataFrame: DataFrame;
@@ -23,18 +25,23 @@ interface ExemplarMarkerProps {
   config: UPlotConfigBuilder;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   exemplarColor?: string;
+  clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
+  setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
+export const ExemplarMarker = ({
   timeZone,
   dataFrame,
   dataFrameFieldIndex,
   config,
   getFieldLinks,
   exemplarColor,
-}) => {
+  clickedExemplarFieldIndex,
+  setClickedExemplarFieldIndex,
+}: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
   const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
@@ -54,6 +61,17 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     ],
   });
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
+
+  useEffect(() => {
+    if (
+      !(
+        clickedExemplarFieldIndex?.fieldIndex === dataFrameFieldIndex.fieldIndex &&
+        clickedExemplarFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex
+      )
+    ) {
+      setIsLocked(false);
+    }
+  }, [clickedExemplarFieldIndex, dataFrameFieldIndex]);
 
   const getSymbol = () => {
     const symbols = [
@@ -88,16 +106,22 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   };
 
   const onMouseEnter = useCallback(() => {
-    if (popoverRenderTimeout.current) {
-      clearTimeout(popoverRenderTimeout.current);
+    if (clickedExemplarFieldIndex === undefined) {
+      if (popoverRenderTimeout.current) {
+        clearTimeout(popoverRenderTimeout.current);
+      }
+      setIsOpen(true);
     }
-    setIsOpen(true);
-  }, [setIsOpen]);
+  }, [setIsOpen, clickedExemplarFieldIndex]);
+
+  const lockExemplarModal = () => {
+    setIsLocked(true);
+  };
 
   const onMouseLeave = useCallback(() => {
     popoverRenderTimeout.current = setTimeout(() => {
       setIsOpen(false);
-    }, 100);
+    }, 150);
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
@@ -112,6 +136,12 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
       });
     };
 
+    const onClose = () => {
+      setIsLocked(false);
+      setIsOpen(false);
+      setClickedExemplarFieldIndex(undefined);
+    };
+
     return (
       <div
         onMouseEnter={onMouseEnter}
@@ -122,10 +152,11 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
         {...attributes.popper}
       >
         <div className={styles.wrapper}>
-          <div className={styles.header}>
-            <span className={styles.title}>Exemplar</span>
-          </div>
+          {isLocked && <ExemplarModalHeader onClick={onClose} />}
           <div className={styles.body}>
+            <div className={styles.header}>
+              <span className={styles.title}>Exemplars</span>
+            </div>
             <div>
               <table className={styles.exemplarsTable}>
                 <tbody>
@@ -163,6 +194,8 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     popperStyles.popper,
     styles,
     timeZone,
+    isLocked,
+    setClickedExemplarFieldIndex,
   ]);
 
   const seriesColor = config
@@ -173,6 +206,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     <>
       <div
         ref={setMarkerElement}
+        onClick={() => {
+          setClickedExemplarFieldIndex(dataFrameFieldIndex);
+          lockExemplarModal();
+        }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.markerWrapper}
@@ -183,12 +220,12 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
           width="7"
           height="7"
           style={{ fill: seriesColor }}
-          className={cx(styles.marble, isOpen && styles.activeMarble)}
+          className={cx(styles.marble, (isOpen || isLocked) && styles.activeMarble)}
         >
           {getSymbol()}
         </svg>
       </div>
-      {isOpen && <Portal>{renderMarker()}</Portal>}
+      {(isOpen || isLocked) && <Portal>{renderMarker()}</Portal>}
     </>
   );
 };
@@ -228,6 +265,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${headerBg};
       border-radius: ${theme.shape.borderRadius(2)};
       box-shadow: 0 0 20px ${shadowColor};
+      padding: ${theme.spacing(1)};
     `,
     exemplarsTable: css`
       width: 100%;
@@ -240,6 +278,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
 
       tr {
         background-color: ${theme.colors.background.primary};
+
         &:nth-child(even) {
           background-color: ${tableBgOdd};
         }
@@ -281,8 +320,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       flex-grow: 1;
     `,
     body: css`
-      padding: ${theme.spacing(1)};
       font-weight: ${theme.typography.fontWeightMedium};
+      border-radius: ${theme.shape.borderRadius(2)};
+      overflow: hidden;
     `,
     marble: css`
       display: block;

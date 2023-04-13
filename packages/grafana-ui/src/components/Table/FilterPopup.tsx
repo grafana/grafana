@@ -100,11 +100,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     max-height: 400px;
     background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     padding: ${theme.spacing(2)};
     margin: ${theme.spacing(1)} 0;
-    box-shadow: 0px 0px 20px ${theme.v1.palette.black};
-    border-radius: ${theme.spacing(0.5)};
+    box-shadow: ${theme.shadows.z3};
+    border-radius: ${theme.shape.radius.default};
   `,
   listDivider: css`
     label: listDivider;

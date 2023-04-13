@@ -132,8 +132,18 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text, valueDisplayMode } =
-      this.props;
+    const {
+      display,
+      field,
+      value,
+      itemSpacing,
+      alignmentFactors,
+      orientation,
+      lcdCellWidth,
+      text,
+      valueDisplayMode,
+      theme,
+    } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -171,7 +181,7 @@ export class BarGauge extends PureComponent<Props> {
       const currentValue = minValue + (valueRange / cellCount) * i;
       const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
-        borderRadius: '2px',
+        borderRadius: theme.shape.radius.default,
       };
 
       if (cellColor.isLit) {
@@ -478,7 +488,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const barStyles: CSSProperties = {
-    borderRadius: '3px',
+    borderRadius: theme.shape.radius.default,
     position: 'relative',
     zIndex: 1,
   };
@@ -487,7 +497,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
-    borderRadius: '3px',
+    borderRadius: theme.shape.radius.default,
     position: 'relative',
   };
 

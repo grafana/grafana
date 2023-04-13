@@ -15,7 +15,6 @@ const (
 	WeightSavedItems
 	WeightCreate
 	WeightDashboard
-	WeightQueryLibrary
 	WeightExplore
 	WeightAlerting
 	WeightDataConnections
@@ -43,6 +42,7 @@ const (
 	NavIDAdmin              = "admin"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
+	NavIDAlertingLegacy     = "alerting-legacy"
 	NavIDMonitoring         = "monitoring"
 	NavIDReporting          = "reports"
 	NavIDApps               = "apps"
@@ -192,6 +192,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 			orgSettings.Text = "Default preferences"
 			adminNodeLinks = append(adminNodeLinks, orgSettings)
 		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("authentication"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
 

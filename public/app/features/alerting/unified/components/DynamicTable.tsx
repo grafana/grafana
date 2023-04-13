@@ -122,7 +122,7 @@ export const DynamicTable = <T extends object>({
                 <div className={cx(styles.cell, styles.expandCell)}>
                   <IconButton
                     aria-label={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
-                    size="xl"
+                    size="lg"
                     data-testid="collapse-toggle"
                     className={styles.expandButton}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
@@ -186,8 +186,8 @@ const getStyles = <T extends unknown>(
 
   return (theme: GrafanaTheme2) => ({
     container: css`
-      border: 1px solid ${theme.colors.border.strong};
-      border-radius: 2px;
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
       color: ${theme.colors.text.secondary};
     `,
     row: css`
@@ -226,6 +226,7 @@ const getStyles = <T extends unknown>(
       padding: ${theme.spacing(1)};
     `,
     cell: css`
+      display: flex;
       align-items: center;
       padding: ${theme.spacing(1)};
 

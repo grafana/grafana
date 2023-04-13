@@ -313,8 +313,11 @@ export class PanelQueryRunner {
 
     this.subscription.unsubscribe();
 
-    // If we have an old result with loading state, send it with done state
-    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+    // If we have an old result with loading or streaming state, send it with done state
+    if (
+      this.lastResult &&
+      (this.lastResult.state === LoadingState.Loading || this.lastResult.state === LoadingState.Streaming)
+    ) {
       this.subject.next({
         ...this.lastResult,
         state: LoadingState.Done,

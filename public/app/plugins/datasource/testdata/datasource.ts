@@ -37,6 +37,13 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     this.variables = new TestDataVariableSupport();
   }
 
+  getDefaultQuery(): Partial<TestData> {
+    return {
+      scenarioId: TestDataQueryType.RandomWalk,
+      seriesCount: 1,
+    };
+  }
+
   query(options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
     const backendQueries: TestData[] = [];
     const streams: Array<Observable<DataQueryResponse>> = [];
@@ -193,10 +200,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
 
   variablesQuery(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
     const query = target.stringInput ?? '';
-    const interpolatedQuery = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '*', options: options.scopedVars })
-    );
+    const interpolatedQuery = this.templateSrv.replace(query, getSearchFilterScopedVar({ query, wildcardChar: '*' }));
     const children = queryMetricTree(interpolatedQuery);
     const items = children.map((item) => ({ value: item.name, text: item.name }));
     const dataFrame = new ArrayDataFrame(items);

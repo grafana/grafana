@@ -210,6 +210,9 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 	}
 
+	// There are a set of feature toggles available that act as short-circuits for common configurations.
+	// If any are set, override the config accordingly.
+	applyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
@@ -338,7 +341,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	return children.Wait()
 }
 
-// IsDisabled returns true if the alerting service is disable for this instance.
+// IsDisabled returns true if the alerting service is disabled for this instance.
 func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
@@ -386,11 +389,38 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewNopHistorian(), nil
 	}
 
-	met.Info.WithLabelValues(cfg.Backend).Set(1)
-	if cfg.Backend == "annotations" {
+	backend, err := historian.ParseBackendType(cfg.Backend)
+	if err != nil {
+		return nil, err
+	}
+
+	met.Info.WithLabelValues(backend.String()).Set(1)
+	if backend == historian.BackendTypeMultiple {
+		primaryCfg := cfg
+		primaryCfg.Backend = cfg.MultiPrimary
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
+		if err != nil {
+			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
+		}
+
+		var secondaries []historian.Backend
+		for _, b := range cfg.MultiSecondaries {
+			secCfg := cfg
+			secCfg.Backend = b
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
+			if err != nil {
+				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
+			}
+			secondaries = append(secondaries, sec)
+		}
+
+		l.Info("State history is operating in multi-backend mode", "primary", cfg.MultiPrimary, "secondaries", cfg.MultiSecondaries)
+		return historian.NewMultipleBackend(primary, secondaries...), nil
+	}
+	if backend == historian.BackendTypeAnnotations {
 		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
 	}
-	if cfg.Backend == "loki" {
+	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
@@ -405,9 +435,51 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		return backend, nil
 	}
-	if cfg.Backend == "sql" {
-		return historian.NewSqlBackend(), nil
-	}
 
-	return nil, fmt.Errorf("unrecognized state history backend: %s", cfg.Backend)
+	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
+}
+
+// applyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
+func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
+	backend, _ := historian.ParseBackendType(cfg.Backend)
+	// These feature toggles represent specific, common backend configurations.
+	// If all toggles are enabled, we listen to the state history config as written.
+	// If any of them are disabled, we ignore the configured backend and treat the toggles as an override.
+	// If multiple toggles are disabled, we go with the most "restrictive" one.
+	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
+		// If we cannot even treat Loki as a secondary, we must use annotations only.
+		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
+			logger.Info("Forcing Annotation backend due to state history feature toggles")
+			cfg.Backend = historian.BackendTypeAnnotations.String()
+			cfg.MultiPrimary = ""
+			cfg.MultiSecondaries = make([]string, 0)
+		}
+		return
+	}
+	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
+		// If we're using multiple backends, Loki must be the secondary.
+		if backend == historian.BackendTypeMultiple {
+			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
+			cfg.MultiPrimary = historian.BackendTypeAnnotations.String()
+			cfg.MultiSecondaries = []string{historian.BackendTypeLoki.String()}
+		}
+		// If we're using loki, we are only allowed to use it as a secondary. Dual write to it, plus annotations.
+		if backend == historian.BackendTypeLoki {
+			logger.Info("Coercing Loki to dual writes with a secondary backend due to state history feature toggles")
+			cfg.Backend = historian.BackendTypeMultiple.String()
+			cfg.MultiPrimary = historian.BackendTypeAnnotations.String()
+			cfg.MultiSecondaries = []string{historian.BackendTypeLoki.String()}
+		}
+		return
+	}
+	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiOnly) {
+		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
+		if backend == historian.BackendTypeLoki {
+			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")
+			cfg.Backend = historian.BackendTypeMultiple.String()
+			cfg.MultiPrimary = historian.BackendTypeLoki.String()
+			cfg.MultiSecondaries = []string{historian.BackendTypeAnnotations.String()}
+		}
+		return
+	}
 }

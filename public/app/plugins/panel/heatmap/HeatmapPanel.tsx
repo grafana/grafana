@@ -14,10 +14,10 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
@@ -26,7 +26,7 @@ import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
-export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
+export const HeatmapPanel = ({
   data,
   id,
   timeRange,
@@ -38,7 +38,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   eventBus,
   onChangeTimeRange,
   replaceVariables,
-}) => {
+}: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();
@@ -206,26 +206,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
             offset={{ x: 10, y: 10 }}
             allowPointerEvents={isToolTipOpen.current}
           >
-            {shouldDisplayCloseButton && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  paddingBottom: '6px',
-                }}
-              >
-                <CloseButton
-                  onClick={onCloseToolTip}
-                  style={{
-                    position: 'relative',
-                    top: 'auto',
-                    right: 'auto',
-                    marginRight: 0,
-                  }}
-                />
-              </div>
-            )}
+            {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
             <HeatmapHoverView
               timeRange={timeRange}
               data={info}

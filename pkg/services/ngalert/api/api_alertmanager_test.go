@@ -108,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -116,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}}))
 	})
@@ -148,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -156,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})
@@ -288,6 +288,136 @@ func TestAlertmanagerConfig(t *testing.T) {
 			require.Len(t, body.TemplateFileProvenances, 1)
 			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
+	})
+}
+
+func TestRouteGetAlertingConfigHistory(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 200 and empty slice when no applied configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "10")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		var configs []apimodels.GettableHistoricUserConfig
+		err = json.Unmarshal(response.Body(), &configs)
+		require.NoError(tt, err)
+
+		require.Len(tt, configs, 0)
+	})
+
+	t.Run("assert 200 and one config in the response for an org that has one successfully applied configuration", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "10")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		var configs []apimodels.GettableHistoricUserConfig
+		err = json.Unmarshal(response.Body(), &configs)
+		require.NoError(tt, err)
+
+		require.Len(tt, configs, 1)
+	})
+
+	t.Run("assert 200 when no limit is provided", func(tt *testing.T) {
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+
+	t.Run("assert 200 when limit is < 1", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "0")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+
+	t.Run("assert 200 when limit is > 100", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "1000")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+}
+
+func TestRoutePostGrafanaAlertingConfigHistoryActivate(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 404 when no historical configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 404, response.Status())
+	})
+
+	t.Run("assert 202 for a valid org and id", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 202, response.Status())
+	})
+
+	t.Run("assert 400 when id is not parseable", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "abc")
+		require.Equal(tt, 400, response.Status())
 	})
 }
 
@@ -658,6 +788,14 @@ func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.Gettable
 	t.Helper()
 	body := &apimodels.GettableUserConfig{}
 	err := json.Unmarshal(r.Body(), body)
+	require.NoError(t, err)
+	return body
+}
+
+func asGettableHistoricUserConfigs(t *testing.T, r response.Response) []apimodels.GettableHistoricUserConfig {
+	t.Helper()
+	var body []apimodels.GettableHistoricUserConfig
+	err := json.Unmarshal(r.Body(), &body)
 	require.NoError(t, err)
 	return body
 }

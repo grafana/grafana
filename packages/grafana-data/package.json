@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -36,10 +36,11 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.2",
-    "@grafana/schema": "9.5.0-pre",
+    "@grafana/schema": "10.0.0-pre",
     "@types/d3-interpolate": "^3.0.0",
     "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
+    "dompurify": "^2.4.3",
     "eventemitter3": "5.0.0",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
@@ -55,18 +56,18 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.5.0",
     "uplot": "1.6.24",
-    "xss": "1.0.14"
+    "xss": "^1.0.14"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-json": "5.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
-    "@testing-library/dom": "8.20.0",
+    "@testing-library/dom": "9.0.1",
     "@testing-library/jest-dom": "5.16.5",
-    "@testing-library/react": "12.1.4",
-    "@testing-library/react-hooks": "8.0.1",
+    "@testing-library/react": "14.0.0",
     "@testing-library/user-event": "14.4.3",
+    "@types/dompurify": "^2",
     "@types/history": "4.7.11",
     "@types/jest": "29.2.3",
     "@types/jquery": "3.5.16",
@@ -74,15 +75,15 @@
     "@types/marked": "4.0.8",
     "@types/node": "18.14.6",
     "@types/papaparse": "5.3.7",
-    "@types/react": "17.0.42",
-    "@types/react-dom": "17.0.14",
+    "@types/react": "18.0.28",
+    "@types/react-dom": "18.0.11",
     "@types/sinon": "10.0.13",
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
     "esbuild": "0.16.17",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
-    "react-test-renderer": "17.0.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-test-renderer": "18.2.0",
     "rimraf": "4.4.0",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
@@ -92,7 +93,7 @@
     "typescript": "4.8.4"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0"
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0"
   }
 }

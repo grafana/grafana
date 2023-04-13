@@ -5,7 +5,6 @@ import {
   DataConfigSource,
   DataFrameDTO,
   DataLink,
-  DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
   EventBusSrv,
@@ -13,7 +12,6 @@ import {
   PanelPlugin,
   PanelPluginDataSupport,
   ScopedVars,
-  urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
   CoreApp,
@@ -27,7 +25,6 @@ import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -37,8 +34,6 @@ import {
 } from 'app/types/events';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
-import { getTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
 
 export interface GridPos {
@@ -129,7 +124,19 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
-  savedQueryLink: null,
+};
+
+export const autoMigrateAngular: Record<string, string> = {
+  graph: 'timeseries',
+  'table-old': 'table',
+  singlestat: 'stat', // also automigrated if dashboard schemaVerion < 27
+  'grafana-singlestat-panel': 'stat',
+  'grafana-piechart-panel': 'piechart',
+  'grafana-worldmap-panel': 'geomap',
+};
+
+const autoMigratePanelType: Record<string, string> = {
+  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -154,8 +161,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
-  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
-
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
@@ -237,23 +242,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    switch (this.type) {
-      case 'graph':
-        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'timeseries';
-        }
-        break;
-      case 'table-old':
-        if (!config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'table';
-        }
-        break;
-      case 'heatmap-new':
-        this.autoMigrateFrom = this.type;
-        this.type = 'heatmap';
-        break;
+    const newType = autoMigratePanelType[this.type];
+    if (newType) {
+      this.autoMigrateFrom = this.type;
+      this.type = newType;
     }
 
     // defaults
@@ -427,7 +419,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = this.autoMigrateFrom === 'graph' || this.autoMigrateFrom === 'table-old';
+      const wasAngular = autoMigrateAngular[this.autoMigrateFrom] != null;
       this.callPanelTypeChangeHandler(
         plugin,
         this.autoMigrateFrom,
@@ -519,17 +511,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       uid: dataSource.uid,
       type: dataSource.type,
     };
-
-    if (options.savedQueryUid) {
-      this.savedQueryLink = {
-        ref: {
-          uid: options.savedQueryUid,
-        },
-        variables: [],
-      };
-    } else {
-      this.savedQueryLink = null;
-    }
 
     this.cacheTimeout = options.cacheTimeout;
     this.queryCachingTTL = options.queryCachingTTL;
@@ -650,21 +631,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     const lastRequest = this.getQueryRunner().getLastRequest();
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
-
-    const allVariablesParams = getVariablesUrlParams(vars);
-    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
-    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
-
-    vars[DataLinkBuiltInVars.keepTime] = {
-      text: timeRangeUrl,
-      value: timeRangeUrl,
-    };
-
-    vars[DataLinkBuiltInVars.includeVars] = {
-      text: variablesQuery,
-      value: variablesQuery,
-    };
-
     return getTemplateSrv().replace(value, vars, format);
   }
 

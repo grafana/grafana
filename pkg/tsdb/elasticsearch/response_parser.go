@@ -85,7 +85,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFrames(queryRes, target)
+			nameFields(queryRes, target)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -409,178 +409,248 @@ func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*
 	return frame
 }
 
+func processCountMetric(buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
+	tags := make(map[string]string, len(props))
+	timeVector := make([]time.Time, 0, len(buckets))
+	values := make([]*float64, 0, len(buckets))
+
+	for _, bucket := range buckets {
+		value := castToFloat(bucket.Get("doc_count"))
+		timeValue, err := getAsTime(bucket.Get("key"))
+		if err != nil {
+			return nil, err
+		}
+		timeVector = append(timeVector, timeValue)
+		values = append(values, value)
+	}
+
+	for k, v := range props {
+		tags[k] = v
+	}
+	tags["metric"] = countType
+	return data.Frames{newTimeSeriesFrame(timeVector, tags, values)}, nil
+}
+
+func processPercentilesMetric(metric *MetricAgg, buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
+	if len(buckets) == 0 {
+		return data.Frames{}, nil
+	}
+
+	firstBucket := buckets[0]
+	percentiles := firstBucket.GetPath(metric.ID, "values").MustMap()
+
+	percentileKeys := make([]string, 0)
+	for k := range percentiles {
+		percentileKeys = append(percentileKeys, k)
+	}
+	sort.Strings(percentileKeys)
+
+	frames := data.Frames{}
+
+	for _, percentileName := range percentileKeys {
+		tags := make(map[string]string, len(props))
+		timeVector := make([]time.Time, 0, len(buckets))
+		values := make([]*float64, 0, len(buckets))
+
+		for k, v := range props {
+			tags[k] = v
+		}
+		tags["metric"] = "p" + percentileName
+		tags["field"] = metric.Field
+		for _, bucket := range buckets {
+			value := castToFloat(bucket.GetPath(metric.ID, "values", percentileName))
+			key := bucket.Get("key")
+			timeValue, err := getAsTime(key)
+			if err != nil {
+				return nil, err
+			}
+			timeVector = append(timeVector, timeValue)
+			values = append(values, value)
+		}
+		frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
+	}
+
+	return frames, nil
+}
+
+func processTopMetricsMetric(metric *MetricAgg, buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
+	metrics := metric.Settings.Get("metrics").MustArray()
+
+	frames := data.Frames{}
+
+	for _, metricField := range metrics {
+		tags := make(map[string]string, len(props))
+		timeVector := make([]time.Time, 0, len(buckets))
+		values := make([]*float64, 0, len(buckets))
+		for k, v := range props {
+			tags[k] = v
+		}
+
+		tags["field"] = metricField.(string)
+		tags["metric"] = "top_metrics"
+
+		for _, bucket := range buckets {
+			stats := bucket.GetPath(metric.ID, "top")
+			timeValue, err := getAsTime(bucket.Get("key"))
+			if err != nil {
+				return nil, err
+			}
+			timeVector = append(timeVector, timeValue)
+
+			for _, stat := range stats.MustArray() {
+				stat := stat.(map[string]interface{})
+
+				metrics, hasMetrics := stat["metrics"]
+				if hasMetrics {
+					metrics := metrics.(map[string]interface{})
+					metricValue, hasMetricValue := metrics[metricField.(string)]
+
+					if hasMetricValue && metricValue != nil {
+						v := metricValue.(float64)
+						values = append(values, &v)
+					}
+				}
+			}
+		}
+
+		frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
+	}
+
+	return frames, nil
+}
+
+func processExtendedStatsMetric(metric *MetricAgg, buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
+	metaKeys := make([]string, 0)
+	meta := metric.Meta.MustMap()
+	for k := range meta {
+		metaKeys = append(metaKeys, k)
+	}
+	sort.Strings(metaKeys)
+
+	frames := data.Frames{}
+
+	for _, statName := range metaKeys {
+		v := meta[statName]
+		if enabled, ok := v.(bool); !ok || !enabled {
+			continue
+		}
+
+		tags := make(map[string]string, len(props))
+		timeVector := make([]time.Time, 0, len(buckets))
+		values := make([]*float64, 0, len(buckets))
+
+		for k, v := range props {
+			tags[k] = v
+		}
+		tags["metric"] = statName
+		tags["field"] = metric.Field
+
+		for _, bucket := range buckets {
+			timeValue, err := getAsTime(bucket.Get("key"))
+			if err != nil {
+				return nil, err
+			}
+			var value *float64
+			switch statName {
+			case "std_deviation_bounds_upper":
+				value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
+			case "std_deviation_bounds_lower":
+				value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
+			default:
+				value = castToFloat(bucket.GetPath(metric.ID, statName))
+			}
+			timeVector = append(timeVector, timeValue)
+			values = append(values, value)
+		}
+		labels := tags
+		frames = append(frames, newTimeSeriesFrame(timeVector, labels, values))
+	}
+
+	return frames, nil
+}
+
+func processDefaultMetric(metric *MetricAgg, buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
+	tags := make(map[string]string, len(props))
+	timeVector := make([]time.Time, 0, len(buckets))
+	values := make([]*float64, 0, len(buckets))
+
+	for k, v := range props {
+		tags[k] = v
+	}
+
+	tags["metric"] = metric.Type
+	tags["field"] = metric.Field
+	tags["metricId"] = metric.ID
+	for _, bucket := range buckets {
+		timeValue, err := getAsTime(bucket.Get("key"))
+		if err != nil {
+			return nil, err
+		}
+		valueObj, err := bucket.Get(metric.ID).Map()
+		if err != nil {
+			continue
+		}
+		var value *float64
+		if _, ok := valueObj["normalized_value"]; ok {
+			value = castToFloat(bucket.GetPath(metric.ID, "normalized_value"))
+		} else {
+			value = castToFloat(bucket.GetPath(metric.ID, "value"))
+		}
+		timeVector = append(timeVector, timeValue)
+		values = append(values, value)
+	}
+	return data.Frames{newTimeSeriesFrame(timeVector, tags, values)}, nil
+}
+
 // nolint:gocyclo
 func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
 	props map[string]string) error {
 	frames := data.Frames{}
 	esAggBuckets := esAgg.Get("buckets").MustArray()
 
+	jsonBuckets := make([]*simplejson.Json, len(esAggBuckets))
+
+	for i, v := range esAggBuckets {
+		jsonBuckets[i] = simplejson.NewFromAny(v)
+	}
+
 	for _, metric := range target.Metrics {
 		if metric.Hide {
 			continue
 		}
 
-		tags := make(map[string]string, len(props))
-		timeVector := make([]time.Time, 0, len(esAggBuckets))
-		values := make([]*float64, 0, len(esAggBuckets))
-
 		switch metric.Type {
 		case countType:
-			for _, v := range esAggBuckets {
-				bucket := simplejson.NewFromAny(v)
-				value := castToFloat(bucket.Get("doc_count"))
-				key := castToFloat(bucket.Get("key"))
-				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
-				values = append(values, value)
+			countFrames, err := processCountMetric(jsonBuckets, props)
+			if err != nil {
+				return err
 			}
-
-			for k, v := range props {
-				tags[k] = v
-			}
-			tags["metric"] = countType
-			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
+			frames = append(frames, countFrames...)
 		case percentilesType:
-			buckets := esAggBuckets
-			if len(buckets) == 0 {
-				break
+			percentileFrames, err := processPercentilesMetric(metric, jsonBuckets, props)
+			if err != nil {
+				return err
 			}
-
-			firstBucket := simplejson.NewFromAny(buckets[0])
-			percentiles := firstBucket.GetPath(metric.ID, "values").MustMap()
-
-			percentileKeys := make([]string, 0)
-			for k := range percentiles {
-				percentileKeys = append(percentileKeys, k)
-			}
-			sort.Strings(percentileKeys)
-			for _, percentileName := range percentileKeys {
-				tags := make(map[string]string, len(props))
-				timeVector := make([]time.Time, 0, len(esAggBuckets))
-				values := make([]*float64, 0, len(esAggBuckets))
-
-				for k, v := range props {
-					tags[k] = v
-				}
-				tags["metric"] = "p" + percentileName
-				tags["field"] = metric.Field
-				for _, v := range buckets {
-					bucket := simplejson.NewFromAny(v)
-					value := castToFloat(bucket.GetPath(metric.ID, "values", percentileName))
-					key := castToFloat(bucket.Get("key"))
-					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
-					values = append(values, value)
-				}
-				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
-			}
+			frames = append(frames, percentileFrames...)
 		case topMetricsType:
-			buckets := esAggBuckets
-			metrics := metric.Settings.Get("metrics").MustArray()
-
-			for _, metricField := range metrics {
-				tags := make(map[string]string, len(props))
-				timeVector := make([]time.Time, 0, len(esAggBuckets))
-				values := make([]*float64, 0, len(esAggBuckets))
-				for k, v := range props {
-					tags[k] = v
-				}
-
-				tags["field"] = metricField.(string)
-				tags["metric"] = "top_metrics"
-
-				for _, v := range buckets {
-					bucket := simplejson.NewFromAny(v)
-					stats := bucket.GetPath(metric.ID, "top")
-					key := castToFloat(bucket.Get("key"))
-
-					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
-
-					for _, stat := range stats.MustArray() {
-						stat := stat.(map[string]interface{})
-
-						metrics, hasMetrics := stat["metrics"]
-						if hasMetrics {
-							metrics := metrics.(map[string]interface{})
-							metricValue, hasMetricValue := metrics[metricField.(string)]
-
-							if hasMetricValue && metricValue != nil {
-								v := metricValue.(float64)
-								values = append(values, &v)
-							}
-						}
-					}
-				}
-
-				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
+			topMetricsFrames, err := processTopMetricsMetric(metric, jsonBuckets, props)
+			if err != nil {
+				return err
 			}
-
+			frames = append(frames, topMetricsFrames...)
 		case extendedStatsType:
-			buckets := esAggBuckets
-
-			metaKeys := make([]string, 0)
-			meta := metric.Meta.MustMap()
-			for k := range meta {
-				metaKeys = append(metaKeys, k)
+			extendedStatsFrames, err := processExtendedStatsMetric(metric, jsonBuckets, props)
+			if err != nil {
+				return err
 			}
-			sort.Strings(metaKeys)
-			for _, statName := range metaKeys {
-				v := meta[statName]
-				if enabled, ok := v.(bool); !ok || !enabled {
-					continue
-				}
 
-				tags := make(map[string]string, len(props))
-				timeVector := make([]time.Time, 0, len(esAggBuckets))
-				values := make([]*float64, 0, len(esAggBuckets))
-
-				for k, v := range props {
-					tags[k] = v
-				}
-				tags["metric"] = statName
-				tags["field"] = metric.Field
-
-				for _, v := range buckets {
-					bucket := simplejson.NewFromAny(v)
-					key := castToFloat(bucket.Get("key"))
-					var value *float64
-					switch statName {
-					case "std_deviation_bounds_upper":
-						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
-					case "std_deviation_bounds_lower":
-						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
-					default:
-						value = castToFloat(bucket.GetPath(metric.ID, statName))
-					}
-					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
-					values = append(values, value)
-				}
-				labels := tags
-				frames = append(frames, newTimeSeriesFrame(timeVector, labels, values))
-			}
+			frames = append(frames, extendedStatsFrames...)
 		default:
-			for k, v := range props {
-				tags[k] = v
+			defaultFrames, err := processDefaultMetric(metric, jsonBuckets, props)
+			if err != nil {
+				return err
 			}
-
-			tags["metric"] = metric.Type
-			tags["field"] = metric.Field
-			tags["metricId"] = metric.ID
-			for _, v := range esAggBuckets {
-				bucket := simplejson.NewFromAny(v)
-				key := castToFloat(bucket.Get("key"))
-				valueObj, err := bucket.Get(metric.ID).Map()
-				if err != nil {
-					continue
-				}
-				var value *float64
-				if _, ok := valueObj["normalized_value"]; ok {
-					value = castToFloat(bucket.GetPath(metric.ID, "normalized_value"))
-				} else {
-					value = castToFloat(bucket.GetPath(metric.ID, "value"))
-				}
-				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
-				values = append(values, value)
-			}
-			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
+			frames = append(frames, defaultFrames...)
 		}
 	}
 	if query.Frames != nil {
@@ -593,60 +663,32 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 
 func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
 	queryResult *backend.DataResponse, props map[string]string) error {
-	propKeys := make([]string, 0)
-	for k := range props {
-		propKeys = append(propKeys, k)
-	}
-	sort.Strings(propKeys)
+	propKeys := createPropKeys(props)
 	frames := data.Frames{}
-	var fields []*data.Field
-
-	if queryResult.Frames == nil {
-		for _, propKey := range propKeys {
-			fields = append(fields, data.NewField(propKey, nil, []*string{}))
-		}
-	}
-
-	addMetricValue := func(values []interface{}, metricName string, value *float64) {
-		index := -1
-		for i, f := range fields {
-			if f.Name == metricName {
-				index = i
-				break
-			}
-		}
-
-		var field data.Field
-		if index == -1 {
-			field = *data.NewField(metricName, nil, []*float64{})
-			fields = append(fields, &field)
-		} else {
-			field = *fields[index]
-		}
-		field.Append(value)
-	}
+	fields := createFields(queryResult.Frames, propKeys)
 
 	for _, v := range esAgg.Get("buckets").MustArray() {
 		bucket := simplejson.NewFromAny(v)
 		var values []interface{}
 
 		found := false
-		for _, e := range fields {
+		for _, field := range fields {
 			for _, propKey := range propKeys {
-				if e.Name == propKey {
-					e.Append(props[propKey])
+				if field.Name == propKey {
+					value := props[propKey]
+					field.Append(&value)
 				}
 			}
-			if e.Name == aggDef.Field {
+			if field.Name == aggDef.Field {
 				found = true
 				if key, err := bucket.Get("key").String(); err == nil {
-					e.Append(&key)
+					field.Append(&key)
 				} else {
 					f, err := bucket.Get("key").Float64()
 					if err != nil {
 						return err
 					}
-					e.Append(&f)
+					field.Append(&f)
 				}
 			}
 		}
@@ -670,52 +712,15 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(values, getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
+				addMetricValueToFields(&fields, values, getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
-				metaKeys := make([]string, 0)
-				meta := metric.Meta.MustMap()
-				for k := range meta {
-					metaKeys = append(metaKeys, k)
-				}
-				sort.Strings(metaKeys)
-				for _, statName := range metaKeys {
-					v := meta[statName]
-					if enabled, ok := v.(bool); !ok || !enabled {
-						continue
-					}
-
-					var value *float64
-					switch statName {
-					case "std_deviation_bounds_upper":
-						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
-					case "std_deviation_bounds_lower":
-						value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
-					default:
-						value = castToFloat(bucket.GetPath(metric.ID, statName))
-					}
-
-					addMetricValue(values, getMetricName(metric.Type), value)
-					break
-				}
+				addExtendedStatsToFields(&fields, bucket, metric, values)
+			case percentilesType:
+				addPercentilesToFields(&fields, bucket, metric, values)
+			case topMetricsType:
+				addTopMetricsToFields(&fields, bucket, metric, values)
 			default:
-				metricName := getMetricName(metric.Type)
-				otherMetrics := make([]*MetricAgg, 0)
-
-				for _, m := range target.Metrics {
-					if m.Type == metric.Type {
-						otherMetrics = append(otherMetrics, m)
-					}
-				}
-
-				if len(otherMetrics) > 1 {
-					metricName += " " + metric.Field
-					if metric.Type == "bucket_script" {
-						// Use the formula in the column name
-						metricName = metric.Settings.Get("script").MustString("")
-					}
-				}
-
-				addMetricValue(values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
+				addOtherMetricsToFields(&fields, bucket, metric, values, target)
 			}
 		}
 
@@ -801,7 +806,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFrames(queryResult backend.DataResponse, target *Query) {
+func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -820,7 +825,10 @@ func nameFrames(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			frame.Name = fieldName
+			if valueField.Config == nil {
+				valueField.Config = &data.FieldConfig{}
+			}
+			valueField.Config.DisplayNameFromDS = fieldName
 		}
 	}
 }
@@ -890,7 +898,7 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 				found := false
 				for _, metric := range target.Metrics {
 					if metric.ID == field {
-						metricName += " " + describeMetric(metric.Type, field)
+						metricName += " " + describeMetric(metric.Type, metric.Field)
 						found = true
 					}
 				}
@@ -969,6 +977,16 @@ func castToFloat(j *simplejson.Json) *float64 {
 	}
 
 	return nil
+}
+
+func getAsTime(j *simplejson.Json) (time.Time, error) {
+	// these are stored as numbers
+	number, err := j.Float64()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.UnixMilli(int64(number)).UTC(), nil
 }
 
 func findAgg(target *Query, aggID string) (*BucketAgg, error) {
@@ -1118,4 +1136,136 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
 	}
+}
+
+func createFields(frames data.Frames, propKeys []string) []*data.Field {
+	var fields []*data.Field
+	// Otherwise use the fields from frames
+	if frames != nil {
+		for _, frame := range frames {
+			fields = append(fields, frame.Fields...)
+		}
+		// If we have no frames, we create fields from propKeys
+	} else {
+		for _, propKey := range propKeys {
+			fields = append(fields, data.NewField(propKey, nil, []*string{}))
+		}
+	}
+	return fields
+}
+
+func getSortedKeys(data map[string]interface{}) []string {
+	keys := make([]string, 0, len(data))
+
+	for k := range data {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+	return keys
+}
+
+func createPropKeys(props map[string]string) []string {
+	propKeys := make([]string, 0)
+	for k := range props {
+		propKeys = append(propKeys, k)
+	}
+	sort.Strings(propKeys)
+	return propKeys
+}
+
+func addMetricValueToFields(fields *[]*data.Field, values []interface{}, metricName string, value *float64) {
+	index := -1
+	for i, f := range *fields {
+		if f.Name == metricName {
+			index = i
+			break
+		}
+	}
+
+	var field data.Field
+	if index == -1 {
+		field = *data.NewField(metricName, nil, []*float64{})
+		*fields = append(*fields, &field)
+	} else {
+		field = *(*fields)[index]
+	}
+	field.Append(value)
+}
+
+func addPercentilesToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
+	percentiles := bucket.GetPath(metric.ID, "values")
+	for _, percentileName := range getSortedKeys(percentiles.MustMap()) {
+		percentileValue := percentiles.Get(percentileName).MustFloat64()
+		addMetricValueToFields(fields, values, fmt.Sprintf("p%v %v", percentileName, metric.Field), &percentileValue)
+	}
+}
+
+func addExtendedStatsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
+	metaKeys := make([]string, 0)
+	meta := metric.Meta.MustMap()
+	for k := range meta {
+		metaKeys = append(metaKeys, k)
+	}
+	sort.Strings(metaKeys)
+	for _, statName := range metaKeys {
+		v := meta[statName]
+		if enabled, ok := v.(bool); !ok || !enabled {
+			continue
+		}
+		var value *float64
+		switch statName {
+		case "std_deviation_bounds_upper":
+			value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
+		case "std_deviation_bounds_lower":
+			value = castToFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
+		default:
+			value = castToFloat(bucket.GetPath(metric.ID, statName))
+		}
+
+		addMetricValueToFields(fields, values, getMetricName(metric.Type), value)
+		break
+	}
+}
+
+func addTopMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
+	baseName := getMetricName(metric.Type)
+	metrics := metric.Settings.Get("metrics").MustStringArray()
+	for _, metricField := range metrics {
+		// If we selected more than one metric we also add each metric name
+		metricName := baseName
+		if len(metrics) > 1 {
+			metricName += " " + metricField
+		}
+		top := bucket.GetPath(metric.ID, "top").MustArray()
+		metrics, hasMetrics := top[0].(map[string]interface{})["metrics"]
+		if hasMetrics {
+			metrics := metrics.(map[string]interface{})
+			metricValue, hasMetricValue := metrics[metricField]
+			if hasMetricValue && metricValue != nil {
+				v := metricValue.(float64)
+				addMetricValueToFields(fields, values, metricName, &v)
+			}
+		}
+	}
+}
+
+func addOtherMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}, target *Query) {
+	metricName := getMetricName(metric.Type)
+	otherMetrics := make([]*MetricAgg, 0)
+
+	for _, m := range target.Metrics {
+		if m.Type == metric.Type {
+			otherMetrics = append(otherMetrics, m)
+		}
+	}
+
+	if len(otherMetrics) > 1 {
+		metricName += " " + metric.Field
+		if metric.Type == "bucket_script" {
+			// Use the formula in the column name
+			metricName = metric.Settings.Get("script").MustString("")
+		}
+	}
+	addMetricValueToFields(fields, values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
 }

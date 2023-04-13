@@ -14,11 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,7 +36,7 @@ type ServiceImpl struct {
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
-	queryLibraryService  querylibrary.HTTPService
+	license              licensing.Licensing
 
 	// Navigation
 	navigationAppConfig     map[string]NavigationAppConfig
@@ -50,7 +50,7 @@ type NavigationAppConfig struct {
 	Icon       string
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, queryLibraryService querylibrary.HTTPService) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -63,7 +63,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
-		queryLibraryService:  queryLibraryService,
+		license:              license,
 	}
 
 	service.readNavigationSettings()
@@ -114,7 +114,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 	}
 
 	canExplore := func(context *contextmodel.ReqContext) bool {
-		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || setting.ViewersCanEdit
+		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || s.cfg.ViewersCanEdit
 	}
 
 	if setting.ExploreEnabled && hasAccess(canExplore, ac.EvalPermission(ac.ActionDatasourcesExplore)) {
@@ -126,18 +126,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			SortWeight: navtree.WeightExplore,
 			Section:    navtree.NavSectionCore,
 			Url:        s.cfg.AppSubURL + "/explore",
-		})
-	}
-
-	if !s.queryLibraryService.IsDisabled() {
-		treeRoot.AddSection(&navtree.NavLink{
-			Text:       "Query Library",
-			Id:         "query",
-			SubTitle:   "Store, import, export and manage your team queries in an easy way.",
-			Icon:       "file-search-alt",
-			SortWeight: navtree.WeightQueryLibrary,
-			Section:    navtree.NavSectionCore,
-			Url:        s.cfg.AppSubURL + "/query-library",
 		})
 	}
 
@@ -162,31 +150,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
 			treeRoot.AddSection(connectionsSection)
 		}
-	}
-
-	if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
-		liveNavLinks := []*navtree.NavLink{}
-
-		liveNavLinks = append(liveNavLinks, &navtree.NavLink{
-			Text: "Status", Id: "live-status", Url: s.cfg.AppSubURL + "/live", Icon: "exchange-alt",
-		})
-		liveNavLinks = append(liveNavLinks, &navtree.NavLink{
-			Text: "Pipeline", Id: "live-pipeline", Url: s.cfg.AppSubURL + "/live/pipeline", Icon: "arrow-to-right",
-		})
-		liveNavLinks = append(liveNavLinks, &navtree.NavLink{
-			Text: "Cloud", Id: "live-cloud", Url: s.cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
-		})
-
-		treeRoot.AddSection(&navtree.NavLink{
-			Id:           "live",
-			Text:         "Live",
-			SubTitle:     "Event streaming",
-			Icon:         "exchange-alt",
-			Url:          s.cfg.AppSubURL + "/live",
-			Children:     liveNavLinks,
-			Section:      navtree.NavSectionConfig,
-			HideFromTabs: true,
-		})
 	}
 
 	orgAdminNode, err := s.getOrgAdminNode(c)
@@ -345,25 +308,20 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		return nil, err
 	}
 
-	starredDashboards := []*dashboards.Dashboard{}
-	starredDashboardsCounter := 0
-	for dashboardId := range starredDashboardResult.UserStars {
+	if len(starredDashboardResult.UserStars) > 0 {
+		var ids []int64
+		for id := range starredDashboardResult.UserStars {
+			ids = append(ids, id)
+		}
+		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardIDs: ids, OrgID: c.OrgID})
+		if err != nil {
+			return nil, err
+		}
 		// Set a loose limit to the first 50 starred dashboards found
-		if starredDashboardsCounter > 50 {
-			break
+		if len(starredDashboards) > 50 {
+			starredDashboards = starredDashboards[:50]
 		}
-		starredDashboardsCounter++
-		query := &dashboards.GetDashboardQuery{
-			ID:    dashboardId,
-			OrgID: c.OrgID,
-		}
-		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
-		if err == nil {
-			starredDashboards = append(starredDashboards, queryResult)
-		}
-	}
 
-	if len(starredDashboards) > 0 {
 		sort.Slice(starredDashboards, func(i, j int) bool {
 			return starredDashboards[i].Title < starredDashboards[j].Title
 		})
@@ -446,6 +404,11 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
 			})
+
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Import dashboard", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
+				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
+			})
 		}
 	}
 
@@ -454,13 +417,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
 				Icon: "plus", Url: s.cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
-			})
-		}
-
-		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
-				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
 	}

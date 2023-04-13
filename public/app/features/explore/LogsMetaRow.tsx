@@ -147,7 +147,7 @@ export const LogsMetaRow = React.memo(
               })}
             />
             <Dropdown overlay={downloadMenu}>
-              <ToolbarButton isOpen={false} variant="default" icon="download-alt">
+              <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
                 Download
               </ToolbarButton>
             </Dropdown>

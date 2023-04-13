@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
@@ -12,7 +13,7 @@ jest.mock('./Graph/ExploreGraph', () => {
   };
 });
 
-function renderPanel(logsVolumeData?: DataQueryResponse) {
+function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () => {}) {
   render(
     <LogsVolumePanelList
       absoluteRange={{ from: 0, to: 1 }}
@@ -21,7 +22,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       width={100}
       onUpdateTimeRange={() => {}}
       logsVolumeData={logsVolumeData}
-      onLoadLogsVolume={() => {}}
+      onLoadLogsVolume={onLoadLogsVolume}
       onHiddenSeriesChanged={() => null}
       eventBus={new EventBusSrv()}
     />
@@ -40,7 +41,7 @@ describe('LogsVolumePanelList', () => {
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 
-  it('shows long warning message', () => {
+  it('shows long warning message', async () => {
     // we make a long message
     const messagePart = 'One two three four five six seven eight nine ten.';
     const message = messagePart + ' ' + messagePart + ' ' + messagePart;
@@ -48,7 +49,22 @@ describe('LogsVolumePanelList', () => {
     renderPanel({ state: LoadingState.Error, error: { data: { message } }, data: [] });
     expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
     expect(screen.queryByText(message)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Show details' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it('a custom message for timeout errors', async () => {
+    const onLoadCallback = jest.fn();
+    renderPanel(
+      {
+        state: LoadingState.Error,
+        error: { data: { message: '{"status":"error","errorType":"timeout","error":"context deadline exceeded"}' } },
+        data: [],
+      },
+      onLoadCallback
+    );
+    expect(screen.getByText('The logs volume query has timed out')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onLoadCallback).toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, waitFor, screen, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -185,7 +185,9 @@ describe('RuleEditor grafana managed rules', () => {
     //check that '+ Add new' option is in folders drop down even if we don't have values
     const emptyFolderInput = await ui.inputs.folderContainer.find();
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
-    await renderRuleEditor(uid);
+    await act(async () => {
+      renderRuleEditor(uid);
+    });
     await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
     expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
 

@@ -31,6 +31,7 @@ A support bundle can include any of the following components:
 - **Settings**: Settings for the Grafana instance
 - **SAML**: Healthcheck connection and metadata for SAML (only displayed if SAML is enabled)
 - **LDAP**: Healthcheck connection and metadata for LDAP (only displayed if LDAP is enabled)
+- **OAuth2**: Healthcheck connection and metadata for each OAuth2 Provider supporter (only displayed if OAuth provider is enabled)
 
 ## Steps
 
@@ -89,7 +90,7 @@ Ensure [age](https://github.com/FiloSottile/age#installation) is installed on yo
 Add the public key to the `public_keys` setting in the `support_bundle` section of the Grafana configuration file.
 
 ```ini
-[support_bundle]
+[support_bundles]
 public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
 ```
 
@@ -99,7 +100,7 @@ public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
 Example:
 
 ```ini
-[support_bundle]
+[support_bundles]
 public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p age1yu8vzu554pv3klw46yhdv4raz36k5w3vy30lpxn46923lqngudyqvxacer"
 ```
 

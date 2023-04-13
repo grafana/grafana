@@ -18,12 +18,9 @@
  * @public
  */
 export interface FeatureToggles {
-  alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
-  dashboardPreviews?: boolean;
-  ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -31,14 +28,11 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
-  lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  dashboardsFromStorage?: boolean;
   exploreMixedDatasource?: boolean;
-  tracing?: boolean;
   newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -46,7 +40,8 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
-  autoMigrateGraphPanels?: boolean;
+  autoMigrateOldPanels?: boolean;
+  disableAngular?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
@@ -61,14 +56,14 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   newPanelChromeUI?: boolean;
-  queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
-  elasticsearchBackendMigration?: boolean;
+  showTraceId?: boolean;
   datasourceOnboarding?: boolean;
+  emptyDashboardPage?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -78,9 +73,28 @@ export interface FeatureToggles {
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
+  lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
+  onlyExternalOrgRoleSync?: boolean;
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
+  prometheusResourceBrowserCache?: boolean;
+  influxdbBackendMigration?: boolean;
+  clientTokenRotation?: boolean;
+  prometheusDataplane?: boolean;
+  lokiMetricDataplane?: boolean;
+  alertStateHistoryLokiSecondary?: boolean;
+  alertStateHistoryLokiPrimary?: boolean;
+  alertStateHistoryLokiOnly?: boolean;
+  disableSSEDataplane?: boolean;
+  unifiedRequestLog?: boolean;
+  renderAuthJWT?: boolean;
+  pyroscopeFlameGraph?: boolean;
+  externalServiceAuth?: boolean;
+  dataplaneFrontendFallback?: boolean;
+  useCachingService?: boolean;
+  disableElasticsearchBackendQuerying?: boolean;
+  authenticationConfigUI?: boolean;
 }

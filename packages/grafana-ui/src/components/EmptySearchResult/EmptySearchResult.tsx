@@ -21,7 +21,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background-color: ${theme.colors.background.secondary};
       padding: ${theme.spacing(2)};
       min-width: 350px;
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.radius.default};
       margin-bottom: ${theme.spacing(4)};
     `,
   };

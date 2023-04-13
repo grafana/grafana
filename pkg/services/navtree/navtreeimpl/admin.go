@@ -1,7 +1,6 @@
 package navtreeimpl
 
 import (
-	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -9,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
@@ -59,7 +59,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 	}
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.ReqCanAdminPlugins(s.cfg), pluginaccesscontrol.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Plugins",
 			Id:       "plugins",
@@ -136,6 +136,17 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
+	if authConfigUIAvailable && hasAccess(ac.ReqGrafanaAdmin, evalAuthenticationSettings()) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text:     "Authentication",
+			Id:       "authentication",
+			SubTitle: "Manage your auth settings and configure single sign-on",
+			Icon:     "signin",
+			Url:      s.cfg.AppSubURL + "/admin/authentication",
+		})
+	}
+
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
@@ -159,7 +170,7 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		adminNavLinks = append(adminNavLinks, storage)
 	}
 
-	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
+	if s.cfg.LDAPAuthEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
 		})
@@ -188,4 +199,13 @@ func (s *ServiceImpl) ReqCanAdminTeams(c *contextmodel.ReqContext) bool {
 func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
+}
+
+func evalAuthenticationSettings() ac.Evaluator {
+	return ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
+	)
 }

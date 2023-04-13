@@ -52,7 +52,7 @@ export const AlertType = ({ editingExistingRule }: Props) => {
       )}
 
       <div className={styles.flexRow}>
-        {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
+        {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
           <Field
             className={styles.formInput}
             label="Select data source"
@@ -67,6 +67,8 @@ export const AlertType = ({ editingExistingRule }: Props) => {
                   onChange={(ds: DataSourceInstanceSettings) => {
                     // reset location if switching data sources, as different rules source will have different groups and namespaces
                     setValue('location', undefined);
+                    // reset expression as they don't need to persist after changing datasources
+                    setValue('expression', '');
                     onChange(ds?.name ?? null);
                   }}
                 />
