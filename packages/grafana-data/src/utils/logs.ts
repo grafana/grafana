@@ -2,7 +2,6 @@ import { countBy, chain, escapeRegExp } from 'lodash';
 
 import { DataFrame, FieldType } from '../types/index';
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
-import { ArrayVector } from '../vector/ArrayVector';
 
 // This matches:
 // first a label from start of the string or first white space, then any word chars until "="
@@ -50,11 +49,11 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
 
 /** @deprecated will be removed in the next major version */
 export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataFrame {
-  const levels = new ArrayVector<LogLevel>();
+  const levels: LogLevel[] = [];
   const lines = series.fields[lineIndex];
   for (let i = 0; i < lines.values.length; i++) {
     const line = lines.values.get(lineIndex);
-    levels.buffer.push(getLogLevel(line));
+    levels.push(getLogLevel(line));
   }
 
   return {
