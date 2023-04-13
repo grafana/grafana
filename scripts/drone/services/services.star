@@ -8,7 +8,7 @@ def integration_test_services_volumes():
         {"name": "mysql", "temp": {"medium": "memory"}},
     ]
 
-def integration_test_services(edition):
+def integration_test_services():
     services = [
         {
             "name": "postgres",
@@ -34,23 +34,17 @@ def integration_test_services(edition):
             },
             "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
         },
+        {
+            "name": "redis",
+            "image": "redis:6.2.11-alpine",
+            "environment": {},
+        },
+        {
+            "name": "memcached",
+            "image": "memcached:1.6.9-alpine",
+            "environment": {},
+        },
     ]
-
-    if edition in ("enterprise", "enterprise2"):
-        services.extend(
-            [
-                {
-                    "name": "redis",
-                    "image": "redis:6.2.1-alpine",
-                    "environment": {},
-                },
-                {
-                    "name": "memcached",
-                    "image": "memcached:1.6.9-alpine",
-                    "environment": {},
-                },
-            ],
-        )
 
     return services
 

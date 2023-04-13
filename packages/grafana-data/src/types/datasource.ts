@@ -474,6 +474,11 @@ export interface DataQueryResponse {
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
+
+  /**
+   * traceIds related to the response, if available
+   */
+  traceIds?: string[];
 }
 
 export enum DataQueryErrorType {
@@ -497,6 +502,7 @@ export interface DataQueryError {
   status?: number;
   statusText?: string;
   refId?: string;
+  traceId?: string;
   type?: DataQueryErrorType;
 }
 

@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -447,63 +449,6 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:  "Load CDN plugin",
-			class: plugins.External,
-			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com",
-				PluginSettings: setting.PluginSettings{
-					"grafana-worldmap-panel": {"cdn": "true"},
-				},
-			},
-			pluginPaths: []string{"../testdata/cdn"},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "grafana-worldmap-panel",
-						Type: "panel",
-						Name: "Worldmap Panel",
-						Info: plugins.Info{
-							Version: "0.3.3",
-							Links: []plugins.InfoLink{
-								{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
-								{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
-							},
-							Logos: plugins.Logos{
-								// Path substitution
-								Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-								Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-							},
-							Screenshots: []plugins.Screenshots{
-								{
-									Name: "World",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
-								},
-								{
-									Name: "USA",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
-								},
-								{
-									Name: "Light Theme",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
-								},
-							},
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "3.x.x",
-							Plugins:        []plugins.Dependency{},
-						},
-					},
-					FS: plugins.NewLocalFS(map[string]struct{}{
-						filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
-					}, filepath.Join(parentDir, "testdata/cdn/plugin")),
-					Class:     plugins.External,
-					Signature: plugins.SignatureValid,
-					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
@@ -533,6 +478,89 @@ func TestLoader_Load(t *testing.T) {
 			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
 		})
 	}
+}
+
+func TestLoader_Load_CustomSource(t *testing.T) {
+	t.Run("Load a plugin", func(t *testing.T) {
+		parentDir, err := filepath.Abs("../")
+		if err != nil {
+			t.Errorf("could not construct absolute path of current dir")
+			return
+		}
+
+		cfg := &config.Cfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+			PluginSettings: setting.PluginSettings{
+				"grafana-worldmap-panel": {"cdn": "true"},
+			},
+		}
+
+		pluginPaths := []string{"../testdata/cdn"}
+		expected := []*plugins.Plugin{{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-worldmap-panel",
+				Type: "panel",
+				Name: "Worldmap Panel",
+				Info: plugins.Info{
+					Version: "0.3.3",
+					Links: []plugins.InfoLink{
+						{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
+						{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
+					},
+					Logos: plugins.Logos{
+						// Path substitution
+						Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+						Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+					},
+					Screenshots: []plugins.Screenshots{
+						{
+							Name: "World",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
+						},
+						{
+							Name: "USA",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
+						},
+						{
+							Name: "Light Theme",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
+						},
+					},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "3.x.x",
+					Plugins:        []plugins.Dependency{},
+				},
+			},
+			FS: plugins.NewLocalFS(map[string]struct{}{
+				filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
+			}, filepath.Join(parentDir, "testdata/cdn/plugin")),
+			Class:     plugins.Bundled,
+			Signature: plugins.SignatureValid,
+			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
+		}}
+
+		l := newLoader(cfg)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.Bundled
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return pluginPaths
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{
+					Status: plugins.SignatureValid,
+				}, true
+			},
+		})
+
+		require.NoError(t, err)
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+	})
 }
 
 func TestLoader_setDefaultNavURL(t *testing.T) {
@@ -988,6 +1016,107 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
+	t.Run("Load duplicate plugin folders", func(t *testing.T) {
+		pluginDir1, err := filepath.Abs("../testdata/test-app")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		pluginDir2, err := filepath.Abs("../testdata/valid-v2-signature")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		expected := []*plugins.Plugin{
+			{
+				JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/plugins/test-app/img/logo_small.png",
+							Large: "public/plugins/test-app/img/logo_large.png",
+						},
+						Screenshots: []plugins.Screenshots{
+							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "3.x.x",
+						Plugins: []plugins.Dependency{
+							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
+							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+						},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+					},
+					Backend: false,
+				},
+				FS:            plugins.NewLocalFS(filesInDir(t, pluginDir1), pluginDir1),
+				Class:         plugins.External,
+				Signature:     plugins.SignatureValid,
+				SignatureType: plugins.GrafanaSignature,
+				SignatureOrg:  "Grafana Labs",
+				Module:        "plugins/test-app/module",
+				BaseURL:       "public/plugins/test-app",
+			},
+		}
+
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		// Cause an initialization error
+		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+			return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+				if pluginID == "test-datasource" {
+					return nil, fmt.Errorf("failed to initialize")
+				}
+				return &fakes.FakePluginClient{}, nil
+			}
+		}
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+		})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir1, pluginDir2}
+			},
+		})
+		require.NoError(t, err)
+
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+	})
+}
+
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	rootDir, err := filepath.Abs("../")
 	if err != nil {
@@ -1304,10 +1433,9 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn), finder.NewLocalFinder())
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder())
 
 	for _, cb := range cbs {
 		cb(l)

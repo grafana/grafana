@@ -45,40 +45,28 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
-        | Name                            | Description                                                                                                                                                                                                                                                                                                     |
-
+    | Name                            | Description                                                                                                                                                                                                                                                                                                     |
     | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `Name` | The data source name. This is how you refer to the data source in panels and queries. |
-    | `Default` | Default data source that is pre-selected for new panels. |
-    | `URL` | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`. |
-    | `Access` | Only Server access mode is functional. If Server mode is already selected this option is hidden. Otherwise change to Server mode to prevent errors. |
-    | `Basic Auth` | Enable basic authentication to the Prometheus data source. |
-    | `User` | User name for basic authentication. |
-    | `Password` | Password for basic authentication. |
-    | `Manage alerts via Alerting UI` | Toggle whether to enable Alertmanager integration for this data source. |
-    | `Scrape interval` | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s. |
-    | `HTTP method` | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network. |
-    | `Type` | The type of your Prometheus server; `Prometheus`, `Cortex`, `Thanos`, `Mimir`. When selected, the **Version** field attempts to populate automatically using the Prometheus [buildinfo](https://semver.org/) API. Some Prometheus types, such as Cortex, don't support this API and must be manually populated. |
-    | `Version` | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected. |
-    | `Disable metrics lookup` | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances. |
-    | `Custom query parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
-    | **Exemplars configuration** | |
-    | `Internal link` | Enable this option is you have an internal link. When you enable this option, you will see a data source selector. Select the backend tracing data store for your exemplar data. |
-    | `Data source` | You will see this option only if you enable `Internal link` option. Select the backend tracing data store for your exemplar data. |
-    | `URL` | You will see this option only if the `Internal link` option is disabled. Enter the full URL of the external link. You can interpolate the value from the field with `${__value.raw }` macro. |
-    | `URL Label` | (Optional) add a custom display label to override the value of the `Label name` field. |
-    | `Label name` | Add a name for the exemplar traceID property. |
-
-        **Exemplars configuration:**
-
-        | Name              | Description                                                                                                                                                                                                                                                    |
-
-    | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data. |
-    | **Data source** | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data. |
-    | **URL** | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}). |
-    | **URL label** | _(Optional)_ Adds a custom display label to override the value of the `Label name` field. |
-    | **Label name** | Adds a name for the exemplar traceID property. |
+    | `Name`                          | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                           |
+    | `Default`                       | Default data source that is pre-selected for new panels.                                                                                                                                                                                                                                                        |
+    | `URL`                           | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                                                                           |
+    | `Access`                        | Only Server access mode is functional. If Server mode is already selected this option is hidden. Otherwise change to Server mode to prevent errors.                                                                                                                                                             |
+    | `Basic Auth`                    | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                                                                      |
+    | `User`                          | User name for basic authentication.                                                                                                                                                                                                                                                                             |
+    | `Password`                      | Password for basic authentication.                                                                                                                                                                                                                                                                              |
+    | `Manage alerts via Alerting UI` | Toggle whether to enable Alertmanager integration for this data source.                                                                                                                                                                                                                                         |
+    | `Scrape interval`               | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                                                                                                                               |
+    | `HTTP method`                   | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                               |
+    | `Type`                          | The type of your Prometheus server; `Prometheus`, `Cortex`, `Thanos`, `Mimir`. When selected, the **Version** field attempts to populate automatically using the Prometheus [buildinfo](https://semver.org/) API. Some Prometheus types, such as Cortex, don't support this API and must be manually populated. |
+    | `Version`                       | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected.                                                                                                                                                                                               |
+    | `Disable metrics lookup`        | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                   |
+    | `Custom query parameters`       | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                         |
+    | **Exemplars configuration**     |                                                                                                                                                                                                                                                                                                                 |
+    | `Internal link`                 | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                                                                             |
+    | `Data source`                   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                                                                                   |
+    | `URL`                           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}).                                                  |
+    | `URL Label`                     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                                                                       |
+    | `Label name`                    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                                                                                  |
 
 ### Provision the data source
 
@@ -101,6 +89,8 @@ datasources:
       manageAlerts: true
       prometheusType: Prometheus
       prometheusVersion: 2.37.0
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
       cacheLevel: 'High'
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
@@ -177,3 +167,11 @@ Grafana lists these variables in dropdown select boxes at the top of the dashboa
 Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+
+## Incremental Dashboard Queries (beta)
+
+As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
+This can be toggled on or off in the datasource configuration or provisioning file (under `incrementalQuerying` in jsonData).
+Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
+
+Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.

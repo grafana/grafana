@@ -162,7 +162,9 @@ export default function CorrelationsPage() {
             </div>
           )}
 
-          {showEmptyListCTA && <EmptyCorrelationsCTA onClick={() => setIsAdding(true)} />}
+          {showEmptyListCTA && (
+            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+          )}
 
           {
             // This error is not actionable, it'd be nice to have a recovery button
