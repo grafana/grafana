@@ -182,6 +182,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return throwError(() => error);
     }
 
+    // When the dashboard first load or on dashboard panel edit mode
+    // PanelQueryRunner runs the queries to have a visualization on the panel.
+    // At that point datasource doesn't have the retention policies fetched.
+    // So hardcoded policy is being sent. Which causes problems.
+    // To overcome this we check/load policies first and then do the query.
     return defer(() => this.getRetentionPolicies()).pipe(
       mergeMap((allPolicies) => {
         this.retentionPolicies = allPolicies;
