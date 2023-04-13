@@ -12,12 +12,13 @@ declare global {
 }
 
 // JS original sin
+// writable: true because Jest will re-exec this block multiple times (in a browser this only runs once)
 Object.defineProperties(Array.prototype, {
   get: {
     value: function(idx: number): any {
       return (this as any)[idx];
     },
-    writable: false,
+    writable: true,
     enumerable: false,
     configurable: false,
   },
@@ -25,7 +26,7 @@ Object.defineProperties(Array.prototype, {
     value: function(idx: number, value: any) {
       (this as any)[idx] = value;
     },
-    writable: false,
+    writable: true,
     enumerable: false,
     configurable: false,
   },
@@ -33,7 +34,7 @@ Object.defineProperties(Array.prototype, {
     value: function(value: any) {
       (this as any).push(value);
     },
-    writable: false,
+    writable: true,
     enumerable: false,
     configurable: false,
   },
@@ -41,7 +42,7 @@ Object.defineProperties(Array.prototype, {
     value: function() {
       return this;
     },
-    writable: false,
+    writable: true,
     enumerable: false,
     configurable: false,
   },
