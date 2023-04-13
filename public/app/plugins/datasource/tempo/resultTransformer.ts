@@ -77,7 +77,7 @@ export function createTableFrame(
   for (let field of logsFrame.fields) {
     let hasMatch = false;
     if (field.type === FieldType.string) {
-      const values = field.values.toArray();
+      const values = field.values;
       for (let i = 0; i < values.length; i++) {
         const line = values[i];
         if (line) {
