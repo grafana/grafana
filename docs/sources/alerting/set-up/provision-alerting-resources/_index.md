@@ -38,7 +38,7 @@ To enable the creation or editing of alerting resources in the Grafana UI, add t
 - `PUT /api/v1/provisioning/policies`
 - `PUT /api/v1/provisioning/templates/{name}`
 
-The next call will change provenance of all alert rules in the group.
+The next API call will change provenance of all alert rules in the group.
 
 - `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}`
 
