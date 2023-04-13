@@ -18,7 +18,7 @@ weight: 1700
 
 ### Role-based access control changes
 
-Role-based access control (RBAC) is now always enabled in Grafaaa 10 and we've removed the option to disable it, no action needs to be taken.
+Role-based access control (RBAC) is now always enabled in Grafana 10 and we've removed the option to disable it, no action needs to be taken.
 
 However, if you decide to **downgrade** for any reason and **disable RBAC**, you will need to run through the following guide before upgrading again.
 

@@ -24,7 +24,7 @@ Description. Include an overview of the feature and problem it solves, and where
 
 ### Role-based access control is always enabled
 
-[Role-based access control (RBAC)](({{< relref "../administration/roles-and-permissions/access-control/" >}})) is now always enabled and you can't disable it anymore using configuration option in Grafana.
+[Role-based access control (RBAC)](({{< relref "../administration/roles-and-permissions/access-control/" >}})) is now enabled by default and you can't disable it using configuration options in Grafana.
 
 We understand that this may affect some users who have relied on the ability to disable RBAC in the past. However, we believe that this change is necessary to ensure the best possible security and user experience for our community and customers.
 
