@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { withSandboxWrapper } from '../utils/sandbox';
+
 import { KeyValue } from './data';
 import { IconName } from './icon';
 
@@ -188,6 +190,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
     if (!this.configPages) {
       this.configPages = [];
     }
+    tab.body = withSandboxWrapper(tab.body);
     this.configPages.push(tab);
     return this;
   }
