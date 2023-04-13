@@ -23,7 +23,7 @@ import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
-const cellCategory = ['Cell Options'];
+const cellCategory = ['Cell options'];
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -70,7 +70,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: 'Cell Type',
+          name: 'Cell type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: defaultTableFieldOptions.cellOptions,
@@ -125,11 +125,6 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             { value: TableCellHeight.Lg, label: 'Large' },
           ],
         },
-      })
-      .addBooleanSwitch({
-        path: 'showRowNums',
-        name: 'Show row numbers',
-        defaultValue: defaultPanelOptions.showRowNums,
       })
       .addBooleanSwitch({
         path: 'footer.show',

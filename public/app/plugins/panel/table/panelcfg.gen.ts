@@ -30,10 +30,6 @@ export interface PanelOptions {
    */
   showHeader: boolean;
   /**
-   * Controls whether the columns should be numbered
-   */
-  showRowNums?: boolean;
-  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -44,7 +40,7 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
-  cellHeight: ui.TableCellHeight.Md,
+  cellHeight: ui.TableCellHeight.Sm,
   footer: {
     /**
      * Controls whether the footer should be shown
@@ -61,7 +57,6 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   },
   frameIndex: 0,
   showHeader: true,
-  showRowNums: false,
   showTypeIcons: false,
   sortBy: [],
 };

@@ -513,8 +513,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
-              var2: { selected: true, value: 'var2-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
+              var2: { value: 'var2-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {
@@ -579,7 +579,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {

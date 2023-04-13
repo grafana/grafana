@@ -27,10 +27,9 @@ For a complete list of field formatting options, refer to [Standard options defi
 
 > You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
-1. Open a dashboard, click the panel title, and click **Edit**.
-
+1. Open a dashboard. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
 1. In the panel display options pane, locate the **Standard options** section.
-
 1. Select the standard options you want to apply.
 
    For more information about standard options, refer to [Standard options definitions]({{< relref "#standard-options-definitions" >}}).

@@ -13,11 +13,11 @@ import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
-export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<GroupingToMatrixTransformerOptions>> = ({
+export const GroupingToMatrixTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<GroupingToMatrixTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
 
   const onSelectColumn = useCallback(

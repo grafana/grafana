@@ -41,7 +41,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Error(t, result.Responses["A"].Error)
 	})
 
-	t.Run("Influxdb response parser should parse everything normally", func(t *testing.T) {
+	t.Run("Influxdb response parser should parse everything normally including nil bools and nil strings", func(t *testing.T) {
 		parser := &ResponseParser{}
 
 		response := `
@@ -54,7 +54,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 							"columns": ["time","mean","path","isActive"],
 							"tags": {"datacenter": "America"},
 							"values": [
-								[111,222,"/usr/path",true],
+								[111,222,null,null],
 								[111,222,"/usr/path",false],
 								[111,null,"/usr/path",true]
 							]
@@ -84,8 +84,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		stringField := data.NewField("value", labels, []string{
-			"/usr/path", "/usr/path", "/usr/path",
+		string_test := "/usr/path"
+		stringField := data.NewField("value", labels, []*string{
+			nil, &string_test, &string_test,
 		})
 		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path { datacenter: America }"}
 		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
@@ -99,8 +100,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		stringFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		boolField := data.NewField("value", labels, []bool{
-			true, false, true,
+		bool_true := true
+		bool_false := false
+		boolField := data.NewField("value", labels, []*bool{
+			nil, &bool_false, &bool_true,
 		})
 		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive { datacenter: America }"}
 		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",

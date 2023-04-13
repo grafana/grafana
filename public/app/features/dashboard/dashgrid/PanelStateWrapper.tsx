@@ -24,7 +24,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTemplateSrv, config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, config, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -89,6 +89,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
+  private descriptionInteractionReported = false;
 
   constructor(props: Props) {
     super(props);
@@ -602,6 +603,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { panel } = this.props;
     const descriptionMarkdown = getTemplateSrv().replace(panel.description, panel.scopedVars);
     const interpolatedDescription = renderMarkdown(descriptionMarkdown);
+
+    if (!this.descriptionInteractionReported) {
+      // Description rendering function can be called multiple times due to re-renders but we want to report the interaction once.
+      reportInteraction('dashboards_panelheader_description_displayed');
+      this.descriptionInteractionReported = true;
+    }
+
     return interpolatedDescription;
   };
 
@@ -610,7 +618,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const linkSupplier = getPanelLinksSupplier(panel);
     if (linkSupplier) {
       const panelLinks = linkSupplier && linkSupplier.getLinks(panel.replaceVariables);
-      return panelLinks;
+
+      return panelLinks.map((panelLink) => ({
+        ...panelLink,
+        onClick: (...args) => {
+          reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+          panelLink.onClick?.(...args);
+        },
+      }));
     }
     return [];
   };
@@ -623,6 +638,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   onOpenErrorInspect = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     locationService.partial({ inspect: this.props.panel.id, inspectTab: InspectTab.Error });
+    reportInteraction('dashboards_panelheader_statusmessage_clicked');
+  };
+
+  onCancelQuery = () => {
+    this.props.panel.getQueryRunner().cancelQuery();
+    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: this.state.data.state });
   };
 
   render() {
@@ -689,6 +710,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           hoverHeaderOffset={hoverHeaderOffset}
           hoverHeader={this.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={this.onCancelQuery}
         >
           {(innerWidth, innerHeight) => (
             <>

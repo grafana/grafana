@@ -33,7 +33,7 @@ Annotations are not currently supported in the new table panel. This might be ad
 
 ## Sort column
 
-Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can only sort by one column at a time.
+Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
 
@@ -107,6 +107,22 @@ The threshold levels define a gradient.
 The gauge is split up in small cells that are lit or unlit.
 
 {{< figure src="/static/img/docs/tables/lcd-gauge.png" max-width="500px" caption="LCD gauge" class="docs-image--no-shadow" >}}
+
+#### Label Options
+
+Additionally, labels displayed alongside of the gauges can be set to be colored by value, match the theme text color, or be hidden.
+
+**Value Color**
+
+{{< figure src="/static/img/docs/tables/value-color-mode.png" max-width="500px" caption="Color Label by Value" class="docs-image--no-shadow" >}}
+
+**Text Color**
+
+{{< figure src="/static/img/docs/tables/text-color-mode.png" max-width="500px" caption="Color Label by theme color" class="docs-image--no-shadow" >}}
+
+**Hidden**
+
+{{< figure src="/static/img/docs/tables/hidden-mode.png" max-width="500px" caption="Hide Label" class="docs-image--no-shadow" >}}
 
 ### JSON view
 

@@ -58,7 +58,10 @@ export const Controlled: ComponentStory<typeof Switch> = (args) => {
 
 export const Uncontrolled: ComponentStory<typeof Switch> = (args) => {
   const [checked, setChecked] = useState(args.value);
-  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
   return <Switch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />;
 };
 

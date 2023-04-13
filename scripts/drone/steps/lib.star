@@ -8,7 +8,7 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.21"
+grabpl_version = "v3.0.30"
 build_image = "grafana/build-container:1.7.2"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -171,6 +171,7 @@ def init_enterprise_step(ver_mode):
         "image": build_image,
         "depends_on": [
             "clone-enterprise",
+            "grabpl",
         ],
         "environment": environment,
         "commands": [
@@ -1143,7 +1144,7 @@ def redis_integration_tests_step():
         "commands": [
             "dockerize -wait tcp://redis:6379/0 -timeout 120s",
             "go clean -testcache",
-            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+            "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
         ],
     }
 
@@ -1158,7 +1159,7 @@ def memcached_integration_tests_step():
         "commands": [
             "dockerize -wait tcp://memcached:11211 -timeout 120s",
             "go clean -testcache",
-            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+            "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
         ],
     }
 
@@ -1268,7 +1269,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
         "name": "publish-linux-packages-{}".format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         "image": "us.gcr.io/kubernetes-dev/package-publish:latest",
-        "depends_on": ["grabpl"],
+        "depends_on": ["compile-build-cmd"],
         "privileged": True,
         "settings": {
             "access_key_id": from_secret("packages_access_key_id"),

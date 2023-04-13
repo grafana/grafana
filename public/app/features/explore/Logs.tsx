@@ -26,6 +26,7 @@ import {
   DataHoverClearEvent,
   EventBus,
   DataSourceWithLogsContextSupport,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -43,7 +44,6 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
 
-import { RowContextOptions } from '../logs/components/LogRowContextProvider';
 import { LogRows } from '../logs/components/LogRows';
 
 import { LogsMetaRow } from './LogsMetaRow';
@@ -79,7 +79,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<any>;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
@@ -392,11 +392,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
               onLoadLogsVolume={loadLogsVolumeData}
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
+              onClose={() => this.onToggleLogsVolumeCollapse(false)}
             />
           )}
         </Collapse>
         <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions} ref={this.topLogsRef}>
+          <div className={styles.logOptions}>
             <InlineFieldRow>
               <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
                 <InlineSwitch
@@ -470,6 +471,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </InlineField>
             </div>
           </div>
+          <div ref={this.topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
             meta={logsMeta || []}

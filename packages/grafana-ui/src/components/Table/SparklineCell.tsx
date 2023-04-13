@@ -1,5 +1,5 @@
 import { isArray } from 'lodash';
-import React, { FC } from 'react';
+import React from 'react';
 
 import {
   ArrayVector,
@@ -37,7 +37,7 @@ export const defaultSparklineCellConfig: GraphFieldConfig = {
   showPoints: VisibilityMode.Never,
 };
 
-export const SparklineCell: FC<TableCellProps> = (props) => {
+export const SparklineCell = (props: TableCellProps) => {
   const { field, innerWidth, tableStyles, cell, cellProps } = props;
 
   const sparkline = getSparkline(cell.value);

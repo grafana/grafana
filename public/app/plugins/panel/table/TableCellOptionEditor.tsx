@@ -1,10 +1,11 @@
+import { css } from '@emotion/css';
 import { merge } from 'lodash';
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
+import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
@@ -25,8 +26,8 @@ interface Props {
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
+  const styles = useStyles2(getStyles);
   const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
-
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
   // Update display mode on change
@@ -56,7 +57,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
 
   // Setup and inject editor
   return (
-    <>
+    <div className={styles.fixBottomMargin}>
       <Field>
         <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
@@ -69,7 +70,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.Sparkline && (
         <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
-    </>
+    </div>
   );
 };
 
@@ -87,3 +88,9 @@ const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
 ];
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  fixBottomMargin: css({
+    marginBottom: theme.spacing(-2),
+  }),
+});

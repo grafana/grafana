@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import classnames from 'classnames';
+import { css, cx } from '@emotion/css';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,7 +10,7 @@ import { PanelMenu } from './PanelMenu';
 
 interface Props {
   children?: React.ReactNode;
-  menu: ReactElement | (() => ReactElement);
+  menu?: ReactElement | (() => ReactElement);
   title?: string;
   offset?: number;
   dragClass?: string;
@@ -38,20 +37,23 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
 
   return (
     <div
-      className={classnames(styles.container, { 'show-on-hover': !menuOpen })}
+      className={cx(styles.container, { 'show-on-hover': !menuOpen })}
       style={{ top: `${offset}px` }}
       data-testid="hover-header-container"
     >
-      <div
-        className={classnames(styles.square, styles.draggable, dragClass)}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        ref={draggableRef}
-      >
-        <Icon name="draggabledots" />
-      </div>
+      {dragClass && (
+        <div
+          className={cx(styles.square, styles.draggable, dragClass)}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          ref={draggableRef}
+        >
+          <Icon name="expand-arrows" className={styles.draggableIcon} />
+        </div>
+      )}
+      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
-      <div className={styles.square}>
+      {menu && (
         <PanelMenu
           menu={menu}
           title={title}
@@ -59,7 +61,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           menuButtonClass={styles.menuButton}
           onVisibleChange={setMenuOpen}
         />
-      </div>
+      )}
     </div>
   );
 }
@@ -77,12 +79,12 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       zIndex: 1,
       right: 0,
-      boxSizing: 'border-box',
+      boxSizing: 'content-box',
       alignItems: 'center',
       background: theme.colors.background.secondary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: '1px',
+      borderRadius: theme.shape.radius.default,
       height: theme.spacing(4),
       boxShadow: theme.shadows.z1,
     }),
@@ -95,15 +97,31 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggable: css({
       cursor: 'move',
-    }),
-    menuButton: css({
-      color: theme.colors.text.primary,
-      '&:hover': {
-        background: 'inherit',
+      // mobile do not support draggable panels
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
       },
     }),
-    title: css({
-      padding: theme.spacing(0.75),
+    menuButton: css({
+      // Background and border are overriden when topnav toggle is disabled
+      background: 'inherit',
+      border: 'none',
+      '&:hover': {
+        background: theme.colors.secondary.main,
+      },
+    }),
+    untitled: css({
+      color: theme.colors.text.disabled,
+      fontStyle: 'italic',
+      padding: theme.spacing(0, 1),
+      marginBottom: 0,
+    }),
+    draggableIcon: css({
+      transform: 'rotate(45deg)',
+      color: theme.colors.text.secondary,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
   };
 }

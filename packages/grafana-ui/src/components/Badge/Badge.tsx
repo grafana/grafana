@@ -7,7 +7,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup } from '../Layout/Layout';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
@@ -23,10 +22,8 @@ export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, class
   const styles = useStyles2(useCallback((theme) => getStyles(theme, color), [color]));
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      <HorizontalGroup align="center" spacing="xs">
-        {icon && <Icon name={icon} size="sm" />}
-        <span>{text}</span>
-      </HorizontalGroup>
+      {icon && <Icon name={icon} size="sm" />}
+      {text}
     </div>
   );
 
@@ -59,20 +56,17 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
 
   return {
     wrapper: css`
-      font-size: ${theme.typography.size.sm};
       display: inline-flex;
       padding: 1px 4px;
-      border-radius: 3px;
+      border-radius: ${theme.shape.radius.default};
       background: ${bgColor};
       border: 1px solid ${borderColor};
       color: ${textColor};
       font-weight: ${theme.typography.fontWeightRegular};
-
-      > span {
-        position: relative;
-        top: 1px;
-        margin-left: 2px;
-      }
+      gap: 2px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      line-height: ${theme.typography.bodySmall.lineHeight};
+      align-items: center;
     `,
   };
 };

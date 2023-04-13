@@ -14,6 +14,12 @@ type FilterWhere interface {
 	Where() (string, []interface{})
 }
 
+// FilterWith returns any recursive CTE queries (if supported)
+// and their parameters
+type FilterWith interface {
+	With() (string, []interface{})
+}
+
 // FilterGroupBy should be used after performing an outer join on the
 // search result to ensure there is only one of each ID in the results.
 // The id column must be present in the result.
@@ -66,16 +72,6 @@ type OrgFilter struct {
 
 func (f OrgFilter) Where() (string, []interface{}) {
 	return "dashboard.org_id=?", []interface{}{f.OrgId}
-}
-
-type StarredFilter struct {
-	UserId int64
-}
-
-func (f StarredFilter) Where() (string, []interface{}) {
-	return `(SELECT count(*)
-			 FROM star
-			 WHERE star.dashboard_id = dashboard.id AND star.user_id = ?) > 0`, []interface{}{f.UserId}
 }
 
 type TitleFilter struct {

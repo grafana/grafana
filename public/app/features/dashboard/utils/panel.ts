@@ -181,3 +181,15 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
 }
+
+export function calculateNewPanelGridPos(dashboard: DashboardModel): PanelModel['gridPos'] {
+  // Move all panels down by the height of the "add panel" widget.
+  // This is to work around an issue with react-grid-layout that can mess up the layout
+  // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
+  const addPanelWidgetHeight = 8;
+  for (const panel of dashboard.panelIterator()) {
+    panel.gridPos.y += addPanelWidgetHeight;
+  }
+
+  return { x: 0, y: 0, w: 12, h: addPanelWidgetHeight };
+}

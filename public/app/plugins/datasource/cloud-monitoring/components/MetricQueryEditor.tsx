@@ -15,6 +15,7 @@ import {
 
 import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';
+import { Project } from './Project';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {
@@ -99,6 +100,13 @@ function Editor({
 
       {query.queryType === QueryType.TIME_SERIES_QUERY && query.timeSeriesQuery && (
         <>
+          <Project
+            refId={refId}
+            datasource={datasource}
+            onChange={(projectName) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, projectName: projectName })}
+            templateVariableOptions={variableOptionGroup.options}
+            projectName={query.timeSeriesQuery.projectName!}
+          />
           <MQLQueryEditor
             onChange={(q: string) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, query: q })}
             onRunQuery={onRunQuery}

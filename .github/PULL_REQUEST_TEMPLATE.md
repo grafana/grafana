@@ -42,5 +42,9 @@ Usage: "Fixes #<issue number>", or "Fixes (paste link of issue)"
 
 Fixes #
 
-**Special notes for your reviewer**:
+**Special notes for your reviewer:**
 
+Please check that:
+- [ ] It works as expected from a user's perspective.
+- [ ] If this is a pre-GA feature, it is behind a feature toggle.
+- [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/#how-to-determine-if-content-belongs-in-a-whats-new-document), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/writing-guide/contribute-release-notes/) doc.

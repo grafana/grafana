@@ -1,17 +1,25 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { CoreApp, createTheme, DataFrame, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import {
+  applyFieldOverrides,
+  ArrayVector,
+  CoreApp,
+  DataFrame,
+  DataLinkClickEvent,
+  Field,
+  FieldType,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Table, useStyles2 } from '@grafana/ui';
 
-import { PIXELS_PER_LEVEL } from '../../constants';
-import { SampleUnit, SelectedView, TableData, TopTableData } from '../types';
-
-import FlameGraphTopTable from './FlameGraphTopTable';
+import { PIXELS_PER_LEVEL, TOP_TABLE_COLUMN_WIDTH } from '../../constants';
+import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { SelectedView, TableData } from '../types';
 
 type Props = {
-  data: DataFrame;
+  data: FlameGraphDataContainer;
   app: CoreApp;
   totalLevels: number;
   selectedView: SelectedView;
@@ -35,110 +43,117 @@ const FlameGraphTopTableContainer = ({
   setRangeMin,
   setRangeMax,
 }: Props) => {
-  const styles = useStyles2(() => getStyles(selectedView, app));
-  const [topTable, setTopTable] = useState<TopTableData[]>();
-  const valueField =
-    data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
-  const selfField = data.fields.find((f) => f.name === 'self') ?? data.fields.find((f) => f.type === FieldType.number);
+  const styles = useStyles2(getStyles);
 
-  const sortLevelsIntoTable = useCallback(() => {
-    let label, self, value;
-    let table: { [key: string]: TableData } = {};
-
-    if (data.fields.length > 3) {
-      const valueValues = data.fields[1].values;
-      const selfValues = data.fields[2].values;
-      const labelValues = data.fields[3].values;
-
-      for (let i = 0; i < valueValues.length; i++) {
-        value = valueValues.get(i);
-        self = selfValues.get(i);
-        label = labelValues.get(i);
-        table[label] = table[label] || {};
-        table[label].self = table[label].self ? table[label].self + self : self;
-        table[label].total = table[label].total ? table[label].total + value : value;
-      }
+  const onSymbolClick = (symbol: string) => {
+    if (search === symbol) {
+      setSearch('');
+    } else {
+      setSearch(symbol);
+      // Reset selected level in flamegraph when selecting row in top table
+      setTopLevelIndex(0);
+      setSelectedBarIndex(0);
+      setRangeMin(0);
+      setRangeMax(1);
     }
-
-    return table;
-  }, [data.fields]);
-
-  const getTopTableData = (field: Field, value: number) => {
-    const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
-    const displayValue = processor(value);
-    let unitValue = displayValue.text + displayValue.suffix;
-
-    switch (field.config.unit) {
-      case SampleUnit.Bytes:
-        break;
-      case SampleUnit.Nanoseconds:
-        break;
-      default:
-        if (!displayValue.suffix) {
-          // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-          unitValue = displayValue.text;
-        }
-        break;
-    }
-
-    return unitValue;
   };
 
-  useEffect(() => {
-    const table = sortLevelsIntoTable();
-
-    let topTable: TopTableData[] = [];
-    for (let key in table) {
-      const selfUnit = getTopTableData(selfField!, table[key].self);
-      const valueUnit = getTopTableData(valueField!, table[key].total);
-
-      topTable.push({
-        symbol: key,
-        self: { value: table[key].self, unitValue: selfUnit },
-        total: { value: table[key].total, unitValue: valueUnit },
-      });
-    }
-
-    setTopTable(topTable);
-  }, [data.fields, selfField, sortLevelsIntoTable, valueField]);
+  const initialSortBy = [{ displayName: 'Self', desc: true }];
 
   return (
-    <>
-      {topTable && (
-        <div className={styles.topTableContainer}>
-          <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
-            {({ width, height }) => (
-              <FlameGraphTopTable
-                width={width}
-                height={height}
-                data={topTable}
-                search={search}
-                setSearch={setSearch}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
-              />
-            )}
-          </AutoSizer>
-        </div>
-      )}
-    </>
+    <div className={styles.topTableContainer} data-testid="topTable">
+      <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
+        {({ width, height }) => {
+          if (width < 3 || height < 3) {
+            return null;
+          }
+
+          const frame = buildTableDataFrame(data, width, onSymbolClick);
+          return <Table initialSortBy={initialSortBy} data={frame} width={width} height={height} />;
+        }}
+      </AutoSizer>
+    </div>
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp) => {
-  const marginRight = '20px';
+function buildTableDataFrame(
+  data: FlameGraphDataContainer,
+  width: number,
+  onSymbolClick: (str: string) => void
+): DataFrame {
+  // Group the data by label
+  // TODO: should be by filename + funcName + linenumber?
+  let table: { [key: string]: TableData } = {};
+  for (let i = 0; i < data.data.length; i++) {
+    const value = data.getValue(i);
+    const self = data.getSelf(i);
+    const label = data.getLabel(i);
+    table[label] = table[label] || {};
+    table[label].self = table[label].self ? table[label].self + self : self;
+    table[label].total = table[label].total ? table[label].total + value : value;
+  }
 
+  const symbolField = {
+    type: FieldType.string,
+    name: 'Symbol',
+    values: new ArrayVector(),
+    config: {
+      custom: { width: width - TOP_TABLE_COLUMN_WIDTH * 2 },
+      links: [
+        {
+          title: 'Highlight symbol',
+          url: '',
+          onClick: (e: DataLinkClickEvent) => {
+            const field: Field = e.origin.field;
+            const value = field.values.get(e.origin.rowIndex);
+            onSymbolClick(value);
+          },
+        },
+      ],
+    },
+  };
+
+  const selfField = {
+    type: FieldType.number,
+    name: 'Self',
+    values: new ArrayVector(),
+    config: { unit: data.selfField.config.unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
+  };
+
+  const totalField = {
+    type: FieldType.number,
+    name: 'Total',
+    values: new ArrayVector(),
+    config: { unit: data.valueField.config.unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
+  };
+
+  for (let key in table) {
+    symbolField.values.add(key);
+    selfField.values.add(table[key].self);
+    totalField.values.add(table[key].total);
+  }
+
+  const frame = { fields: [symbolField, selfField, totalField], length: symbolField.values.length };
+
+  const dataFrames = applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value: string) => value,
+    theme: config.theme2,
+  });
+
+  return dataFrames[0];
+}
+
+const getStyles = () => {
   return {
     topTableContainer: css`
-      cursor: pointer;
-      float: left;
-      margin-right: ${marginRight};
-      width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore
-        ? 'height: calc(100% - 50px)'
-        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
+      flex-grow: 1;
+      flex-basis: 50%;
+      overflow: hidden;
     `,
   };
 };

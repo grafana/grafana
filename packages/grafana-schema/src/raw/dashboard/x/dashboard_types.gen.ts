@@ -239,6 +239,10 @@ export interface Threshold {
    */
   color: string;
   /**
+   * Threshold index, an old property that is not needed an should only appear in older dashboards
+   */
+  index?: number;
+  /**
    * TODO docs
    * TODO are the values here enumerable into a disjunction?
    * Some seem to be listed in typescript comment

@@ -47,31 +47,32 @@ export function AppChrome({ children }: Props) {
   });
 
   // Chromeless routes are without topNav, mega menu, search & command palette
-  if (state.chromeless) {
-    return (
-      <main className="main-view">
-        <div className={contentClass}>{children}</div>
-      </main>
-    );
-  }
+  // We check chromeless twice here instead of having a separate path so {children}
+  // doesn't get re-mounted when chromeless goes from true to false.
 
   return (
     <main className="main-view">
-      <div className={cx(styles.topNav)}>
-        {!searchBarHidden && <TopSearchBar />}
-        <NavToolbar
-          searchBarHidden={searchBarHidden}
-          sectionNav={state.sectionNav}
-          pageNav={state.pageNav}
-          actions={state.actions}
-          onToggleSearchBar={chrome.onToggleSearchBar}
-          onToggleMegaMenu={chrome.onToggleMegaMenu}
-          onToggleKioskMode={chrome.onToggleKioskMode}
-        />
-      </div>
+      {!state.chromeless && (
+        <div className={cx(styles.topNav)}>
+          {!searchBarHidden && <TopSearchBar />}
+          <NavToolbar
+            searchBarHidden={searchBarHidden}
+            sectionNav={state.sectionNav}
+            pageNav={state.pageNav}
+            actions={state.actions}
+            onToggleSearchBar={chrome.onToggleSearchBar}
+            onToggleMegaMenu={chrome.onToggleMegaMenu}
+            onToggleKioskMode={chrome.onToggleKioskMode}
+          />
+        </div>
+      )}
       <div className={contentClass}>{children}</div>
-      <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
-      <CommandPalette />
+      {!state.chromeless && (
+        <>
+          <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          <CommandPalette />
+        </>
+      )}
     </main>
   );
 }
@@ -104,6 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 };

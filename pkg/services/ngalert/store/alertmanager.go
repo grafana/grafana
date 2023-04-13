@@ -24,8 +24,8 @@ var (
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
-func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (result *models.AlertConfiguration, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		c := &models.AlertConfiguration{}
 		// The ID is already an auto incremental column, using the ID as an order should guarantee the latest.
 		ok, err := sess.Table("alert_configuration").Where("org_id = ?", query.OrgID).Get(c)
@@ -37,9 +37,10 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query
 			return ErrNoAlertmanagerConfiguration
 		}
 
-		query.Result = c
+		result = c
 		return nil
 	})
+	return result, err
 }
 
 // GetAllLatestAlertmanagerConfiguration returns the latest configuration of every organization
@@ -162,21 +163,50 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 }
 
 // GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest by id.
-func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st *DBstore) GetAppliedConfigurations(ctx context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error) {
+	if limit < 1 || limit > ConfigRecordsLimit {
+		limit = ConfigRecordsLimit
+	}
+
+	var configs []*models.HistoricAlertConfiguration
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		cfgs := []*models.HistoricAlertConfiguration{}
 		err := sess.Table("alert_configuration_history").
 			Desc("id").
-			Where("org_id = ? AND last_applied != 0", query.OrgID).
+			Where("org_id = ? AND last_applied != 0", orgID).
+			Limit(limit).
 			Find(&cfgs)
-
 		if err != nil {
 			return err
 		}
 
-		query.Result = cfgs
+		configs = cfgs
 		return nil
-	})
+	}); err != nil {
+		return []*models.HistoricAlertConfiguration{}, err
+	}
+
+	return configs, nil
+}
+
+// GetHistoricalConfiguration returns a single historical configuration based on provided org and id.
+func (st *DBstore) GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+	var config models.HistoricAlertConfiguration
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		ok, err := sess.Table("alert_configuration_history").
+			Where("id = ? AND org_id = ?", id, orgID).
+			Get(&config)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return ErrNoAlertmanagerConfiguration
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
@@ -209,11 +239,11 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 		}
 
 		res, err := sess.Exec(`
-			DELETE FROM 
+			DELETE FROM
 				alert_configuration_history
 			WHERE
 				org_id = ?
-			AND 
+			AND
 				id < ?
 		`, orgID, threshold)
 		if err != nil {

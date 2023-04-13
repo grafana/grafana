@@ -7,5 +7,5 @@ import (
 )
 
 type Finder interface {
-	Find(ctx context.Context, uris ...string) ([]*plugins.FoundBundle, error)
+	Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 }
