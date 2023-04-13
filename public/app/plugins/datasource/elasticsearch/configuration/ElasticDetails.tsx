@@ -148,11 +148,11 @@ const jsonDataSwitchChangeHandler =
 
 const intervalHandler =
   (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<Interval | 'none'>) => {
-    const { database } = value;
+    const { jsonData } = value;
     // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
     const newInterval = option.value === 'none' ? undefined : option.value;
 
-    if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
+    if (!jsonData.index || jsonData.index.length === 0 || jsonData.index.startsWith('[logstash-]')) {
       let newDatabase = '';
 
       if (newInterval !== undefined) {
@@ -165,9 +165,10 @@ const intervalHandler =
 
       onChange({
         ...value,
-        database: newDatabase,
+        database: '',
         jsonData: {
           ...value.jsonData,
+          index: newDatabase,
           interval: newInterval,
         },
       });
