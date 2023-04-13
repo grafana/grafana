@@ -52,9 +52,9 @@ export const TransformationsEditor = (props: Props) => {
               {fields.length === 0 && <div> No transformations defined.</div>}
               {fields.length > 0 && (
                 <div>
-                  {fields.map((field, index) => {
+                  {fields.map((fieldVal, index) => {
                     return (
-                      <Stack direction="row" key={field.id} alignItems="top">
+                      <Stack direction="row" key={fieldVal.id} alignItems="top">
                         <Field
                           label={
                             <Stack gap={0.5}>
@@ -76,9 +76,11 @@ export const TransformationsEditor = (props: Props) => {
                         >
                           <InputControl
                             render={({ field: { onChange, ref, ...field } }) => {
+                              // input control field is not manipulated with remove, use value from control
                               return (
                                 <Select
                                   {...field}
+                                  value={fieldVal.type}
                                   onChange={(value) => {
                                     if (!readOnly) {
                                       const currentValues = getValues().config.transformations[index];
@@ -120,7 +122,6 @@ export const TransformationsEditor = (props: Props) => {
                                 />
                               );
                             }}
-                            defaultValue={field.type}
                             control={control}
                             name={`config.transformations.${index}.type`}
                             rules={{ required: { value: true, message: 'Please select a transformation type' } }}
@@ -148,7 +149,7 @@ export const TransformationsEditor = (props: Props) => {
                           <Input
                             {...register(`config.transformations.${index}.field`)}
                             readOnly={readOnly}
-                            defaultValue={field.field}
+                            defaultValue={fieldVal.field}
                             label="field"
                             aria-label="field"
                           />
@@ -187,7 +188,7 @@ export const TransformationsEditor = (props: Props) => {
                                 ? 'Please define an expression'
                                 : undefined,
                             })}
-                            defaultValue={field.expression}
+                            defaultValue={fieldVal.expression}
                             readOnly={readOnly}
                             disabled={
                               !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
@@ -217,7 +218,7 @@ export const TransformationsEditor = (props: Props) => {
                         >
                           <Input
                             {...register(`config.transformations.${index}.mapValue`)}
-                            defaultValue={field.mapValue}
+                            defaultValue={fieldVal.mapValue}
                             readOnly={readOnly}
                             disabled={
                               !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue

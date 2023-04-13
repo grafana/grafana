@@ -233,7 +233,7 @@ describe('CorrelationsPage', () => {
       mocks.reportInteraction.mockClear();
     });
 
-    it.skip('shows the first page of the wizard', async () => {
+    it('shows the first page of the wizard', async () => {
       const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -252,7 +252,7 @@ describe('CorrelationsPage', () => {
       expect(await screen.findByRole('button', { name: /next$/i })).toBeInTheDocument();
     });
 
-    it.skip('correctly adds first correlation', async () => {
+    it('correctly adds first correlation', async () => {
       const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -373,11 +373,11 @@ describe('CorrelationsPage', () => {
       getHeaderByName = renderResult.getHeaderByName;
     });
 
-    it.skip('shows a table with correlations', async () => {
+    it('shows a table with correlations', async () => {
       expect(await screen.findByRole('table')).toBeInTheDocument();
     });
 
-    it.skip('correctly sorts by source', async () => {
+    it('correctly sorts by source', async () => {
       // wait for table to appear
       await screen.findByRole('table');
 
@@ -401,7 +401,7 @@ describe('CorrelationsPage', () => {
       });
     });
 
-    it.skip('correctly adds new correlation', async () => {
+    it('correctly adds new correlation', async () => {
       const addNewButton = await screen.findByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       await userEvent.click(addNewButton);
@@ -435,7 +435,7 @@ describe('CorrelationsPage', () => {
       expect(await screen.findByRole('table')).toBeInTheDocument();
     });
 
-    it.skip('correctly closes the form when clicking on the close icon', async () => {
+    it('correctly closes the form when clicking on the close icon', async () => {
       const addNewButton = await screen.findByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       await userEvent.click(addNewButton);
@@ -445,7 +445,7 @@ describe('CorrelationsPage', () => {
       expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
     });
 
-    it.skip('correctly deletes correlations', async () => {
+    it('correctly deletes correlations', async () => {
       // A row with the correlation should exist
       expect(await screen.findByRole('cell', { name: /some label/i })).toBeInTheDocument();
 
@@ -467,7 +467,7 @@ describe('CorrelationsPage', () => {
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_deleted');
     });
 
-    it.skip('correctly edits correlations', async () => {
+    it('correctly edits correlations', async () => {
       // wait for table to appear
       await screen.findByRole('table');
 
@@ -508,40 +508,40 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
 
       // select Logfmt, be sure expression field is disabled
-      const stateFilterSelect = screen.getAllByLabelText('Type');
-      openMenu(stateFilterSelect[0]);
+      let typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Logfmt'));
       let expressionInput = screen.queryByRole('textbox', { name: 'expression' });
       expect(expressionInput).toBeInTheDocument();
-      expect(expressionInput).toHaveAttribute('disabled');
+      expect(expressionInput).toBeDisabled();
 
       // select Regex, be sure expression field is not disabled and contains the former expression
-      openMenu(stateFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression'));
-      expressionInput = screen.queryByRole('textbox', { name: 'expression' });
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Regular expression', { selector: 'span' }));
+      expressionInput = screen.getByRole('textbox', { name: 'expression' });
       expect(expressionInput).toBeInTheDocument();
-      expect(expressionInput).not.toHaveAttribute('disabled');
-      expect(expressionInput).toHaveValue('url=http[s]?://(S*)');
+      expect(expressionInput).toBeEnabled();
+      expect(expressionInput).toHaveAttribute('value', 'url=http[s]?://(S*)');
 
       // select Logfmt, delete, then add a new one to be sure the value is blank
-      openMenu(stateFilterSelect[0]);
+      openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Logfmt'));
       await userEvent.click(screen.getByRole('button', { name: /remove transformation/i }));
       expressionInput = screen.queryByRole('textbox', { name: 'expression' });
       expect(expressionInput).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
-      openMenu(stateFilterSelect[0]);
+      typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Regular expression'));
       expressionInput = screen.queryByRole('textbox', { name: 'expression' });
       expect(expressionInput).toBeInTheDocument();
-      //expect(expressionInput).not.toHaveAttribute('disabled');
+      expect(expressionInput).toBeEnabled();
       expect(expressionInput).not.toHaveValue('url=http[s]?://(S*)');
-
-      console.log(screen.debug(undefined, Infinity));
-
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
-
+      expect(screen.getByText('Please define an expression')).toBeInTheDocument();
+      await userEvent.type(screen.getByRole('textbox', { name: 'expression' }), 'test expression');
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
     });
   });
@@ -579,14 +579,14 @@ describe('CorrelationsPage', () => {
       );
     });
 
-    it.skip("doesn't render delete button", async () => {
+    it("doesn't render delete button", async () => {
       // A row with the correlation should exist
       expect(await screen.findByRole('cell', { name: /some label/i })).toBeInTheDocument();
 
       expect(screen.queryByRole('button', { name: /delete correlation/i })).not.toBeInTheDocument();
     });
 
-    it.skip('edit form is read only', async () => {
+    it('edit form is read only', async () => {
       // A row with the correlation should exist
       const rowExpanderButton = await screen.findByRole('button', { name: /toggle row expanded/i });
 
