@@ -26,7 +26,7 @@ Support for exemplars is available for the Prometheus data source only. Once you
 
 Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique traceID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
 
-{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing the detail window of an Exemplar" >}}
+{{< figure src="/media/docs/grafana/exemplars/screenshot-exemplars.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing the detail window of an exemplar" >}}
 
 Refer to [View exemplar data]({{< relref "#view-exemplar-data" >}}) for instructions on how to drill down and view exemplar trace details from metrics and logs. To know more about exemplars, refer to the blogpost [Intro to exemplars, which enable Grafana Tempo’s distributed tracing at massive scale](https://grafana.com/blog/2021/03/31/intro-to-exemplars-which-enable-grafana-tempos-distributed-tracing-at-massive-scale/).
 
@@ -42,11 +42,11 @@ To examine the details of an exemplar trace:
 
 1. Place your cursor over an exemplar (highlighted star). Depending on your backend trace data source, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo.
 
-   {{< figure src="/static/img/docs/basics/exemplar-details.png" class="docs-image--no-shadow" max-width= "275px" caption="Screenshot showing Exemplar details" >}}
+   {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-details.png" class="docs-image--no-shadow" max-width= "275px" caption="Screenshot showing exemplar details" >}}
 
 1. Click the **Query with Tempo** option next to the `traceID` property. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
-   {{< figure src="/static/img/docs/basics/exemplar-explore-view.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
+   {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-explore-view.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
 
 For more information on how to drill down and analyze the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
 
@@ -56,11 +56,11 @@ You can also view exemplar trace details from the Loki logs in Explore. Use rege
 
 To view the details of an exemplar trace:
 
-1. Expand a log line and scroll down to the `Detected fields` section. Depending on your backend trace data source, you will see a blue button with the label `<data source name>`.
+1. Expand a log line and scroll down to the `Fields` section. Depending on your backend trace data source, you will see a blue button with the label `<data source name>`.
 
 1. Click the blue button next to the `traceID` property. Typically, it will have the name of the backend data source. In the following example, the tracing data source is Tempo. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
-{{< figure src="/static/img/docs/basics/exemplar-loki-logs.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
+{{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-loki-logs.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
 
 For more information on how to drill down and analyze the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
 
@@ -84,4 +84,4 @@ This panel shows the details of the trace in different segments.
 
   This displays additional metadata associated with the span. The metadata itself is initially shown in a narrow strip but you can see more details by clicking the metadata strip.
 
-  {{< figure src="/static/img/docs/basics/exemplar-span-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Span details" >}}
+  {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-span-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Span details" >}}
