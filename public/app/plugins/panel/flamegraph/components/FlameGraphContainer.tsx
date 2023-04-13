@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 import { DataFrame, CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
+import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
@@ -60,12 +60,10 @@ const FlameGraphContainer = (props: Props) => {
     setRangeMax(1);
   }, [props.data]);
 
-  const height = props.app === CoreApp.Explore ? PIXELS_PER_LEVEL * (levels?.length ?? 0) : undefined;
-
   return (
     <>
       {dataContainer && (
-        <div ref={sizeRef} className={styles.container} style={{ height }}>
+        <div ref={sizeRef} className={styles.container}>
           <FlameGraphHeader
             app={props.app}
             setTopLevelIndex={setTopLevelIndex}
