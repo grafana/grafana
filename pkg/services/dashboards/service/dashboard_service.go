@@ -633,13 +633,13 @@ func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int6
 	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }
 
-func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, query *dashboards.CountDashboardsInFolderQuery) (int64, error) {
+func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, UID string) (int64, error) {
 	u, err := appcontext.User(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &query.FolderUID, OrgID: u.OrgID, SignedInUser: u})
+	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &UID, OrgID: orgID, SignedInUser: u})
 	if err != nil {
 		return 0, err
 	}
@@ -649,11 +649,6 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 
 func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, UID string) error {
 	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
-}
-
-// #TODO: replace CountDashboardsInFolder?
-func (dr *DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, UID string) (int64, error) {
-	return dr.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{OrgID: orgID, FolderUID: UID})
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

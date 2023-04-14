@@ -233,10 +233,10 @@ func TestDashboardService(t *testing.T) {
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
 			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			// set up a ctx with signed in user
-			usr := &user.SignedInUser{UserID: 1}
+			usr := &user.SignedInUser{OrgID: 1, UserID: 1}
 			ctx := appcontext.WithUser(context.Background(), usr)
 
-			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
+			count, err := service.CountInFolder(ctx, 1, "i am a folder")
 			require.NoError(t, err)
 			require.Equal(t, int64(3), count)
 		})
