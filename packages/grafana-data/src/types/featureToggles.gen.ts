@@ -76,7 +76,6 @@ export interface FeatureToggles {
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
-  drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
@@ -97,4 +96,5 @@ export interface FeatureToggles {
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
+  advancedDataSourcePicker?: boolean;
 }

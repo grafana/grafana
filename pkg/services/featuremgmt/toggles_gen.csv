@@ -57,7 +57,6 @@ lokiQuerySplitting,alpha,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,alpha,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,alpha,@grafana/backend-platform,false,false,false,false
 onlyExternalOrgRoleSync,alpha,@grafana/grafana-authnz-team,false,false,false,false
-drawerDataSourcePicker,alpha,@grafana/grafana-bi-squad,false,false,false,true
 traceqlSearch,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 prometheusMetricEncyclopedia,alpha,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
@@ -78,3 +77,4 @@ dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
 enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
+advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
