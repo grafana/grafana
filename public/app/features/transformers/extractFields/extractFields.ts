@@ -78,7 +78,7 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
     }
 
     for (const [key, val] of Object.entries(obj)) {
-      let buffer = values[key];
+      let buffer = values.get(key);
       if (buffer == null) {
         buffer = new Array(count);
         values.set(key, buffer);
@@ -89,7 +89,7 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   }
 
   const fields = names.map((name) => {
-    const buffer = values[name];
+    const buffer = values.get(name);
     return {
       name,
       values: buffer,
