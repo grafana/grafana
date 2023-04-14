@@ -1,12 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import {
-  DataFrame,
-  DataTransformerID,
-  Field,
-  FieldType,
-  SynchronousDataTransformerInfo,
-} from '@grafana/data';
+import { DataFrame, DataTransformerID, Field, FieldType, SynchronousDataTransformerInfo } from '@grafana/data';
 
 import { getDistinctLabels } from '../utils';
 

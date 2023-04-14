@@ -1,13 +1,6 @@
 import React from 'react';
 
-import {
-  FieldType,
-  FieldConfig,
-  getMinMaxAndDelta,
-  FieldSparkline,
-  isDataFrame,
-  Field,
-} from '@grafana/data';
+import { FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame, Field } from '@grafana/data';
 import {
   BarAlignment,
   GraphDrawStyle,

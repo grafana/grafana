@@ -1,10 +1,4 @@
-import {
-  FieldColorModeId,
-  FieldDTO,
-  FieldType,
-  MutableDataFrame,
-  NodeGraphDataFrameFieldNames,
-} from '@grafana/data';
+import { FieldColorModeId, FieldDTO, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
 
 import { nodes, edges } from './testData/serviceMapResponse';
 
