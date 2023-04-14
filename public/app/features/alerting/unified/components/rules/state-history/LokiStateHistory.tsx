@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
 import { groupBy, isEmpty, last, sortBy, take, uniq } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { BehaviorSubject } from 'rxjs';
 
 import {
   ArrayVector,
@@ -19,16 +17,15 @@ import {
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
-import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
+import { MappingType, ThresholdsMode } from '@grafana/schema';
 import { Alert, Button, Field, Icon, Input, Label, TagList, useStyles2, useTheme2 } from '@grafana/ui';
-import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
-import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { HoverCard } from '../../HoverCard';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
+import { LogTimelineViewer } from './LogTimelineViewer';
 import { extractCommonLabels, Line, LogRecord, omitLabels } from './common';
 
 interface Props {
@@ -36,19 +33,13 @@ interface Props {
 }
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
-  const { useGetRuleHistoryQuery } = stateHistoryApi;
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
+  const logsRef = useRef<HTMLDivElement[]>([]);
 
   const { getValues, setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
 
-  const frameSubsetRef = useRef<DataFrame[]>([]);
-
-  const logsRef = useRef<HTMLDivElement[]>([]);
-  const pointerSubject = useRef(
-    new BehaviorSubject<{ seriesIdx: number; pointIdx: number }>({ seriesIdx: 0, pointIdx: 0 })
-  );
-
+  const { useGetRuleHistoryQuery } = stateHistoryApi;
   const timeRange = useMemo(() => getDefaultTimeRange(), []);
   const {
     currentData: stateHistory,
@@ -78,23 +69,17 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
 
-  useEffect(() => {
-    const subject = pointerSubject.current;
-    subject.subscribe((x) => {
-      const uniqueTimestamps = sortBy(
-        uniq(frameSubsetRef.current.flatMap((frame) => frame.fields[0].values.toArray()))
-      );
+  const onTimelinePointerMove = useCallback(
+    (seriesIdx: number, pointIdx: number) => {
+      const uniqueTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values.toArray())));
 
-      const timestamp = uniqueTimestamps[x.pointIdx];
+      const timestamp = uniqueTimestamps[pointIdx];
 
       const refToScroll = logsRef.current.find((x) => parseInt(x.id, 10) === timestamp);
       refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-
-    return () => {
-      subject.unsubscribe();
-    };
-  }, []);
+    },
+    [frameSubset]
+  );
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -106,8 +91,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       </Alert>
     );
   }
-
-  frameSubsetRef.current = frameSubset;
 
   const hasMoreInstances = frameSubset.length < dataFrames.length;
   const emptyStateMessage =
@@ -171,7 +154,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       ) : (
         <>
           <div className={styles.graphWrapper}>
-            <LogTimelineViewer frames={frameSubset} timeRange={timeRange} pointerSubject={pointerSubject.current} />
+            <LogTimelineViewer frames={frameSubset} timeRange={timeRange} onPointerMove={onTimelinePointerMove} />
           </div>
           {hasMoreInstances && (
             <div className={styles.moreInstancesWarning}>
@@ -245,74 +228,6 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
 function isLine(value: unknown): value is Line {
   return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
 }
-
-interface LogTimelineViewerProps {
-  frames: DataFrame[];
-  timeRange: TimeRange;
-  pointerSubject: BehaviorSubject<{ seriesIdx: number; pointIdx: number }>;
-}
-
-const LogTimelineViewer = React.memo(({ frames, timeRange, pointerSubject }: LogTimelineViewerProps) => {
-  const theme = useTheme2();
-
-  return (
-    <AutoSizer disableHeight>
-      {({ width }) => (
-        <TimelineChart
-          frames={frames}
-          timeRange={timeRange}
-          timeZone={'browser'}
-          mode={TimelineMode.Changes}
-          height={20 * frames.length + 40}
-          width={width}
-          showValue={VisibilityMode.Never}
-          theme={theme}
-          rowHeight={0.8}
-          legend={{
-            calcs: [],
-            displayMode: LegendDisplayMode.List,
-            placement: 'bottom',
-            showLegend: true,
-          }}
-          legendItems={[
-            { label: 'Normal', color: theme.colors.success.main, yAxis: 1 },
-            { label: 'Pending', color: theme.colors.warning.main, yAxis: 1 },
-            { label: 'Alerting', color: theme.colors.error.main, yAxis: 1 },
-            { label: 'NoData', color: theme.colors.info.main, yAxis: 1 },
-          ]}
-        >
-          {(builder) => {
-            builder.setSync();
-            const interpolator = builder.getTooltipInterpolator();
-
-            // I found this in TooltipPlugin.tsx
-            if (interpolator) {
-              builder.addHook('setCursor', (u) => {
-                interpolator(
-                  (seriesIdx) => {
-                    if (seriesIdx) {
-                      const currentPointer = pointerSubject.getValue();
-                      pointerSubject.next({ ...currentPointer, seriesIdx });
-                    }
-                  },
-                  (pointIdx) => {
-                    if (pointIdx) {
-                      const currentPointer = pointerSubject.getValue();
-                      pointerSubject.next({ ...currentPointer, pointIdx });
-                    }
-                  },
-                  () => {},
-                  u
-                );
-              });
-            }
-          }}
-        </TimelineChart>
-      )}
-    </AutoSizer>
-  );
-});
-LogTimelineViewer.displayName = 'LogTimelineViewer';
 
 function logRecordsToDataFrame(
   instanceLabels: string,
