@@ -199,13 +199,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   useLayoutEffect(() => {
     if (entryElement.current) {
-      // no idea why we need to scroll twice, but if we scroll only once the scroll position is not correct
-      entryElement.current.scrollIntoView({
-        block: 'center',
-      });
-      entryElement.current.scrollIntoView({
-        block: 'center',
-      });
+      entryElement.current.scrollIntoView({ block: 'center' });
     }
   }, [entryElement, context]);
 
