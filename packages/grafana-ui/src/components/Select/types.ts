@@ -23,6 +23,7 @@ export interface SelectCommonProps<T> {
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
+  blurInputOnSelect?: boolean;
   className?: string;
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */

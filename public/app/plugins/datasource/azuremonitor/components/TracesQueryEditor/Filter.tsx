@@ -254,6 +254,7 @@ const Filter = (
         defaultValue={'eq'}
       />
       <AsyncMultiSelect
+        blurInputOnSelect={false}
         menuShouldPortal
         placeholder="Value"
         value={selected}
