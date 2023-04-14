@@ -40,15 +40,15 @@ type Props = {
 export const newAnnotationName = 'New annotation';
 
 export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
+  const styles = useStyles2(getStyles);
   const [annotation, setAnnotation] = useState(dashboard.annotations.list[editIdx]);
+
   const panelFilter = useMemo(() => {
     if (!annotation.filter) {
       return PanelFilterType.AllPanels;
     }
     return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
   }, [annotation.filter]);
-
-  const style = useStyles2(getStyles);
 
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
@@ -130,7 +130,6 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   };
 
   const isNewAnnotation = annotation.name === newAnnotationName;
-  const formWidth = 50;
 
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
@@ -147,7 +146,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
 
   return (
     <div>
-      <FieldSet>
+      <FieldSet className={styles.settingsForm}>
         <Field label="Name">
           <Input
             aria-label={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
@@ -156,17 +155,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             autoFocus={isNewAnnotation}
             value={annotation.name}
             onChange={onNameChange}
-            width={formWidth}
           />
         </Field>
         <Field label="Data source" htmlFor="data-source-picker">
-          <DataSourcePicker
-            width={formWidth}
-            annotations
-            variables
-            current={annotation.datasource}
-            onChange={onDataSourceChange}
-          />
+          <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
           <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
@@ -177,9 +169,14 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         >
           <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
         </Field>
+        <Field label="Color" description="Color to use for the annotation event markers">
+          <HorizontalGroup>
+            <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
+          </HorizontalGroup>
+        </Field>
         <Field label="Show in">
           <>
-            <Select width={formWidth} options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} />
+            <Select options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
                 options={panels}
@@ -189,16 +186,13 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
                 placeholder="Choose panel"
                 width={100}
                 closeMenuOnSelect={false}
-                className={style.select}
+                className={styles.select}
               />
             )}
           </>
         </Field>
-        <Field label="Color" description="Color to use for the annotation event markers">
-          <HorizontalGroup>
-            <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
-          </HorizontalGroup>
-        </Field>
+      </FieldSet>
+      <FieldSet>
         <h3 className="page-heading">Query</h3>
         {ds?.annotations && dsi && (
           <StandardAnnotationQueryEditor
@@ -229,6 +223,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    settingsForm: css({
+      maxWidth: theme.spacing(60),
+      marginBottom: theme.spacing(2),
+    }),
     select: css`
       margin-top: 8px;
     `,
