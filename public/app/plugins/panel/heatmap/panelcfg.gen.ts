@@ -51,7 +51,7 @@ export interface HeatmapColorOptions {
   /**
    * Sets the color mode
    */
-  mode?: HeatmapColorMode; // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+  mode?: HeatmapColorMode;
   /**
    * Reverses the color scheme
    */
@@ -59,7 +59,7 @@ export interface HeatmapColorOptions {
   /**
    * Controls the color scale
    */
-  scale?: HeatmapColorScale; // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+  scale?: HeatmapColorScale;
   /**
    * Controls the color scheme used
    */
