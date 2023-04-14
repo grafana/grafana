@@ -243,7 +243,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
-    const isTopnav = config.featureToggles.topnav;
 
     const shareButton = (
       <DashNavButton
@@ -267,27 +266,15 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         />
       );
 
-    const toolbarLeftItems = [
-      // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
-      !isTopnav && exploreId === ExploreId.left && shareButton,
-      getDataSourcePicker(),
-    ].filter(Boolean);
+    const toolbarLeftItems = [getDataSourcePicker()].filter(Boolean);
 
     return (
       <div ref={topOfViewRef}>
         {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
-        {isTopnav && (
-          <div ref={topOfViewRef}>
-            <AppChromeUpdate actions={[shareButton, <div style={{ flex: 1 }} key="spacer" />]} />
-          </div>
-        )}
-        <PageToolbar
-          aria-label="Explore toolbar"
-          title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
-          pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
-          leftItems={toolbarLeftItems}
-          forceShowLeftItems
-        >
+        <div ref={topOfViewRef}>
+          <AppChromeUpdate actions={[shareButton, <div style={{ flex: 1 }} key="spacer" />]} />
+        </div>
+        <PageToolbar aria-label="Explore toolbar" leftItems={toolbarLeftItems} forceShowLeftItems>
           {this.renderActions()}
         </PageToolbar>
       </div>

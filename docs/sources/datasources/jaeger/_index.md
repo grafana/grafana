@@ -192,6 +192,10 @@ datasources:
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
       nodeGraph:
         enabled: true
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
       spanBar:
         type: 'None'
     secureJsonData:
