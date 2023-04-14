@@ -1063,7 +1063,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			withLabels(data.Labels{"test": "value2"}), withAlertingState())
 
 		t.Run("invalid matchers returns 400 Bad Request", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=unknown", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher={\"name\":\"\"}", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1076,7 +1076,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, http.StatusBadRequest, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Equal(t, "bad matcher format: unknown", res.Error)
+			require.Equal(t, "bad matcher: the name cannot be blank", res.Error)
 		})
 
 		t.Run("first without matchers", func(t *testing.T) {
@@ -1101,7 +1101,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with single matcher", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=test=value1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher={\"name\":\"test\",\"isEqual\":true,\"value\":\"value1\"}", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1122,8 +1122,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, rg.Rules[0].Alerts, 1)
 		})
 
-		t.Run("then with regex matcher", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matcher~=test=value[0-9]+", nil)
+		t.Run("then with URL encoded regex matcher", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=%7B%22name%22:%22test%22%2C%22isEqual%22:true%2C%22isRegex%22:true%2C%22value%22:%22value%5B0-9%5D%2B%22%7D%0A", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1145,7 +1145,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with multiple matchers", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=alertname=test_title_0&matcher=test=value1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher={\"name\":\"alertname\",\"isEqual\":true,\"value\":\"test_title_0\"}&matcher={\"name\":\"test\",\"isEqual\":true,\"value\":\"value1\"}", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1167,7 +1167,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with multiple matchers that don't match", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?matcher=alertname=test_title_0&matcher=test=value3", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?matcher={\"name\":\"alertname\",\"isEqual\":true,\"value\":\"test_title_0\"}&matcher={\"name\":\"test\",\"isEqual\":true,\"value\":\"value3\"}", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},

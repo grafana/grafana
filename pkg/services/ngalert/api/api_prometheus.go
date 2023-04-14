@@ -110,11 +110,14 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 func getMatchersFromRequest(r *http.Request) (labels.Matchers, error) {
 	var matchers labels.Matchers
 	for _, s := range r.URL.Query()["matcher"] {
-		m, err := labels.ParseMatcher(s)
-		if err != nil {
+		var m labels.Matcher
+		if err := json.Unmarshal([]byte(s), &m); err != nil {
 			return nil, err
 		}
-		matchers = append(matchers, m)
+		if len(m.Name) == 0 {
+			return nil, errors.New("bad matcher: the name cannot be blank")
+		}
+		matchers = append(matchers, &m)
 	}
 	return matchers, nil
 }
