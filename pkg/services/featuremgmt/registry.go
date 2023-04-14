@@ -515,9 +515,9 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "disableElasticsearchBackendQuerying",
-			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
-			State:       FeatureStateStable,
+			Name:        "enableElasticsearchBackendQuerying",
+			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
