@@ -28,14 +28,19 @@ const addFilter = async (
   mockQuery: AzureMonitorQuery,
   filter: {
     property: string;
-    count: number;
-    value: string;
     operation: string;
     index: number;
+    filters: Array<{
+      count: number;
+      value: string;
+    }>;
   },
   rerender: (ui: React.ReactElement) => void
 ) => {
-  const { property, count, value, operation, index } = filter;
+  const { property, operation, index } = filter;
+  const resultVector = new ArrayVector([
+    `{"${property}":[${filter.filters.map(({ count, value }) => `{"${property}":"${value}", "count":${count}}`)}]}`,
+  ]);
   mockDatasource.azureLogAnalyticsDatasource.query = jest.fn().mockReturnValue(
     of({
       data: [
@@ -64,7 +69,7 @@ const addFilter = async (
                   },
                 ],
               },
-              values: new ArrayVector([`{"${property}":[{"${property}":"${value}", "count":${count}}]}`]),
+              values: resultVector,
               entities: {},
             },
           ],
@@ -124,18 +129,23 @@ const addFilter = async (
       ],
     })
   );
-  const label = `${value} - (${count})`;
 
-  await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument());
-  selectOptionInTest(valueSelect, label);
-  await waitFor(() => expect(screen.getByText(value)).toBeInTheDocument());
+  const values = [];
+  for (const currFilter of filter.filters) {
+    const label = `${currFilter.value} - (${currFilter.count})`;
+    await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument());
+    selectOptionInTest(valueSelect, label);
+    await waitFor(() => expect(screen.getByText(currFilter.value)).toBeInTheDocument());
+    values.push(currFilter.value);
+  }
+
   if (mockQuery.azureTraces?.filters && mockQuery.azureTraces.filters.length === 0) {
     expect(onQueryChange).not.toHaveBeenCalled();
   }
 
   const newQuery = setFilters(mockQuery, [
     ...(mockQuery.azureTraces?.filters ?? []),
-    { property, operation, filters: [value] },
+    { property, operation, filters: values },
   ]);
   await waitFor(() => {
     userEvent.type(valueSelect, '{Escape}');
@@ -209,7 +219,7 @@ describe(`Traces Filters`, () => {
 
     await addFilter(
       mockQuery,
-      { property: 'appId', count: 10, value: 'test-app-id', operation: 'eq', index: 0 },
+      { property: 'appId', filters: [{ count: 10, value: 'test-app-id' }], operation: 'eq', index: 0 },
       rerender
     );
   });
@@ -233,12 +243,12 @@ describe(`Traces Filters`, () => {
 
     mockQuery = await addFilter(
       mockQuery,
-      { property: 'appId', count: 10, value: 'test-app-id', operation: 'eq', index: 0 },
+      { property: 'appId', filters: [{ count: 10, value: 'test-app-id' }], operation: 'eq', index: 0 },
       rerender
     );
     mockQuery = await addFilter(
       mockQuery,
-      { property: 'client_Browser', count: 100, value: 'test-client', operation: 'ne', index: 1 },
+      { property: 'client_Browser', filters: [{ count: 100, value: 'test-client' }], operation: 'ne', index: 1 },
       rerender
     );
   });
@@ -262,12 +272,12 @@ describe(`Traces Filters`, () => {
 
     mockQuery = await addFilter(
       mockQuery,
-      { property: 'appId', count: 10, value: 'test-app-id', operation: 'eq', index: 0 },
+      { property: 'appId', filters: [{ count: 10, value: 'test-app-id' }], operation: 'eq', index: 0 },
       rerender
     );
     mockQuery = await addFilter(
       mockQuery,
-      { property: 'client_Browser', count: 100, value: 'test-client', operation: 'ne', index: 1 },
+      { property: 'client_Browser', filters: [{ count: 100, value: 'test-client' }], operation: 'ne', index: 1 },
       rerender
     );
 
@@ -300,5 +310,102 @@ describe(`Traces Filters`, () => {
     expect(screen.queryByText('client_Browser')).not.toBeInTheDocument();
     expect(screen.queryByText('!=')).not.toBeInTheDocument();
     expect(screen.queryByText('test-client')).not.toBeInTheDocument();
+  });
+
+  it('should add a trace filter and select multiple values', async () => {
+    let mockQuery = createMockQuery({ azureTraces: { traceTypes: ['customEvents'] } });
+    mockQuery.azureTraces = {
+      ...mockQuery.azureTraces,
+      filters: undefined,
+    };
+
+    const { rerender } = render(
+      <Filters
+        datasource={mockDatasource}
+        onQueryChange={onQueryChange}
+        query={mockQuery}
+        setError={jest.fn()}
+        variableOptionGroup={variableOptionGroup}
+      />
+    );
+
+    await addFilter(
+      mockQuery,
+      {
+        property: 'appId',
+        filters: [
+          { count: 10, value: 'test-app-id' },
+          { count: 20, value: 'test-app-id-2' },
+        ],
+        operation: 'eq',
+        index: 0,
+      },
+      rerender
+    );
+  });
+
+  it('should remove a value from a trace filter with multiple values', async () => {
+    let mockQuery = createMockQuery({ azureTraces: { traceTypes: ['customEvents'] } });
+    mockQuery.azureTraces = {
+      ...mockQuery.azureTraces,
+      filters: undefined,
+    };
+
+    const { rerender } = render(
+      <Filters
+        datasource={mockDatasource}
+        onQueryChange={onQueryChange}
+        query={mockQuery}
+        setError={jest.fn()}
+        variableOptionGroup={variableOptionGroup}
+      />
+    );
+
+    mockQuery = await addFilter(
+      mockQuery,
+      {
+        property: 'appId',
+        filters: [
+          { count: 10, value: 'test-app-id' },
+          { count: 20, value: 'test-app-id-2' },
+        ],
+        operation: 'eq',
+        index: 0,
+      },
+      rerender
+    );
+
+    const currFilter = mockQuery.azureTraces?.filters![0]!;
+    mockQuery = {
+      ...mockQuery,
+      azureTraces: {
+        ...mockQuery.azureTraces,
+        filters: [
+          {
+            ...currFilter,
+            filters: currFilter.filters.slice(0, 1),
+          },
+        ],
+      },
+    };
+    const removeLabel = screen.getByLabelText(`Remove test-app-id-2`);
+    await act(async () => {
+      await userEvent.click(removeLabel);
+    });
+
+    rerender(
+      <Filters
+        datasource={mockDatasource}
+        onQueryChange={onQueryChange}
+        query={mockQuery}
+        setError={jest.fn()}
+        variableOptionGroup={variableOptionGroup}
+      />
+    );
+
+    expect(screen.getByText('appId')).toBeInTheDocument();
+    expect(screen.getByText('=')).toBeInTheDocument();
+    expect(screen.getByText('test-app-id')).toBeInTheDocument();
+    expect(screen.queryByText('test-app-id-2')).not.toBeInTheDocument();
   });
 });
