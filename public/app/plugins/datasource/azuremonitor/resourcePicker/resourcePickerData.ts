@@ -395,7 +395,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   async getLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
     const subscriptionIds = subscriptions.map((sub) => sub.id);
     const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
-
     return locations;
   }
 
