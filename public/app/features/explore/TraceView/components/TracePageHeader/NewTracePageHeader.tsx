@@ -14,12 +14,13 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, useMemo } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
@@ -28,16 +29,42 @@ import { Trace } from '../types';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
+import { SpanFilters } from './SpanFilters/SpanFilters';
 import { timestamp, getStyles } from './TracePageHeader';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
   timeZone: TimeZone;
+  search: SearchProps;
+  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  showSpanFilters: boolean;
+  setShowSpanFilters: (isOpen: boolean) => void;
+  focusedSpanIdForSearch: string;
+  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  spanFilterMatches: Set<string> | undefined;
+  datasourceType: string;
+  setHeaderHeight: (height: number) => void;
 };
 
 export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
-  const { trace, timeZone } = props;
+  const {
+    trace,
+    timeZone,
+    search,
+    setSearch,
+    showSpanFilters,
+    setShowSpanFilters,
+    focusedSpanIdForSearch,
+    setFocusedSpanIdForSearch,
+    spanFilterMatches,
+    datasourceType,
+    setHeaderHeight,
+  } = props;
   const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
+
+  useEffect(() => {
+    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
+  }, [setHeaderHeight, showSpanFilters, styles.header]);
 
   const links = useMemo(() => {
     if (!trace) {
@@ -102,6 +129,18 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
           </Tooltip>
         )}
       </div>
+
+      <SpanFilters
+        trace={trace}
+        showSpanFilters={showSpanFilters}
+        setShowSpanFilters={setShowSpanFilters}
+        search={search}
+        setSearch={setSearch}
+        spanFilterMatches={spanFilterMatches}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+        datasourceType={datasourceType}
+      />
     </header>
   );
 });
@@ -111,13 +150,17 @@ NewTracePageHeader.displayName = 'NewTracePageHeader';
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
+      label: TracePageHeader;
       background-color: ${theme.colors.background.primary};
-      padding: 0.5em 0.25em 0 0.25em;
+      padding: 0.5em 0 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 5;
     `,
     titleRow: css`
       align-items: center;
       display: flex;
-      padding: 0 0.5em 0 0.5em;
+      padding: 0 8px;
     `,
     title: css`
       color: inherit;
@@ -128,7 +171,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     subtitle: css`
       flex: 1;
       line-height: 1em;
-      margin: -0.5em 0.5em 0.75em 0.5em;
+      margin: -0.5em 8px 0.75em 8px;
     `,
     tag: css`
       margin: 0 0.5em 0 0;

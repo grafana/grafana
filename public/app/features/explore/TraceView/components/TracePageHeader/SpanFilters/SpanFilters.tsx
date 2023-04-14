@@ -37,25 +37,25 @@ import NewTracePageSearchBar from '../NewTracePageSearchBar';
 export type SpanFilterProps = {
   trace: Trace;
   search: SearchProps;
+  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
-  spanFilterMatches: Set<string> | undefined;
   focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
 };
 
 export const SpanFilters = memo((props: SpanFilterProps) => {
   const {
     trace,
-    showSpanFilters,
-    setShowSpanFilters,
     search,
     setSearch,
-    spanFilterMatches,
+    showSpanFilters,
+    setShowSpanFilters,
     focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
+    spanFilterMatches,
     datasourceType,
   } = props;
   const styles = { ...useStyles2(getStyles) };
@@ -384,8 +384,6 @@ const getStyles = () => {
   return {
     container: css`
       margin: 0.5em 0 -8px 0;
-      position: sticky;
-      top: -13.5em;
       z-index: 5;
 
       & > div {

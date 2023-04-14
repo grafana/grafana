@@ -35,7 +35,6 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from './components';
-import { SpanFilters } from './components/TracePageHeader/SpanFilters/SpanFilters';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -97,6 +96,7 @@ export function TraceView(props: Props) {
   const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp?.spans);
   const [newTraceViewFocusedSpanIdForSearch, setNewTraceViewFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const styles = useStyles2(getStyles);
 
@@ -150,23 +150,24 @@ export function TraceView(props: Props) {
         <>
           {config.featureToggles.newTraceView ? (
             <>
-              <NewTracePageHeader trace={traceProp} timeZone={timeZone} />
+              <NewTracePageHeader
+                trace={traceProp}
+                timeZone={timeZone}
+                search={newTraceViewSearch}
+                setSearch={setNewTraceViewSearch}
+                showSpanFilters={showSpanFilters}
+                setShowSpanFilters={setShowSpanFilters}
+                focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
+                setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
+                spanFilterMatches={spanFilterMatches}
+                datasourceType={datasourceType}
+                setHeaderHeight={setHeaderHeight}
+              />
               <SpanGraph
                 trace={traceProp}
                 viewRange={viewRange}
                 updateNextViewRangeTime={updateNextViewRangeTime}
                 updateViewRangeTime={updateViewRangeTime}
-              />
-              <SpanFilters
-                trace={traceProp}
-                showSpanFilters={showSpanFilters}
-                setShowSpanFilters={setShowSpanFilters}
-                search={newTraceViewSearch}
-                setSearch={setNewTraceViewSearch}
-                spanFilterMatches={spanFilterMatches}
-                focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
-                setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
-                datasourceType={datasourceType}
               />
             </>
           ) : (
@@ -220,6 +221,7 @@ export function TraceView(props: Props) {
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
+            headerHeight={headerHeight}
           />
         </>
       ) : (

@@ -17,17 +17,24 @@ import React from 'react';
 
 import config from 'app/core/config';
 
-import { NewTracePageHeader, TracePageHeaderProps } from './NewTracePageHeader';
+import { defaultFilters } from '../../useSearch';
+
+import { NewTracePageHeader } from './NewTracePageHeader';
 import { trace } from './TracePageHeader.test';
 
-const setup = (propOverrides?: TracePageHeaderProps) => {
+const setup = () => {
   const defaultProps = {
     trace,
     timeZone: '',
-    viewRange: { time: { current: [10, 20] as [number, number] } },
-    updateNextViewRangeTime: () => {},
-    updateViewRangeTime: () => {},
-    ...propOverrides,
+    search: defaultFilters,
+    setSearch: jest.fn(),
+    showSpanFilters: true,
+    setShowSpanFilters: jest.fn(),
+    spanFilterMatches: undefined,
+    focusedSpanIdForSearch: '',
+    setFocusedSpanIdForSearch: jest.fn(),
+    datasourceType: 'tempo',
+    setHeaderHeight: jest.fn(),
   };
 
   return render(<NewTracePageHeader {...defaultProps} />);
