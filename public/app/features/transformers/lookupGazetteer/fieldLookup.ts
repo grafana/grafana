@@ -1,7 +1,6 @@
 import { mergeMap, from } from 'rxjs';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   Field,
