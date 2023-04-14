@@ -1,0 +1,5 @@
+source .bingo/variables.env
+
+lefthook () {
+  ${LEFTHOOK} "$@"
+}
