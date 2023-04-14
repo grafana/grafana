@@ -11,18 +11,18 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
+import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
 
 import {
   BarGauge,
   Props,
-  getCellColor,
-  getValueColor,
+  getTextValueColor,
   getBasicAndGradientStyles,
   getBarGradient,
   getTitleStyles,
   getValuePercent,
-  BarGaugeDisplayMode,
   calculateBarAndValueDimensions,
+  getCellColor,
 } from './BarGauge';
 
 const green = '#73BF69';
@@ -63,7 +63,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
 }
 
 function getValue(value: number, title?: string): DisplayValue {
-  return { numeric: value, text: value.toString(), title: title };
+  return { numeric: value, text: value.toString(), title: title, color: '#FF0000' };
 }
 
 describe('BarGauge', () => {
@@ -134,12 +134,12 @@ describe('BarGauge', () => {
     it('should get the threshold color if value is same as a threshold', () => {
       const props = getProps();
       props.value = props.display!(70);
-      expect(getValueColor(props)).toEqual(orange);
+      expect(getTextValueColor(props)).toEqual(orange);
     });
     it('should get the base threshold', () => {
       const props = getProps();
       props.value = props.display!(-10);
-      expect(getValueColor(props)).toEqual(green);
+      expect(getTextValueColor(props)).toEqual(green);
     });
   });
 
@@ -158,6 +158,10 @@ describe('BarGauge', () => {
 
     it('-30 to 30 and value 30', () => {
       expect(getValuePercent(30, -30, 30)).toEqual(1);
+    });
+
+    it('returns 0 if the min, max and value are all the same value', () => {
+      expect(getValuePercent(25, 25, 25)).toEqual(0);
     });
   });
 
@@ -320,6 +324,47 @@ describe('BarGauge', () => {
         })
       );
       expect(result.valueWidth).toBe(21);
+    });
+
+    it('valueWidth be zero if valueMode is hideen', () => {
+      const result = calculateBarAndValueDimensions(
+        getProps({
+          height: 30,
+          width: 100,
+          value: getValue(1, 'AA'),
+          orientation: VizOrientation.Horizontal,
+          valueDisplayMode: BarGaugeValueMode.Hidden,
+        })
+      );
+      expect(result.valueWidth).toBe(0);
+    });
+  });
+
+  describe('With valueMode set to text color', () => {
+    it('should color value using text color', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Vertical,
+        valueDisplayMode: BarGaugeValueMode.Text,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
+      expect(styles.value.color).toBe('rgb(204, 204, 220)');
+    });
+  });
+
+  describe('With valueMode set to text value', () => {
+    it('should color value value color', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Vertical,
+        valueDisplayMode: BarGaugeValueMode.Color,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
+      expect(styles.value.color).toBe('#FF0000');
     });
   });
 });

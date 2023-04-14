@@ -6,14 +6,13 @@ import (
 	"net/url"
 	"testing"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 func TestInvalidReceiverError_Error(t *testing.T) {
-	e := InvalidReceiverError{
-		Receiver: &definitions.PostableGrafanaReceiver{
+	e := alertingNotify.InvalidReceiverError{
+		Receiver: &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		},
@@ -23,8 +22,8 @@ func TestInvalidReceiverError_Error(t *testing.T) {
 }
 
 func TestReceiverTimeoutError_Error(t *testing.T) {
-	e := ReceiverTimeoutError{
-		Receiver: &definitions.PostableGrafanaReceiver{
+	e := alertingNotify.ReceiverTimeoutError{
+		Receiver: &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		},
@@ -45,18 +44,18 @@ func (e timeoutError) Timeout() bool {
 
 func TestProcessNotifierError(t *testing.T) {
 	t.Run("assert ReceiverTimeoutError is returned for context deadline exceeded", func(t *testing.T) {
-		r := &definitions.PostableGrafanaReceiver{
+		r := &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		}
-		require.Equal(t, ReceiverTimeoutError{
+		require.Equal(t, alertingNotify.ReceiverTimeoutError{
 			Receiver: r,
 			Err:      context.DeadlineExceeded,
-		}, processNotifierError(r, context.DeadlineExceeded))
+		}, alertingNotify.ProcessNotifierError(r, context.DeadlineExceeded))
 	})
 
 	t.Run("assert ReceiverTimeoutError is returned for *url.Error timeout", func(t *testing.T) {
-		r := &definitions.PostableGrafanaReceiver{
+		r := &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		}
@@ -65,18 +64,18 @@ func TestProcessNotifierError(t *testing.T) {
 			URL: "https://grafana.net",
 			Err: timeoutError{},
 		}
-		require.Equal(t, ReceiverTimeoutError{
+		require.Equal(t, alertingNotify.ReceiverTimeoutError{
 			Receiver: r,
 			Err:      urlError,
-		}, processNotifierError(r, urlError))
+		}, alertingNotify.ProcessNotifierError(r, urlError))
 	})
 
 	t.Run("assert unknown error is returned unmodified", func(t *testing.T) {
-		r := &definitions.PostableGrafanaReceiver{
+		r := &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		}
 		err := errors.New("this is an error")
-		require.Equal(t, err, processNotifierError(r, err))
+		require.Equal(t, err, alertingNotify.ProcessNotifierError(r, err))
 	})
 }

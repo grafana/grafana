@@ -18,45 +18,48 @@ describe('Worldmap Migrations', () => {
     const panel = {} as PanelModel;
     panel.options = mapPanelChangedHandler(panel, 'grafana-worldmap-panel', old, prevFieldConfig);
     expect(panel).toMatchInlineSnapshot(`
-      Object {
-        "fieldConfig": Object {
-          "defaults": Object {
+      {
+        "fieldConfig": {
+          "defaults": {
             "decimals": 3,
-            "thresholds": Object {
+            "thresholds": {
               "mode": "absolute",
-              "steps": Array [
-                Object {
+              "steps": [
+                {
                   "color": "#37872D",
                   "value": -Infinity,
                 },
-                Object {
+                {
                   "color": "#E0B400",
                   "value": 0,
                 },
-                Object {
+                {
                   "color": "#C4162A",
                   "value": 50,
                 },
-                Object {
+                {
                   "color": "#8F3BB8",
                   "value": 100,
                 },
               ],
             },
           },
-          "overrides": Array [],
+          "overrides": [],
         },
-        "options": Object {
-          "basemap": Object {
+        "options": {
+          "basemap": {
             "name": "Basemap",
             "type": "default",
           },
-          "controls": Object {
+          "controls": {
             "mouseWheelZoom": true,
             "showZoom": true,
           },
-          "layers": Array [],
-          "view": Object {
+          "layers": [],
+          "tooltip": {
+            "mode": "details",
+          },
+          "view": {
             "id": "europe",
             "lat": 46,
             "lon": 14,
@@ -135,39 +138,39 @@ describe('geomap migrations', () => {
         ],
       },
       pluginVersion: '8.2.0',
-    } as any as PanelModel;
+    } as unknown as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
     expect(panel).toMatchInlineSnapshot(`
-      Object {
-        "options": Object {
-          "layers": Array [
-            Object {
-              "config": Object {
+      {
+        "options": {
+          "layers": [
+            {
+              "config": {
                 "showLegend": true,
-                "style": Object {
-                  "color": Object {
+                "style": {
+                  "color": {
                     "field": "Price",
                     "fixed": "dark-green",
                   },
                   "opacity": 0.4,
-                  "rotation": Object {
+                  "rotation": {
                     "fixed": 0,
                     "max": 360,
                     "min": -360,
                     "mode": "mod",
                   },
-                  "size": Object {
+                  "size": {
                     "field": "Count",
                     "fixed": 5,
                     "max": 15,
                     "min": 2,
                   },
-                  "symbol": Object {
+                  "symbol": {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
                   },
-                  "textConfig": Object {
+                  "textConfig": {
                     "fontSize": 12,
                     "offsetX": 0,
                     "offsetY": 0,

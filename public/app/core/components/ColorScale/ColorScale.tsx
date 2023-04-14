@@ -20,7 +20,6 @@ type HoverState = {
   value: number;
 };
 
-const LEFT_OFFSET = 2;
 const GRADIENT_STOPS = 10;
 
 export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useStopsPercentage }: Props) => {
@@ -37,7 +36,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
-    const offsetWidth = (event.target as any).offsetWidth as number;
+    const offsetWidth = event.currentTarget.offsetWidth;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
 
@@ -64,15 +63,15 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
       </div>
       {display && (
         <div className={styles.followerContainer}>
-          {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
-            <span className={styles.hoverValue} style={{ left: `${percent - LEFT_OFFSET}%` }}>
-              {display(hoverValue || scaleHover.value)}
-            </span>
-          )}
-          <div className={styles.legendValues} style={{ opacity: scaleHover.isShown || hoverValue ? 0.3 : 1 }}>
+          <div className={styles.legendValues}>
             <span>{display(min)}</span>
             <span>{display(max)}</span>
           </div>
+          {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
+            <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
+              {display(hoverValue ?? scaleHover.value)}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -137,17 +136,24 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
     height: 10px;
+    pointer-events: none;
   `,
   legendValues: css`
     display: flex;
     justify-content: space-between;
+    pointer-events: none;
   `,
   hoverValue: css`
     position: absolute;
-    padding-top: 4px;
+    margin-top: -14px;
+    padding: 3px 15px;
+    background: ${theme.colors.background.primary};
+    transform: translateX(-50%);
   `,
   followerContainer: css`
     position: relative;
+    pointer-events: none;
+    white-space: nowrap;
   `,
   follower: css`
     position: absolute;
@@ -155,7 +161,6 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     width: 14px;
     border-radius: 50%;
     transform: translateX(-50%) translateY(-50%);
-    pointer-events: none;
     border: 2px solid ${theme.colors.text.primary};
     margin-top: 5px;
   `,

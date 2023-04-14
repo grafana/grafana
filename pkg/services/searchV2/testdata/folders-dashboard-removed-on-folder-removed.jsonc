@@ -2,29 +2,38 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 1
 //      }
 //  }
 //  Name: Query results
 //  Dimensions: 8 Fields by 1 Rows
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location |
-//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        |
-//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | dashboard      | 4              | One more dash  |                  | /pfix/d/4/     | null                     | null                     |                |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location |
+//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
+//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | dashboard      | 4              | One more dash  |                  | /pfix/d/4/     | null                     | []                      | general        |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 1
           }
@@ -85,8 +94,7 @@
             "name": "ds_uid",
             "type": "other",
             "typeInfo": {
-              "frame": "json.RawMessage",
-              "nullable": true
+              "frame": "json.RawMessage"
             }
           },
           {
@@ -119,10 +127,10 @@
             null
           ],
           [
-            null
+            []
           ],
           [
-            ""
+            "general"
           ]
         ]
       }

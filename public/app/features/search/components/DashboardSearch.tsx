@@ -1,135 +1,53 @@
 import { css } from '@emotion/css';
-import React, { FC, memo, useState } from 'react';
-import { useDebounce, useLocalStorage } from 'react-use';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { CustomScrollbar, IconButton, stylesFactory, useStyles2, useTheme2 } from '@grafana/ui';
+import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
-import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { useSearchQuery } from '../hooks/useSearchQuery';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
-import { ActionRow } from './ActionRow';
-import { PreviewsSystemRequirements } from './PreviewsSystemRequirements';
-import { SearchField } from './SearchField';
-import { SearchResults } from './SearchResults';
+export interface Props {}
 
-export interface Props {
-  onCloseSearch: () => void;
-}
-
-export default function DashboardSearch({ onCloseSearch }: Props) {
-  if (config.featureToggles.panelTitleSearch) {
-    // TODO: "folder:current" ????
-    return <DashboardSearchNew onCloseSearch={onCloseSearch} />;
-  }
-  return <DashboardSearchOLD onCloseSearch={onCloseSearch} />;
-}
-
-function DashboardSearchNew({ onCloseSearch }: Props) {
+export function DashboardSearch({}: Props) {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange } = useSearchQuery({});
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
 
-  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
-  if (!config.featureToggles.panelTitleSearch) {
-    includePanels = false;
-  }
+  useEffect(() => stateManager.initStateFromUrl(), [stateManager]);
 
-  const [inputValue, setInputValue] = useState(query.query ?? '');
-  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    setInputValue(e.currentTarget.value);
-  };
-  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
-    <div tabIndex={0} className={styles.overlay}>
+    <div className={styles.overlay}>
       <div className={styles.container}>
         <div className={styles.searchField}>
           <div>
             <input
               type="text"
-              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
-              value={inputValue}
-              onChange={onSearchQueryChange}
-              tabIndex={0}
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              placeholder={state.includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
+              value={state.query ?? ''}
+              onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
+              onKeyDown={onKeyDown}
               spellCheck={false}
               className={styles.input}
-              autoFocus
             />
           </div>
 
           <div className={styles.closeBtn}>
-            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={stateManager.onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView
-            showManage={false}
-            queryText={query.query}
-            includePanels={includePanels!}
-            setIncludePanels={setIncludePanels}
-          />
+          <SearchView showManage={false} keyboardEvents={keyboardEvents} />
         </div>
       </div>
     </div>
   );
 }
-
-export const DashboardSearchOLD: FC<Props> = memo(({ onCloseSearch }) => {
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
-  const { results, loading, onToggleSection, onKeyDown, showPreviews, setShowPreviews } = useDashboardSearch(
-    query,
-    onCloseSearch
-  );
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-
-  return (
-    <div tabIndex={0} className={styles.overlay}>
-      <div className={styles.container}>
-        <div className={styles.searchField}>
-          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
-          <div className={styles.closeBtn}>
-            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
-          </div>
-        </div>
-        <div className={styles.search}>
-          <ActionRow
-            {...{
-              onLayoutChange,
-              setShowPreviews,
-              onSortChange,
-              onTagFilterChange,
-              query,
-              showPreviews,
-            }}
-          />
-          <PreviewsSystemRequirements
-            bottomSpacing={3}
-            showPreviews={showPreviews}
-            onRemove={() => setShowPreviews(false)}
-          />
-          <CustomScrollbar>
-            <SearchResults
-              results={results}
-              loading={loading}
-              onTagSelected={onTagAdd}
-              editable={false}
-              onToggleSection={onToggleSection}
-              layout={query.layout}
-              showPreviews={showPreviews}
-            />
-          </CustomScrollbar>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-DashboardSearchOLD.displayName = 'DashboardSearchOLD';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -141,10 +59,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.sidemenu};
       position: fixed;
       background: ${theme.colors.background.canvas};
+      padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.up('md')} {
         left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
+        padding: ${theme.spacing(2)};
       }
     `,
     container: css`
@@ -152,11 +72,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1)};
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
-      margin-top: ${theme.spacing(4)};
-
       height: 100%;
 
       ${theme.breakpoints.up('md')} {

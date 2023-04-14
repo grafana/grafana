@@ -16,9 +16,9 @@ import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
-export class BarGaugePanel extends PureComponent<PanelProps<PanelOptions>> {
+export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
@@ -49,6 +49,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<PanelOptions>> {
         className={targetClassName}
         alignmentFactors={count > 1 ? alignmentFactors : undefined}
         showUnfilled={options.showUnfilled}
+        valueDisplayMode={options.valueMode}
       />
     );
   };
@@ -60,9 +61,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<PanelOptions>> {
     if (hasLinks && getLinks) {
       return (
         <div style={{ width: '100%', display: orientation === VizOrientation.Vertical ? 'flex' : 'initial' }}>
-          <DataLinksContextMenu links={getLinks} config={value.field}>
-            {(api) => this.renderComponent(valueProps, api)}
-          </DataLinksContextMenu>
+          <DataLinksContextMenu links={getLinks}>{(api) => this.renderComponent(valueProps, api)}</DataLinksContextMenu>
         </div>
       );
     }
@@ -111,8 +110,9 @@ export class BarGaugePanel extends PureComponent<PanelProps<PanelOptions>> {
     );
   }
 }
+export type BarGaugePanelProps = PanelProps<PanelOptions>;
 
-export function clearNameForSingleSeries(count: number, field: FieldConfig<any>, display: DisplayValue): DisplayValue {
+export function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
   if (count === 1 && !field.displayName) {
     return {
       ...display,

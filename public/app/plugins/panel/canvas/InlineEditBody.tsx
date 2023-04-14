@@ -1,36 +1,50 @@
+import { css } from '@emotion/css';
 import { get as lodashGet } from 'lodash';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
-import { PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { useStyles2 } from '@grafana/ui/src';
+import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
 import { activePanelSubject, InstanceState } from './CanvasPanel';
+import { TabsEditor } from './editor/TabsEditor';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { addStandardCanvasEditorOptions } from './module';
+import { InlineEditTabs } from './types';
+import { getElementTypes, onAddItem } from './utils';
 
-export const InlineEditBody = () => {
+export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
+  const styles = useStyles2(getStyles);
+
+  const [activeTab, setActiveTab] = useState<string>(InlineEditTabs.SelectedElement);
 
   const pane = useMemo(() => {
+    const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state) {
+    if (!state || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
     const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
-      builder.addNestedOptions(getLayerEditor(instanceState));
+      if (activeTab === InlineEditTabs.ElementManagement) {
+        builder.addNestedOptions(getLayerEditor(instanceState));
+      }
 
       const selection = state.selected;
-      if (selection?.length === 1) {
+      if (selection?.length === 1 && activeTab === InlineEditTabs.SelectedElement) {
         const element = selection[0];
-        if (!(element instanceof FrameState)) {
+        if (element && !(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],
@@ -40,35 +54,72 @@ export const InlineEditBody = () => {
           );
         }
       }
+
+      addStandardCanvasEditorOptions(builder);
     };
 
-    return getOptionsPaneCategoryDescriptor({}, supplier);
-  }, [instanceState]);
+    return getOptionsPaneCategoryDescriptor(
+      {
+        options: p.props.options,
+        onChange: p.props.onOptionsChange,
+        data: p.props.data?.series,
+      },
+      supplier
+    );
+  }, [instanceState, activePanel, activeTab]);
+
+  const topLevelItemsContainerStyle = {
+    marginLeft: 15,
+    marginTop: 10,
+  };
+
+  const onTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  const typeOptions = getElementTypes(instanceState?.scene.shouldShowAdvancedTypes).options;
+  const rootLayer: FrameState | undefined = instanceState?.layer;
+
+  const noElementSelected =
+    instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0;
 
   return (
-    <div>
-      <div>{pane.items.map((v) => v.render())}</div>
-      <div>
-        {pane.categories.map((c) => {
-          return (
-            <div key={c.props.id}>
-              <h5>{c.props.title}</h5>
-              <div>{c.items.map((s) => s.render())}</div>
-            </div>
-          );
-        })}
+    <>
+      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
+      <div style={topLevelItemsContainerStyle}>
+        <AddLayerButton onChange={(sel) => onAddItem(sel, rootLayer)} options={typeOptions} label={'Add item'} />
       </div>
-    </div>
+      <div style={topLevelItemsContainerStyle}>
+        <TabsEditor onTabChange={onTabChange} />
+        {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
+        {noElementSelected && <div className={styles.selectElement}>Please select an element</div>}
+      </div>
+    </>
   );
-};
+}
 
-// 🤮🤮🤮🤮 this oddly does not actually do anything, but structure is required.  I'll try to clean it up...
+// Recursively render options
+function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
+  return (
+    <OptionsPaneCategory {...pane.props} key={pane.props.id}>
+      <div>{pane.items.map((v) => v.render())}</div>
+      {pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}
+    </OptionsPaneCategory>
+  );
+}
+
+interface EditorProps<T> {
+  onChange: (v: T) => void;
+  options: T;
+  data?: DataFrame[];
+}
+
 function getOptionsPaneCategoryDescriptor<T = any>(
-  props: any,
+  props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
   const context: StandardEditorContext<unknown, unknown> = {
-    data: props.input,
+    data: props.data ?? [],
     options: props.options,
   };
 
@@ -97,3 +148,10 @@ function getOptionsPaneCategoryDescriptor<T = any>(
   fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
   return root;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  selectElement: css`
+    color: ${theme.colors.text.secondary};
+    padding: ${theme.spacing(2)};
+  `,
+});

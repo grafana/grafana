@@ -11,6 +11,7 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   range: RawTimeRange;
   context?: string;
   panelsState?: ExplorePanelsState;
+  isFromCompactUrl?: boolean;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
@@ -21,9 +22,16 @@ export interface ExploreTracePanelState {
   spanId?: string;
 }
 
+export interface SplitOpenOptions<T> {
+  datasourceUid: string;
+  /** @deprecated Will be removed in a future version. Use queries instead. */
+  query?: T;
+  queries?: T[];
+  range?: TimeRange;
+  panelsState?: ExplorePanelsState;
+}
+
 /**
  * SplitOpen type is used in Explore and related components.
  */
-export type SplitOpen = <T extends DataQuery = any>(
-  options?: { datasourceUid: string; query: T; range?: TimeRange; panelsState?: ExplorePanelsState } | undefined
-) => void;
+export type SplitOpen = <T extends DataQuery = any>(options?: SplitOpenOptions<T> | undefined) => void;

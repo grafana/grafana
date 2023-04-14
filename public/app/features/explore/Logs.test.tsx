@@ -1,13 +1,14 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc } from '@grafana/data';
+import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc, EventBusSrv } from '@grafana/data';
 import { ExploreId } from 'app/types';
 
 import { Logs } from './Logs';
 
 describe('Logs', () => {
-  const setup = (propOverrides?: object) => {
+  const setup = (logs?: LogRowModel[]) => {
     const rows = [
       makeLog({ uid: '1', timeEpochMs: 1 }),
       makeLog({ uid: '2', timeEpochMs: 2 }),
@@ -17,7 +18,14 @@ describe('Logs', () => {
     return render(
       <Logs
         exploreId={ExploreId.left}
-        logRows={rows}
+        splitOpen={() => undefined}
+        logsVolumeEnabled={true}
+        onSetLogsVolumeEnabled={() => null}
+        onClickFilterLabel={() => null}
+        onClickFilterOutLabel={() => null}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
+        logRows={logs ?? rows}
         timeZone={'utc'}
         width={50}
         loading={false}
@@ -32,17 +40,10 @@ describe('Logs', () => {
         getFieldLinks={() => {
           return [];
         }}
+        eventBus={new EventBusSrv()}
       />
     );
   };
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
 
   it('should render logs', () => {
     setup();
@@ -53,11 +54,138 @@ describe('Logs', () => {
     expect(logRows[2].textContent).toContain('log message 1');
   });
 
-  it('should flip the order', () => {
+  it('should render no logs found', () => {
+    setup([]);
+
+    expect(screen.getByText(/no logs found\./i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /scan for older logs/i,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('should render a load more button', () => {
+    const scanningStarted = jest.fn();
+    render(
+      <Logs
+        exploreId={ExploreId.left}
+        splitOpen={() => undefined}
+        logsVolumeEnabled={true}
+        onSetLogsVolumeEnabled={() => null}
+        onClickFilterLabel={() => null}
+        onClickFilterOutLabel={() => null}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
+        logRows={[]}
+        onStartScanning={scanningStarted}
+        timeZone={'utc'}
+        width={50}
+        loading={false}
+        loadingState={LoadingState.Done}
+        absoluteRange={{
+          from: toUtc('2019-01-01 10:00:00').valueOf(),
+          to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        addResultsToCache={() => {}}
+        onChangeTime={() => {}}
+        clearCache={() => {}}
+        getFieldLinks={() => {
+          return [];
+        }}
+        eventBus={new EventBusSrv()}
+      />
+    );
+    const button = screen.getByRole('button', {
+      name: /scan for older logs/i,
+    });
+    button.click();
+    expect(scanningStarted).toHaveBeenCalled();
+  });
+
+  it('should render a stop scanning button', () => {
+    render(
+      <Logs
+        exploreId={ExploreId.left}
+        splitOpen={() => undefined}
+        logsVolumeEnabled={true}
+        onSetLogsVolumeEnabled={() => null}
+        onClickFilterLabel={() => null}
+        onClickFilterOutLabel={() => null}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
+        logRows={[]}
+        scanning={true}
+        timeZone={'utc'}
+        width={50}
+        loading={false}
+        loadingState={LoadingState.Done}
+        absoluteRange={{
+          from: toUtc('2019-01-01 10:00:00').valueOf(),
+          to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        addResultsToCache={() => {}}
+        onChangeTime={() => {}}
+        clearCache={() => {}}
+        getFieldLinks={() => {
+          return [];
+        }}
+        eventBus={new EventBusSrv()}
+      />
+    );
+
+    expect(
+      screen.getByRole('button', {
+        name: /stop scan/i,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('should render a stop scanning button', () => {
+    const scanningStopped = jest.fn();
+
+    render(
+      <Logs
+        exploreId={ExploreId.left}
+        splitOpen={() => undefined}
+        logsVolumeEnabled={true}
+        onSetLogsVolumeEnabled={() => null}
+        onClickFilterLabel={() => null}
+        onClickFilterOutLabel={() => null}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
+        logRows={[]}
+        scanning={true}
+        onStopScanning={scanningStopped}
+        timeZone={'utc'}
+        width={50}
+        loading={false}
+        loadingState={LoadingState.Done}
+        absoluteRange={{
+          from: toUtc('2019-01-01 10:00:00').valueOf(),
+          to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        addResultsToCache={() => {}}
+        onChangeTime={() => {}}
+        clearCache={() => {}}
+        getFieldLinks={() => {
+          return [];
+        }}
+        eventBus={new EventBusSrv()}
+      />
+    );
+
+    const button = screen.getByRole('button', {
+      name: /stop scan/i,
+    });
+    button.click();
+    expect(scanningStopped).toHaveBeenCalled();
+  });
+
+  it('should flip the order', async () => {
     setup();
     const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    fireEvent.click(oldestFirstSelection);
-    jest.advanceTimersByTime(1000);
+    await userEvent.click(oldestFirstSelection);
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
     expect(logRows.length).toBe(3);

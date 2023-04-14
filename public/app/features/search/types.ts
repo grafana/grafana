@@ -1,9 +1,8 @@
-import { Dispatch } from 'react';
 import { Action } from 'redux';
 
-import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { WithAccessControlMetadata } from '@grafana/data';
 
-import { FolderInfo } from '../../types';
+import { QueryResponse } from './service';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -11,94 +10,98 @@ export enum DashboardSearchItemType {
   DashFolder = 'dash-folder',
 }
 
-export interface DashboardSection {
-  id: number;
-  uid?: string;
-  title: string;
-  expanded?: boolean;
-  url: string;
-  icon?: string;
-  score?: number;
-  checked?: boolean;
-  items: DashboardSectionItem[];
-  toggle?: (section: DashboardSection) => Promise<DashboardSection>;
-  selected?: boolean;
-  type: DashboardSearchItemType;
-  slug?: string;
-  itemsFetching?: boolean;
-}
-
-export interface DashboardSectionItem {
-  checked?: boolean;
+/**
+ * @deprecated Use DashboardSearchItem and use UIDs instead of IDs
+ * DTO type for search API result items, but with deprecated IDs
+ * This type was previously also used heavily for views, so contains lots of
+ * extraneous properties
+ */
+export interface DashboardSearchHit extends WithAccessControlMetadata {
   folderId?: number;
   folderTitle?: string;
   folderUid?: string;
   folderUrl?: string;
-  id: number;
-  isStarred: boolean;
-  selected?: boolean;
+  id?: number;
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
-  icon?: string; // used for grid view
-  uid?: string;
-  uri: string;
+  uid: string;
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
 }
 
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
+/**
+ * DTO type for search API result items
+ * This should not be used directly - use GrafanaSearcher instead and get a DashboardQueryResult
+ */
+export interface DashboardSearchItem {
+  uid: string;
+  title: string;
+  uri: string;
+  url: string;
+  type: string; // dash-db, dash-home
+  tags: string[];
+  isStarred: boolean;
 
-export interface DashboardTag {
-  term: string;
-  count: number;
+  // Only on dashboards in folders results
+  folderUid?: string;
+  folderTitle?: string;
+  folderUrl?: string;
+}
+
+/**
+ * Type used in the folder view components
+ */
+export interface DashboardViewItem {
+  kind: 'folder' | 'dashboard' | 'panel';
+  uid: string;
+  title: string;
+  url?: string;
+  tags?: string[];
+
+  icon?: string;
+
+  // Most commonly parent folder title, but can be dashboard if panelTitleSearch is enabled
+  parentTitle?: string;
+  parentKind?: string;
+
+  // Used only for psuedo-folders, such as Starred or Recent
+  itemsUIDs?: string[];
+
+  // For enterprise sort options
+  sortMeta?: number | string; // value sorted by
+  sortMetaName?: string; // name of the value being sorted e.g. 'Views'
 }
 
 export interface SearchAction extends Action {
   payload?: any;
 }
 
-export interface UidsToDelete {
-  folders: string[];
-  dashboards: string[];
-}
+export type EventTrackingNamespace = 'manage_dashboards' | 'dashboard_search';
 
-export interface DashboardQuery {
+export interface SearchState {
   query: string;
   tag: string[];
   starred: boolean;
-  skipRecent: boolean;
-  skipStarred: boolean;
-  folderIds: number[];
+  explain?: boolean; // adds debug info
   datasource?: string;
-  sort: SelectableValue | null;
-  // Save sorting data between layouts
-  prevSort: SelectableValue | null;
+  panel_type?: string;
+  sort?: string;
+  prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
-}
-
-export type SearchReducer<S> = [S, Dispatch<SearchAction>];
-interface UseSearchParams {
-  queryParsing?: boolean;
-  searchCallback?: (folderUid: string | undefined) => any;
+  result?: QueryResponse;
+  loading?: boolean;
   folderUid?: string;
+  includePanels?: boolean;
+  eventTrackingNamespace: EventTrackingNamespace;
 }
 
-export type UseSearch = <S>(
-  query: DashboardQuery,
-  reducer: SearchReducer<S>,
-  params: UseSearchParams
-) => { state: S; dispatch: Dispatch<SearchAction>; onToggleSection: (section: DashboardSection) => void };
-
-export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
-export type OnDeleteItems = (folders: string[], dashboards: string[]) => void;
-export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: FolderInfo | null) => void;
+export type OnToggleChecked = (item: DashboardViewItem) => void;
 
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
-  Grid = 'grid', // preview
 }
 
 export interface SearchQueryParams {

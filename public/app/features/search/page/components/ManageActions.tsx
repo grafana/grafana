@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Button, HorizontalGroup, IconButton, IconName, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, IconButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO } from 'app/types';
 
@@ -26,10 +26,7 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
 
   const canMove = hasEditPermissionInFolders;
 
-  // TODO: check user permissions for delete, should not be able to delete if includes general folder and user don't have permissions
-  // There is not GENERAL_FOLDER_UID configured yet, we need to make sure to add it to the data.
   const selectedFolders = Array.from(items.get('folder') ?? []);
-  console.log({ selectedFolders });
   const includesGeneralFolder = selectedFolders.find((result) => result === GENERAL_FOLDER_UID);
 
   const canDelete = hasEditPermissionInFolders && !includesGeneralFolder;
@@ -45,10 +42,10 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
   };
 
   return (
-    <div className={styles.actionRow}>
+    <div className={styles.actionRow} data-testid="manage-actions">
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
-          <IconButton name={'check-square' as IconName} onClick={clearSelection} title="Uncheck everything" />
+          <IconButton name="check-square" onClick={clearSelection} title="Uncheck everything" />
           <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
             Move
           </Button>
@@ -58,18 +55,13 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
         </HorizontalGroup>
       </div>
 
-      <ConfirmDeleteModal
-        onDeleteItems={onChange}
-        results={items}
-        isOpen={isDeleteModalOpen}
-        onDismiss={() => setIsDeleteModalOpen(false)}
-      />
-      <MoveToFolderModal
-        onMoveItems={onChange}
-        results={items}
-        isOpen={isMoveModalOpen}
-        onDismiss={() => setIsMoveModalOpen(false)}
-      />
+      {isDeleteModalOpen && (
+        <ConfirmDeleteModal onDeleteItems={onChange} results={items} onDismiss={() => setIsDeleteModalOpen(false)} />
+      )}
+
+      {isMoveModalOpen && (
+        <MoveToFolderModal onMoveItems={onChange} results={items} onDismiss={() => setIsMoveModalOpen(false)} />
+      )}
     </div>
   );
 }

@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { AppEvents, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
-  FileUpload,
   Form,
   HorizontalGroup,
   Input,
@@ -17,18 +16,22 @@ import {
   TextArea,
   Themeable2,
   VerticalGroup,
+  FileDropzone,
   withTheme2,
+  DropzoneFile,
+  FileDropzoneDefaultChildren,
+  LinkButton,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
+import { initialImportDashboardState } from './state/reducers';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
 type DashboardImportPageRouteSearchParams = {
@@ -40,7 +43,6 @@ type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageR
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'import', undefined, true),
   loadingState: state.importDashboard.state,
 });
 
@@ -65,36 +67,24 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.cleanUpAction({ stateSelector: (state: StoreState) => state.importDashboard });
+    this.props.cleanUpAction({ cleanupAction: (state) => (state.importDashboard = initialImportDashboardState) });
   }
 
-  onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+  // Do not display upload file list
+  fileListRenderer = (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => null;
+
+  onFileUpload = (result: string | ArrayBuffer | null) => {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, {
       import_source: 'json_uploaded',
     });
 
-    const { importDashboardJson } = this.props;
-    const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
-
-    if (file) {
-      const reader = new FileReader();
-      const readerOnLoad = () => {
-        return (e: any) => {
-          let dashboard: any;
-          try {
-            dashboard = JSON.parse(e.target.result);
-          } catch (error) {
-            appEvents.emit(AppEvents.alertError, [
-              'Import failed',
-              'JSON -> JS Serialization failed: ' + error.message,
-            ]);
-            return;
-          }
-          importDashboardJson(dashboard);
-        };
-      };
-      reader.onload = readerOnLoad();
-      reader.readAsText(file);
+    try {
+      this.props.importDashboardJson(JSON.parse(String(result)));
+    } catch (error) {
+      if (error instanceof Error) {
+        appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
+      }
+      return;
     }
   };
 
@@ -130,9 +120,17 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     return (
       <>
         <div className={styles.option}>
-          <FileUpload accept="application/json" onFileUpload={this.onFileUpload}>
-            Upload JSON file
-          </FileUpload>
+          <FileDropzone
+            options={{ multiple: false, accept: ['.json', '.txt'] }}
+            readAs="readAsText"
+            fileListRenderer={this.fileListRenderer}
+            onLoad={this.onFileUpload}
+          >
+            <FileDropzoneDefaultChildren
+              primaryText="Upload dashboard JSON file"
+              secondaryText="Drag and drop here or click to browse"
+            />
+          </FileDropzone>
         </div>
         <div className={styles.option}>
           <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
@@ -175,9 +173,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                     rows={10}
                   />
                 </Field>
-                <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
-                  Load
-                </Button>
+                <HorizontalGroup>
+                  <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
+                    Load
+                  </Button>
+                  <LinkButton variant="secondary" href={`${config.appSubUrl}/dashboards`}>
+                    Cancel
+                  </LinkButton>
+                </HorizontalGroup>
               </>
             )}
           </Form>
@@ -186,11 +189,17 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     );
   }
 
+  pageNav: NavModelItem = {
+    text: 'Import dashboard',
+    subTitle: 'Import dashboard from file or Grafana.com',
+    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
+  };
+
   render() {
-    const { loadingState, navModel } = this.props;
+    const { loadingState } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="dashboards/browse" pageNav={this.pageNav}>
         <Page.Contents>
           {loadingState === LoadingState.Loading && (
             <VerticalGroup justify="center">
@@ -216,6 +225,7 @@ const importStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     option: css`
       margin-bottom: ${theme.spacing(4)};
+      max-width: 600px;
     `,
   };
 });

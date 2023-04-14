@@ -1,9 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { changelogTask } from './tasks/changelog';
-import { cherryPickTask } from './tasks/cherrypick';
-import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
@@ -30,39 +27,27 @@ export const run = (includeInternalScripts = false) => {
       .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
       .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async (cmd) => {
+        console.warn(
+          '@grafana/toolkit package:build task is deprecated and will be removed in @grafana/toolkit@10.0.0.'
+        );
         await execTask(buildPackageTask)({
           scope: cmd.scope,
         });
       });
 
     program
-      .command('changelog')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .description('Builds changelog markdown')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(changelogTask)({
-          milestone: cmd.milestone,
-          silent: true,
-        });
-      });
-
-    program
-      .command('cherrypick')
-      .option('-e, --enterprise', 'Run task for grafana-enterprise')
-      .description('Helps find commits to cherry pick')
-      .action(async (cmd) => {
-        await execTask(cherryPickTask)({ enterprise: !!cmd.enterprise });
-      });
-
-    program
       .command('node-version-check')
-      .description('Verify node version')
-      .action(async (cmd) => {
+      .description('[deprecated] Verify node version')
+      .action(async () => {
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
+        );
+
         await execTask(nodeVersionCheckerTask)({});
       });
 
@@ -75,43 +60,44 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('toolkit:build')
-      .description('Prepares grafana/toolkit dist package')
+      .description('[Deprecated] Prepares grafana/toolkit dist package')
       .action(async (cmd) => {
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
+        );
         await execTask(toolkitBuildTask)({});
       });
 
     program
       .command('searchTestData')
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('Setup test data for search')
+      .description('[deprecated] Setup test data for search')
       .action(async (cmd) => {
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
+        );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
-      });
-
-    program
-      .command('close-milestone')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .option('--dryRun', 'Only simulate actions')
-      .description('Helps ends a milestone by removing the cherry-pick label and closing it')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(closeMilestoneTask)({
-          milestone: cmd.milestone,
-          dryRun: !!cmd.dryRun,
-        });
       });
 
     // React generator
     program
       .command('component:create')
       .description(
-        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+        '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
       )
       .action(async () => {
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component'
+        );
         await execTask(componentCreateTask)({});
       });
   }
@@ -123,8 +109,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:create [name]')
-    .description('Creates plugin from template')
+    .description('[Deprecated] Creates plugin from template')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
       await execTask(pluginCreateTask)({ name: cmd, silent: true });
     });
 
@@ -135,8 +125,13 @@ export const run = (includeInternalScripts = false) => {
     .option('--skipTest', 'Skip running tests (for pipelines that run it separate)', false)
     .option('--skipLint', 'Skip running lint (for pipelines that run it separate)', false)
     .option('--preserveConsole', 'Preserves console calls', false)
-    .description('Prepares plugin dist package')
+    .description('[Deprecated] Prepares plugin dist package')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
+
       await execTask(pluginBuildTask)({
         coverage: cmd.coverage,
         silent: true,
@@ -150,8 +145,13 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:dev')
     .option('-w, --watch', 'Run plugin development mode with watch enabled')
-    .description('Starts plugin dev mode')
+    .description('[Deprecated] Starts plugin dev mode')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
+
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
         silent: true,
@@ -166,8 +166,13 @@ export const run = (includeInternalScripts = false) => {
     .option('--testPathPattern <regex>', 'Run only tests with a path that matches the regex')
     .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
     .option('--maxWorkers <num>|<string>', 'Limit number of workers spawned')
-    .description('Executes plugin tests')
+    .description('[Deprecated] Executes plugin tests')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
+
       await execTask(pluginTestTask)({
         updateSnapshot: !!cmd.updateSnapshot,
         coverage: !!cmd.coverage,
@@ -197,8 +202,12 @@ export const run = (includeInternalScripts = false) => {
       },
       []
     )
-    .description('Create a plugin signature')
+    .description('[Deprecated] Create a plugin signature')
     .action(async (cmd) => {
+      console.log(
+        chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️') +
+          '\nPlease migrate to grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin'
+      );
       await execTask(pluginSignTask)({
         signatureType: cmd.signatureType,
         rootUrls: cmd.rootUrls,
@@ -243,8 +252,13 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:bundle-managed')
-    .description('Builds managed plugins')
+    .description('[Deprecated] Builds managed plugins')
     .action(async (cmd) => {
+      console.log(
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        )
+      );
       await execTask(bundleManagedTask)({});
     });
 
@@ -253,8 +267,14 @@ export const run = (includeInternalScripts = false) => {
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
     .option('--commitHash <hashKey>', 'Specify the commit hash')
-    .description('Publish to github')
+    .description('[Deprecated] Publish to github')
     .action(async (cmd) => {
+      console.log(
+        chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`)
+      );
+      console.log(
+        'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/templates/github/ci/.github/workflows'
+      );
       await execTask(githubPublishTask)({
         dryrun: cmd.dryrun,
         verbose: cmd.verbose,
@@ -264,8 +284,13 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:update-circleci')
-    .description('Update plugin')
+    .description('[Deprecated] Update plugin')
     .action(async (cmd) => {
+      console.log(
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        )
+      );
       await execTask(pluginUpdateTask)({});
     });
 

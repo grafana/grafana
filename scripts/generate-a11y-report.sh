@@ -26,8 +26,11 @@ else
   ./scripts/grafana-server/wait-for-grafana
 fi
 
-# Run accessibility command
-yarn dlx --quiet pa11y-ci@pa11y/pa11y-ci#6b2d4f54efe445ad551472acc1877fe7542ac085 --config .pa11yci.conf.js --json > pa11y-ci-results.json
+
+# Use docker grafana docker-puppetter image
+# run pa11y ci command
+# output wil be used to generate html report
+HOST=host.docker.internal docker run --add-host host.docker.internal:host-gateway -e HOST -v "$PWD":/grafana grafana/docker-puppeteer:1.1.0 pa11y-ci --config /grafana/.pa11yci.conf.js --json > pa11y-ci-results.json
 
 # Generate HTML report
 yarn dlx pa11y-ci-reporter-html@3.0.1 pa11y-ci-reporter-html

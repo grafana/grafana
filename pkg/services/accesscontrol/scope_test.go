@@ -51,3 +51,36 @@ func Test_ScopePrefix(t *testing.T) {
 		})
 	}
 }
+
+func TestWildcardsFromPrefix(t *testing.T) {
+	type testCase struct {
+		desc     string
+		prefix   string
+		expected Wildcards
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should handle empty prefix",
+			prefix:   "",
+			expected: Wildcards{"*"},
+		},
+		{
+			desc:     "should generate wildcards for prefix",
+			prefix:   "dashboards:uid",
+			expected: Wildcards{"*", "dashboards:*", "dashboards:uid:*"},
+		},
+		{
+			desc:     "should handle trailing :",
+			prefix:   "dashboards:uid:",
+			expected: Wildcards{"*", "dashboards:*", "dashboards:uid:*"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			wildcards := WildcardsFromPrefix(tt.prefix)
+			assert.Equal(t, tt.expected, wildcards)
+		})
+	}
+}

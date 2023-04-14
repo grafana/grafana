@@ -44,14 +44,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
+export const ButtonCascader = (props: ButtonCascaderProps) => {
   const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   // Weird way to do this bit it goes around a styling issue in Button where even null/undefined child triggers
   // styling change which messes up the look if there is only single icon content.
-  let content: any = props.children;
+  let content: React.ReactNode = props.children;
   if (!hideDownIcon) {
     content = [props.children, <Icon key={'down-icon'} name="angle-down" className={styles.icons.right} />];
   }

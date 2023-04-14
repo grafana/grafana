@@ -6,9 +6,11 @@ import (
 	"github.com/blugelabs/bluge"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/aggregations"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type usageGauge struct {
@@ -42,7 +44,9 @@ var (
 	}
 )
 
-func updateUsageStats(ctx context.Context, reader *bluge.Reader, logger log.Logger) {
+func updateUsageStats(ctx context.Context, reader *bluge.Reader, logger log.Logger, tracer tracing.Tracer) {
+	ctx, span := tracer.Start(ctx, "searchV2 updateUsageStats")
+	defer span.End()
 	req := bluge.NewAllMatches(bluge.NewTermQuery("panel").SetField(documentFieldKind))
 	for _, usage := range panelUsage {
 		req.AddAggregation(usage.field, aggregations.NewTermsAggregation(search.Field(usage.field), 50))
@@ -51,7 +55,7 @@ func updateUsageStats(ctx context.Context, reader *bluge.Reader, logger log.Logg
 	// execute this search on the reader
 	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
-		logger.Error("error executing search: %v", err)
+		logger.Error("error executing search", "err", err)
 		return
 	}
 

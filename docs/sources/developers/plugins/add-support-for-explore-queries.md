@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/add-support-for-explore-queries/
 title: Add support for Explore queries
 ---
 
@@ -8,7 +6,7 @@ title: Add support for Explore queries
 
 This guide explains how to improve support for [Explore]({{< relref "../../explore/" >}}) in an existing data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< ref "/tutorials/build-a-data-source-plugin/" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin/).
 
 With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
 
@@ -73,4 +71,4 @@ const firstResult = new MutableDataFrame({
 });
 ```
 
-For possible options, refer to [PreferredVisualisationType](https://grafana.com/docs/grafana/latest/packages_api/data/preferredvisualisationtype/).
+For possible options, refer to [PreferredVisualisationType](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L25).

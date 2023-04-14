@@ -10,6 +10,7 @@ export interface NavBarItemWithoutMenuProps {
   label: string;
   children: ReactNode;
   className?: string;
+  elClassName?: string;
   url?: string;
   target?: string;
   isActive?: boolean;
@@ -20,113 +21,97 @@ export interface NavBarItemWithoutMenuProps {
 export function NavBarItemWithoutMenu({
   label,
   children,
-  className,
   url,
   target,
   isActive = false,
   onClick,
   highlightText,
+  className,
+  elClassName,
 }: NavBarItemWithoutMenuProps) {
   const theme = useTheme2();
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
 
   const content = highlightText ? (
     <NavFeatureHighlight>
-      <span className={styles.icon}>{children}</span>
+      <div className={styles.icon}>{children}</div>
     </NavFeatureHighlight>
   ) : (
-    <span className={styles.icon}>{children}</span>
+    <div className={styles.icon}>{children}</div>
   );
 
-  return (
-    <li className={cx(styles.container, className)}>
-      {!url && (
-        <button className={styles.element} onClick={onClick} aria-label={label}>
+  const elStyle = cx(styles.element, elClassName);
+
+  const renderContents = () => {
+    if (!url) {
+      return (
+        <button className={elStyle} onClick={onClick} aria-label={label}>
           {content}
         </button>
-      )}
-      {url && (
-        <>
-          {!target && url.startsWith('/') ? (
-            <Link
-              className={styles.element}
-              href={url}
-              target={target}
-              aria-label={label}
-              onClick={onClick}
-              aria-haspopup="true"
-            >
-              {content}
-            </Link>
-          ) : (
-            <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
-              {content}
-            </a>
-          )}
-        </>
-      )}
-    </li>
-  );
+      );
+    } else if (!target && url.startsWith('/')) {
+      return (
+        <Link className={elStyle} href={url} target={target} aria-label={label} onClick={onClick} aria-haspopup="true">
+          {content}
+        </Link>
+      );
+    } else {
+      return (
+        <a href={url} target={target} className={elStyle} onClick={onClick} aria-label={label}>
+          {content}
+        </a>
+      );
+    }
+  };
+
+  return <div className={cx(styles.container, className)}>{renderContents()}</div>;
 }
 
 export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: boolean) {
   return {
-    container: css`
-      position: relative;
-      color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
+    container: css({
+      position: 'relative',
+      color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
+      display: 'grid',
 
-      &:hover {
-        background-color: ${theme.colors.action.hover};
-        color: ${theme.colors.text.primary};
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+      },
+    }),
+    element: css({
+      backgroundColor: 'transparent',
+      border: 'none',
+      color: 'inherit',
+      display: 'block',
+      padding: 0,
+      overflowWrap: 'anywhere',
 
-        // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
-        .navbar-dropdown {
-          opacity: 1;
-          visibility: visible;
-        }
-      }
-    `,
-    element: css`
-      background-color: transparent;
-      border: none;
-      color: inherit;
-      display: block;
-      line-height: ${theme.components.sidemenu.width}px;
-      padding: 0;
-      text-align: center;
-      width: ${theme.components.sidemenu.width}px;
+      '&::before': {
+        display: isActive ? 'block' : 'none',
+        content: "' '",
+        position: 'absolute',
+        left: theme.spacing(1),
+        top: theme.spacing(1.5),
+        bottom: theme.spacing(1.5),
+        width: theme.spacing(0.5),
+        borderRadius: theme.shape.borderRadius(1),
+        backgroundImage: theme.colors.gradients.brandVertical,
+      },
 
-      &::before {
-        display: ${isActive ? 'block' : 'none'};
-        content: ' ';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        border-radius: 2px;
-        background-image: ${theme.colors.gradients.brandVertical};
-      }
+      '&:focus-visible': {
+        backgroundColor: theme.colors.action.hover,
+        boxShadow: 'none',
+        color: theme.colors.text.primary,
+        outline: `${theme.shape.borderRadius(1)} solid ${theme.colors.primary.main}`,
+        outlineOffset: `-${theme.shape.borderRadius(1)}`,
+        transition: 'none',
+      },
+    }),
 
-      &:focus-visible {
-        background-color: ${theme.colors.action.hover};
-        box-shadow: none;
-        color: ${theme.colors.text.primary};
-        outline: 2px solid ${theme.colors.primary.main};
-        outline-offset: -2px;
-        transition: none;
-      }
-    `,
-
-    icon: css`
-      height: 100%;
-      width: 100%;
-
-      img {
-        border-radius: 50%;
-        height: ${theme.spacing(3)};
-        width: ${theme.spacing(3)};
-      }
-    `,
+    icon: css({
+      height: '100%',
+      width: '100%',
+    }),
   };
 }

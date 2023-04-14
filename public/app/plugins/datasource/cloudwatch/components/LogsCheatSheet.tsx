@@ -6,7 +6,7 @@ import React, { PureComponent } from 'react';
 import { QueryEditorHelpProps } from '@grafana/data';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
-import tokenizer from '../syntax';
+import tokenizer from '../language/cloudwatch-logs/syntax';
 import { CloudWatchQuery } from '../types';
 
 interface QueryExample {
@@ -216,6 +216,10 @@ const exampleCategory = css`
   margin-top: 5px;
 `;
 
+const link = css`
+  text-decoration: underline;
+`;
+
 export default class LogsCheatSheet extends PureComponent<
   QueryEditorHelpProps<CloudWatchQuery>,
   { userExamples: string[] }
@@ -223,10 +227,10 @@ export default class LogsCheatSheet extends PureComponent<
   onClickExample(query: CloudWatchQuery) {
     this.props.onClickExample(query);
   }
-
   renderExpression(expr: string, keyPrefix: string) {
     return (
-      <div
+      <button
+        type="button"
         className="cheat-sheet-item__example"
         key={expr}
         onClick={() =>
@@ -237,11 +241,12 @@ export default class LogsCheatSheet extends PureComponent<
             region: this.props.query.region,
             id: this.props.query.refId ?? 'A',
             logGroupNames: 'logGroupNames' in this.props.query ? this.props.query.logGroupNames : [],
+            logGroups: 'logGroups' in this.props.query ? this.props.query.logGroups : [],
           })
         }
       >
         <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
-      </div>
+      </button>
     );
   }
 
@@ -279,6 +284,18 @@ export default class LogsCheatSheet extends PureComponent<
             ))}
           </div>
         ))}
+        <div>
+          If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
+          <a
+            className={cx(link)}
+            href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cloudwatch-logs-data-protection"
+            target="_blank"
+            rel="noreferrer"
+          >
+            See documentation for details
+          </a>
+          .
+        </div>
       </div>
     );
   }

@@ -1,15 +1,15 @@
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
-import { IconButton } from '../IconButton/IconButton';
+import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
 
 import { getSelectStyles } from './getSelectStyles';
 
 interface MultiValueContainerProps {
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
 }
 
-export const MultiValueContainer: React.FC<MultiValueContainerProps> = ({ innerProps, children }) => {
+export const MultiValueContainer = ({ innerProps, children }: React.PropsWithChildren<MultiValueContainerProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -21,10 +21,10 @@ export const MultiValueContainer: React.FC<MultiValueContainerProps> = ({ innerP
 };
 
 export type MultiValueRemoveProps = {
-  innerProps: any;
+  innerProps: IconButtonProps;
 };
 
-export const MultiValueRemove: React.FC<MultiValueRemoveProps> = ({ children, innerProps }) => {
+export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return <IconButton {...innerProps} name="times" size="sm" className={styles.multiValueRemove} />;

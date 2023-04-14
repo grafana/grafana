@@ -37,6 +37,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
     `,
     value: css`
       padding-left: ${theme.spacing(2)};
+      text-align: right;
     `,
     activeSeries: css`
       font-weight: ${theme.typography.fontWeightBold};
@@ -52,11 +53,11 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
 /**
  * @public
  */
-export const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
+export const SeriesTableRow = ({ color, label, value, isActive }: SeriesTableRowProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (
-    <div className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
+    <div data-testid="SeriesTableRow" className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
       {color && (
         <div className={styles.seriesTableCell}>
           <SeriesIcon color={color} className={styles.icon} />
@@ -79,7 +80,7 @@ export interface SeriesTableProps {
 /**
  * @public
  */
-export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
+export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (

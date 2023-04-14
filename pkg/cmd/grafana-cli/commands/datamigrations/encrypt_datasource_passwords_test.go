@@ -5,30 +5,36 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
-	sqlstore := sqlstore.InitTestDB(t)
-	session := sqlstore.NewSession(context.Background())
-	defer session.Close()
+	store := db.InitTestDB(t)
+	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		passwordMigration(t, sess, store)
+		return nil
+	})
+	require.NoError(t, err)
+}
 
-	datasources := []*models.DataSource{
-		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
-		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
-		{Type: "prometheus", Name: "prometheus", Uid: "prom"},
-		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", Uid: "elastic"},
+func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
+	ds := []*datasources.DataSource{
+		{Type: "influxdb", Name: "influxdb", Password: "foobar", UID: "influx"},
+		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", UID: "graphite"},
+		{Type: "prometheus", Name: "prometheus", UID: "prom"},
+		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", UID: "elastic"},
 	}
 
 	// set required default values
-	for _, ds := range datasources {
+	for _, ds := range ds {
 		ds.Created = time.Now()
 		ds.Updated = time.Now()
 
@@ -42,7 +48,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 		}
 	}
 
-	_, err := session.Insert(&datasources)
+	_, err := session.Insert(&ds)
 	require.NoError(t, err)
 
 	// force secure_json_data to be null to verify that migration can handle that
@@ -56,7 +62,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	require.NoError(t, err)
 
 	// verify that no datasources still have password or basic_auth
-	var dss []*models.DataSource
+	var dss []*datasources.DataSource
 	err = session.SQL("select * from data_source").Find(&dss)
 	require.NoError(t, err)
 	assert.Equal(t, len(dss), 4)
@@ -95,7 +101,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	}
 }
 
-func DecryptSecureJsonData(ds *models.DataSource) (map[string]string, error) {
+func DecryptSecureJsonData(ds *datasources.DataSource) (map[string]string, error) {
 	decrypted := make(map[string]string)
 	for key, data := range ds.SecureJsonData {
 		decryptedData, err := util.Decrypt(data, setting.SecretKey)

@@ -15,7 +15,7 @@ const defaultOptions: Array<SelectableValue<string>> = [
   { label: 'Option 5', value: 'opt-5', description: 'A description of Option 5' },
 ];
 
-export default {
+const meta: ComponentMeta<typeof RadioButtonList> = {
   title: 'Forms/RadioButtonList',
   component: RadioButtonList,
   parameters: {
@@ -39,7 +39,7 @@ export default {
     options: defaultOptions,
     disabled: false,
   },
-} as ComponentMeta<typeof RadioButtonList>;
+};
 
 const longTextOptions: Array<SelectableValue<string>> = [
   {
@@ -115,7 +115,7 @@ DisabledList.args = {
 };
 
 export const Dots: Story = () => {
-  const Wrapper: React.FC<{ title: string }> = ({ title, children }) => (
+  const Wrapper = ({ title, children }: React.PropsWithChildren<{ title: string }>) => (
     <div style={{ marginBottom: 20 }}>
       <h5>{title}</h5>
       {children}
@@ -147,3 +147,5 @@ Dots.parameters = {
     hideNoControlsWarning: true,
   },
 };
+
+export default meta;

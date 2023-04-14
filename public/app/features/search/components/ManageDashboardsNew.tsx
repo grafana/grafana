@@ -1,16 +1,15 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
-import { useDebounce, useLocalStorage } from 'react-use';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Input, useStyles2, Spinner } from '@grafana/ui';
+import { useStyles2, FilterInput } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, AccessControlAction } from 'app/types';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
-import { useSearchQuery } from '../hooks/useSearchQuery';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
 import { DashboardActions } from './DashboardActions';
 
@@ -21,52 +20,59 @@ export interface Props {
 export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   // since we don't use "query" from use search... it is not actually loaded from the URL!
-  const { query, onQueryChange } = useSearchQuery({});
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   // TODO: we need to refactor DashboardActions to use folder.uid instead
-  const folderId = folder?.id;
-  // const folderUid = folder?.uid;
+
+  const folderUid = folder?.uid;
   const canSave = folder?.canSave;
-  const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
-
-  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
-  if (!config.featureToggles.panelTitleSearch) {
-    includePanels = false;
-  }
-
   const { isEditor } = contextSrv;
+  const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
+  const canCreateFolders = contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor);
+  const canCreateDashboardsFallback = hasEditPermissionInFolders || !!canSave;
+  const canCreateDashboards = folderUid
+    ? contextSrv.hasAccessInMetadata(AccessControlAction.DashboardsCreate, folder, canCreateDashboardsFallback)
+    : contextSrv.hasAccess(AccessControlAction.DashboardsCreate, canCreateDashboardsFallback);
+  const viewActions = (folder === undefined && canCreateFolders) || canCreateDashboards;
 
-  const [inputValue, setInputValue] = useState(query.query ?? '');
-  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    setInputValue(e.currentTarget.value);
-  };
-  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+  useEffect(() => stateManager.initStateFromUrl(folder?.uid), [folder?.uid, stateManager]);
 
   return (
     <>
       <div className={cx(styles.actionBar, 'page-action-bar')}>
         <div className={cx(styles.inputWrapper, 'gf-form gf-form--grow m-r-2')}>
-          <Input
-            value={inputValue}
-            onChange={onSearchQueryChange}
+          <FilterInput
+            value={state.query ?? ''}
+            onChange={(e) => stateManager.onQueryChange(e)}
+            onKeyDown={onKeyDown}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             spellCheck={false}
-            placeholder={includePanels ? 'Search for dashboards and panels' : 'Search for dashboards'}
+            placeholder={
+              state.includePanels
+                ? t('search.search-input.include-panels-placeholder', 'Search for dashboards and panels')
+                : t('search.search-input.placeholder', 'Search for dashboards')
+            }
+            escapeRegex={false}
             className={styles.searchInput}
-            suffix={false ? <Spinner /> : null}
           />
         </div>
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        {viewActions && (
+          <DashboardActions
+            folder={folder}
+            canCreateFolders={canCreateFolders}
+            canCreateDashboards={canCreateDashboards}
+          />
+        )}
       </div>
 
       <SearchView
-        showManage={isEditor || hasEditPermissionInFolders || canSave}
+        showManage={Boolean(isEditor || hasEditPermissionInFolders || canSave)}
         folderDTO={folder}
-        queryText={query.query}
         hidePseudoFolders={true}
-        includePanels={includePanels!}
-        setIncludePanels={setIncludePanels}
+        keyboardEvents={keyboardEvents}
       />
     </>
   );

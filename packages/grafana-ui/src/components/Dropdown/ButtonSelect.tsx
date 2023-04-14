@@ -8,10 +8,11 @@ import React, { HTMLAttributes } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
+import { ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
+import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton';
 import { PopoverContent } from '../Tooltip';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
@@ -53,7 +54,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         {...buttonProps}
         {...restProps}
       >
-        {value?.label || value?.value}
+        {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>
       {state.isOpen && (
         <div className={styles.menuWrapper}>
@@ -67,7 +68,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}
-                    label={(item.label || item.value) as string}
+                    label={item.label ?? String(item.value)}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
                     ariaChecked={item.value === value?.value}

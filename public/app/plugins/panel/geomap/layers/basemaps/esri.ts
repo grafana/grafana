@@ -1,6 +1,6 @@
 import Map from 'ol/Map';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry, EventBus } from '@grafana/data';
 
 import { xyzTiles, defaultXYZConfig, XYZConfig } from './generic';
 
@@ -57,9 +57,10 @@ export interface ESRIXYZConfig extends XYZConfig {
 export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
+  description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
 
-  create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const cfg = { ...options.config };
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
     if (svc.id !== CUSTOM_SERVICE) {
@@ -68,7 +69,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
       cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
     }
     const opts = { ...options, config: cfg as XYZConfig };
-    return xyzTiles.create(map, opts, theme).then((xyz) => {
+    return xyzTiles.create(map, opts, eventBus, theme).then((xyz) => {
       xyz.registerOptionsUI = (builder) => {
         builder
           .addSelect({

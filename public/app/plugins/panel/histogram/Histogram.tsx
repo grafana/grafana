@@ -12,14 +12,7 @@ import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import {
-  VizLegendOptions,
-  LegendDisplayMode,
-  ScaleDistribution,
-  AxisPlacement,
-  ScaleDirection,
-  ScaleOrientation,
-} from '@grafana/schema';
+import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   Themeable2,
   UPlotConfigBuilder,
@@ -30,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -48,6 +41,7 @@ export interface HistogramProps extends Themeable2 {
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
+  rawSeries?: DataFrame[];
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
 }
 
@@ -151,10 +145,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     theme,
   });
 
+  // assumes BucketMax is [1]
+  let countField = frame.fields[2];
+  let dispY = countField.display;
+
   builder.addAxis({
     scaleKey: 'y',
     isTime: false,
     placement: AxisPlacement.Left,
+    formatValue: (v, decimals) => formattedValueToString(dispY!(v, decimals)),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,
@@ -176,14 +175,14 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let seriesIndex = 0;
 
-  // assumes BucketMax is [1]
+  // assumes xMin is [0], xMax is [1]
   for (let i = 2; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig = { ...field.config.custom };
+    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);
@@ -200,7 +199,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       colorMode,
       pathBuilder,
       //pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.vis,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
@@ -210,10 +209,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      dataFrameFieldIndex: {
-        fieldIndex: i,
-        frameIndex: 0,
-      },
+      dataFrameFieldIndex: field.state.origin,
     });
   }
 
@@ -221,7 +217,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 };
 
 const preparePlotData = (frame: DataFrame) => {
-  let data: AlignedData = [] as any;
+  let data = [];
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
@@ -240,7 +236,7 @@ const preparePlotData = (frame: DataFrame) => {
     }
   }
 
-  return data;
+  return data as AlignedData;
 };
 
 interface State {
@@ -273,11 +269,12 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+
+    if (!config || legend.showLegend === false) {
       return null;
     }
 
-    return <PlotLegend data={[this.props.alignedFrame]} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend data={this.props.rawSeries!} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {

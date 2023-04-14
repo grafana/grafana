@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
@@ -9,7 +9,6 @@ import { ServiceAccountToken } from '../components/CreateTokenModal';
 
 import {
   acOptionsLoaded,
-  builtInRolesLoaded,
   pageChanged,
   queryChanged,
   serviceAccountsFetchBegin,
@@ -27,14 +26,6 @@ export function fetchACOptions(): ThunkResult<void> {
         const options = await fetchRoleOptions();
         dispatch(acOptionsLoaded(options));
       }
-      if (
-        contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
-        contextSrv.licensedAccessControlEnabled() &&
-        contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-      ) {
-        const builtInRoles = await fetchBuiltinRoles();
-        dispatch(builtInRolesLoaded(builtInRoles));
-      }
     } catch (error) {
       console.error(error);
     }
@@ -50,20 +41,22 @@ export function fetchServiceAccounts(
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      if (withLoadingIndicator) {
-        dispatch(serviceAccountsFetchBegin());
+      if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
+        if (withLoadingIndicator) {
+          dispatch(serviceAccountsFetchBegin());
+        }
+        const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
+        const result = await getBackendSrv().get(
+          `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
+            serviceAccountStateFilter
+          )}&accesscontrol=true`
+        );
+        dispatch(serviceAccountsFetched(result));
       }
-      const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
-      const result = await getBackendSrv().get(
-        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
-          serviceAccountStateFilter
-        )}&accesscontrol=true`
-      );
-      dispatch(serviceAccountsFetched(result));
     } catch (error) {
       console.error(error);
     } finally {
-      serviceAccountsFetchEnd();
+      dispatch(serviceAccountsFetchEnd());
     }
   };
 }

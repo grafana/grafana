@@ -1,4 +1,4 @@
-{{Subject .Subject "Welcome to Grafana, please complete your sign up!"}}
+{{HiddenSubject .Subject "Welcome to Grafana, please complete your sign up!"}}
 
 Complete the signup
 
@@ -8,4 +8,5 @@ in the sign up form or use the link below.
 
 {{.SignUpUrl}}
 
-Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs
+
+Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs

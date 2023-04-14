@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -17,7 +17,7 @@ import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface Props {
+export interface RichHistoryQueriesTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -31,41 +31,39 @@ export interface Props {
   height: number;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
-  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
+const getStyles = (theme: GrafanaTheme2, height: number) => {
+  const bgColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.dark4;
 
-  /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
-  const cardWidth = '100% - 134px';
-  const sliderHeight = `${height - 180}px`;
   return {
     container: css`
       display: flex;
-      .label-slider {
-        font-size: ${theme.typography.size.sm};
-        &:last-of-type {
-          margin-top: ${theme.spacing.lg};
-        }
-        &:first-of-type {
-          font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.md};
-        }
+    `,
+    labelSlider: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+      &:last-of-type {
+        margin-top: ${theme.spacing(3)};
+      }
+      &:first-of-type {
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-bottom: ${theme.spacing(2)};
       }
     `,
     containerContent: css`
-      width: calc(${cardWidth});
+      /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
+      width: calc(100% - 134px);
     `,
     containerSlider: css`
       width: 129px;
-      margin-right: ${theme.spacing.sm};
-      .slider {
-        bottom: 10px;
-        height: ${sliderHeight};
-        width: 129px;
-        padding: ${theme.spacing.sm} 0;
-      }
+      margin-right: ${theme.spacing(1)};
+    `,
+    fixedSlider: css`
+      position: fixed;
     `,
     slider: css`
-      position: fixed;
+      bottom: 10px;
+      height: ${height - 180}px;
+      width: 129px;
+      padding: ${theme.spacing(1)} 0;
     `,
     selectors: css`
       display: flex;
@@ -73,15 +71,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       flex-wrap: wrap;
     `,
     filterInput: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     multiselect: css`
       width: 100%;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
       .gf-form-select-box__multi-value {
         background-color: ${bgColor};
-        padding: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.sm};
-        border-radius: ${theme.border.radius.sm};
+        padding: ${theme.spacing(0.25, 0.5, 0.25, 1)};
+        border-radius: ${theme.shape.borderRadius(1)};
       }
     `,
     sort: css`
@@ -91,36 +89,36 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      margin-top: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(3)};
       h4 {
         margin: 0 10px 0 0;
       }
     `,
     heading: css`
-      font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
+      font-size: ${theme.typography.h4.fontSize};
+      margin: ${theme.spacing(2, 0.25, 1, 0.25)};
     `,
     footer: css`
       height: 60px;
-      margin: ${theme.spacing.lg} auto;
+      margin: ${theme.spacing(3)} auto;
       display: flex;
       justify-content: center;
-      font-weight: ${theme.typography.weight.light};
-      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightLight};
+      font-size: ${theme.typography.bodySmall.fontSize};
       a {
-        font-weight: ${theme.typography.weight.semibold};
-        margin-left: ${theme.spacing.xxs};
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-left: ${theme.spacing(0.25)};
       }
     `,
     queries: css`
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-left: ${theme.spacing.xs};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightRegular};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
-});
+};
 
-export function RichHistoryQueriesTab(props: Props) {
+export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   const {
     queries,
     totalQueries,
@@ -135,8 +133,7 @@ export function RichHistoryQueriesTab(props: Props) {
     activeDatasourceInstance,
   } = props;
 
-  const theme = useTheme();
-  const styles = getStyles(theme, height);
+  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, height), [height]));
 
   const listOfDatasources = createDatasourcesList();
 
@@ -175,10 +172,10 @@ export function RichHistoryQueriesTab(props: Props) {
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
-        <div className={styles.slider}>
-          <div className="label-slider">Filter history</div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
-          <div className="slider">
+        <div className={styles.fixedSlider}>
+          <div className={styles.labelSlider}>Filter history</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
+          <div className={styles.slider}>
             <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
@@ -192,7 +189,7 @@ export function RichHistoryQueriesTab(props: Props) {
               }}
             />
           </div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
         </div>
       </div>
 
@@ -214,6 +211,7 @@ export function RichHistoryQueriesTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
+              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
@@ -242,17 +240,8 @@ export function RichHistoryQueriesTab(props: Props) {
                     {mappedQueriesToHeadings[heading].length} queries
                   </span>
                 </div>
-                {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                  const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
-                  return (
-                    <RichHistoryCard
-                      query={q}
-                      key={q.id}
-                      exploreId={exploreId}
-                      dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                      isRemoved={idx === -1}
-                    />
-                  );
+                {mappedQueriesToHeadings[heading].map((q) => {
+                  return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
                 })}
               </div>
             );

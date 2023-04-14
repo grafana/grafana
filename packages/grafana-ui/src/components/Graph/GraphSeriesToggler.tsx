@@ -1,5 +1,5 @@
 import { difference, isEqual } from 'lodash';
-import React from 'react';
+import React, { Component } from 'react';
 
 import { GraphSeriesXY } from '@grafana/data';
 
@@ -19,7 +19,7 @@ export interface GraphSeriesTogglerState {
   toggledSeries: GraphSeriesXY[];
 }
 
-export class GraphSeriesToggler extends React.Component<GraphSeriesTogglerProps, GraphSeriesTogglerState> {
+export class GraphSeriesToggler extends Component<GraphSeriesTogglerProps, GraphSeriesTogglerState> {
   constructor(props: GraphSeriesTogglerProps) {
     super(props);
 

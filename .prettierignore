@@ -18,10 +18,22 @@ vendor
 # TS generate from cue by cuetsy
 **/*.gen.ts
 
-# Auto-generated localisation files
+# Auto-generated internationalization files
 public/locales/_build/
 public/locales/**/*.js
 
 # Auto-generated theme files
 theme.light.generated.json
 theme.dark.generated.json
+
+# Generated Swagger API specs
+public/api-merged.json
+public/openapi3.json
+
+# Generated Kinds report
+kinds/report.json
+
+# Generated schema docs
+docs/sources/developers/kinds/
+
+scripts/cli/bettererIssueTemplate.md

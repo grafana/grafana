@@ -40,7 +40,8 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration.
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
-	if err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query)
+	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one.
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration: %w", err)
@@ -48,11 +49,11 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 	}
 
 	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
-	if query.Result != nil {
-		currentConfig, err := Load([]byte(query.Result.AlertmanagerConfiguration))
+	if amConfig != nil {
+		currentConfig, err := Load([]byte(amConfig.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
+			c.log.Warn("last known alertmanager configuration was invalid. Overwriting...")
 		} else {
 			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 		}

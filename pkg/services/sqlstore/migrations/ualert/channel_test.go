@@ -2,27 +2,29 @@ package ualert
 
 import (
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestFilterReceiversForAlert(t *testing.T) {
 	tc := []struct {
 		name             string
-		da               dashAlert
+		channelIds       []uidOrID
 		receivers        map[uidOrID]*PostableApiReceiver
 		defaultReceivers map[string]struct{}
 		expected         map[string]interface{}
 	}{
 		{
-			name: "when an alert has multiple channels, each should filter for the correct receiver",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{UID: "uid1"}, {UID: "uid2"}},
-				},
-			},
+			name:       "when an alert has multiple channels, each should filter for the correct receiver",
+			channelIds: []uidOrID{"uid1", "uid2"},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "recv1",
@@ -44,12 +46,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			},
 		},
 		{
-			name: "when default receivers exist, they should be added to an alert's filtered receivers",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{UID: "uid1"}},
-				},
-			},
+			name:       "when default receivers exist, they should be added to an alert's filtered receivers",
+			channelIds: []uidOrID{"uid1"},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "recv1",
@@ -73,12 +71,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			},
 		},
 		{
-			name: "when an alert has a channels associated by ID instead of UID, it should be included",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{ID: int64(42)}},
-				},
-			},
+			name:       "when an alert has a channels associated by ID instead of UID, it should be included",
+			channelIds: []uidOrID{int64(42)},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				int64(42): {
 					Name:                    "recv1",
@@ -91,12 +85,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			},
 		},
 		{
-			name: "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
-			da: dashAlert{
-				ParsedSettings: &dashAlertSettings{
-					Notifications: []dashAlertNot{{UID: "uid1"}},
-				},
-			},
+			name:       "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
+			channelIds: []uidOrID{"uid1"},
 			receivers: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "recv1",
@@ -122,7 +112,7 @@ func TestFilterReceiversForAlert(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestMigration(t)
-			res := m.filterReceiversForAlert(tt.da, tt.receivers, tt.defaultReceivers)
+			res := m.filterReceiversForAlert("", tt.channelIds, tt.receivers, tt.defaultReceivers)
 
 			require.Equal(t, tt.expected, res)
 		})
@@ -131,73 +121,95 @@ func TestFilterReceiversForAlert(t *testing.T) {
 
 func TestCreateRoute(t *testing.T) {
 	tc := []struct {
-		name                  string
-		ruleUID               string
-		filteredReceiverNames map[string]interface{}
-		expected              *Route
-		expErr                error
+		name     string
+		channel  *notificationChannel
+		recv     *PostableApiReceiver
+		expected *Route
 	}{
 		{
-			name:    "when a single receiver is passed in, the route should be simple and not nested",
-			ruleUID: "r_uid1",
-			filteredReceiverNames: map[string]interface{}{
-				"recv1": struct{}{},
+			name:    "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
+			channel: &notificationChannel{},
+			recv: &PostableApiReceiver{
+				Name: "recv1",
 			},
 			expected: &Route{
-				Receiver: "recv1",
-				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-				Routes:   nil,
-				Continue: false,
+				Receiver:       "recv1",
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
 			},
 		},
 		{
-			name:    "when multiple receivers are passed in, the route should be nested with continue=true",
-			ruleUID: "r_uid1",
-			filteredReceiverNames: map[string]interface{}{
-				"recv1": struct{}{},
-				"recv2": struct{}{},
+			name:    "notification channel should be escaped for regex in the matcher",
+			channel: &notificationChannel{},
+			recv: &PostableApiReceiver{
+				Name: `. ^ $ * + - ? ( ) [ ] { } \ |`,
 			},
 			expected: &Route{
-				Receiver: "",
-				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-				Routes: []*Route{
-					{
-						Receiver: "recv1",
-						Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:   nil,
-						Continue: true,
-					},
-					{
-						Receiver: "recv2",
-						Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:   nil,
-						Continue: true,
-					},
-				},
-				Continue: false,
+				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \( \) \[ \] \{ \} \\ \|".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			},
+		},
+		{
+			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
+			channel: &notificationChannel{SendReminder: true, Frequency: model.Duration(time.Duration(42) * time.Hour)},
+			recv: &PostableApiReceiver{
+				Name: "recv1",
+			},
+			expected: &Route{
+				Receiver:       "recv1",
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
+				RepeatInterval: durationPointer(model.Duration(time.Duration(42) * time.Hour)),
+			},
+		},
+		{
+			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
+			channel: &notificationChannel{SendReminder: false, Frequency: model.Duration(time.Duration(42) * time.Hour)},
+			recv: &PostableApiReceiver{
+				Name: "recv1",
+			},
+			expected: &Route{
+				Receiver:       "recv1",
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
 			},
 		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := createRoute(tt.ruleUID, tt.filteredReceiverNames)
-			if tt.expErr != nil {
-				require.Error(t, err)
-				require.EqualError(t, err, tt.expErr.Error())
-				return
-			}
-
+			res, err := createRoute(channelReceiver{
+				channel:  tt.channel,
+				receiver: tt.recv,
+			})
 			require.NoError(t, err)
 
-			// Compare route slice separately since order is not guaranteed
-			expRoutes := tt.expected.Routes
-			tt.expected.Routes = nil
-			actRoutes := res.Routes
-			res.Routes = nil
+			// Order of nested routes is not guaranteed.
+			cOpt := []cmp.Option{
+				cmpopts.SortSlices(func(a, b *Route) bool {
+					if a.Receiver != b.Receiver {
+						return a.Receiver < b.Receiver
+					}
+					return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
+				}),
+				cmpopts.IgnoreUnexported(Route{}, labels.Matcher{}),
+			}
 
-			require.Equal(t, tt.expected, res)
-			require.ElementsMatch(t, expRoutes, actRoutes)
+			if !cmp.Equal(tt.expected, res, cOpt...) {
+				t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expected, res, cOpt...))
+			}
 		})
 	}
 }
@@ -207,13 +219,18 @@ func createNotChannel(t *testing.T, uid string, id int64, name string) *notifica
 	return &notificationChannel{Uid: uid, ID: id, Name: name, Settings: simplejson.New()}
 }
 
+func createNotChannelWithReminder(t *testing.T, uid string, id int64, name string, frequency model.Duration) *notificationChannel {
+	t.Helper()
+	return &notificationChannel{Uid: uid, ID: id, Name: name, SendReminder: true, Frequency: frequency, Settings: simplejson.New()}
+}
+
 func TestCreateReceivers(t *testing.T) {
 	tc := []struct {
 		name            string
 		allChannels     []*notificationChannel
 		defaultChannels []*notificationChannel
 		expRecvMap      map[uidOrID]*PostableApiReceiver
-		expRecv         []*PostableApiReceiver
+		expRecv         []channelReceiver
 		expErr          error
 	}{
 		{
@@ -237,14 +254,81 @@ func TestCreateReceivers(t *testing.T) {
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
 				},
 			},
-			expRecv: []*PostableApiReceiver{
+			expRecv: []channelReceiver{
 				{
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
+					channel: createNotChannel(t, "uid1", int64(1), "name1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name1",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
+					},
 				},
 				{
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
+					channel: createNotChannel(t, "uid2", int64(2), "name2"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name2",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
+					},
+				},
+			},
+		},
+		{
+			name:        "when given notification channel contains double quote sanitize with underscore",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
+				"uid1": {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				int64(1): {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+			},
+			expRecv: []channelReceiver{
+				{
+					channel: createNotChannel(t, "uid1", int64(1), "name\"1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name_1",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+					},
+				},
+			},
+		},
+		{
+			name:        "when given notification channels collide after sanitization add short hash to end",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
+				"uid1": {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				"uid2": {
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+				},
+				int64(1): {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				int64(2): {
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+				},
+			},
+			expRecv: []channelReceiver{
+				{
+					channel: createNotChannel(t, "uid1", int64(1), "name\"1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name_1",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+					},
+				},
+				{
+					channel: createNotChannel(t, "uid2", int64(2), "name_1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name_1_dba13d",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+					},
 				},
 			},
 		},
@@ -264,7 +348,7 @@ func TestCreateReceivers(t *testing.T) {
 
 			// We ignore certain fields for the purposes of this test
 			for _, recv := range recvs {
-				for _, not := range recv.GrafanaManagedReceivers {
+				for _, not := range recv.receiver.GrafanaManagedReceivers {
 					not.UID = ""
 					not.Settings = nil
 					not.SecureSettings = nil
@@ -294,8 +378,27 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
 			},
 			expRoute: &Route{
-				Receiver: "autogen-contact-point-default",
-				Routes:   make([]*Route, 0),
+				Receiver:       "autogen-contact-point-default",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			},
+		},
+		{
+			name: "when given multiple default notification channels migrate them to a single receiver with RepeatInterval set to be the minimum of all channel frequencies",
+			defaultChannels: []*notificationChannel{
+				createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42)),
+				createNotChannelWithReminder(t, "uid2", int64(2), "name2", model.Duration(100000)),
+			},
+			expRecv: &PostableApiReceiver{
+				Name:                    "autogen-contact-point-default",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
+			},
+			expRoute: &Route{
+				Receiver:       "autogen-contact-point-default",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(model.Duration(42)),
 			},
 		},
 		{
@@ -306,8 +409,10 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
 			},
 			expRoute: &Route{
-				Receiver: "autogen-contact-point-default",
-				Routes:   make([]*Route, 0),
+				Receiver:       "autogen-contact-point-default",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: nil,
 			},
 		},
 		{
@@ -315,8 +420,21 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
 			expRecv:         nil,
 			expRoute: &Route{
-				Receiver: "name1",
-				Routes:   make([]*Route, 0),
+				Receiver:       "name1",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			},
+		},
+		{
+			name:            "when given a single default notification channel with SendReminder=true, use the channels Frequency as the RepeatInterval",
+			defaultChannels: []*notificationChannel{createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42))},
+			expRecv:         nil,
+			expRoute: &Route{
+				Receiver:       "name1",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(model.Duration(42)),
 			},
 		},
 	}
@@ -346,4 +464,8 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			require.Equal(t, tt.expRoute, route)
 		})
 	}
+}
+
+func durationPointer(d model.Duration) *model.Duration {
+	return &d
 }

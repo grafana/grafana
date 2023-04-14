@@ -1,17 +1,20 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { Button, ButtonProps } from '@grafana/ui/src/components/Button';
 
 type Props = Omit<ButtonProps, 'variant' | 'size'>;
 
-export const ActionButton: FC<Props> = ({ className, ...restProps }) => (
-  <Button variant="secondary" size="xs" className={cx(useStyles(getStyle), className)} {...restProps} />
-);
+export const ActionButton = ({ className, ...restProps }: Props) => {
+  const styles = useStyles2(getStyle);
+  return <Button variant="secondary" size="xs" className={cx(styles.wrapper, className)} {...restProps} />;
+};
 
-export const getStyle = (theme: GrafanaTheme) => css`
-  height: 24px;
-  font-size: ${theme.typography.size.sm};
-`;
+export const getStyle = (theme: GrafanaTheme2) => ({
+  wrapper: css`
+    height: 24px;
+    font-size: ${theme.typography.bodySmall.fontSize};
+  `,
+});

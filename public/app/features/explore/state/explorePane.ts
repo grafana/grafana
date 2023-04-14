@@ -4,7 +4,6 @@ import { AnyAction } from 'redux';
 
 import {
   EventBusExtended,
-  DataQuery,
   ExploreUrlState,
   TimeRange,
   HistoryItem,
@@ -13,7 +12,7 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import {
   DEFAULT_RANGE,
   getQueryKeys,
@@ -24,7 +23,7 @@ import {
 } from 'app/core/utils/explore';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ThunkResult } from 'app/types';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
@@ -36,7 +35,6 @@ import {
   loadAndInitDatasource,
   createEmptyQueryResponse,
   getUrlStateFromPaneState,
-  storeGraphStyle,
 } from './utils';
 // Types
 
@@ -99,6 +97,7 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
+  isFromCompactUrl?: boolean;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
@@ -118,32 +117,23 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
-interface ChangeGraphStylePayload {
-  exploreId: ExploreId;
-  graphStyle: ExploreGraphStyle;
-}
-
-const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
-
-export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    storeGraphStyle(graphStyle);
-    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
-  };
-}
-
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
+ *
+ * The `datasource` param will be passed to the datasource service `get` function
+ * and can be either a string that is the name or uid, or a datasourceRef
+ * This is to maximize compatability with how datasources are accessed from the URL param.
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceNameOrUid: string,
+  datasource: DataSourceRef | string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
-  panelsState?: ExplorePanelsState
+  panelsState?: ExplorePanelsState,
+  isFromCompactUrl?: boolean
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -152,7 +142,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
+      const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -166,14 +156,13 @@ export function initializeExplore(
         range,
         datasourceInstance: instance,
         history,
+        isFromCompactUrl,
       })
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
     }
     dispatch(updateTime({ exploreId }));
-
-    keybindingSrv.setupTimeRangeBindings(false);
 
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because
@@ -190,8 +179,8 @@ export function initializeExplore(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId]!;
-    if (!itemState.initialized) {
+    const itemState = getState().explore[exploreId];
+    if (!itemState?.initialized) {
       return;
     }
 
@@ -201,6 +190,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
+    // datasource will either be name or UID here
     const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
@@ -216,7 +206,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     // commit changes based on the diff of new url vs old url
 
     if (update.datasource) {
-      const initialQueries = ensureQueries(queries);
+      const initialQueries = await ensureQueries(queries);
       await dispatch(
         initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
@@ -278,18 +268,14 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, containerWidth };
   }
 
-  if (changeGraphStyleAction.match(action)) {
-    const { graphStyle } = action.payload;
-    return { ...state, graphStyle };
-  }
-
   if (changePanelsStateAction.match(action)) {
     const { panelsState } = action.payload;
     return { ...state, panelsState };
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
+    const { containerWidth, eventBridge, queries, range, datasourceInstance, history, isFromCompactUrl } =
+      action.payload;
 
     return {
       ...state,
@@ -298,12 +284,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, datasourceInstance),
+      queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
+      isFromCompactUrl: isFromCompactUrl || false,
     };
   }
 

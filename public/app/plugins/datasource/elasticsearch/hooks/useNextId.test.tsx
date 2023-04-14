@@ -1,9 +1,10 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import React, { PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
+import { ElasticDatasource } from '../datasource';
 import { ElasticsearchQuery } from '../types';
 
 import { useNextId } from './useNextId';
@@ -20,7 +21,7 @@ describe('useNextId', () => {
       return (
         <ElasticsearchProvider
           query={query}
-          datasource={{} as any}
+          datasource={{} as ElasticDatasource}
           onChange={() => {}}
           onRunQuery={() => {}}
           range={getDefaultTimeRange()}

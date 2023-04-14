@@ -1,4 +1,9 @@
 import { captureMessage, captureException, Severity as LogLevel } from '@sentry/browser';
+
+import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
+
+import { config } from '../config';
+
 export { LogLevel };
 
 // a bit stricter than what Sentry allows
@@ -10,10 +15,18 @@ type Contexts = Record<string, Record<string, number | string | Record<string, s
  * @public
  */
 export function logInfo(message: string, contexts?: Contexts) {
-  captureMessage(message, {
-    level: LogLevel.Info,
-    contexts,
-  });
+  if (config.grafanaJavascriptAgent.enabled) {
+    faro.api.pushLog([message], {
+      level: GrafanaLogLevel.INFO,
+      context: contexts,
+    });
+  }
+  if (config.sentry.enabled) {
+    captureMessage(message, {
+      level: LogLevel.Info,
+      contexts,
+    });
+  }
 }
 
 /**
@@ -22,10 +35,18 @@ export function logInfo(message: string, contexts?: Contexts) {
  * @public
  */
 export function logWarning(message: string, contexts?: Contexts) {
-  captureMessage(message, {
-    level: LogLevel.Warning,
-    contexts,
-  });
+  if (config.grafanaJavascriptAgent.enabled) {
+    faro.api.pushLog([message], {
+      level: GrafanaLogLevel.WARN,
+      context: contexts,
+    });
+  }
+  if (config.sentry.enabled) {
+    captureMessage(message, {
+      level: LogLevel.Warning,
+      contexts,
+    });
+  }
 }
 
 /**
@@ -34,10 +55,18 @@ export function logWarning(message: string, contexts?: Contexts) {
  * @public
  */
 export function logDebug(message: string, contexts?: Contexts) {
-  captureMessage(message, {
-    level: LogLevel.Debug,
-    contexts,
-  });
+  if (config.grafanaJavascriptAgent.enabled) {
+    faro.api.pushLog([message], {
+      level: GrafanaLogLevel.DEBUG,
+      context: contexts,
+    });
+  }
+  if (config.sentry.enabled) {
+    captureMessage(message, {
+      level: LogLevel.Debug,
+      contexts,
+    });
+  }
 }
 
 /**
@@ -46,5 +75,10 @@ export function logDebug(message: string, contexts?: Contexts) {
  * @public
  */
 export function logError(err: Error, contexts?: Contexts) {
-  captureException(err, { contexts });
+  if (config.grafanaJavascriptAgent.enabled) {
+    faro.api.pushError(err);
+  }
+  if (config.sentry.enabled) {
+    captureException(err, { contexts });
+  }
 }

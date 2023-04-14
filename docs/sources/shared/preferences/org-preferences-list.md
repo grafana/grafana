@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/preferences/org-preferences-list/
 title: Click Org preferences
 ---
 

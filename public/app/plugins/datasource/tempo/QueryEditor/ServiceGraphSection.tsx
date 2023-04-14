@@ -8,7 +8,7 @@ import { Alert, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
 import { AdHocVariableFilter } from '../../../../features/variables/types';
 import { PrometheusDatasource } from '../../prometheus/datasource';
-import { TempoQuery } from '../datasource';
+import { TempoQuery } from '../types';
 
 import { getDS } from './utils';
 
@@ -71,11 +71,7 @@ export function ServiceGraphSection({
             datasource={{ uid: graphDatasourceUid }}
             filters={filters}
             getTagKeysOptions={{
-              series: [
-                'traces_service_graph_request_server_seconds_sum',
-                'traces_service_graph_request_total',
-                'traces_service_graph_request_failed_total',
-              ],
+              series: ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total'],
             }}
             addFilter={(filter: AdHocVariableFilter) => {
               onChange({

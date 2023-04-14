@@ -1,5 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { OrgRole, TeamPermissionLevel } from '../../../types';
+import { getMockTeam } from '../../teams/__mocks__/teamMocks';
 
 import {
   initialUserState,
@@ -16,7 +17,7 @@ import {
 } from './reducers';
 
 describe('userReducer', () => {
-  let dateNow: any;
+  let dateNow: jest.SpyInstance;
 
   beforeAll(() => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
@@ -89,31 +90,13 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
-            teams: [
-              {
-                id: 1,
-                email: 'team@team.com',
-                name: 'Team',
-                avatarUrl: '/avatar/12345',
-                memberCount: 4,
-                permission: TeamPermissionLevel.Admin,
-              },
-            ],
+            teams: [getMockTeam(1, { permission: TeamPermissionLevel.Admin })],
           })
         )
         .thenStateShouldEqual({
           ...initialUserState,
           teamsAreLoading: false,
-          teams: [
-            {
-              id: 1,
-              email: 'team@team.com',
-              name: 'Team',
-              avatarUrl: '/avatar/12345',
-              memberCount: 4,
-              permission: TeamPermissionLevel.Admin,
-            },
-          ],
+          teams: [getMockTeam(1, { permission: TeamPermissionLevel.Admin })],
         });
     });
   });

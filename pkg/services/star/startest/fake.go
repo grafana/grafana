@@ -28,6 +28,10 @@ func (f *FakeStarService) Delete(ctx context.Context, cmd *star.UnstarDashboardC
 	return f.ExpectedError
 }
 
+func (f *FakeStarService) DeleteByUser(ctx context.Context, userID int64) error {
+	return f.ExpectedError
+}
+
 func (f *FakeStarService) GetByUser(ctx context.Context, query *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {
 	return f.ExpectedUserStars, f.ExpectedError
 }

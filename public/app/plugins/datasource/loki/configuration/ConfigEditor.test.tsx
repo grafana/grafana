@@ -1,31 +1,36 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-
-import { DataSourceHttpSettings } from '@grafana/ui';
 
 import { createDefaultConfigOptions } from '../mocks';
 
 import { ConfigEditor } from './ConfigEditor';
-import { DerivedFields } from './DerivedFields';
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {
-    mount(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+    expect(() =>
+      render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />)
+    ).not.toThrow();
   });
 
   it('should render the right sections', () => {
-    const wrapper = mount(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
-    expect(wrapper.find(DataSourceHttpSettings).length).toBe(1);
-    expect(wrapper.find({ label: 'Maximum lines' }).length).toBe(1);
-    expect(wrapper.find(DerivedFields).length).toBe(1);
+    render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+    expect(screen.getByRole('heading', { name: 'HTTP' })).toBeInTheDocument();
+    expect(screen.getByText('Maximum lines')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Derived fields' })).toBeInTheDocument();
   });
 
-  it('should pass correct data to onChange', () => {
+  it('should pass correct data to onChange', async () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<ConfigEditor onOptionsChange={onChangeMock} options={createDefaultConfigOptions()} />);
-    const inputWrapper = wrapper.find({ label: 'Maximum lines' }).find('input');
-    (inputWrapper.getDOMNode() as any).value = 42;
-    inputWrapper.simulate('change');
-    expect(onChangeMock.mock.calls[0][0].jsonData.maxLines).toBe('42');
+    render(<ConfigEditor onOptionsChange={onChangeMock} options={createDefaultConfigOptions()} />);
+    const maxLinesInput = await screen.findByDisplayValue('531');
+    await userEvent.type(maxLinesInput, '2');
+    expect(onChangeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jsonData: expect.objectContaining({
+          maxLines: '5312',
+        }),
+      })
+    );
   });
 });

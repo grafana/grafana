@@ -1,43 +1,52 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/migrating-alerts/opt-out/
-  - /docs/grafana/latest/alerting/opt-in/
-  - /docs/grafana/latest/alerting/unified-alerting/opt-in/
-description: Disable Grafana alerts
-title: Opt-out of Grafana alerting
-weight: 113
+  - ../opt-in/
+  - ../unified-alerting/opt-in/
+description: Opt out of Grafana Alerting
+title: Opt out of Grafana Alerting
+weight: 102
 ---
 
-# Opt-out to Grafana alerting in OSS
+# Opt out of Grafana Alerting
 
-This topic discusses how to disable Grafana alerting and migrate to legacy dashboard alerting. It also provides guidance on how to enable Grafana alerting once you are ready to migrate to Grafana alerting.
+You can opt out of Grafana Alerting at any time and switch to using legacy alerting. Alternatively, you can opt out of using alerting in its entirety.
 
-> **Note:** This topic is only relevant for OSS and Enterprise customers. Contact customer support to enable or disable Grafana alerting for your Grafana Cloud stack.
+## Staying on legacy alerting
 
-## Before you begin
+When upgrading to Grafana > 9.0, existing installations that use legacy alerting are automatically upgraded to Grafana Alerting unless you have opted-out of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost. To keep using legacy alerting and disable Grafana Alerting:
 
-We recommend that you backup Grafana's database. If you are using PostgreSQL as the backend database, then the minimum required version is 9.5.
+1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
+2. Enter the following in your configuration:
 
-## Opt-out of Grafana alerts
+```
+[alerting]
+enabled = true
 
-To opt-out of Grafana alerts and roll back to legacy dashboard alerting:
+[unified_alerting]
+enabled = false
+```
 
-1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [Grafana alerting]({{< relref "../../setup-grafana/configure-grafana/#unified_alerting" >}}) section.
-1. Set the `enabled` property to `false`.
-1. For [legacy dashboard alerting]({{< relref "../../setup-grafana/configure-grafana/#alerting" >}}), set the `enabled` flag to `true`.
-1. Restart Grafana for the configuration changes to take effect.
+Installations that have been migrated to Grafana Alerting can [roll back]({{< relref "roll-back/" >}}) to legacy alerting at any time.
 
-> **Note:** Rolling back from Grafana to legacy alerting can result in data loss. This is applicable to the fresh installation as well as upgraded setups.
+> **Note:** This topic is only relevant for OSS and Enterprise customers. Contact customer support to enable or disable Grafana Alerting for your Grafana Cloud stack.
 
-## Opt-in to Grafana alerting
+The `ngalert` toggle previously used to enable or disable Grafana Alerting is no longer available.
 
-When you are ready to make the switch, the following procedure will help you migrate to Grafana alerting.
+## Disable alerting
 
-To opt-in to Grafana alerts:
+You can disable both Grafana Alerting and legacy alerting in Grafana.
 
-1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified alerts]({{< relref "../../setup-grafana/configure-grafana/#unified_alerting" >}}) section.
-1. Set the `enabled` property to `true`.
-1. Next, for [legacy dashboard alerting]({{< relref "../../setup-grafana/configure-grafana/#alerting" >}}), set the `enabled` flag to `false`.
-1. Restart Grafana for the configuration changes to take effect.
+1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
+2. Enter the following in your configuration:
 
-> **Note:** The `ngalert` toggle previously used to enable or disable Grafana alerting is no longer available.
+```
+[alerting]
+enabled = false
+
+[unified_alerting]
+enabled = false
+```
+
+3. Restart Grafana for the configuration changes to take effect.
+
+If you want to turn alerting back on, you can remove both flags to enable Grafana Alerting.

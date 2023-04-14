@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes } from 'react';
 
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
@@ -18,6 +18,7 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
   inputWidth?: number;
   // Placeholder of the input field when in non configured state.
   placeholder?: string;
+  interactive?: boolean;
 }
 
 const getSecretFormFieldStyles = () => {
@@ -38,7 +39,7 @@ const getSecretFormFieldStyles = () => {
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
  */
-export const SecretFormField: FunctionComponent<Props> = ({
+export const SecretFormField = ({
   label = 'Password',
   labelWidth,
   inputWidth = 12,
@@ -46,6 +47,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
   isConfigured,
   tooltip,
   placeholder = 'Password',
+  interactive,
   ...inputProps
 }: Props) => {
   const styles = getSecretFormFieldStyles();
@@ -53,6 +55,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
     <FormField
       label={label!}
       tooltip={tooltip}
+      interactive={interactive}
       labelWidth={labelWidth}
       inputEl={
         isConfigured ? (

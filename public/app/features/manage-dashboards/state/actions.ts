@@ -1,14 +1,16 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
+import { DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
+import { DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
@@ -34,7 +36,9 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
       dispatch(processElements(dashboard.json));
     } catch (error) {
       dispatch(fetchFailed());
-      dispatch(notifyApp(createErrorNotification(error.data.message || error)));
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.message || error)));
+      }
     }
   };
 }
@@ -75,7 +79,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
   };
 }
 
-function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }): ThunkResult<void> {
+function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
   return async function (dispatch) {
     if (!dashboardJson || !dashboardJson.__elements) {
       return;
@@ -83,7 +87,7 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
 
     const libraryPanelInputs: LibraryPanelInput[] = [];
 
-    for (const element of dashboardJson.__elements) {
+    for (const element of Object.values(dashboardJson.__elements)) {
       if (element.kind !== LibraryElementKind.Panel) {
         continue;
       }
@@ -97,8 +101,6 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
           uid,
           name,
           version: 0,
-          meta: {},
-          id: 0,
           type,
           kind: LibraryElementKind.Panel,
           description,
@@ -108,7 +110,7 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
 
       try {
         const panelInDb = await getLibraryPanel(uid, true);
-        input.state = LibraryPanelInputState.Exits;
+        input.state = LibraryPanelInputState.Exists;
         input.model = panelInDb;
       } catch (e: any) {
         if (e.status !== 404) {
@@ -162,7 +164,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
       overwrite: true,
       inputs: inputsToPersist,
-      folderId: importDashboardForm.folder.id,
+      folderUid: importDashboardForm.folder.uid,
     });
 
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
@@ -179,6 +181,26 @@ const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, i
     inputModel.info = 'Select a ' + input.pluginName + ' data source';
   }
 };
+
+export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
+  const result = {
+    totalCount: folderUIDs.length,
+    successCount: 0,
+  };
+
+  for (const folderUID of folderUIDs) {
+    try {
+      const newFolderDTO = await moveFolder(folderUID, toFolder);
+      if (newFolderDTO !== null) {
+        result.successCount += 1;
+      }
+    } catch (err) {
+      console.error('Failed to move a folder', err);
+    }
+  }
+
+  return result;
+}
 
 export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
   const tasks = [];
@@ -199,13 +221,16 @@ export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
 async function moveDashboard(uid: string, toFolder: FolderInfo) {
   const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
 
-  if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
+  if (
+    ((fullDash.meta.folderUid === undefined || fullDash.meta.folderUid === null) && toFolder.uid === '') ||
+    fullDash.meta.folderUid === toFolder.uid
+  ) {
     return { alreadyInFolder: true };
   }
 
   const options = {
     dashboard: fullDash.dashboard,
-    folderId: toFolder.id,
+    folderUid: toFolder.uid,
     overwrite: false,
   };
 
@@ -213,11 +238,13 @@ async function moveDashboard(uid: string, toFolder: FolderInfo) {
     await saveDashboard(options);
     return { succeeded: true };
   } catch (err) {
-    if (err.data?.status !== 'plugin-dashboard') {
-      return { succeeded: false };
-    }
+    if (isFetchError(err)) {
+      if (err.data?.status !== 'plugin-dashboard') {
+        return { succeeded: false };
+      }
 
-    err.isHandled = true;
+      err.isHandled = true;
+    }
     options.overwrite = true;
 
     try {
@@ -258,35 +285,33 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export interface SaveDashboardOptions {
-  dashboard: DashboardDataDTO;
-  message?: string;
-  folderId?: number;
-  overwrite?: boolean;
-}
-
-export function saveDashboard(options: SaveDashboardOptions) {
+export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
   return getBackendSrv().post('/api/dashboards/db/', {
     dashboard: options.dashboard,
     message: options.message ?? '',
     overwrite: options.overwrite ?? false,
-    folderId: options.folderId,
+    folderUid: options.folderUid,
   });
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=false`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
 }
 
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
+
+export function moveFolder(uid: string, toFolder: FolderInfo) {
+  const payload = {
+    parentUid: toFolder.uid,
+  };
+  return getBackendSrv().post(`/api/folders/${uid}/move`, payload, { showErrorAlert: false });
+}
+
+export const SLICE_FOLDER_RESULTS_TO = 1000;
 
 export function searchFolders(
   query: any,
@@ -298,22 +323,22 @@ export function searchFolders(
     type: 'dash-folder',
     permission,
     accesscontrol: withAccessControl,
+    limit: SLICE_FOLDER_RESULTS_TO,
   });
 }
 
+export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
+  return getBackendSrv().get(`/api/folders/${uid}`);
+}
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {
   return getBackendSrv().get(`/api/folders/id/${id}`);
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
-function executeInOrder(tasks: any[]) {
+function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
   }, []);

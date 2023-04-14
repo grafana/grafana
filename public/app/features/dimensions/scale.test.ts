@@ -1,15 +1,16 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { ScaleDimensionConfig } from '@grafana/schema';
 
 import { getScaledDimension, validateScaleConfig } from './scale';
 
 describe('scale dimensions', () => {
   it('should validate empty input', () => {
-    const out = validateScaleConfig({} as any, {
+    const out = validateScaleConfig({} as ScaleDimensionConfig, {
       min: 5,
       max: 10,
     });
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "fixed": 7.5,
         "max": 10,
         "min": 5,
@@ -30,7 +31,7 @@ describe('scale dimensions', () => {
       }
     );
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "fixed": 10,
         "max": 7,
         "min": 5,

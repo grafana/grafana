@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/explore/explore-inspector/
 title: Inspector in Explore
 weight: 400
 ---
@@ -45,7 +43,7 @@ For multiple queries or for queries multiple nodes, there are additional options
 
 Grafana generates a CSV file in your default browser download location. You can open it in the viewer of your choice.
 
-1. In the **Inspector** tab, raw query results following instructions in (### Inspect raw query results).
+1. In the **Inspector** tab, get raw query results by following the instructions [described in Inspect raw query results](#inspect-raw-query-results).
 1. Refine query settings until you can see the raw data that you want to export.
 1. Click **Download CSV**.
 

@@ -6,7 +6,15 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
-import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import {
+  Alert,
+  DataSourceHttpSettings,
+  InlineFormLabel,
+  LegacyForms,
+  Select,
+  SecureSocksProxySettings,
+} from '@grafana/ui';
+import { config } from 'app/core/config';
 import store from 'app/core/store';
 
 import { GraphiteOptions, GraphiteType } from '../types';
@@ -15,7 +23,7 @@ import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 import { MappingsConfiguration } from './MappingsConfiguration';
 import { fromString, toString } from './parseLokiLabelMappings';
 
-const { Select, Switch } = LegacyForms;
+const { Switch } = LegacyForms;
 export const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
 
 const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
@@ -75,6 +83,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           dataSourceConfig={options}
           onChange={onOptionsChange}
         />
+        {config.featureToggles.secureSocksDatasourceProxy && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
         <h3 className="page-heading">Graphite details</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
@@ -86,7 +97,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 aria-label="Graphite version"
                 value={currentVersion}
                 options={graphiteVersions}
-                width={8}
+                className="width-8"
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteVersion')}
               />
             </div>
@@ -98,7 +109,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 aria-label="Graphite backend type"
                 options={graphiteTypes}
                 value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
-                width={8}
+                className="width-8"
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />
             </div>

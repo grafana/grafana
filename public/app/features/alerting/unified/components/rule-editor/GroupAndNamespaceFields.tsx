@@ -1,23 +1,22 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, InputControl, useStyles2, VirtualizedSelect } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 
-import { SelectWithAdd } from './SelectWIthAdd';
 import { checkForPathSeparator } from './util';
 
 interface Props {
   rulesSourceName: string;
 }
 
-export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
+export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   const {
     control,
     watch,
@@ -26,8 +25,6 @@ export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
   } = useFormContext<RuleFormValues>();
 
   const style = useStyles2(getStyle);
-
-  const [customGroup, setCustomGroup] = useState(false);
 
   const rulerRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const dispatch = useDispatch();
@@ -61,15 +58,13 @@ export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
       >
         <InputControl
           render={({ field: { onChange, ref, ...field } }) => (
-            <SelectWithAdd
+            <VirtualizedSelect
               {...field}
+              allowCustomValue
               className={style.input}
               onChange={(value) => {
                 setValue('group', ''); //reset if namespace changes
-                onChange(value);
-              }}
-              onCustomChange={(custom: boolean) => {
-                custom && setCustomGroup(true);
+                onChange(value.value);
               }}
               options={namespaceOptions}
               width={42}
@@ -88,7 +83,16 @@ export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
       <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={style.input} />
+            <VirtualizedSelect
+              {...field}
+              allowCustomValue
+              options={groupOptions}
+              width={42}
+              onChange={(value) => {
+                setValue('group', value.value ?? '');
+              }}
+              className={style.input}
+            />
           )}
           name="group"
           control={control}

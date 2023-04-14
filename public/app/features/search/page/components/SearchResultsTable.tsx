@@ -1,15 +1,18 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState, CSSProperties } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
+import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { TableCellHeight } from '@grafana/schema';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
-import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
+import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
 
+import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { QueryResponse } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -24,6 +27,8 @@ export type SearchResultsProps = {
   clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
+  onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export type TableColumn = Column & {
@@ -42,17 +47,21 @@ export const SearchResultsTable = React.memo(
     clearSelection,
     onTagSelected,
     onDatasourceChange,
+    onClickItem,
+    keyboardEvents,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
-    const tableStyles = useStyles2(getTableStyles);
-
+    const columnStyles = useStyles2(getColumnStyles);
+    const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
-    const listRef = useRef<FixedSizeList>(null);
+    const [listEl, setListEl] = useState<FixedSizeList | null>(null);
+    const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
+
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
@@ -64,10 +73,10 @@ export const SearchResultsTable = React.memo(
       if (infiniteLoaderRef.current) {
         infiniteLoaderRef.current.resetloadMoreItemsCache();
       }
-      if (listRef.current) {
-        listRef.current.scrollTo(0);
+      if (listEl) {
+        listEl.scrollTo(0);
       }
-    }, [memoizedData]);
+    }, [memoizedData, listEl]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -77,11 +86,12 @@ export const SearchResultsTable = React.memo(
         selection,
         selectionToggle,
         clearSelection,
-        styles,
+        columnStyles,
         onTagSelected,
-        onDatasourceChange
+        onDatasourceChange,
+        response.view?.length >= response.totalRows
       );
-    }, [response, width, styles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
+    }, [response, width, columnStyles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
 
     const options: TableOptions<{}> = useMemo(
       () => ({
@@ -93,14 +103,19 @@ export const SearchResultsTable = React.memo(
 
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
 
-    const RenderRow = React.useCallback(
-      ({ index: rowIndex, style }) => {
+    const RenderRow = useCallback(
+      ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
         const row = rows[rowIndex];
         prepareRow(row);
 
         const url = response.view.fields.url?.values.get(rowIndex);
+        let className = styles.rowContainer;
+        if (rowIndex === highlightIndex.y) {
+          className += ' ' + styles.selectedRow;
+        }
+
         return (
-          <div {...row.getRowProps({ style })} className={styles.rowContainer}>
+          <div {...row.getRowProps({ style })} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
               return (
                 <TableCell
@@ -109,14 +124,14 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   columnIndex={index}
                   columnCount={row.cells.length}
-                  userProps={{ href: url }}
+                  userProps={{ href: url, onClick: onClickItem }}
                 />
               );
             })}
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles, onClickItem]
     );
 
     if (!rows.length) {
@@ -124,7 +139,7 @@ export const SearchResultsTable = React.memo(
     }
 
     return (
-      <div {...getTableProps()} aria-label="Search result table" role="table">
+      <div {...getTableProps()} aria-label="Search results table" role="table">
         <div>
           {headerGroups.map((headerGroup) => {
             const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -151,9 +166,12 @@ export const SearchResultsTable = React.memo(
             itemCount={rows.length}
             loadMoreItems={response.loadMoreItems}
           >
-            {({ onItemsRendered }) => (
+            {({ onItemsRendered, ref }) => (
               <FixedSizeList
-                ref={listRef}
+                ref={(innerRef) => {
+                  ref(innerRef);
+                  setListEl(innerRef);
+                }}
                 onItemsRendered={onItemsRendered}
                 height={height - HEADER_HEIGHT}
                 itemCount={rows.length}
@@ -183,13 +201,36 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
       height: 100%;
     `,
-    table: css`
-      width: 100%;
+    headerCell: css`
+      padding: ${theme.spacing(1)};
     `,
-    cellIcon: css`
-      display: flex;
+    headerRow: css`
+      background-color: ${theme.colors.background.secondary};
+      height: ${HEADER_HEIGHT}px;
       align-items: center;
     `,
+    selectedRow: css`
+      background-color: ${rowHoverBg};
+      box-shadow: inset 3px 0px ${theme.colors.primary.border};
+    `,
+    rowContainer: css`
+      label: row;
+      &:hover {
+        background-color: ${rowHoverBg};
+      }
+
+      &:not(:hover) div[role='cell'] {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    `,
+  };
+};
+
+// CSS for columns from react table
+const getColumnStyles = (theme: GrafanaTheme2) => {
+  return {
     nameCellStyle: css`
       border-right: none;
       padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)};
@@ -204,26 +245,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerNameStyle: css`
       padding-left: ${theme.spacing(1)};
     `,
-    headerCell: css`
-      padding: ${theme.spacing(1)};
-    `,
-    headerRow: css`
-      background-color: ${theme.colors.background.secondary};
-      height: ${HEADER_HEIGHT}px;
-      align-items: center;
-    `,
-    rowContainer: css`
-      label: row;
-      &:hover {
-        background-color: ${rowHoverBg};
-      }
 
-      &:not(:hover) div[role='cell'] {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    `,
     typeIcon: css`
       margin-left: 5px;
       margin-right: 9.5px;
@@ -263,6 +285,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       text-align: right;
       padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
     `,
+    explainItem: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+      cursor: pointer;
+    `,
     locationCellStyle: css`
       padding-top: ${theme.spacing(1)};
       padding-right: ${theme.spacing(1)};
@@ -274,12 +301,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: 10px;
       margin-right: 10px;
       margin-top: 5px;
-    `,
-    infoWrap: css`
-      color: ${theme.colors.text.secondary};
-      span {
-        margin-right: 10px;
-      }
     `,
     tagList: css`
       padding-top: ${theme.spacing(0.5)};

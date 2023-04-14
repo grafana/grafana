@@ -1,8 +1,7 @@
-import { map, find, filter, indexOf } from 'lodash';
+import { filter, find, indexOf, map } from 'lodash';
 
-import { ScopedVars } from '@grafana/data';
+import { escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-import kbn from 'app/core/utils/kbn';
 
 import queryPart from './query_part';
 import { InfluxQuery, InfluxQueryTag } from './types';
@@ -16,13 +15,11 @@ export default class InfluxQueryModel {
   scopedVars: any;
   refId?: string;
 
-  /** @ngInject */
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.policy = target.policy || 'default';
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
@@ -172,10 +169,20 @@ export default class InfluxQueryModel {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    let escapedKey = `"${tag.key}"`;
+
+    if (tag.key.endsWith('::tag')) {
+      escapedKey = `"${tag.key.slice(0, -5)}"::tag`;
+    }
+
+    if (tag.key.endsWith('::field')) {
+      escapedKey = `"${tag.key.slice(0, -7)}"::field`;
+    }
+
+    return str + escapedKey + ' ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy(interpolate: any) {
+  getMeasurementAndPolicy(interpolate?: boolean) {
     let policy = this.target.policy;
     let measurement = this.target.measurement || 'measurement';
 
@@ -185,13 +192,7 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
-      policy = '"' + this.target.policy + '".';
-    } else {
-      policy = '';
-    }
-
-    return policy + measurement;
+    return `"${policy}".${measurement}`;
   }
 
   interpolateQueryStr(value: any[], variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
@@ -201,10 +202,10 @@ export default class InfluxQueryModel {
     }
 
     if (typeof value === 'string') {
-      return kbn.regexEscape(value);
+      return escapeRegex(value);
     }
 
-    const escapedValues = map(value, kbn.regexEscape);
+    const escapedValues = map(value, escapeRegex);
     return '(' + escapedValues.join('|') + ')';
   }
 

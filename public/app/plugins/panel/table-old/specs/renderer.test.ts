@@ -2,7 +2,7 @@ import { each } from 'lodash';
 
 import { ScopedVars, TimeZone } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
-import TableModel from 'app/core/table_model';
+import TableModel from 'app/core/TableModel';
 
 import { TableRenderer } from '../renderer';
 import { ColumnRender } from '../types';
@@ -18,7 +18,7 @@ const templateSrv = {
     if (scopedVars) {
       // For testing variables replacement in link
       each(scopedVars, (val, key) => {
-        value = value.replace('$' + key, val.value);
+        value = value.replace('$' + key, val?.value);
       });
     }
     return value;

@@ -19,7 +19,7 @@ interface Props<V, D> {
   renderValue: (props: VizRepeaterRenderValueProps<V, D>) => JSX.Element;
   height: number;
   width: number;
-  source: any; // If this changes, new values will be requested
+  source: unknown; // If this changes, new values will be requested
   getValues: () => V[];
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;

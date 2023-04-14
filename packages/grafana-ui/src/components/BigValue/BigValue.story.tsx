@@ -16,7 +16,7 @@ import {
 } from './BigValue';
 import mdx from './BigValue.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Visualizations/BigValue',
   component: BigValue,
   decorators: [withCenteredStory],
@@ -31,7 +31,9 @@ export default {
   argTypes: {
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 200, max: 800 } },
-    colorMode: { control: { type: 'select', options: [BigValueColorMode.Value, BigValueColorMode.Background] } },
+    colorMode: {
+      control: { type: 'select', options: [BigValueColorMode.Value, BigValueColorMode.Background] },
+    },
     graphMode: { control: { type: 'select', options: [BigValueGraphMode.Area, BigValueGraphMode.None] } },
     justifyMode: { control: { type: 'select', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
     textMode: {
@@ -48,7 +50,7 @@ export default {
     },
     color: { control: 'color' },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<Props> {
   numeric: number;
@@ -110,3 +112,5 @@ Basic.args = {
   color: 'red',
   textMode: BigValueTextMode.Auto,
 };
+
+export default meta;

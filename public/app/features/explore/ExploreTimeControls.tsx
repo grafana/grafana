@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { ExploreId } from 'app/types';
@@ -44,6 +45,11 @@ export class ExploreTimeControls extends Component<Props> {
       from: adjustedFrom,
       to: adjustedTo,
     });
+
+    reportInteraction('grafana_explore_time_picker_time_range_changed', {
+      timeRangeFrom: adjustedFrom,
+      timeRangeTo: adjustedTo,
+    });
   };
 
   onZoom = () => {
@@ -82,6 +88,7 @@ export class ExploreTimeControls extends Component<Props> {
 
     return (
       <TimePickerWithHistory
+        isOnCanvas
         {...timePickerCommonProps}
         timeSyncButton={timeSyncButton}
         isSynced={syncedTimes}

@@ -1,50 +1,52 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { select, openMenu } from 'react-select-event';
 
-import { LegacyForms } from '@grafana/ui';
+import { MetricSelect, Props } from './MetricSelect';
 
-import { MetricSelect } from './MetricSelect';
-
-const { Select } = LegacyForms;
+const props: Props = {
+  isSearchable: false,
+  onChange: jest.fn(),
+  value: '',
+  placeholder: 'Select Reducer',
+  className: 'width-15',
+  options: [
+    {
+      label: 'foo',
+      value: 'foo',
+    },
+    {
+      label: 'bar',
+      value: 'bar',
+    },
+  ],
+  variables: [],
+};
 
 describe('MetricSelect', () => {
-  describe('When receive props', () => {
-    it('should pass correct set of props to Select component', () => {
-      const props: any = {
-        placeholder: 'Select Reducer',
-        className: 'width-15',
-        options: [],
-        variables: [],
-      };
-      const wrapper = shallow(<MetricSelect {...props} />);
-      expect(wrapper.find(Select).props()).toMatchObject({
-        className: 'width-15',
-        isMulti: false,
-        isClearable: false,
-        backspaceRemovesValue: false,
-        isSearchable: true,
-        maxMenuHeight: 500,
-        placeholder: 'Select Reducer',
-      });
+  it('passes the placeholder, options and onChange correctly to Select', async () => {
+    render(<MetricSelect {...props} />);
+    const metricSelect = screen.getByRole('combobox');
+    expect(metricSelect).toBeInTheDocument();
+    expect(screen.getByText('Select Reducer')).toBeInTheDocument();
+
+    await select(metricSelect, 'foo', {
+      container: document.body,
     });
-    it('should pass callbacks correctly to the Select component', () => {
-      const spyOnChange = jest.fn();
-      const props: any = {
-        onChange: spyOnChange,
-        options: [],
-        variables: [],
-      };
-      const wrapper = shallow(<MetricSelect {...props} />);
-      const select = wrapper.find(Select);
+    expect(props.onChange).toHaveBeenCalledWith('foo');
+  });
 
-      select.props().onChange({ value: 'foo' }, { action: 'select-option', option: undefined });
+  it('has the correct noOptionsMessage', () => {
+    const propsWithoutOptions = {
+      ...props,
+      options: [],
+    };
+    render(<MetricSelect {...propsWithoutOptions} />);
 
-      expect(select.props().noOptionsMessage).toBeDefined();
+    const metricSelect = screen.getByRole('combobox');
+    expect(metricSelect).toBeInTheDocument();
 
-      // @ts-ignore typescript doesn't understand that noOptionsMessage can't be undefined here
-      const noOptionsMessage = select.props().noOptionsMessage();
-      expect(noOptionsMessage).toEqual('No options found');
-      expect(spyOnChange).toHaveBeenCalledWith('foo');
-    });
+    openMenu(metricSelect);
+    expect(screen.getByText('No options found')).toBeInTheDocument();
   });
 });

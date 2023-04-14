@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo, useReducer } from 'react';
 
 import { LoadingState } from '@grafana/data';
-import { Button, Modal, useStyles } from '@grafana/ui';
+import { Button, Modal, useStyles2 } from '@grafana/ui';
 
 import { getModalStyles } from '../../styles';
 import { LibraryElementDTO } from '../../types';
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, onConfirm }) => {
-  const styles = useStyles(getModalStyles);
+  const styles = useStyles2(getModalStyles);
   const [{ dashboardTitles, loadingState }, dispatch] = useReducer(
     deleteLibraryPanelModalReducer,
     initialDeleteLibraryPanelModalState
@@ -51,16 +51,16 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   );
 };
 
-const LoadingIndicator: FC = () => <span>Loading library panel...</span>;
+const LoadingIndicator = () => <span>Loading library panel...</span>;
 
-const Confirm: FC = () => {
-  const styles = useStyles(getModalStyles);
+const Confirm = () => {
+  const styles = useStyles2(getModalStyles);
 
   return <div className={styles.modalText}>Do you want to delete this panel?</div>;
 };
 
 const HasConnectedDashboards: FC<{ dashboardTitles: string[] }> = ({ dashboardTitles }) => {
-  const styles = useStyles(getModalStyles);
+  const styles = useStyles2(getModalStyles);
   const suffix = dashboardTitles.length === 1 ? 'dashboard.' : 'dashboards.';
   const message = `${dashboardTitles.length} ${suffix}`;
   if (dashboardTitles.length === 0) {

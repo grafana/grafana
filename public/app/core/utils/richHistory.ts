@@ -12,6 +12,7 @@ import {
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
+import { config } from '../config';
 import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
@@ -58,11 +59,13 @@ export async function addToRichHistory(
       });
       warning = result.warning;
     } catch (error) {
-      if (error.name === RichHistoryServiceError.StorageFull) {
-        richHistoryStorageFull = true;
-        showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-      } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
-        dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+      if (error instanceof Error) {
+        if (error.name === RichHistoryServiceError.StorageFull) {
+          richHistoryStorageFull = true;
+          showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
+        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
+          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+        }
       }
       // Saving failed. Do not add new entry.
       return { richHistoryStorageFull, limitExceeded };
@@ -101,7 +104,9 @@ export async function updateStarredInRichHistory(id: string, starred: boolean) {
   try {
     return await getRichHistoryStorage().updateStarred(id, starred);
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
     return undefined;
   }
 }
@@ -110,7 +115,9 @@ export async function updateCommentInRichHistory(id: string, newComment: string 
   try {
     return await getRichHistoryStorage().updateComment(id, newComment);
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
     return undefined;
   }
 }
@@ -120,7 +127,9 @@ export async function deleteQueryInRichHistory(id: string) {
     await getRichHistoryStorage().deleteRichHistory(id);
     return id;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
     return undefined;
   }
 }
@@ -156,8 +165,9 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorag
     dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
     return { status: LocalStorageMigrationStatus.Successful };
   } catch (error) {
-    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${error.message}`)));
-    return { status: LocalStorageMigrationStatus.Failed, error };
+    const errorToThrow = error instanceof Error ? error : new Error('Uknown error occurred.');
+    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${errorToThrow.message}`)));
+    return { status: LocalStorageMigrationStatus.Failed, error: errorToThrow };
   }
 }
 
@@ -224,19 +234,16 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi | undefined) {
-  /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
-   * to format query text
-   */
-  if (queryDsInstance?.getQueryDisplayText) {
-    return queryDsInstance.getQueryDisplayText(query);
+export function createQueryText(query: DataQuery, dsApi?: DataSourceApi) {
+  if (dsApi?.getQueryDisplayText) {
+    return dsApi.getQueryDisplayText(query);
   }
 
   return getQueryDisplayText(query);
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
-  let mappedQueriesToHeadings: any = {};
+  let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
     let heading = createQueryHeading(q, sortOrder);
@@ -255,12 +262,11 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  */
 export function createDatasourcesList() {
   return getDataSourceSrv()
-    .getList()
+    .getList({ mixed: config.featureToggles.exploreMixedDatasource === true })
     .map((dsSettings) => {
       return {
         name: dsSettings.name,
         uid: dsSettings.uid,
-        imgUrl: dsSettings.meta.info.logos.small,
       };
     });
 }

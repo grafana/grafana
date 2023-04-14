@@ -1,10 +1,9 @@
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
-  PanelData,
   GrafanaTheme2,
   PluginState,
-  SelectableValue,
+  EventBus,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
@@ -12,19 +11,19 @@ import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { unByKey } from 'ol/Observable';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
-import { StyleEditor } from './StyleEditor';
+import { StyleEditor } from '../../editor/StyleEditor';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getPublicGeoJSONFiles } from '../../utils/utils';
+import { ComparisonOperation } from '@grafana/schema';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -59,8 +58,6 @@ export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
   },
 };
 
-let publicGeoJSONFiles: Array<SelectableValue<string>> | undefined = undefined;
-
 export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   id: 'geojson',
   name: 'GeoJSON',
@@ -72,7 +69,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -152,9 +149,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
-        console.log('todo... find values matching the ID and update');
-      },
       registerOptionsUI: (builder) => {
         // get properties for first feature to use as ui options
         const layerInfo = features.pipe(
@@ -162,16 +156,12 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           rxjsmap((v) => getLayerPropertyInfo(v))
         );
 
-        if (!publicGeoJSONFiles) {
-          initGeojsonFiles();
-        }
-
         builder
           .addSelect({
             path: 'config.src',
             name: 'GeoJSON URL',
             settings: {
-              options: publicGeoJSONFiles ?? [],
+              options: getPublicGeoJSONFiles() ?? [],
               allowCustomValue: true,
             },
             defaultValue: defaultOptions.src,
@@ -206,27 +196,3 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   defaultOptions,
 };
 
-// This will find all geojson files in the maps and gazetteer folders
-async function initGeojsonFiles() {
-  if (publicGeoJSONFiles) {
-    return;
-  }
-  publicGeoJSONFiles = [];
-
-  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
-  for (let folder of ['maps', 'gazetteer']) {
-    ds.listFiles(folder).subscribe({
-      next: (frame) => {
-        frame.forEach((item) => {
-          if (item.name.endsWith('.geojson')) {
-            const value = `public/${folder}/${item.name}`;
-            publicGeoJSONFiles!.push({
-              value,
-              label: value,
-            });
-          }
-        });
-      },
-    });
-  }
-}

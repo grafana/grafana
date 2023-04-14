@@ -68,7 +68,7 @@ export interface EventFilterOptions {
  */
 export interface EventBus {
   /**
-   * Publish single vent
+   * Publish single event
    */
   publish<T extends BusEvent>(event: T): void;
 

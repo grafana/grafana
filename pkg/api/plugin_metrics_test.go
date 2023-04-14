@@ -2,17 +2,18 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPluginMetricsEndpoint(t *testing.T) {
@@ -39,7 +40,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, "http_errors=2", string(body))
 			require.NoError(t, resp.Body.Close())
@@ -53,7 +54,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Empty(t, string(body))
 			require.NoError(t, resp.Body.Close())
@@ -106,7 +107,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, "http_errors=2", string(body))
 			require.NoError(t, resp.Body.Close())

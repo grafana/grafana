@@ -16,7 +16,7 @@ type LiveTailButtonProps = {
 
 export function LiveTailButton(props: LiveTailButtonProps) {
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
-  const buttonVariant = isLive && !isPaused ? 'active' : 'default';
+  const buttonVariant = isLive && !isPaused ? 'active' : 'canvas';
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
 
   return (

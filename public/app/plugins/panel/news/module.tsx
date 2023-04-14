@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 
 import { NewsPanel } from './NewsPanel';
 import { DEFAULT_FEED_URL } from './constants';
-import { PanelOptions, defaultPanelOptions } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(NewsPanel).setPanelOptions((builder) => {
   builder

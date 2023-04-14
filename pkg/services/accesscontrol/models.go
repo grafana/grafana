@@ -6,9 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -24,7 +27,7 @@ type Role struct {
 	Version     int64  `json:"version"`
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
+	DisplayName string `json:"displayName,omitempty"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 	Hidden      bool   `json:"hidden"`
@@ -45,17 +48,9 @@ func (r *Role) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r *Role) GetDisplayName() string {
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = fallbackDisplayName(r.Name)
-	}
-	return r.DisplayName
-}
-
 func (r Role) MarshalJSON() ([]byte, error) {
 	type Alias Role
 
-	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -69,7 +64,7 @@ type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName"`
+	DisplayName string       `json:"displayName,omitempty"`
 	Description string       `json:"description"`
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
@@ -118,28 +113,25 @@ func (r *RoleDTO) Global() bool {
 	return r.OrgID == GlobalOrgID
 }
 
+func (r *RoleDTO) IsManaged() bool {
+	return strings.HasPrefix(r.Name, ManagedRolePrefix)
+}
+
 func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
+}
+
+func (r *RoleDTO) IsPlugin() bool {
+	return strings.HasPrefix(r.Name, PluginRolePrefix)
 }
 
 func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r *RoleDTO) GetDisplayName() string {
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = fallbackDisplayName(r.Name)
-	}
-	if r.DisplayName == "" {
-		return r.Name
-	}
-	return r.DisplayName
-}
-
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
-	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -147,17 +139,6 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 		Alias:  (Alias)(r),
 		Global: r.Global(),
 	})
-}
-
-// fallbackDisplayName provides a fallback name for role
-// that can be displayed in the ui for better readability
-// example: currently this would give:
-// fixed:datasources:name -> datasources name
-// datasources:admin      -> datasources admin
-func fallbackDisplayName(rName string) string {
-	// removing prefix for fixed roles
-	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
 type TeamRole struct {
@@ -207,16 +188,11 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID   int64 `json:"-"`
-	UserID  int64 `json:"userId"`
-	Roles   []string
-	Actions []string
-}
-
-// ScopeParams holds the parameters used to fill in scope templates
-type ScopeParams struct {
-	OrgID     int64
-	URLParams map[string]string
+	OrgID      int64
+	UserID     int64
+	Roles      []string
+	TeamIDs    []int64
+	RolePrefix string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -234,6 +210,7 @@ type ResourcePermission struct {
 	Team        string
 	BuiltInRole string
 	IsManaged   bool
+	IsInherited bool
 	Created     time.Time
 	Updated     time.Time
 }
@@ -262,10 +239,10 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 }
 
 type SetResourcePermissionCommand struct {
-	UserID      int64
-	TeamID      int64
-	BuiltinRole string
-	Permission  string
+	UserID      int64  `json:"userId,omitempty"`
+	TeamID      int64  `json:"teamId,omitempty"`
+	BuiltinRole string `json:"builtInRole,omitempty"`
+	Permission  string `json:"permission"`
 }
 
 const (
@@ -273,6 +250,7 @@ const (
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
 	BasicRolePrefix    = "basic:"
+	PluginRolePrefix   = "plugins:"
 	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 
@@ -304,8 +282,18 @@ const (
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
+	ActionUsersPermissionsRead   = "users.permissions:read"
 
 	// Org actions
+	ActionOrgsRead             = "orgs:read"
+	ActionOrgsPreferencesRead  = "orgs.preferences:read"
+	ActionOrgsQuotasRead       = "orgs.quotas:read"
+	ActionOrgsWrite            = "orgs:write"
+	ActionOrgsPreferencesWrite = "orgs.preferences:write"
+	ActionOrgsQuotasWrite      = "orgs.quotas:write"
+	ActionOrgsDelete           = "orgs:delete"
+	ActionOrgsCreate           = "orgs:create"
+
 	ActionOrgUsersRead   = "org.users:read"
 	ActionOrgUsersAdd    = "org.users:add"
 	ActionOrgUsersRemove = "org.users:remove"
@@ -321,7 +309,8 @@ const (
 	ActionServerStatsRead = "server.stats:read"
 
 	// Settings actions
-	ActionSettingsRead = "settings:read"
+	ActionSettingsRead  = "settings:read"
+	ActionSettingsWrite = "settings:write"
 
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
@@ -336,7 +325,9 @@ const (
 	ScopeUsersAll = "users:*"
 
 	// Settings scope
-	ScopeSettingsAll = "settings:*"
+	ScopeSettingsAll  = "settings:*"
+	ScopeSettingsAuth = "settings:auth:*"
+	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -385,6 +376,10 @@ const (
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
+
+	// Alerting provisioning actions
+	ActionAlertingProvisioningRead  = "alert.provisioning:read"
+	ActionAlertingProvisioningWrite = "alert.provisioning:write"
 )
 
 var (
@@ -406,7 +401,7 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 	for _, br := range builtInRoles {
 		res[br] = struct{}{}
 		if br != RoleGrafanaAdmin {
-			for _, parent := range models.RoleType(br).Parents() {
+			for _, parent := range org.RoleType(br).Parents() {
 				res[string(parent)] = struct{}{}
 			}
 		}
@@ -414,3 +409,53 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 
 	return res
 }
+
+// Evaluators
+
+// TeamsAccessEvaluator is used to protect the "Configuration > Teams" page access
+// grants access to a user when they can either create teams or can read and update a team
+var TeamsAccessEvaluator = EvalAny(
+	EvalPermission(ActionTeamsCreate),
+	EvalAll(
+		EvalPermission(ActionTeamsRead),
+		EvalAny(
+			EvalPermission(ActionTeamsWrite),
+			EvalPermission(ActionTeamsPermissionsWrite),
+		),
+	),
+)
+
+// TeamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+var TeamsEditAccessEvaluator = EvalAll(
+	EvalPermission(ActionTeamsRead),
+	EvalAny(
+		EvalPermission(ActionTeamsCreate),
+		EvalPermission(ActionTeamsWrite),
+		EvalPermission(ActionTeamsPermissionsWrite),
+	),
+)
+
+// OrgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
+var OrgPreferencesAccessEvaluator = EvalAny(
+	EvalAll(
+		EvalPermission(ActionOrgsRead),
+		EvalPermission(ActionOrgsWrite),
+	),
+	EvalAll(
+		EvalPermission(ActionOrgsPreferencesRead),
+		EvalPermission(ActionOrgsPreferencesWrite),
+	),
+)
+
+// OrgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
+// (you need to have read access to update or delete orgs; read is the minimum)
+var OrgsAccessEvaluator = EvalPermission(ActionOrgsRead)
+
+// OrgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
+var OrgsCreateAccessEvaluator = EvalAll(
+	EvalPermission(ActionOrgsRead),
+	EvalPermission(ActionOrgsCreate),
+)
+
+// ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
+var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)

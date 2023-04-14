@@ -65,7 +65,6 @@ export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   isLoading: boolean;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
 
   // search / filtering
   query: string;
@@ -74,4 +73,8 @@ export interface ServiceAccountsState {
   totalPages: number;
   showPaging: boolean;
   serviceAccountStateFilter: ServiceAccountStateFilter;
+}
+
+export interface ServiceAccountsUpgradeStatus {
+  upgraded: boolean;
 }

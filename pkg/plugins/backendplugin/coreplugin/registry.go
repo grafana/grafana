@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -17,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -39,7 +44,15 @@ const (
 	MySQL           = "mysql"
 	MSSQL           = "mssql"
 	Grafana         = "grafana"
+	Phlare          = "phlare"
+	Parca           = "parca"
 )
+
+func init() {
+	// Non-optimal global solution to replace plugin SDK default loggers for core plugins.
+	sdklog.DefaultLogger = &logWrapper{logger: log.New("plugin.coreplugin")}
+	backend.Logger = sdklog.DefaultLogger
+}
 
 type Registry struct {
 	store map[string]backendplugin.PluginFactoryFunc
@@ -54,7 +67,7 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, phlare *phlare.Service, parca *parca.Service) *Registry {
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
 		CloudWatch:      asBackendPlugin(cw.Executor),
 		CloudMonitoring: asBackendPlugin(cm),
@@ -71,6 +84,8 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 		MySQL:           asBackendPlugin(my),
 		MSSQL:           asBackendPlugin(ms),
 		Grafana:         asBackendPlugin(graf),
+		Phlare:          asBackendPlugin(phlare),
+		Parca:           asBackendPlugin(parca),
 	})
 }
 
@@ -109,4 +124,33 @@ func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {
 	}
 
 	return nil
+}
+
+type logWrapper struct {
+	logger log.Logger
+}
+
+func (l *logWrapper) Debug(msg string, args ...interface{}) {
+	l.logger.Debug(msg, args...)
+}
+
+func (l *logWrapper) Info(msg string, args ...interface{}) {
+	l.logger.Info(msg, args...)
+}
+
+func (l *logWrapper) Warn(msg string, args ...interface{}) {
+	l.logger.Warn(msg, args...)
+}
+
+func (l *logWrapper) Error(msg string, args ...interface{}) {
+	l.logger.Error(msg, args...)
+}
+
+func (l *logWrapper) Level() sdklog.Level {
+	return sdklog.NoLevel
+}
+
+func (l *logWrapper) With(args ...interface{}) sdklog.Logger {
+	l.logger = l.logger.New(args...)
+	return l
 }

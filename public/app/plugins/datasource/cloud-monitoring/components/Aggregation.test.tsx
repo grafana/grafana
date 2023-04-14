@@ -1,11 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { shallow } from 'enzyme';
 import React from 'react';
+import { openMenu } from 'react-select-event';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { Select } from '@grafana/ui';
-
-import { ValueTypes, MetricKind } from '../types';
+import { ValueTypes, MetricKind, MetricDescriptor } from '../types';
 
 import { Aggregation, Props } from './Aggregation';
 
@@ -16,7 +14,7 @@ const props: Props = {
   metricDescriptor: {
     valueType: '',
     metricKind: '',
-  } as any,
+  } as unknown as MetricDescriptor,
   crossSeriesReducer: '',
   groupBys: [],
   templateVariableOptions: [],
@@ -35,18 +33,15 @@ describe('Aggregation', () => {
         metricDescriptor: {
           valueType: ValueTypes.DOUBLE,
           metricKind: MetricKind.GAUGE,
-        } as any,
+        } as MetricDescriptor,
       };
 
       it('should not have the reduce values', () => {
-        const wrapper = shallow(<Aggregation {...nextProps} />);
-        const { options } = wrapper.find(Select).props() as any;
-        const [, aggGroup] = options;
-
-        expect(aggGroup.options.length).toEqual(11);
-        expect(aggGroup.options.map((o: any) => o.value)).toEqual(
-          expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
-        );
+        render(<Aggregation {...nextProps} />);
+        const label = screen.getByLabelText('Group by function');
+        openMenu(label);
+        expect(screen.queryByText('count true')).not.toBeInTheDocument();
+        expect(screen.queryByText('count false')).not.toBeInTheDocument();
       });
     });
 
@@ -56,16 +51,14 @@ describe('Aggregation', () => {
         metricDescriptor: {
           valueType: ValueTypes.MONEY,
           metricKind: MetricKind.CUMULATIVE,
-        } as any,
+        } as MetricDescriptor,
       };
 
       it('should have the reduce values', () => {
-        const wrapper = shallow(<Aggregation {...nextProps} />);
-        const { options } = wrapper.find(Select).props() as any;
-        const [, aggGroup] = options;
-
-        expect(aggGroup.options.length).toEqual(11);
-        expect(aggGroup.options.map((o: any) => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
+        render(<Aggregation {...nextProps} />);
+        const label = screen.getByLabelText('Group by function');
+        openMenu(label);
+        expect(screen.getByText('none')).toBeInTheDocument();
       });
     });
   });

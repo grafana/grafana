@@ -24,13 +24,7 @@ export function getPageStyles(theme: GrafanaTheme2) {
       flex-grow: 1;
       height: 100%;
       flex: 1 1 0;
-    }
-
-    .page-scrollbar-wrapper {
-      width: 100%;
-      flex-grow: 1;
-      width: 100%;
-      min-height: 0;
+      min-width: 0;
     }
 
     .page-scrollbar-content {
@@ -96,7 +90,8 @@ export function getPageStyles(theme: GrafanaTheme2) {
       align-items: flex-start;
 
       > a,
-      > button {
+      > button,
+      > div:nth-child(2) {
         margin-left: ${theme.spacing(2)};
       }
     }
@@ -117,6 +112,10 @@ export function getPageStyles(theme: GrafanaTheme2) {
     .page-sub-heading-icon {
       margin-left: ${theme.spacing(1)};
       margin-top: ${theme.spacing(0.5)};
+    }
+
+    .page-hidden {
+      display: none;
     }
   `;
 }

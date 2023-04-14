@@ -10,10 +10,10 @@ import { backendSrv } from '../../../core/services/backend_srv';
 import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, Props } from './AnnoListPanel';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -41,6 +41,8 @@ const defaultResult: any = {
   panelId: 13,
   dashboardId: 14, // deliberately different from panelId
   id: 14,
+  uid: '7MeksYbmk',
+  dashboardUID: '7MeksYbmk',
   url: '/d/asdkjhajksd/some-dash',
 };
 
@@ -53,7 +55,7 @@ async function setupTestContext({
   const getMock = jest.spyOn(backendSrv, 'get');
   getMock.mockResolvedValue(results);
 
-  const dash: any = { id: 1, formatDate: (time: number) => new Date(time).toISOString() };
+  const dash: any = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
   const dashSrv: any = { getCurrent: () => dash };
   setDashboardSrv(dashSrv);
   const pushSpy = jest.spyOn(locationService, 'push');
@@ -99,7 +101,7 @@ describe('AnnoListPanel', () => {
       expect(getMock).toHaveBeenCalledWith(
         '/api/annotations',
         {
-          dashboardId: 1,
+          dashboardUID: 'srx16xR4z',
           limit: 10,
           tags: ['tag A', 'tag B'],
           type: 'annotation',
@@ -128,6 +130,16 @@ describe('AnnoListPanel', () => {
       expect(screen.getByText('Result tag A')).toBeInTheDocument();
       expect(screen.getByText('Result tag B')).toBeInTheDocument();
       expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
+    });
+
+    it("renders annotation item's html content", async () => {
+      const { getMock } = await setupTestContext({
+        results: [{ ...defaultResult, text: '<a href="">test link </a> ' }],
+      });
+
+      getMock.mockClear();
+      expect(screen.getByRole('link')).toBeInTheDocument();
+      expect(getMock).not.toHaveBeenCalled();
     });
 
     describe('and login property is missing in annotation', () => {
@@ -201,11 +213,11 @@ describe('AnnoListPanel', () => {
         const { getMock, pushSpy } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        await userEvent.click(screen.getByText(/result text/i));
+        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
-        expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardIds: 14 });
+        expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardUIDs: '7MeksYbmk' });
         expect(pushSpy).toHaveBeenCalledTimes(1);
         expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
       });
@@ -216,14 +228,15 @@ describe('AnnoListPanel', () => {
         const { getMock } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        await userEvent.click(screen.getByText('Result tag B'));
+
+        expect(screen.getByRole('button', { name: /result tag b/i })).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /result tag b/i }));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
           '/api/annotations',
           {
-            dashboardId: 1,
+            dashboardUID: 'srx16xR4z',
             limit: 10,
             tags: ['tag A', 'tag B', 'Result tag B'],
             type: 'annotation',
@@ -247,7 +260,7 @@ describe('AnnoListPanel', () => {
         expect(getMock).toHaveBeenCalledWith(
           '/api/annotations',
           {
-            dashboardId: 1,
+            dashboardUID: 'srx16xR4z',
             limit: 10,
             tags: ['tag A', 'tag B'],
             type: 'annotation',

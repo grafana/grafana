@@ -2,24 +2,25 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, VariableSupportType } from '@grafana/data';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { NEW_VARIABLE_ID } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { KeyedVariableIdentifier } from '../state/types';
-import { VariableModel } from '../types';
+import { QueryVariableModel } from '../types';
 
 import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
 
 const setupTestContext = (options: Partial<Props>) => {
-  const variableDefaults: Partial<VariableModel> = { rootStateKey: 'key' };
+  const variableDefaults: Partial<QueryVariableModel> = { rootStateKey: 'key' };
   const extended = {
     VariableQueryEditor: LegacyVariableQueryEditor,
     dataSource: {} as unknown as DataSourceApi,
   };
+
   const defaults: Props = {
     variable: { ...initialQueryVariableModelState, ...variableDefaults },
     initQueryVariableEditor: jest.fn(),
@@ -63,6 +64,42 @@ describe('QueryVariableEditor', () => {
     });
   });
 
+  describe('when the editor is rendered', () => {
+    const extendedCustom = {
+      extended: {
+        VariableQueryEditor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+        dataSource: {
+          variables: {
+            getType: () => VariableSupportType.Custom,
+            query: jest.fn(),
+            editor: jest.fn(),
+          },
+        } as unknown as DataSourceApi,
+      },
+    };
+    it('should pass down the query with default values if the datasource config defines it', () => {
+      const extended = { ...extendedCustom };
+      extended.extended.dataSource.variables!.getDefaultQuery = jest
+        .fn()
+        .mockImplementation(() => 'some default query');
+      const { props } = setupTestContext(extended);
+      expect(props.extended?.dataSource?.variables?.getDefaultQuery).toBeDefined();
+      expect(props.extended?.dataSource?.variables?.getDefaultQuery).toHaveBeenCalledTimes(1);
+      expect(props.extended?.VariableQueryEditor).toHaveBeenCalledWith(
+        expect.objectContaining({ query: 'some default query' }),
+        expect.anything()
+      );
+    });
+    it('should not pass down a default query if the datasource config doesnt define it', () => {
+      extendedCustom.extended.dataSource.variables!.getDefaultQuery = undefined;
+      const { props } = setupTestContext(extendedCustom);
+      expect(props.extended?.dataSource?.variables?.getDefaultQuery).not.toBeDefined();
+      expect(props.extended?.VariableQueryEditor).toHaveBeenCalledWith(
+        expect.objectContaining({ query: '' }),
+        expect.anything()
+      );
+    });
+  });
   describe('when the user changes', () => {
     it.each`
       fieldName  | propName                      | expectedArgs
@@ -109,7 +146,7 @@ describe('QueryVariableEditor', () => {
 const getQueryField = () =>
   screen.getByRole('textbox', { name: /variable editor form default variable query editor textarea/i });
 
-const getRegExField = () => screen.getByLabelText('Regex');
+const getRegExField = () => screen.getByLabelText(/Regex/);
 
 const fieldAccessors: Record<string, () => HTMLElement> = {
   query: getQueryField,

@@ -5,11 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "Stale query history can be deleted",
 		func(t *testing.T, sc scenarioContext) {
 			olderThan := time.Now().Unix() + 60

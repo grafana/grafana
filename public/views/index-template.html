@@ -10,20 +10,14 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link
-      rel="preload"
-      href="[[.ContentDeliveryURL]]public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
-      as="font"
-      crossorigin
-    />
-
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
+    <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .Theme "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
-    [[ else ]]
+    [[ else if eq .Theme "dark" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
     [[ end ]]
 
@@ -194,8 +188,7 @@
           2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not
           using a reverse proxy make sure to set serve_from_sub_path to true.<br />
           <br />
-          3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn
-          build<br />
+          3. If you have a local dev build make sure you build frontend using: yarn start, or yarn build<br />
           <br />
           4. Sometimes restarting grafana-server can help<br />
           <br />
@@ -257,6 +250,26 @@
           dark: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
         }
       };
+
+      // Set theme to match system only on startup.
+      // Do not react to changes in system theme after startup.
+      if (window.grafanaBootData.user.theme === "system") {
+        document.body.classList.remove("theme-system");
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var cssLink = document.createElement("link");
+        cssLink.rel = 'stylesheet';
+
+        if (darkQuery.matches) {
+          document.body.classList.add("theme-dark");
+          cssLink.href = window.grafanaBootData.themePaths.dark;
+          window.grafanaBootData.user.lightTheme = false;
+        } else {
+          document.body.classList.add("theme-light");
+          cssLink.href = window.grafanaBootData.themePaths.light;
+          window.grafanaBootData.user.lightTheme = true;
+        }
+        document.head.appendChild(cssLink);
+      }
 
       window.__grafana_load_failed = function() {
         var preloader = document.getElementsByClassName("preloader");

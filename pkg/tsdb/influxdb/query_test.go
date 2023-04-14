@@ -49,7 +49,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") FROM "policy"."cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(10s) fill(null)`)
+			require.Equal(t, rawQuery, `SELECT mean("value") FROM "policy"."cpu" WHERE time >= 1596240000000ms and time <= 1596240300000ms GROUP BY time(10s) fill(null)`)
 		})
 
 		t.Run("can build query with tz", func(t *testing.T) {
@@ -63,7 +63,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s) tz('Europe/Paris')`)
+			require.Equal(t, rawQuery,
+				`SELECT mean("value") FROM "cpu" WHERE time >= 1596240000000ms and time <= 1596240300000ms GROUP BY time(5s) tz('Europe/Paris')`)
 		})
 
 		t.Run("can build query with tz, limit, slimit, orderByTime and puts them in the correct order", func(t *testing.T) {
@@ -80,7 +81,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s) ORDER BY time ASC limit 1 slimit 1 tz('Europe/Paris')`)
+			require.Equal(t, rawQuery,
+				`SELECT mean("value") FROM "cpu" WHERE time >= 1596240000000ms and time <= 1596240300000ms GROUP BY time(5s) ORDER BY time ASC limit 1 slimit 1 tz('Europe/Paris')`)
 		})
 
 		t.Run("can build query with group bys", func(t *testing.T) {
@@ -94,7 +96,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s), "datacenter" fill(null)`)
+			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time >= 1596240000000ms and time <= 1596240300000ms GROUP BY time(5s), "datacenter" fill(null)`)
 		})
 
 		t.Run("can build query with math part", func(t *testing.T) {
@@ -106,7 +108,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") / 100 FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms`)
+			require.Equal(t, rawQuery,
+				`SELECT mean("value") / 100 FROM "cpu" WHERE time >= 1596240000000ms and time <= 1596240300000ms`)
 		})
 
 		t.Run("can build query with math part using $__interval_ms variable", func(t *testing.T) {
@@ -118,7 +121,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") / 5000 FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms`)
+			require.Equal(t, rawQuery,
+				`SELECT mean("value") / 5000 FROM "cpu" WHERE time >= 1596240000000ms and time <= 1596240300000ms`)
 		})
 
 		t.Run("can build query with old $interval variable", func(t *testing.T) {
@@ -132,7 +136,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			require.NoError(t, err)
-			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(200ms)`)
+			require.Equal(t, rawQuery,
+				`SELECT mean("value") FROM "cpu" WHERE time >= 1596240000000ms and time <= 1596240300000ms GROUP BY time(200ms)`)
 		})
 
 		t.Run("can render time range", func(t *testing.T) {
@@ -150,7 +155,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 						},
 					},
 				}
-				require.Equal(t, query.renderTimeFilter(queryContext), "time > 1596240000000ms and time < 1596243600000ms")
+				require.Equal(t, query.renderTimeFilter(queryContext),
+					"time >= 1596240000000ms and time <= 1596243600000ms")
 			})
 
 			t.Run("render from: 10m", func(t *testing.T) {
@@ -165,7 +171,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 						},
 					},
 				}
-				require.Equal(t, query.renderTimeFilter(queryContext), "time > 1596240000000ms and time < 1596240600000ms")
+				require.Equal(t, query.renderTimeFilter(queryContext),
+					"time >= 1596240000000ms and time <= 1596240600000ms")
 			})
 		})
 

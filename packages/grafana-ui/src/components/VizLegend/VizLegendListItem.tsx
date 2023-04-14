@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendStatsList } from './VizLegendStatsList';
@@ -13,36 +13,42 @@ import { VizLegendItem } from './types';
 export interface Props<T> {
   item: VizLegendItem<T>;
   className?: string;
-  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLDivElement>) => void;
-  onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
+  onLabelMouseOver?: (
+    item: VizLegendItem,
+    event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
+  ) => void;
+  onLabelMouseOut?: (
+    item: VizLegendItem,
+    event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
+  ) => void;
   readonly?: boolean;
 }
 
 /**
  * @internal
  */
-export const VizLegendListItem = <T extends unknown = any>({
+export const VizLegendListItem = <T = unknown,>({
   item,
   onLabelClick,
-  onLabelMouseEnter,
+  onLabelMouseOver,
   onLabelMouseOut,
   className,
   readonly,
 }: Props<T>) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
-  const onMouseEnter = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      if (onLabelMouseEnter) {
-        onLabelMouseEnter(item, event);
+  const onMouseOver = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
+      if (onLabelMouseOver) {
+        onLabelMouseOver(item, event);
       }
     },
-    [item, onLabelMouseEnter]
+    [item, onLabelMouseOver]
   );
 
   const onMouseOut = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
       if (onLabelMouseOut) {
         onLabelMouseOut(item, event);
       }
@@ -51,7 +57,7 @@ export const VizLegendListItem = <T extends unknown = any>({
   );
 
   const onClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (onLabelClick) {
         onLabelClick(item, event);
       }
@@ -65,14 +71,19 @@ export const VizLegendListItem = <T extends unknown = any>({
       aria-label={selectors.components.VizLegend.seriesName(item.label)}
     >
       <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
-      <div
-        onMouseEnter={onMouseEnter}
+      <button
+        disabled={readonly}
+        type="button"
+        title={item.label}
+        onBlur={onMouseOut}
+        onFocus={onMouseOver}
+        onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}
-        onClick={!readonly ? onClick : undefined}
-        className={cx(styles.label, !readonly && styles.clickable)}
+        onClick={onClick}
+        className={styles.label}
       >
         {item.label}
-      </div>
+      </button>
 
       {item.getDisplayValues && <VizLegendStatsList stats={item.getDisplayValues()} />}
     </div>
@@ -81,18 +92,22 @@ export const VizLegendListItem = <T extends unknown = any>({
 
 VizLegendListItem.displayName = 'VizLegendListItem';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   label: css`
     label: LegendLabel;
     white-space: nowrap;
-  `,
-  clickable: css`
-    label: LegendClickabel;
-    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: inherit;
+    padding: 0;
+    user-select: text;
+    max-width: 600px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   `,
   itemDisabled: css`
     label: LegendLabelDisabled;
-    color: ${theme.colors.linkDisabled};
+    color: ${theme.colors.text.disabled};
   `,
   itemWrapper: css`
     label: LegendItemWrapper;
@@ -105,6 +120,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     text-align: right;
   `,
   yAxisLabel: css`
-    color: ${theme.palette.gray2};
+    color: ${theme.v1.palette.gray2};
   `,
 });

@@ -4,6 +4,16 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
+// swagger:route GET /api/v1/ngalert configuration RouteGetStatus
+//
+//  Get the status of the alerting engine
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//		 200: AlertingStatus
+
 // swagger:route GET /api/v1/ngalert/alertmanagers configuration RouteGetAlertmanagers
 //
 //  Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.
@@ -58,20 +68,19 @@ type NGalertConfig struct {
 type AlertmanagersChoice string
 
 const (
-	AllAlertmanagers      AlertmanagersChoice = "all"
-	InternalAlertmanager  AlertmanagersChoice = "internal"
-	ExternalAlertmanagers AlertmanagersChoice = "external"
+	AllAlertmanagers           AlertmanagersChoice = "all"
+	InternalAlertmanager       AlertmanagersChoice = "internal"
+	ExternalAlertmanagers      AlertmanagersChoice = "external"
+	HandleGrafanaManagedAlerts                     = "handleGrafanaManagedAlerts"
 )
 
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers       []string            `json:"alertmanagers"`
 	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
-	Alertmanagers       []string            `json:"alertmanagers"`
 	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
@@ -79,4 +88,10 @@ type GettableNGalertConfig struct {
 type GettableAlertmanagers struct {
 	Status string                 `json:"status"`
 	Data   v1.AlertManagersResult `json:"data"`
+}
+
+// swagger:model
+type AlertingStatus struct {
+	AlertmanagersChoice      AlertmanagersChoice `json:"alertmanagersChoice"`
+	NumExternalAlertmanagers int                 `json:"numExternalAlertmanagers"`
 }

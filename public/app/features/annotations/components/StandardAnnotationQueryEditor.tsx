@@ -2,7 +2,15 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { AnnotationEventMappings, AnnotationQuery, DataQuery, DataSourceApi, LoadingState } from '@grafana/data';
+import {
+  AnnotationEventMappings,
+  AnnotationQuery,
+  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourcePluginContextProvider,
+  LoadingState,
+} from '@grafana/data';
 import { Button, Icon, IconName, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -14,8 +22,9 @@ import { AnnotationQueryResponse } from '../types';
 
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
-interface Props {
+export interface Props {
   datasource: DataSourceApi;
+  datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;
   onChange: (annotation: AnnotationQuery<DataQuery>) => void;
 }
@@ -26,7 +35,7 @@ interface State {
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
-  state = {} as State;
+  state: State = {};
 
   componentDidMount() {
     this.verifyDataSource();
@@ -76,7 +85,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       executeAnnotationQuery(
         {
           range: getTimeSrv().timeRange(),
-          panel: {} as PanelModel,
+          panel: new PanelModel({}),
           dashboard,
         },
         datasource,
@@ -168,7 +177,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   };
 
   render() {
-    const { datasource, annotation } = this.props;
+    const { datasource, annotation, datasourceInstanceSettings } = this.props;
     const { response } = this.state;
 
     // Find the annotation runner
@@ -177,20 +186,26 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    const query = annotation.target ?? { refId: 'Anno' };
+    const query = {
+      ...datasource.annotations?.getDefaultQuery?.(),
+      ...(annotation.target ?? { refId: 'Anno' }),
+    };
+
     return (
       <>
-        <QueryEditor
-          key={datasource?.name}
-          query={query}
-          datasource={datasource}
-          onChange={this.onQueryChange}
-          onRunQuery={this.onRunQuery}
-          data={response?.panelData}
-          range={getTimeSrv().timeRange()}
-          annotation={annotation}
-          onAnnotationChange={this.onAnnotationChange}
-        />
+        <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
+          <QueryEditor
+            key={datasource?.name}
+            query={query}
+            datasource={datasource}
+            onChange={this.onQueryChange}
+            onRunQuery={this.onRunQuery}
+            data={response?.panelData}
+            range={getTimeSrv().timeRange()}
+            annotation={annotation}
+            onAnnotationChange={this.onAnnotationChange}
+          />
+        </DataSourcePluginContextProvider>
         {shouldUseMappingUI(datasource) && (
           <>
             {this.renderStatus()}

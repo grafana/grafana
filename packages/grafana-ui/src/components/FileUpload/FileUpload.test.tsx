@@ -9,14 +9,14 @@ import { FileUpload } from './FileUpload';
 describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
     render(<FileUpload onFileUpload={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Upload file' })).toBeInTheDocument();
+    expect(screen.getByText('Upload file')).toBeInTheDocument();
     expect(screen.queryByLabelText('File name')).toBeNull();
   });
 
   it('clicking the button should trigger the input', async () => {
     const mockInputOnClick = jest.fn();
     const { getByTestId } = render(<FileUpload onFileUpload={() => {}} />);
-    const button = screen.getByRole('button', { name: 'Upload file' });
+    const button = screen.getByText('Upload file');
     const input = getByTestId(selectors.components.FileUpload.inputField);
 
     // attach a click listener to the input
@@ -30,7 +30,7 @@ describe('FileUpload', () => {
     const testFileName = 'grafana.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} />);
+    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
     let uploader = getByTestId(selectors.components.FileUpload.inputField);
     await waitFor(() =>
       fireEvent.change(uploader, {
@@ -45,7 +45,7 @@ describe('FileUpload', () => {
     const testFileName = 'longFileName.something.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} />);
+    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
     let uploader = getByTestId(selectors.components.FileUpload.inputField);
     await waitFor(() =>
       fireEvent.change(uploader, {

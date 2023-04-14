@@ -3,10 +3,10 @@ import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types';
 
-import { highlightTrial } from '../../admin/utils';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+import { GenericDataSourcePlugin } from '../types';
 
 const loadingDSType = 'Loading';
 
@@ -68,7 +68,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     dsPermissions.tabSuffix = () => ProBadge({ experimentId: permissionsExperimentId, eventVariant: 'trial' });
   }
 
-  if (featureEnabled('dspermissions')) {
+  if (featureEnabled('dspermissions.enforcement')) {
     if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
       navModel.children!.push(dsPermissions);
     }
@@ -94,7 +94,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('analytics')) {
-    navModel.children!.push(analytics);
+    if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)) {
+      navModel.children!.push(analytics);
+    }
   } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...analytics,
@@ -119,7 +121,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('caching')) {
-    navModel.children!.push(caching);
+    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource)) {
+      navModel.children!.push(caching);
+    }
   } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...caching,

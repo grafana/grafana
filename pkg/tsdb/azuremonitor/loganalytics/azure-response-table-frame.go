@@ -5,14 +5,49 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
+func apiErrorToNotice(err *AzureLogAnalyticsAPIError) data.Notice {
+	message := []string{}
+	severity := data.NoticeSeverityWarning
+	if err.Message != nil {
+		message = append(message, *err.Message)
+	}
+	if err.Details != nil && len(*err.Details) > 0 {
+		for _, detail := range *err.Details {
+			if detail.Message != nil {
+				message = append(message, *detail.Message)
+			}
+			if detail.Innererror != nil {
+				if detail.Innererror.Message != nil {
+					message = append(message, *detail.Innererror.Message)
+				}
+				if detail.Innererror.SeverityName != nil && *detail.Innererror.SeverityName == "Error" {
+					// Severity names are not documented in the API response format
+					// https://docs.microsoft.com/en-us/azure/azure-monitor/logs/api/response-format
+					// so assuming either an error or a warning
+					severity = data.NoticeSeverityError
+				}
+			}
+		}
+	}
+	return data.Notice{
+		Severity: severity,
+		Text:     strings.Join(message, " "),
+	}
+}
+
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
-func ResponseTableToFrame(table *types.AzureResponseTable) (*data.Frame, error) {
+func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string) (*data.Frame, error) {
+	if len(table.Rows) == 0 {
+		return nil, nil
+	}
+
 	converterFrame, err := converterFrameForTable(table)
 	if err != nil {
 		return nil, err
@@ -25,6 +60,7 @@ func ResponseTableToFrame(table *types.AzureResponseTable) (*data.Frame, error) 
 			}
 		}
 	}
+
 	return converterFrame.Frame, nil
 }
 

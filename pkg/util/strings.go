@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -31,6 +32,16 @@ func stringsFallback(vals ...string) string {
 func SplitString(str string) []string {
 	if len(str) == 0 {
 		return []string{}
+	}
+
+	// JSON list syntax support
+	if strings.Index(strings.TrimSpace(str), "[") == 0 {
+		var res []string
+		err := json.Unmarshal([]byte(str), &res)
+		if err != nil {
+			return []string{}
+		}
+		return res
 	}
 
 	return strings.Fields(strings.ReplaceAll(str, ",", " "))
@@ -116,4 +127,18 @@ func Capitalize(s string) string {
 	r := []rune(s)
 	r[0] = unicode.ToUpper(r[0])
 	return string(r)
+}
+
+func ByteCountSI(b int64) string {
+	const unit = 1000
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB",
+		float64(b)/float64(div), "kMGTPE"[exp])
 }

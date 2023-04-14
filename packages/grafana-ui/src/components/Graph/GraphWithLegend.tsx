@@ -15,6 +15,7 @@ import { Graph, GraphProps } from './Graph';
 
 export interface GraphWithLegendProps extends GraphProps {
   legendDisplayMode: LegendDisplayMode;
+  legendVisibility: boolean;
   placement: LegendPlacement;
   hideEmpty?: boolean;
   hideZero?: boolean;
@@ -46,7 +47,7 @@ const shouldHideLegendItem = (data: GraphSeriesValue[][], hideEmpty = false, hid
   return (hideEmpty && isNullOnlySeries) || (hideZero && isZeroOnlySeries);
 };
 
-export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (props: GraphWithLegendProps) => {
+export const GraphWithLegend = (props: GraphWithLegendProps) => {
   const {
     series,
     timeRange,
@@ -58,6 +59,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     sortLegendBy,
     sortLegendDesc,
     legendDisplayMode,
+    legendVisibility,
     placement,
     onSeriesToggle,
     onToggleSort,
@@ -106,7 +108,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
         </Graph>
       </div>
 
-      {legendDisplayMode !== LegendDisplayMode.Hidden && (
+      {legendVisibility && (
         <div className={legendContainer}>
           <CustomScrollbar hideHorizontalTrack>
             <VizLegend

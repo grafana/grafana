@@ -2,28 +2,16 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
-
-const (
-	headerName  = "httpHeaderName"
-	headerValue = "httpHeaderValue"
-)
-
-var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
-	return oAuthTokenService.IsOAuthPassThruEnabled(ds)
-}
 
 type Service struct {
 	pluginsClient      plugins.Client
@@ -40,8 +28,8 @@ func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.O
 	}
 }
 
-//nolint: staticcheck // legacydata.DataResponse deprecated
-func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
+//nolint:staticcheck // legacydata.DataResponse deprecated
+func (h *Service) HandleRequest(ctx context.Context, ds *datasources.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
 	decryptedJsonData, err := h.dataSourcesService.DecryptedValues(ctx, ds)
 	if err != nil {
 		return legacydata.DataResponse{}, err
@@ -50,13 +38,6 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 	req, err := generateRequest(ctx, ds, decryptedJsonData, query)
 	if err != nil {
 		return legacydata.DataResponse{}, err
-	}
-
-	// Attach Auth information
-	if oAuthIsOAuthPassThruEnabledFunc(h.oAuthTokenService, ds) {
-		if token := h.oAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
-			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-		}
 	}
 
 	resp, err := h.pluginsClient.QueryData(ctx, req)
@@ -91,16 +72,16 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 	return tR, nil
 }
 
-func generateRequest(ctx context.Context, ds *models.DataSource, decryptedJsonData map[string]string, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
+func generateRequest(ctx context.Context, ds *datasources.DataSource, decryptedJsonData map[string]string, query legacydata.DataQuery) (*backend.QueryDataRequest, error) {
 	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
 	instanceSettings := &backend.DataSourceInstanceSettings{
-		ID:                      ds.Id,
+		ID:                      ds.ID,
 		Name:                    ds.Name,
-		URL:                     ds.Url,
+		URL:                     ds.URL,
 		Database:                ds.Database,
 		User:                    ds.User,
 		BasicAuthEnabled:        ds.BasicAuth,
@@ -108,7 +89,7 @@ func generateRequest(ctx context.Context, ds *models.DataSource, decryptedJsonDa
 		JSONData:                jsonDataBytes,
 		DecryptedSecureJSONData: decryptedJsonData,
 		Updated:                 ds.Updated,
-		UID:                     ds.Uid,
+		UID:                     ds.UID,
 	}
 
 	if query.Headers == nil {
@@ -117,18 +98,13 @@ func generateRequest(ctx context.Context, ds *models.DataSource, decryptedJsonDa
 
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			OrgID:                      ds.OrgId,
+			OrgID:                      ds.OrgID,
 			PluginID:                   ds.Type,
 			User:                       adapters.BackendUserFromSignedInUser(query.User),
 			DataSourceInstanceSettings: instanceSettings,
 		},
 		Queries: []backend.DataQuery{},
 		Headers: query.Headers,
-	}
-
-	// Apply Configured Custom Headers to query request.
-	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
-		req.Headers[k] = v
 	}
 
 	for _, q := range query.Queries {
@@ -149,26 +125,6 @@ func generateRequest(ctx context.Context, ds *models.DataSource, decryptedJsonDa
 		})
 	}
 	return req, nil
-}
-
-func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
-	if jsonData == nil {
-		return nil
-	}
-
-	data := jsonData.MustMap()
-
-	headers := map[string]string{}
-	for k := range data {
-		if strings.HasPrefix(k, headerName) {
-			if header, ok := data[k].(string); ok {
-				valueKey := strings.ReplaceAll(k, headerName, headerValue)
-				headers[header] = decryptedJsonData[valueKey]
-			}
-		}
-	}
-
-	return headers
 }
 
 var _ legacydata.RequestHandler = &Service{}

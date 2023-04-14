@@ -6,6 +6,7 @@
 name: "CodeQL"
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, v1.8.x, v2.0.x, v2.1.x, v2.6.x, v3.0.x, v3.1.x, v4.0.x, v4.1.x, v4.2.x, v4.3.x, v4.4.x, v4.5.x, v4.6.x, v4.7.x, v5.0.x, v5.1.x, v5.2.x, v5.3.x, v5.4.x, v6.0.x, v6.1.x, v6.2.x, v6.3.x, v6.4.x, v6.5.x, v6.6.x, v6.7.x, v7.0.x, v7.1.x, v7.2.x]
     paths-ignore:
@@ -39,9 +40,15 @@ jobs:
         # a pull request then we can checkout the head.
         fetch-depth: 2
 
+    - if: matrix.language == 'go'
+      name: Set go version
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.19.2'
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -49,5 +56,11 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
+    - if: matrix.language == 'go'
+      name: Build go files
+      run: |
+        go mod verify
+        make build-go
+
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2

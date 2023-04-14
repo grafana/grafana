@@ -166,16 +166,21 @@ interface ModalState {
 ##### Emotion class names
 
 ```typescript
-const getStyles  = = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   // bad
   ElementWrapper: css`...`,
   // bad
-  ["element-wrapper"]: css`...`,
+  ['element-wrapper']: css`...`,
 
   // good
-  elementWrapper: css`...`,
+  elementWrapper: css({
+    padding: theme.spacing(1, 2),
+    background: theme.colors.background.secondary,
+  }),
 });
 ```
+
+Use hook useStyles2(getStyles) to memoize the styles generation and try to avoid passing props to the the getStyles function and instead compose classes using emotion cx function.
 
 #### Use `ALL_CAPS` for constants.
 
@@ -348,11 +353,25 @@ static defaultProps: Partial<Props> = { ... }
 
 ### How to declare functional components
 
-We recommend using named regular functions when creating a new react functional component.
+We prefer using function declarations over function expressions when creating a new react functional component.
 
 ```typescript
-export function Component(props: Props): ReactElement { ... }
+// bad
+export const Component = (props: Props) => { ... }
+
+// bad
+export const Component: React.FC<Props> = (props) => { ... }
+
+// good
+export function Component(props: Props) { ... }
 ```
+
+Some interesting readings on the topic:
+
+- [Create React App: Remove React.FC from typescript template](https://github.com/facebook/create-react-app/pull/8177)
+- [Kent C. Dodds: How to write a React Component in Typescript](https://kentcdodds.com/blog/how-to-write-a-react-component-in-typescript)
+- [Kent C. Dodds: Function forms](https://kentcdodds.com/blog/function-forms)
+- [Sam Hendrickx: Why you probably shouldn't use React.FC?](https://medium.com/raccoons-group/why-you-probably-shouldnt-use-react-fc-to-type-your-react-components-37ca1243dd13)
 
 ## State management
 

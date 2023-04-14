@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert } from 'app/types/unified-alerting';
+import { dateTime } from '@grafana/data';
+import { Alert, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
@@ -13,12 +12,14 @@ import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   instances: Alert[];
+  pagination?: PaginationProps;
+  footerRow?: JSX.Element;
 }
 
 type AlertTableColumnProps = DynamicTableColumnProps<Alert>;
 type AlertTableItemProps = DynamicTableItemProps<Alert>;
 
-export const AlertInstancesTable: FC<Props> = ({ instances }) => {
+export const AlertInstancesTable = ({ instances, pagination, footerRow }: Props) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -34,32 +35,11 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
       isExpandable={true}
       items={items}
       renderExpandedContent={({ data }) => <AlertInstanceDetails instance={data} />}
+      pagination={pagination}
+      footerRow={footerRow}
     />
   );
 };
-
-export const getStyles = (theme: GrafanaTheme2) => ({
-  colExpand: css`
-    width: 36px;
-  `,
-  colState: css`
-    width: 110px;
-  `,
-  labelsCell: css`
-    padding-top: ${theme.spacing(0.5)} !important;
-    padding-bottom: ${theme.spacing(0.5)} !important;
-  `,
-  createdCell: css`
-    white-space: nowrap;
-  `,
-  table: css`
-    td {
-      vertical-align: top;
-      padding-top: ${theme.spacing(1)};
-      padding-bottom: ${theme.spacing(1)};
-    }
-  `,
-});
 
 const columns: AlertTableColumnProps[] = [
   {
@@ -80,7 +60,7 @@ const columns: AlertTableColumnProps[] = [
     label: 'Created',
     // eslint-disable-next-line react/display-name
     renderCell: ({ data: { activeAt } }) => (
-      <>{activeAt.startsWith('0001') ? '-' : activeAt.slice(0, 19).replace('T', ' ')}</>
+      <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>
     ),
     size: '150px',
   },

@@ -1,17 +1,15 @@
-import { isUndefined, omitBy } from 'lodash';
-import { Validate } from 'react-hook-form';
+import { uniqueId } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField, parseMatcher } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { parseInterval, timeOptions } from './time';
-
-const defaultValueAndType: [string, string] = ['', ''];
+import { findExistingRoute } from './routeTree';
+import { isValidPrometheusDuration } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -29,25 +27,6 @@ const matchersToArrayFieldMatchers = (
     [] as MatcherFieldValue[]
   );
 
-const intervalToValueAndType = (
-  strValue: string | undefined,
-  defaultValue?: typeof defaultValueAndType
-): [string, string] => {
-  if (!strValue) {
-    return defaultValue ?? defaultValueAndType;
-  }
-
-  const [value, valueType] = strValue ? parseInterval(strValue) : [undefined, undefined];
-
-  const timeOption = timeOptions.find((opt) => opt.value === valueType);
-
-  if (!value || !timeOption) {
-    return defaultValueAndType;
-  }
-
-  return [String(value), timeOption.value];
-};
-
 const selectableValueToString = (selectableValue: SelectableValue<string>): string => selectableValue.value!;
 
 const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefined): string[] =>
@@ -59,130 +38,192 @@ export const emptyArrayFieldMatcher: MatcherFieldValue = {
   operator: MatcherOperator.equal,
 };
 
+// Default route group_by labels for newly created routes.
+export const defaultGroupBy = ['grafana_folder', 'alertname'];
+
+// Common route group_by options for multiselect drop-down
+export const commonGroupByOptions = [
+  { label: 'grafana_folder', value: 'grafana_folder' },
+  { label: 'alertname', value: 'alertname' },
+  { label: 'Disable (...)', value: '...' },
+];
+
 export const emptyRoute: FormAmRoute = {
   id: '',
   overrideGrouping: false,
-  groupBy: [],
+  groupBy: defaultGroupBy,
   object_matchers: [],
   routes: [],
   continue: false,
   receiver: '',
   overrideTimings: false,
   groupWaitValue: '',
-  groupWaitValueType: timeOptions[0].value,
   groupIntervalValue: '',
-  groupIntervalValueType: timeOptions[0].value,
   repeatIntervalValue: '',
-  repeatIntervalValueType: timeOptions[0].value,
   muteTimeIntervals: [],
 };
 
-//returns route, and a record mapping id to existing route route
-export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Record<string, Route>] => {
-  if (!route || Object.keys(route).length === 0) {
-    return [emptyRoute, {}];
+/**
+ * We need to deal with multiple (deprecated) properties such as "match" and "match_re"
+ * this function will normalize all of the different ways to define matchers in to a single one.
+ */
+export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
+  const matchers: ObjectMatcher[] = [];
+
+  if (route.matchers) {
+    route.matchers.forEach((matcher) => {
+      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
+      let operator = MatcherOperator.equal;
+
+      if (isEqual && isRegex) {
+        operator = MatcherOperator.regex;
+      }
+      if (!isEqual && isRegex) {
+        operator = MatcherOperator.notRegex;
+      }
+      if (isEqual && !isRegex) {
+        operator = MatcherOperator.equal;
+      }
+      if (!isEqual && !isRegex) {
+        operator = MatcherOperator.notEqual;
+      }
+
+      matchers.push([name, operator, value]);
+    });
   }
 
-  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
-  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
-  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
+  if (route.object_matchers) {
+    matchers.push(...route.object_matchers);
+  }
 
-  const id = String(Math.random());
-  const id2route = {
-    [id]: route,
-  };
-  const formRoutes: FormAmRoute[] = [];
-  route.routes?.forEach((subRoute) => {
-    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute);
-    formRoutes.push(subFormRoute);
-    Object.assign(id2route, subId2Route);
-  });
+  if (route.match_re) {
+    Object.entries(route.match_re).forEach(([label, value]) => {
+      matchers.push([label, MatcherOperator.regex, value]);
+    });
+  }
 
-  // Frontend migration to use object_matchers instead of matchers
-  const matchers = route.matchers
-    ? route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []
-    : route.object_matchers?.map(
-        (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
-      ) ?? [];
+  if (route.match) {
+    Object.entries(route.match).forEach(([label, value]) => {
+      matchers.push([label, MatcherOperator.equal, value]);
+    });
+  }
 
-  return [
-    {
-      id,
-      object_matchers: [
-        ...matchers,
-        ...matchersToArrayFieldMatchers(route.match, false),
-        ...matchersToArrayFieldMatchers(route.match_re, true),
-      ],
-      continue: route.continue ?? false,
-      receiver: route.receiver ?? '',
-      overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
-      groupBy: route.group_by ?? [],
-      overrideTimings: [groupWaitValue, groupIntervalValue, repeatIntervalValue].some(Boolean),
-      groupWaitValue,
-      groupWaitValueType,
-      groupIntervalValue,
-      groupIntervalValueType,
-      repeatIntervalValue,
-      repeatIntervalValueType,
-      routes: formRoutes,
-      muteTimeIntervals: route.mute_time_intervals ?? [],
-    },
-    id2route,
-  ];
+  return matchers;
 };
 
+// add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
+export function addUniqueIdentifierToRoute(route: Route): RouteWithID {
+  return {
+    id: uniqueId('route-'),
+    ...route,
+    routes: (route.routes ?? []).map(addUniqueIdentifierToRoute),
+  };
+}
+
+//returns route, and a record mapping id to existing route
+export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): FormAmRoute => {
+  if (!route) {
+    return emptyRoute;
+  }
+
+  const id = 'id' in route ? route.id : uniqueId('route-');
+
+  if (Object.keys(route).length === 0) {
+    const formAmRoute = { ...emptyRoute, id };
+    return formAmRoute;
+  }
+
+  const formRoutes: FormAmRoute[] = [];
+  route.routes?.forEach((subRoute) => {
+    const subFormRoute = amRouteToFormAmRoute(subRoute);
+    formRoutes.push(subFormRoute);
+  });
+
+  const objectMatchers =
+    route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
+  const matchers = route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? [];
+
+  return {
+    id,
+    // Frontend migration to use object_matchers instead of matchers, match, and match_re
+    object_matchers: [
+      ...matchers,
+      ...objectMatchers,
+      ...matchersToArrayFieldMatchers(route.match, false),
+      ...matchersToArrayFieldMatchers(route.match_re, true),
+    ],
+    continue: route.continue ?? false,
+    receiver: route.receiver ?? '',
+    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
+    groupBy: route.group_by ?? [],
+    overrideTimings: [route.group_wait, route.group_interval, route.repeat_interval].some(Boolean),
+    groupWaitValue: route.group_wait ?? '',
+    groupIntervalValue: route.group_interval ?? '',
+    repeatIntervalValue: route.repeat_interval ?? '',
+    routes: formRoutes,
+    muteTimeIntervals: route.mute_time_intervals ?? [],
+  };
+};
+
+// convert a FormAmRoute to a Route
 export const formAmRouteToAmRoute = (
-  alertManagerSourceName: string | undefined,
-  formAmRoute: FormAmRoute,
-  id2ExistingRoute: Record<string, Route>
+  alertManagerSourceName: string,
+  formAmRoute: Partial<FormAmRoute>,
+  routeTree: RouteWithID
 ): Route => {
-  const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
+  const existing = findExistingRoute(formAmRoute.id ?? '', routeTree);
 
   const {
     overrideGrouping,
     groupBy,
     overrideTimings,
     groupWaitValue,
-    groupWaitValueType,
     groupIntervalValue,
-    groupIntervalValueType,
     repeatIntervalValue,
-    repeatIntervalValueType,
+    receiver,
   } = formAmRoute;
 
   const group_by = overrideGrouping && groupBy ? groupBy : [];
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
-  const group_wait = overrideGroupWait ? `${groupWaitValue}${groupWaitValueType}` : undefined;
+  const group_wait = overrideGroupWait ? groupWaitValue : undefined;
 
   const overrideGroupInterval = overrideTimings && groupIntervalValue;
-  const group_interval = overrideGroupInterval ? `${groupIntervalValue}${groupIntervalValueType}` : undefined;
+  const group_interval = overrideGroupInterval ? groupIntervalValue : undefined;
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
-  const repeat_interval = overrideRepeatInterval ? `${repeatIntervalValue}${repeatIntervalValueType}` : undefined;
+  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : undefined;
+  const object_matchers = formAmRoute.object_matchers
+    ?.filter((route) => route.name && route.value && route.operator)
+    .map(({ name, operator, value }) => [name, operator, value] as ObjectMatcher);
+
+  const routes = formAmRoute.routes?.map((subRoute) =>
+    formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)
+  );
 
   const amRoute: Route = {
     ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: group_by,
-    object_matchers: formAmRoute.object_matchers.length
-      ? formAmRoute.object_matchers.map((matcher) => [matcher.name, matcher.operator, matcher.value])
-      : undefined,
+    object_matchers: object_matchers,
     match: undefined, // DEPRECATED: Use matchers
     match_re: undefined, // DEPRECATED: Use matchers
     group_wait,
     group_interval,
     repeat_interval,
-    routes: formAmRoute.routes.map((subRoute) =>
-      formAmRouteToAmRoute(alertManagerSourceName, subRoute, id2ExistingRoute)
-    ),
+    routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
+    receiver: receiver,
   };
 
+  // non-Grafana managed rules should use "matchers", Grafana-managed rules should use "object_matchers"
+  // Grafana maintains a fork of AM to support all utf-8 characters in the "object_matchers" property values but this
+  // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    amRoute.matchers = formAmRoute.object_matchers.map(({ name, operator, value }) => `${name}${operator}${value}`);
+    amRoute.matchers = formAmRoute.object_matchers?.map(({ name, operator, value }) => `${name}${operator}${value}`);
     amRoute.object_matchers = undefined;
   } else {
+    amRoute.object_matchers = normalizeMatchers(amRoute);
     amRoute.matchers = undefined;
   }
 
@@ -190,7 +231,7 @@ export const formAmRouteToAmRoute = (
     amRoute.receiver = formAmRoute.receiver;
   }
 
-  return omitBy(amRoute, isUndefined);
+  return amRoute;
 };
 
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({
@@ -201,7 +242,12 @@ export const stringToSelectableValue = (str: string): SelectableValue<string> =>
 export const stringsToSelectableValues = (arr: string[] | undefined): Array<SelectableValue<string>> =>
   (arr ?? []).map(stringToSelectableValue);
 
-export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string => {
+export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string | undefined => {
+  // this allows us to deal with cleared values
+  if (selectableValue === null) {
+    return undefined;
+  }
+
   if (!selectableValue) {
     return '';
   }
@@ -219,10 +265,10 @@ export const mapMultiSelectValueToStrings = (
   return selectableValuesToStrings(selectableValues);
 };
 
-export const optionalPositiveInteger: Validate<string> = (value) => {
-  if (!value) {
-    return undefined;
+export function promDurationValidator(duration: string) {
+  if (duration.length === 0) {
+    return true;
   }
 
-  return !/^\d+$/.test(value) ? 'Must be a positive integer.' : undefined;
-};
+  return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
+}

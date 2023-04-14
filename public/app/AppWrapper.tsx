@@ -5,22 +5,19 @@ import { Router, Route, Redirect, Switch } from 'react-router-dom';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
-import { SearchWrapper } from 'app/features/search';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
+import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
-import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/Next/NavBarNext';
-import { I18nProvider } from './core/localisation';
+import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
-import { CommandPalette } from './features/commandPalette/CommandPalette';
+import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
@@ -61,10 +58,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return (
       <Route
         exact={route.exact === undefined ? true : route.exact}
+        sensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
         render={(props) => {
-          navigationLogger('AppWrapper', false, 'Rendering route', route, 'with match', props.location);
           // TODO[Router]: test this logic
           if (roles?.length) {
             if (!roles.some((r: string) => contextSrv.hasRole(r))) {
@@ -83,66 +80,52 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   render() {
+    const { app } = this.props;
     const { ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
-
     const commandPaletteActionSelected = (action: Action) => {
-      reportInteraction('commandPalette_action_selected', {
+      reportInteraction('command_palette_action_selected', {
         actionId: action.id,
+        actionName: action.name,
       });
     };
 
-    const commandPaletteEnabled = () => !config.isPublicDashboardView && config.featureToggles.commandPalette;
-
-    const renderNavBar = () => {
-      return !config.isPublicDashboardView && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>;
-    };
-
-    const searchBarEnabled = () => !config.isPublicDashboardView;
-
     return (
       <Provider store={store}>
-        <I18nProvider>
-          <ErrorBoundaryAlert style="page">
-            <ConfigContext.Provider value={config}>
-              <ThemeProvider>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <ModalsProvider>
-                    <GlobalStyles />
-                    {commandPaletteEnabled() && <CommandPalette />}
-                    <div className="grafana-app">
-                      <Router history={locationService.getHistory()}>
-                        {renderNavBar()}
-                        <main className="main-view">
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
-
-                          <AngularRoot />
-                          <AppNotificationList />
-                          {searchBarEnabled() && <SearchWrapper />}
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </main>
-                      </Router>
-                    </div>
-                    <LiveConnectionWarning />
-                    <ModalRoot />
-                    <PortalContainer />
-                  </ModalsProvider>
-                </KBarProvider>
-              </ThemeProvider>
-            </ConfigContext.Provider>
-          </ErrorBoundaryAlert>
-        </I18nProvider>
+        <ErrorBoundaryAlert style="page">
+          <GrafanaContext.Provider value={app.context}>
+            <ThemeProvider value={config.theme2}>
+              <KBarProvider
+                actions={[]}
+                options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+              >
+                <ModalsProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      <AppChrome>
+                        {pageBanners.map((Banner, index) => (
+                          <Banner key={index.toString()} />
+                        ))}
+                        <AngularRoot />
+                        <AppNotificationList />
+                        {ready && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </AppChrome>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                  <PortalContainer />
+                </ModalsProvider>
+              </KBarProvider>
+            </ThemeProvider>
+          </GrafanaContext.Provider>
+        </ErrorBoundaryAlert>
       </Provider>
     );
   }

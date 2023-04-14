@@ -1,16 +1,18 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
 
-import { TempoJsonData } from '../datasource';
+import { TempoJsonData } from '../types';
+
+import { getStyles } from './QuerySettings';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
 export function LokiSearchSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   // Default to the trace to logs datasource if configured and loki search was enabled
   // but only if jsonData.lokiSearch hasn't been set
@@ -23,11 +25,12 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
   }
 
   return (
-    <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Loki Search</h3>
+    <div className={styles.container}>
+      <h3 className="page-heading">Loki search</h3>
 
       <div className={styles.infoText}>
-        Select a Loki datasource to search for traces. Derived fields must be configured in the Loki data source.
+        Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source
+        <DocsLinkButton hrefSuffix="tempo/#loki-search" />
       </div>
 
       <InlineFieldRow className={styles.row}>
@@ -64,16 +67,3 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
     </div>
   );
 }
-
-const getStyles = (theme: GrafanaTheme) => ({
-  infoText: css`
-    label: infoText;
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textSemiWeak};
-  `,
-
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
-});

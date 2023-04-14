@@ -1,6 +1,8 @@
+import { WithAccessControlMetadata } from '@grafana/data';
+
 import { DashboardAcl } from './acl';
 
-export interface FolderDTO {
+export interface FolderDTO extends WithAccessControlMetadata {
   id: number;
   uid: string;
   title: string;
@@ -26,7 +28,11 @@ export interface FolderState {
 }
 
 export interface FolderInfo {
-  id?: number;
+  /**
+   * @deprecated use uid instead.
+   */
+  id?: number; // can't be totally removed as search and alerts api aren't supporting folderUids yet. It will break DashList and AlertList panel
+  uid?: string;
   title?: string;
   url?: string;
   canViewFolderPermissions?: boolean;

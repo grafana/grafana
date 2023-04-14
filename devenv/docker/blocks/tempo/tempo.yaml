@@ -1,12 +1,12 @@
-auth_enabled: false
+metrics_generator_enabled: true
 
 server:
-  http_listen_port: 3101
+  http_listen_port: 3200
 
 distributor:
   receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
     jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
-      protocols:                       # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver
+      protocols:                       # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
         thrift_http:                   #
         grpc:                          # for a production deployment you should only enable the receivers you need!
         thrift_binary:
@@ -18,24 +18,37 @@ distributor:
         grpc:
     opencensus:
 
-ingester:
-  trace_idle_period: 10s               # the length of time after a trace has not received spans to consider it complete and flush it
-  max_block_duration: 5m               #   this much time passes
-
 compactor:
   compaction:
     compaction_window: 1h              # blocks in this time window will be compacted together
-    max_compaction_objects: 1000000    # maximum size of compacted blocks
+    max_block_bytes: 100_000_000       # maximum size of compacted blocks
     block_retention: 1h
     compacted_block_retention: 10m
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: docker-compose
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
 
 storage:
   trace:
     backend: local                     # backend configuration to use
+    block:
+      bloom_filter_false_positive: .05 # bloom filter false positive rate.  lower values create larger filters but fewer false positives
+      v2_index_downsample_bytes: 1000     # number of bytes per index record
+      v2_encoding: zstd                   # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
+      version: vParquet
     wal:
       path: /tmp/tempo/wal             # where to store the the wal locally
+      v2_encoding: snappy              # wal encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
     local:
       path: /tmp/tempo/blocks
-    pool:
-      max_workers: 100                 # the worker pool mainly drives querying, but is also used for polling the blocklist
-      queue_depth: 10000
+
+overrides:
+  metrics_generator_processors: [service-graphs, span-metrics]

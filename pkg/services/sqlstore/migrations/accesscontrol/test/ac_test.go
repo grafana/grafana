@@ -6,18 +6,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type rawPermission struct {
@@ -38,49 +41,49 @@ func (rp *rawPermission) toPermission(roleID int64, ts time.Time) accesscontrol.
 var (
 	now = time.Now()
 
-	users = []models.User{
+	users = []user.User{
 		{
-			Id:      1,
+			ID:      1,
 			Email:   "viewer1@example.org",
 			Name:    "viewer1",
 			Login:   "viewer1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      2,
+			ID:      2,
 			Email:   "viewer2@example.org",
 			Name:    "viewer2",
 			Login:   "viewer2",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      3,
+			ID:      3,
 			Email:   "editor1@example.org",
 			Name:    "editor1",
 			Login:   "editor1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      4,
+			ID:      4,
 			Email:   "admin1@example.org",
 			Name:    "admin1",
 			Login:   "admin1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      5,
+			ID:      5,
 			Email:   "editor2@example.org",
 			Name:    "editor2",
 			Login:   "editor2",
-			OrgId:   2,
+			OrgID:   2,
 			Created: now,
 			Updated: now,
 		},
@@ -213,9 +216,9 @@ func TestMigrations(t *testing.T) {
 
 			for _, user := range users {
 				// Check managed roles exist
-				roleName := fmt.Sprintf("managed:users:%d:permissions", user.Id)
+				roleName := fmt.Sprintf("managed:users:%d:permissions", user.ID)
 				role := accesscontrol.Role{}
-				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, roleName).Get(&role)
+				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgID, roleName).Get(&role)
 
 				require.NoError(t, errManagedRoleSearch)
 				assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
@@ -234,7 +237,7 @@ func TestMigrations(t *testing.T) {
 
 				// Check assignment of the roles
 				assign := accesscontrol.UserRole{}
-				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.Id).Get(&assign)
+				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.ID).Get(&assign)
 				require.NoError(t, errAssignmentSearch)
 				assert.True(t, has, "expected assignment of role to user", role, user)
 			}
@@ -270,39 +273,39 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, errInsertUsers)
 	require.Equal(t, int64(5), usersCount, "needed 5 users for this test to run")
 
-	orgUsers := []models.OrgUser{
+	orgUsers := []org.OrgUser{
 		{
-			OrgId:   1,
-			UserId:  1,
-			Role:    models.ROLE_VIEWER,
+			OrgID:   1,
+			UserID:  1,
+			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  2,
-			Role:    models.ROLE_VIEWER,
+			OrgID:   1,
+			UserID:  2,
+			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  3,
-			Role:    models.ROLE_EDITOR,
+			OrgID:   1,
+			UserID:  3,
+			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  4,
-			Role:    models.ROLE_ADMIN,
+			OrgID:   1,
+			UserID:  4,
+			Role:    org.RoleAdmin,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   2,
-			UserId:  5,
-			Role:    models.ROLE_EDITOR,
+			OrgID:   2,
+			UserID:  5,
+			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
 		},
@@ -312,16 +315,16 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.Equal(t, int64(5), orgUsersCount, "needed 5 users for this test to run")
 
 	// Setup teams (and members)
-	teams := []models.Team{
+	teams := []team.Team{
 		{
-			OrgId:   1,
+			OrgID:   1,
 			Name:    "teamOrg1",
 			Email:   "teamorg1@example.org",
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   2,
+			OrgID:   2,
 			Name:    "teamOrg2",
 			Email:   "teamorg2@example.org",
 			Created: now,
@@ -332,12 +335,12 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, errInsertTeams)
 	require.Equal(t, int64(2), teamCount, "needed 2 teams for this test to run")
 
-	members := []models.TeamMember{
+	members := []team.TeamMember{
 		{
 			// Can have viewer permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     1,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     1,
 			External:   false,
 			Permission: 0,
 			Created:    now,
@@ -345,39 +348,39 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 		},
 		{
 			// Cannot have admin permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     2,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     2,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
 		{
 			// Can have admin permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     3,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     3,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
 		{
 			// Can have admin permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     4,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     4,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
 		{
 			// Can have viewer permissions
-			OrgId:      2,
-			TeamId:     2,
-			UserId:     5,
+			OrgID:      2,
+			TeamID:     2,
+			UserID:     5,
 			External:   false,
 			Permission: 0,
 			Created:    now,

@@ -1,22 +1,22 @@
 package conditions
 
 import (
+	gocontext "context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-
-	gocontext "context"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func init() {
@@ -59,7 +59,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 	// matches represents all the series that violate the alert condition
 	var matches []*alerting.EvalMatch
 	// allMatches capture all evaluation matches irregardless on whether the condition is met or not
-	var allMatches []*alerting.EvalMatch
+	allMatches := make([]*alerting.EvalMatch, 0, len(seriesList))
 
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
@@ -115,7 +115,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 	}, nil
 }
 
-func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
+func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Json, dsInfo *datasources.DataSource) (time.Duration, error) {
 	// if there is no min-interval specified in the datasource or in the dashboard-panel,
 	// the value of 1ms is used (this is how it is done in the dashboard-interval-calculation too,
 	// see https://github.com/grafana/grafana/blob/9a0040c0aeaae8357c650cec2ee644a571dddf3d/packages/grafana-data/src/datetime/rangeutil.ts#L264)
@@ -141,21 +141,22 @@ func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Jso
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange legacydata.DataTimeRange,
 	requestHandler legacydata.RequestHandler) (legacydata.DataTimeSeriesSlice, error) {
-	getDsInfo := &models.GetDataSourceQuery{
-		Id:    c.Query.DatasourceID,
-		OrgId: context.Rule.OrgID,
+	getDsInfo := &datasources.GetDataSourceQuery{
+		ID:    c.Query.DatasourceID,
+		OrgID: context.Rule.OrgID,
 	}
 
-	if err := context.Store.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	dataSource, err := context.GetDataSource(context.Ctx, getDsInfo)
+	if err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
-	err := context.RequestValidator.Validate(getDsInfo.Result.Url, nil)
+	err = context.RequestValidator.Validate(dataSource.URL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
-	req, err := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	req, err := c.getRequestForAlertRule(dataSource, timeRange, context.IsDebug)
 	if err != nil {
 		return nil, fmt.Errorf("interval calculation failed: %w", err)
 	}
@@ -182,7 +183,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 				RefID: q.RefID,
 				Model: q.Model,
 				Datasource: simplejson.NewFromAny(map[string]interface{}{
-					"id":   q.DataSource.Id,
+					"id":   q.DataSource.ID,
 					"name": q.DataSource.Name,
 				}),
 				MaxDataPoints: q.MaxDataPoints,
@@ -198,7 +199,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		})
 	}
 
-	resp, err := requestHandler.HandleRequest(context.Ctx, getDsInfo.Result, req)
+	resp, err := requestHandler.HandleRequest(context.Ctx, dataSource, req)
 	if err != nil {
 		return nil, toCustomError(err)
 	}
@@ -253,7 +254,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange legacydata.DataTimeRange,
+func (c *QueryCondition) getRequestForAlertRule(datasource *datasources.DataSource, timeRange legacydata.DataTimeRange,
 	debug bool) (legacydata.DataQuery, error) {
 	queryModel := c.Query.Model
 
@@ -275,8 +276,8 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 			},
 		},
 		Headers: map[string]string{
-			"FromAlert":    "true",
-			"X-Cache-Skip": "true",
+			ngalertmodels.FromAlertHeaderName: "true",
+			ngalertmodels.CacheSkipHeaderName: "true",
 		},
 		Debug: debug,
 	}

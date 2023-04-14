@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/
+  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
 description: Create Grafana managed alert rule
 keywords:
   - grafana
@@ -9,40 +8,53 @@ keywords:
   - guide
   - rules
   - create
-title: Create Grafana managed alert rule
+title: Create Grafana managed alert rules
 weight: 400
 ---
 
 # Create a Grafana managed alerting rule
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana alerting, see [About Grafana alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana alerting.
+Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fixed thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
+
+Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
+
+_Video shows Alerting in Grafana v9.0. Refer to [Add Grafana managed rule]({{< relref "#add-grafana-managed-rule" >}}) (following) for current instructions._
 
 ## Add Grafana managed rule
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
-1. In Step 1, add queries and expressions to evaluate, and then select the alert condition.
-   - For queries, select a data source from the drop-down.
-   - Add one or more [queries]({{< relref "../../panels/query-a-data-source/add-a-query/" >}}) or [expressions]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}).
-   - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
+1. Click **Alert rules**.
+1. Click **+ Create alert rule**. The new alerting rule page opens where the **Grafana managed alerts** option is selected by default.
+1. In Step 1, add the rule name.
+   - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
+1. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
+   - For queries, select a data source from the dropdown.
+   - Add one or more [queries]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
+   - For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
-1. In Step 2, specify the alert evaluation interval.
-   - From the **Condition** drop-down, select the query or expression to trigger the alert rule.
+1. In Step 3, specify the alert evaluation interval.
+
+   - From the **Condition** dropdown, select the query or expression to trigger the alert rule.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
    - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
-   - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
-1. In Step 3, add the rule name, storage location, rule group, as well as additional metadata associated with the rule.
-   - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
-   - From the **Folder** drop-down, select the folder where you want to store the rule.
+   - Click **Preview** to check the result of running the query at this moment. Preview excludes no data and error handling.
+
+     **Note:**
+
+     You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
+1. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
+   - From the **Folder** dropdown, select the folder where you want to store the rule.
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
-   - Add custom labels.
+1. In Step 5, add custom labels.
+   - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification]({{< relref "../notifications/" >}}) for the rule.
+1. Next, create a for the rule.
 
 ### Single and multi dimensional rule
 
@@ -65,20 +77,26 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 #### Rule with classic condition
 
-For more information, see [expressions documentation]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}).
+For more information, see [expressions documentation]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
 
-### No data and error handling
+### Configure no data and error handling
 
-Configure alerting behavior in the absence of data using information in the following tables.
+Configure alerting behavior when your alert rule evaluation returns no data or an error.
 
-| No Data Option | Description                                                                                                                               |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| No Data        | Create a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting       | Set alert rule state to `Alerting`.                                                                                                       |
-| Ok             | Set alert rule state to `Normal`.                                                                                                         |
+**Note:** Alert rules that are configured to fire when an evaluation returns no data or error only fire when the entire duration of the evaluation period has finished. This means that rather than immediately firing when the alert rule condition is breached, the alert rule waits until the time set as the **For** field has finished and then fires, reducing alert noise and allowing for temporary data availability issues.
 
-| Error or timeout option | Description                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Alerting                | Set alert rule state to `Alerting`. From Grafana 8.5, the alert rule waits for the entire duration for which the condition is true before firing. |
-| OK                      | Set alert rule state to `Normal`                                                                                                                  |
-| Error                   | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels.          |
+If your alert rule evaluation returns no data, you can set the state on your alert rule to appear as follows:
+
+| No Data  | Description                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| No Data  | Creates a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.              |
+| Ok       | Sets alert rule state to `Normal`.                                                                                                         |
+
+If your evaluation returns an error, you can set the state on your alert rule to appear as follows:
+
+| Error    | Description                                                                                                                                     |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error    | Creates an alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
+| Ok       | Sets alert rule state to `Normal`.                                                                                                              |

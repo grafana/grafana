@@ -1,8 +1,8 @@
-import { VariableSupportType } from '@grafana/data';
+import { TypedVariableModel, VariableSupportType } from '@grafana/data';
 
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
-import { TransactionStatus, VariableModel } from '../types';
+import { TransactionStatus } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { upgradeLegacyQueries } from './actions';
@@ -12,7 +12,7 @@ import { changeVariableProp } from './sharedReducer';
 
 interface Args {
   query?: any;
-  variable?: VariableModel;
+  variable?: TypedVariableModel;
   datasource?: any;
   transactionStatus?: TransactionStatus;
 }

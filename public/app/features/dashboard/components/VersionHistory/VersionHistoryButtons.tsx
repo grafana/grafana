@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { HorizontalGroup, Tooltip, Button } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Tooltip, Button } from '@grafana/ui';
 
 type VersionsButtonsType = {
   hasMore: boolean;
@@ -9,14 +10,14 @@ type VersionsButtonsType = {
   getDiff: () => void;
   isLastPage: boolean;
 };
-export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
+export const VersionsHistoryButtons = ({
   hasMore,
   canCompare,
   getVersions,
   getDiff,
   isLastPage,
-}) => (
-  <HorizontalGroup>
+}: VersionsButtonsType) => (
+  <Stack>
     {hasMore && (
       <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>
         Show more versions
@@ -27,5 +28,5 @@ export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
         Compare versions
       </Button>
     </Tooltip>
-  </HorizontalGroup>
+  </Stack>
 );

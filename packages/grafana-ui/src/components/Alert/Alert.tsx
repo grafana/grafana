@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, ReactNode } from 'react';
+import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,20 +24,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
-export function getIconFromSeverity(severity: AlertVariant): string {
-  switch (severity) {
-    case 'error':
-    case 'warning':
-      return 'exclamation-triangle';
-    case 'info':
-      return 'info-circle';
-    case 'success':
-      return 'check';
-    default:
-      return '';
-  }
-}
-
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
@@ -55,28 +41,42 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
+    const hasTitle = Boolean(title);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const rolesBySeverity: Record<AlertVariant, AriaRole> = {
+      error: 'alert',
+      warning: 'alert',
+      info: 'status',
+      success: 'status',
+    };
+    const role = restProps['role'] || rolesBySeverity[severity];
+    const ariaLabel = restProps['aria-label'] || title;
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
+        role={role}
+        aria-label={ariaLabel}
         {...restProps}
       >
         <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
+          <Icon size="xl" name={getIconFromSeverity(severity)} />
         </div>
-        <div className={styles.body} role="alert">
+
+        <div className={styles.body}>
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
+
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
             <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
           </div>
         )}
+
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
             <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
@@ -91,9 +91,22 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
+export const getIconFromSeverity = (severity: AlertVariant): IconName => {
+  switch (severity) {
+    case 'error':
+    case 'warning':
+      return 'exclamation-triangle';
+    case 'info':
+      return 'info-circle';
+    case 'success':
+      return 'check';
+  }
+};
+
 const getStyles = (
   theme: GrafanaTheme2,
   severity: AlertVariant,
+  hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
   topSpacing?: number
@@ -150,7 +163,7 @@ const getStyles = (
     `,
     content: css`
       color: ${theme.colors.text.secondary};
-      padding-top: ${theme.spacing(1)};
+      padding-top: ${hasTitle ? theme.spacing(1) : 0};
       max-height: 50vh;
       overflow-y: auto;
     `,

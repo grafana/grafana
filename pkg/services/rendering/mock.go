@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+
 	models "github.com/grafana/grafana/pkg/models"
 )
 
@@ -66,32 +67,32 @@ func (mr *MockServiceMockRecorder) GetRenderUser(arg0, arg1 interface{}) *gomock
 }
 
 // HasCapability mocks base method.
-func (m *MockService) HasCapability(arg0 CapabilityName) (CapabilitySupportRequestResult, error) {
+func (m *MockService) HasCapability(arg0 context.Context, arg1 CapabilityName) (CapabilitySupportRequestResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasCapability", arg0)
+	ret := m.ctrl.Call(m, "HasCapability", arg0, arg1)
 	ret0, _ := ret[0].(CapabilitySupportRequestResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // HasCapability indicates an expected call of HasCapability.
-func (mr *MockServiceMockRecorder) HasCapability(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) HasCapability(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasCapability", reflect.TypeOf((*MockService)(nil).HasCapability), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasCapability", reflect.TypeOf((*MockService)(nil).HasCapability), arg0, arg1)
 }
 
 // IsAvailable mocks base method.
-func (m *MockService) IsAvailable() bool {
+func (m *MockService) IsAvailable(arg0 context.Context) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAvailable")
+	ret := m.ctrl.Call(m, "IsAvailable", arg0)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // IsAvailable indicates an expected call of IsAvailable.
-func (mr *MockServiceMockRecorder) IsAvailable() *gomock.Call {
+func (mr *MockServiceMockRecorder) IsAvailable(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAvailable", reflect.TypeOf((*MockService)(nil).IsAvailable))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAvailable", reflect.TypeOf((*MockService)(nil).IsAvailable), arg0)
 }
 
 // Render mocks base method.
@@ -137,6 +138,21 @@ func (m *MockService) RenderErrorImage(arg0 models.Theme, arg1 error) (*RenderRe
 func (mr *MockServiceMockRecorder) RenderErrorImage(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderErrorImage", reflect.TypeOf((*MockService)(nil).RenderErrorImage), arg0, arg1)
+}
+
+// SanitizeSVG mocks base method.
+func (m *MockService) SanitizeSVG(arg0 context.Context, arg1 *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SanitizeSVG", arg0, arg1)
+	ret0, _ := ret[0].(*SanitizeSVGResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SanitizeSVG indicates an expected call of SanitizeSVG.
+func (mr *MockServiceMockRecorder) SanitizeSVG(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SanitizeSVG", reflect.TypeOf((*MockService)(nil).SanitizeSVG), arg0, arg1)
 }
 
 // Version mocks base method.

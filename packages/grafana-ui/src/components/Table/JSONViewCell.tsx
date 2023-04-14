@@ -2,7 +2,10 @@ import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
 import React from 'react';
 
+import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
+import { Button, clearLinkButtonStyles } from '../Button';
+import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableCellProps, TableFieldOptions } from './types';
@@ -26,22 +29,27 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
     displayValue = JSON.stringify(value, null, ' ');
   }
 
-  const { link, onClick } = getCellLinks(field, row);
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
       <div className={cx(tableStyles.cellText, txt)}>
-        {!link && <div className={tableStyles.cellText}>{displayValue}</div>}
-        {link && (
-          <a
-            href={link.href}
-            onClick={onClick}
-            target={link.target}
-            title={link.title}
-            className={tableStyles.cellLink}
-          >
-            {displayValue}
-          </a>
+        {!hasLinks && <div className={tableStyles.cellText}>{displayValue}</div>}
+        {hasLinks && (
+          <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+            {(api) => {
+              if (api.openMenu) {
+                return (
+                  <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                    {displayValue}
+                  </Button>
+                );
+              } else {
+                return <>{displayValue}</>;
+              }
+            }}
+          </DataLinksContextMenu>
         )}
       </div>
       {inspectEnabled && <CellActions {...props} previewMode="code" />}

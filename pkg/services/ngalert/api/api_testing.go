@@ -1,55 +1,61 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
 	*AlertingProxy
-	ExpressionService *expr.Service
-	DatasourceCache   datasources.CacheService
-	log               log.Logger
-	accessControl     accesscontrol.AccessControl
-	evaluator         eval.Evaluator
+	DatasourceCache datasources.CacheService
+	log             log.Logger
+	accessControl   accesscontrol.AccessControl
+	evaluator       eval.EvaluatorFactory
+	cfg             *setting.UnifiedAlertingSettings
+	backtesting     *backtesting.Engine
+	featureManager  featuremgmt.FeatureToggles
 }
 
-func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, body apimodels.TestRulePayload) response.Response {
 	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
-		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, body.Type().String()))
 	}
 
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: body.GrafanaManagedCondition.Data}, func(evaluator accesscontrol.Evaluator) bool {
+	queries := AlertQueriesFromApiAlertQueries(body.GrafanaManagedCondition.Data)
+
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
-		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
+		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}
 
 	evalCond := ngmodels.Condition{
 		Condition: body.GrafanaManagedCondition.Condition,
-		OrgID:     c.SignedInUser.OrgId,
-		Data:      body.GrafanaManagedCondition.Data,
+		Data:      queries,
 	}
+	ctx := eval.NewContext(c.Req.Context(), c.SignedInUser)
 
-	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+	conditionEval, err := srv.evaluator.Create(ctx, evalCond)
+	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
@@ -58,9 +64,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now, srv.ExpressionService)
+	evalResults, err := conditionEval.Evaluate(c.Req.Context(), now)
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
+		return ErrResp(500, err, "Failed to evaluate the rule")
 	}
 
 	frame := evalResults.AsDataFrame()
@@ -69,25 +75,23 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 	})
 }
 
-func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {
 	if body.Type() != apimodels.LoTexRulerBackend {
-		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.LoTexRulerBackend, body.Type().String()))
 	}
-
-	var path string
-	datasourceUID := web.Params(c.Req)[":DatasourceUID"]
-	ds, err := srv.DatasourceCache.GetDatasourceByUID(context.Background(), datasourceUID, c.SignedInUser, c.SkipCache)
+	ds, err := getDatasourceByUID(c, srv.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
+		return errorToResponse(err)
 	}
-
+	var path string
 	switch ds.Type {
 	case "loki":
 		path = "loki/api/v1/query"
 	case "prometheus":
 		path = "api/v1/query"
 	default:
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("unexpected datasource type %s", ds.Type), "")
+		// this should not happen because getDatasourceByUID would not return the data source
+		return errorToResponse(unexpectedDatasourceTypeError(ds.Type, "loki, prometheus"))
 	}
 
 	t := timeNow()
@@ -109,26 +113,106 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 	)
 }
 
-func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
+func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
+	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
+	cond := ngmodels.Condition{
+		Condition: "",
+		Data:      queries,
+	}
+	if len(cmd.Data) > 0 {
+		cond.Condition = cmd.Data[0].RefID
+	}
+	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), cond)
+
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
+	evalResults, err := evaluator.EvaluateRaw(c.Req.Context(), now)
+
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
+		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries and expressions")
 	}
 
 	return response.JSONStreaming(http.StatusOK, evalResults)
+}
+
+func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimodels.BacktestConfig) response.Response {
+	if !srv.featureManager.IsEnabled(featuremgmt.FlagAlertingBacktesting) {
+		return ErrResp(http.StatusNotFound, nil, "Backgtesting API is not enabled")
+	}
+
+	if cmd.From.After(cmd.To) {
+		return ErrResp(400, nil, "From cannot be greater than To")
+	}
+
+	noDataState, err := ngmodels.NoDataStateFromString(string(cmd.NoDataState))
+
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	forInterval := time.Duration(cmd.For)
+	if forInterval < 0 {
+		return ErrResp(400, nil, "Bad For interval")
+	}
+
+	intervalSeconds, err := validateInterval(srv.cfg, time.Duration(cmd.Interval))
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+
+	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
+	}) {
+		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
+	}
+
+	rule := &ngmodels.AlertRule{
+		// ID:             0,
+		// Updated:        time.Time{},
+		// Version:        0,
+		// NamespaceUID:   "",
+		// DashboardUID:   nil,
+		// PanelID:        nil,
+		// RuleGroup:      "",
+		// RuleGroupIndex: 0,
+		// ExecErrState:   "",
+		Title: cmd.Title,
+		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
+		UID:             "backtesting-" + util.GenerateShortUID(),
+		OrgID:           c.OrgID,
+		Condition:       cmd.Condition,
+		Data:            queries,
+		IntervalSeconds: intervalSeconds,
+		NoDataState:     noDataState,
+		For:             forInterval,
+		Annotations:     cmd.Annotations,
+		Labels:          cmd.Labels,
+	}
+
+	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To)
+	if err != nil {
+		if errors.Is(err, backtesting.ErrInvalidInputData) {
+			return ErrResp(400, err, "Failed to evaluate")
+		}
+		return ErrResp(500, err, "Failed to evaluate")
+	}
+
+	body, err := data.FrameToJSON(result, data.IncludeAll)
+	if err != nil {
+		return ErrResp(500, err, "Failed to convert frame to JSON")
+	}
+	return response.JSON(http.StatusOK, body)
 }

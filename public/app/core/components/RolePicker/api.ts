@@ -1,5 +1,7 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Role } from 'app/types';
+
+import { addDisplayNameForFixedRole } from './utils';
 
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles?delegatable=true';
@@ -10,15 +12,7 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   if (!roles || !roles.length) {
     return [];
   }
-  return roles;
-};
-
-export const fetchBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
-  let builtinRolesUrl = '/api/access-control/builtin-roles';
-  if (orgId) {
-    builtinRolesUrl += `?targetOrgId=${orgId}`;
-  }
-  return getBackendSrv().get(builtinRolesUrl);
+  return roles.map(addDisplayNameForFixedRole);
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
@@ -31,9 +25,11 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    return roles;
+    return roles.map(addDisplayNameForFixedRole);
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return [];
   }
 };
@@ -60,9 +56,11 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    return roles;
+    return roles.map(addDisplayNameForFixedRole);
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return [];
   }
 };

@@ -4,21 +4,21 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { ArrayVector } from '../../vector';
 
 import { calculateFieldTransformer } from './calculateField';
-import { isLikelyAscendingVector, outerJoinDataFrames } from './joinDataFrames';
+import { JoinMode } from './joinByField';
+import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
     mockTransformationsRegistry([calculateFieldTransformer]);
   });
 
-  it('by first time field', () => {
+  describe('by first time field', () => {
     const series1 = toDataFrame({
       fields: [
         { name: 'TheTime', type: FieldType.time, values: [1000, 2000] },
         { name: 'A', type: FieldType.number, values: [1, 100] },
       ],
     });
-
     const series2 = toDataFrame({
       fields: [
         { name: '_time', type: FieldType.time, values: [1000, 1500, 2000] },
@@ -28,56 +28,106 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1, series2] })!;
-    expect(
-      out.fields.map((f) => ({
-        name: f.name,
-        values: f.values.toArray(),
-      }))
-    ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "name": "TheTime",
-          "values": Array [
-            1000,
-            1500,
-            2000,
-          ],
-        },
-        Object {
-          "name": "A",
-          "values": Array [
-            1,
-            undefined,
-            100,
-          ],
-        },
-        Object {
-          "name": "A",
-          "values": Array [
-            2,
-            20,
-            200,
-          ],
-        },
-        Object {
-          "name": "B",
-          "values": Array [
-            3,
-            30,
-            300,
-          ],
-        },
-        Object {
-          "name": "C",
-          "values": Array [
-            "first",
-            "second",
-            "third",
-          ],
-        },
-      ]
-    `);
+    it('should perform an outer join', () => {
+      const out = joinDataFrames({ frames: [series1, series2] })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values.toArray(),
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "TheTime",
+            "values": [
+              1000,
+              1500,
+              2000,
+            ],
+          },
+          {
+            "name": "A",
+            "values": [
+              1,
+              undefined,
+              100,
+            ],
+          },
+          {
+            "name": "A",
+            "values": [
+              2,
+              20,
+              200,
+            ],
+          },
+          {
+            "name": "B",
+            "values": [
+              3,
+              30,
+              300,
+            ],
+          },
+          {
+            "name": "C",
+            "values": [
+              "first",
+              "second",
+              "third",
+            ],
+          },
+        ]
+      `);
+    });
+
+    it('should perform an inner join', () => {
+      const out = joinDataFrames({ frames: [series1, series2], mode: JoinMode.inner })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values.toArray(),
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "TheTime",
+            "values": [
+              1000,
+              2000,
+            ],
+          },
+          {
+            "name": "A",
+            "values": [
+              1,
+              100,
+            ],
+          },
+          {
+            "name": "A",
+            "values": [
+              2,
+              200,
+            ],
+          },
+          {
+            "name": "B",
+            "values": [
+              3,
+              300,
+            ],
+          },
+          {
+            "name": "C",
+            "values": [
+              "first",
+              "third",
+            ],
+          },
+        ]
+      `);
+    });
   });
 
   it('unsorted input keep indexes', () => {
@@ -96,7 +146,7 @@ describe('align frames', () => {
       ],
     });
 
-    let out = outerJoinDataFrames({ frames: [series1, series3], keepOriginIndices: true })!;
+    let out = joinDataFrames({ frames: [series1, series3], keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -104,44 +154,44 @@ describe('align frames', () => {
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 0,
               "frameIndex": 0,
             },
           },
-          "values": Array [
+          "values": [
             1000,
             1500,
             2000,
           ],
         },
-        Object {
+        {
           "name": "A1",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 0,
             },
           },
-          "values": Array [
+          "values": [
             1,
             15,
             2,
           ],
         },
-        Object {
+        {
           "name": "A2",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 1,
             },
           },
-          "values": Array [
+          "values": [
             1,
             undefined,
             2,
@@ -151,27 +201,27 @@ describe('align frames', () => {
     `);
 
     // Fast path still adds origin indecies
-    out = outerJoinDataFrames({ frames: [series1], keepOriginIndices: true })!;
+    out = joinDataFrames({ frames: [series1], keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 0,
               "frameIndex": 0,
             },
           },
         },
-        Object {
+        {
           "name": "A1",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 0,
             },
@@ -189,25 +239,25 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1], keepOriginIndices: true })!;
+    const out = joinDataFrames({ frames: [series1], keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
         values: f.values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "values": Array [
+          "values": [
             1500,
             2000,
             6000,
           ],
         },
-        Object {
+        {
           "name": "A1",
-          "values": Array [
+          "values": [
             15,
             22,
             1,
@@ -236,31 +286,31 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1, series3] })!;
+    const out = joinDataFrames({ frames: [series1, series3] })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
         values: f.values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "values": Array [
+          "values": [
             1000,
             2000,
           ],
         },
-        Object {
+        {
           "name": "A",
-          "values": Array [
+          "values": [
             1,
             100,
           ],
         },
-        Object {
+        {
           "name": "A",
-          "values": Array [
+          "values": [
             200,
             undefined,
           ],
@@ -293,6 +343,20 @@ describe('align frames', () => {
     it('decending', () => {
       expect(isLikelyAscendingVector(new ArrayVector([7, 6, null]))).toBeFalsy();
       expect(isLikelyAscendingVector(new ArrayVector([7, 8, 6]))).toBeFalsy();
+    });
+
+    it('ascending first/last', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([10, 20, 30, 5, 15, 7, 43, 29, 11]), 3)).toBeFalsy();
+      expect(
+        isLikelyAscendingVector(new ArrayVector([null, 10, 20, 30, 5, null, 15, 7, 43, 29, 11, null]), 3)
+      ).toBeFalsy();
+    });
+
+    it('null stuffs', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([null, null, 1]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([1, null, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([null, null, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([null, 1, null]), 3)).toBeTruthy();
     });
   });
 });

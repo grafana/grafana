@@ -1,0 +1,28 @@
+<mj-raw>
+  {{ $numberOfFiringInstance := (len .Alerts.Firing) }}
+  {{ $numberOfResolvedAlerts := (len .Alerts.Resolved) }}
+</mj-raw>
+
+<mj-preview>
+  <mj-raw>
+    {{ if $numberOfFiringInstance }}
+  </mj-raw>
+  <strong>{{ $numberOfFiringInstance }} firing</strong> alert {{ $numberOfFiringInstance| plural "instance" "instances" }}
+  <mj-raw>
+    {{ end }}
+  </mj-raw>
+  <mj-raw>
+    {{ if and $numberOfFiringInstance $numberOfResolvedAlerts }}
+  </mj-raw>
+  &nbsp;and&nbsp;
+  <mj-raw>
+    {{ end }}
+  </mj-raw>
+  <mj-raw>
+    {{ if $numberOfResolvedAlerts }}
+  </mj-raw>
+  <strong>{{ $numberOfResolvedAlerts }} resolved</strong> alert {{ $numberOfResolvedAlerts| plural "instance" "instances" }}
+  <mj-raw>
+    {{ end }}
+  </mj-raw>
+</mj-preview>

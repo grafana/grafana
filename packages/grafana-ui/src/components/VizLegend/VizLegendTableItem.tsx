@@ -13,36 +13,42 @@ export interface Props {
   key?: React.Key;
   item: VizLegendItem;
   className?: string;
-  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLButtonElement>) => void;
+  onLabelMouseOver?: (
+    item: VizLegendItem,
+    event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
+  ) => void;
+  onLabelMouseOut?: (
+    item: VizLegendItem,
+    event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
+  ) => void;
   readonly?: boolean;
 }
 
 /**
  * @internal
  */
-export const LegendTableItem: React.FunctionComponent<Props> = ({
+export const LegendTableItem = ({
   item,
   onLabelClick,
-  onLabelMouseEnter,
+  onLabelMouseOver,
   onLabelMouseOut,
   className,
   readonly,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
-  const onMouseEnter = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      if (onLabelMouseEnter) {
-        onLabelMouseEnter(item, event);
+  const onMouseOver = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
+      if (onLabelMouseOver) {
+        onLabelMouseOver(item, event);
       }
     },
-    [item, onLabelMouseEnter]
+    [item, onLabelMouseOver]
   );
 
   const onMouseOut = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
       if (onLabelMouseOut) {
         onLabelMouseOut(item, event);
       }
@@ -51,7 +57,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   );
 
   const onClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (onLabelClick) {
         onLabelClick(item, event);
       }
@@ -64,14 +70,19 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
       <td>
         <span className={styles.itemWrapper}>
           <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
-          <div
-            onMouseEnter={onMouseEnter}
+          <button
+            disabled={readonly}
+            type="button"
+            title={item.label}
+            onBlur={onMouseOut}
+            onFocus={onMouseOver}
+            onMouseOver={onMouseOver}
             onMouseOut={onMouseOut}
             onClick={!readonly ? onClick : undefined}
-            className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
+            className={cx(styles.label, item.disabled && styles.labelDisabled)}
           >
             {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
-          </div>
+          </button>
         </span>
       </td>
       {item.getDisplayValues &&
@@ -108,14 +119,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     label: css`
       label: LegendLabel;
       white-space: nowrap;
+      background: none;
+      border: none;
+      font-size: inherit;
+      padding: 0;
+      max-width: 600px;
+      text-overflow: ellipsis;
+      overflow: hidden;
     `,
     labelDisabled: css`
       label: LegendLabelDisabled;
       color: ${theme.colors.text.disabled};
-    `,
-    clickable: css`
-      label: LegendClickable;
-      cursor: pointer;
     `,
     itemWrapper: css`
       display: flex;
@@ -123,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     value: css`
-      text-align: left;
+      text-align: right;
     `,
     yAxisLabel: css`
       color: ${theme.colors.text.secondary};

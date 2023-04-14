@@ -9,18 +9,23 @@ import (
 	"testing"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -90,7 +95,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		_, _, _, api := setupAPI(t)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -109,7 +114,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -151,7 +156,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2, withAlertingState())
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -193,7 +198,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -255,7 +260,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
 	require.NoError(t, err)
-	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID, OrgRole: models.ROLE_VIEWER}}
+	c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer}}
 
 	t.Run("with no rules", func(t *testing.T) {
 		_, _, _, api := setupAPI(t)
@@ -325,7 +330,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID, OrgRole: models.ROLE_VIEWER}}
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer}}
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -419,9 +424,52 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 `, folder.Title), string(r.Body()))
 	})
 
+	t.Run("with many rules in a group", func(t *testing.T) {
+		t.Run("should return sorted", func(t *testing.T) {
+			ruleStore := fakes.NewRuleStore(t)
+			fakeAIM := NewFakeAlertInstanceManager(t)
+			groupKey := ngmodels.GenerateGroupKey(orgID)
+			_, rules := ngmodels.GenerateUniqueAlertRules(rand.Intn(5)+5, ngmodels.AlertRuleGen(withGroupKey(groupKey), ngmodels.WithUniqueGroupIndex()))
+			ruleStore.PutRule(context.Background(), rules...)
+
+			api := PrometheusSrv{
+				log:     log.NewNopLogger(),
+				manager: fakeAIM,
+				store:   ruleStore,
+				ac:      acmock.New().WithDisabled(),
+			}
+
+			response := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, response.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+
+			ngmodels.RulesGroup(rules).SortByGroupIndex()
+
+			require.Len(t, result.Data.RuleGroups, 1)
+			group := result.Data.RuleGroups[0]
+			require.Equal(t, groupKey.RuleGroup, group.Name)
+			require.Len(t, group.Rules, len(rules))
+			for i, actual := range group.Rules {
+				expected := rules[i]
+				if actual.Name != expected.Title {
+					var actualNames []string
+					var expectedNames []string
+					for _, rule := range group.Rules {
+						actualNames = append(actualNames, rule.Name)
+					}
+					for _, rule := range rules {
+						expectedNames = append(expectedNames, rule.Title)
+					}
+					require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedNames, actualNames))
+				}
+			}
+		})
+	})
+
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 
 			rules := ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))
@@ -458,8 +506,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 }
 
-func setupAPI(t *testing.T) (*store.FakeRuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {
-	fakeStore := store.NewFakeRuleStore(t)
+func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {
+	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
 	acMock := acmock.New().WithDisabled()
 
@@ -473,16 +521,16 @@ func setupAPI(t *testing.T) (*store.FakeRuleStore, *fakeAlertInstanceManager, *a
 	return fakeStore, fakeAIM, acMock, api
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *store.FakeRuleStore, query func(r *ngmodels.AlertRule)) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query func(r *ngmodels.AlertRule)) {
 	t.Helper()
 
 	rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), asFixture(), query))
 
 	fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{
-			"job":                      "prometheus",
-			ngmodels.NamespaceUIDLabel: "test_namespace_uid",
-			ngmodels.RuleUIDLabel:      "test_alert_rule_uid_0",
+			"job":                            "prometheus",
+			alertingModels.NamespaceUIDLabel: "test_namespace_uid",
+			alertingModels.RuleUIDLabel:      "test_alert_rule_uid_0",
 		}
 		s.Annotations = data.Labels{"severity": "critical"}
 		return s
@@ -503,7 +551,7 @@ func asFixture() func(r *ngmodels.AlertRule) {
 		r.UID = "RuleUID"
 		r.Labels = map[string]string{
 			"__a_private_label_on_the_rule__": "a_value",
-			ngmodels.RuleUIDLabel:             "RuleUID",
+			alertingModels.RuleUIDLabel:       "RuleUID",
 		}
 		r.Annotations = nil
 		r.IntervalSeconds = 60
@@ -525,7 +573,7 @@ func withClassicConditionSingleQuery() func(r *ngmodels.AlertRule) {
 				RefID:             "B",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(classicConditionsModel, "A", "B")),
 			},
 		}
@@ -554,21 +602,21 @@ func withExpressionsMultiQuery() func(r *ngmodels.AlertRule) {
 				RefID:             "C",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(reduceLastExpressionModel, "A", "C")),
 			},
 			{
 				RefID:             "D",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(reduceLastExpressionModel, "B", "D")),
 			},
 			{
 				RefID:             "E",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(mathExpressionModel, "A", "B", "E")),
 			},
 		}

@@ -10,7 +10,7 @@ import { AsyncSelect, Select } from '../Select/Select';
  * when a value is selected. See comment below on closeMenuOnSelect()
  */
 export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
-  value?: SelectableValue<T>;
+  value?: T | SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (item: SelectableValue<T>) => void;
   /**

@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Canvas",
   "id": "canvas",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "description": "Explicit element placement",

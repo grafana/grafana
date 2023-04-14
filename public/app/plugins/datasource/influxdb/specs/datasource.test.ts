@@ -1,10 +1,12 @@
 import { lastValueFrom, of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
+import { ScopedVars } from '@grafana/data/src';
 import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import InfluxDatasource from '../datasource';
 
 //@ts-ignore
@@ -25,6 +27,7 @@ describe('InfluxDataSource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
+    ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
@@ -82,7 +85,7 @@ describe('InfluxDataSource', () => {
   });
 
   describe('When getting error on 200 after issuing a query', () => {
-    const queryOptions: any = {
+    const queryOptions = {
       range: {
         from: '2018-01-01T00:00:00Z',
         to: '2018-01-02T00:00:00Z',
@@ -101,7 +104,7 @@ describe('InfluxDataSource', () => {
     };
 
     it('throws an error', async () => {
-      fetchMock.mockImplementation((req: any) => {
+      fetchMock.mockImplementation(() => {
         return of({
           data: {
             results: [
@@ -116,7 +119,28 @@ describe('InfluxDataSource', () => {
       try {
         await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
-        expect(err.message).toBe('InfluxDB Error: Query timeout');
+        if (err instanceof Error) {
+          expect(err.message).toBe('InfluxDB Error: Query timeout');
+        }
+      }
+    });
+  });
+
+  describe('When getting a request after issuing a query using outdated Browser Mode', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      ctx.instanceSettings.url = '/api/datasources/proxy/1';
+      ctx.instanceSettings.access = 'direct';
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+    });
+
+    it('throws an error', async () => {
+      try {
+        await lastValueFrom(ctx.ds.query({}));
+      } catch (err) {
+        if (err instanceof Error) {
+          expect(err.message).toBe(BROWSER_MODE_DISABLED_MESSAGE);
+        }
       }
     });
   });
@@ -177,16 +201,38 @@ describe('InfluxDataSource', () => {
   });
 
   describe('Variables should be interpolated correctly', () => {
-    const templateSrv: any = { replace: jest.fn() };
     const instanceSettings: any = {};
-    const ds = new InfluxDatasource(instanceSettings, templateSrv);
     const text = 'interpolationText';
-    templateSrv.replace.mockReturnValue(text);
-
-    const fluxQuery = {
-      refId: 'x',
-      query: '$interpolationVar',
+    const text2 = 'interpolationText2';
+    const textWithoutFormatRegex = 'interpolationText,interpolationText2';
+    const textWithFormatRegex = 'interpolationText|interpolationText2';
+    const variableMap: Record<string, string> = {
+      $interpolationVar: text,
+      $interpolationVar2: text2,
     };
+    const adhocFilters = [
+      {
+        key: 'adhoc',
+        operator: '=',
+        value: 'val',
+        condition: '',
+      },
+    ];
+    const templateSrv: any = {
+      getAdhocFilters: jest.fn((name: string) => {
+        return adhocFilters;
+      }),
+      replace: jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+        if (!format) {
+          return variableMap[target!] || '';
+        }
+        if (format === 'regex') {
+          return textWithFormatRegex;
+        }
+        return textWithoutFormatRegex;
+      }),
+    };
+    const ds = new InfluxDatasource(instanceSettings, templateSrv);
 
     const influxQuery = {
       refId: 'x',
@@ -200,7 +246,7 @@ describe('InfluxDataSource', () => {
         {
           key: 'cpu',
           operator: '=~',
-          value: '/^$interpolationVar$/',
+          value: '/^$interpolationVar,$interpolationVar2$/',
         },
       ],
       groupBy: [
@@ -217,39 +263,43 @@ describe('InfluxDataSource', () => {
           },
         ],
       ],
+      adhocFilters,
     };
-
-    function fluxChecks(query: any) {
-      expect(templateSrv.replace).toBeCalledTimes(1);
-      expect(query).toBe(text);
-    }
 
     function influxChecks(query: any) {
       expect(templateSrv.replace).toBeCalledTimes(10);
       expect(query.alias).toBe(text);
-      expect(query.measurement).toBe(text);
-      expect(query.policy).toBe(text);
-      expect(query.limit).toBe(text);
-      expect(query.slimit).toBe(text);
+      expect(query.measurement).toBe(textWithFormatRegex);
+      expect(query.policy).toBe(textWithFormatRegex);
+      expect(query.limit).toBe(textWithFormatRegex);
+      expect(query.slimit).toBe(textWithFormatRegex);
       expect(query.tz).toBe(text);
-      expect(query.tags![0].value).toBe(text);
-      expect(query.groupBy![0].params![0]).toBe(text);
-      expect(query.select![0][0].params![0]).toBe(text);
+      expect(query.tags![0].value).toBe(textWithFormatRegex);
+      expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
+      expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.adhocFilters[0].key).toBe(adhocFilters[0].key);
     }
 
     describe('when interpolating query variables for dashboard->explore', () => {
       it('should interpolate all variables with Flux mode', () => {
         ds.isFlux = true;
+        const fluxQuery = {
+          refId: 'x',
+          query: '$interpolationVar,$interpolationVar2',
+        };
         const queries = ds.interpolateVariablesInQueries([fluxQuery], {
           interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: text2, value: text2 },
         });
-        fluxChecks(queries[0].query);
+        expect(templateSrv.replace).toBeCalledTimes(1);
+        expect(queries[0].query).toBe(textWithFormatRegex);
       });
 
       it('should interpolate all variables with InfluxQL mode', () => {
         ds.isFlux = false;
         const queries = ds.interpolateVariablesInQueries([influxQuery], {
           interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: text2, value: text2 },
         });
         influxChecks(queries[0]);
       });
@@ -258,16 +308,42 @@ describe('InfluxDataSource', () => {
     describe('when interpolating template variables', () => {
       it('should apply all template variables with Flux mode', () => {
         ds.isFlux = true;
-        const query = ds.applyTemplateVariables(fluxQuery, { interpolationVar: { text: text, value: text } });
-        fluxChecks(query.query);
+        const fluxQuery = {
+          refId: 'x',
+          query: '$interpolationVar',
+        };
+        const query = ds.applyTemplateVariables(fluxQuery, {
+          interpolationVar: {
+            text: text,
+            value: text,
+          },
+        });
+        expect(templateSrv.replace).toBeCalledTimes(1);
+        expect(query.query).toBe(text);
       });
 
       it('should apply all template variables with InfluxQL mode', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
         config.featureToggles.influxdbBackendMigration = true;
-        const query = ds.applyTemplateVariables(influxQuery, { interpolationVar: { text: text, value: text } });
+        const query = ds.applyTemplateVariables(influxQuery, {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+        });
         influxChecks(query);
+      });
+
+      it('should apply all scopedVars to tags', () => {
+        ds.isFlux = false;
+        ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
+        const query = ds.applyTemplateVariables(influxQuery, {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+        });
+        const value = query.tags[0].value;
+        const scopedVars = 'interpolationText|interpolationText2';
+        expect(value).toBe(scopedVars);
       });
     });
   });

@@ -1,50 +1,55 @@
-import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
+import { useId } from '@react-aria/utils';
+import React, { FormEvent, PropsWithChildren } from 'react';
 
-import { InlineField, Input, PopoverContent } from '@grafana/ui';
+import { Field, Input } from '@grafana/ui';
 
 interface VariableTextFieldProps {
   value: string;
   name: string;
-  placeholder: string;
+  placeholder?: string;
   onChange: (event: FormEvent<HTMLInputElement>) => void;
   testId?: string;
-  tooltip?: PopoverContent;
   required?: boolean;
   width?: number;
-  labelWidth?: number;
   grow?: boolean;
   onBlur?: (event: FormEvent<HTMLInputElement>) => void;
-  interactive?: boolean;
+  maxLength?: number;
+  description?: React.ReactNode;
+  invalid?: boolean;
+  error?: React.ReactNode;
 }
 
 export function VariableTextField({
   value,
   name,
-  placeholder,
+  placeholder = '',
   onChange,
   testId,
   width,
-  labelWidth,
   required,
   onBlur,
-  tooltip,
   grow,
-  interactive,
-}: PropsWithChildren<VariableTextFieldProps>): ReactElement {
+  description,
+  invalid,
+  error,
+  maxLength,
+}: PropsWithChildren<VariableTextFieldProps>) {
+  const id = useId(name);
+
   return (
-    <InlineField interactive={interactive} label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip} grow={grow}>
+    <Field label={name} description={description} invalid={invalid} error={error} htmlFor={id}>
       <Input
         type="text"
-        id={name}
-        name={name}
+        id={id}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
-        width={grow ? undefined : width ?? 25}
+        width={grow ? undefined : width ?? 30}
         data-testid={testId}
+        maxLength={maxLength}
         required={required}
       />
-    </InlineField>
+    </Field>
   );
 }

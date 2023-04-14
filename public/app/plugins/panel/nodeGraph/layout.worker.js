@@ -44,7 +44,7 @@ export function layout(nodes, edges, config) {
 }
 
 /**
- * This initializes positions of the graph by going from the root to it's children and laying it out in a grid from left
+ * This initializes positions of the graph by going from the root to its children and laying it out in a grid from left
  * to right. This works only so, so because service map graphs can have cycles and children levels are not ordered in a
  * way to minimize the edge lengths. Nevertheless this seems to make the graph easier to nudge with the forces later on
  * than with the d3 default initial positioning. Also we can fix the root positions later on for a bit more neat
@@ -125,7 +125,7 @@ function initializePositions(nodes, edges) {
 }
 
 /**
- * Makes sure that the center of the graph based on it's bound is in 0, 0 coordinates.
+ * Makes sure that the center of the graph based on its bound is in 0, 0 coordinates.
  * Modifies the nodes directly.
  */
 function centerNodes(nodes) {

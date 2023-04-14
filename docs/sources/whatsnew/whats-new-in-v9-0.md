@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v9-0/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v9-0/
+  - ../guides/whats-new-in-v9-0/
 description: Feature and improvement highlights for Grafana v9.0
 keywords:
   - grafana
@@ -15,15 +14,15 @@ title: What's new in Grafana v9.0
 weight: -33
 ---
 
-# What’s new in Grafana v9.0 ((beta))
+# What's new in Grafana v9.0
 
-As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default unified alerting experience.
+As tradition goes, GrafanaCon — our yearly community event for Grafana open source users — is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0: a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
 
-A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
+A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki, writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
 
 The release also includes a brand-new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
-We’ve summarized what’s new in the beta release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+We’ve summarized what’s new in the release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Prometheus query builder
 
@@ -41,11 +40,11 @@ All functions, aggregations and binary operations are added via the + Operation 
 
 ### Range vector
 
-The query builder will automatically mange and add the range vector, it will be shown as a parameter to the operations that require a range (rate, delta, increase etc).
+The query builder will automatically manage and add the range selector. It will be shown as a parameter to the operations that require a range vector (rate, delta, increase, etc).
 
 ### Binary operations
 
-Simple binary operations like multiple or divide by scaler are represented via simple operation boxes like other functions but the builder also supports binary operations on nested query expressions.
+Simple binary operations like multiplication or division by a scalar are represented via simple operation boxes like other functions. The builder also supports binary operations on nested query expressions.
 
 ### Switch between code and builder
 
@@ -82,11 +81,11 @@ The new heatmap by default assumes that the data is pre-bucketed. So if your que
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="500px" caption="Heatmap panel with time series" >}}
 
-## Unified alerting is the default in Grafana 9
+## Grafana Alerting is the default in Grafana 9
 
-Unified alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the unified alerting interface.
+Grafana Alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the Grafana Alerting interface.
 
-Unified alerting has been available since June, 2021, it now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out/" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
+Grafana Alerting, called unified alerting in Grafana 8, has been available since June, 2021 now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out/" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
 
 ### Alert state history for Grafana managed alerts
 
@@ -94,11 +93,11 @@ Alert state history for Grafana managed alerts indicates the cause of the state.
 
 ### Images in notifications for Grafana managed alerts
 
-Unified alerting now provides the ability to capture an image for Grafana managed alerts and deliver it via a notification. This is configurable via the contact points tab of Unified alerting . This functionality was available in legacy dashboard alerting, but was missing in unified alerting. It requires the alert to be related to a specific dashboard using the “Dashboard UID” field.
+Grafana Alerting now provides the ability to capture an image for Grafana managed alerts and deliver it via a notification. This is configurable via the contact points tab of Grafana Alerting . This functionality was available in legacy dashboard alerting, but was missing in Grafana Alerting. It requires the alert to be related to a specific dashboard panel using the “Dashboard UID” and “Panel ID” annotations.
 
 ## Envelope encryption is generally available and enabled by default
 
-Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external Key Management Service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [docs](https://grafana.com/docs/grafana/next/administration/database-encryption/#envelope-encryption).
+Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external key management service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [database encryption documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption/#envelope-encryption" >}}).
 
 {{< figure src="/static/img/docs/enterprise/dashboards/envelope-encryption.png" max-width="750px" caption="Envelope encryption" >}}
 
@@ -110,9 +109,9 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
-## Panel title search
+## Panel title search (opt-in beta)
 
-In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
+Grafana 9 has a feature toggle `panelTitleSearch`. When enabled, it tells Grafana to use a new search engine. Instead of using SQL queries, the new search uses an in-memory full-text index. That provides a better search experience and additionally allows searching through panel titles.
 
 ## Expanding the navigation bar
 
@@ -173,18 +172,19 @@ Reporting is all about convenience - getting info to eyeballs as quickly as poss
 
 {{< figure src="/static/img/docs/dashboards/report-embedded-image.png" max-width="750px" caption="Embed report" >}}
 
-## Breaking Changes
+## Breaking changes
 
-This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES).
+This is a partial list of notable breaking changes. For the complete list, see our [Release Notes]({{< relref "../release-notes/release-notes-9-0-0/" >}}).
 
 ### Role-based access control: changes for general release
 
 Fine-grained access control is now called "Role-based access control". As part of the Grafana 9.0 release, the service is generally available, and there are several breaking changes:
 
-Built-in roles are now called basic roles, and they now consist of permissions, not roles
-The Terraform builtin_role_assignment resource is going away.
-Grafana provisioning has a new schema, please refer to the documentation for more information.
-Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Built-in roles are now called basic roles. They now consist of permissions, not roles.
+- The Terraform builtin_role_assignment resource is going away.
+- Grafana provisioning has a new schema. Please refer to the documentation for more information.
+- Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Several role-based access control actions have been renamed. All the database entries that use legacy action names will be migrated to use the new names, but provisioning files and scripts will have to be updated by the user. This change also means that if Grafana is downgraded from 9.0 to a lower version, some role-based access control permissions will not be resolved correctly.
 
 ### Loki: logs data format changed
 
@@ -213,7 +213,42 @@ In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 
-The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
+The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (`/`), for example, `(.*)` would become `/(.*)/`. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
+
+### Clock Panel
+
+We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
+
+### Polystat Panel
+
+We have updated [polystat panel](https://grafana.com/grafana/plugins/grafana-polystat-panel/) to version `1.2.10` to make it compatible with Grafana 9. The previous versions `1.2.8` and below will render empty in Grafana 9. We encourage you to update the panel before or immediately after migrating to Grafana 9.
+
+### Plugins: Most relevant breaking changes
+
+- `getColorForTheme` was removed, use `theme.visualization.getColorByName` instead [PR #49519](https://github.com/grafana/grafana/pull/49519)
+- `TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead [PR #49705](https://github.com/grafana/grafana/pull/49705)
+- We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods) [PR #47493](https://github.com/grafana/grafana/pull/47493)
+- We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead [PR #49945](https://github.com/grafana/grafana/pull/49945)
+- We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use `/api/ds/query` instead [PR #49916](https://github.com/grafana/grafana/pull/49916)
+
+You can find the complete list of breaking changes in the links below. Please check them out for more details and see if there is anything affecting your plugin
+
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta1/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta2/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta3/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0
+
+### Envelope encryption enabled by default
+
+Grafana v8.5 added a new kind of encryption called "envelope encryption" for secrets stored in the Grafana database, such as data source credentials, alerting notification channel credentials, oauth tokens, etc., behind a feature toggle named `envelopeEncryption`.
+
+In v9.0, the `envelopeEncryption` feature toggle is replaced in favor of `disableEnvelopeEncryption`, and Grafana uses the envelope encryption mechanism by default.
+
+Therefore, any secret created or updated in Grafana v9.0 won't be decryptable by any previous Grafana version, unless the Grafana version is at least v8.5 and the feature toggle `envelopeEncryption` is enabled. If not properly configured, this can cause issues in high availability setups, progressive rollouts, or any situation that involves rolling back to a previous Grafana version.
+
+We strongly recommend that you enable `envelopeEncryption` for older versions to deploy envelope encryption. You can alternatively configure the `disableEnvelopeEncryption` feature toggle before upgrading to v9.0; however, this feature toggle might be removed in a future Grafana release.
+
+For more details, and workarounds for potential issues, refer to the [documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}}).
 
 ## A note on Grafana Enterprise licensing
 

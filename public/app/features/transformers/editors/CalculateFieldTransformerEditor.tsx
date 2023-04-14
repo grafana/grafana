@@ -37,6 +37,7 @@ interface CalculateFieldTransformerEditorState {
 const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
 
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
@@ -68,9 +69,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   private initOptions() {
     const { options } = this.props;
     const configuredOptions = options?.reduce?.include || [];
+    const ctx = { interpolate: (v: string) => v };
     const subscription = of(this.props.input)
       .pipe(
-        standardTransformers.ensureColumnsTransformer.operator(null),
+        standardTransformers.ensureColumnsTransformer.operator(null, ctx),
         this.extractAllNames(),
         this.extractNamesAndSelected(configuredOptions)
       )

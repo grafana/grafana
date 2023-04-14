@@ -1,15 +1,8 @@
 import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
-import {
-  GraphDrawStyle,
-  GraphFieldConfig,
-  GraphGradientMode,
-  LegendDisplayMode,
-  LineInterpolation,
-  StackingMode,
-} from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { TimeSeriesOptions } from './types';
+import { PanelOptions } from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -19,7 +12,7 @@ export class TimeSeriesSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
+    const list = builder.getListAppender<PanelOptions, GraphFieldConfig>({
       name: SuggestionName.LineChart,
       pluginId: 'timeseries',
       options: {
@@ -33,7 +26,7 @@ export class TimeSeriesSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+          s.options!.legend.showLegend = false;
 
           if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
             s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);

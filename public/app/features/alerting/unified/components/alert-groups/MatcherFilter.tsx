@@ -1,24 +1,38 @@
 import { css } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { debounce } from 'lodash';
+import React, { FormEvent, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { logInfo } from '@grafana/runtime';
 import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
+
+import { LogMessages } from '../../Analytics';
 
 interface Props {
   className?: string;
-  queryString?: string;
   defaultQueryString?: string;
   onFilterChange: (filterString: string) => void;
 }
 
-export const MatcherFilter = ({ className, onFilterChange, defaultQueryString, queryString }: Props) => {
+export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
-  const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
-    onFilterChange(target.value);
-  };
+
+  const onSearchInputChanged = useMemo(
+    () =>
+      debounce((e: FormEvent<HTMLInputElement>) => {
+        logInfo(LogMessages.filterByLabel);
+
+        const target = e.target as HTMLInputElement;
+        onFilterChange(target.value);
+      }, 600),
+    [onFilterChange]
+  );
+
+  useEffect(() => onSearchInputChanged.cancel(), [onSearchInputChanged]);
+
   const searchIcon = <Icon name={'search'} />;
+
   return (
     <div className={className}>
       <Label>
@@ -39,8 +53,7 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString, q
       <Input
         placeholder="Search"
         defaultValue={defaultQueryString}
-        value={queryString}
-        onChange={handleSearchChange}
+        onChange={onSearchInputChanged}
         data-testid="search-query-input"
         prefix={searchIcon}
         className={styles.inputWidth}

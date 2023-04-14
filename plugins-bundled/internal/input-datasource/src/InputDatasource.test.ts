@@ -20,6 +20,7 @@ describe('InputDatasource', () => {
     name: 'xxx',
     meta: {} as PluginMeta,
     access: 'proxy',
+    readOnly: false,
     jsonData: {
       data,
     },

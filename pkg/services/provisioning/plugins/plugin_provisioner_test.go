@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 func TestPluginProvisioner(t *testing.T) {
@@ -34,7 +35,9 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		store := &mockStore{}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store, pluginSettings: store}
+		orgMock := orgtest.NewOrgServiceFake()
+		orgMock.ExpectedOrg = &org.Org{ID: 4}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, pluginSettings: store, orgService: orgMock}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
@@ -80,13 +83,6 @@ type mockStore struct {
 	updateRequests []*pluginsettings.UpdateArgs
 }
 
-func (m *mockStore) GetOrgByNameHandler(_ context.Context, query *models.GetOrgByNameQuery) error {
-	if query.Name == "Org 4" {
-		query.Result = &models.Org{Id: 4}
-	}
-	return nil
-}
-
 func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
 	if args.PluginID == "test-plugin" && args.OrgID == 2 {
 		return &pluginsettings.DTO{
@@ -94,7 +90,7 @@ func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginse
 		}, nil
 	}
 
-	return nil, models.ErrPluginSettingNotFound
+	return nil, pluginsettings.ErrPluginSettingNotFound
 }
 
 func (m *mockStore) UpdatePluginSetting(_ context.Context, args *pluginsettings.UpdateArgs) error {
@@ -106,7 +102,7 @@ func (m *mockStore) UpdatePluginSettingPluginVersion(_ context.Context, _ *plugi
 	return nil
 }
 
-func (m *mockStore) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
+func (m *mockStore) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	return nil, nil
 }
 

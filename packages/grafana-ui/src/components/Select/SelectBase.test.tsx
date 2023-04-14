@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { selectOptionInTest } from '../../../../../public/test/helpers/selectOptionInTest';
+
 import { SelectBase } from './SelectBase';
-import { selectOptionInTest } from './test-utils';
 
 describe('SelectBase', () => {
   const onChangeHandler = () => jest.fn();
@@ -204,6 +205,17 @@ describe('SelectBase', () => {
         { label: 'Option 2', value: 2 },
         { action: 'select-option', name: undefined, option: undefined }
       );
+    });
+
+    it('hideSelectedOptions prop - when false does not hide selected', async () => {
+      render(<SelectBase onChange={jest.fn()} options={options} aria-label="My select" hideSelectedOptions={false} />);
+
+      const selectEl = screen.getByLabelText('My select');
+
+      await selectOptionInTest(selectEl, 'Option 2');
+      await userEvent.click(screen.getByText(/option 2/i));
+      const menuOptions = screen.getAllByLabelText('Select option');
+      expect(menuOptions).toHaveLength(2);
     });
   });
 });

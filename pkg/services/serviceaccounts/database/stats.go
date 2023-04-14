@@ -3,35 +3,29 @@ package database
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	stats := map[string]interface{}{"stats.serviceaccounts.enabled.count": int64(1)}
+func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
+	dialect := s.sqlStore.GetDialect()
 
-	sb := &sqlstore.SQLBuilder{}
-	dialect := s.sqlStore.Dialect
+	sb := &db.SQLBuilder{}
 	sb.Write("SELECT ")
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") +
 		` WHERE is_service_account = ` + dialect.BooleanStr(true) + `) AS serviceaccounts,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("api_key") +
 		` WHERE service_account_id IS NOT NULL ) AS serviceaccount_tokens`)
 
-	type saStats struct {
-		ServiceAccounts int64 `xorm:"serviceaccounts"`
-		Tokens          int64 `xorm:"serviceaccount_tokens"`
-	}
-
-	var sqlStats saStats
-	if err := s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	var sqlStats serviceaccounts.Stats
+	if err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&sqlStats)
 		return err
 	}); err != nil {
 		return nil, err
 	}
 
-	stats["stats.serviceaccounts.count"] = sqlStats.ServiceAccounts
-	stats["stats.serviceaccounts.tokens.count"] = sqlStats.Tokens
+	sqlStats.ForcedExpiryEnabled = s.cfg.SATokenExpirationDayLimit != 0
 
-	return stats, nil
+	return &sqlStats, nil
 }

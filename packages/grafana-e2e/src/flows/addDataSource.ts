@@ -8,10 +8,6 @@ export interface AddDataSourceConfig {
   basicAuth: boolean;
   basicAuthPassword: string;
   basicAuthUser: string;
-  /**
-   * @deprecated check health request is no longer supported
-   */
-  checkHealth: boolean;
   expectedAlertMessage: string | RegExp;
   form: () => void;
   name: string;
@@ -26,12 +22,11 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     basicAuth: false,
     basicAuthPassword: '',
     basicAuthUser: '',
-    checkHealth: false,
     expectedAlertMessage: 'Data source is working',
     form: () => {},
     name: `e2e-${uuidv4()}`,
     skipTlsVerify: false,
-    type: 'TestData DB',
+    type: 'TestData',
     ...config,
   };
 

@@ -1,17 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
       "rotate": undefined,
       "scale": "x",
@@ -21,7 +22,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -30,15 +31,16 @@ Object {
       "timeZone": "utc",
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
       "rotate": undefined,
       "scale": "__fixed/na-na/na-na/auto/linear/na",
@@ -48,7 +50,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -58,40 +60,49 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
+  "cursor": {
     "dataIdx": [Function],
-    "drag": Object {
+    "drag": {
       "setScale": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
+    "points": {
       "fill": [Function],
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "sync": Object {
-      "filters": Object {
+    "sync": {
+      "filters": {
         "pub": [Function],
       },
       "key": "__global_",
-      "match": Array [
-        [Function],
-        [Function],
-      ],
-      "scales": Array [
+      "scales": [
         "x",
-        null,
+        "__fixed/na-na/na-na/auto/linear/na",
       ],
     },
   },
-  "hooks": Object {},
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {},
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "__fixed/na-na/na-na/auto/linear/na": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "__fixed/na-na/na-na/auto/linear/na": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -100,7 +111,7 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
       "auto": false,
       "dir": 1,
       "ori": 0,
@@ -109,19 +120,19 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
-      "dash": Array [
+    {
+      "dash": [
         1,
         2,
       ],
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#ff0000",
         "filter": [Function],
         "show": true,
@@ -136,15 +147,15 @@ Object {
       "value": [Function],
       "width": 2,
     },
-    Object {
-      "dash": Array [
+    {
+      "dash": [
         1,
         2,
       ],
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#ff0000",
         "filter": [Function],
         "show": true,
@@ -159,15 +170,15 @@ Object {
       "value": [Function],
       "width": 2,
     },
-    Object {
-      "dash": Array [
+    {
+      "dash": [
         1,
         2,
       ],
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#ff0000",
         "filter": [Function],
         "show": true,
@@ -182,15 +193,15 @@ Object {
       "value": [Function],
       "width": 2,
     },
-    Object {
-      "dash": Array [
+    {
+      "dash": [
         1,
         2,
       ],
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#ff0000",
         "filter": [Function],
         "show": true,
@@ -205,15 +216,15 @@ Object {
       "value": [Function],
       "width": 2,
     },
-    Object {
-      "dash": Array [
+    {
+      "dash": [
         1,
         2,
       ],
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#ff0000",
         "filter": [Function],
         "show": true,

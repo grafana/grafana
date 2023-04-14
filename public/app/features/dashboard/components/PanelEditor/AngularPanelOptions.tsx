@@ -110,7 +110,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
       toggleOptionGroup: (index: number) => {
         const tab = panelCtrl.editorTabs[index];
         tab.isOpen = !tab.isOpen;
-        saveSectionOpenState(tab.title, tab.isOpen as boolean);
+        saveSectionOpenState(tab.title, Boolean(tab.isOpen));
       },
     };
 

@@ -1,3 +1,4 @@
+import { clone } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
@@ -52,7 +53,9 @@ const createFieldsOrderer =
       return fields;
     }
     const comparer = createOrderFieldsComparer(indexByName);
-    return fields.sort((a, b) => comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data)));
+    return clone(fields).sort((a, b) =>
+      comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data))
+    );
   };
 
 const indexOfField = (fieldName: string, indexByName: Record<string, number>) => {

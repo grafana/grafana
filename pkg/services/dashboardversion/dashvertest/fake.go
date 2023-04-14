@@ -7,8 +7,8 @@ import (
 )
 
 type FakeDashboardVersionService struct {
-	ExpectedDashboardVersion     *dashver.DashboardVersion
-	ExpectedDashboardVersions    []*dashver.DashboardVersion
+	ExpectedDashboardVersion     *dashver.DashboardVersionDTO
+	ExpectedDashboardVersions    []*dashver.DashboardVersionDTO
 	ExpectedListDashboarVersions []*dashver.DashboardVersionDTO
 	counter                      int
 	ExpectedError                error
@@ -18,7 +18,7 @@ func NewDashboardVersionServiceFake() *FakeDashboardVersionService {
 	return &FakeDashboardVersionService{}
 }
 
-func (f *FakeDashboardVersionService) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
+func (f *FakeDashboardVersionService) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersionDTO, error) {
 	if len(f.ExpectedDashboardVersions) == 0 {
 		return f.ExpectedDashboardVersion, f.ExpectedError
 	}

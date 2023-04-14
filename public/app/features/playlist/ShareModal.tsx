@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 
-import { AppEvents, SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
-import { Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Modal, RadioButtonGroup } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-
-import { buildBaseUrl } from '../dashboard/components/ShareModal/utils';
+import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
+import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { PlaylistMode } from './types';
 
-interface ShareModalProps {
-  playlistId: number;
+interface Props {
+  playlistUid: string;
   onDismiss: () => void;
 }
 
-export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
+export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 
@@ -23,10 +21,6 @@ export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
     { label: 'Kiosk', value: true },
   ];
 
-  const onShareUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   const params: UrlQueryMap = {};
   if (mode) {
     params.kiosk = mode;
@@ -35,7 +29,7 @@ export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
     params.autofitpanels = true;
   }
 
-  const shareUrl = urlUtil.renderUrl(`${buildBaseUrl()}/play/${playlistId}`, params);
+  const shareUrl = urlUtil.renderUrl(`${buildBaseUrl()}/play/${playlistUid}`, params);
 
   return (
     <Modal isOpen={true} title="Share playlist" onDismiss={onDismiss}>
@@ -59,8 +53,8 @@ export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
             value={shareUrl}
             readOnly
             addonAfter={
-              <ClipboardButton variant="primary" getText={() => shareUrl} onClipboardCopy={onShareUrlCopy}>
-                <Icon name="copy" /> Copy
+              <ClipboardButton icon="copy" variant="primary" getText={() => shareUrl}>
+                Copy
               </ClipboardButton>
             }
           />

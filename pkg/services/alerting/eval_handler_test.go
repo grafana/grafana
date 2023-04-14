@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-
-	"github.com/stretchr/testify/require"
 )
 
 type conditionStub struct {
@@ -29,7 +30,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			Conditions: []Condition{&conditionStub{
 				firing: true,
 			}},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
@@ -39,7 +40,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 	t.Run("Show return triggered with single passing condition2", func(t *testing.T) {
 		context := NewEvalContext(context.Background(), &Rule{
 			Conditions: []Condition{&conditionStub{firing: true, operator: "and"}},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
@@ -52,7 +53,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{{}, {}}},
 				&conditionStub{firing: false, operator: "and"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
@@ -65,7 +66,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "or"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
@@ -78,7 +79,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "and"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
@@ -92,7 +93,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: true, operator: "and"},
 				&conditionStub{firing: false, operator: "or"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
@@ -106,7 +107,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: false, operator: "and"},
 				&conditionStub{firing: false, operator: "or"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
@@ -120,7 +121,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: false, operator: "and"},
 				&conditionStub{firing: true, operator: "and"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
@@ -134,7 +135,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: false, operator: "or"},
 				&conditionStub{firing: true, operator: "or"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, true, context.Firing)
@@ -148,7 +149,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{firing: false, operator: "or"},
 				&conditionStub{firing: false, operator: "or"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
@@ -163,7 +164,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{operator: "or", noData: false},
 				&conditionStub{operator: "or", noData: false},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.False(t, context.NoDataFound)
@@ -174,7 +175,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			Conditions: []Condition{
 				&conditionStub{operator: "and", noData: true},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.Equal(t, false, context.Firing)
@@ -187,7 +188,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{operator: "and", noData: true},
 				&conditionStub{operator: "and", noData: false},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.True(t, context.NoDataFound)
@@ -199,7 +200,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				&conditionStub{operator: "or", noData: true},
 				&conditionStub{operator: "or", noData: false},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		handler.Eval(context)
 		require.True(t, context.NoDataFound)

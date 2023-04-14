@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -12,22 +16,27 @@
 //  +-------------------------------+-----------------------------------------------------+
 //  | Name: Time                    | Name: Value                                         |
 //  | Labels:                       | Labels: handler=/api/v1/query_range, job=prometheus |
-//  | Type: []time.Time             | Type: []*float64                                    |
+//  | Type: []time.Time             | Type: []float64                                     |
 //  +-------------------------------+-----------------------------------------------------+
-//  | 2022-01-11 08:25:30 +0000 UTC | null                                                |
-//  | 2022-01-11 08:25:31 +0000 UTC | null                                                |
-//  | 2022-01-11 08:25:32 +0000 UTC | null                                                |
+//  | 2022-01-11 08:25:30 +0000 UTC | NaN                                                 |
+//  | 2022-01-11 08:25:31 +0000 UTC | NaN                                                 |
+//  | 2022-01-11 08:25:32 +0000 UTC | NaN                                                 |
 //  +-------------------------------+-----------------------------------------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "matrix"
           },
@@ -48,8 +57,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "handler": "/api/v1/query_range",
@@ -73,6 +81,16 @@
             null,
             null
           ]
+        ],
+        "entities": [
+          null,
+          {
+            "NaN": [
+              0,
+              1,
+              2
+            ]
+          }
         ]
       }
     }

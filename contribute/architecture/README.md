@@ -4,9 +4,9 @@ Are you looking to take on contributions with bigger impact? These guides help y
 
 Learn more about the backend architecture:
 
-- Part 1: [Services](backend/services.md)
-- Part 2: [Communication](backend/communication.md)
-- Part 3: [Database](backend/database.md)
+- Part 1: [Services](../backend/services.md)
+- Part 2: [Communication](../backend/communication.md)
+- Part 3: [Database](../backend/database.md)
 
 Learn more about the frontend architecture:
 

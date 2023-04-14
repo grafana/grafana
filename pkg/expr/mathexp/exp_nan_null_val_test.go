@@ -1,6 +1,7 @@
 package mathexp
 
 import (
+	"fmt"
 	"math"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNaN(t *testing.T) {
@@ -418,6 +420,92 @@ func TestNullValues(t *testing.T) {
 				assert.Panics(t, testBlock)
 			} else {
 				testBlock()
+			}
+		})
+	}
+}
+
+func TestNoData(t *testing.T) {
+	t.Run("unary operation return NoData if input NoData", func(t *testing.T) {
+		unaryOps := []string{
+			"abs($A)",
+			"is_inf($A)",
+			"is_nan($A)",
+			"is_null($A)",
+			"is_number($A)",
+			"log($A)",
+			"round($A)",
+			"ceil($A)",
+			"floor($A)",
+			"!$A",
+			"-$A",
+		}
+		vars := Vars{"A": Results{[]Value{NewNoData()}}}
+		for _, expr := range unaryOps {
+			t.Run(fmt.Sprintf("op: %s", expr), func(t *testing.T) {
+				e, err := New(expr)
+				require.NoError(t, err)
+				if e != nil {
+					res, err := e.Execute("", vars)
+					require.NoError(t, err)
+					require.Len(t, res.Values, 1)
+					require.Equal(t, NewNoData(), res.Values[0])
+				}
+			})
+		}
+	})
+
+	makeVars := func(a, b Value) Vars {
+		return Vars{
+			"A": Results{[]Value{a}},
+			"B": Results{[]Value{b}},
+		}
+	}
+
+	bin_ops := []string{
+		"$A || $B",
+		"$A && $B",
+		"$A + $B",
+		"$A * $B",
+		"$A - $B",
+		"$A / $B",
+		"$A ** $B",
+		"$A % $B",
+		"$A == $B",
+		"$A > $B",
+		"$A != $B",
+		"$A < $B",
+		"$A >= $B",
+		"$A <= $B",
+		"$A || $B",
+		"$A && $B",
+	}
+	series := makeSeries("test", nil, tp{time.Unix(5, 0), float64Pointer(2)})
+	for _, expr := range bin_ops {
+		t.Run(fmt.Sprintf("op: %s", expr), func(t *testing.T) {
+			e, err := New(expr)
+			require.NoError(t, err)
+			if e != nil {
+				t.Run("$A,$B=nodata", func(t *testing.T) {
+					res, err := e.Execute("", makeVars(NewNoData(), NewNoData()))
+					require.NoError(t, err)
+					require.Len(t, res.Values, 1)
+					require.Equal(t, NewNoData(), res.Values[0])
+				})
+
+				t.Run("$A=nodata, $B=series", func(t *testing.T) {
+					res, err := e.Execute("", makeVars(NewNoData(), series))
+					require.NoError(t, err)
+					require.Len(t, res.Values, 1)
+					require.Equal(t, NewNoData(), res.Values[0])
+				})
+
+				t.Run("$A=series, $B=nodata", func(t *testing.T) {
+					res, err := e.Execute("", makeVars(NewNoData(), series))
+					require.NoError(t, err)
+					require.Len(t, res.Values, 1)
+					require.Equal(t, NewNoData(), res.Values[0])
+				})
 			}
 		})
 	}

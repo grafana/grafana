@@ -1,25 +1,17 @@
 import { css } from '@emotion/css';
-import React, { useReducer } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { HorizontalGroup, useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
+import { useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
+import { FolderInfo } from 'app/types';
 
 import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFilter';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { SortPicker } from '../../../../core/components/Select/SortPicker';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
-import { FolderInfo } from '../../../../types';
 import { LibraryElementDTO } from '../../types';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-
-import {
-  folderFilterChanged,
-  initialLibraryPanelsSearchState,
-  libraryPanelsSearchReducer,
-  panelFilterChanged,
-  searchChanged,
-  sortChanged,
-} from './reducer';
 
 export enum LibraryPanelsSearchVariant {
   Tight = 'tight',
@@ -34,7 +26,7 @@ export interface LibraryPanelsSearchProps {
   showFolderFilter?: boolean;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
-  currentFolderId?: number;
+  currentFolderUID?: string;
   perPage?: number;
 }
 
@@ -42,85 +34,58 @@ export const LibraryPanelsSearch = ({
   onClick,
   variant = LibraryPanelsSearchVariant.Spacious,
   currentPanelId,
-  currentFolderId,
+  currentFolderUID,
   perPage = DEFAULT_PER_PAGE_PAGINATION,
   showPanelFilter = false,
   showFolderFilter = false,
   showSort = false,
   showSecondaryActions = false,
 }: LibraryPanelsSearchProps): JSX.Element => {
-  const styles = useStyles2(getStyles);
-  const [{ sortDirection, panelFilter, folderFilter, searchQuery }, dispatch] = useReducer(libraryPanelsSearchReducer, {
-    ...initialLibraryPanelsSearchState,
-    folderFilter: currentFolderId ? [currentFolderId.toString(10)] : [],
-  });
-  const onFilterChange = (searchString: string) => dispatch(searchChanged(searchString));
-  const onSortChange = (sorting: SelectableValue<string>) => dispatch(sortChanged(sorting));
-  const onFolderFilterChange = (folders: FolderInfo[]) => dispatch(folderFilterChanged(folders));
-  const onPanelFilterChange = (plugins: PanelPluginMeta[]) => dispatch(panelFilterChanged(plugins));
+  const styles = useStyles2(useCallback((theme) => getStyles(theme, variant), [variant]));
 
-  if (variant === LibraryPanelsSearchVariant.Spacious) {
-    return (
-      <div className={styles.container}>
-        <VerticalGroup spacing="lg">
-          <FilterInput
-            value={searchQuery}
-            onChange={onFilterChange}
-            placeholder={'Search by name or description'}
-            width={0}
-          />
-          <div className={styles.buttonRow}>
-            <HorizontalGroup
-              spacing="sm"
-              justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}
-            >
-              {showSort && (
-                <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />
-              )}
-              <HorizontalGroup
-                spacing="sm"
-                justify={showFolderFilter && showPanelFilter ? 'space-between' : 'flex-end'}
-              >
-                {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} />}
-                {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} />}
-              </HorizontalGroup>
-            </HorizontalGroup>
-          </div>
-          <div className={styles.libraryPanelsView}>
-            <LibraryPanelsView
-              onClickCard={onClick}
-              searchString={searchQuery}
-              sortDirection={sortDirection}
-              panelFilter={panelFilter}
-              folderFilter={folderFilter}
-              currentPanelId={currentPanelId}
-              showSecondaryActions={showSecondaryActions}
-              perPage={perPage}
-            />
-          </div>
-        </VerticalGroup>
-      </div>
-    );
-  }
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
+
+  const [sortDirection, setSortDirection] = useState<SelectableValue<string>>({});
+  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderUID ? [currentFolderUID] : []);
+  const [panelFilter, setPanelFilter] = useState<string[]>([]);
+
+  const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
+  const verticalGroupSpacing = variant === LibraryPanelsSearchVariant.Tight ? 'lg' : 'xs';
 
   return (
     <div className={styles.container}>
-      <VerticalGroup spacing="xs">
-        <div className={styles.tightButtonRow}>
-          <div className={styles.tightFilter}>
-            <FilterInput value={searchQuery} onChange={onFilterChange} placeholder={'Search by name'} width={0} />
+      <VerticalGroup spacing={verticalGroupSpacing}>
+        <div className={styles.gridContainer}>
+          <div className={styles.filterInputWrapper}>
+            <FilterInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search by name or description"
+              width={0}
+              escapeRegex={false}
+            />
           </div>
-          <div className={styles.tightSortFilter}>
-            {showSort && <SortPicker value={sortDirection} onChange={onSortChange} />}
-            {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} maxMenuHeight={200} />}
-            {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} maxMenuHeight={200} />}
-          </div>
+          {sortOrFiltersVisible && (
+            <SearchControls
+              showSort={showSort}
+              showPanelFilter={showPanelFilter}
+              showFolderFilter={showFolderFilter}
+              onSortChange={setSortDirection}
+              onFolderFilterChange={setFolderFilter}
+              onPanelFilterChange={setPanelFilter}
+              sortDirection={sortDirection.value}
+              variant={variant}
+            />
+          )}
         </div>
+
         <div className={styles.libraryPanelsView}>
           <LibraryPanelsView
             onClickCard={onClick}
-            searchString={searchQuery}
-            sortDirection={sortDirection}
+            searchString={debouncedSearchQuery}
+            sortDirection={sortDirection.value}
             panelFilter={panelFilter}
             folderFilter={folderFilter}
             currentPanelId={currentPanelId}
@@ -133,34 +98,118 @@ export const LibraryPanelsSearch = ({
   );
 };
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, variant: LibraryPanelsSearchVariant) {
+  const tightLayout = css`
+    flex-direction: row;
+    row-gap: ${theme.spacing(1)};
+  `;
   return {
+    filterInputWrapper: css`
+      flex-grow: ${variant === LibraryPanelsSearchVariant.Tight ? 1 : 'initial'};
+    `,
     container: css`
       width: 100%;
       overflow-y: auto;
       padding: ${theme.spacing(1)};
     `,
-    buttonRow: css`
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: ${theme.spacing(2)}; // Clear types link
-    `,
-    tightButtonRow: css`
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: ${theme.spacing(4)}; // Clear types link
-    `,
-    tightFilter: css`
-      flex-grow: 1;
-    `,
-    tightSortFilter: css`
-      flex-grow: 1;
-      padding: ${theme.spacing(0, 0, 0, 0.5)};
-    `,
     libraryPanelsView: css`
       width: 100%;
     `,
+    gridContainer: css`
+      ${variant === LibraryPanelsSearchVariant.Tight ? tightLayout : ''};
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      column-gap: ${theme.spacing(1)};
+      row-gap: ${theme.spacing(1)};
+      padding-bottom: ${theme.spacing(2)};
+    `,
   };
+}
+
+interface SearchControlsProps {
+  showSort: boolean;
+  showPanelFilter: boolean;
+  showFolderFilter: boolean;
+  sortDirection?: string;
+  onSortChange: (sortValue: SelectableValue) => void;
+  onFolderFilterChange: (folder: string[]) => void;
+  onPanelFilterChange: (plugins: string[]) => void;
+  variant?: LibraryPanelsSearchVariant;
+}
+
+const SearchControls = React.memo(
+  ({
+    variant = LibraryPanelsSearchVariant.Spacious,
+    showSort,
+    showPanelFilter,
+    showFolderFilter,
+    sortDirection,
+    onSortChange,
+    onFolderFilterChange,
+    onPanelFilterChange,
+  }: SearchControlsProps) => {
+    const styles = useStyles2(useCallback((theme) => getRowStyles(theme, variant), [variant]));
+    const panelFilterChanged = useCallback(
+      (plugins: PanelPluginMeta[]) => onPanelFilterChange(plugins.map((p) => p.id)),
+      [onPanelFilterChange]
+    );
+    const folderFilterChanged = useCallback(
+      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => f.uid ?? '')),
+      [onFolderFilterChange]
+    );
+
+    return (
+      <div className={styles.container}>
+        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />}
+        {(showFolderFilter || showPanelFilter) && (
+          <div className={styles.filterContainer}>
+            {showFolderFilter && <FolderFilter onChange={folderFilterChanged} />}
+            {showPanelFilter && <PanelTypeFilter onChange={panelFilterChanged} />}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+SearchControls.displayName = 'SearchControls';
+
+function getRowStyles(theme: GrafanaTheme2, variant = LibraryPanelsSearchVariant.Spacious) {
+  const searchRowContainer = css`
+    display: flex;
+    gap: ${theme.spacing(1)};
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: end;
+  `;
+  const searchRowContainerTight = css`
+    ${searchRowContainer};
+    flex-grow: initial;
+    flex-direction: column;
+    justify-content: normal;
+  `;
+  const filterContainer = css`
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    gap: 4px;
+  `;
+  const filterContainerTight = css`
+    ${filterContainer};
+    flex-direction: column;
+    margin-left: initial;
+  `;
+
+  switch (variant) {
+    case LibraryPanelsSearchVariant.Spacious:
+      return {
+        container: searchRowContainer,
+        filterContainer: filterContainer,
+      };
+    case LibraryPanelsSearchVariant.Tight:
+      return {
+        container: searchRowContainerTight,
+        filterContainer: filterContainerTight,
+      };
+  }
 }

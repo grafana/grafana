@@ -14,10 +14,12 @@ import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, th
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { loadUrlToken } from 'app/core/utils/urlToken';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -44,6 +46,12 @@ export interface BackendSrvDependencies {
   logout: () => void;
 }
 
+export interface FolderRequestOptions {
+  withAccessControl?: boolean;
+}
+
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
@@ -58,7 +66,6 @@ export class BackendSrv implements BackendService {
     contextSrv: contextSrv,
     logout: () => {
       contextSrv.setLoggedOut();
-      window.location.reload();
     },
   };
 
@@ -122,6 +129,17 @@ export class BackendSrv implements BackendService {
     }
 
     options = this.parseRequestOptions(options);
+
+    const token = loadUrlToken();
+    if (token !== null && token !== '') {
+      if (!options.headers) {
+        options.headers = {};
+      }
+
+      if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers[config.jwtHeaderName] = `${token}`;
+      }
+    }
 
     const fromFetchStream = this.getFromFetchStream<T>(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
@@ -207,6 +225,7 @@ export class BackendSrv implements BackendService {
           type,
           redirected,
           config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
         };
         return fetchResponse;
       }),
@@ -222,7 +241,13 @@ export class BackendSrv implements BackendService {
         filter((response) => response.ok === false),
         mergeMap((response) => {
           const { status, statusText, data } = response;
-          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
+          const fetchErrorResponse: FetchError = {
+            status,
+            statusText,
+            data,
+            config: options,
+            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+          };
           return throwError(fetchErrorResponse);
         }),
         retryWhen((attempts: Observable<any>) =>
@@ -244,7 +269,12 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                return from(this.loginPing()).pipe(
+                let authChecker = () => this.loginPing();
+                if (config.featureToggles.clientTokenRotation) {
+                  authChecker = () => this.rotateToken();
+                }
+
+                return from(authChecker()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -286,7 +316,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  showErrorAlert<T>(config: BackendSrvRequest, err: FetchError) {
+  showErrorAlert(config: BackendSrvRequest, err: FetchError) {
     if (config.showErrorAlert === false) {
       return;
     }
@@ -299,6 +329,11 @@ export class BackendSrv implements BackendService {
     let description = '';
     let message = err.data.message;
 
+    // Sometimes we have a better error message on err.message
+    if (message === 'Unexpected error' && err.message) {
+      message = err.message;
+    }
+
     if (message.length > 80) {
       description = message;
       message = 'Error';
@@ -306,6 +341,7 @@ export class BackendSrv implements BackendService {
 
     // Validation
     if (err.status === 422) {
+      description = err.data.message;
       message = 'Validation failed';
     }
 
@@ -390,24 +426,29 @@ export class BackendSrv implements BackendService {
     return this.inspectorStream;
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
-    return await this.request({ method: 'GET', url, params, requestId });
+  async get<T = any>(
+    url: string,
+    params?: BackendSrvRequest['params'],
+    requestId?: BackendSrvRequest['requestId'],
+    options?: Partial<BackendSrvRequest>
+  ) {
+    return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete(url: string, data?: any) {
-    return await this.request({ method: 'DELETE', url, data });
+  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post(url: string, data?: any) {
-    return await this.request({ method: 'POST', url, data });
+  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch(url: string, data: any) {
-    return await this.request({ method: 'PATCH', url, data });
+  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put(url: string, data: any) {
-    return await this.request({ method: 'PUT', url, data });
+  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
   withNoBackendCache(callback: any) {
@@ -417,27 +458,62 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  rotateToken() {
+    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 });
+  }
+
   loginPing() {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
-  search(query: any): Promise<DashboardSearchHit[]> {
+  /** @deprecated */
+  search(query: any): Promise<DashboardSearchItem[]> {
     return this.get('/api/search', query);
   }
 
-  getDashboardByUid(uid: string) {
+  getDashboardByUid(uid: string): Promise<DashboardDTO> {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+  }
+
+  validateDashboard(dashboard: DashboardModel) {
+    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
+    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
+
+    return this.request<ValidateDashboardResponse>({
+      method: 'POST',
+      url: `/api/dashboards/validate`,
+      data: { dashboard: dashboardJson },
+      showSuccessAlert: false,
+      showErrorAlert: false,
+    });
   }
 
   getPublicDashboardByUid(uid: string) {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  getFolderByUid(uid: string) {
-    return this.get<FolderDTO>(`/api/folders/${uid}`);
+  getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
+    const queryParams = new URLSearchParams();
+    if (options.withAccessControl) {
+      queryParams.set('accesscontrol', 'true');
+    }
+
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
   }
 }
 
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
+
+interface ValidateDashboardResponse {
+  isValid: boolean;
+  message?: string;
+}
+
+function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    return undefined;
+  }
+  return value;
+}

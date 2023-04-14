@@ -1,17 +1,17 @@
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
-import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
+import { TraceData, TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
@@ -23,7 +23,7 @@ function getTraceView(frames: DataFrame[]) {
   };
   const topOfViewRef = createRef<HTMLDivElement>();
 
-  const traceView = (
+  return (
     <Provider store={store}>
       <TraceView
         exploreId={ExploreId.left}
@@ -39,7 +39,6 @@ function getTraceView(frames: DataFrame[]) {
       />
     </Provider>
   );
-  return traceView;
 }
 
 function renderTraceView(frames = [frameOld]) {
@@ -63,7 +62,7 @@ describe('TraceView', () => {
       getInstanceSettings() {
         return undefined;
       },
-    } as any);
+    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {
@@ -92,20 +91,20 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Tags/)).toBeFalsy();
+    expect(screen.queryByText(/Attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Tags/)).toBeTruthy();
+    expect(screen.queryByText(/Attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Tags/));
-    expect(screen.queryByText(/Tags/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Attributes/));
+    expect(screen.queryByText(/Attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
-      return screen.getByText('', { selector: 'div[data-test-id="TimelineHeaderRow"]' }).children[1].children[1]
+      return screen.getByText('', { selector: 'div[data-testid="TimelineHeaderRow"]' }).children[1].children[1]
         .textContent;
     }
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
@@ -118,22 +117,22 @@ describe('TraceView', () => {
 
     const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
-    await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    await userEvent.click(screen.getByText(/Resource/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-1');
     await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
-    await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    await userEvent.click(screen.getByText(/Resource/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
     await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
-    await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    await userEvent.click(screen.getByText(/Resource/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
 
@@ -142,10 +141,10 @@ describe('TraceView', () => {
     const span = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(span);
     //Process is in detail view
-    expect(screen.getByText(/Process/)).toBeInTheDocument();
+    expect(screen.getByText(/Resource/)).toBeInTheDocument();
 
     rerender(getTraceView([frameNew]));
-    expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
   });
 });
 
@@ -157,7 +156,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       spanID: '1ed38015486087ca',
       flags: 1,
       operationName: 'HTTP POST - api_prom_push',
-      references: [] as any,
+      references: [],
       startTime: 1585244579835187,
       duration: 1098,
       tags: [
@@ -191,7 +190,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         },
       ],
       processID: '1ed38015486087ca',
-      warnings: null as any,
+      warnings: null,
     },
     {
       traceID: '1ed38015486087ca',
@@ -223,9 +222,9 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'component', type: 'string', value: 'gRPC' },
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
-      logs: [] as any,
+      logs: [],
       processID: '35118c298fc91f68',
-      warnings: null as any,
+      warnings: null,
     },
   ],
   processes: {
@@ -257,7 +256,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       ],
     },
   },
-  warnings: null as any,
+  warnings: null,
 };
 
 export const frameOld = new MutableDataFrame({

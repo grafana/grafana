@@ -10,12 +10,14 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
-import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
@@ -26,11 +28,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-const loadGraphStyle = (): ExploreGraphStyle => {
-  const data = store.get(GRAPH_STYLE_KEY);
-  return toGraphStyle(data);
 };
 
 /**
@@ -61,12 +58,11 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  logsVolumeDataProvider: undefined,
-  logsVolumeData: undefined,
-  graphStyle: loadGraphStyle(),
+  supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
 });
 
@@ -78,7 +74,10 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
   tableFrames: [],
+  rawPrometheusFrames: [],
+  rawPrometheusResult: null,
   graphResult: null,
   logsResult: null,
   tableResult: null,
@@ -86,11 +85,12 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
 
 export async function loadAndInitDatasource(
   orgId: number,
-  datasourceUid?: string
+  datasource: DataSourceRef | string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
   let instance;
   try {
-    instance = await getDatasourceSrv().get(datasourceUid);
+    // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
+    instance = await getDatasourceSrv().get(datasource);
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
@@ -129,7 +129,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.name || '',
+    datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
     // don't include panelsState in the url unless a piece of state is actually set

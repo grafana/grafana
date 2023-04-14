@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
+
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/stretchr/testify/require"
 )
 
 var MigTitle = migTitle
@@ -19,17 +21,35 @@ var ClearMigrationEntryTitle = clearMigrationEntryTitle
 
 type RmMigration = rmMigration
 
-func (m *Matchers) UnmarshalJSON(data []byte) error {
-	var lines []string
-	if err := json.Unmarshal(data, &lines); err != nil {
+// UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
+func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
+	var rawMatchers [][3]string
+	if err := json.Unmarshal(data, &rawMatchers); err != nil {
 		return err
 	}
-	for _, line := range lines {
-		pm, err := labels.ParseMatchers(line)
+	for _, rawMatcher := range rawMatchers {
+		var matchType labels.MatchType
+		switch rawMatcher[1] {
+		case "=":
+			matchType = labels.MatchEqual
+		case "!=":
+			matchType = labels.MatchNotEqual
+		case "=~":
+			matchType = labels.MatchRegexp
+		case "!~":
+			matchType = labels.MatchNotRegexp
+		default:
+			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
+		}
+
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
+
+		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
 		if err != nil {
 			return err
 		}
-		*m = append(*m, pm...)
+		*m = append(*m, matcher)
 	}
 	sort.Sort(labels.Matchers(*m))
 	return nil
@@ -45,14 +65,14 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			name: "when a slack receiver does not have a valid URL - it should error",
 			receivers: []*PostableGrafanaReceiver{
 				{
-					UID:            util.GenerateShortUID(),
+					UID:            "test-uid",
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
 					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
 					SecureSettings: map[string]string{"url": invalidUri},
 				},
 			},
-			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": invalid URL %q", invalidUri),
+			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": failed to parse notifier SlackWithBadURL (UID: test-uid): invalid URL %q", invalidUri),
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",
@@ -83,11 +103,10 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			mg := newTestMigration(t)
-			orgID := int64(1)
 
 			config := configFromReceivers(t, tt.receivers)
 			require.NoError(t, config.EncryptSecureSettings()) // make sure we encrypt the settings
-			err := mg.validateAlertmanagerConfig(orgID, config)
+			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
@@ -152,4 +171,24 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 		require.Len(t, folder, MaxFolderName)
 		require.Contains(t, folder, dash.Uid)
 	})
+}
+
+func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
+	s := uidSet{
+		set:             make(map[string]struct{}),
+		caseInsensitive: true,
+	}
+
+	// 10000 uids seems to be enough to cause a collision in almost every run if using util.GenerateShortUID directly.
+	for i := 0; i < 10000; i++ {
+		_, _ = s.generateUid()
+	}
+
+	// check if any are case-insensitive duplicates.
+	deduped := make(map[string]struct{})
+	for k := range s.set {
+		deduped[strings.ToLower(k)] = struct{}{}
+	}
+
+	require.Equal(t, len(s.set), len(deduped))
 }

@@ -1,11 +1,13 @@
 package notifier
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -36,7 +38,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		// Check if the template file already exists and if it has changed
 		// We can safely ignore gosec here as we've previously checked the filename is clean
 		// nolint:gosec
-		if tmpl, err := ioutil.ReadFile(file); err == nil && string(tmpl) == content {
+		if tmpl, err := os.ReadFile(file); err == nil && string(tmpl) == content {
 			// Templates file is the same we have, no-op and continue.
 			continue
 		} else if err != nil && !os.IsNotExist(err) {
@@ -45,7 +47,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 
 		// We can safely ignore gosec here as we've previously checked the filename is clean
 		// nolint:gosec
-		if err := ioutil.WriteFile(file, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(file, []byte(content), 0644); err != nil {
 			return nil, false, fmt.Errorf("unable to create Alertmanager template file %q: %s", file, err)
 		}
 
@@ -53,9 +55,9 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	}
 
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
-	existingFiles, err := ioutil.ReadDir(path)
+	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "err", err, "path", path)
+		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
@@ -64,7 +66,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				cfglogger.Error("unable to delete template", "err", err, "file", p)
+				cfglogger.Error("unable to delete template", "error", err, "file", p)
 			}
 		}
 	}
@@ -84,4 +86,54 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+// AlertingConfiguration provides configuration for an Alertmanager.
+// It implements the notify.Configuration interface.
+type AlertingConfiguration struct {
+	AlertmanagerConfig    api.PostableApiAlertingConfig
+	RawAlertmanagerConfig []byte
+
+	AlertmanagerTemplates *alertingNotify.Template
+
+	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error)
+	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error)
+}
+
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+	return func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+		return a.ReceiverIntegrationsFunc(next, tmpl)
+	}
+}
+
+func (a AlertingConfiguration) DispatcherLimits() alertingNotify.DispatcherLimits {
+	return &nilLimits{}
+}
+
+func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
+	return a.AlertmanagerConfig.InhibitRules
+}
+
+func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
+	return a.AlertmanagerConfig.MuteTimeIntervals
+}
+
+func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
+	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
+}
+
+func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
+	return a.AlertmanagerConfig.Route.AsAMRoute()
+}
+
+func (a AlertingConfiguration) Templates() *alertingNotify.Template {
+	return a.AlertmanagerTemplates
+}
+
+func (a AlertingConfiguration) Hash() [16]byte {
+	return md5.Sum(a.RawAlertmanagerConfig)
+}
+
+func (a AlertingConfiguration) Raw() []byte {
+	return a.RawAlertmanagerConfig
 }

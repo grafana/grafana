@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { stylesFactory, useTheme, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
+import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import {
   createDatasourcesList,
   SortOrder,
@@ -15,7 +15,7 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface Props {
+export interface RichHistoryStarredTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -28,8 +28,8 @@ export interface Props {
   exploreId: ExploreId;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
+const getStyles = (theme: GrafanaTheme2) => {
+  const bgColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.dark4;
   return {
     container: css`
       display: flex;
@@ -44,35 +44,35 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     multiselect: css`
       width: 100%;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
       .gf-form-select-box__multi-value {
         background-color: ${bgColor};
-        padding: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.sm};
-        border-radius: ${theme.border.radius.sm};
+        padding: ${theme.spacing(0.25, 0.5, 0.25, 1)};
+        border-radius: ${theme.shape.borderRadius(1)};
       }
     `,
     filterInput: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     sort: css`
       width: 170px;
     `,
     footer: css`
       height: 60px;
-      margin-top: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(3)};
       display: flex;
       justify-content: center;
-      font-weight: ${theme.typography.weight.light};
-      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightLight};
+      font-size: ${theme.typography.bodySmall.fontSize};
       a {
-        font-weight: ${theme.typography.weight.semibold};
-        margin-left: ${theme.spacing.xxs};
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-left: ${theme.spacing(0.25)};
       }
     `,
   };
-});
+};
 
-export function RichHistoryStarredTab(props: Props) {
+export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
   const {
     updateFilters,
     clearRichHistoryResults,
@@ -86,8 +86,7 @@ export function RichHistoryStarredTab(props: Props) {
     exploreId,
   } = props;
 
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const listOfDatasources = createDatasourcesList();
 
@@ -137,6 +136,7 @@ export function RichHistoryStarredTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
+              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
@@ -154,16 +154,7 @@ export function RichHistoryStarredTab(props: Props) {
         {loading && <span>Loading results...</span>}
         {!loading &&
           queries.map((q) => {
-            const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
-            return (
-              <RichHistoryCard
-                query={q}
-                key={q.id}
-                exploreId={exploreId}
-                dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                isRemoved={idx === -1}
-              />
-            );
+            return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>

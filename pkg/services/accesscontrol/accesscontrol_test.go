@@ -1,87 +1,127 @@
 package accesscontrol
 
 import (
-	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	// this import is needed for github.com/grafana/grafana/pkg/web hack_wrap to work
+	_ "github.com/grafana/grafana/pkg/api/response"
 )
 
-func TestGetResourcesMetadata(t *testing.T) {
+func TestReduce(t *testing.T) {
 	tests := []struct {
-		desc         string
-		prefix       string
-		resourcesIDs map[string]bool
-		permissions  map[string][]string
-		expected     map[string]Metadata
+		name string
+		ps   []Permission
+		want map[string][]string
 	}{
 		{
-			desc:         "Should return no permission for resources 1,2,3 given the user has no permission",
-			prefix:       "resources:id:",
-			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
-			expected:     map[string]Metadata{},
+			name: "no permission",
+			ps:   []Permission{},
+			want: map[string][]string{},
 		},
 		{
-			desc:   "Should return no permission for resources 1,2,3 given the user has permissions for 4 only",
-			prefix: "resources:id:",
-			permissions: map[string][]string{
-				"resources:action1": {Scope("resources", "id", "4")},
-				"resources:action2": {Scope("resources", "id", "4")},
-				"resources:action3": {Scope("resources", "id", "4")},
+			name: "scopeless permissions",
+			ps:   []Permission{{Action: "orgs:read"}},
+			want: map[string][]string{"orgs:read": nil},
+		},
+		{ // edge case that should not exist
+			name: "mixed scope and scopeless permissions",
+			ps: []Permission{
+				{Action: "resources:read", Scope: "resources:id:1"},
+				{Action: "resources:read"},
 			},
-			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
-			expected:     map[string]Metadata{},
+			want: map[string][]string{"resources:read": {"resources:id:1"}},
 		},
 		{
-			desc:   "Should only return permissions for resources 1 and 2, given the user has no permissions for 3",
-			prefix: "resources:id:",
-			permissions: map[string][]string{
-				"resources:action1": {Scope("resources", "id", "1")},
-				"resources:action2": {Scope("resources", "id", "2")},
-				"resources:action3": {Scope("resources", "id", "2")},
+			name: "specific permission",
+			ps: []Permission{
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:read", Scope: "teams:id:2"},
+				{Action: "teams:write", Scope: "teams:id:1"},
 			},
-			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
-			expected: map[string]Metadata{
-				"1": {"resources:action1": true},
-				"2": {"resources:action2": true, "resources:action3": true},
-			},
-		},
-		{
-			desc:   "Should return permissions with global scopes for resources 1,2,3",
-			prefix: "resources:id:",
-			permissions: map[string][]string{
-				"resources:action1": {Scope("resources", "id", "1")},
-				"resources:action2": {Scope("resources", "id", "2")},
-				"resources:action3": {Scope("resources", "id", "2")},
-				"resources:action4": {Scope("resources", "id", "*")},
-				"resources:action5": {Scope("resources", "*")},
-				"resources:action6": {"*"},
-			},
-			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
-			expected: map[string]Metadata{
-				"1": {"resources:action1": true, "resources:action4": true, "resources:action5": true, "resources:action6": true},
-				"2": {"resources:action2": true, "resources:action3": true, "resources:action4": true, "resources:action5": true, "resources:action6": true},
-				"3": {"resources:action4": true, "resources:action5": true, "resources:action6": true},
+			want: map[string][]string{
+				"teams:read":  {"teams:id:1", "teams:id:2"},
+				"teams:write": {"teams:id:1"},
 			},
 		},
 		{
-			desc:   "Should correctly filter out irrelevant permissions for resources 1,2,3",
-			prefix: "resources:id:",
-			permissions: map[string][]string{
-				"resources:action1":      {Scope("resources", "id", "1")},
-				"resources:action2":      {Scope("otherresources", "id", "*")},
-				"otherresources:action1": {Scope("resources", "id", "1"), Scope("otherresources", "id", "*")},
+			name: "specific permissions with repeated scope",
+			ps: []Permission{
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:read", Scope: "teams:id:2"},
+				{Action: "teams:read", Scope: "teams:id:1"},
 			},
-			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
-			expected: map[string]Metadata{
-				"1": {"resources:action1": true, "otherresources:action1": true},
+			want: map[string][]string{
+				"teams:read": {"teams:id:1", "teams:id:2"},
+			},
+		},
+		{
+			name: "wildcard permission",
+			ps: []Permission{
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:read", Scope: "teams:id:2"},
+				{Action: "teams:read", Scope: "teams:id:*"},
+				{Action: "teams:write", Scope: "teams:id:1"},
+			},
+			want: map[string][]string{
+				"teams:read":  {"teams:id:*"},
+				"teams:write": {"teams:id:1"},
+			},
+		},
+		{
+			name: "mixed wildcard and scoped permission",
+			ps: []Permission{
+				{Action: "dashboards:read", Scope: "dashboards:*"},
+				{Action: "dashboards:read", Scope: "folders:uid:1"},
+			},
+			want: map[string][]string{
+				"dashboards:read": {"dashboards:*", "folders:uid:1"},
+			},
+		},
+		{
+			name: "different wildcard permission",
+			ps: []Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+				{Action: "dashboards:read", Scope: "dashboards:*"},
+				{Action: "dashboards:read", Scope: "folders:uid:*"},
+				{Action: "dashboards:read", Scope: "folders:*"},
+			},
+			want: map[string][]string{
+				"dashboards:read": {"dashboards:*", "folders:*"},
+			},
+		},
+		{
+			name: "root wildcard permission",
+			ps: []Permission{
+				{Action: "dashboards:read", Scope: "*"},
+				{Action: "dashboards:read", Scope: "dashboards:*"},
+				{Action: "dashboards:read", Scope: "folders:*"},
+			},
+			want: map[string][]string{
+				"dashboards:read": {"*"},
+			},
+		},
+		{
+			name: "non-wilcard scopes with * in them",
+			ps: []Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:123"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:1*"},
+			},
+			want: map[string][]string{
+				"dashboards:read": {"dashboards:uid:123", "dashboards:uid:1*"},
 			},
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			metadata := GetResourcesMetadata(context.Background(), tt.permissions, tt.prefix, tt.resourcesIDs)
-			assert.EqualValues(t, tt.expected, metadata)
+		t.Run(tt.name, func(t *testing.T) {
+			got := Reduce(tt.ps)
+			require.Len(t, got, len(tt.want))
+			for action, scopes := range got {
+				want, ok := tt.want[action]
+				require.True(t, ok)
+				require.ElementsMatch(t, scopes, want)
+			}
 		})
 	}
 }

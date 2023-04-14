@@ -1,21 +1,16 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  ApplyFieldOverrideOptions,
-  DataTransformerConfig,
-  dateMath,
-  FieldColorModeId,
-  NavModelItem,
-  PanelData,
-} from '@grafana/data';
-import { Button, Table } from '@grafana/ui';
+import { ApplyFieldOverrideOptions, dateMath, FieldColorModeId, NavModelItem, PanelData } from '@grafana/data';
+import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
+import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { QueryGroupOptions } from 'app/types';
 
-import Page from '../../core/components/Page/Page';
 import { PanelRenderer } from '../panel/components/PanelRenderer';
 import { QueryGroup } from '../query/components/QueryGroup';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
@@ -26,7 +21,7 @@ interface State {
   data?: PanelData;
 }
 
-export const TestStuffPage: FC = () => {
+export const TestStuffPage = () => {
   const [state, setState] = useState<State>(getDefaultState());
   const { queryOptions, queryRunner } = state;
 
@@ -66,6 +61,9 @@ export const TestStuffPage: FC = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
+        <HorizontalGroup>
+          <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
+        </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
             {({ width }) => {
@@ -145,8 +143,32 @@ export function getDefaultState(): State {
         name: 'gdev-testdata',
       },
       maxDataPoints: 100,
+      savedQueryUid: null,
     },
   };
+}
+
+function LinkToBasicApp({ extensionPointId }: { extensionPointId: string }) {
+  const { extensions } = getPluginExtensions({ extensionPointId });
+
+  if (extensions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      {extensions.map((extension, i) => {
+        if (!isPluginExtensionLink(extension)) {
+          return null;
+        }
+        return (
+          <LinkButton href={extension.path} title={extension.description} key={extension.id}>
+            {extension.title}
+          </LinkButton>
+        );
+      })}
+    </div>
+  );
 }
 
 export default TestStuffPage;

@@ -2,31 +2,30 @@ package influxdb
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 func TestExecutor_createRequest(t *testing.T) {
 	datasource := &models.DatasourceInfo{
 		URL:      "http://awesome-influxdb:1337",
-		Database: "awesome-db",
+		DbName:   "awesome-db",
 		HTTPMode: "GET",
 	}
 	query := "SELECT awesomeness FROM somewhere"
 	s := &Service{
 		queryParser:    &InfluxdbQueryParser{},
 		responseParser: &ResponseParser{},
-		glog:           log.New("test"),
 	}
 
 	t.Run("createRequest with GET httpMode", func(t *testing.T) {
-		req, err := s.createRequest(context.Background(), datasource, query)
+		req, err := s.createRequest(context.Background(), logger, datasource, query)
 
 		require.NoError(t, err)
 
@@ -40,7 +39,7 @@ func TestExecutor_createRequest(t *testing.T) {
 
 	t.Run("createRequest with POST httpMode", func(t *testing.T) {
 		datasource.HTTPMode = "POST"
-		req, err := s.createRequest(context.Background(), datasource, query)
+		req, err := s.createRequest(context.Background(), logger, datasource, query)
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -48,7 +47,7 @@ func TestExecutor_createRequest(t *testing.T) {
 		q := req.URL.Query().Get("q")
 		assert.Empty(t, q)
 
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		testBodyValues := url.Values{}
@@ -59,7 +58,7 @@ func TestExecutor_createRequest(t *testing.T) {
 
 	t.Run("createRequest with PUT httpMode", func(t *testing.T) {
 		datasource.HTTPMode = "PUT"
-		_, err := s.createRequest(context.Background(), datasource, query)
+		_, err := s.createRequest(context.Background(), logger, datasource, query)
 		require.EqualError(t, err, ErrInvalidHttpMode.Error())
 	})
 }

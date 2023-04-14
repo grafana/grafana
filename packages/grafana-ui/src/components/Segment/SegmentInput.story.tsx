@@ -1,7 +1,10 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
+
+import { SegmentInputProps } from './SegmentInput';
 
 const SegmentFrame = ({ children }: any) => (
   <>
@@ -24,7 +27,7 @@ export const BasicInput = () => {
   );
 };
 
-export default {
+const meta: ComponentMeta<typeof SegmentInput> = {
   title: 'Data Source/Segment/SegmentInput',
   component: SegmentInput,
 };
@@ -84,14 +87,51 @@ export const InputWithAutoFocus = () => {
       {inputComponents.map((InputComponent: any, i: number) => (
         <InputComponent initialValue="test" key={i} />
       ))}
-      <a
+      <button
+        type="button"
         className="gf-form-label query-part"
         onClick={() => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
         <Icon name="plus" />
-      </a>
+      </button>
     </SegmentFrame>
   );
 };
+
+export const Basic: ComponentStory<React.ComponentType<SegmentInputProps>> = (args: SegmentInputProps) => {
+  const [value, setValue] = useState(args.value);
+
+  const props: SegmentInputProps = {
+    ...args,
+    value,
+    onChange: (value) => {
+      setValue(value);
+      action('onChange fired')({ value });
+    },
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
+  };
+
+  return (
+    <SegmentSection label="Segment:">
+      <SegmentInput {...props} />
+    </SegmentSection>
+  );
+};
+
+Basic.parameters = {
+  controls: {
+    exclude: ['value', 'onChange', 'Component', 'className', 'onExpandedChange'],
+  },
+};
+
+Basic.args = {
+  value: 'Initial input value',
+  placeholder: 'Placeholder text',
+  disabled: false,
+  autofocus: false,
+  inputPlaceholder: 'Start typing...',
+};
+
+export default meta;

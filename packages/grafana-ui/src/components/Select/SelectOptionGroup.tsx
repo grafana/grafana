@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { GroupProps } from 'react-select';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, withTheme } from '../../themes';
-import { Themeable } from '../../types';
+import { stylesFactory, withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 import { Icon } from '../Icon/Icon';
 
-interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable {
+interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable2 {
   data: {
     label: string;
     expanded: boolean;
@@ -20,7 +20,7 @@ interface State {
   expanded: boolean;
 }
 
-const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
+const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     header: css`
       display: flex;
@@ -30,10 +30,10 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       padding: 7px 10px;
       width: 100%;
-      border-bottom: 1px solid ${theme.colors.bg2};
+      border-bottom: 1px solid ${theme.colors.background.secondary};
 
       &:hover {
-        color: ${theme.colors.textStrong};
+        color: ${theme.colors.text.maxContrast};
       }
     `,
     label: css`
@@ -91,4 +91,4 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
   }
 }
 
-export const SelectOptionGroup = withTheme(UnthemedSelectOptionGroup);
+export const SelectOptionGroup = withTheme2(UnthemedSelectOptionGroup);

@@ -1,0 +1,627 @@
+{
+  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Kopiert"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Thema ändern...",
+      "dark-theme": "Dunkel",
+      "light-theme": "Hell"
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "Aktionen",
+      "dashboard-search-results": "Dashboards",
+      "folder-search-results": "",
+      "pages": "Seiten",
+      "preferences": "Einstellungen",
+      "recent-dashboards": "Kürzliche Dashboards"
+    }
+  },
+  "common": {
+    "locale": {
+      "default": "Standard"
+    },
+    "save": "Speichern"
+  },
+  "dashboard": {
+    "inspect": {
+      "data-tab": "Daten",
+      "error-tab": "Fehler",
+      "json-tab": "JSON",
+      "meta-tab": "Metadaten",
+      "query-tab": "Abfrage",
+      "stats-tab": "Statistiken",
+      "subtitle": "{{queryCount}} Abfragen mit einer Gesamtabfragezeit von {{formatted}}",
+      "title": "Überprüfen: {{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "Datenoptionen",
+      "dataframe-aria-label": "Datenrahmen auswählen",
+      "dataframe-label": "Datenrahmen anzeigen",
+      "download-csv": "CSV herunterladen",
+      "download-excel-description": "Kopfzeile zu CSV für die Verwendung in Excel hinzufügen",
+      "download-excel-label": "Für Excel herunterladen",
+      "download-logs": "Logs herunterladen",
+      "download-service": "Servicediagramm herunterladen",
+      "download-traces": "Traces herunterladen",
+      "excel-header": "Excel-Kopfzeile",
+      "formatted": "Formatierte Daten",
+      "formatted-data-description": "Tabellendaten werden mit den in den Tabs „Feld“ und „Überschreiben“ definierten Optionen formatiert",
+      "formatted-data-label": "Formatierte Daten",
+      "panel-transforms": "Panel-Transformationen",
+      "series-to-columns": "Serie durch Zeit verbunden",
+      "transformation": "Serie durch Zeit verbunden",
+      "transformations-description": "Tabellendaten werden mit den im Tab „Panel-Transformationen“ definierten Transformationen angezeigt.",
+      "transformations-label": "Panel-Transformationen anwenden"
+    },
+    "inspect-json": {
+      "dataframe-description": "Rohdaten ohne Transformationen und angewendete Feldkonfiguration. ",
+      "dataframe-label": "Datenrahmen-JSON (aus Abfrage)",
+      "panel-data-description": "Das Rohmodell wurde an die Panel-Visualisierung übertragen",
+      "panel-data-label": "Panel-Daten",
+      "panel-json-description": "Das im Dashboard-JSON gespeicherte Modell, das konfiguriert, wie alles funktioniert.",
+      "panel-json-label": "Panel-JSON",
+      "select-source": "Quelle auswählen",
+      "unknown": "Unbekanntes Objekt: {{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "Kein Metadaten-Inspektor"
+    },
+    "inspect-stats": {
+      "data-title": "Statistiken zu Datenquellen",
+      "processing-time": "Datenverarbeitungszeit",
+      "queries": "Anzahl der Abfragen",
+      "request-time": "Gesamte Anfragezeit",
+      "rows": "Gesamtanzahl an Zeilen",
+      "table-title": "Statistiken"
+    },
+    "toolbar": {
+      "add-panel": "Panel hinzufügen",
+      "mark-favorite": "Als Favorit markieren",
+      "open-original": "Original-Dashboard öffnen",
+      "playlist-next": "Zum nächsten Dashboard",
+      "playlist-previous": "Zum vorherigen Dashboard",
+      "playlist-stop": "Wiedergabeliste stoppen",
+      "refresh": "Dashboard aktualisieren",
+      "save": "Dashboard speichern",
+      "settings": "Dashboard-Einstellungen",
+      "share": "Dashboard oder Panel teilen",
+      "tv-button": "Zyklus-Ansichtsmodus",
+      "unmark-favorite": "Markierung als Favorit entfernen"
+    }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
+    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
+    "new-dashboard": "Neues Dashboard",
+    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
+    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
+    "viewAll": "Alle anzeigen",
+    "welcome": "Willkommen bei Grafana Dashboards!"
+  },
+  "folder-picker": {
+    "loading": "Ordner werden geladen …"
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
+  },
+  "library-panel": {
+    "add-modal": {
+      "cancel": "Abbrechen",
+      "create": "Bibliotheks-Panel erstellen",
+      "error": "Ein Bibliotheks-Panel mit diesem Namen existiert bereits",
+      "folder": "In Ordner speichern",
+      "folder-description": "Berechtigungen des Bibliotheks-Panels werden von den Ordnerberechtigungen übernommen",
+      "name": "Name des Bibliotheks-Panels"
+    }
+  },
+  "library-panels": {
+    "save": {
+      "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
+      "success": "Bibliotheks-Panel wurde gespeichert"
+    }
+  },
+  "nav": {
+    "admin": {
+      "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
+      "title": "Server-Administrator"
+    },
+    "alerting": {
+      "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
+      "title": "Meldungen"
+    },
+    "alerting-admin": {
+      "title": "Administrator"
+    },
+    "alerting-am-routes": {
+      "subtitle": "Lege fest, wie Warnungen an Kontaktpunkte weitergeleitet werden",
+      "title": "Benachrichtigungsrichtlinien"
+    },
+    "alerting-channels": {
+      "title": "Benachrichtigungskanäle"
+    },
+    "alerting-groups": {
+      "subtitle": "Zeige gruppierte Warnungen vom Alertmanager an",
+      "title": "Gruppen"
+    },
+    "alerting-home": {
+      "title": "Home"
+    },
+    "alerting-legacy": {
+      "title": "Warnungen (Legacy)"
+    },
+    "alerting-list": {
+      "subtitle": "Regeln, die festlegen, ob eine Warnung ausgelöst wird",
+      "title": "Warnregeln"
+    },
+    "alerting-receivers": {
+      "subtitle": "",
+      "title": "Kontaktpunkte"
+    },
+    "alerting-silences": {
+      "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
+      "title": "Stummschalten"
+    },
+    "alerts-and-incidents": {
+      "subtitle": "Warn- und Vorfallmanagement-Apps",
+      "title": "Warnungen & Vorfälle"
+    },
+    "api-keys": {
+      "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
+      "title": "API-Schlüssel"
+    },
+    "apps": {
+      "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
+      "title": "Apps"
+    },
+    "config": {
+      "title": "Verwaltung",
+      "titleBeforeTopnav": "Konfiguration"
+    },
+    "correlations": {
+      "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
+      "title": "Korrelationen"
+    },
+    "create": {
+      "title": "Erstellen"
+    },
+    "create-alert": {
+      "title": ""
+    },
+    "create-dashboard": {
+      "title": "Dashboard"
+    },
+    "create-folder": {
+      "title": "Ordner"
+    },
+    "create-import": {
+      "title": ""
+    },
+    "dashboards": {
+      "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
+      "title": "Dashboards"
+    },
+    "datasources": {
+      "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
+      "title": "Datenquellen"
+    },
+    "explore": {
+      "title": "Entdecken"
+    },
+    "global-orgs": {
+      "subtitle": "Isolierte Instanzen von Grafana auf dem gleichen Server",
+      "title": "Organisationen"
+    },
+    "global-users": {
+      "subtitle": "Benutzer in Grafana verwalten",
+      "title": "Benutzer",
+      "titleBeforeTopnav": "Benutzer"
+    },
+    "help": {
+      "title": "Hilfe"
+    },
+    "help/community": "Community",
+    "help/documentation": "Dokumentation",
+    "help/keyboard-shortcuts": "Tastaturbefehle",
+    "help/support": "Support",
+    "home": {
+      "title": "Home"
+    },
+    "library-panels": {
+      "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
+      "title": "Bibliotheks-Panels"
+    },
+    "manage-dashboards": {
+      "title": "Durchsuchen"
+    },
+    "manage-folder": {
+      "subtitle": ""
+    },
+    "monitoring": {
+      "subtitle": "Überwachungs- und Infrastruktur-Apps",
+      "title": "Überwachung"
+    },
+    "new": {
+      "title": "Neu"
+    },
+    "new-dashboard": {
+      "title": "Neues Dashboard"
+    },
+    "new-folder": {
+      "title": "Neuer Ordner"
+    },
+    "org-settings": {
+      "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
+      "title": "Standardeinstellungen",
+      "titleBeforeTopnav": "Einstellungen"
+    },
+    "playlists": {
+      "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
+      "title": "Playlisten"
+    },
+    "plugins": {
+      "subtitle": "Erweitere das Grafana-Erlebnis mit Plug-ins",
+      "title": "Plug-ins"
+    },
+    "profile/notifications": {
+      "title": "Benachrichtigungsverlauf"
+    },
+    "profile/password": {
+      "title": "Passwort ändern"
+    },
+    "profile/settings": {
+      "title": "Profil"
+    },
+    "profile/switch-org": "Organisation wechseln",
+    "public": {
+      "title": ""
+    },
+    "scenes": {
+      "title": "Szenen"
+    },
+    "search": {
+      "placeholderCommandPalette": ""
+    },
+    "search-dashboards": {
+      "title": "Dashboards durchsuchen"
+    },
+    "server-settings": {
+      "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
+      "title": "Einstellungen"
+    },
+    "service-accounts": {
+      "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
+      "title": "Servicekonten"
+    },
+    "sign-in": "Anmelden",
+    "sign-out": {
+      "title": "Abmelden"
+    },
+    "snapshots": {
+      "subtitle": "Interaktive, öffentlich verfügbare Point-in-Time-Darstellungen von Dashboards",
+      "title": "Schnappschüsse"
+    },
+    "starred": {
+      "title": "Hervorgehoben"
+    },
+    "starred-empty": {
+      "title": "Deine hervorgehobenen Dashboards werden hier angezeigt"
+    },
+    "storage": {
+      "subtitle": "Dateispeicher verwalten",
+      "title": "Speicher"
+    },
+    "support-bundles": {
+      "subtitle": "Support-Bundles herunterladen",
+      "title": "Support-Bundles"
+    },
+    "teams": {
+      "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
+      "title": "Teams"
+    },
+    "upgrading": {
+      "title": "Statistiken und Lizenz"
+    },
+    "users": {
+      "subtitle": "Laden Benutzer ein und weise ihnen Rollen zu",
+      "title": "Benutzer"
+    }
+  },
+  "navigation": {
+    "kiosk": {
+      "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
+    }
+  },
+  "news": {
+    "title": "Das Neueste aus dem Blog"
+  },
+  "notifications": {
+    "starred-dashboard": "Dashboard markiert",
+    "unstarred-dashboard": "Dashboard nicht markiert"
+  },
+  "panel": {
+    "header-menu": {
+      "copy": "Kopieren",
+      "create-library-panel": "Bibliotheksleiste erstellen",
+      "duplicate": "Duplikat",
+      "edit": "Bearbeiten",
+      "explore": "Entdecken",
+      "get-help": "Hilfe",
+      "hide-legend": "Legende ausblenden",
+      "inspect": "Überprüfen",
+      "inspect-data": "Daten",
+      "inspect-json": "Panel-JSON",
+      "more": "Mehr …",
+      "query": "Abfrage",
+      "remove": "Entfernen",
+      "share": "Teilen",
+      "show-legend": "Legende anzeigen",
+      "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
+      "view": "Anzeigen"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
+      "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
+    },
+    "live-option": {
+      "aria-label": "Live-Streaming einschalten",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Automatische Aktualisierung ausschalten",
+      "label": "Aus"
+    },
+    "select-button": {
+      "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "Hervorgehoben",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
+    "dashboard-actions": {
+      "import": "Importieren",
+      "new": "Neu",
+      "new-dashboard": "Neues Dashboard",
+      "new-folder": "Neuer Ordner"
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Ordner",
+      "panel": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "Name",
+      "tags-header": "",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Ordner",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
+    }
+  },
+  "share-modal": {
+    "dashboard": {
+      "title": "Teilen"
+    },
+    "embed": {
+      "copy": "In die Zwischenablage kopieren",
+      "html": "HTML einbetten",
+      "html-description": "Der folgende HTML-Code kann kopiert und in eine Website eingefügt werden. Wenn der anonyme Zugriff nicht aktiviert ist, muss der Benutzer, der diese Seite aufruft, bei Grafana angemeldet sein, damit das Diagramm geladen wird.",
+      "info": "Erstelle einen HTML-Code zum Einbetten eines Inlineframes in dieses Panel.",
+      "time-range": "Aktueller Zeitbereich",
+      "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um"
+    },
+    "export": {
+      "cancel-button": "Abbrechen",
+      "info-text": "Dieses Dashboard exportieren.",
+      "save-button": "In Datei speichern …",
+      "share-default-label": "Export mit entfernten Standardwerten",
+      "share-externally-label": "Export für externe Freigabe",
+      "view-button": "JSON anzeigen"
+    },
+    "library": {
+      "info": "Bibliotheks-Panel erstellen."
+    },
+    "link": {
+      "copy-link-button": "Kopieren",
+      "info-text": "Erstelle einen direkten Link zu diesem Dashboard oder Panel mit den folgenden angepassten Optionen.",
+      "link-url": "Link-URL",
+      "render-alert": "Bild-Render-Plug-in nicht installiert",
+      "render-instructions": "Um ein Panel-Bild zu rendern, muss das <1>Bild-Render-Plug-in</1> von Grafana installiert sein. Bitte wende dich an deinen Grafana-Administrator, um das Plug-in zu installieren.",
+      "rendered-image": "Direktlink zum gerenderten Bild",
+      "save-alert": "Dashboard nicht gespeichert",
+      "save-dashboard": "Um ein Panel-Bild zu rendern, muss zuerst das Dashboard gespeichert werden.",
+      "shorten-url": "URL kürzen",
+      "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um",
+      "time-range-label": "Zeitbereich sperren"
+    },
+    "panel": {
+      "title": "Panel teilen"
+    },
+    "snapshot": {
+      "cancel-button": "Abbrechen",
+      "copy-link-button": "Kopieren",
+      "delete-button": "Schnappschuss löschen.",
+      "deleted-message": "Der Schnappschuss wurde gelöscht. Wenn du bereits einmal darauf zugegriffen hast, kann es bis zu eine Stunde dauern, bevor es aus den Browser-Caches oder den CDN-Caches gelöscht wird.",
+      "expire": "Läuft ab nach",
+      "expire-day": "1 Tag",
+      "expire-hour": "1 Stunde",
+      "expire-never": "Nie",
+      "expire-week": "7 Tage",
+      "info-text-1": "Ein Schnappschuss ist eine Möglichkeit, ein interaktives Dashboard sofort öffentlich zu teilen. Beim Erstellen entfernen wir sensible Daten wie Abfragen (Metriken, Vorlagen und Anmerkungen) und Panel-Links, sodass nur die sichtbaren Metrikdaten und die in dein Dashboard eingebetteten Seriennamen angezeigt werden.",
+      "info-text-2": "Beachte, dass dein Schnappschuss <1>für jeden sichtbar ist</1>, der den Link hat und auf die URL zugreifen kann. Teile Schnappschüsse daher mit Bedacht.",
+      "local-button": "Lokaler Schnappschuss",
+      "mistake-message": "Hast du einen Fehler gemacht? ",
+      "name": "Name des Schnappschusses",
+      "timeout": "Timeout (Sekunden)",
+      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
+      "url-label": "Schnappschuss-URL"
+    },
+    "tab-title": {
+      "embed": "Einbetten",
+      "export": "Exportieren",
+      "library-panel": "Bibliotheks-Panel",
+      "link": "Link",
+      "snapshot": "Schnappschuss"
+    },
+    "theme-picker": {
+      "current": "Aktuell",
+      "dark": "Dunkel",
+      "field-name": "Design",
+      "light": "Hell"
+    },
+    "view-json": {
+      "copy-button": "In Zwischenablage kopieren"
+    }
+  },
+  "shared-dashboard": {
+    "fields": {
+      "timezone-label": "Zeitzone"
+    }
+  },
+  "shared-preferences": {
+    "fields": {
+      "home-dashboard-label": "Home-Dashboard",
+      "home-dashboard-placeholder": "Standard-Dashboard",
+      "locale-label": "Sprache",
+      "locale-placeholder": "Sprache wählen",
+      "theme-label": "UI-Design",
+      "week-start-label": "Wochenbeginn"
+    },
+    "theme": {
+      "dark-label": "Dunkel",
+      "default-label": "Standard",
+      "light-label": "Hell",
+      "system-label": ""
+    },
+    "title": "Einstellungen"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
+  "time-picker": {
+    "absolute": {
+      "recent-title": "Kürzlich verwendete absolute Bereiche",
+      "title": "Absoluter Zeitbereich"
+    },
+    "calendar": {
+      "apply-button": "Zeitbereich anwenden",
+      "cancel-button": "Abbrechen",
+      "select-time": "Einen Zeitbereich auswählen"
+    },
+    "content": {
+      "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></1>",
+      "filter-placeholder": "Schnellbereiche suchen"
+    },
+    "footer": {
+      "change-settings-button": "Zeiteinstellungen ändern",
+      "fiscal-year-option": "Geschäftsjahr",
+      "fiscal-year-start": "Startmonat Geschäftsjahr",
+      "time-zone-option": "Zeitzone",
+      "time-zone-selection": "Zeitzonenauswahl"
+    },
+    "range-content": {
+      "apply-button": "Zeitbereich anwenden",
+      "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
+      "fiscal-year": "Geschäftsjahr",
+      "from-input": "Von",
+      "range-error": "„Von“ darf nicht nach „Bis“ sein",
+      "to-input": "Bis"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Zeitbereich nach hinten verschieben",
+      "current-time-selected": "Ausgewählter Zeitbereich: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Zeitbereich nach vorne verschieben",
+      "to": "bis",
+      "zoom-out-button": "Zeitbereich verkleinern",
+      "zoom-out-tooltip": "Zeitbereich verkleinern <1></1> STRG +Z"
+    },
+    "time-range": {
+      "aria-role": "Zeitbereichauswahl",
+      "default-title": "Zeitbereiche",
+      "example-title": "Zeitbereiche-Beispiel",
+      "specify": "Zeitbereich festlegen <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Zeitzonen-Auswähler",
+      "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
+    }
+  },
+  "user-orgs": {
+    "current-org-button": "Aktuell",
+    "name-column": "Name",
+    "role-column": "Rolle",
+    "select-org-button": "Organisation auswählen",
+    "title": "Organisationen"
+  },
+  "user-profile": {
+    "fields": {
+      "email-error": "E-Mail-Adresse ist erforderlich",
+      "email-label": "E-Mail-Adresse",
+      "name-error": "Name ist erforderlich",
+      "name-label": "Name",
+      "username-label": "Benutzername"
+    }
+  },
+  "user-session": {
+    "browser-column": "Browser & Betriebssystem",
+    "created-at-column": "Angemeldet",
+    "ip-column": "IP-Adresse",
+    "revoke": "Benutzersitzung widerrufen",
+    "seen-at-column": "Zuletzt gesehen"
+  },
+  "user-sessions": {
+    "loading": "Sitzungen werden geladen …"
+  },
+  "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": "Variablenwert eingeben"
+    },
+    "picker": {
+      "link-all": "Alle",
+      "option-all": "Alle",
+      "option-selected-values": "Ausgewählt",
+      "option-tooltip": "Auswahl löschen"
+    },
+    "textbox": {
+      "placeholder": "Variablenwert eingeben"
+    }
+  }
+}

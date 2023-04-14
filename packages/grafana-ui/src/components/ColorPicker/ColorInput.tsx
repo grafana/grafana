@@ -1,99 +1,95 @@
 import { cx, css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React from 'react';
+import React, { forwardRef, useState, useEffect, useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Input } from '../Input/Input';
+import { Input, Props as InputProps } from '../Input/Input';
 
 import { ColorPickerProps } from './ColorPickerPopover';
 
-interface ColorInputState {
-  previousColor: string;
-  value: string;
+interface ColorInputProps extends ColorPickerProps, Omit<InputProps, 'color' | 'onChange'> {
+  isClearable?: boolean;
+  buttonAriaLabel?: string;
 }
 
-interface ColorInputProps extends ColorPickerProps {
-  style?: React.CSSProperties;
-  className?: string;
-}
+const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
+  ({ color, onChange, isClearable = false, onClick, onBlur, disabled, buttonAriaLabel, ...inputProps }, ref) => {
+    const [value, setValue] = useState(color);
+    const [previousColor, setPreviousColor] = useState(color);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const updateColor = useMemo(() => debounce(onChange, 100), []);
 
-class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
-  constructor(props: ColorInputProps) {
-    super(props);
-    this.state = {
-      previousColor: props.color,
-      value: props.color,
+    useEffect(() => {
+      const newColor = tinycolor(color);
+      if (newColor.isValid() && color !== previousColor) {
+        setValue(newColor.toString());
+        setPreviousColor(color);
+      }
+    }, [color, previousColor]);
+
+    const onChangeColor = (event: React.SyntheticEvent<HTMLInputElement>) => {
+      const { value: colorValue } = event.currentTarget;
+
+      setValue(colorValue);
+      if (colorValue === '' && isClearable) {
+        updateColor(colorValue);
+        return;
+      }
+      const newColor = tinycolor(colorValue);
+
+      if (newColor.isValid()) {
+        updateColor(newColor.toString());
+      }
     };
 
-    this.updateColor = debounce(this.updateColor, 100);
-  }
+    const onBlurInput = (event: React.FocusEvent<HTMLInputElement>) => {
+      const newColor = tinycolor(value);
 
-  static getDerivedStateFromProps(props: ColorPickerProps, state: ColorInputState) {
-    const newColor = tinycolor(props.color);
-    if (newColor.isValid() && props.color !== state.previousColor) {
-      return {
-        ...state,
-        previousColor: props.color,
-        value: newColor.toString(),
-      };
-    }
+      if (!newColor.isValid()) {
+        setValue(color);
+      }
 
-    return state;
-  }
-  updateColor = (color: string) => {
-    this.props.onChange(color);
-  };
+      onBlur?.(event);
+    };
 
-  onChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const newColor = tinycolor(event.currentTarget.value);
-
-    this.setState({
-      value: event.currentTarget.value,
-    });
-
-    if (newColor.isValid()) {
-      this.updateColor(newColor.toString());
-    }
-  };
-
-  onBlur = () => {
-    const newColor = tinycolor(this.state.value);
-
-    if (!newColor.isValid()) {
-      this.setState({
-        value: this.props.color,
-      });
-    }
-  };
-
-  render() {
-    const { value } = this.state;
     return (
       <Input
-        className={this.props.className}
+        {...inputProps}
         value={value}
-        onChange={this.onChange}
-        onBlur={this.onBlur}
-        addonBefore={<ColorPreview color={this.props.color} />}
+        onChange={onChangeColor}
+        disabled={disabled}
+        onClick={onClick}
+        onBlur={onBlurInput}
+        addonBefore={<ColorPreview onClick={onClick} ariaLabel={buttonAriaLabel} disabled={disabled} color={color} />}
+        ref={ref}
       />
     );
   }
-}
+);
+
+ColorInput.displayName = 'ColorInput';
 
 export default ColorInput;
 
 interface ColorPreviewProps {
   color: string;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
-const ColorPreview = ({ color }: ColorPreviewProps) => {
+const ColorPreview = ({ color, onClick, disabled, ariaLabel }: ColorPreviewProps) => {
   const styles = useStyles2(getColorPreviewStyles);
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={disabled || !onClick}
       className={cx(
         styles,
         css`

@@ -3,11 +3,15 @@ package queryhistory
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegrationPatchQueryCommentInQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "When user tries to patch comment of query in query history that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.patchCommentHandler(sc.reqContext)

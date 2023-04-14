@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta } from '../types';
+import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta, Field } from '../types';
 import { ArrayVector } from '../vector';
 
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
@@ -20,6 +20,8 @@ export interface DataFrameJSON {
   data?: DataFrameData;
 }
 
+type FieldValues = unknown[];
+
 /**
  * @alpha
  */
@@ -27,7 +29,7 @@ export interface DataFrameData {
   /**
    * A columnar store that matches fields defined by schema.
    */
-  values: any[][];
+  values: FieldValues[];
 
   /**
    * Since JSON cannot encode NaN, Inf, -Inf, and undefined, these entities
@@ -48,10 +50,19 @@ export interface DataFrameData {
   factors?: number[];
 
   /**
-   * Holds enums per field so we can encode recurring values as ints
+   * Holds enums per field so we can encode recurring string values as ints
    * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
+   *
+   * NOTE: currently only decoding is implemented
    */
-  enums?: any[][];
+  enums?: Array<string[] | null>;
+
+  /**
+   * Holds integers between 0 and 999999, used by time-fields
+   * to store the nanosecond-precision that cannot be represented
+   * by the millisecond-based base value.
+   */
+  nanos?: Array<number[] | null>;
 }
 
 /**
@@ -107,7 +118,7 @@ export interface FieldValueEntityLookup {
   NegInf?: number[];
 }
 
-const ENTITY_MAP: Record<keyof FieldValueEntityLookup, any> = {
+const ENTITY_MAP: Record<keyof FieldValueEntityLookup, number | undefined> = {
   Inf: Infinity,
   NegInf: -Infinity,
   Undef: undefined,
@@ -117,10 +128,7 @@ const ENTITY_MAP: Record<keyof FieldValueEntityLookup, any> = {
 /**
  * @internal use locally
  */
-export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: any[]) {
-  if (!lookup || !values) {
-    return;
-  }
+export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values: FieldValues) {
   for (const key in lookup) {
     const repl = ENTITY_MAP[key as keyof FieldValueEntityLookup];
     for (const idx of lookup[key as keyof FieldValueEntityLookup]!) {
@@ -131,7 +139,16 @@ export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values:
   }
 }
 
-function guessFieldType(name: string, values: any[]): FieldType {
+/**
+ * @internal use locally
+ */
+export function decodeFieldValueEnums(lookup: string[], values: FieldValues) {
+  for (let i = 0; i < values.length; i++) {
+    values[i] = lookup[values[i] as number];
+  }
+}
+
+function guessFieldType(name: string, values: FieldValues): FieldType {
   for (const v of values) {
     if (v != null) {
       return guessFieldTypeFromNameAndValue(name, v);
@@ -157,6 +174,7 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
   const fields = schema.fields.map((f, index) => {
     let buffer = data ? data.values[index] : [];
     let origLen = buffer.length;
+    let type = f.type;
 
     if (origLen !== length) {
       buffer.length = length;
@@ -164,22 +182,37 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
       buffer.fill(undefined, origLen);
     }
 
-    let entities: FieldValueEntityLookup | undefined | null;
+    let entities = data?.entities?.[index];
 
-    if ((entities = data && data.entities && data.entities[index])) {
+    if (entities) {
       decodeFieldValueEntities(entities, buffer);
     }
 
-    // TODO: expand arrays further using bases,factors,enums
+    let enums = data?.enums?.[index];
 
-    return {
+    if (enums) {
+      decodeFieldValueEnums(enums, buffer);
+      type = FieldType.string;
+    }
+
+    const nanos = data?.nanos?.[index];
+
+    // TODO: expand arrays further using bases,factors
+
+    const dataFrameField: Field & { entities: FieldValueEntityLookup } = {
       ...f,
-      type: f.type ?? guessFieldType(f.name, buffer),
+      type: type ?? guessFieldType(f.name, buffer),
       config: f.config ?? {},
       values: new ArrayVector(buffer),
       // the presence of this prop is an optimization signal & lookup for consumers
       entities: entities ?? {},
     };
+
+    if (nanos != null) {
+      dataFrameField.nanos = nanos;
+    }
+
+    return dataFrameField;
   });
 
   return {
@@ -198,17 +231,33 @@ export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
   const data: DataFrameData = {
     values: [],
   };
+
+  const allNanos: Array<number[] | null> = [];
+  let hasNanos = false;
+
   const schema: DataFrameSchema = {
     refId: frame.refId,
     meta: frame.meta,
     name: frame.name,
     fields: frame.fields.map((f) => {
-      const { values, state, display, ...sfield } = f;
+      const { values, nanos, state, display, ...sfield } = f;
       delete (sfield as any).entities;
       data.values.push(values.toArray());
+
+      if (nanos != null) {
+        allNanos.push(nanos);
+        hasNanos = true;
+      } else {
+        allNanos.push(null);
+      }
+
       return sfield;
     }),
   };
+
+  if (hasNanos) {
+    data.nanos = allNanos;
+  }
 
   return {
     schema,

@@ -1,14 +1,14 @@
-import { Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { Badge, BadgeProps } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
 
-import { iconOptions } from '../../utils/storybook/knobs';
+import { iconOptions } from '../../utils/storybook/icons';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Badge.mdx';
 
-export default {
+const meta: ComponentMeta<typeof Badge> = {
   title: 'Data Display/Badge',
   component: Badge,
   decorators: [withCenteredStory],
@@ -22,7 +22,7 @@ export default {
   },
 };
 
-const Template: Story<BadgeProps> = (args) => <Badge {...args} />;
+const Template: ComponentStory<typeof Badge> = (args) => <Badge {...args} />;
 
 export const Basic = Template.bind({});
 
@@ -31,3 +31,5 @@ Basic.args = {
   color: 'blue',
   icon: 'rocket',
 };
+
+export default meta;

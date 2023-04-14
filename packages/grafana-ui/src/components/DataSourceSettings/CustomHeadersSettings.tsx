@@ -55,7 +55,7 @@ const getCustomHeaderRowStyles = stylesFactory(() => {
   };
 });
 
-const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onChange, onRemove, onReset }) => {
+const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: CustomHeaderRowProps) => {
   const styles = getCustomHeaderRowStyles();
   return (
     <div className={styles.layout}>
@@ -196,6 +196,8 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
 
   render() {
     const { headers } = this.state;
+    const { dataSourceConfig } = this.props;
+
     return (
       <div className={'gf-form-group'}>
         <div className="gf-form">
@@ -215,18 +217,20 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
             />
           ))}
         </div>
-        <div className="gf-form">
-          <Button
-            variant="secondary"
-            icon="plus"
-            type="button"
-            onClick={(e) => {
-              this.onHeaderAdd();
-            }}
-          >
-            Add header
-          </Button>
-        </div>
+        {!dataSourceConfig.readOnly && (
+          <div className="gf-form">
+            <Button
+              variant="secondary"
+              icon="plus"
+              type="button"
+              onClick={(e) => {
+                this.onHeaderAdd();
+              }}
+            >
+              Add header
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

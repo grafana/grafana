@@ -1,34 +1,30 @@
 package definitions
 
-import (
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-)
-
 // swagger:route GET /api/v1/provisioning/templates provisioning stable RouteGetTemplates
 //
-// Get all message templates.
+// Get all notification templates.
 //
 //     Responses:
-//       200: MessageTemplate
-//       400: ValidationError
+//       200: NotificationTemplates
+//       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
-// Get a message template.
+// Get a notification template.
 //
 //     Responses:
-//       200: MessageTemplate
-//       404: NotFound
+//       200: NotificationTemplate
+//       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
-// Updates an existing template.
+// Updates an existing notification template.
 //
 //     Consumes:
 //     - application/json
 //
 //     Responses:
-//       202: Ack
+//       202: NotificationTemplate
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
@@ -36,7 +32,7 @@ import (
 // Delete a template.
 //
 //     Responses:
-//       204: Ack
+//       204: description: The template was deleted successfully.
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
 type RouteGetTemplateParam struct {
@@ -46,29 +42,29 @@ type RouteGetTemplateParam struct {
 }
 
 // swagger:model
-type MessageTemplate struct {
-	Name       string
-	Template   string
-	Provenance models.Provenance `json:"provenance,omitempty"`
+type NotificationTemplate struct {
+	Name       string     `json:"name"`
+	Template   string     `json:"template"`
+	Provenance Provenance `json:"provenance,omitempty"`
 }
 
 // swagger:model
-type MessageTemplates []MessageTemplate
+type NotificationTemplates []NotificationTemplate
 
-type MessageTemplateContent struct {
-	Template string
+type NotificationTemplateContent struct {
+	Template string `json:"template"`
 }
 
 // swagger:parameters RoutePutTemplate
-type MessageTemplatePayload struct {
+type NotificationTemplatePayload struct {
 	// in:body
-	Body MessageTemplateContent
+	Body NotificationTemplateContent
 }
 
-func (t *MessageTemplate) ResourceType() string {
+func (t *NotificationTemplate) ResourceType() string {
 	return "template"
 }
 
-func (t *MessageTemplate) ResourceID() string {
+func (t *NotificationTemplate) ResourceID() string {
 	return t.Name
 }

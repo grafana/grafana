@@ -2,7 +2,7 @@ version: "2.1"
 
 services:
   db:
-    image: mysql:5.6
+    image: mysql:5.7.39
     platform: linux/x86_64
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
@@ -32,7 +32,7 @@ services:
     environment:
       - VIRTUAL_HOST=prometheus.loc
     ports:
-      - 909
+      - 9090
   nginx-proxy:
     image: jwilder/nginx-proxy
     ports:
@@ -43,48 +43,53 @@ services:
       db:
         condition: service_healthy
   grafana1:
-    image: grafana/grafana:dev
-    volumes:
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
-    environment:
-      - VIRTUAL_HOST=grafana.loc
-      - GF_FEATURE_TOGGLES_ENABLE=ngalert
-      - GF_UNIFIED_ALERTING_HA_PEERS=ha-test-unified-alerting_grafana2_1:9094,ha-test-unified-alerting_grafana1_1:9094
-      - GF_SERVER_ROOT_URL=http://grafana.loc
-      - GF_DATABASE_NAME=grafana
-      - GF_DATABASE_USER=grafana
-      - GF_DATABASE_PASSWORD=password
-      - GF_DATABASE_TYPE=mysql
-      - GF_DATABASE_HOST=db:3306
-      - GF_DATABASE_MAX_OPEN_CONN=300
-      - GF_SESSION_PROVIDER=mysql
-      - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(db:3306)/grafana?allowNativePasswords=true
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
     ports:
       - 3010:3000
     depends_on:
       db:
         condition: service_healthy
-
   grafana2:
-    image: grafana/grafana:dev
-    volumes:
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
-    environment:
-      - VIRTUAL_HOST=grafana.loc
-      - GF_FEATURE_TOGGLES_ENABLE=ngalert
-      - GF_UNIFIED_ALERTING_HA_PEERS=ha-test-unified-alerting_grafana2_1:9094,ha-test-unified-alerting_grafana1_1:9094
-      - GF_SERVER_ROOT_URL=http://grafana.loc
-      - GF_DATABASE_NAME=grafana
-      - GF_DATABASE_USER=grafana
-      - GF_DATABASE_PASSWORD=password
-      - GF_DATABASE_TYPE=mysql
-      - GF_DATABASE_HOST=db:3306
-      - GF_DATABASE_MAX_OPEN_CONN=300
-      - GF_SESSION_PROVIDER=mysql
-      - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(db:3306)/grafana?allowNativePasswords=true
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
     ports:
       - 3020:3000
     depends_on:
       db:
         condition: service_healthy
-
+      grafana1:
+        condition: service_healthy
+  grafana3:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    ports:
+      - 3030:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      grafana2:
+        condition: service_healthy
+  grafana4:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    ports:
+      - 3040:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      grafana3:
+        condition: service_healthy
+  webhook:
+    image: webhook-receiver
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "18081:8080"
+    volumes:
+      - "./logs/webhook:/tmp/logs:rw"

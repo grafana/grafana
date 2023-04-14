@@ -8,9 +8,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func BenchmarkFilter10_10(b *testing.B)     { benchmarkFilter(b, 10, 10) }
@@ -32,30 +35,30 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	for i := 0; i < b.N; i++ {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
 		acFilter, err := accesscontrol.Filter(
-			&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},
+			&user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},
 			"data_source.id",
 			"datasources:id:",
 			"datasources:read",
 		)
 		require.NoError(b, err)
 
-		var datasources []models.DataSource
-		sess := store.NewSession(context.Background())
-		err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
+		var datasources []datasources.DataSource
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			return sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
+		})
 		require.NoError(b, err)
-		sess.Close()
 		require.Len(b, datasources, numPermissions)
 	}
 }
 
-func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []*accesscontrol.Permission) {
+func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (db.DB, []accesscontrol.Permission) {
 	b.Helper()
-	store := sqlstore.InitTestDB(b)
-
+	sqlStore := db.InitTestDB(b)
+	store := dsService.CreateStore(sqlStore, log.New("accesscontrol.test"))
 	for i := 1; i <= numDs; i++ {
-		err := store.AddDataSource(context.Background(), &models.AddDataSourceCommand{
+		_, err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			Name:  fmt.Sprintf("ds:%d", i),
-			OrgId: 1,
+			OrgID: 1,
 		})
 		require.NoError(b, err)
 	}
@@ -64,13 +67,13 @@ func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQ
 		numPermissions = numDs
 	}
 
-	permissions := make([]*accesscontrol.Permission, 0, numPermissions)
+	permissions := make([]accesscontrol.Permission, 0, numPermissions)
 	for i := 1; i <= numPermissions; i++ {
-		permissions = append(permissions, &accesscontrol.Permission{
+		permissions = append(permissions, accesscontrol.Permission{
 			Action: "datasources:read",
 			Scope:  accesscontrol.Scope("datasources", "id", strconv.Itoa(i)),
 		})
 	}
 
-	return store, permissions
+	return sqlStore, permissions
 }

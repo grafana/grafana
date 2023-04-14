@@ -1,18 +1,11 @@
 import React, { useCallback } from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
-import { NavModel } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Button, Input, Field } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 
-import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from '../../types';
-
-interface UserCreatePageProps {
-  navModel: NavModel;
-}
 interface UserDTO {
   name: string;
   password: string;
@@ -22,21 +15,29 @@ interface UserDTO {
 
 const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/users', user);
 
-const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
+const pageNav: NavModelItem = {
+  icon: 'user',
+  id: 'user-new',
+  text: 'New user',
+  subTitle: 'Create a new Grafana user.',
+  breadcrumbs: [{ title: 'Server admin', url: 'admin/users' }],
+};
+
+const UserCreatePage = () => {
   const history = useHistory();
 
   const onSubmit = useCallback(
     async (data: UserDTO) => {
-      await createUser(data);
-      history.push('/admin/users');
+      const { id } = await createUser(data);
+
+      history.push(`/admin/users/edit/${id}`);
     },
     [history]
   );
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="global-users" pageNav={pageNav}>
       <Page.Contents>
-        <h1>Add new user</h1>
         <Form onSubmit={onSubmit} validateOn="onBlur">
           {({ register, errors }) => {
             return (
@@ -81,8 +82,4 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
   );
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'global-users'),
-});
-
-export default connect(mapStateToProps)(UserCreatePage);
+export default UserCreatePage;

@@ -1,7 +1,7 @@
 import { ScopedVars } from './ScopedVars';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DataLink, LinkModel } from './dataLink';
-import { DisplayProcessor, DisplayValue } from './displayValue';
+import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
@@ -16,7 +16,9 @@ export enum FieldType {
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
   geo = 'geo',
+  enum = 'enum',
   other = 'other', // Object, Array, etc
+  frame = 'frame', // DataFrame
 }
 
 /**
@@ -63,7 +65,7 @@ export interface FieldConfig<TOptions = any> {
 
   // Numeric Options
   unit?: string;
-  decimals?: number | null; // Significant digits (for display)
+  decimals?: DecimalCount; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
 
@@ -91,8 +93,22 @@ export interface FieldConfig<TOptions = any> {
   // Alternative to empty string
   noValue?: string;
 
+  // The field type may map to specific config
+  type?: FieldTypeConfig;
+
   // Panel Specific Values
   custom?: TOptions;
+}
+
+export interface FieldTypeConfig {
+  enum?: EnumFieldConfig;
+}
+
+export interface EnumFieldConfig {
+  text?: string[];
+  color?: string[];
+  icon?: string[];
+  description?: string[];
 }
 
 /** @public */
@@ -121,6 +137,14 @@ export interface Field<T = any, V = Vector<T>> {
    */
   config: FieldConfig;
   values: V; // The raw field values
+
+  /**
+   * When type === FieldType.Time, this can optionally store
+   * the nanosecond-precison fractions as integers between
+   * 0 and 999999.
+   */
+  nanos?: number[];
+
   labels?: Labels;
 
   /**
@@ -188,6 +212,12 @@ export interface FieldState {
    * this would applied more than one time.
    */
   nullThresholdApplied?: boolean;
+
+  /**
+   * Can be used by visualizations to cache max display value lengths to aid alignment.
+   * It's up to each visualization to calculate and set this.
+   */
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
 /** @public */

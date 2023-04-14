@@ -17,7 +17,7 @@ vendor
 # TS generate from cue by cuetsy
 **/*.gen.ts
 
-# Auto-generated localisation files
+# Auto-generated internationalization files
 public/locales/_build/
 public/locales/**/*.js
 

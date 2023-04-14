@@ -5,7 +5,9 @@ import { ClipboardButton } from './ClipboardButton';
 
 # ClipboardButton
 
-A wrapper for [clipboard.js](https://github.com/zenorocha/clipboard.js) library that allows copying text to clipboard. The text to be copied should be provided via `getText` prop.
+A control for allowing the user to copy text to their clipboard. Uses native APIs on modern browsers, falling back to the old `document.execCommand('copy')` API on other browsers. The text to be copied should be provided via `getText` prop.
+
+Commonly it is passed in the `addonAfter` prop on `<Input />`
 
 # Usage
 
@@ -17,6 +19,19 @@ A wrapper for [clipboard.js](https://github.com/zenorocha/clipboard.js) library 
 >
   Copy to clipboard
 </ClipboardButton>
+```
+
+```jsx
+<Input
+  id="link-url-input"
+  value={shareUrl}
+  readOnly
+  addonAfter={
+    <ClipboardButton icon="copy" variant="primary" getText={() => shareUrl}>
+      Copy
+    </ClipboardButton>
+  }
+/>
 ```
 
 <Props of={ClipboardButton} />

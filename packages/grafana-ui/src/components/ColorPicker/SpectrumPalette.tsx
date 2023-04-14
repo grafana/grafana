@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
@@ -15,7 +15,7 @@ export interface SpectrumPaletteProps {
   onChange: (color: string) => void;
 }
 
-const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
+const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   const [currentColor, setColor] = useState(color);
 
   useThrottleFn(
@@ -37,13 +37,13 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
 
   return (
     <div className={styles.wrapper}>
-      <RgbaStringColorPicker className={cx(styles.root)} color={rgbaString} onChange={setColor} />
+      <RgbaStringColorPicker className={styles.root} color={rgbaString} onChange={setColor} />
       <ColorInput theme={theme} color={rgbaString} onChange={setColor} className={styles.colorInput} />
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     flex-grow: 1;
   `,
@@ -54,10 +54,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     .react-colorful {
       &__saturation {
-        border-radius: ${theme.v1.border.radius.sm} ${theme.v1.border.radius.sm} 0 0;
+        border-radius: ${theme.shape.borderRadius(1)} ${theme.shape.borderRadius(1)} 0 0;
       }
       &__alpha {
-        border-radius: 0 0 ${theme.v1.border.radius.sm} ${theme.v1.border.radius.sm};
+        border-radius: 0 0 ${theme.shape.borderRadius(1)} ${theme.shape.borderRadius(1)};
       }
       &__alpha,
       &__hue {

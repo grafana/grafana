@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -59,7 +60,7 @@ func (value *FrontendSentryExceptionValue) FmtStacktrace(store *SourceMapStore) 
 }
 
 func (exception *FrontendSentryException) FmtStacktraces(store *SourceMapStore) string {
-	var stacktraces []string
+	stacktraces := make([]string, 0, len(exception.Values))
 	for _, value := range exception.Values {
 		stacktraces = append(stacktraces, value.FmtStacktrace(store))
 	}

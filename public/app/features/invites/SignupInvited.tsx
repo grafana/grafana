@@ -1,12 +1,14 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Form, Input } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+
+import { w3cStandardEmailValidator } from '../admin/utils';
 
 interface FormModel {
   email: string;
@@ -17,7 +19,7 @@ interface FormModel {
 
 const navModel = {
   main: {
-    icon: 'grafana',
+    icon: 'grafana' as const,
     text: 'Invite',
     subTitle: 'Register your Grafana account',
     breadcrumbs: [{ title: 'Login', url: 'login' }],
@@ -29,7 +31,7 @@ const navModel = {
 
 export interface Props extends GrafanaRouteComponentProps<{ code: string }> {}
 
-export const SignupInvitedPage: FC<Props> = ({ match }) => {
+export const SignupInvitedPage = ({ match }: Props) => {
   const code = match.params.code;
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
@@ -77,7 +79,7 @@ export const SignupInvitedPage: FC<Props> = ({ match }) => {
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /^\S+@\S+$/,
+                      value: w3cStandardEmailValidator,
                       message: 'Email is invalid',
                     },
                   })}

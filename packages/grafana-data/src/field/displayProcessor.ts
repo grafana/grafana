@@ -6,11 +6,11 @@ import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { toUtc, dateTimeParse } from '../datetime';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue, TimeZone } from '../types';
-import { Field, FieldType } from '../types/dataFrame';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { EnumFieldConfig, Field, FieldType } from '../types/dataFrame';
+import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+import { FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 
 import { getScaleCalculator } from './scale';
 
@@ -62,7 +62,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         start /= 1e3;
         end /= 1e3;
       }
-      showMs = end - start < 60; //show ms when minute or less
+      showMs = Math.abs(end - start) < 60; //show ms when minute or less
     }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
@@ -70,12 +70,21 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
   } else if (!unit && field.type === FieldType.string) {
     unit = 'string';
+  } else if (field.type === FieldType.enum) {
+    return getEnumDisplayProcessor(options.theme, config.type?.enum);
   }
+
+  const hasCurrencyUnit = unit?.startsWith('currency');
+  const hasBoolUnit = isBooleanUnit(unit);
+  const isNumType = field.type === FieldType.number;
+  const isLocaleFormat = unit === 'locale';
+  const canTrimTrailingDecimalZeros =
+    !hasDateUnit && !hasCurrencyUnit && !hasBoolUnit && !isLocaleFormat && isNumType && config.decimals == null;
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any) => {
+  return (value: unknown, adjacentDecimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -109,9 +118,22 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    if (!isNaN(numeric)) {
+    if (!Number.isNaN(numeric)) {
       if (text == null && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
+        let v: FormattedValue;
+
+        if (canTrimTrailingDecimalZeros && adjacentDecimals != null) {
+          v = formatFunc(numeric, adjacentDecimals, null, options.timeZone, showMs);
+
+          // if no explicit decimals config, we strip trailing zeros e.g. 60.00 -> 60
+          // this is needed because we may have determined the minimum determined `adjacentDecimals` for y tick increments based on
+          // e.g. 'seconds' field unit (0.15s, 0.20s, 0.25s), but then formatFunc decided to return milli or nanos (150, 200, 250)
+          // so we end up with excess precision: 150.00, 200.00, 250.00
+          v.text = +v.text + '';
+        } else {
+          v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
+        }
+
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;
@@ -166,12 +188,47 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   };
 }
 
-function toStringProcessor(value: any): DisplayValue {
+function toStringProcessor(value: unknown): DisplayValue {
   return { text: toString(value), numeric: anyToNumber(value) };
 }
 
+export function getEnumDisplayProcessor(theme: GrafanaTheme2, cfg?: EnumFieldConfig): DisplayProcessor {
+  const config = {
+    text: cfg?.text ?? [],
+    color: cfg?.color ?? [],
+  };
+  // use the theme specific color values
+  config.color = config.color.map((v) => theme.visualization.getColorByName(v));
+
+  return (value: unknown) => {
+    if (value == null) {
+      return {
+        text: '',
+        numeric: NaN,
+      };
+    }
+    const idx = +value;
+    let text = config.text[idx];
+    if (text == null) {
+      text = `${value}`; // the original value
+    }
+    let color = config.color[idx];
+    if (color == null) {
+      // constant color for index
+      const { palette } = theme.visualization;
+      color = palette[idx % palette.length];
+      config.color[idx] = color;
+    }
+    return {
+      text,
+      numeric: idx,
+      color,
+    };
+  };
+}
+
 export function getRawDisplayProcessor(): DisplayProcessor {
-  return (value: any) => ({
+  return (value: unknown) => ({
     text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
     numeric: null as unknown as number,
   });

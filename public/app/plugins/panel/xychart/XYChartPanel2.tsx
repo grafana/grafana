@@ -1,10 +1,20 @@
-import React, { PureComponent } from 'react';
+import { css } from '@emotion/css';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { usePrevious } from 'react-use';
 
-import { PanelProps } from '@grafana/data';
+import {
+  DisplayProcessor,
+  DisplayValue,
+  fieldReducers,
+  PanelProps,
+  reduceField,
+  ReducerID,
+  getDisplayProcessor,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  LegendDisplayMode,
   Portal,
+  TooltipDisplayMode,
   UPlotChart,
   UPlotConfigBuilder,
   VizLayout,
@@ -13,116 +23,240 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
-import { XYChartOptions } from './models.gen';
-import { prepData, prepScatter } from './scatter';
-import { ScatterHoverEvent, ScatterSeries } from './types';
+import { SeriesMapping } from './models.gen';
+import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
+import { PanelOptions, ScatterHoverEvent, ScatterSeries } from './types';
 
-type Props = PanelProps<XYChartOptions>;
-type State = {
-  error?: string;
-  series: ScatterSeries[];
-  builder?: UPlotConfigBuilder;
-  facets?: FacetedData;
-  hover?: ScatterHoverEvent;
-};
+type Props = PanelProps<PanelOptions>;
+const TOOLTIP_OFFSET = 10;
 
-export class XYChartPanel2 extends PureComponent<Props, State> {
-  state: State = {
-    series: [],
+export const XYChartPanel2 = (props: Props) => {
+  const [error, setError] = useState<string | undefined>();
+  const [series, setSeries] = useState<ScatterSeries[]>([]);
+  const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
+  const [facets, setFacets] = useState<FacetedData | undefined>();
+  const [hover, setHover] = useState<ScatterHoverEvent | undefined>();
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+
+  const isToolTipOpen = useRef<boolean>(false);
+  const oldOptions = usePrevious(props.options);
+  const oldData = usePrevious(props.data);
+
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setShouldDisplayCloseButton(false);
+    scatterHoverCallback(undefined);
   };
 
-  componentDidMount() {
-    this.initSeries(); // also data
-  }
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
 
-  componentDidUpdate(oldProps: Props) {
-    const { options, data } = this.props;
-    const configsChanged = options !== oldProps.options || data.structureRev !== oldProps.data.structureRev;
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
 
-    if (configsChanged) {
-      this.initSeries();
-    } else if (data !== oldProps.data) {
-      this.initFacets();
+  const scatterHoverCallback = (hover?: ScatterHoverEvent) => {
+    setHover(hover);
+  };
+
+  const initSeries = useCallback(() => {
+    const getData = () => props.data.series;
+    const info: ScatterPanelInfo = prepScatter(
+      props.options,
+      getData,
+      config.theme2,
+      scatterHoverCallback,
+      onUPlotClick,
+      isToolTipOpen
+    );
+
+    if (info.error) {
+      setError(info.error);
+    } else if (info.series.length && props.data.series) {
+      setBuilder(info.builder);
+      setSeries(info.series);
+      setFacets(() => prepData(info, props.data.series));
+      setError(undefined);
     }
-  }
+  }, [props.data.series, props.options]);
 
-  scatterHoverCallback = (hover?: ScatterHoverEvent) => {
-    this.setState({ hover });
-  };
+  const initFacets = useCallback(() => {
+    setFacets(() => prepData({ error, series }, props.data.series));
+  }, [props.data.series, error, series]);
 
-  getData = () => {
-    return this.props.data.series;
-  };
-
-  initSeries = () => {
-    const { options, data } = this.props;
-    const info: State = prepScatter(options, this.getData, config.theme2, this.scatterHoverCallback);
-    if (info.series.length && data.series) {
-      info.facets = prepData(info, data.series);
-      info.error = undefined;
+  useEffect(() => {
+    if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {
+      initSeries();
+    } else if (oldData !== props.data) {
+      initFacets();
     }
-    this.setState(info);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props]);
 
-  initFacets = () => {
-    this.setState({
-      facets: prepData(this.state, this.props.data.series),
-    });
-  };
-
-  renderLegend = () => {
-    const { data } = this.props;
-    const { series } = this.state;
+  const renderLegend = () => {
     const items: VizLegendItem[] = [];
-    for (const s of series) {
-      const frame = s.frame(data.series);
+    const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+    const theme = config.theme2;
+
+    for (let si = 0; si < series.length; si++) {
+      const s = series[si];
+      const frame = s.frame(props.data.series);
       if (frame) {
-        for (const item of s.legend(frame)) {
+        for (const item of s.legend()) {
+          item.getDisplayValues = () => {
+            const calcs = props.options.legend.calcs;
+
+            if (!calcs?.length) {
+              return [];
+            }
+
+            const field = s.y(frame);
+
+            const fmt = field.display ?? defaultFormatter;
+            let countFormatter: DisplayProcessor | null = null;
+
+            const fieldCalcs = reduceField({
+              field,
+              reducers: calcs,
+            });
+
+            return calcs.map<DisplayValue>((reducerId) => {
+              const fieldReducer = fieldReducers.get(reducerId);
+              let formatter = fmt;
+
+              if (fieldReducer.id === ReducerID.diffperc) {
+                formatter = getDisplayProcessor({
+                  field: {
+                    ...field,
+                    config: {
+                      ...field.config,
+                      unit: 'percent',
+                    },
+                  },
+                  theme,
+                });
+              }
+
+              if (
+                fieldReducer.id === ReducerID.count ||
+                fieldReducer.id === ReducerID.changeCount ||
+                fieldReducer.id === ReducerID.distinctCount
+              ) {
+                if (!countFormatter) {
+                  countFormatter = getDisplayProcessor({
+                    field: {
+                      ...field,
+                      config: {
+                        ...field.config,
+                        unit: 'none',
+                      },
+                    },
+                    theme,
+                  });
+                }
+                formatter = countFormatter;
+              }
+
+              return {
+                ...formatter(fieldCalcs[reducerId]),
+                title: fieldReducer.name,
+                description: fieldReducer.description,
+              };
+            });
+          };
+
+          item.disabled = !(s.show ?? true);
+
+          if (props.options.seriesMapping === SeriesMapping.Manual) {
+            item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
+          }
+
           items.push(item);
         }
       }
     }
 
+    if (!props.options.legend.showLegend) {
+      return null;
+    }
+
+    const legendStyle = {
+      flexStart: css`
+        div {
+          justify-content: flex-start !important;
+        }
+      `,
+    };
+
     return (
-      <VizLayout.Legend placement="bottom">
-        <VizLegend placement="bottom" items={items} displayMode={LegendDisplayMode.List} />
+      <VizLayout.Legend placement={props.options.legend.placement} width={props.options.legend.width}>
+        <VizLegend
+          className={legendStyle.flexStart}
+          placement={props.options.legend.placement}
+          items={items}
+          displayMode={props.options.legend.displayMode}
+        />
       </VizLayout.Legend>
     );
   };
 
-  render() {
-    const { width, height, timeRange, data } = this.props;
-    const { error, facets, builder, hover, series } = this.state;
-    if (error || !builder) {
-      return (
-        <div className="panel-empty">
-          <p>{error}</p>
-        </div>
-      );
-    }
-
+  if (error || !builder || !facets) {
     return (
-      <>
-        <VizLayout width={width} height={height} legend={this.renderLegend()}>
-          {(vizWidth: number, vizHeight: number) => (
-            // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
-            //   {JSON.stringify(scatterData, null, 2)}
-            // </pre>
-            <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={timeRange}>
-              {/*children ? children(config, alignedFrame) : null*/}
-            </UPlotChart>
-          )}
-        </VizLayout>
-        <Portal>
-          {hover && (
-            <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
-              <TooltipView series={series[hover.scatterIndex]} rowIndex={hover.xIndex} data={data.series} />
-            </VizTooltipContainer>
-          )}
-        </Portal>
-      </>
+      <div className="panel-empty">
+        <p>{error}</p>
+      </div>
     );
   }
-}
+
+  return (
+    <>
+      <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} timeRange={props.timeRange} />
+        )}
+      </VizLayout>
+      <Portal>
+        {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (
+          <VizTooltipContainer
+            position={{ x: hover.pageX, y: hover.pageY }}
+            offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {shouldDisplayCloseButton && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <CloseButton
+                  onClick={onCloseToolTip}
+                  style={{
+                    position: 'relative',
+                    top: 'auto',
+                    right: 'auto',
+                    marginRight: 0,
+                  }}
+                />
+              </div>
+            )}
+            <TooltipView
+              options={props.options.tooltip}
+              allSeries={series}
+              manualSeriesConfigs={props.options.series}
+              seriesMapping={props.options.seriesMapping!}
+              rowIndex={hover.xIndex}
+              hoveredPointIndex={hover.scatterIndex}
+              data={props.data.series}
+              range={props.timeRange}
+            />
+          </VizTooltipContainer>
+        )}
+      </Portal>
+    </>
+  );
+};

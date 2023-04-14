@@ -1,9 +1,9 @@
 package featuremgmt
 
 import (
-	"io/ioutil"
+	"os"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type configBody struct {
@@ -23,7 +23,7 @@ func readConfigFile(filename string) (*configBody, error) {
 
 	// Can ignore gosec G304 because the file path is forced within config subfolder
 	//nolint:gosec
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return cfg, err
 	}

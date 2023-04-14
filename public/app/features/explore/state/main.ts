@@ -1,8 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
+import { DataSourceSrv, locationService } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
@@ -10,6 +11,7 @@ import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { ThunkResult } from '../../../types';
+import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
 import { paneReducer } from './explorePane';
@@ -37,13 +39,22 @@ export const richHistorySearchFiltersUpdatedAction = createAction<{
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
+export const saveCorrelationsAction = createAction<CorrelationData[]>('explore/saveCorrelationsAction');
+
+export const splitSizeUpdateAction = createAction<{
+  largerExploreId?: ExploreId;
+}>('explore/splitSizeUpdateAction');
+
+export const maximizePaneAction = createAction<{
+  exploreId?: ExploreId;
+}>('explore/maximizePaneAction');
+
+export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
+
 /**
  * Resets state for explore.
  */
-export interface ResetExplorePayload {
-  force?: boolean;
-}
-export const resetExploreAction = createAction<ResetExplorePayload>('explore/resetExplore');
+export const resetExploreAction = createAction('explore/resetExplore');
 
 /**
  * Close the split view and save URL state.
@@ -52,17 +63,6 @@ export interface SplitCloseActionPayload {
   itemId: ExploreId;
 }
 export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
-
-/**
- * Cleans up a pane state. Could seem like this should be in explorePane.ts actions but in case we area closing
- * left pane we need to move right state to the left.
- * Also this may seem redundant as we have splitClose actions which clears up state but that action is not called on
- * URL change.
- */
-export interface CleanupPanePayload {
-  exploreId: ExploreId;
-}
-export const cleanupPaneAction = createAction<CleanupPanePayload>('explore/cleanupPane');
 
 //
 // Action creators
@@ -101,17 +101,18 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
+export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOptions<T>): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
     const leftUrlState = getUrlStateFromPaneState(leftState);
     let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
-      const datasourceName = getDataSourceSrv().getInstanceSettings(options.datasourceUid)?.name || '';
+      const { query, queries } = options;
+
       rightUrlState = {
-        datasource: datasourceName,
-        queries: [options.query],
+        datasource: options.datasourceUid,
+        queries: queries ?? (query ? [query] : []),
         range: options.range || leftState.range,
         panelsState: options.panelsState,
       };
@@ -171,9 +172,13 @@ export const initialExploreState: ExploreState = {
   syncedTimes: false,
   left: initialExploreItemState,
   right: undefined,
+  correlations: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   richHistoryMigrationFailed: false,
+  largerExploreId: undefined,
+  maxedExploreId: undefined,
+  evenSplitPanes: true,
 };
 
 /**
@@ -182,7 +187,7 @@ export const initialExploreState: ExploreState = {
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitCloseAction.match(action)) {
-    const { itemId } = action.payload as SplitCloseActionPayload;
+    const { itemId } = action.payload;
     const targetSplit = {
       left: itemId === ExploreId.left ? state.right! : state.left,
       right: undefined,
@@ -190,31 +195,47 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       ...targetSplit,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: true,
+      syncedTimes: false,
     };
   }
 
-  if (cleanupPaneAction.match(action)) {
-    const { exploreId } = action.payload as CleanupPanePayload;
+  if (splitSizeUpdateAction.match(action)) {
+    const { largerExploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId,
+      maxedExploreId: undefined,
+      evenSplitPanes: largerExploreId === undefined,
+    };
+  }
 
-    // We want to do this only when we remove single pane not when we are unmounting whole explore.
-    // It needs to be checked like this because in component we don't get new path (which would tell us if we are
-    // navigating out of explore) before the unmount.
-    if (!state[exploreId]?.initialized) {
-      return state;
-    }
+  if (maximizePaneAction.match(action)) {
+    const { exploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId: exploreId,
+      maxedExploreId: exploreId,
+      evenSplitPanes: false,
+    };
+  }
 
-    if (exploreId === ExploreId.left) {
-      return {
-        ...state,
-        [ExploreId.left]: state[ExploreId.right]!,
-        [ExploreId.right]: undefined,
-      };
-    } else {
-      return {
-        ...state,
-        [ExploreId.right]: undefined,
-      };
-    }
+  if (evenPaneResizeAction.match(action)) {
+    return {
+      ...state,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: true,
+    };
+  }
+
+  if (saveCorrelationsAction.match(action)) {
+    return {
+      ...state,
+      correlations: action.payload,
+    };
   }
 
   if (syncTimesAction.match(action)) {
@@ -243,16 +264,11 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (resetExploreAction.match(action)) {
-    const payload: ResetExplorePayload = action.payload;
     const leftState = state[ExploreId.left];
     const rightState = state[ExploreId.right];
     stopQueryState(leftState.querySubscription);
     if (rightState) {
       stopQueryState(rightState.querySubscription);
-    }
-
-    if (payload.force) {
-      return initialExploreState;
     }
 
     return {
@@ -277,7 +293,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     if (exploreId !== undefined) {
       // @ts-ignore
       const explorePaneState = state[exploreId];
-      return { ...state, [exploreId]: paneReducer(explorePaneState, action as any) };
+      return { ...state, [exploreId]: paneReducer(explorePaneState, action) };
     }
   }
 

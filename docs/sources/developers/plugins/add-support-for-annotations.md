@@ -1,16 +1,14 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/add-support-for-annotations/
 title: Add support for annotations
 ---
 
 # Add support for annotations
 
-This guide explains how to add support for [annotations]({{< relref "../../dashboards/annotations/" >}}) to an existing data source plugin.
+This guide explains how to add support for [annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) to an existing data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< ref "/tutorials/build-a-data-source-plugin/" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin/).
 
-> **Note:** Annotation support for React plugins was released in Grafana 7.2. To support earlier versions, refer to the [Add support for annotation for Grafana 7.1](https://grafana.com/docs/grafana/v7.1/developers/plugins/add-support-for-annotations/).
+> **Note:** Annotation support for React plugins was released in Grafana 7.2. To support earlier versions, refer to [Add support for annotation for Grafana 7.1](https://grafana.com/docs/grafana/v7.1/developers/plugins/add-support-for-annotations/).
 
 ## Add annotations support to your data source
 

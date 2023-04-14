@@ -16,77 +16,77 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"html/template"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"syscall"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	handlers []http.Handler
-	index    int
+	mws []Middleware
 
-	*Router
 	Req      *http.Request
 	Resp     ResponseWriter
 	template *template.Template
-	logger   log.Logger
 }
 
-func (ctx *Context) handler() http.Handler {
-	if ctx.index < len(ctx.handlers) {
-		return ctx.handlers[ctx.index]
-	}
-	if ctx.index == len(ctx.handlers) {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	}
-	panic("invalid index for context handler")
-}
-
-// Next runs the next handler in the context chain
-func (ctx *Context) Next() {
-	ctx.index++
-	ctx.run()
-}
+var errMissingWrite = errutil.NewBase(errutil.StatusInternal, "web.missingWrite")
 
 func (ctx *Context) run() {
-	for ctx.index <= len(ctx.handlers) {
-		ctx.handler().ServeHTTP(ctx.Resp, ctx.Req)
+	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	for i := len(ctx.mws) - 1; i >= 0; i-- {
+		h = ctx.mws[i](h)
+	}
 
-		ctx.index++
-		if ctx.Resp.Written() {
-			return
-		}
+	rw := ctx.Resp
+	h.ServeHTTP(ctx.Resp, ctx.Req)
+
+	// Prevent the handler chain from not writing anything.
+	// This indicates nearly always that a middleware is misbehaving and not calling its next.ServeHTTP().
+	// In rare cases where a blank http.StatusOK without any body is wished, explicitly state that using w.WriteStatus(http.StatusOK)
+	if !rw.Written() {
+		errhttp.Write(
+			ctx.Req.Context(),
+			errMissingWrite.Errorf("chain did not write HTTP response: %s", ctx.Req.URL.Path),
+			rw,
+		)
 	}
 }
 
 // RemoteAddr returns more real IP address.
 func (ctx *Context) RemoteAddr() string {
-	addr := ctx.Req.Header.Get("X-Real-IP")
+	return RemoteAddr(ctx.Req)
+}
+
+func RemoteAddr(req *http.Request) string {
+	addr := req.Header.Get("X-Real-IP")
 
 	if len(addr) == 0 {
 		// X-Forwarded-For may contain multiple IP addresses, separated by
 		// commas.
-		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
+		addr = strings.TrimSpace(strings.Split(req.Header.Get("X-Forwarded-For"), ",")[0])
 	}
 
 	// parse user inputs from headers to prevent log forgery
 	if len(addr) > 0 {
 		if parsedIP := net.ParseIP(addr); parsedIP == nil {
 			// if parsedIP is nil we clean addr and populate with RemoteAddr below
-			ctx.logger.Warn("Received invalid IP address in request headers, removed for log forgery prevention")
 			addr = ""
 		}
 	}
 
 	if len(addr) == 0 {
-		addr = ctx.Req.RemoteAddr
+		addr = req.RemoteAddr
 		if i := strings.LastIndex(addr, ":"); i > -1 {
 			addr = addr[:i]
 		}
@@ -106,7 +106,10 @@ func (ctx *Context) HTML(status int, name string, data interface{}) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
-		panic("Context.HTML:" + err.Error())
+		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
+			return
+		}
+		panic(fmt.Sprintf("Context.HTML - Error rendering template: %s. You may need to build frontend assets \n %s", name, err.Error()))
 	}
 }
 

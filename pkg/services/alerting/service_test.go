@@ -4,23 +4,41 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestService(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := &sqlStore{
+		db:    db.InitTestDB(t),
+		log:   &log.ConcreteLogger{},
+		cache: localcache.New(time.Minute, time.Minute),
+	}
 
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(sqlStore, ossencryption.ProvideService(), nil)
+	usMock := &usagestats.UsageStatsMock{T: t}
+
+	encProvider := encryptionprovider.ProvideEncryptionProvider()
+	settings := &setting.OSSImpl{Cfg: setting.NewCfg()}
+
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	require.NoError(t, err)
+
+	s := ProvideService(sqlStore.db, encService, nil)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"
@@ -35,7 +53,7 @@ func TestService(t *testing.T) {
 		ss := map[string]string{"password": "12345"}
 		cmd := models.CreateAlertNotificationCommand{SecureSettings: ss}
 
-		err := s.CreateAlertNotificationCommand(ctx, &cmd)
+		_, err := s.CreateAlertNotificationCommand(ctx, &cmd)
 		require.Error(t, err)
 	})
 
@@ -45,18 +63,17 @@ func TestService(t *testing.T) {
 		ss := map[string]string{"password": "12345"}
 		cmd := models.CreateAlertNotificationCommand{SecureSettings: ss, Type: nType}
 
-		err := s.CreateAlertNotificationCommand(ctx, &cmd)
+		an, err := s.CreateAlertNotificationCommand(ctx, &cmd)
 		require.NoError(t, err)
 
-		an := cmd.Result
 		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, an.SecureSettings, setting.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 
 		// Delete the created alert notification
 		delCmd := models.DeleteAlertNotificationCommand{
-			Id:    cmd.Result.Id,
-			OrgId: cmd.Result.OrgId,
+			ID:    an.ID,
+			OrgID: an.OrgID,
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
@@ -69,18 +86,18 @@ func TestService(t *testing.T) {
 		ss := map[string]string{"password": "12345"}
 		createCmd := models.CreateAlertNotificationCommand{SecureSettings: ss, Type: nType}
 
-		err := s.CreateAlertNotificationCommand(ctx, &createCmd)
+		n, err := s.CreateAlertNotificationCommand(ctx, &createCmd)
 		require.NoError(t, err)
 
 		// Try to update it with an invalid type.
-		updateCmd := models.UpdateAlertNotificationCommand{Id: createCmd.Result.Id, Settings: simplejson.New(), SecureSettings: ss, Type: "invalid"}
-		err = s.UpdateAlertNotification(ctx, &updateCmd)
+		updateCmd := models.UpdateAlertNotificationCommand{ID: n.ID, Settings: simplejson.New(), SecureSettings: ss, Type: "invalid"}
+		_, err = s.UpdateAlertNotification(ctx, &updateCmd)
 		require.Error(t, err)
 
 		// Delete the created alert notification.
 		delCmd := models.DeleteAlertNotificationCommand{
-			Id:    createCmd.Result.Id,
-			OrgId: createCmd.Result.OrgId,
+			ID:    n.ID,
+			OrgID: n.OrgID,
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
@@ -93,22 +110,22 @@ func TestService(t *testing.T) {
 		ss := map[string]string{"password": "12345"}
 		createCmd := models.CreateAlertNotificationCommand{SecureSettings: ss, Type: nType}
 
-		err := s.CreateAlertNotificationCommand(ctx, &createCmd)
+		n, err := s.CreateAlertNotificationCommand(ctx, &createCmd)
 		require.NoError(t, err)
 
 		// Update test notification.
-		updateCmd := models.UpdateAlertNotificationCommand{Id: createCmd.Result.Id, Settings: simplejson.New(), SecureSettings: ss, Type: nType}
-		err = s.UpdateAlertNotification(ctx, &updateCmd)
+		updateCmd := models.UpdateAlertNotificationCommand{ID: n.ID, Settings: simplejson.New(), SecureSettings: ss, Type: nType}
+		n2, err := s.UpdateAlertNotification(ctx, &updateCmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, updateCmd.Result.SecureSettings, setting.SecretKey)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, n2.SecureSettings, setting.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 
 		// Delete the created alert notification.
 		delCmd := models.DeleteAlertNotificationCommand{
-			Id:    createCmd.Result.Id,
-			OrgId: createCmd.Result.OrgId,
+			ID:    n.ID,
+			OrgID: n.OrgID,
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
@@ -117,7 +134,7 @@ func TestService(t *testing.T) {
 	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
 		uid := strings.Repeat("A", 41)
 
-		err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{Uid: uid})
+		_, err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{UID: uid})
 		require.ErrorIs(t, err, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"})
 	})
 
@@ -127,10 +144,10 @@ func TestService(t *testing.T) {
 		uid := strings.Repeat("A", 41)
 		expectedErr := ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 
-		err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{Uid: uid})
+		_, err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{UID: uid})
 		require.ErrorIs(t, err, expectedErr)
 
-		err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUid: uid})
+		_, err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUID: uid})
 		require.ErrorIs(t, err, expectedErr)
 	})
 }

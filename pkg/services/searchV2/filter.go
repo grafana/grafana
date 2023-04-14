@@ -2,12 +2,15 @@ package searchV2
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/blugelabs/bluge"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/searcher"
 	"github.com/blugelabs/bluge/search/similarity"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type PermissionFilter struct {
@@ -18,9 +21,11 @@ type PermissionFilter struct {
 type entityKind string
 
 const (
-	entityKindPanel     entityKind = "panel"
-	entityKindDashboard entityKind = "dashboard"
-	entityKindFolder    entityKind = "folder"
+	entityKindPanel      entityKind = entity.StandardKindPanel
+	entityKindDashboard  entityKind = entity.StandardKindDashboard
+	entityKindFolder     entityKind = entity.StandardKindFolder
+	entityKindDatasource entityKind = entity.StandardKindDataSource
+	entityKindQuery      entityKind = entity.StandardKindQuery
 )
 
 func (r entityKind) IsValid() bool {
@@ -32,7 +37,7 @@ func (r entityKind) supportsAuthzCheck() bool {
 }
 
 var (
-	permissionFilterFields                 = []string{documentFieldUID, documentFieldKind}
+	permissionFilterFields                 = []string{documentFieldUID, documentFieldKind, documentFieldLocation}
 	panelIdFieldRegex                      = regexp.MustCompile(`^(.*)#([0-9]{1,4})$`)
 	panelIdFieldDashboardUidSubmatchIndex  = 1
 	panelIdFieldPanelIdSubmatchIndex       = 2
@@ -61,7 +66,7 @@ func (q *PermissionFilter) logAccessDecision(decision bool, kind interface{}, id
 	}
 }
 
-func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
+func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool {
 	if !kind.supportsAuthzCheck() {
 		q.logAccessDecision(false, kind, id, "entityDoesNotSupportAuthz")
 		return false
@@ -70,29 +75,28 @@ func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
 	// TODO add `kind` to the `ResourceFilter` interface so that we can move the switch out of here
 	//
 	switch kind {
-	case entityKindFolder:
-		if id == "" {
-			q.logAccessDecision(true, kind, id, "generalFolder")
-			return true
-		}
-		fallthrough
-	case entityKindDashboard:
-		decision := q.filter(id)
+	case entityKindFolder, entityKindDashboard:
+		decision := q.filter(kind, id, location)
 		q.logAccessDecision(decision, kind, id, "resourceFilter")
 		return decision
 	case entityKindPanel:
 		matches := panelIdFieldRegex.FindStringSubmatch(id)
-
 		submatchCount := len(matches)
 		if submatchCount != panelIdFieldRegexExpectedSubmatchCount {
 			q.logAccessDecision(false, kind, id, "invalidPanelIdFieldRegexSubmatchCount", "submatchCount", submatchCount, "expectedSubmatchCount", panelIdFieldRegexExpectedSubmatchCount)
 			return false
 		}
-
 		dashboardUid := matches[panelIdFieldDashboardUidSubmatchIndex]
-		decision := q.filter(dashboardUid)
 
-		q.logAccessDecision(decision, kind, id, "resourceFilter", "dashboardUid", dashboardUid, "panelId", matches[panelIdFieldPanelIdSubmatchIndex])
+		// Location is <folder_uid>/<dashboard_uid>
+		if !strings.HasSuffix(location, "/"+dashboardUid) {
+			q.logAccessDecision(false, kind, id, "invalidLocation", "location", location, "dashboardUid", dashboardUid)
+			return false
+		}
+		folderUid := location[:len(location)-len(dashboardUid)-1]
+
+		decision := q.filter(entityKindDashboard, dashboardUid, folderUid)
+		q.logAccessDecision(decision, kind, id, "resourceFilter", "folderUid", folderUid, "dashboardUid", dashboardUid, "panelId", matches[panelIdFieldPanelIdSubmatchIndex])
 		return decision
 	default:
 		q.logAccessDecision(false, kind, id, "reason", "unknownKind")
@@ -107,13 +111,18 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 	}
 
 	s, err := searcher.NewMatchAllSearcher(i, 1, similarity.ConstantScorer(1), options)
+	if err != nil {
+		return nil, err
+	}
 	return searcher.NewFilteringSearcher(s, func(d *search.DocumentMatch) bool {
-		var kind, id string
+		var kind, id, location string
 		err := dvReader.VisitDocumentValues(d.Number, func(field string, term []byte) {
 			if field == documentFieldKind {
 				kind = string(term)
 			} else if field == documentFieldUID {
 				id = string(term)
+			} else if field == documentFieldLocation {
+				location = string(term)
 			}
 		})
 		if err != nil {
@@ -127,6 +136,6 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 			return false
 		}
 
-		return q.canAccess(e, id)
+		return q.canAccess(e, id, location)
 	}), err
 }

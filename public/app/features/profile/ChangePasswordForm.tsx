@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
 import config from 'app/core/config';
@@ -15,12 +15,12 @@ export interface Props {
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
-export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving }) => {
-  const { ldapEnabled, authProxyEnabled, disableLoginForm } = config;
+export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
+  const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 
-  if (ldapEnabled || authProxyEnabled) {
-    return <p>You cannot change password when LDAP or auth proxy authentication is enabled.</p>;
+  if (authSource === 'LDAP' || authSource === 'Auth Proxy') {
+    return <p>You cannot change password when signed in with LDAP or auth proxy.</p>;
   }
   if (authSource && disableLoginForm) {
     return <p>Password cannot be changed here.</p>;

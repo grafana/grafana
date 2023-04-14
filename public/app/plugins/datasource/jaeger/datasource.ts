@@ -12,11 +12,13 @@ import {
   DateTime,
   FieldType,
   MutableDataFrame,
+  ScopedVars,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { createGraphFrames } from './graphTransform';
@@ -31,9 +33,11 @@ export interface JaegerJsonData extends DataSourceJsonData {
 export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
+  spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly timeSrv: TimeSrv = getTimeSrv(),
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
@@ -44,17 +48,26 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return res.data.data;
   }
 
+  isSearchFormValid(query: JaegerQuery): boolean {
+    return !!query.service;
+  }
+
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
+
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
     }
 
+    if (target.queryType === 'search' && !this.isSearchFormValid(target)) {
+      return of({ error: { message: 'You must select a service.' }, data: [] });
+    }
+
     if (target.queryType !== 'search' && target.query) {
       return this._request(
-        `/api/traces/${encodeURIComponent(getTemplateSrv().replace(target.query, options.scopedVars))}`
+        `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`
       ).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
@@ -85,22 +98,30 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
         }
         return of({ data });
       } catch (error) {
-        return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
+        return of({ error: { message: 'The JSON file uploaded is not in a valid Jaeger format' }, data: [] });
       }
     }
 
-    let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+      'service',
+      'operation',
+      'tags',
+      'minDuration',
+      'maxDuration',
+      'limit',
+    ]);
     // remove empty properties
-    jaegerQuery = pickBy(jaegerQuery, identity);
-    if (jaegerQuery.tags) {
-      jaegerQuery = {
-        ...jaegerQuery,
-        tags: convertTagsLogfmt(getTemplateSrv().replace(jaegerQuery.tags, options.scopedVars)),
-      };
-    }
+    let jaegerQuery = pickBy(jaegerInterpolated, identity);
 
     if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {
       jaegerQuery = omit(jaegerQuery, 'operation');
+    }
+
+    if (jaegerQuery.tags) {
+      jaegerQuery = {
+        ...jaegerQuery,
+        tags: convertTagsLogfmt(jaegerQuery.tags.toString()),
+      };
     }
 
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
@@ -115,6 +136,39 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
         };
       })
     );
+  }
+
+  interpolateVariablesInQueries(queries: JaegerQuery[], scopedVars: ScopedVars): JaegerQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars),
+      };
+    });
+  }
+
+  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+    let expandedQuery = { ...query };
+
+    if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
+      expandedQuery = {
+        ...query,
+        tags: this.templateSrv.replace(query.tags, scopedVars),
+      };
+    }
+
+    return {
+      ...expandedQuery,
+      service: this.templateSrv.replace(query.service ?? '', scopedVars),
+      operation: this.templateSrv.replace(query.operation ?? '', scopedVars),
+      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
+      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+    };
   }
 
   async testDatasource(): Promise<any> {

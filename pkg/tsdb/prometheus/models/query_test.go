@@ -1,13 +1,15 @@
 package models_test
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -15,7 +17,7 @@ var (
 	intervalCalculator = intervalv2.NewCalculator()
 )
 
-func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
+func TestParse(t *testing.T) {
 	t.Run("parsing query from unified alerting", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,
@@ -374,6 +376,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 1,
 			"interval": "$__rate_interval",
+			"intervalMs": 60000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -447,5 +450,29 @@ func queryContext(json string, timeRange backend.TimeRange) backend.DataQuery {
 		JSON:      []byte(json),
 		TimeRange: timeRange,
 		RefID:     "A",
+	}
+}
+
+func TestAlignTimeRange(t *testing.T) {
+	type args struct {
+		t      time.Time
+		step   time.Duration
+		offset int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want time.Time
+	}{
+		{name: "second step", args: args{t: time.Unix(1664816826, 0), step: 10 * time.Second, offset: 0}, want: time.Unix(1664816820, 0).UTC()},
+		{name: "millisecond step", args: args{t: time.Unix(1664816825, 5*int64(time.Millisecond)), step: 10 * time.Millisecond, offset: 0}, want: time.Unix(1664816825, 0).UTC()},
+		{name: "second step with offset", args: args{t: time.Unix(1664816825, 5*int64(time.Millisecond)), step: 2 * time.Second, offset: -3}, want: time.Unix(1664816825, 0).UTC()},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := models.AlignTimeRange(tt.args.t, tt.args.step, tt.args.offset); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AlignTimeRange() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

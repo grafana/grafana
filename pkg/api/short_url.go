@@ -1,45 +1,32 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
 	cmd := dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
 	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
-
-	cmd.Path = strings.TrimSpace(cmd.Path)
-
-	if path.IsAbs(cmd.Path) {
-		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return response.Error(400, "Path should be relative", nil)
-	}
-	if strings.Contains(cmd.Path, "../") {
-		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return response.Error(400, "Invalid path", nil)
-	}
-
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return response.Error(500, "Failed to create short URL", err)
+		return response.Err(err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgId)
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgID)
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
@@ -50,7 +37,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
+func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 	shortURLUID := web.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {
@@ -59,7 +46,7 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
 	if err != nil {
-		if errors.Is(err, models.ErrShortURLNotFound) {
+		if shorturls.ErrShortURLNotFound.Is(err) {
 			hs.log.Debug("Not redirecting short URL since not found")
 			return
 		}

@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
@@ -17,51 +17,43 @@ const setup = (propsFunc?: (props: Props) => Props) => {
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
-      { value: 'germanyazuremonitor', label: 'Azure Germany' },
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),
-    getSubscriptions: jest.fn(),
+    getSubscriptions: jest.fn().mockResolvedValue([]),
   };
 
   if (propsFunc) {
     props = propsFunc(props);
   }
 
-  return shallow(<AzureCredentialsForm {...props} />);
+  render(<AzureCredentialsForm {...props} />);
 };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-    expect(wrapper).toMatchSnapshot();
+describe('AzureCredentialsForm', () => {
+  it('should render without error', () => {
+    expect(() => setup()).not.toThrow();
   });
 
-  it('should disable azure monitor secret input', () => {
-    const wrapper = setup((props) => ({
+  it('should disable azure monitor secret input when the clientSecret is a symbol', async () => {
+    setup((props) => ({
       ...props,
       credentials: {
-        authType: 'clientsecret',
-        azureCloud: 'azuremonitor',
-        tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
-        clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
+        ...props.credentials,
         clientSecret: Symbol(),
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    expect(await screen.findByLabelText('Client Secret')).toBeDisabled();
   });
 
-  it('should enable azure monitor load subscriptions button', () => {
-    const wrapper = setup((props) => ({
+  it('should enable azure monitor load subscriptions button when all required fields are defined', async () => {
+    setup((props) => ({
       ...props,
       credentials: {
-        authType: 'clientsecret',
-        azureCloud: 'azuremonitor',
-        tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
-        clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
+        ...props.credentials,
         clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    expect(await screen.findByRole('button', { name: 'Load Subscriptions' })).not.toBeDisabled();
   });
 });

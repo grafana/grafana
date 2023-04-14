@@ -1,9 +1,9 @@
-import React, { FC, Fragment, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { Fragment, useMemo, useState } from 'react';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { deleteTemplateAction } from '../../state/actions';
@@ -12,22 +12,32 @@ import { getNotificationsPermissions } from '../../utils/access-control';
 import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
+import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
+import { TemplateEditor } from './TemplateEditor';
 
 interface Props {
   config: AlertManagerCortexConfig;
   alertManagerName: string;
 }
 
-export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
+export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
   const permissions = getNotificationsPermissions(alertManagerName);
 
-  const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
+  const templateRows = useMemo(() => {
+    const templates = Object.entries(config.template_files);
+
+    return templates.map(([name, template]) => ({
+      name,
+      template,
+      provenance: (config.template_file_provenances ?? {})[name],
+    }));
+  }, [config]);
   const [templateToDelete, setTemplateToDelete] = useState<string>();
 
   const deleteTemplate = () => {
@@ -39,9 +49,9 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
-      title="Message templates"
-      description="Templates construct the messages that get sent to the contact points."
-      addButtonLabel="New template"
+      title="Notification templates"
+      description="Create notification templates to customize your notifications."
+      addButtonLabel="Add template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
       showButton={contextSrv.hasPermission(permissions.create)}
     >
@@ -66,7 +76,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
               <td colSpan={3}>No templates defined.</td>
             </tr>
           )}
-          {templateRows.map(([name, content], idx) => {
+          {templateRows.map(({ name, template, provenance }, idx) => {
             const isExpanded = !!expandedTemplates[name];
             return (
               <Fragment key={name}>
@@ -77,9 +87,21 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                       onToggle={() => setExpandedTemplates({ ...expandedTemplates, [name]: !isExpanded })}
                     />
                   </td>
-                  <td>{name}</td>
-                  <Authorize actions={[permissions.update, permissions.delete]}>
-                    <td className={tableStyles.actionsCell}>
+                  <td>
+                    {name} {provenance && <ProvisioningBadge />}
+                  </td>
+                  <td className={tableStyles.actionsCell}>
+                    {provenance && (
+                      <ActionIcon
+                        to={makeAMLink(
+                          `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                          alertManagerName
+                        )}
+                        tooltip="view template"
+                        icon="file-alt"
+                      />
+                    )}
+                    {!provenance && (
                       <Authorize actions={[permissions.update]}>
                         <ActionIcon
                           to={makeAMLink(
@@ -90,6 +112,19 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                           icon="pen"
                         />
                       </Authorize>
+                    )}
+                    {contextSrv.hasPermission(permissions.create) && (
+                      <ActionIcon
+                        to={makeAMLink(
+                          `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
+                          alertManagerName
+                        )}
+                        tooltip="Copy template"
+                        icon="copy"
+                      />
+                    )}
+
+                    {!provenance && (
                       <Authorize actions={[permissions.delete]}>
                         <ActionIcon
                           onClick={() => setTemplateToDelete(name)}
@@ -97,15 +132,25 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                           icon="trash-alt"
                         />
                       </Authorize>
-                    </td>
-                  </Authorize>
+                    )}
+                  </td>
                 </tr>
                 {isExpanded && (
                   <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                     <td></td>
                     <td colSpan={2}>
                       <DetailsField label="Description" horizontal={true}>
-                        <pre>{content}</pre>
+                        <TemplateEditor
+                          width={'auto'}
+                          height={'auto'}
+                          autoHeight={true}
+                          value={template}
+                          showLineNumbers={false}
+                          monacoOptions={{
+                            readOnly: true,
+                            scrollBeyondLastLine: false,
+                          }}
+                        />
                       </DetailsField>
                     </td>
                   </tr>

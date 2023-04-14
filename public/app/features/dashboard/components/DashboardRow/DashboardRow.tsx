@@ -17,15 +17,8 @@ export interface DashboardRowProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardRow extends React.Component<DashboardRowProps, any> {
+export class DashboardRow extends React.Component<DashboardRowProps> {
   sub?: Unsubscribable;
-  constructor(props: DashboardRowProps) {
-    super(props);
-
-    this.state = {
-      collapsed: this.props.panel.collapsed,
-    };
-  }
 
   componentDidMount() {
     this.sub = this.props.dashboard.events.subscribe(RefreshEvent, this.onVariableUpdated);
@@ -43,15 +36,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
   onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
-
-    this.setState((prevState: any) => {
-      return { collapsed: !prevState.collapsed };
-    });
   };
 
   onUpdate = (title: string, repeat?: string | null) => {
-    this.props.panel['title'] = title;
-    this.props.panel['repeat'] = repeat ?? undefined;
+    this.props.panel.setProperty('title', title);
+    this.props.panel.setProperty('repeat', repeat ?? undefined);
     this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
@@ -77,7 +66,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   render() {
     const classes = classNames({
       'dashboard-row': true,
-      'dashboard-row--collapsed': this.state.collapsed,
+      'dashboard-row--collapsed': this.props.panel.collapsed,
     });
 
     const title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
@@ -87,17 +76,18 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes} data-testid="dashboard-row-container">
-        <a
+        <button
           className="dashboard-row__title pointer"
+          type="button"
           data-testid={selectors.components.DashboardRow.title(title)}
           onClick={this.onToggle}
         >
-          <Icon name={this.state.collapsed ? 'angle-right' : 'angle-down'} />
+          <Icon name={this.props.panel.collapsed ? 'angle-right' : 'angle-down'} />
           {title}
           <span className="dashboard-row__panel_count">
             ({count} {panels})
           </span>
-        </a>
+        </button>
         {canEdit && (
           <div className="dashboard-row__actions">
             <RowOptionsButton
@@ -105,12 +95,15 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
             />
-            <a className="pointer" onClick={this.onDelete} role="button" aria-label="Delete row">
+            <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />
-            </a>
+            </button>
           </div>
         )}
-        {this.state.collapsed === true && (
+        {this.props.panel.collapsed === true && (
+          /* disabling the a11y rules here as the button handles keyboard interactions */
+          /* this is just to provide a better experience for mouse users */
+          /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
           <div className="dashboard-row__toggle-target" onClick={this.onToggle}>
             &nbsp;
           </div>

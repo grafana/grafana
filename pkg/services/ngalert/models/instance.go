@@ -7,15 +7,19 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	RuleOrgID         int64  `xorm:"rule_org_id"`
-	RuleUID           string `xorm:"rule_uid"`
+	AlertInstanceKey  `xorm:"extends"`
 	Labels            InstanceLabels
-	LabelsHash        string
 	CurrentState      InstanceStateType
 	CurrentReason     string
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
+}
+
+type AlertInstanceKey struct {
+	RuleOrgID  int64  `xorm:"rule_org_id"`
+	RuleUID    string `xorm:"rule_uid"`
+	LabelsHash string
 }
 
 // InstanceStateType is an enum for instance states.
@@ -30,7 +34,7 @@ const (
 	InstanceStatePending InstanceStateType = "Pending"
 	// InstanceStateNoData is for an alert with no data.
 	InstanceStateNoData InstanceStateType = "NoData"
-	// InstanceStateError is for a erroring alert.
+	// InstanceStateError is for an erroring alert.
 	InstanceStateError InstanceStateType = "Error"
 )
 
@@ -44,45 +48,15 @@ func (i InstanceStateType) IsValid() bool {
 		i == InstanceStateError
 }
 
-// SaveAlertInstanceCommand is the query for saving a new alert instance.
-type SaveAlertInstanceCommand struct {
-	RuleOrgID         int64
-	RuleUID           string
-	Labels            InstanceLabels
-	State             InstanceStateType
-	StateReason       string
-	LastEvalTime      time.Time
-	CurrentStateSince time.Time
-	CurrentStateEnd   time.Time
-}
-
-// GetAlertInstanceQuery is the query for retrieving/deleting an alert definition by ID.
-// nolint:unused
-type GetAlertInstanceQuery struct {
-	RuleOrgID int64
-	RuleUID   string
-	Labels    InstanceLabels
-
-	Result *AlertInstance
-}
-
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	RuleOrgID   int64 `json:"-"`
-	RuleUID     string
-	State       InstanceStateType
-	StateReason string
-
-	Result []*AlertInstance
+	RuleUID   string
+	RuleOrgID int64 `json:"-"`
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,
 // and state.
-func ValidateAlertInstance(alertInstance *AlertInstance) error {
-	if alertInstance == nil {
-		return fmt.Errorf("alert instance is invalid because it is nil")
-	}
-
+func ValidateAlertInstance(alertInstance AlertInstance) error {
 	if alertInstance.RuleOrgID == 0 {
 		return fmt.Errorf("alert instance is invalid due to missing alert rule organisation")
 	}

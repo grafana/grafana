@@ -1,7 +1,7 @@
 package services
 
 import (
-	"io/ioutil"
+	"io/fs"
 	"os"
 )
 
@@ -16,8 +16,8 @@ func (i IoUtilImp) RemoveAll(path string) error {
 	return os.RemoveAll(path)
 }
 
-func (i IoUtilImp) ReadDir(path string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(path)
+func (i IoUtilImp) ReadDir(path string) ([]fs.DirEntry, error) {
+	return os.ReadDir(path)
 }
 
 func (i IoUtilImp) ReadFile(filename string) ([]byte, error) {
@@ -25,5 +25,5 @@ func (i IoUtilImp) ReadFile(filename string) ([]byte, error) {
 	// from command line flag "pluginsDir". If the user shouldn't be reading from this directory, they shouldn't have
 	// the permission in the file system.
 	// nolint:gosec
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }

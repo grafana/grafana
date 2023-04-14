@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/dashboard_versions/
-  - /docs/grafana/latest/http_api/dashboard_versions/
-  - /docs/grafana/latest/http_api/dashboardversions/
+  - ../../http_api/dashboard_versions/
+  - ../../http_api/dashboardversions/
+canonical: /docs/grafana/latest/developers/http_api/dashboard_versions/
 description: Grafana Dashboard Versions HTTP API
 keywords:
   - grafana
@@ -177,7 +177,6 @@ Content-Length: 1300
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "hideControls": false,
     "id": 1,
     "links": [
 
@@ -290,7 +289,6 @@ Content-Length: 1300
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "hideControls": false,
     "id": 1,
     "links": [
 

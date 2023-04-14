@@ -5,24 +5,20 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
-
-type Store interface {
-	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-}
 
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, pluginStore plugins.Store, pluginSettings pluginsettings.Service) error {
+func Provision(ctx context.Context, configDirectory string, pluginStore plugins.Store, pluginSettings pluginsettings.Service, orgService org.Service) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
 		log:            logger,
 		cfgProvider:    newConfigReader(logger, pluginStore),
-		store:          store,
 		pluginSettings: pluginSettings,
+		orgService:     orgService,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -32,18 +28,19 @@ func Provision(ctx context.Context, configDirectory string, store Store, pluginS
 type PluginProvisioner struct {
 	log            log.Logger
 	cfgProvider    configReader
-	store          Store
 	pluginSettings pluginsettings.Service
+	orgService     org.Service
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
 	for _, app := range cfg.Apps {
 		if app.OrgID == 0 && app.OrgName != "" {
-			getOrgQuery := &models.GetOrgByNameQuery{Name: app.OrgName}
-			if err := ap.store.GetOrgByNameHandler(ctx, getOrgQuery); err != nil {
+			getOrgQuery := &org.GetOrgByNameQuery{Name: app.OrgName}
+			res, err := ap.orgService.GetByName(ctx, getOrgQuery)
+			if err != nil {
 				return err
 			}
-			app.OrgID = getOrgQuery.Result.Id
+			app.OrgID = res.ID
 		} else if app.OrgID < 0 {
 			app.OrgID = 1
 		}
@@ -53,7 +50,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			PluginID: app.PluginID,
 		})
 		if err != nil {
-			if !errors.Is(err, models.ErrPluginSettingNotFound) {
+			if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 				return err
 			}
 		} else {

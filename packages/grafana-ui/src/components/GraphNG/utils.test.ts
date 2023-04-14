@@ -204,7 +204,7 @@ function mockDataFrame() {
 }
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   DefaultTimeZone: 'utc',
 }));
 
@@ -214,7 +214,7 @@ describe('GraphNG utils', () => {
     const result = preparePlotConfigBuilder({
       frame: frame!,
       theme: createTheme(),
-      timeZone: DefaultTimeZone,
+      timeZones: [DefaultTimeZone],
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
       sync: () => DashboardCursorSync.Tooltip,
@@ -322,19 +322,20 @@ describe('GraphNG utils', () => {
     });
 
     expect(aligndFrame).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "time",
-            "state": Object {
-              "origin": Object {
+            "state": {
+              "nullThresholdApplied": true,
+              "origin": {
                 "fieldIndex": 0,
                 "frameIndex": 0,
               },
             },
             "type": "time",
-            "values": Array [
+            "values": [
               1,
               1.1,
               2,
@@ -349,25 +350,25 @@ describe('GraphNG utils', () => {
               102,
             ],
           },
-          Object {
-            "config": Object {
-              "custom": Object {
+          {
+            "config": {
+              "custom": {
                 "drawStyle": "bars",
                 "spanNulls": -1,
               },
             },
-            "labels": Object {
+            "labels": {
               "name": "A",
             },
             "name": "value",
-            "state": Object {
-              "origin": Object {
+            "state": {
+              "origin": {
                 "fieldIndex": 1,
                 "frameIndex": 0,
               },
             },
             "type": "number",
-            "values": Array [
+            "values": [
               1,
               undefined,
               1,
@@ -382,25 +383,25 @@ describe('GraphNG utils', () => {
               null,
             ],
           },
-          Object {
-            "config": Object {
-              "custom": Object {
+          {
+            "config": {
+              "custom": {
                 "drawStyle": "bars",
                 "spanNulls": -1,
               },
             },
-            "labels": Object {
+            "labels": {
               "name": "B",
             },
             "name": "value",
-            "state": Object {
-              "origin": Object {
+            "state": {
+              "origin": {
                 "fieldIndex": 1,
                 "frameIndex": 1,
               },
             },
             "type": "number",
-            "values": Array [
+            "values": [
               undefined,
               undefined,
               undefined,
@@ -415,24 +416,24 @@ describe('GraphNG utils', () => {
               null,
             ],
           },
-          Object {
-            "config": Object {
-              "custom": Object {
+          {
+            "config": {
+              "custom": {
                 "drawStyle": "line",
               },
             },
-            "labels": Object {
+            "labels": {
               "name": "B",
             },
             "name": "value",
-            "state": Object {
-              "origin": Object {
+            "state": {
+              "origin": {
                 "fieldIndex": 2,
                 "frameIndex": 1,
               },
             },
             "type": "number",
-            "values": Array [
+            "values": [
               undefined,
               undefined,
               undefined,
@@ -447,24 +448,24 @@ describe('GraphNG utils', () => {
               undefined,
             ],
           },
-          Object {
-            "config": Object {
-              "custom": Object {
+          {
+            "config": {
+              "custom": {
                 "drawStyle": "line",
               },
             },
-            "labels": Object {
+            "labels": {
               "name": "C",
             },
             "name": "value",
-            "state": Object {
-              "origin": Object {
+            "state": {
+              "origin": {
                 "fieldIndex": 1,
                 "frameIndex": 2,
               },
             },
             "type": "number",
-            "values": Array [
+            "values": [
               4,
               4,
               undefined,
@@ -479,27 +480,27 @@ describe('GraphNG utils', () => {
               undefined,
             ],
           },
-          Object {
-            "config": Object {
-              "custom": Object {
+          {
+            "config": {
+              "custom": {
                 "drawStyle": "bars",
-                "hideFrom": Object {
+                "hideFrom": {
                   "viz": true,
                 },
               },
             },
-            "labels": Object {
+            "labels": {
               "name": "C",
             },
             "name": "value",
-            "state": Object {
-              "origin": Object {
+            "state": {
+              "origin": {
                 "fieldIndex": 2,
                 "frameIndex": 2,
               },
             },
             "type": "number",
-            "values": Array [
+            "values": [
               4,
               4,
               undefined,

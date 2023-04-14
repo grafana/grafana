@@ -12,17 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
+func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
 	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
@@ -41,7 +42,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 
 type DataSourceProxyService struct {
 	DataSourceCache        datasources.CacheService
-	PluginRequestValidator models.PluginRequestValidator
+	PluginRequestValidator validations.PluginRequestValidator
 	pluginStore            plugins.Store
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
@@ -51,7 +52,7 @@ type DataSourceProxyService struct {
 	secretsService         secrets.Service
 }
 
-func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
+func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
@@ -60,7 +61,7 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, id)
 }
 
-func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext, dsUID string) {
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
 	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
@@ -72,7 +73,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqCont
 		return
 	}
 
-	ds, err := p.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		toAPIError(c, err)
 		return
@@ -80,30 +81,31 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqCont
 	p.proxyDatasourceRequest(c, ds)
 }
 
-func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		toAPIError(c, err)
+		return
 	}
 	p.proxyDatasourceRequest(c, ds)
 }
 
-func toAPIError(c *models.ReqContext, err error) {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+func toAPIError(c *contextmodel.ReqContext, err error) {
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
 		return
 	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource", err)
 		return
 	}
 	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 }
 
-func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *models.DataSource) {
-	err := p.PluginRequestValidator.Validate(ds.Url, c.Req)
+func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
+	err := p.PluginRequestValidator.Validate(ds.URL, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -121,7 +123,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
-			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
+			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source proxy", err)
 		}
@@ -130,12 +132,12 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 	proxy.HandleRequest()
 }
 
-var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w]+)\/?`)
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w-]+)\/?`)
 
 func extractProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
 }
 
-func getProxyPath(c *models.ReqContext) string {
+func getProxyPath(c *contextmodel.ReqContext) string {
 	return extractProxyPath(c.Req.URL.EscapedPath())
 }

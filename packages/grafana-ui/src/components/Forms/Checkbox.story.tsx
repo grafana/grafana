@@ -1,3 +1,4 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { VerticalGroup } from '../Layout/Layout';
@@ -6,41 +7,36 @@ import { Checkbox } from './Checkbox';
 import mdx from './Checkbox.mdx';
 import { Field } from './Field';
 
-export default {
+const meta: ComponentMeta<typeof Checkbox> = {
   title: 'Forms/Checkbox',
   component: Checkbox,
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['value', 'htmlValue'],
+    },
   },
 };
 
-export const Controlled = () => {
+export const Basic: ComponentStory<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
-  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
   return (
     <div>
-      <Checkbox
-        value={checked}
-        onChange={onChange}
-        label="Skip TLS cert validation"
-        description="Set to true if you want to skip TLS cert validation"
-      />
+      <Checkbox value={checked} onChange={onChange} {...args} />
     </div>
   );
 };
 
-export const uncontrolled = () => {
-  return (
-    <div>
-      <Checkbox
-        defaultChecked={true}
-        label="Skip TLS cert validation"
-        description="Set to true if you want to skip TLS cert validation"
-      />
-    </div>
-  );
+Basic.args = {
+  label: 'Skip TLS cert validation',
+  description: 'Set to true if you want to skip TLS cert validation',
+  disabled: false,
 };
 
 export const StackedList = () => {
@@ -67,15 +63,21 @@ export const StackedList = () => {
   );
 };
 
-export const InAField = () => {
+export const InAField: ComponentStory<typeof Checkbox> = (args) => {
   return (
     <div>
-      <Field
-        label="Hidden"
-        description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
-      >
+      <Field {...args}>
         <Checkbox name="hide" id="hide" defaultChecked={true} />
       </Field>
     </div>
   );
 };
+
+InAField.args = {
+  label: 'Hidden',
+  description:
+    'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
+  disabled: false,
+};
+
+export default meta;

@@ -4,23 +4,17 @@ import React, { useCallback, useRef } from 'react';
 import { CodeEditor, Monaco } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
-import language from '../metric-math/definition';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
-import { registerLanguage } from '../monarch/register';
+import language from '../language/metric-math/definition';
+import { TRIGGER_SUGGEST } from '../language/monarch/commands';
+import { registerLanguage } from '../language/monarch/register';
 
 export interface Props {
   onChange: (query: string) => void;
-  onRunQuery: () => void;
   expression: string;
   datasource: CloudWatchDatasource;
 }
 
-export function MathExpressionQueryField({
-  expression: query,
-  onChange,
-  onRunQuery,
-  datasource,
-}: React.PropsWithChildren<Props>) {
+export function MathExpressionQueryField({ expression: query, onChange, datasource }: React.PropsWithChildren<Props>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onEditorMount = useCallback(
     (editor: monacoType.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -28,7 +22,6 @@ export function MathExpressionQueryField({
       editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
         const text = editor.getValue();
         onChange(text);
-        onRunQuery();
       });
 
       // auto resizes the editor to be the height of the content it holds
@@ -48,7 +41,7 @@ export function MathExpressionQueryField({
       editor.onDidContentSizeChange(updateElementHeight);
       updateElementHeight();
     },
-    [onChange, onRunQuery]
+    [onChange]
   );
 
   return (
@@ -77,7 +70,6 @@ export function MathExpressionQueryField({
         onBlur={(value) => {
           if (value !== query) {
             onChange(value);
-            onRunQuery();
           }
         }}
         onBeforeEditorMount={(monaco: Monaco) =>

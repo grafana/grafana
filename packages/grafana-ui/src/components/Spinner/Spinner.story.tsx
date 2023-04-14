@@ -8,7 +8,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Props } from './Spinner';
 import mdx from './Spinner.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Visualizations/Spinner',
   component: Spinner,
   decorators: [withCenteredStory],
@@ -24,7 +24,7 @@ export default {
     backgroundColor: { control: { type: 'color' } },
     color: { control: { type: 'color' } },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<Props> {
   backgroundColor: string;
@@ -55,3 +55,5 @@ Basic.args = {
   size: 34,
   withStyle: false,
 };
+
+export default meta;

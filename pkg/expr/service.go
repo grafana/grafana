@@ -2,12 +2,14 @@ package expr
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,13 +41,15 @@ type Service struct {
 	cfg               *setting.Cfg
 	dataService       backend.QueryDataHandler
 	dataSourceService datasources.DataSourceService
+	features          featuremgmt.FeatureToggles
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
 		cfg:               cfg,
 		dataService:       pluginClient,
 		dataSourceService: dataSourceService,
+		features:          features,
 	}
 }
 
@@ -62,9 +66,9 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
-func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
+func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
 	res := backend.NewQueryDataResponse()
-	vars, err := pipeline.execute(ctx, s)
+	vars, err := pipeline.execute(ctx, now, s)
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +80,10 @@ func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*
 	return res, nil
 }
 
-func DataSourceModel() *models.DataSource {
-	return &models.DataSource{
-		Id:             DatasourceID,
-		Uid:            DatasourceUID,
+func DataSourceModel() *datasources.DataSource {
+	return &datasources.DataSource{
+		ID:             DatasourceID,
+		UID:            DatasourceUID,
 		Name:           DatasourceUID,
 		Type:           DatasourceType,
 		JsonData:       simplejson.New(),

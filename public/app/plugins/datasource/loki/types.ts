@@ -1,12 +1,14 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
-import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
+import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
+
+export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
 
 export interface LokiInstantQueryRequest {
   query: string;
   limit?: number;
   time?: string;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiQueryDirection;
 }
 
 export interface LokiRangeQueryRequest {
@@ -15,7 +17,7 @@ export interface LokiRangeQueryRequest {
   start?: number;
   end?: number;
   step?: number;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiQueryDirection;
 }
 
 export enum LokiResultType {
@@ -24,31 +26,21 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
-export enum LokiQueryType {
-  Range = 'range',
-  Instant = 'instant',
-  Stream = 'stream',
-}
-
-export enum LokiQueryDirection {
-  Backward = 'backward',
-  Forward = 'forward',
-}
-
-export interface LokiQuery extends DataQuery {
-  queryType?: LokiQueryType;
-  expr: string;
+export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
-  legendFormat?: string;
-  maxLines?: number;
-  resolution?: number;
-  /** Used in range queries */
-  volumeQuery?: boolean;
-  /* @deprecated now use queryType */
-  range?: boolean;
-  /* @deprecated now use queryType */
-  instant?: boolean;
-  editorMode?: QueryEditorMode;
+  /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
+  supportingQueryType?: SupportingQueryType;
+  // CUE autogenerates `queryType` as `?string`, as that's how it is defined
+  // in the parent-interface (in DataQuery).
+  // the temporary fix (until this gets improved in the codegen), is to
+  // override it here
+  queryType?: LokiQueryType;
+
+  /**
+   * This is a property for the experimental query splitting feature.
+   * @experimental
+   */
+  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -141,4 +133,30 @@ export interface TransformerOptions {
   refId: string;
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;
+}
+
+export enum LokiVariableQueryType {
+  LabelNames,
+  LabelValues,
+}
+
+export interface LokiVariableQuery extends DataQuery {
+  type: LokiVariableQueryType;
+  label?: string;
+  stream?: string;
+}
+
+export interface QueryStats {
+  streams: number;
+  chunks: number;
+  bytes: number;
+  entries: number;
+}
+
+export interface ContextFilter {
+  enabled: boolean;
+  label: string;
+  value: string;
+  fromParser: boolean;
+  description?: string;
 }

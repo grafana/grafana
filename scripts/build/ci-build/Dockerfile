@@ -1,5 +1,5 @@
-# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20210208 AS toolchain
+# Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
+FROM debian:buster-20220822 AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
@@ -81,19 +81,17 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.37.1
-ARG GOLANGCILINT_CHKSUM=1929425d7733d136b342395c77f171d459aa89b198933465ec4c854aa34c41a2
-
-RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
-RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
-RUN tar xf golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
-RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
-
 ARG SHELLCHECK_VERSION=0.7.1
 ARG SHELLCHECK_CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
 RUN curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
 RUN echo $SHELLCHECK_CHKSUM shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
 RUN tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz && mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /tmp/
+
+ARG BUILDIFIER_VERSION=5.1.0
+ARG BUILDIFIER_CHKSUM=52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3
+RUN curl -fLO https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-linux-amd64
+RUN echo $BUILDIFIER_CHKSUM buildifier-linux-amd64 | sha256sum --check --strict --status
+RUN mv buildifier-linux-amd64 /tmp/buildifier && chmod +x /tmp/buildifier
 
 ARG CUE_VERSION=0.3.0-alpha5
 ARG CUE_CHKSUM=9d3131e470cdb5182afd9966688f1c052d383145cce005a947156b5591da39b7
@@ -107,34 +105,35 @@ RUN tar -xzvf dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz -C /tmp/
 RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 
 # Base image to crossbuild grafana.
-# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20210208
+# Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
+FROM debian:buster-20220822
 
-ENV GOVERSION=1.17.11 \
+ENV GOVERSION=1.20.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=16.14.0-1nodesource1 \
-    YARNVERSION=1.22.15-1
+    NODEVERSION=18.12.0-1nodesource1 \
+    YARNVERSION=1.22.19-1
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
-COPY --from=toolchain /tmp/golangci-lint /usr/local/bin/
 COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
+COPY --from=toolchain /tmp/buildifier /usr/local/bin/
 COPY --from=toolchain /tmp/cue /usr/local/bin/
 COPY --from=toolchain /tmp/dockerize /usr/local/bin/
 
 RUN apt-get update && \
-    apt-get install -yq  \
-        build-essential netcat-traditional clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
+    apt-get install -yq \
         apt-transport-https \
+        build-essential netcat-traditional clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         python-pip      \
         ca-certificates \
         curl            \
         gcc             \
         g++             \
         git             \
+	      jq		          \
         make            \
         rpm             \
         xz-utils        \
@@ -144,11 +143,12 @@ RUN apt-get update && \
         ruby            \
         ruby-dev        \
         rubygems        \
-        unzip &&        \
-    gem install -N fpm && \
+        unzip && \
+    gem install -N public_suffix -v 4.0.7 && \
+    gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
     curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
-    curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
+    curl -O https://deb.nodesource.com/node_18.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
     dpkg -i nodejs_${NODEVERSION}_amd64.deb &&\
     rm nodejs_${NODEVERSION}_amd64.deb &&\
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
@@ -183,11 +183,11 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
-RUN go get -u github.com/mgechev/revive@v1.0.2 && \
+RUN go install github.com/mgechev/revive@v1.0.2 && \
   mv ${GOPATH}/bin/revive /usr/local/bin/ && \
-  go get github.com/google/go-jsonnet/cmd/jsonnetfmt && \
+  go install github.com/google/go-jsonnet/cmd/jsonnetfmt@latest && \
   mv ${GOPATH}/bin/jsonnetfmt /usr/local/bin/ && \
-  go get github.com/monitoring-mixins/mixtool/cmd/mixtool && \
+  go install github.com/monitoring-mixins/mixtool/cmd/mixtool@latest && \
   mv ${GOPATH}/bin/mixtool /usr/local/bin/
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh

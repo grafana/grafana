@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -26,51 +27,82 @@ var routeOperationNameKey = contextKey{}
 // Implements routing.RegisterNamedMiddleware.
 func ProvideRouteOperationName(name string) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		ctx := context.WithValue(c.Req.Context(), routeOperationNameKey, name)
-		c.Req = c.Req.WithContext(ctx)
+		c.Req = addRouteNameToContext(c.Req, name)
 	}
 }
 
-// RouteOperationNameFromContext receives the route operation name from context, if set.
-func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
-	if val := ctx.Value(routeOperationNameKey); val != nil {
+func addRouteNameToContext(req *http.Request, operationName string) *http.Request {
+	// don't set route name if it's set
+	if _, exists := RouteOperationName(req); exists {
+		return req
+	}
+
+	ctx := context.WithValue(req.Context(), routeOperationNameKey, operationName)
+	return req.WithContext(ctx)
+}
+
+var unnamedHandlers = []struct {
+	pathPattern *regexp.Regexp
+	handler     string
+}{
+	{handler: "public-assets", pathPattern: regexp.MustCompile("^/favicon.ico")},
+	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
+	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
+	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
+	{handler: "/api/health", pathPattern: regexp.MustCompile("^/api/health")},
+	{handler: "/robots.txt", pathPattern: regexp.MustCompile("^/robots.txt$")},
+	// bundle all pprof endpoints under the same handler name
+	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},
+}
+
+// RouteOperationName receives the route operation name from context, if set.
+func RouteOperationName(req *http.Request) (string, bool) {
+	if val := req.Context().Value(routeOperationNameKey); val != nil {
 		op, ok := val.(string)
 		return op, ok
+	}
+
+	for _, hp := range unnamedHandlers {
+		if hp.pathPattern.Match([]byte(req.URL.Path)) {
+			return hp.handler, true
+		}
 	}
 
 	return "", false
 }
 
-func RequestTracing(tracer tracing.Tracer) web.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		if strings.HasPrefix(c.Req.URL.Path, "/public/") ||
-			c.Req.URL.Path == "robots.txt" {
-			c.Next()
-			return
-		}
+func RequestTracing(tracer tracing.Tracer) web.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if strings.HasPrefix(req.URL.Path, "/public/") || req.URL.Path == "/robots.txt" || req.URL.Path == "/favicon.ico" {
+				next.ServeHTTP(w, req)
+				return
+			}
 
-		rw := res.(web.ResponseWriter)
+			rw := web.Rw(w, req)
 
-		wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+			wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
+			ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
-		c.Req = req.WithContext(ctx)
-		c.Next()
+			req = req.WithContext(ctx)
+			next.ServeHTTP(w, req)
 
-		// Only call span.Finish when a route operation name have been set,
-		// meaning that not set the span would not be reported.
-		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
-			defer span.End()
-			span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
-		}
+			// Only call span.Finish when a route operation name have been set,
+			// meaning that not set the span would not be reported.
+			// TODO: do not depend on web.Context from the future
+			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
+				defer span.End()
+				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
+			}
 
-		status := rw.Status()
+			status := rw.Status()
 
-		span.SetAttributes("http.status_code", status, attribute.Int("http.status_code", status))
-		span.SetAttributes("http.url", req.RequestURI, attribute.String("http.url", req.RequestURI))
-		span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
-		if status >= 400 {
-			span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
-		}
+			span.SetAttributes("http.status_code", status, attribute.Int("http.status_code", status))
+			span.SetAttributes("http.url", req.RequestURI, attribute.String("http.url", req.RequestURI))
+			span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
+			if status >= 400 {
+				span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
+			}
+		})
 	}
 }

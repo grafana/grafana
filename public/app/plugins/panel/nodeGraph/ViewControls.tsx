@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { Button, HorizontalGroup, useStyles, VerticalGroup } from '@grafana/ui';
+import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
 function getStyles() {
   return {
@@ -31,7 +31,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
   // For debugging the layout, should be removed here and maybe moved to panel config later on
   const allowConfiguration = false;
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>

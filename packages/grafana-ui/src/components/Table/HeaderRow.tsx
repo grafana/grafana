@@ -1,29 +1,26 @@
 import React from 'react';
 import { HeaderGroup, Column } from 'react-table';
 
-import { DataFrame, Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
 import { getFieldTypeIcon } from '../../types';
 import { Icon } from '../Icon/Icon';
 
 import { Filter } from './Filter';
-import { getTableStyles, TableStyles } from './styles';
+import { TableStyles } from './styles';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
-  data: DataFrame;
   showTypeIcons?: boolean;
+  tableStyles: TableStyles;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, data, showTypeIcons } = props;
+  const { headerGroups, showTypeIcons, tableStyles } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
-  const tableStyles = useStyles2(getTableStyles);
 
   return (
-    <div role="rowgroup">
+    <div role="rowgroup" className={tableStyles.headerRow}>
       {headerGroups.map((headerGroup: HeaderGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
         return (
@@ -35,7 +32,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
             role="row"
           >
             {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, data.fields[index], showTypeIcons)
+              renderHeaderCell(column, tableStyles, showTypeIcons)
             )}
           </div>
         );
@@ -44,15 +41,16 @@ export const HeaderRow = (props: HeaderRowProps) => {
   );
 };
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, showTypeIcons?: boolean) {
+function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?: boolean) {
   const headerProps = column.getHeaderProps();
+  const field = column.field ?? null;
 
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
   }
 
   headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = (column as any).justifyContent;
+  headerProps.style.justifyContent = column.justifyContent;
 
   return (
     <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
@@ -63,9 +61,12 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, 
               <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
             )}
             <div>{column.render('Header')}</div>
-            <div>
-              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
-            </div>
+            {column.isSorted &&
+              (column.isSortedDesc ? (
+                <Icon size="lg" name="arrow-down" className={tableStyles.sortIcon} />
+              ) : (
+                <Icon name="arrow-up" size="lg" className={tableStyles.sortIcon} />
+              ))}
           </button>
           {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
         </>

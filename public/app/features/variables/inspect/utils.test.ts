@@ -1,17 +1,12 @@
-import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { variableAdapters } from '../adapters';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createQueryVariableAdapter } from '../query/adapter';
+import { createGraph } from '../state/actions';
 
-import {
-  flattenPanels,
-  getAffectedPanelIdsForVariable,
-  getAllAffectedPanelIdsForVariableChange,
-  getDependenciesForVariable,
-  getPropsWithVariable,
-} from './utils';
+import { flattenPanels, getAllAffectedPanelIdsForVariableChange, getPanelVars, getPropsWithVariable } from './utils';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
@@ -217,45 +212,11 @@ describe('getPropsWithVariable', () => {
   });
 });
 
-describe('getAffectedPanelIdsForVariable', () => {
-  describe('when called with a real world example with rows and repeats', () => {
-    it('then it should return correct panel ids', () => {
-      const panels = dashWithRepeatsAndRows.panels.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
-      const result = getAffectedPanelIdsForVariable('query0', panels);
-      expect(result).toEqual([15, 16, 17, 11, 12, 13, 2, 5, 7, 6]);
-    });
-  });
-});
-
 variableAdapters.setInit(() => [
   createDataSourceVariableAdapter(),
   createCustomVariableAdapter(),
   createQueryVariableAdapter(),
 ]);
-
-describe('getDependenciesForVariable', () => {
-  describe('when called with a real world example with dependencies', () => {
-    it('then it should return correct dependencies', () => {
-      const {
-        templating: { list: variables },
-      } = dashWithTemplateDependenciesAndPanels;
-      const result = getDependenciesForVariable('ds_instance', variables, new Set());
-      expect([...result]).toEqual([
-        'ds',
-        'query_with_ds',
-        'depends_on_query_with_ds',
-        'depends_on_query_with_ds_regex',
-        'depends_on_all',
-      ]);
-    });
-  });
-});
 
 describe('getAllAffectedPanelIdsForVariableChange ', () => {
   describe('when called with a real world example with dependencies and panels', () => {
@@ -264,15 +225,11 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         panels: panelsAsJson,
         templating: { list: variables },
       } = dashWithTemplateDependenciesAndPanels;
-      const panels = panelsAsJson.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
-      const result = getAllAffectedPanelIdsForVariableChange('ds_instance', variables, panels);
-      expect(result).toEqual([2, 3, 4, 5]);
+      const panelVarPairs = getPanelVars(panelsAsJson);
+      const varGraph = createGraph(variables);
+
+      const result = [...getAllAffectedPanelIdsForVariableChange(['ds_instance'], varGraph, panelVarPairs)];
+      expect(result).toEqual([5, 2, 4, 3]);
     });
   });
 
@@ -282,14 +239,9 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         panels: panelsAsJson,
         templating: { list: variables },
       } = dashWithTemplateDependenciesAndPanels;
-      const panels = panelsAsJson.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
-      const result = getAllAffectedPanelIdsForVariableChange('depends_on_all', variables, panels);
+      const panelVarPairs = getPanelVars(panelsAsJson);
+      const varGraph = createGraph(variables);
+      const result = [...getAllAffectedPanelIdsForVariableChange(['depends_on_all'], varGraph, panelVarPairs)];
       expect(result).toEqual([2]);
     });
   });
@@ -300,14 +252,9 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         panels: panelsAsJson,
         templating: { list: variables },
       } = dashWithAllVariables;
-      const panels = panelsAsJson.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
-      const result = getAllAffectedPanelIdsForVariableChange('unknown', variables, panels);
+      const panelVarPairs = getPanelVars(panelsAsJson);
+      const varGraph = createGraph(variables);
+      const result = [...getAllAffectedPanelIdsForVariableChange(['unknown'], varGraph, panelVarPairs)];
       expect(result).toEqual([2, 3]);
     });
   });
@@ -356,7 +303,7 @@ describe('flattenPanels', () => {
   });
 });
 
-const dashWithRepeatsAndRows: any = {
+const dashWithRepeatsAndRows = {
   annotations: {
     list: [
       {
@@ -1216,9 +1163,9 @@ const dashWithRepeatsAndRows: any = {
   title: 'Variables update POC',
   uid: 'tISItwInz',
   version: 2,
-};
+} as unknown as DashboardModel;
 
-const dashWithTemplateDependenciesAndPanels: any = {
+const dashWithTemplateDependenciesAndPanels = {
   annotations: {
     list: [
       {
@@ -1543,8 +1490,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
       {
         current: {
           selected: false,
-          text: 'TestData DB',
-          value: 'TestData DB',
+          text: 'TestData',
+          value: 'TestData',
         },
         description: null,
         error: null,
@@ -1677,8 +1624,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
         allValue: null,
         current: {
           selected: true,
-          text: 'TestData DB',
-          value: 'TestData DB',
+          text: 'TestData',
+          value: 'TestData',
         },
         description: null,
         error: null,
@@ -1690,8 +1637,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
         options: [
           {
             selected: true,
-            text: 'TestData DB',
-            value: 'TestData DB',
+            text: 'TestData',
+            value: 'TestData',
           },
           {
             selected: false,
@@ -1699,7 +1646,7 @@ const dashWithTemplateDependenciesAndPanels: any = {
             value: 'gdev-testdata',
           },
         ],
-        query: 'TestData DB, gdev-testdata',
+        query: 'TestData, gdev-testdata',
         queryValue: '',
         skipUrlSync: false,
         type: 'custom',
@@ -1715,9 +1662,9 @@ const dashWithTemplateDependenciesAndPanels: any = {
   title: 'Variables dependencies update POC',
   uid: 'n60iRMNnk',
   version: 6,
-};
+} as unknown as DashboardModel;
 
-const dashWithAllVariables: any = {
+const dashWithAllVariables = {
   annotations: {
     list: [
       {
@@ -2020,4 +1967,4 @@ const dashWithAllVariables: any = {
   uid: 'XkBHMzF7z',
   version: 6,
   weekStart: '',
-};
+} as unknown as DashboardModel;

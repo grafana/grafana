@@ -32,3 +32,13 @@ export const generateOptions = (desc = false) => {
     description: desc ? `This is a description of ${name}` : undefined,
   }));
 };
+
+export const generateThousandsOfOptions = () => {
+  const options: Array<SelectableValue<string>> = new Array(10000).fill(null).map((_, index) => ({
+    value: String(index),
+    label: 'Option ' + index,
+    description: 'This is option number ' + index,
+  }));
+
+  return options;
+};

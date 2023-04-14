@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React, { MouseEvent, useCallback, useState } from 'react';
 
-import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
-import { ContextMenu, MenuGroup, MenuItem, stylesFactory, useTheme } from '@grafana/ui';
+import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { Config } from './layout';
 import { EdgeDatum, NodeDatum } from './types';
-import { getEdgeFields, getNodeFields } from './utils';
+import { getEdgeFields, getNodeFields, statToString } from './utils';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
@@ -14,8 +14,10 @@ import { getEdgeFields, getNodeFields } from './utils';
  */
 export function useContextMenu(
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
-  nodes: DataFrame,
-  edges: DataFrame,
+  // This can be undefined if we only use edge dataframe
+  nodes: DataFrame | undefined,
+  // This can be undefined if we have only single node
+  edges: DataFrame | undefined,
   config: Config,
   setConfig: (config: Config) => void,
   setFocusedNodeId: (id: string) => void
@@ -27,55 +29,61 @@ export function useContextMenu(
   const [menu, setMenu] = useState<JSX.Element | undefined>(undefined);
 
   const onNodeOpen = useCallback(
-    (event, node) => {
-      const extraNodeItem = config.gridLayout
-        ? [
-            {
-              label: 'Show in Graph layout',
-              onClick: (node: NodeDatum) => {
-                setFocusedNodeId(node.id);
-                setConfig({ ...config, gridLayout: false });
-              },
-            },
-          ]
-        : undefined;
-      const renderer = getItemsRenderer(getLinks(nodes, node.dataFrameRowIndex), node, extraNodeItem);
+    (event: MouseEvent<SVGElement>, node: NodeDatum) => {
+      const [label, showGridLayout] = config.gridLayout
+        ? ['Show in Graph layout', false]
+        : ['Show in Grid layout', true];
 
-      if (renderer) {
-        setMenu(
-          <ContextMenu
-            renderHeader={() => <NodeHeader node={node} nodes={nodes} />}
-            renderMenuItems={renderer}
-            onClose={() => setMenu(undefined)}
-            x={event.pageX}
-            y={event.pageY}
-          />
-        );
-      }
+      const extraNodeItem = [
+        {
+          label: label,
+          onClick: (node: NodeDatum) => {
+            setFocusedNodeId(node.id);
+            setConfig({ ...config, gridLayout: showGridLayout });
+            setMenu(undefined);
+          },
+        },
+      ];
+
+      const links = nodes ? getLinks(nodes, node.dataFrameRowIndex) : [];
+      const renderer = getItemsRenderer(links, node, extraNodeItem);
+      setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, event, setMenu, renderer));
     },
     [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId]
   );
 
   const onEdgeOpen = useCallback(
-    (event, edge) => {
-      const renderer = getItemsRenderer(getLinks(edges, edge.dataFrameRowIndex), edge);
-
-      if (renderer) {
-        setMenu(
-          <ContextMenu
-            renderHeader={() => <EdgeHeader edge={edge} edges={edges} />}
-            renderMenuItems={renderer}
-            onClose={() => setMenu(undefined)}
-            x={event.pageX}
-            y={event.pageY}
-          />
-        );
+    (event: MouseEvent<SVGElement>, edge: EdgeDatum) => {
+      if (!edges) {
+        // This could happen if we have only one node and no edges, in which case this is not needed as there is no edge
+        // to click on.
+        return;
       }
+      const links = getLinks(edges, edge.dataFrameRowIndex);
+      const renderer = getItemsRenderer(links, edge);
+      setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, event, setMenu, renderer));
     },
     [edges, getLinks, setMenu]
   );
 
   return { onEdgeOpen, onNodeOpen, MenuComponent: menu };
+}
+
+function makeContextMenu(
+  header: JSX.Element,
+  event: MouseEvent<SVGElement>,
+  setMenu: (el: JSX.Element | undefined) => void,
+  renderer?: () => React.ReactNode
+) {
+  return (
+    <ContextMenu
+      renderHeader={() => header}
+      renderMenuItems={renderer}
+      onClose={() => setMenu(undefined)}
+      x={event.pageX}
+      y={event.pageY}
+    />
+  );
 }
 
 function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
@@ -109,7 +117,17 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
         url={link.url}
         label={link.label}
         ariaLabel={link.ariaLabel}
-        onClick={link.onClick ? () => link.onClick?.(item) : undefined}
+        onClick={
+          link.onClick
+            ? (event) => {
+                if (!(event?.ctrlKey || event?.metaKey || event?.shiftKey)) {
+                  event?.preventDefault();
+                  event?.stopPropagation();
+                  link.onClick?.(item);
+                }
+              }
+            : undefined
+        }
         target={'_self'}
       />
     );
@@ -155,62 +173,96 @@ function getItems(links: LinkModel[]) {
   });
 }
 
-function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
-  const index = props.node.dataFrameRowIndex;
-  const fields = getNodeFields(props.nodes);
+function FieldRow({ field, index }: { field: Field; index: number }) {
   return (
-    <div>
-      {fields.title && <Label field={fields.title} index={index} />}
-      {fields.subTitle && <Label field={fields.subTitle} index={index} />}
-      {fields.details.map((f) => (
-        <Label key={f.name} field={f} index={index} />
-      ))}
-    </div>
+    <HeaderRow
+      label={field.config?.displayName || field.name}
+      value={statToString(field.config, field.values.get(index) || '')}
+    />
   );
 }
 
+function HeaderRow({ label, value }: { label: string; value: string }) {
+  const styles = useStyles2(getLabelStyles);
+  return (
+    <tr>
+      <td className={styles.label}>{label}: </td>
+      <td className={styles.value}>{value}</td>
+    </tr>
+  );
+}
+
+/**
+ * Shows some field values in a table on top of the context menu.
+ */
+function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
+  const rows = [];
+  if (nodes) {
+    const fields = getNodeFields(nodes);
+    for (const f of [fields.title, fields.subTitle, fields.mainStat, fields.secondaryStat, ...fields.details]) {
+      if (f && f.values.get(node.dataFrameRowIndex)) {
+        rows.push(<FieldRow field={f} index={node.dataFrameRowIndex} />);
+      }
+    }
+  } else {
+    // Fallback if we don't have nodes dataFrame. Can happen if we use just the edges frame to construct this.
+    if (node.title) {
+      rows.push(<HeaderRow label={'Title'} value={node.title} />);
+    }
+    if (node.subTitle) {
+      rows.push(<HeaderRow label={'Subtitle'} value={node.subTitle} />);
+    }
+  }
+
+  return (
+    <table style={{ width: '100%' }}>
+      <tbody>{rows}</tbody>
+    </table>
+  );
+}
+
+/**
+ * Shows some of the field values in a table on top of the context menu.
+ */
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
+  const valueSource = fields.source?.values.get(index) || '';
+  const valueTarget = fields.target?.values.get(index) || '';
+
+  const rows = [];
+  if (valueSource && valueTarget) {
+    rows.push(<HeaderRow label={'Source → Target'} value={`${valueSource} → ${valueTarget}`} />);
+  }
+
+  for (const f of [fields.mainStat, fields.secondaryStat, ...fields.details]) {
+    if (f && f.values.get(index)) {
+      rows.push(<FieldRow field={f} index={index} />);
+    }
+  }
+
   return (
-    <div>
-      {fields.details.map((f) => (
-        <Label key={f.name} field={f} index={index} />
-      ))}
-    </div>
+    <table style={{ width: '100%' }}>
+      <tbody>{rows}</tbody>
+    </table>
   );
 }
 
-export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     label: css`
       label: Label;
       line-height: 1.25;
-      margin: ${theme.spacing.formLabelMargin};
-      padding: ${theme.spacing.formLabelPadding};
-      color: ${theme.colors.textFaint};
+      color: ${theme.colors.text.disabled};
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding-right: ${theme.spacing(1)};
     `,
     value: css`
       label: Value;
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.formLabel};
-      margin-top: ${theme.spacing.xxs};
-      display: block;
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.text.primary};
     `,
   };
-});
-function Label(props: { field: Field; index: number }) {
-  const { field, index } = props;
-  const value = field.values.get(index) || '';
-  const styles = getLabelStyles(useTheme());
-
-  return (
-    <div className={styles.label}>
-      <div>{field.config.displayName || field.name}</div>
-      <span className={styles.value}>{value}</span>
-    </div>
-  );
-}
+};

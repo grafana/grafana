@@ -2,21 +2,24 @@ package schedule
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-type alertRuleRegistry struct {
+var errRuleDeleted = errors.New("rule deleted")
+
+type alertRuleInfoRegistry struct {
 	mu            sync.Mutex
 	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
 }
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -28,20 +31,7 @@ func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.
 	return info, !ok
 }
 
-// get returns the channel for the specific alert rule
-// if the key does not exist returns an error
-func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	info, ok := r.alertRuleInfo[key]
-	if !ok {
-		return nil, fmt.Errorf("%v key not found", key)
-	}
-	return info, nil
-}
-
-func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
+func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -52,7 +42,7 @@ func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
 // del removes pair that has specific key from alertRuleInfo.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	info, ok := r.alertRuleInfo[key]
@@ -62,7 +52,7 @@ func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) 
 	return info, ok
 }
 
-func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.alertRuleInfo))
@@ -72,35 +62,64 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
+type ruleVersion int64
+type ruleVersionAndPauseStatus struct {
+	Version  ruleVersion
+	IsPaused bool
+}
+
 type alertRuleInfo struct {
 	evalCh   chan *evaluation
-	updateCh chan struct{}
+	updateCh chan ruleVersionAndPauseStatus
 	ctx      context.Context
-	stop     context.CancelFunc
+	stop     func(reason error)
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
-	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
+	ctx, stop := util.WithCancelCause(parent)
+	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersionAndPauseStatus), ctx: ctx, stop: stop}
 }
 
-// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
-func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
+// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
+// Before sending a message into the channel, it does non-blocking read to make sure that there is no concurrent send operation.
+// Returns a tuple where first element is
+//   - true when message was sent
+//   - false when the send operation is stopped
+//
+// the second element contains a dropped message that was sent by a concurrent sender.
+func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
+	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
+	var droppedMsg *evaluation
 	select {
-	case a.evalCh <- &evaluation{
-		scheduledAt: t,
-		version:     version,
-	}:
-		return true
+	case droppedMsg = <-a.evalCh:
+	default:
+	}
+
+	select {
+	case a.evalCh <- eval:
+		return true, droppedMsg
 	case <-a.ctx.Done():
-		return false
+		return false, droppedMsg
 	}
 }
 
-// update signals the rule evaluation routine to update the internal state. Does nothing if the loop is stopped
-func (a *alertRuleInfo) update() bool {
+// update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
+func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
+	// check if the channel is not empty.
+	msg := lastVersion
 	select {
-	case a.updateCh <- struct{}{}:
+	case v := <-a.updateCh:
+		// if it has a version pick the greatest one.
+		if v.Version > msg.Version {
+			msg = v
+		}
+	case <-a.ctx.Done():
+		return false
+	default:
+	}
+
+	select {
+	case a.updateCh <- msg:
 		return true
 	case <-a.ctx.Done():
 		return false
@@ -109,5 +128,108 @@ func (a *alertRuleInfo) update() bool {
 
 type evaluation struct {
 	scheduledAt time.Time
-	version     int64
+	rule        *models.AlertRule
+	folderTitle string
+}
+
+type alertRulesRegistry struct {
+	rules        map[models.AlertRuleKey]*models.AlertRule
+	folderTitles map[string]string
+	mu           sync.Mutex
+}
+
+// all returns all rules in the registry.
+func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[string]string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	result := make([]*models.AlertRule, 0, len(r.rules))
+	for _, rule := range r.rules {
+		result = append(result, rule)
+	}
+	return result, r.folderTitles
+}
+
+func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.rules[k]
+}
+
+// set replaces all rules in the registry. Returns difference between previous and the new current version of the registry
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) diff {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)
+	for _, rule := range rules {
+		rulesMap[rule.GetKey()] = rule
+	}
+	d := r.getDiff(rulesMap)
+	r.rules = rulesMap
+	// return the map as is without copying because it is not mutated
+	r.folderTitles = folders
+	return d
+}
+
+// update inserts or replaces a rule in the registry.
+func (r *alertRulesRegistry) update(rule *models.AlertRule) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.rules[rule.GetKey()] = rule
+}
+
+// del removes pair that has specific key from alertRulesRegistry.
+// Returns 2-tuple where the first element is value of the removed pair
+// and the second element indicates whether element with the specified key existed.
+func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	rule, ok := r.rules[k]
+	if ok {
+		delete(r.rules, k)
+	}
+	return rule, ok
+}
+
+func (r *alertRulesRegistry) isEmpty() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.rules) == 0
+}
+
+func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+	if len(r.rules) != len(keys) {
+		return true
+	}
+	for _, key := range keys {
+		rule, ok := r.rules[key.AlertRuleKey]
+		if !ok || rule.Version != key.Version {
+			return true
+		}
+	}
+	return false
+}
+
+type diff struct {
+	updated map[models.AlertRuleKey]struct{}
+}
+
+func (d diff) IsEmpty() bool {
+	return len(d.updated) == 0
+}
+
+// getDiff calculates difference between the list of rules fetched previously and provided keys. Returns diff where
+// updated - a list of keys that exist in the registry but with different version,
+func (r *alertRulesRegistry) getDiff(rules map[models.AlertRuleKey]*models.AlertRule) diff {
+	result := diff{
+		updated: map[models.AlertRuleKey]struct{}{},
+	}
+	for key, newRule := range rules {
+		oldRule, ok := r.rules[key]
+		if !ok || newRule.Version == oldRule.Version {
+			// a new rule or not updated
+			continue
+		}
+		result.updated[key] = struct{}{}
+	}
+	return result
 }

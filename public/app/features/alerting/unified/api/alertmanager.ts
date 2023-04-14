@@ -1,12 +1,13 @@
 import { lastValueFrom } from 'rxjs';
 
 import { urlUtil } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   AlertmanagerStatus,
+  ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
   Matcher,
   Receiver,
@@ -15,10 +16,8 @@ import {
   TestReceiversAlert,
   TestReceiversPayload,
   TestReceiversResult,
-  ExternalAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { isFetchError } from '../utils/alertmanager';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
@@ -33,12 +32,16 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     );
     return {
       template_files: result.data.template_files ?? {},
+      template_file_provenances: result.data.template_file_provenances ?? {},
       alertmanager_config: result.data.alertmanager_config ?? {},
+      last_applied: result.data.last_applied,
+      id: result.data.id,
     };
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
       alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      isFetchError(e) &&
       e.data?.message?.includes('could not find an Alertmanager configuration')
     ) {
       return {

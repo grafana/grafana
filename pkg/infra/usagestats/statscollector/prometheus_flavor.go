@@ -3,11 +3,11 @@ package statscollector
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const promFlavorCacheLifetime = time.Hour
@@ -37,15 +37,15 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		return s.promFlavorCache.variants, nil
 	}
 
-	dsProm := &models.GetDataSourcesByTypeQuery{Type: "prometheus"}
-	err := s.datasources.GetDataSourcesByType(ctx, dsProm)
+	dsProm := &datasources.GetDataSourcesByTypeQuery{Type: "prometheus"}
+	dataSources, err := s.datasources.GetDataSourcesByType(ctx, dsProm)
 	if err != nil {
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)
 		return nil, err
 	}
 
 	variants := map[string]int64{}
-	for _, ds := range dsProm.Result {
+	for _, ds := range dataSources {
 		variant, err := s.detectPrometheusVariant(ctx, ds)
 		if err != nil {
 			return nil, err
@@ -65,7 +65,7 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	return variants, nil
 }
 
-func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	type buildInfo struct {
 		Data struct {
 			Application *string                `json:"application"`
@@ -79,7 +79,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.Url+"/api/v1/status/buildinfo", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.URL+"/api/v1/status/buildinfo", nil)
 	if err != nil {
 		s.log.Error("Failed to create Prometheus build info request", "error", err)
 		return "", err
@@ -107,7 +107,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		return "unknown", nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Error("Failed to read Prometheus build info", "error", err)
 		return "", err

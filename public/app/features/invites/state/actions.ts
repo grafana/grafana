@@ -4,7 +4,7 @@ import { FormModel } from 'app/features/org/UserInviteForm';
 import { AccessControlAction, createAsyncThunk, Invitee } from 'app/types';
 
 export const fetchInvitees = createAsyncThunk('users/fetchInvitees', async () => {
-  if (!contextSrv.hasPermission(AccessControlAction.UsersCreate)) {
+  if (!contextSrv.hasPermission(AccessControlAction.OrgUsersAdd)) {
     return [];
   }
 

@@ -14,8 +14,9 @@ describe('NodeGraphContainer', () => {
         dataFrames={[emptyFrame]}
         exploreId={ExploreId.left}
         range={getDefaultTimeRange()}
-        splitOpen={(() => {}) as any}
+        splitOpenFn={() => {}}
         withTraceView={true}
+        datasourceType={''}
       />
     );
 
@@ -29,7 +30,8 @@ describe('NodeGraphContainer', () => {
         dataFrames={[nodes]}
         exploreId={ExploreId.left}
         range={getDefaultTimeRange()}
-        splitOpen={(() => {}) as any}
+        splitOpenFn={() => {}}
+        datasourceType={''}
       />
     );
 
@@ -52,7 +54,7 @@ const nodes = new MutableDataFrame({
   ]),
 });
 
-function toFields(fields: Array<[string, any[]]>) {
+function toFields(fields: Array<[string, unknown[]]>) {
   return fields.map(([name, values]) => {
     return { name, values };
   });

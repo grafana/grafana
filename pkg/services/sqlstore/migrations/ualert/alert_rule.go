@@ -5,14 +5,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
-	legacymodels "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	// ContactLabel is a private label created during migration and used in notification policies.
+	// It stores a string array of all contact point names an alert rule should send to.
+	// It was created as a means to simplify post-migration notification policies.
+	ContactLabel = "__contacts__"
 )
 
 type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
@@ -22,12 +29,14 @@ type alertRule struct {
 	UID             string `xorm:"uid"`
 	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
 	ExecErrState    string
 	For             duration
 	Updated         time.Time
 	Annotations     map[string]string
-	Labels          map[string]string // (Labels are not Created in the migration)
+	Labels          map[string]string
+	IsPaused        bool
 }
 
 type alertRuleVersion struct {
@@ -35,6 +44,7 @@ type alertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -51,6 +61,7 @@ type alertRuleVersion struct {
 	For         duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
@@ -59,6 +70,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		RuleUID:          a.UID,
 		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
 		ParentVersion:    0,
 		RestoredFrom:     0,
 		Version:          1,
@@ -73,13 +85,16 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		For:             a.For,
 		Annotations:     a.Annotations,
 		Labels:          map[string]string{},
+		IsPaused:        a.IsPaused,
 	}
 }
 
 func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
-	lbls := da.ParsedSettings.AlertRuleTags
-	if lbls == nil {
-		lbls = make(map[string]string)
+	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
+	lbls := make(map[string]string, len(tagsMap))
+
+	for k, v := range tagsMap {
+		lbls[k] = simplejson.NewFromAny(v).MustString()
 	}
 
 	annotations := make(map[string]string, 3)
@@ -92,7 +107,6 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	lbls["alertname"] = da.Name
 	annotations["message"] = da.Message
 	var err error
 
@@ -101,20 +115,34 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
 
+	uid, err := m.seenUIDs.generateUid()
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule: %w", err)
+	}
+
+	name := normalizeRuleName(da.Name, uid)
+
+	isPaused := false
+	if da.State == "paused" {
+		isPaused = true
+	}
+
 	ar := &alertRule{
 		OrgID:           da.OrgId,
-		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
-		UID:             util.GenerateShortUID(),
+		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		UID:             uid,
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		RuleGroup:       da.Name,
+		RuleGroup:       name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
+		RuleGroupIndex:  1,
+		IsPaused:        isPaused,
 	}
 
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
@@ -128,7 +156,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	}
 
 	// Label for routing and silences.
-	n, v := getLabelForRouteMatching(ar.UID)
+	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
 	if err := m.addSilence(da, ar); err != nil {
@@ -151,7 +179,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
-		if d.DatasourceUID == expr.OldDatasourceUID {
+		if d.DatasourceUID == expressionDatasourceUID {
 			result = append(result, d)
 			continue
 		}
@@ -269,4 +297,32 @@ func transExecErr(s string) (string, error) {
 		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
+}
+
+func normalizeRuleName(daName string, uid string) string {
+	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
+	// Append the UID to the suffix to forcibly break any collisions.
+	if len(daName) > DefaultFieldMaxLength {
+		trunc := DefaultFieldMaxLength - 1 - len(uid)
+		daName = daName[:trunc] + "_" + uid
+	}
+
+	return daName
+}
+
+func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
+	// Extracting channel UID/ID.
+	for _, ui := range d.ParsedSettings.Notifications {
+		if ui.UID != "" {
+			channelUids = append(channelUids, ui.UID)
+			continue
+		}
+		// In certain circumstances, id is used instead of uid.
+		// We add this if there was no uid.
+		if ui.ID > 0 {
+			channelUids = append(channelUids, ui.ID)
+		}
+	}
+
+	return channelUids
 }

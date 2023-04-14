@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 set -e
 
@@ -7,23 +7,24 @@ set -e
 IS_UPGRADE=false
 
 
-case "$1" in
-	configure)
-	[ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
-	[ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
-	if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
-	    addgroup --system "$GRAFANA_GROUP" --quiet
-	fi
-	if ! id $GRAFANA_USER > /dev/null 2>&1 ; then
-	    adduser --system --home /usr/share/grafana --no-create-home \
-		--ingroup "$GRAFANA_GROUP" --disabled-password --shell /bin/false \
-		"$GRAFANA_USER"
-	fi
+# Initial installation: $1 == configure
+# Upgrade: $1 == configure, and $2 not empty
+if [ "$1" = configure ]; then
+  [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
+  [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
+    addgroup --system "$GRAFANA_GROUP" --quiet
+  fi
+  if ! id "$GRAFANA_USER" > /dev/null 2>&1 ; then
+    adduser --system --home /usr/share/grafana --no-create-home \
+      --ingroup "$GRAFANA_GROUP" --disabled-password --shell /bin/false \
+      "$GRAFANA_USER"
+  fi
 
-	# Set user permissions on /var/log/grafana, /var/lib/grafana
-	mkdir -p /var/log/grafana /var/lib/grafana
-	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
-	chmod 755 /var/log/grafana /var/lib/grafana
+  # Set user permissions on /var/log/grafana, /var/lib/grafana
+  mkdir -p /var/log/grafana /var/lib/grafana
+  chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
+  chmod 755 /var/log/grafana /var/lib/grafana
 
   # copy user config files
   if [ ! -f $CONF_FILE ]; then
@@ -50,6 +51,11 @@ case "$1" in
   if [ ! -d $PROVISIONING_CFG_DIR/access-control ]; then
     mkdir -p $PROVISIONING_CFG_DIR/access-control
     cp /usr/share/grafana/conf/provisioning/access-control/sample.yaml $PROVISIONING_CFG_DIR/access-control/sample.yaml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR/alerting ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/alerting
+    cp /usr/share/grafana/conf/provisioning/alerting/sample.yaml $PROVISIONING_CFG_DIR/alerting/sample.yaml
   fi
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
@@ -92,6 +98,5 @@ case "$1" in
     fi
     echo " OK"
 
-	fi
-	;;
-esac
+  fi
+fi

@@ -18,7 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@16
+brew install node@18
 npm install -g yarn
 ```
 
@@ -149,13 +149,13 @@ go test -covermode=atomic -tags=integration ./pkg/...
 To run PostgreSQL and MySQL integration tests locally, you need to start the docker blocks for MySQL and/or PostgreSQL test data sources by running `make devenv sources=mysql_tests,postgres_tests`. When your test data sources are running, you can execute integration tests by running:
 
 ```bash
-GRAFANA_TEST_DB=mysql go test -covermode=atomic -tags=integration ./pkg/...
+make test-go-integration-mysql
 ```
 
 and/or
 
 ```bash
-GRAFANA_TEST_DB=postgres go test -covermode=atomic -tags=integration ./pkg/...
+make test-go-integration-postgres
 ```
 
 ### Run end-to-end tests

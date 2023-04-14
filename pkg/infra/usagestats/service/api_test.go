@@ -7,13 +7,16 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func TestApi_getUsageStats(t *testing.T) {
@@ -43,20 +46,14 @@ func TestApi_getUsageStats(t *testing.T) {
 			expectedStatus: 403,
 		},
 	}
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	uss.registerAPIEndpoints()
-
-	sqlStore.ExpectedSystemStats = &models.SystemStats{}
-	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{}
-	sqlStore.ExpectedDataSources = []*models.DataSource{}
-	sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{}
-	sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			uss.Cfg.ReportingEnabled = tt.enabled
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
 
 			usageStats, recorder := getUsageStats(t, server)
 			require.Equal(t, tt.expectedStatus, recorder.Code)
@@ -68,20 +65,20 @@ func TestApi_getUsageStats(t *testing.T) {
 	}
 }
 
-func getUsageStats(t *testing.T, server *web.Mux) (*models.SystemStats, *httptest.ResponseRecorder) {
+func getUsageStats(t *testing.T, server *web.Mux) (*stats.SystemStats, *httptest.ResponseRecorder) {
 	req, err := http.NewRequest(http.MethodGet, "/api/admin/usage-report-preview", http.NoBody)
 	require.NoError(t, err)
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 
-	var usageStats models.SystemStats
+	var usageStats stats.SystemStats
 	if recorder.Code == http.StatusOK {
 		require.NoError(t, json.NewDecoder(recorder.Body).Decode(&usageStats))
 	}
 	return &usageStats, recorder
 }
 
-func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStats) *web.Mux {
+func setupTestServer(t *testing.T, user *user.SignedInUser, service *UsageStats) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
@@ -90,17 +87,17 @@ func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStat
 }
 
 type testContext struct {
-	user *models.SignedInUser
+	user *user.SignedInUser
 }
 
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
 		signedIn := tc.user != nil
-		reqCtx := &models.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,
-			SkipCache:    true,
+			SkipDSCache:  true,
 			Logger:       log.New("test"),
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))

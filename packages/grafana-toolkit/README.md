@@ -146,14 +146,7 @@ Yes! grafana-toolkit supports TypeScript by default.
 
 grafana-toolkit comes with Jest as a test runner.
 
-Internally at Grafana we use Enzyme. If you are developing React plugin and you want to configure Enzyme as a testing utility, then you need to configure `enzyme-adapter-react`. To do so, create `<YOUR_PLUGIN_DIR>/config/jest-setup.ts` file that will provide necessary setup. Copy the following code into that file to get Enzyme working with React:
-
-```ts
-import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-
-configure({ adapter: new Adapter() });
-```
+Internally at Grafana we use React Testing Library.
 
 You can also set up Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `<YOUR_PLUGIN_DIR_>/config/jest-shim.ts`
 
@@ -165,6 +158,16 @@ Currently we support following Jest configuration properties:
 
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
+
+### I want to use monaco-editor, is there anything particular I should pay attention?
+
+Yes there is.
+We already bundled monaco-editor in grafana. See [webpack config](https://github.
+com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58).
+We use `@monaco-editor/react` package with loader-config https://github.com/suren-atoyan/monaco-react#loader-config
+By default, monaco files are being downloaded from CDN. We use the bundled version.
+Initialization: https://github.com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58t
+We suggest to use the bundled version to prevent unwanted issues related to version mismatch.
 
 ### How can I customize Webpack rules or plugins?
 
@@ -326,7 +329,19 @@ You can contribute to grafana-toolkit by helping develop it or by debugging it.
 
 ### Develop grafana-toolkit
 
-Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
+Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. There are two ways to run the local toolkit version:
+
+### Using `NODE_OPTIONS` to load the yarn pnp file:
+
+You can run grafana toolkit directly from the grafana repository with this command.
+
+`NODE_OPTIONS="--require $GRAFANA_REPO/.pnp.cjs" $GRAFANA_REPO/packages/grafana-toolkit/dist/bin/grafana-toolkit.js [command]`
+
+You can replace `$GRAFANA_REPO` with the path to your grafana clone or set it in your environment. e.g.: `export GRAFANA_REPO=/home/dev/your_grafana_clone`
+
+> Note: This will run grafana toolkit from your local clone but it won't change the dependencies of what you are trying to build.
+
+### Using yarn berry linking.
 
 #### Prerequisites
 

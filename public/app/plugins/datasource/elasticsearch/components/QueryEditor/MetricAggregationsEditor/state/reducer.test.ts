@@ -2,9 +2,9 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
-import { defaultMetricAgg } from '../../../../query_def';
+import { defaultMetricAgg } from '../../../../queryDef';
+import { Derivative, ExtendedStats, MetricAggregation } from '../../../../types';
 import { initQuery } from '../../state';
-import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
 import { metricAggregationConfig } from '../utils';
 
 import {
@@ -170,7 +170,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedSettings: typeof firstAggregation['settings'] = {
+    const expectedSettings: (typeof firstAggregation)['settings'] = {
       unit: 'Changed unit',
     };
 
@@ -195,7 +195,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedMeta: typeof firstAggregation['meta'] = {
+    const expectedMeta: (typeof firstAggregation)['meta'] = {
       avg: false,
     };
 
@@ -215,7 +215,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedHide: typeof firstAggregation['hide'] = false;
+    const expectedHide: (typeof firstAggregation)['hide'] = false;
 
     reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])

@@ -1,89 +1,96 @@
 package resource
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/url"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
+	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
 type Resource struct {
-	provider *client.Provider
-	log      log.Logger
+	promClient *client.Client
+	log        log.Logger
 }
 
 func New(
-	httpClientProvider httpclient.Provider,
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
+	httpClient *http.Client,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*Resource, error) {
-	var jsonData map[string]interface{}
-	if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
+	jsonData, err := utils.GetJsonData(settings)
+	if err != nil {
+		return nil, err
+	}
+	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
+
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
 	}
 
-	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-
 	return &Resource{
-		log:      plog,
-		provider: p,
+		log:        plog,
+		promClient: client.NewClient(httpClient, httpMethod, settings.URL),
 	}, nil
 }
 
-func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (int, []byte, error) {
-	client, err := r.provider.GetClient(reqHeaders(req.Headers))
+func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	r.log.FromContext(ctx).Debug("Sending resource query", "URL", req.URL)
+	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {
-		return 500, nil, err
+		return nil, fmt.Errorf("error querying resource: %v", err)
 	}
 
-	return r.fetch(ctx, client, req)
-}
-
-func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backend.CallResourceRequest) (int, []byte, error) {
-	r.log.Debug("Sending resource query", "URL", req.URL)
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return 500, nil, err
+	// frontend sets the X-Grafana-Cache with the desired response cache control value
+	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 {
+		resp.Header.Set("X-Grafana-Cache", "y")
+		resp.Header.Set("Cache-Control", req.GetHTTPHeaders().Get("X-Grafana-Cache"))
 	}
 
-	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
-	if err != nil {
-		statusCode := 500
-		if resp != nil {
-			statusCode = resp.StatusCode
+	defer func() {
+		tmpErr := resp.Body.Close()
+		if tmpErr != nil && err == nil {
+			err = tmpErr
 		}
-		return statusCode, nil, err
-	}
+	}()
 
-	defer resp.Body.Close() //nolint (we don't care about the error being returned by resp.Body.Close())
-
-	data, err := ioutil.ReadAll(resp.Body)
+	var buf bytes.Buffer
+	// Should be more efficient than ReadAll. See https://github.com/prometheus/client_golang/pull/976
+	_, err = buf.ReadFrom(resp.Body)
+	body := buf.Bytes()
 	if err != nil {
-		return 500, nil, err
+		return nil, err
+	}
+	callResponse := &backend.CallResourceResponse{
+		Status:  resp.StatusCode,
+		Headers: resp.Header,
+		Body:    body,
 	}
 
-	return resp.StatusCode, data, err
+	return callResponse, err
 }
 
-func reqHeaders(headers map[string][]string) map[string]string {
-	// Keep only the authorization header, incase downstream the authorization header is required.
-	// Strip all the others out as appropriate headers will be applied to speak with prometheus.
-	h := make(map[string]string)
-	accessValues := headers["Authorization"]
-
-	if len(accessValues) > 0 {
-		h["Authorization"] = accessValues[0]
+func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	newReq := &backend.CallResourceRequest{
+		PluginContext: req.PluginContext,
+		Path:          "/api/v1/status/buildinfo",
 	}
 
-	return h
+	resp, err := r.Execute(ctx, newReq)
+
+	if err != nil {
+		return nil, err
+	}
+
+	callResponse := &backend.CallResourceResponse{
+		Status: 200,
+		Body:   resp.Body,
+	}
+
+	return callResponse, nil
 }

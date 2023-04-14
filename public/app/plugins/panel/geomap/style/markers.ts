@@ -1,7 +1,7 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
 import tinycolor from 'tinycolor2';
 
-import { Registry, RegistryItem } from '@grafana/data';
+import { Registry, RegistryItem, textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 
@@ -38,6 +38,18 @@ export function getFillColor(cfg: StyleConfigValues) {
   if (opacity > 0) {
     const color = tinycolor(cfg.color).setAlpha(opacity).toRgbString();
     return new Fill({ color });
+  }
+  return undefined;
+}
+
+export function getStrokeStyle(cfg: StyleConfigValues) {
+  const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
+  if (opacity === 1) {
+    return new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
+  }
+  if (opacity > 0) {
+    const color = tinycolor(cfg.color).setAlpha(opacity).toRgbString();
+    return new Stroke({ color, width: cfg.lineWidth ?? 1 });
   }
   return undefined;
 }
@@ -84,6 +96,14 @@ export const polyStyle = (cfg: StyleConfigValues) => {
   return new Style({
     fill: getFillColor(cfg),
     stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+    text: textLabel(cfg),
+  });
+};
+
+export const routeStyle = (cfg: StyleConfigValues) => {
+  return new Style({
+    fill: getFillColor(cfg),
+    stroke: getStrokeStyle(cfg),
     text: textLabel(cfg),
   });
 };
@@ -227,6 +247,8 @@ async function prepareSVG(url: string, size?: number): Promise<string> {
       return res.text();
     })
     .then((text) => {
+      text = textUtil.sanitizeSVGContent(text);
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, 'image/svg+xml');
       const svg = doc.getElementsByTagName('svg')[0];
@@ -247,7 +269,7 @@ async function prepareSVG(url: string, size?: number): Promise<string> {
       return `data:image/svg+xml,${svgURI}`;
     })
     .catch((error) => {
-      console.error(error);
+      console.error(error); // eslint-disable-line no-console
       return '';
     });
 }

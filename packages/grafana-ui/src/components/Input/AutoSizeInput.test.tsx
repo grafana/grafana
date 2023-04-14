@@ -1,13 +1,15 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { screen, render, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
+
+import { measureText } from '../../utils/measureText';
 
 import { AutoSizeInput } from './AutoSizeInput';
 
 jest.mock('../../utils/measureText', () => {
   // Mocking measureText
-  const measureText = (text: string, fontSize: number) => {
+  const measureText = jest.fn().mockImplementation((text: string, fontSize: number) => {
     return { width: text.length * fontSize };
-  };
+  });
 
   return { measureText };
 });
@@ -93,5 +95,27 @@ describe('AutoSizeInput', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
 
     expect(onCommitChange).toHaveBeenCalled();
+  });
+
+  it('should respect min width', async () => {
+    render(<AutoSizeInput minWidth={4} defaultValue="" />);
+
+    await waitFor(() => expect(measureText).toHaveBeenCalled());
+
+    expect(getComputedStyle(screen.getByTestId('input-wrapper')).width).toBe('32px');
+  });
+
+  it('should respect max width', async () => {
+    render(
+      <AutoSizeInput
+        minWidth={1}
+        maxWidth={4}
+        defaultValue="thisisareallylongvalueandwhenisaylongireallymeanreallylongwithlotsofcharacterscommingfromuserinputwhotookthetimetocomeupwithalongstreamofcharacters"
+      />
+    );
+
+    await waitFor(() => expect(measureText).toHaveBeenCalled());
+
+    expect(getComputedStyle(screen.getByTestId('input-wrapper')).width).toBe('32px');
   });
 });

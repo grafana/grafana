@@ -3,20 +3,33 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
+	"path"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	ErrFileNotExist   = errors.New("file does not exist")
+	ErrPluginFileRead = errors.New("file could not be read")
 )
 
 type Plugin struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	FS    FS
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -29,23 +42,26 @@ type Plugin struct {
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	Renderer       pluginextensionv2.RendererPlugin
+	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
+	client         backendplugin.Plugin
+	log            log.Logger
 }
 
 type PluginDTO struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	fs                FS
+	logger            log.Logger
+	supportsStreaming bool
+
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -56,19 +72,19 @@ type PluginDTO struct {
 	Signature      SignatureStatus
 	SignatureType  SignatureType
 	SignatureOrg   string
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
-
-	// temporary
-	backend.StreamHandler
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
-	return p.StreamHandler != nil
+	return p.supportsStreaming
+}
+
+func (p PluginDTO) Base() string {
+	return p.fs.Base()
 }
 
 func (p PluginDTO) IsApp() bool {
@@ -77,23 +93,6 @@ func (p PluginDTO) IsApp() bool {
 
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
-}
-
-func (p PluginDTO) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
-	}
-
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
-	}
-
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
-	}
-	return true
 }
 
 // JSONData represents the plugin's plugin.json
@@ -111,6 +110,9 @@ type JSONData struct {
 	Preload      bool         `json:"preload"`
 	Backend      bool         `json:"backend"`
 	Routes       []*Route     `json:"routes"`
+
+	// AccessControl settings
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -132,7 +134,7 @@ type JSONData struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (Datasource + Renderer)
+	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
 }
 
@@ -152,7 +154,7 @@ func (d JSONData) DashboardIncludes() []*Includes {
 type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
-	ReqRole      models.RoleType `json:"reqRole"`
+	ReqRole      org.RoleType    `json:"reqRole"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -200,7 +202,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
-
 	return p.client.Start(ctx)
 }
 
@@ -237,6 +238,16 @@ func (p *Plugin) Exited() bool {
 		return p.client.Exited()
 	}
 	return false
+}
+
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
 }
 
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -295,6 +306,25 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+func (p *Plugin) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
+	}
+
+	if p.FS == nil {
+		return nil, ErrFileNotExist
+	}
+
+	f, err := p.FS.Open(cleanPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
 	p.client = c
 }
@@ -306,6 +336,29 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
+func (p *Plugin) ExecutablePath() string {
+	if p.IsRenderer() {
+		return p.executablePath("plugin_start")
+	}
+
+	if p.IsSecretsManager() {
+		return p.executablePath("secrets_plugin_start")
+	}
+
+	return p.executablePath(p.Executable)
+}
+
+func (p *Plugin) executablePath(f string) string {
+	os := strings.ToLower(runtime.GOOS)
+	arch := runtime.GOARCH
+	extension := ""
+
+	if os == "windows" {
+		extension = ".exe"
+	}
+	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+}
+
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
@@ -315,23 +368,21 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
-	c, _ := p.Client()
-
 	return PluginDTO{
-		JSONData:        p.JSONData,
-		PluginDir:       p.PluginDir,
-		Class:           p.Class,
-		IncludedInAppID: p.IncludedInAppID,
-		DefaultNavURL:   p.DefaultNavURL,
-		Pinned:          p.Pinned,
-		Signature:       p.Signature,
-		SignatureType:   p.SignatureType,
-		SignatureOrg:    p.SignatureOrg,
-		SignedFiles:     p.SignedFiles,
-		SignatureError:  p.SignatureError,
-		Module:          p.Module,
-		BaseURL:         p.BaseURL,
-		StreamHandler:   c,
+		logger:            p.Logger(),
+		fs:                p.FS,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
+		Class:             p.Class,
+		JSONData:          p.JSONData,
+		IncludedInAppID:   p.IncludedInAppID,
+		DefaultNavURL:     p.DefaultNavURL,
+		Pinned:            p.Pinned,
+		Signature:         p.Signature,
+		SignatureType:     p.SignatureType,
+		SignatureOrg:      p.SignatureOrg,
+		SignatureError:    p.SignatureError,
+		Module:            p.Module,
+		BaseURL:           p.BaseURL,
 	}
 }
 
@@ -340,23 +391,23 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 		return nil
 	}
 
-	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
+	if p.FS == nil {
+		return nil
+	}
+
+	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == "renderer"
+	return p.Type == Renderer
 }
 
-func (p *Plugin) IsDataSource() bool {
-	return p.Type == "datasource"
-}
-
-func (p *Plugin) IsPanel() bool {
-	return p.Type == "panel"
+func (p *Plugin) IsSecretsManager() bool {
+	return p.Type == SecretsManager
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p *Plugin) IsCorePlugin() bool {
@@ -379,25 +430,31 @@ const (
 	External Class = "external"
 )
 
+func (c Class) String() string {
+	return string(c)
+}
+
 var PluginTypes = []Type{
 	DataSource,
 	Panel,
 	App,
 	Renderer,
+	SecretsManager,
 }
 
 type Type string
 
 const (
-	DataSource Type = "datasource"
-	Panel      Type = "panel"
-	App        Type = "app"
-	Renderer   Type = "renderer"
+	DataSource     Type = "datasource"
+	Panel          Type = "panel"
+	App            Type = "app"
+	Renderer       Type = "renderer"
+	SecretsManager Type = "secretsmanager"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case DataSource, Panel, App, Renderer:
+	case DataSource, Panel, App, Renderer, SecretsManager:
 		return true
 	}
 	return false

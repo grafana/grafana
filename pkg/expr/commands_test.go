@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -79,7 +81,7 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 				RefID:      "A",
 				Query:      qmap,
 				QueryType:  "",
-				TimeRange:  TimeRange{},
+				TimeRange:  RelativeTimeRange{},
 				DataSource: nil,
 			})
 
@@ -102,9 +104,9 @@ func TestReduceExecute(t *testing.T) {
 
 	t.Run("should noop if Number", func(t *testing.T) {
 		var numbers mathexp.Values = []mathexp.Value{
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
 		}
 
 		vars := map[string]mathexp.Results{
@@ -113,7 +115,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		execute, err := cmd.Execute(context.Background(), vars)
+		execute, err := cmd.Execute(context.Background(), time.Now(), vars)
 		require.NoError(t, err)
 
 		require.Len(t, execute.Values, len(numbers))
@@ -136,9 +138,94 @@ func TestReduceExecute(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("should return new NoData", func(t *testing.T) {
+		var noData mathexp.Values = []mathexp.Value{
+			mathexp.NoData{Frame: data.NewFrame("no data")},
+		}
+
+		vars := map[string]mathexp.Results{
+			varToReduce: {
+				Values: noData,
+			},
+		}
+
+		results, err := cmd.Execute(context.Background(), time.Now(), vars)
+		require.NoError(t, err)
+
+		require.Len(t, results.Values, 1)
+
+		v := results.Values[0]
+		assert.Equal(t, v, mathexp.NoData{}.New())
+
+		// should not be able to change the original frame
+		v.AsDataFrame().Name = "there is still no data"
+		assert.NotEqual(t, v, mathexp.NoData{}.New())
+		assert.NotEqual(t, v, noData[0])
+		assert.Equal(t, "no data", noData[0].AsDataFrame().Name)
+	})
 }
 
 func randomReduceFunc() string {
 	res := mathexp.GetSupportedReduceFuncs()
-	return res[rand.Intn(len(res)-1)]
+	return res[rand.Intn(len(res))]
+}
+
+func TestResampleCommand_Execute(t *testing.T) {
+	varToReduce := util.GenerateShortUID()
+	tr := RelativeTimeRange{
+		From: -10 * time.Second,
+		To:   0,
+	}
+	cmd, err := NewResampleCommand(util.GenerateShortUID(), "1s", varToReduce, "sum", "pad", tr)
+	require.NoError(t, err)
+
+	var tests = []struct {
+		name         string
+		vals         mathexp.Value
+		isError      bool
+		expectedType parse.ReturnType
+	}{
+		{
+			name:         "should resample when input Series",
+			vals:         mathexp.NewSeries(varToReduce, nil, 100),
+			expectedType: parse.TypeSeriesSet,
+		},
+		{
+			name:         "should return NoData when input NoData",
+			vals:         mathexp.NoData{},
+			expectedType: parse.TypeNoData,
+		}, {
+			name:    "should return error when input Number",
+			vals:    mathexp.NewNumber("test", nil),
+			isError: true,
+		}, {
+			name:    "should return error when input Scalar",
+			vals:    mathexp.NewScalar("test", util.Pointer(rand.Float64())),
+			isError: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
+				varToReduce: mathexp.Results{Values: mathexp.Values{test.vals}},
+			})
+			if test.isError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, result.Values, 1)
+				res := result.Values[0]
+				require.Equal(t, test.expectedType, res.Type())
+			}
+		})
+	}
+
+	t.Run("should return empty result if input is nil Value", func(t *testing.T) {
+		result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
+			varToReduce: mathexp.Results{Values: mathexp.Values{nil}},
+		})
+		require.Empty(t, result.Values)
+		require.NoError(t, err)
+	})
 }

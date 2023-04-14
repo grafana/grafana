@@ -1,10 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Icon, IconName, Tooltip, useForceUpdate } from '@grafana/ui';
+import { Icon, Tooltip, useForceUpdate } from '@grafana/ui';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
@@ -18,7 +18,7 @@ export interface Props {
   links: DashboardLink[];
 }
 
-export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
+export const DashboardLinks = ({ dashboard, links }: Props) => {
   const forceUpdate = useForceUpdate();
 
   useEffectOnce(() => {
@@ -37,8 +37,10 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
         const key = `${link.title}-$${index}`;
 
         if (link.type === 'dashboards') {
-          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
+          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboard.uid} />;
         }
+
+        const icon = linkIconMap[link.icon];
 
         const linkElement = (
           <a
@@ -48,7 +50,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}
           >
-            <Icon aria-hidden name={linkIconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
+            {icon && <Icon aria-hidden name={icon} style={{ marginRight: '4px' }} />}
             <span>{linkInfo.title}</span>
           </a>
         );

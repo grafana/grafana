@@ -1,16 +1,7 @@
 ﻿import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ApiKey, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 
-import { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery } from './reducers';
-
-export function addApiKey(apiKey: ApiKey, openModal: (key: string) => void): ThunkResult<void> {
-  return async (dispatch) => {
-    const result = await getBackendSrv().post('/api/auth/keys', apiKey);
-    dispatch(setSearchQuery(''));
-    dispatch(loadApiKeys());
-    openModal(result.key);
-  };
-}
+import { apiKeysLoaded, includeExpiredToggled, isFetching } from './reducers';
 
 export function loadApiKeys(): ThunkResult<void> {
   return async (dispatch) => {
@@ -28,6 +19,26 @@ export function deleteApiKey(id: number): ThunkResult<void> {
     getBackendSrv()
       .delete(`/api/auth/keys/${id}`)
       .then(() => dispatch(loadApiKeys()));
+  };
+}
+
+export function migrateApiKey(id: number): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      await getBackendSrv().post(`/api/serviceaccounts/migrate/${id}`);
+    } finally {
+      dispatch(loadApiKeys());
+    }
+  };
+}
+
+export function migrateAll(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      await getBackendSrv().post('/api/serviceaccounts/migrate');
+    } finally {
+      dispatch(loadApiKeys());
+    }
   };
 }
 

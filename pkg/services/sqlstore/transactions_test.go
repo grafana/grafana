@@ -5,55 +5,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
-var ErrProvokedError = errors.New("testing error")
-
-func TestIntegrationTransaction(t *testing.T) {
-	ss := InitTestDB(t)
-
-	cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
-	t.Run("can update key", func(t *testing.T) {
-		err := ss.AddAPIKey(context.Background(), cmd)
-		require.Nil(t, err)
-
-		err = ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-			return deleteAPIKey(sess, cmd.Result.Id, 1)
-		})
-
-		require.Nil(t, err)
-
-		query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-		err = ss.GetApiKeyById(context.Background(), query)
-		require.Equal(t, models.ErrInvalidApiKey, err)
-	})
-
-	t.Run("won't update if one handler fails", func(t *testing.T) {
-		err := ss.AddAPIKey(context.Background(), cmd)
-		require.Nil(t, err)
-
-		err = ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-			err := deleteAPIKey(sess, cmd.Result.Id, 1)
-			if err != nil {
-				return err
-			}
-
-			return ErrProvokedError
-		})
-
-		require.Equal(t, ErrProvokedError, err)
-
-		query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-		err = ss.GetApiKeyById(context.Background(), query)
-		require.Nil(t, err)
-		require.Equal(t, cmd.Result.Id, query.Result.Id)
-	})
-}
-
 func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 
 	t.Run("top level transaction", func(t *testing.T) {
@@ -108,3 +67,75 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 		}))
 	})
 }
+
+func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ss := InitTestDB(t)
+	ctx := context.Background()
+
+	// On X success
+	var xHasSucceeded bool
+	ss.Bus().AddEventListener(func(ctx context.Context, e *X) error {
+		xHasSucceeded = true
+		t.Logf("Succeeded and committed: %T\n", e)
+		return nil
+	})
+
+	// On Y success
+	var yHasSucceeded bool
+	ss.Bus().AddEventListener(func(ctx context.Context, e *Y) error {
+		yHasSucceeded = true
+		t.Logf("Succeeded and committed: %T\n", e)
+		return nil
+	})
+
+	t.Run("When no session is stored into the context, each transaction should be independent", func(t *testing.T) {
+		t.Cleanup(func() { xHasSucceeded = false; yHasSucceeded = false })
+
+		err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			t.Logf("Outer transaction: doing X... success!")
+			sess.PublishAfterCommit(&X{})
+
+			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				t.Log("Inner transaction: doing Y... success!")
+				sess.PublishAfterCommit(&Y{})
+				return nil
+			}))
+
+			t.Log("Outer transaction: doing Z... failure, rolling back...")
+			return errors.New("z failed")
+		})
+
+		assert.NotNil(t, err)
+		assert.False(t, xHasSucceeded)
+		assert.True(t, yHasSucceeded)
+	})
+
+	t.Run("When the session is stored into the context, the inner transaction should depend on the outer one", func(t *testing.T) {
+		t.Cleanup(func() { xHasSucceeded = false; yHasSucceeded = false })
+
+		err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			t.Logf("Outer transaction: doing X... success!")
+			sess.PublishAfterCommit(&X{})
+
+			require.NoError(t, ss.InTransaction(ctx, func(ctx context.Context) error {
+				t.Log("Inner transaction: doing Y... success!")
+				sess.PublishAfterCommit(&Y{})
+				return nil
+			}))
+
+			t.Log("Outer transaction: doing Z... failure, rolling back...")
+			return errors.New("z failed")
+		})
+
+		assert.NotNil(t, err)
+		assert.False(t, xHasSucceeded)
+		assert.False(t, yHasSucceeded)
+	})
+}
+
+type X struct{}
+type Y struct{}

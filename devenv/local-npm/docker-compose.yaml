@@ -2,24 +2,12 @@ version: '2'
 
 services:
   verdaccio:
-    image: verdaccio/verdaccio:4
-    container_name: verdaccio_root_path
+    image: verdaccio/verdaccio:5
+    container_name: verdaccio
     ports:
       - "4873:4873"
     volumes:
       - verdaccio:/verdaccio
-
-  nginx:
-    restart: always
-    build: conf/nginx
-    ports:
-      - "80:80"
-    volumes:
-      - /www/public
-    volumes_from:
-      - verdaccio
-    links:
-      - verdaccio:verdaccio
 
 volumes:
   verdaccio:

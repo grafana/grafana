@@ -3,25 +3,37 @@ import React, { PureComponent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
-  SelectableValue,
-  onUpdateDatasourceOption,
-  updateDatasourcePluginResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
+  onUpdateDatasourceOption,
   onUpdateDatasourceSecureJsonDataOption,
+  SelectableValue,
   updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+import {
+  Alert,
+  DataSourceHttpSettings,
+  InfoBox,
+  InlineField,
+  InlineFormLabel,
+  LegacyForms,
+  SecureSocksProxySettings,
+  Select,
+} from '@grafana/ui';
+import { config } from 'app/core/config';
 
-const { Input, SecretFormField } = LegacyForms;
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
-const httpModes = [
+const { Input, SecretFormField } = LegacyForms;
+
+const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
-] as SelectableValue[];
+];
 
-const versions = [
+const versions: Array<SelectableValue<InfluxVersion>> = [
   {
     label: 'InfluxQL',
     value: InfluxVersion.InfluxQL,
@@ -32,7 +44,7 @@ const versions = [
     value: InfluxVersion.Flux,
     description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+',
   },
-] as Array<SelectableValue<InfluxVersion>>;
+];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 type State = {
@@ -111,7 +123,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
+              isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
               value={secureJsonData.token || ''}
               label="Token"
               aria-label="Token"
@@ -188,8 +200,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <Input
                 id={`${htmlPrefix}-db`}
                 className="width-20"
-                value={options.database || ''}
-                onChange={onUpdateDatasourceOption(this.props, 'database')}
+                value={options.jsonData.dbName ?? options.database}
+                onChange={(event) => {
+                  this.props.onOptionsChange({
+                    ...options,
+                    database: '',
+                    jsonData: {
+                      ...options.jsonData,
+                      dbName: event.target.value,
+                    },
+                  });
+                }}
               />
             </div>
           </div>
@@ -212,7 +233,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
+              isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
               value={secureJsonData.password || ''}
               label="Password"
               aria-label="Password"
@@ -270,6 +291,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { options, onOptionsChange } = this.props;
+    const isDirectAccess = options.access === 'direct';
 
     return (
       <>
@@ -301,18 +323,22 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </InfoBox>
         )}
 
-        {options.access === 'direct' && (
-          <Alert title="Deprecation Notice" severity="warning">
-            Browser access mode in the InfluxDB datasource is deprecated and will be removed in a future release.
+        {isDirectAccess && (
+          <Alert title="Error" severity="error">
+            {BROWSER_MODE_DISABLED_MESSAGE}
           </Alert>
         )}
 
         <DataSourceHttpSettings
-          showAccessOptions={true}
+          showAccessOptions={isDirectAccess}
           dataSourceConfig={options}
           defaultUrl="http://localhost:8086"
           onChange={onOptionsChange}
         />
+
+        {config.featureToggles.secureSocksDatasourceProxy && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
 
         <div className="gf-form-group">
           <div>

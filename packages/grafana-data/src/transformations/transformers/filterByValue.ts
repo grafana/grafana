@@ -40,13 +40,13 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     match: FilterByValueMatch.any,
   },
 
-  operator: (options) => (source) => {
+  operator: (options, ctx) => (source) => {
     const filters = options.filters;
     const matchAll = options.match === FilterByValueMatch.all;
     const include = options.type === FilterByValueType.include;
 
     if (!Array.isArray(filters) || filters.length === 0) {
-      return source.pipe(noopTransformer.operator({}));
+      return source.pipe(noopTransformer.operator({}, ctx));
     }
 
     return source.pipe(

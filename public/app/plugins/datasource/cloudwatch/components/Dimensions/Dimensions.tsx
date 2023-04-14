@@ -25,15 +25,32 @@ export interface DimensionFilterCondition {
 
 const dimensionsToFilterConditions = (dimensions: DimensionsType | undefined) =>
   Object.entries(dimensions ?? {}).reduce<DimensionFilterCondition[]>((acc, [key, value]) => {
-    if (value && typeof value === 'string') {
-      const filter = {
-        key,
-        value,
-        operator: '=',
-      };
-      return [...acc, filter];
+    if (!value) {
+      return acc;
     }
-    return acc;
+
+    // Previously, we only appended to the `acc`umulated dimensions if the value was a string.
+    // However, Cloudwatch can present dimensions with single-value arrays, e.g.
+    //   k: FunctionName
+    //   v: ['MyLambdaFunction']
+    // in which case we grab the single-value from the Array and use that as the value.
+    let v = '';
+    if (typeof value === 'string') {
+      v = value;
+    } else if (Array.isArray(value) && typeof value[0] === 'string') {
+      v = value[0];
+    }
+
+    if (!v) {
+      return acc;
+    }
+
+    const filter = {
+      key: key,
+      value: v,
+      operator: '=',
+    };
+    return [...acc, filter];
   }, []);
 
 const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
@@ -45,13 +62,7 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
   }, {});
 };
 
-export const Dimensions: React.FC<Props> = ({
-  metricStat,
-  datasource,
-  dimensionKeys,
-  disableExpressions,
-  onChange,
-}) => {
+export const Dimensions = ({ metricStat, datasource, dimensionKeys, disableExpressions, onChange }: Props) => {
   const dimensionFilters = useMemo(() => dimensionsToFilterConditions(metricStat.dimensions), [metricStat.dimensions]);
   const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {

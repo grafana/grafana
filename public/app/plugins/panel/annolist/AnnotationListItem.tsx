@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC, MouseEvent } from 'react';
+import React, { MouseEvent } from 'react';
 
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Card, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 interface Props extends Pick<PanelProps<PanelOptions>, 'options'> {
   annotation: AnnotationEvent;
@@ -14,17 +14,10 @@ interface Props extends Pick<PanelProps<PanelOptions>, 'options'> {
   onTagClick: (tag: string, remove?: boolean) => void;
 }
 
-export const AnnotationListItem: FC<Props> = ({
-  options,
-  annotation,
-  formatDate,
-  onClick,
-  onAvatarClick,
-  onTagClick,
-}) => {
+export const AnnotationListItem = ({ options, annotation, formatDate, onClick, onAvatarClick, onTagClick }: Props) => {
   const styles = useStyles2(getStyles);
   const { showUser, showTags, showTime } = options;
-  const { text, login, email, avatarUrl, tags, time, timeEnd } = annotation;
+  const { text = '', login, email, avatarUrl, tags, time, timeEnd } = annotation;
   const onItemClick = () => {
     onClick(annotation);
   };
@@ -38,7 +31,13 @@ export const AnnotationListItem: FC<Props> = ({
   return (
     <Card className={styles.card} onClick={onItemClick}>
       <Card.Heading>
-        <span>{text}</span>
+        <RenderUserContentAsHTML
+          className={styles.heading}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          content={text}
+        />
       </Card.Heading>
       {showTimeStamp && (
         <Card.Description className={styles.timestamp}>
@@ -72,7 +71,7 @@ interface AvatarProps {
   email?: string;
 }
 
-const Avatar: FC<AvatarProps> = ({ onClick, avatarUrl, login, email }) => {
+const Avatar = ({ onClick, avatarUrl, login, email }: AvatarProps) => {
   const styles = useStyles2(getStyles);
   const onAvatarClick = (e: MouseEvent) => {
     e.stopPropagation();
@@ -99,7 +98,7 @@ interface TimeStampProps {
   formatDate: (date: DateTimeInput, format?: string) => string;
 }
 
-const TimeStamp: FC<TimeStampProps> = ({ time, formatDate }) => {
+const TimeStamp = ({ time, formatDate }: TimeStampProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -117,6 +116,16 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1),
       margin: theme.spacing(0.5),
       width: 'inherit',
+    }),
+    heading: css({
+      a: {
+        zIndex: 1,
+        position: 'relative',
+        color: theme.colors.text.link,
+        '&:hover': {
+          textDecoration: 'underline',
+        },
+      },
     }),
     meta: css({
       margin: 0,

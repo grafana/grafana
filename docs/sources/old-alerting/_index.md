@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/old-alerting/
 draft: true
 title: Legacy Grafana Alerts
 weight: 114
@@ -8,9 +6,9 @@ weight: 114
 
 # Legacy Grafana alerts
 
-Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "../unified-alerting/opt-in/" >}}) feature.
+Grafana Alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "../unified-alerting/opt-in/" >}}) feature.
 
-> **Note**: Legacy dashboard alerts are deprecated and will be removed in Grafana 9. We encourage you to migrate to [Grafana alerting]({{< relref "../unified-alerting/" >}}) for all existing installations.
+> **Note**: Legacy dashboard alerts are deprecated and will be removed in Grafana 9. We encourage you to migrate to [Grafana Alerting]({{< relref "../unified-alerting/" >}}) for all existing installations.
 
 Legacy dashboard alerts have two main components:
 

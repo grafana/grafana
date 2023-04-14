@@ -1,38 +1,67 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { cloneDeep } from 'lodash';
 
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
+import { getNavSubTitle, getNavTitle } from '../components/NavBar/navBarItem-translations';
+
+export const HOME_NAV_ID = 'home';
+
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = config.bootData.navTree as NavModelItem[];
-  buildNavIndex(navIndex, rootNodes);
+  const rootNodes = cloneDeep(config.bootData.navTree);
+  const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
+  const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
+
+  if (homeNav) {
+    buildNavIndex(navIndex, [homeNav]);
+  }
+  // set home as parent for the other rootNodes
+  // need to use the translated home node from the navIndex
+  buildNavIndex(navIndex, otherRootNodes, navIndex[HOME_NAV_ID]);
+
   return navIndex;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
+  const translatedChildren: NavModelItem[] = [];
+
   for (const node of children) {
-    navIndex[node.id!] = {
+    const translatedNode: NavModelItem = {
       ...node,
+      text: getNavTitle(node.id) ?? node.text,
+      subTitle: getNavSubTitle(node.id) ?? node.subTitle,
+      emptyMessage: getNavTitle(node.emptyMessageId),
       parentItem: parentItem,
     };
 
-    if (node.children) {
-      buildNavIndex(navIndex, node.children, node);
+    if (translatedNode.id) {
+      navIndex[translatedNode.id] = translatedNode;
     }
+
+    if (translatedNode.children) {
+      buildNavIndex(navIndex, translatedNode.children, translatedNode);
+    }
+    translatedChildren.push(translatedNode);
+  }
+
+  // need to update the parentItem children with the new translated children
+  if (parentItem) {
+    parentItem.children = translatedChildren;
   }
 
   navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };
+  navIndex['error'] = { ...buildWarningNav('Page error', 'An unexpected error').node };
 }
 
 function buildWarningNav(text: string, subTitle?: string): NavModel {
   const node = {
     text,
     subTitle,
-    icon: 'exclamation-triangle',
+    icon: 'exclamation-triangle' as const,
   };
   return {
-    breadcrumbs: [node],
     node: node,
     main: node,
   };
@@ -78,6 +107,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       ...state,
       cfg: { ...state.cfg, subTitle },
       datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
       users: getItemWithNewSubTitle(state.users, subTitle),
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),

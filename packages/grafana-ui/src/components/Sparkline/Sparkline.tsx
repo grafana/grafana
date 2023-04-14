@@ -44,6 +44,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
+  pointSize: 2,
 };
 
 /** @internal */
@@ -93,7 +94,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     }
   }
 
-  getYRange(field: Field) {
+  getYRange(field: Field): Range.MinMax {
     let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
 
     if (min === max) {
@@ -103,12 +104,11 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         min = 0;
         max! *= 2;
       }
+
+      return [min, max!];
     }
 
-    return [
-      Math.max(min!, field.config.min ?? -Infinity),
-      Math.min(max!, field.config.max ?? Infinity),
-    ] as Range.MinMax;
+    return [Math.max(min!, field.config.min ?? -Infinity), Math.min(max!, field.config.max ?? Infinity)];
   }
 
   prepareConfig(data: DataFrame) {
@@ -149,7 +149,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
-      const config = field.config as FieldConfig<GraphFieldConfig>;
+      const config: FieldConfig<GraphFieldConfig> = field.config;
       const customConfig: GraphFieldConfig = {
         ...defaultConfig,
         ...config.custom,
@@ -182,6 +182,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         pxAlign: false,
         scaleKey,
         theme,
+        colorMode,
+        thresholds: config.thresholds,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
@@ -189,7 +191,9 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
         fillOpacity: customConfig.fillOpacity,
-        fillColor: customConfig.fillColor ?? seriesColor,
+        fillColor: customConfig.fillColor,
+        lineStyle: customConfig.lineStyle,
+        gradientMode: customConfig.gradientMode,
       });
     }
 

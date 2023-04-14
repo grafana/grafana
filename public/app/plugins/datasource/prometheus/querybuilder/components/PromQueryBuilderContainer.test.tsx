@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
@@ -39,8 +41,8 @@ function setup(queryOverrides: Partial<PromQuery> = {}) {
     {
       url: '',
       jsonData: {},
-      meta: {} as any,
-    } as any,
+      meta: {} as DataSourcePluginMeta,
+    } as DataSourceInstanceSettings,
     undefined,
     undefined,
     languageProvider
@@ -55,6 +57,7 @@ function setup(queryOverrides: Partial<PromQuery> = {}) {
     },
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
+    showExplain: false,
   };
 
   const { container } = render(<PromQueryBuilderContainer {...props} />);

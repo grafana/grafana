@@ -1,11 +1,12 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Switch } from '@grafana/ui';
+import { EditorField, EditorRow } from '@grafana/experimental';
+import { HorizontalGroup, Switch } from '@grafana/ui';
 
-import { GRAPH_PERIODS, SELECT_WIDTH } from '../constants';
+import { GRAPH_PERIODS } from '../constants';
 
-import { PeriodSelect, QueryEditorRow } from '.';
+import { PeriodSelect } from './index';
 
 export interface Props {
   refId: string;
@@ -14,10 +15,10 @@ export interface Props {
   graphPeriod?: string;
 }
 
-export const GraphPeriod: FunctionComponent<Props> = ({ refId, onChange, graphPeriod, variableOptionGroup }) => {
+export const GraphPeriod = ({ refId, onChange, graphPeriod, variableOptionGroup }: Props) => {
   return (
-    <>
-      <QueryEditorRow
+    <EditorRow>
+      <EditorField
         label="Graph period"
         htmlFor={`${refId}-graph-period`}
         tooltip={
@@ -27,21 +28,22 @@ export const GraphPeriod: FunctionComponent<Props> = ({ refId, onChange, graphPe
           </>
         }
       >
-        <Switch
-          data-testid={`${refId}-switch-graph-period`}
-          value={graphPeriod !== 'disabled'}
-          onChange={(e) => onChange(e.currentTarget.checked ? '' : 'disabled')}
-        />
-        <PeriodSelect
-          inputId={`${refId}-graph-period`}
-          templateVariableOptions={variableOptionGroup.options}
-          current={graphPeriod}
-          onChange={onChange}
-          selectWidth={SELECT_WIDTH}
-          disabled={graphPeriod === 'disabled'}
-          aligmentPeriods={GRAPH_PERIODS}
-        />
-      </QueryEditorRow>
-    </>
+        <HorizontalGroup>
+          <Switch
+            data-testid={`${refId}-switch-graph-period`}
+            value={graphPeriod !== 'disabled'}
+            onChange={(e) => onChange(e.currentTarget.checked ? '' : 'disabled')}
+          />
+          <PeriodSelect
+            inputId={`${refId}-graph-period`}
+            templateVariableOptions={variableOptionGroup.options}
+            current={graphPeriod}
+            onChange={onChange}
+            disabled={graphPeriod === 'disabled'}
+            aligmentPeriods={GRAPH_PERIODS}
+          />
+        </HorizontalGroup>
+      </EditorField>
+    </EditorRow>
   );
 };

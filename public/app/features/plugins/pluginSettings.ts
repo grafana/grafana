@@ -1,5 +1,5 @@
 import { PluginMeta } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
 type PluginCache = {
   [key: string]: PluginMeta;
@@ -7,13 +7,13 @@ type PluginCache = {
 
 const pluginInfoCache: PluginCache = {};
 
-export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
+export function getPluginSettings(pluginId: string, options?: Partial<BackendSrvRequest>): Promise<PluginMeta> {
   const v = pluginInfoCache[pluginId];
   if (v) {
     return Promise.resolve(v);
   }
   return getBackendSrv()
-    .get(`/api/plugins/${pluginId}/settings`)
+    .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, options)
     .then((settings: any) => {
       pluginInfoCache[pluginId] = settings;
       return settings;

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,10 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
+var logger log.Logger = log.New("tsdb.influxdb")
+
 type Service struct {
 	queryParser    *InfluxdbQueryParser
 	responseParser *ResponseParser
-	glog           log.Logger
 
 	im instancemgmt.InstanceManager
 }
@@ -34,7 +36,6 @@ func ProvideService(httpClient httpclient.Provider) *Service {
 	return &Service{
 		queryParser:    &InfluxdbQueryParser{},
 		responseParser: &ResponseParser{},
-		glog:           log.New("tsdb.influxdb"),
 		im:             datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 	}
 }
@@ -64,11 +65,19 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if maxSeries == 0 {
 			maxSeries = 1000
 		}
+		version := jsonData.Version
+		if version == "" {
+			version = influxVersionInfluxQL
+		}
+		database := jsonData.DbName
+		if database == "" {
+			database = settings.Database
+		}
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
-			Database:      settings.Database,
-			Version:       jsonData.Version,
+			DbName:        database,
+			Version:       version,
 			HTTPMode:      httpMode,
 			TimeInterval:  jsonData.TimeInterval,
 			DefaultBucket: jsonData.DefaultBucket,
@@ -81,7 +90,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	s.glog.Debug("Received a query request", "numQueries", len(req.Queries))
+	logger := logger.FromContext(ctx)
+	logger.Debug("Received a query request", "numQueries", len(req.Queries))
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -92,10 +102,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return flux.Query(ctx, dsInfo, *req)
 	}
 
-	s.glog.Debug("Making a non-Flux type query")
+	logger.Debug("Making a non-Flux type query")
 
 	var allRawQueries string
-	var queries []Query
+	queries := make([]Query, 0, len(req.Queries))
 
 	for _, reqQuery := range req.Queries {
 		query, err := s.queryParser.Parse(reqQuery)
@@ -115,10 +125,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	if setting.Env == setting.Dev {
-		s.glog.Debug("Influxdb query", "raw query", allRawQueries)
+		logger.Debug("Influxdb query", "raw query", allRawQueries)
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, allRawQueries)
+	request, err := s.createRequest(ctx, logger, dsInfo, allRawQueries)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -129,7 +139,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.glog.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 	if res.StatusCode/100 != 2 {
@@ -141,7 +151,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return resp, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -169,11 +179,9 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceIn
 		return nil, ErrInvalidHttpMode
 	}
 
-	req.Header.Set("User-Agent", "Grafana")
-
 	params := req.URL.Query()
-	params.Set("db", dsInfo.Database)
-	params.Set("epoch", "s")
+	params.Set("db", dsInfo.DbName)
+	params.Set("epoch", "ms")
 
 	if httpMode == "GET" {
 		params.Set("q", query)
@@ -183,7 +191,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceIn
 
 	req.URL.RawQuery = params.Encode()
 
-	s.glog.Debug("Influxdb request", "url", req.URL.String())
+	logger.Debug("Influxdb request", "url", req.URL.String())
 	return req, nil
 }
 

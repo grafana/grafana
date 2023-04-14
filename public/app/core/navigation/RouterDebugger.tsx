@@ -6,7 +6,7 @@ import { PageContents } from '../components/Page/PageContents';
 
 import { RouteDescriptor } from './types';
 
-export const RouterDebugger: React.FC<any> = () => {
+export const RouterDebugger = () => {
   const manualRoutes: RouteDescriptor[] = [];
   return (
     <PageContents>

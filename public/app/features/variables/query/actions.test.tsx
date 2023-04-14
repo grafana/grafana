@@ -15,7 +15,7 @@ import {
   changeVariableEditorExtended,
   initialVariableEditorState,
   removeVariableEditorError,
-  setIdInEditor,
+  variableEditorMounted,
 } from '../editor/reducer';
 import { updateOptions } from '../state/actions';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
@@ -167,8 +167,8 @@ describe('query actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
+        .whenActionIsDispatched(toKeyedAction('key', variableEditorMounted({ name: variable.name, id: variable.id })))
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -195,13 +195,11 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), 'search'), true);
 
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', removeVariableEditorError({ errorProp: 'update' })),
         toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update)))
       );
     });
@@ -211,7 +209,7 @@ describe('query actions', () => {
     silenceConsoleOutput();
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
-      const error = { message: 'failed to fetch metrics' };
+      const error = new Error('failed to fetch metrics');
 
       mocks[variable.datasource!.uid!].metricFindQuery = jest.fn(() => Promise.reject(error));
 
@@ -221,27 +219,19 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        const expectedNumberOfActions = 5;
+        const expectedNumberOfActions = 3;
 
         expect(dispatchedActions[0]).toEqual(toKeyedAction('key', variableStateFetching(toVariablePayload(variable))));
-        expect(dispatchedActions[1]).toEqual(toKeyedAction('key', removeVariableEditorError({ errorProp: 'update' })));
-        expect(dispatchedActions[2]).toEqual(
-          toKeyedAction('key', addVariableEditorError({ errorProp: 'update', errorText: error.message }))
+        expect(dispatchedActions[1]).toEqual(
+          toKeyedAction('key', variableStateFailed(toVariablePayload(variable, { error })))
         );
-        expect(dispatchedActions[3]).toEqual(
-          toKeyedAction(
-            'key',
-            variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
-          )
-        );
-        expect(dispatchedActions[4].type).toEqual(notifyApp.type);
-        expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');
-        expect(dispatchedActions[4].payload.text).toEqual('Error updating options: failed to fetch metrics');
-        expect(dispatchedActions[4].payload.severity).toEqual('error');
+        expect(dispatchedActions[2].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[2].payload.title).toEqual('Templating [0]');
+        expect(dispatchedActions[2].payload.text).toEqual('Error updating options: failed to fetch metrics');
+        expect(dispatchedActions[2].payload.severity).toEqual('error');
 
         return dispatchedActions.length === expectedNumberOfActions;
       });
@@ -722,6 +712,95 @@ describe('query actions', () => {
         arr_1_arr_0_bool: true,
       });
     });
+  });
+
+  it('returns correct result when called with an object with null values inside', () => {
+    const query = {
+      level2: {
+        level3: {
+          query: '${query3}',
+          refId: 'C',
+          num: 2,
+          bool: true,
+          null: null,
+          arr: [
+            { query: '${query4}', refId: 'D', num: 4, bool: true },
+            {
+              query: '${query5}',
+              refId: 'E',
+              num: 5,
+              bool: true,
+              arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+            },
+          ],
+        },
+        query: '${query2}',
+        refId: 'B',
+        num: 1,
+        bool: false,
+      },
+      query: '${query1}',
+      refId: 'A',
+      num: 0,
+      bool: true,
+      arr: [
+        { query: '${query7}', refId: 'G', num: 7, bool: true },
+        {
+          query: '${query8}',
+          refId: 'H',
+          num: 8,
+          bool: true,
+          arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true, null: null }],
+        },
+      ],
+    };
+
+    expect(flattenQuery(query)).toEqual({
+      query: '${query1}',
+      refId: 'A',
+      num: 0,
+      bool: true,
+      level2_query: '${query2}',
+      level2_refId: 'B',
+      level2_num: 1,
+      level2_bool: false,
+      level2_level3_query: '${query3}',
+      level2_level3_refId: 'C',
+      level2_level3_num: 2,
+      level2_level3_bool: true,
+      level2_level3_null: null,
+      level2_level3_arr_0_query: '${query4}',
+      level2_level3_arr_0_refId: 'D',
+      level2_level3_arr_0_num: 4,
+      level2_level3_arr_0_bool: true,
+      level2_level3_arr_1_query: '${query5}',
+      level2_level3_arr_1_refId: 'E',
+      level2_level3_arr_1_num: 5,
+      level2_level3_arr_1_bool: true,
+      level2_level3_arr_1_arr_0_query: '${query6}',
+      level2_level3_arr_1_arr_0_refId: 'F',
+      level2_level3_arr_1_arr_0_num: 6,
+      level2_level3_arr_1_arr_0_bool: true,
+      arr_0_query: '${query7}',
+      arr_0_refId: 'G',
+      arr_0_num: 7,
+      arr_0_bool: true,
+      arr_1_query: '${query8}',
+      arr_1_refId: 'H',
+      arr_1_num: 8,
+      arr_1_bool: true,
+      arr_1_arr_0_query: '${query9}',
+      arr_1_arr_0_refId: 'I',
+      arr_1_arr_0_num: 9,
+      arr_1_arr_0_bool: true,
+      arr_1_arr_0_null: null,
+    });
+  });
+
+  it('returns correct result when called with null', () => {
+    const query = null;
+
+    expect(flattenQuery(query)).toEqual({ query: null });
   });
 });
 

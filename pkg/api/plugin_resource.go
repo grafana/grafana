@@ -2,18 +2,20 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -21,11 +23,11 @@ import (
 // CallResource passes a resource call from a plugin to the backend plugin.
 //
 // /api/plugins/:pluginId/resources/*
-func (hs *HTTPServer) CallResource(c *models.ReqContext) {
+func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 	hs.callPluginResource(c, web.Params(c.Req)[":pluginId"])
 }
 
-func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) {
+func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
 	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
@@ -47,7 +49,7 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) 
 	}
 }
 
-func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, pluginID string, ds *models.DataSource) {
+func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
 	pCtx, found, err := hs.PluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
@@ -75,23 +77,12 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 		return
 	}
 
-	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
-			req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Header.Add("X-ID-Token", idToken)
-			}
-		}
-	}
-
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
 }
 
-func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext) (*http.Request, error) {
+func (hs *HTTPServer) pluginResourceRequest(c *contextmodel.ReqContext) (*http.Request, error) {
 	clonedReq := c.Req.Clone(c.Req.Context())
 	rawURL := web.Params(c.Req)["*"]
 	if clonedReq.URL.RawQuery != "" {
@@ -107,19 +98,9 @@ func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext) (*http.Request
 }
 
 func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	keepCookieModel := struct {
-		KeepCookies []string `json:"keepCookies"`
-	}{}
-	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
-		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
-		if err != nil {
-			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
-		}
-	}
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
 	proxyutil.PrepareProxyRequest(req)
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}
@@ -149,7 +130,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 	var flushStreamErr error
 	go func() {
-		flushStreamErr = hs.flushStream(stream, w)
+		flushStreamErr = hs.flushStream(req.Context(), crReq, stream, w)
 		wg.Done()
 	}()
 
@@ -160,9 +141,10 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	return flushStreamErr
 }
 
-func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
+func (hs *HTTPServer) flushStream(ctx context.Context, req *backend.CallResourceRequest, stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
-
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
@@ -181,17 +163,22 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 		}
 
 		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 && resp.Headers != nil {
-			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
-				resp.Headers["Content-Type"] = []string{"application/json"}
-			}
-
+		if processedStreams == 0 {
+			var hasContentType bool
 			for k, values := range resp.Headers {
-				// Due to security reasons we don't want to forward
-				// cookies from a backend plugin to clients/browsers.
-				if k == "Set-Cookie" {
+				// Convert the keys to the canonical format of MIME headers.
+				// This ensures that we can safely add/overwrite headers
+				// even if the plugin returns them in non-canonical format
+				// and be sure they won't be present multiple times in the response.
+				k = textproto.CanonicalMIMEHeaderKey(k)
+
+				switch k {
+				case "Set-Cookie":
+					// Due to security reasons we don't want to forward
+					// cookies from a backend plugin to clients/browsers.
 					continue
+				case "Content-Type":
+					hasContentType = true
 				}
 
 				for _, v := range values {
@@ -201,6 +188,11 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 				}
 			}
 
+			// Make sure a content type always is returned in response
+			if !hasContentType && resp.Status != http.StatusNoContent {
+				w.Header().Set("Content-Type", "application/json")
+			}
+
 			proxyutil.SetProxyResponseHeaders(w.Header())
 
 			w.WriteHeader(resp.Status)
@@ -208,6 +200,12 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 
 		if _, err := w.Write(resp.Body); err != nil {
 			hs.log.Error("Failed to write resource response", "err", err)
+		} else if hs.Features.IsEnabled(featuremgmt.FlagUseCachingService) {
+			// Placing the new service implementation behind a feature flag until it is known to be stable
+
+			// The enterprise implementation of this function will use the headers and status of the first response,
+			// And append the body of any subsequent responses. It waits for the context to be canceled before caching the cumulative result.
+			hs.cachingService.CacheResourceResponse(ctx, req, resp)
 		}
 
 		if flusher, ok := w.(http.Flusher); ok {
@@ -217,7 +215,7 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 	}
 }
 
-func handleCallResourceError(err error, reqCtx *models.ReqContext) {
+func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
 		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
 		return

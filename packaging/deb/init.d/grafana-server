@@ -36,7 +36,7 @@ CONF_FILE=$CONF_DIR/grafana.ini
 PROVISIONING_CFG_DIR=$CONF_DIR/provisioning
 MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
-DAEMON=/usr/sbin/$NAME
+DAEMON=$GRAFANA_HOME/bin/grafana
 
 umask 0027
 
@@ -48,104 +48,102 @@ fi
 . /lib/lsb/init-functions
 
 if [ -r /etc/default/rcS ]; then
-	. /etc/default/rcS
+  . /etc/default/rcS
 fi
 
 # overwrite settings from default file
 if [ -f "$DEFAULT" ]; then
-	. "$DEFAULT"
+  . "$DEFAULT"
 fi
 
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} --packaging=deb cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+DAEMON_OPTS="server --pidfile=${PID_FILE} --config=${CONF_FILE} --packaging=deb cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
 
 function checkUser() {
   if [ `id -u` -ne 0 ]; then
-  	echo "You need root privileges to run this script"
-  	exit 4
+    echo "You need root privileges to run this script"
+    exit 4
   fi
 }
 
 case "$1" in
   start)
-  checkUser
-	log_daemon_msg "Starting $DESC"
+    checkUser
+    log_daemon_msg "Starting $DESC"
+    pid=`pidofproc -p $PID_FILE grafana`
+    if [ -n "$pid" ] ; then
+      log_begin_msg "Already running."
+      log_end_msg 0
+      exit 0
+    fi
 
-	pid=`pidofproc -p $PID_FILE grafana`
-	if [ -n "$pid" ] ; then
-		log_begin_msg "Already running."
-		log_end_msg 0
-		exit 0
-	fi
+    # Prepare environment
+    mkdir -p "$LOG_DIR" "$DATA_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR"
+    touch "$PID_FILE" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$PID_FILE"
 
-	# Prepare environment
-	mkdir -p "$LOG_DIR" "$DATA_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR"
-	touch "$PID_FILE" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$PID_FILE"
+    if [ -n "$MAX_OPEN_FILES" ]; then
+      ulimit -n $MAX_OPEN_FILES
+    fi
 
-  if [ -n "$MAX_OPEN_FILES" ]; then
-		ulimit -n $MAX_OPEN_FILES
-	fi
+    # Start Daemon
+    start-stop-daemon --start -b --chdir "$WORK_DIR" --user "$GRAFANA_USER" -c "$GRAFANA_USER" --pidfile "$PID_FILE" --exec $DAEMON -- $DAEMON_OPTS
+    return=$?
+    if [ $return -eq 0 ]
+    then
+      sleep 1
+      # check if pid file has been written to
+      if ! [[ -s $PID_FILE ]]; then
+        log_end_msg 1
+        exit 1
+      fi
+      i=0
+      timeout=10
+      # Wait for the process to be properly started before exiting
+      until { cat "$PID_FILE" | xargs kill -0; } >/dev/null 2>&1
+      do
+        sleep 1
+        i=$(($i + 1))
+        if [ $i -gt $timeout ]; then
+          log_end_msg 1
+          exit 1
+        fi
+      done
+    fi
 
-	# Start Daemon
-	start-stop-daemon --start -b --chdir "$WORK_DIR" --user "$GRAFANA_USER" -c "$GRAFANA_USER" --pidfile "$PID_FILE" --exec $DAEMON -- $DAEMON_OPTS
-	return=$?
-	if [ $return -eq 0 ]
-	then
-	  sleep 1
-
-    # check if pid file has been written to
-	  if ! [[ -s $PID_FILE ]]; then
-	    log_end_msg 1
-	    exit 1
-	  fi
-
-		i=0
-		timeout=10
-		# Wait for the process to be properly started before exiting
-		until { cat "$PID_FILE" | xargs kill -0; } >/dev/null 2>&1
-		do
-			sleep 1
-			i=$(($i + 1))
-      if [ $i -gt $timeout ]; then
-			  log_end_msg 1
-			  exit 1
-			fi
-		done
-  fi
-  log_end_msg $return
-	;;
+    log_end_msg $return
+    ;;
   stop)
-  checkUser
-	log_daemon_msg "Stopping $DESC"
+    checkUser
+    log_daemon_msg "Stopping $DESC"
 
-	if [ -f "$PID_FILE" ]; then
-		start-stop-daemon --stop --pidfile "$PID_FILE" \
-			--user "$GRAFANA_USER" \
-			--retry=TERM/20/KILL/5 >/dev/null
-		if [ $? -eq 1 ]; then
-			log_progress_msg "$DESC is not running but pid file exists, cleaning up"
-		elif [ $? -eq 3 ]; then
-			PID="`cat $PID_FILE`"
-			log_failure_msg "Failed to stop $DESC (pid $PID)"
-			exit 1
-		fi
-		rm -f "$PID_FILE"
-	else
-		log_progress_msg "(not running)"
-	fi
-	log_end_msg 0
-	;;
+    if [ -f "$PID_FILE" ]; then
+      start-stop-daemon --stop --pidfile "$PID_FILE" \
+        --user "$GRAFANA_USER" \
+        --retry=TERM/20/KILL/5 >/dev/null
+      if [ $? -eq 1 ]; then
+        log_progress_msg "$DESC is not running but pid file exists, cleaning up"
+      elif [ $? -eq 3 ]; then
+        PID="`cat $PID_FILE`"
+        log_failure_msg "Failed to stop $DESC (pid $PID)"
+        exit 1
+      fi
+      rm -f "$PID_FILE"
+    else
+      log_progress_msg "(not running)"
+    fi
+    log_end_msg 0
+    ;;
   status)
-	status_of_proc -p $PID_FILE grafana grafana && exit 0 || exit $?
+    status_of_proc -p $PID_FILE grafana grafana && exit 0 || exit $?
     ;;
   restart|force-reload)
-	if [ -f "$PID_FILE" ]; then
-		$0 stop
-		sleep 1
-	fi
-	$0 start
-	;;
+    if [ -f "$PID_FILE" ]; then
+      $0 stop
+      sleep 1
+    fi
+    $0 start
+    ;;
   *)
-	log_success_msg "Usage: $0 {start|stop|restart|force-reload|status}"
-	exit 3
-	;;
+    log_success_msg "Usage: $0 {start|stop|restart|force-reload|status}"
+    exit 3
+    ;;
 esac

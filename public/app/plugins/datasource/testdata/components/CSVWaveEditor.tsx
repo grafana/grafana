@@ -1,9 +1,9 @@
-import React, { ChangeEvent, PureComponent } from 'react';
+import React, { PureComponent, useState } from 'react';
 
 import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { defaultCSVWaveQuery } from '../constants';
-import { CSVWave } from '../types';
+import type { CSVWave } from '../dataquery.gen';
 
 interface WavesProps {
   waves?: CSVWave[];
@@ -18,59 +18,74 @@ interface WaveProps {
   onAdd: () => void;
 }
 
-class CSVWaveEditor extends PureComponent<WaveProps> {
-  onFieldChange = (field: keyof CSVWave) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target as HTMLInputElement;
-
-    this.props.onChange(this.props.index, {
-      ...this.props.wave,
-      [field]: value,
-    });
-  };
-
-  onNameChange = this.onFieldChange('name');
-  onLabelsChange = this.onFieldChange('labels');
-  onCSVChange = this.onFieldChange('valuesCSV');
-  onTimeStepChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const timeStep = e.target.valueAsNumber;
-    this.props.onChange(this.props.index, {
-      ...this.props.wave,
-      timeStep,
-    });
-  };
-
-  render() {
-    const { wave, last } = this.props;
-    let action = this.props.onAdd;
-    if (!last) {
-      action = () => {
-        this.props.onChange(this.props.index, undefined); // remove
-      };
+const CSVWaveEditor = (props: WaveProps) => {
+  const { wave, last, index, onAdd, onChange } = props;
+  const [valuesCSV, setValuesCSV] = useState(wave.valuesCSV || '');
+  const [labels, setLabels] = useState(wave.labels || '');
+  const [name, setName] = useState(wave.name || '');
+  const onAction = () => {
+    if (last) {
+      onAdd();
+    } else {
+      onChange(index, undefined);
     }
+  };
+  const onValueChange = <K extends keyof CSVWave, V extends CSVWave[K]>(key: K, value: V) => {
+    onChange(index, { ...wave, [key]: value });
+  };
+  const onKeyDown = (evt: React.KeyboardEvent<HTMLInputElement>) => {
+    if (evt.key === 'Enter') {
+      onValueChange('valuesCSV', valuesCSV);
+    }
+  };
 
-    return (
-      <InlineFieldRow>
-        <InlineField
-          label={'Values'}
-          grow
-          tooltip="Comma separated values. Each value may be an int, float, or null and must not be empty. Whitespace and trailing commas are removed"
-        >
-          <Input value={wave.valuesCSV} placeholder={'CSV values'} onChange={this.onCSVChange} autoFocus={true} />
-        </InlineField>
-        <InlineField label={'Step'} tooltip="The number of seconds between datapoints.">
-          <Input value={wave.timeStep} type="number" placeholder={'60'} width={6} onChange={this.onTimeStepChange} />
-        </InlineField>
-        <InlineField label={'Labels'}>
-          <Input value={wave.labels} placeholder={'labels'} width={12} onChange={this.onLabelsChange} />
-        </InlineField>
-        <InlineField label={'Name'}>
-          <Input value={wave.name} placeholder={'name'} width={10} onChange={this.onNameChange} />
-        </InlineField>
-        <Button icon={last ? 'plus' : 'minus'} variant="secondary" onClick={action} />
-      </InlineFieldRow>
-    );
-  }
-}
+  return (
+    <InlineFieldRow>
+      <InlineField
+        label={'Values'}
+        grow
+        tooltip="Comma separated values. Each value may be an int, float, or null and must not be empty. Whitespace and trailing commas are removed"
+      >
+        <Input
+          value={valuesCSV}
+          placeholder={'CSV values'}
+          onChange={(e) => setValuesCSV(e.currentTarget.value)}
+          autoFocus={true}
+          onBlur={() => onValueChange('valuesCSV', valuesCSV)}
+          onKeyDown={onKeyDown}
+        />
+      </InlineField>
+      <InlineField label={'Step'} tooltip="The number of seconds between datapoints.">
+        <Input
+          value={wave.timeStep}
+          type="number"
+          placeholder={'60'}
+          width={10}
+          onChange={(e) => onValueChange('timeStep', e.currentTarget.valueAsNumber)}
+        />
+      </InlineField>
+      <InlineField label={'Name'}>
+        <Input
+          value={name}
+          placeholder={'name'}
+          width={10}
+          onChange={(e) => setName(e.currentTarget.value)}
+          onBlur={() => onValueChange('name', name)}
+        />
+      </InlineField>
+      <InlineField label={'Labels'}>
+        <Input
+          value={labels}
+          placeholder={'labels'}
+          width={12}
+          onChange={(e) => setLabels(e.currentTarget.value)}
+          onBlur={() => onValueChange('labels', labels)}
+        />
+      </InlineField>
+      <Button icon={last ? 'plus' : 'minus'} variant="secondary" onClick={onAction} />
+    </InlineFieldRow>
+  );
+};
 
 export class CSVWavesEditor extends PureComponent<WavesProps> {
   onChange = (index: number, wave?: CSVWave) => {

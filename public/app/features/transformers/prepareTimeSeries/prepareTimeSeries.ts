@@ -15,6 +15,8 @@ import {
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
 
+import { partitionByValues } from '../partitionByValues/partitionByValues';
+
 /**
  * There is currently an effort to figure out consistent names
  * for the various formats/types we produce and use.
@@ -24,10 +26,14 @@ import { Labels } from 'app/types/unified-alerting-dto';
  *
  * @internal -- TBD
  */
+
 export enum timeSeriesFormat {
-  TimeSeriesWide = 'wide', // [time,...values]
-  TimeSeriesMany = 'many', // All frames have [time,number]
+  TimeSeriesWide = 'wide',
   TimeSeriesLong = 'long',
+  TimeSeriesMulti = 'multi',
+
+  /** @deprecated use multi */
+  TimeSeriesMany = 'many',
 }
 
 export type PrepareTimeSeriesOptions = {
@@ -37,7 +43,7 @@ export type PrepareTimeSeriesOptions = {
 /**
  * Convert to [][time,number]
  */
-export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
+export function toTimeSeriesMulti(data: DataFrame[]): DataFrame[] {
   if (!Array.isArray(data) || data.length === 0) {
     return data;
   }
@@ -104,7 +110,7 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
             refId: frame.refId,
             meta: {
               ...frame.meta,
-              type: DataFrameType.TimeSeriesMany,
+              type: DataFrameType.TimeSeriesMulti,
             },
             fields: [
               {
@@ -126,7 +132,7 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
           refId: frame.refId,
           meta: {
             ...frame.meta,
-            type: DataFrameType.TimeSeriesMany,
+            type: DataFrameType.TimeSeriesMulti,
           },
           fields: [timeField, field],
           length: frame.length,
@@ -280,31 +286,68 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
+export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
+  // All the string fields
+  const matcher = (field: Field) => field.type === FieldType.string;
+
+  // transform one dataFrame at a time and concat into DataFrame[]
+  return partitionByValues(frame, matcher).map((frame) => {
+    if (!frame.meta) {
+      frame.meta = {};
+    }
+    frame.meta.type = DataFrameType.TimeSeriesMulti;
+    return frame;
+  });
+}
+
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
   description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatibility for panels not supporting the new wide format.`,
   defaultOptions: {},
 
-  operator: (options) => (source) =>
-    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
-    if (format === timeSeriesFormat.TimeSeriesMany) {
-      return toTimeSeriesMany;
+    if (format === timeSeriesFormat.TimeSeriesMany || format === timeSeriesFormat.TimeSeriesMulti) {
+      return toTimeSeriesMulti;
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
     }
+    const joinBy = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 
+    // Single TimeSeriesWide frame (joined by time)
     return (data: DataFrame[]) => {
+      if (!data.length) {
+        return [];
+      }
+
+      // Convert long to wide first
+      const join: DataFrame[] = [];
+      for (const df of data) {
+        if (df.meta?.type === DataFrameType.TimeSeriesLong) {
+          longToMultiTimeSeries(df).forEach((v) => join.push(v));
+        } else {
+          join.push(df);
+        }
+      }
+
       // Join by the first frame
       const frame = outerJoinDataFrames({
-        frames: data,
-        joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        frames: join,
+        joinBy,
         keepOriginIndices: true,
       });
-      return frame ? [frame] : [];
+      if (frame) {
+        if (!frame.meta) {
+          frame.meta = {};
+        }
+        frame.meta.type = DataFrameType.TimeSeriesWide;
+        return [frame];
+      }
+      return [];
     };
   },
 };

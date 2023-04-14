@@ -1,17 +1,17 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
-import { SelectableValue, urlUtil } from '@grafana/data';
+import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@grafana/ui';
 
-import { PlaylistDTO, PlaylistMode } from './types';
+import { Playlist, PlaylistMode } from './types';
 
-export interface StartModalProps {
-  playlist: PlaylistDTO;
+export interface Props {
+  playlist: Playlist;
   onDismiss: () => void;
 }
 
-export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
+export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 
@@ -22,14 +22,14 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
   ];
 
   const onStart = () => {
-    const params: any = {};
+    const params: UrlQueryMap = {};
     if (mode) {
       params.kiosk = mode;
     }
     if (autoFit) {
       params.autofitpanels = true;
     }
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.id}`, params));
+    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.uid}`, params));
   };
 
   return (

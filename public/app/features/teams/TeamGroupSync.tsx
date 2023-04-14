@@ -37,7 +37,7 @@ interface State {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
+const headerTooltip = `Sync LDAP, OAuth or SAML groups with your Grafana teams.`;
 
 export class TeamGroupSync extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -130,17 +130,19 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <CloseButton onClick={this.onToggleAdding} />
             <form onSubmit={this.onAddGroup}>
               <InlineFieldRow>
-                <InlineField label={'Add External Group'}>
+                <InlineField
+                  label={'Add External Group'}
+                  tooltip="LDAP Group Example: cn=users,ou=groups,dc=grafana,dc=org."
+                >
                   <Input
                     type="text"
                     id={'add-external-group'}
+                    placeholder=""
                     value={newGroupId}
                     onChange={this.onNewGroupIdChanged}
-                    placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
                     disabled={isReadOnly}
                   />
                 </InlineField>
-
                 <Button type="submit" disabled={isReadOnly || !this.isNewGroupValid()} style={{ marginLeft: 4 }}>
                   Add group
                 </Button>
@@ -161,7 +163,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               buttonTitle="Add group"
               proTip={headerTooltip}
               proTipLinkTitle="Learn more"
-              proTipLink="https://docs.grafana.org/auth/enhanced_ldap/"
+              proTipLink="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/"
               proTipTarget="_blank"
               buttonDisabled={isReadOnly}
             />

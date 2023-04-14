@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -27,7 +27,7 @@ func TestResponseLimitMiddleware(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Test ResponseLimitMiddleware with limit: %d", tc.limit), func(t *testing.T) {
 			finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				return &http.Response{StatusCode: http.StatusOK, Request: req, Body: ioutil.NopCloser(strings.NewReader("dummy"))}, nil
+				return &http.Response{StatusCode: http.StatusOK, Request: req, Body: io.NopCloser(strings.NewReader("dummy"))}, nil
 			})
 
 			mw := ResponseLimitMiddleware(tc.limit)
@@ -46,7 +46,7 @@ func TestResponseLimitMiddleware(t *testing.T) {
 			require.NotNil(t, res.Body)
 			require.NoError(t, res.Body.Close())
 
-			bodyBytes, err := ioutil.ReadAll(res.Body)
+			bodyBytes, err := io.ReadAll(res.Body)
 			if err != nil {
 				require.EqualError(t, tc.err, err.Error())
 			} else {

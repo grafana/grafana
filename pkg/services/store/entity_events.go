@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,6 +25,8 @@ type EntityType string
 const (
 	EntityTypeDashboard EntityType = "dashboard"
 	EntityTypeFolder    EntityType = "folder"
+	EntityTypeImage     EntityType = "image"
+	EntityTypeJSON      EntityType = "json"
 )
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables
@@ -56,19 +58,18 @@ type EventHandler func(ctx context.Context, e *EntityEvent) error
 
 // EntityEventsService is a temporary solution to support change notifications in an HA setup
 // With this service each system can query for any events that have happened since a fixed time
+//
 //go:generate mockery --name EntityEventsService --structname MockEntityEventsService --inpackage --filename entity_events_mock.go
 type EntityEventsService interface {
 	registry.BackgroundService
 	registry.CanBeDisabled
-	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
-	OnEvent(handler EventHandler)
 
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
 }
 
-func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) EntityEventsService {
+func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore db.DB, features featuremgmt.FeatureToggles) EntityEventsService {
 	if !features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 		return &dummyEntityEventsService{}
 	}
@@ -82,45 +83,15 @@ func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, f
 }
 
 type entityEventService struct {
-	sql           *sqlstore.SQLStore
+	sql           db.DB
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 	eventHandlers []EventHandler
 }
 
-func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	entityEvent := &EntityEvent{
-		EventType: cmd.EventType,
-		EntityId:  cmd.EntityId,
-		Created:   time.Now().Unix(),
-	}
-	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(entityEvent)
-		return err
-	})
-	if err != nil {
-		return err
-	}
-	return e.broadcastEvent(ctx, entityEvent)
-}
-
-func (e *entityEventService) broadcastEvent(ctx context.Context, event *EntityEvent) error {
-	for _, h := range e.eventHandlers {
-		err := h(ctx, event)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (e *entityEventService) OnEvent(handler EventHandler) {
-	e.eventHandlers = append(e.eventHandlers, handler)
-}
-
 func (e *entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
 	var entityEvent *EntityEvent
-	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := e.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		bean := &EntityEvent{}
 		found, err := sess.OrderBy("id desc").Get(bean)
 		if found {
@@ -134,7 +105,7 @@ func (e *entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, er
 
 func (e *entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
 	var evs = make([]*EntityEvent, 0)
-	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := e.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.OrderBy("id asc").Where("id > ?", id).Find(&evs)
 	})
 
@@ -142,7 +113,7 @@ func (e *entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([
 }
 
 func (e *entityEventService) deleteEventsOlderThan(ctx context.Context, duration time.Duration) error {
-	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return e.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		maxCreated := time.Now().Add(-duration)
 		deletedCount, err := sess.Where("created < ?", maxCreated.Unix()).Delete(&EntityEvent{})
 		e.log.Info("deleting old events", "count", deletedCount, "maxCreated", maxCreated)
@@ -177,19 +148,16 @@ func (e *entityEventService) Run(ctx context.Context) error {
 type dummyEntityEventsService struct {
 }
 
+func NewDummyEntityEventsService() EntityEventsService {
+	return dummyEntityEventsService{}
+}
+
 func (d dummyEntityEventsService) Run(ctx context.Context) error {
 	return nil
 }
 
 func (d dummyEntityEventsService) IsDisabled() bool {
 	return false
-}
-
-func (d dummyEntityEventsService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	return nil
-}
-
-func (d dummyEntityEventsService) OnEvent(handler EventHandler) {
 }
 
 func (d dummyEntityEventsService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {

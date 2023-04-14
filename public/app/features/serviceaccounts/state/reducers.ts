@@ -43,7 +43,6 @@ export const { serviceAccountLoaded, serviceAccountTokensLoaded, serviceAccountF
 export const initialStateList: ServiceAccountsState = {
   serviceAccounts: [] as ServiceAccountDTO[],
   isLoading: true,
-  builtInRoles: {},
   roleOptions: [],
   query: '',
   page: 0,
@@ -86,9 +85,6 @@ const serviceAccountsSlice = createSlice({
     acOptionsLoaded: (state, action: PayloadAction<Role[]>): ServiceAccountsState => {
       return { ...state, roleOptions: action.payload };
     },
-    builtInRolesLoaded: (state, action: PayloadAction<Record<string, Role[]>>): ServiceAccountsState => {
-      return { ...state, builtInRoles: action.payload };
-    },
     queryChanged: (state, action: PayloadAction<string>) => {
       return {
         ...state,
@@ -113,7 +109,6 @@ export const {
   serviceAccountsFetchEnd,
   serviceAccountsFetched,
   acOptionsLoaded,
-  builtInRolesLoaded,
   pageChanged,
   stateFilterChanged,
   queryChanged,

@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -12,7 +16,7 @@
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
 //  | Name: Time                        | Name: Value                                                                                            |
 //  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=200, handler=/api/v1/query_range, job=prometheus |
-//  | Type: []time.Time                 | Type: []*float64                                                                                       |
+//  | Type: []time.Time                 | Type: []float64                                                                                        |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
 //  | 2022-01-11 08:25:30.123 +0000 UTC | 21                                                                                                     |
 //  | 2022-01-11 08:25:31.123 +0000 UTC | 32                                                                                                     |
@@ -22,7 +26,11 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -33,7 +41,7 @@
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
 //  | Name: Time                        | Name: Value                                                                                            |
 //  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=400, handler=/api/v1/query_range, job=prometheus |
-//  | Type: []time.Time                 | Type: []*float64                                                                                       |
+//  | Type: []time.Time                 | Type: []float64                                                                                        |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
 //  | 2022-01-11 08:25:29.123 +0000 UTC | 54                                                                                                     |
 //  | 2022-01-11 08:25:32.123 +0000 UTC | 76                                                                                                     |
@@ -42,12 +50,17 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "matrix"
           },
@@ -68,8 +81,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",
@@ -102,7 +114,11 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "matrix"
           },
@@ -123,8 +139,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",

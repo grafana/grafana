@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"testing"
@@ -13,14 +14,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+
+	"github.com/grafana/kindsys"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 )
 
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
@@ -58,12 +66,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 
 		qm := models.QueryModel{
-			LegendFormat:  "legend {{app}}",
-			UtcOffsetSec:  0,
-			ExemplarQuery: true,
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: 0,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Exemplar: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -108,7 +119,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -119,7 +132,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
@@ -154,7 +168,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -165,7 +181,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -196,7 +213,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -207,7 +226,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -236,7 +256,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -248,7 +270,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			JSON: b,
 		}
 
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
@@ -270,14 +293,17 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
@@ -308,14 +334,17 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
@@ -337,13 +366,18 @@ type queryResult struct {
 	Result interface{} `json:"result"`
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface{}, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
-		Headers: map[string]string{},
+		Headers: headers,
 	}
 
 	promRes, err := toAPIResponse(qr)
+	defer func() {
+		if err := promRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("response body close error: %v", err))
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -355,6 +389,10 @@ func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.F
 	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil
+}
+
+func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+	return executeWithHeaders(tctx, query, qr, map[string]string{})
 }
 
 type apiResponse struct {
@@ -380,7 +418,7 @@ func toAPIResponse(d interface{}) (*http.Response, error) {
 
 	return &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(raw)),
+		Body:       io.NopCloser(bytes.NewReader(raw)),
 	}, nil
 }
 
@@ -389,33 +427,41 @@ type testContext struct {
 	queryData    *querydata.QueryData
 }
 
-func setup(wideFrames bool) *testContext {
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		panic(err)
-	}
+func setup(wideFrames bool) (*testContext, error) {
+	tracer := tracing.InitializeTracerForTest()
 	httpProvider := &fakeHttpClientProvider{
 		opts: sdkhttpclient.Options{
 			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
 		},
 		res: &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 	}
-	queryData, _ := querydata.New(
-		httpProvider,
-		setting.NewCfg(),
-		&fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}},
-		tracer,
-		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{"timeInterval": "15s"}`)},
-		&fakeLogger{},
-	)
+	settings := backend.DataSourceInstanceSettings{
+		URL:      "http://localhost:9090",
+		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
+	}
+
+	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false,
+		"prometheusWideSeries": wideFrames}}
+
+	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient, err := httpProvider.New(*opts)
+	if err != nil {
+		return nil, err
+	}
+
+	queryData, _ := querydata.New(httpClient, features, tracer, settings, &logtest.Fake{})
 
 	return &testContext{
 		httpProvider: httpProvider,
 		queryData:    queryData,
-	}
+	}, nil
 }
 
 type fakeFeatureToggles struct {
@@ -429,6 +475,7 @@ func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
 type fakeHttpClientProvider struct {
 	httpclient.Provider
 	opts sdkhttpclient.Options
+	req  *http.Request
 	res  *http.Response
 }
 
@@ -452,5 +499,6 @@ func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
+	p.req = req
 	return p.res, nil
 }

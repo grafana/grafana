@@ -10,6 +10,7 @@ import {
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -25,9 +26,6 @@ export class ElementState implements LayerElement {
   revId = 0;
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
-
-  // Determine whether or not element is in motion or not (via moveable)
-  isMoving = false;
 
   // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
   tempConstraint: Constraint | undefined;
@@ -49,6 +47,8 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    options.background = options.background ?? { color: { fixed: 'transparent' } };
+    options.border = options.border ?? { color: { fixed: 'dark-green' } };
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -74,7 +74,7 @@ export class ElementState implements LayerElement {
   }
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
-  applyLayoutStylesToDiv() {
+  applyLayoutStylesToDiv(disablePointerEvents?: boolean) {
     if (this.isRoot()) {
       // Root supersedes layout engine and is always 100% width + height of panel
       return;
@@ -84,7 +84,11 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
 
+    const editingEnabled = this.getScene()?.isEditingEnabled;
+
     const style: React.CSSProperties = {
+      cursor: editingEnabled ? 'grab' : 'auto',
+      pointerEvents: disablePointerEvents ? 'none' : 'auto',
       position: 'absolute',
       // Minimum element size is 10x10
       minWidth: '10px',
@@ -196,18 +200,30 @@ export class ElementState implements LayerElement {
     if (!elementContainer) {
       elementContainer = this.div && this.div.getBoundingClientRect();
     }
+    let parentBorderWidth = 0;
     if (!parentContainer) {
       parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+      parentBorderWidth = this.parent?.isRoot()
+        ? 0
+        : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
     const relativeTop =
-      elementContainer && parentContainer ? Math.round(elementContainer.top - parentContainer.top) : 0;
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth)
+        : 0;
     const relativeBottom =
-      elementContainer && parentContainer ? Math.round(parentContainer.bottom - elementContainer.bottom) : 0;
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom)
+        : 0;
     const relativeLeft =
-      elementContainer && parentContainer ? Math.round(elementContainer.left - parentContainer.left) : 0;
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth)
+        : 0;
     const relativeRight =
-      elementContainer && parentContainer ? Math.round(parentContainer.right - elementContainer.right) : 0;
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
+        : 0;
 
     const placement = {} as Placement;
 
@@ -270,6 +286,8 @@ export class ElementState implements LayerElement {
 
     this.applyLayoutStylesToDiv();
     this.revId++;
+
+    this.getScene()?.save();
   }
 
   updateData(ctx: DimensionContext) {
@@ -310,14 +328,16 @@ export class ElementState implements LayerElement {
                 css.backgroundSize = '100% 100%';
                 break;
             }
+          } else {
+            css.backgroundImage = '';
           }
         }
       }
     }
 
-    if (border && border.color && border.width) {
+    if (border && border.color && border.width !== undefined) {
       const color = ctx.getColor(border.color);
-      css.borderWidth = border.width;
+      css.borderWidth = `${border.width}px`;
       css.borderStyle = 'solid';
       css.borderColor = color.value();
 
@@ -363,6 +383,12 @@ export class ElementState implements LayerElement {
 
     const scene = this.getScene();
     if (oldName !== newName && scene) {
+      if (isConnectionTarget(this, scene.byName)) {
+        getConnectionsByTarget(this, scene).forEach((connection) => {
+          connection.info.targetName = newName;
+        });
+      }
+
       scene.byName.delete(oldName);
       scene.byName.set(newName, this);
     }
@@ -378,6 +404,20 @@ export class ElementState implements LayerElement {
   };
 
   applyDrag = (event: OnDrag) => {
+    const hasHorizontalCenterConstraint = this.options.constraint?.horizontal === HorizontalConstraint.Center;
+    const hasVerticalCenterConstraint = this.options.constraint?.vertical === VerticalConstraint.Center;
+    if (hasHorizontalCenterConstraint || hasVerticalCenterConstraint) {
+      const numberOfTargets = this.getScene()?.selecto?.getSelectedTargets().length ?? 0;
+      const isMultiSelection = numberOfTargets > 1;
+      if (!isMultiSelection) {
+        const elementContainer = this.div?.getBoundingClientRect();
+        const height = elementContainer?.height ?? 100;
+        const yOffset = hasVerticalCenterConstraint ? height / 4 : 0;
+        event.target.style.transform = `translate(${event.translate[0]}px, ${event.translate[1] - yOffset}px)`;
+        return;
+      }
+    }
+
     event.target.style.transform = event.transform;
   };
 
@@ -413,11 +453,65 @@ export class ElementState implements LayerElement {
     }
   };
 
+  handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
+    const scene = this.getScene();
+    if (!scene?.isEditingEnabled) {
+      this.handleTooltip(event);
+    } else if (!isSelected) {
+      scene?.connections.handleMouseEnter(event);
+    }
+  };
+
+  handleTooltip = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback) {
+      const rect = this.div?.getBoundingClientRect();
+      scene.tooltipCallback({
+        anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
+        element: this,
+        isOpen: false,
+      });
+    }
+  };
+
+  handleMouseLeave = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+      scene.tooltipCallback(undefined);
+    }
+  };
+
+  onElementClick = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+      scene.tooltipCallback({
+        anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        element: this,
+        isOpen: true,
+      });
+    }
+  };
+
   render() {
-    const { item } = this;
+    const { item, div } = this;
+    const scene = this.getScene();
+    // TODO: Rethink selected state handling
+    const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
+
     return (
-      <div key={this.UID} ref={this.initElement}>
-        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
+      <div
+        key={this.UID}
+        ref={this.initElement}
+        onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
+        onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
+        onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+      >
+        <item.display
+          key={`${this.UID}/${this.revId}`}
+          config={this.options.config}
+          data={this.data}
+          isSelected={isSelected}
+        />
       </div>
     );
   }

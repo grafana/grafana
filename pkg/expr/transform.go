@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 var (
@@ -34,6 +35,7 @@ type Request struct {
 	Debug   bool
 	OrgId   int64
 	Queries []Query
+	User    *backend.User
 }
 
 // Query is like plugins.DataSubQuery, but with a a time range, and only the UID
@@ -41,7 +43,7 @@ type Request struct {
 type Query struct {
 	RefID         string
 	TimeRange     TimeRange
-	DataSource    *models.DataSource `json:"datasource"`
+	DataSource    *datasources.DataSource `json:"datasource"`
 	JSON          json.RawMessage
 	Interval      time.Duration
 	QueryType     string
@@ -49,14 +51,38 @@ type Query struct {
 }
 
 // TimeRange is a time.Time based TimeRange.
-type TimeRange struct {
+type TimeRange interface {
+	AbsoluteTime(now time.Time) backend.TimeRange
+}
+
+type AbsoluteTimeRange struct {
 	From time.Time
 	To   time.Time
 }
 
+func (r AbsoluteTimeRange) AbsoluteTime(_ time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: r.From,
+		To:   r.To,
+	}
+}
+
+// RelativeTimeRange is a time range relative to some absolute time.
+type RelativeTimeRange struct {
+	From time.Duration
+	To   time.Duration
+}
+
+func (r RelativeTimeRange) AbsoluteTime(t time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: t.Add(r.From),
+		To:   t.Add(r.To),
+	}
+}
+
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
+func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, fmt.Errorf("server side expressions are disabled")
 	}
@@ -82,7 +108,7 @@ func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.Q
 	}
 
 	// Execute the pipeline
-	responses, err := s.ExecutePipeline(ctx, pipeline)
+	responses, err := s.ExecutePipeline(ctx, now, pipeline)
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +152,8 @@ func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 	return hidden, nil
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
-	return func(ds *models.DataSource) map[string]string {
-		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
-		if err != nil {
-			logger.Error("Failed to decrypt secure json data", "error", err)
-		}
-		return decryptedJsonData
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+	return func(ds *datasources.DataSource) (map[string]string, error) {
+		return s.dataSourceService.DecryptedValues(ctx, ds)
 	}
 }

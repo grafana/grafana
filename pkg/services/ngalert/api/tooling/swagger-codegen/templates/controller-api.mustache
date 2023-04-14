@@ -11,28 +11,28 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
-type {{classname}}ForkingService interface { {{#operation}}
-	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
+type {{classname}} interface { {{#operation}}
+	{{nickname}}(*contextmodel.ReqContext) response.Response{{/operation}}
 }
 
 {{#operations}}{{#operation}}
-func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) response.Response { {{#hasPathParams}}
+	// Parse Path Parameters{{/hasPathParams}}{{#pathParams}}
+	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]{{/pathParams}}
 	{{#bodyParams}}
+	// Parse Request Body
 	conf := apimodels.{{dataType}}{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.fork{{nickname}}(ctx, conf)
-	{{/bodyParams}}
-	{{^bodyParams}}
-	return f.fork{{nickname}}(ctx)
-	{{/bodyParams}}
+	{{/bodyParams}}return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
 }
 {{/operation}}{{/operations}}
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}ForkingService, m *metrics.API) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"),

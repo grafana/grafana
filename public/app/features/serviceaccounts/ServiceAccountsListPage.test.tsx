@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
 
@@ -23,15 +24,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const changeStateFilterMock = jest.fn();
   const createServiceAccountTokenMock = jest.fn();
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Service accounts',
-      },
-    },
-    builtInRoles: {},
     isLoading: false,
     page: 0,
     perPage: 10,
@@ -52,9 +44,13 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ServiceAccountsListPageUnconnected {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <ServiceAccountsListPageUnconnected {...props} />
+    </TestProvider>
+  );
   return {
-    rerender,
+    rerender: (element: JSX.Element) => rerender(<TestProvider>{element}</TestProvider>),
     props,
     changeQueryMock,
     fetchACOptionsMock,

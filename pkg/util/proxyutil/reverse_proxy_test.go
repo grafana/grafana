@@ -8,8 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestReverseProxy(t *testing.T) {
@@ -30,6 +33,9 @@ func TestReverseProxy(t *testing.T) {
 		req.Header.Set("Referer", "https://test.com/api")
 		req.RemoteAddr = "10.0.0.1"
 
+		req = req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
+		req.Header.Set("Authorization", "val")
+
 		rp := NewReverseProxy(log.New("test"), func(req *http.Request) {
 			req.Header.Set("X-KEY", "value")
 		})
@@ -44,11 +50,13 @@ func TestReverseProxy(t *testing.T) {
 		require.Equal(t, "10.0.0.1", actualReq.Header.Get("X-Forwarded-For"))
 		require.Empty(t, actualReq.Header.Get("Origin"))
 		require.Empty(t, actualReq.Header.Get("Referer"))
+		require.Equal(t, "https://test.com/api", actualReq.Header.Get("X-Grafana-Referer"))
 		require.Equal(t, "value", actualReq.Header.Get("X-KEY"))
 		resp := rec.Result()
 		require.Empty(t, resp.Cookies())
 		require.Equal(t, "sandbox", resp.Header.Get("Content-Security-Policy"))
 		require.NoError(t, resp.Body.Close())
+		require.Empty(t, actualReq.Header.Get("Authorization"))
 	})
 
 	t.Run("When proxying a request using WithModifyResponse should call it before default ModifyResponse func", func(t *testing.T) {

@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route Post /api/v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
@@ -38,6 +37,7 @@ import (
 //
 //     Responses:
 //       200: TestRuleResponse
+//       404: NotFound
 
 // swagger:route Post /api/v1/eval testing RouteEvalQueries
 //
@@ -51,6 +51,19 @@ import (
 //
 //     Responses:
 //       200: EvalQueriesResponse
+
+// swagger:route Post /api/v1/rule/backtest testing BacktestConfig
+//
+// Test rule
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: BacktestResult
 
 // swagger:parameters RouteTestReceiverConfig
 type TestReceiverRequest struct {
@@ -69,7 +82,7 @@ type TestRulePayload struct {
 	// Example: (node_filesystem_avail_bytes{fstype!="",job="integrations/node_exporter"} node_filesystem_size_bytes{fstype!="",job="integrations/node_exporter"} * 100 < 5 and node_filesystem_readonly{fstype!="",job="integrations/node_exporter"} == 0)
 	Expr string `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
-	GrafanaManagedCondition *models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+	GrafanaManagedCondition *EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
 // swagger:parameters RouteEvalQueries
@@ -80,8 +93,8 @@ type EvalQueriesRequest struct {
 
 // swagger:model
 type EvalQueriesPayload struct {
-	Data []models.AlertQuery `json:"data"`
-	Now  time.Time           `json:"now"`
+	Data []AlertQuery `json:"data"`
+	Now  time.Time    `json:"now"`
 }
 
 func (p *TestRulePayload) UnmarshalJSON(b []byte) error {
@@ -159,3 +172,29 @@ type Failure ResponseDetails
 type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
+
+// swagger:parameters BacktestConfig
+type BacktestConfigRequest struct {
+	// in:body
+	Body BacktestConfig
+}
+
+// swagger:model
+type BacktestConfig struct {
+	From     time.Time      `json:"from"`
+	To       time.Time      `json:"to"`
+	Interval model.Duration `json:"interval,omitempty"`
+
+	Condition string         `json:"condition"`
+	Data      []AlertQuery   `json:"data"`
+	For       model.Duration `json:"for,omitempty"`
+
+	Title       string            `json:"title"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	NoDataState NoDataState `json:"no_data_state"`
+}
+
+// swagger:model
+type BacktestResult data.Frame

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Spinner, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -14,13 +15,14 @@ interface Props {
   rule: CombinedRule;
   isDeleting: boolean;
   isCreating: boolean;
+  isPaused?: boolean;
 }
 
-export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
+export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => {
   const style = useStyles2(getStyle);
   const { promRule } = rule;
 
-  // return how long the rule has been in it's firing state, if any
+  // return how long the rule has been in its firing state, if any
   const forTime = useMemo(() => {
     if (
       promRule &&
@@ -52,25 +54,24 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
 
   if (isDeleting) {
     return (
-      <HorizontalGroup align="flex-start">
+      <Stack gap={1}>
         <Spinner />
-        deleting
-      </HorizontalGroup>
+        Deleting
+      </Stack>
     );
   } else if (isCreating) {
     return (
-      <HorizontalGroup align="flex-start">
-        {' '}
+      <Stack gap={1}>
         <Spinner />
-        creating
-      </HorizontalGroup>
+        Creating
+      </Stack>
     );
   } else if (promRule && isAlertingRule(promRule)) {
     return (
-      <HorizontalGroup align="flex-start">
-        <AlertStateTag state={promRule.state} />
+      <Stack gap={1}>
+        <AlertStateTag state={promRule.state} isPaused={isPaused} />
         {forTime}
-      </HorizontalGroup>
+      </Stack>
     );
   } else if (promRule && isRecordingRule(promRule)) {
     return <>Recording rule</>;

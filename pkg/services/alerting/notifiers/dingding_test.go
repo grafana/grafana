@@ -4,16 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/validations"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestDingDingNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
@@ -24,7 +27,7 @@ func TestDingDingNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		_, err := newDingDingNotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 	t.Run("settings should trigger incident", func(t *testing.T) {
@@ -37,7 +40,7 @@ func TestDingDingNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := newDingDingNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := newDingDingNotifier(model, encryptionService.GetDecryptedValue, nil)
 		notifier := not.(*DingDingNotifier)
 
 		require.Nil(t, err)
@@ -50,7 +53,7 @@ func TestDingDingNotifier(t *testing.T) {
 				&alerting.Rule{
 					State:   models.AlertStateAlerting,
 					Message: `{host="localhost"}`,
-				}, &validations.OSSPluginRequestValidator{}, nil, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, err = notifier.genBody(evalContext, "")
 			require.Nil(t, err)
 		})

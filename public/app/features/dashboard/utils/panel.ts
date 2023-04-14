@@ -75,7 +75,7 @@ export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) =>
       component: AddLibraryPanelModal,
       props: {
         panel,
-        initialFolderId: dashboard.meta.folderId,
+        initialFolderUid: dashboard.meta.folderUid,
         isOpen: true,
       },
     })
@@ -87,10 +87,7 @@ export const unlinkLibraryPanel = (panel: PanelModel) => {
     new ShowModalReactEvent({
       component: UnlinkModal,
       props: {
-        onConfirm: () => {
-          delete panel.libraryPanel;
-          panel.render();
-        },
+        onConfirm: () => panel.unlinkLibraryPanel(),
         isOpen: true,
       },
     })
@@ -102,10 +99,11 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  console.warn('Toggle legend is not implemented yet');
-  // We need to set panel.legend defaults first
-  // panel.legend.show = !panel.legend.show;
-  refreshPanel(panel);
+  const newOptions = { ...panel.options };
+  newOptions.legend.showLegend === true
+    ? (newOptions.legend.showLegend = false)
+    : (newOptions.legend.showLegend = true);
+  panel.updateOptions(newOptions);
 };
 
 export interface TimeOverrideResult {
@@ -182,4 +180,16 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
+}
+
+export function calculateNewPanelGridPos(dashboard: DashboardModel): PanelModel['gridPos'] {
+  // Move all panels down by the height of the "add panel" widget.
+  // This is to work around an issue with react-grid-layout that can mess up the layout
+  // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
+  const addPanelWidgetHeight = 8;
+  for (const panel of dashboard.panelIterator()) {
+    panel.gridPos.y += addPanelWidgetHeight;
+  }
+
+  return { x: 0, y: 0, w: 12, h: addPanelWidgetHeight };
 }

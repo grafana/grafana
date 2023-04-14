@@ -6,7 +6,7 @@ import { SeriesColorPicker, SeriesIcon } from '@grafana/ui';
 import { TimeSeries } from 'app/core/core';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'] as const;
-export type LegendStat = typeof LEGEND_STATS[number];
+export type LegendStat = (typeof LEGEND_STATS)[number];
 
 export interface LegendLabelProps {
   series: TimeSeries;
@@ -107,7 +107,7 @@ export class LegendItem extends PureComponent<LegendItemProps, LegendItemState> 
     if (asTable) {
       return (
         <tr className={`graph-legend-series ${seriesOptionClasses}`}>
-          <td>
+          <td role="gridcell">
             <div className="graph-legend-series__table-name">{seriesLabel}</div>
           </td>
           {valueItems}
@@ -150,7 +150,8 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         onColorChange={onColorChange}
         onToggleAxis={onToggleAxis}
       />,
-      <a
+      <button
+        type="button"
         className="graph-legend-alias pointer"
         title={label}
         key="label"
@@ -158,7 +159,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
       >
         {label}
-      </a>,
+      </button>,
     ];
   }
 }
@@ -220,14 +221,10 @@ interface LegendValueProps {
 function LegendValue({ value, valueName, asTable, onValueClick }: LegendValueProps) {
   if (asTable) {
     return (
-      <td className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
+      <td role="gridcell" className={`graph-legend-value ${valueName}`}>
         {value}
       </td>
     );
   }
-  return (
-    <div className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
-      {value}
-    </div>
-  );
+  return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
 }

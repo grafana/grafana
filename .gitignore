@@ -40,6 +40,8 @@ tsconfig.tsbuildinfo
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
 /devenv/docker/blocks/saml-enterprise
+# This is the new place of the block, but I leave the previous here for a while
+/devenv/docker/blocks/auth/saml-enterprise
 
 /tmp
 tools/phantomjs/phantomjs
@@ -59,6 +61,7 @@ public/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+.fleet/
 *.iml
 *.tmp
 .DS_Store
@@ -73,7 +76,11 @@ public/css/*.min.css
 
 # devenv
 /devenv/docker-compose.yaml
+/devenv/docker-compose.override.yaml
 /devenv/.env
+/devenv/docker/blocks/tempo/tempo-data/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
+/devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 
 conf/custom.ini
 /conf/provisioning/**/custom.yaml
@@ -89,6 +96,8 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
 /pkg/server/wireexts_enterprise.go
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
@@ -99,6 +108,8 @@ debug.test
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
+pkg/cmd/grafana-server/__debug_bin
+pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore OSX indexing
 .DS_Store
@@ -117,12 +128,21 @@ debug.test
 
 /scripts/build/release_publisher/release_publisher
 *.patch
+!.yarn/patches/*.patch
 
 # Ignoring frontend packages specifics
+/packages/grafana-ui/.yarn/.cache
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
+/packages/**/package.tgz
+/packages/grafana-toolkit/sass
+## CI places the packages in a different location
+/npm-artifacts/*.tgz
+
+# Ignore frontend build manifest
+manifest.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
@@ -141,6 +161,8 @@ compilation-stats.json
 /e2e/benchmarks/**/results/*
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
+/e2e/extensions
+/e2e/extensions-suite
 
 # grafana server
 /scripts/grafana-server/server.log
@@ -155,14 +177,17 @@ compilation-stats.json
 # auto generated frontend docs
 /docs/sources/packages_api
 
-# auto generated Go files
-*_gen.go
-!pkg/services/featuremgmt/toggles_gen.go
-!pkg/coremodel/**/*_gen.go
+# wire generated files
+**/wire_gen.go
 
-# Auto-generated localisation files
+# Auto-generated internationalization files
 public/locales/_build/
-public/locales/**/*.js
+public/locales/*/*.js
+public/locales/*/grafana_old.json
+
+# Auto-generated swagger intermediate file
+public/api-spec.json
 
 deployment_tools_config.json
 
+.betterer.cache

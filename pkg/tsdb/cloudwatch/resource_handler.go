@@ -8,19 +8,23 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/regions", handleResourceReq(e.handleGetRegions))
-	mux.HandleFunc("/namespaces", handleResourceReq(e.handleGetNamespaces))
-	mux.HandleFunc("/metrics", handleResourceReq(e.handleGetMetrics))
-	mux.HandleFunc("/all-metrics", handleResourceReq(e.handleGetAllMetrics))
-	mux.HandleFunc("/dimension-keys", handleResourceReq(e.handleGetDimensionKeys))
-	mux.HandleFunc("/dimension-values", handleResourceReq(e.handleGetDimensionValues))
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
+	mux.HandleFunc("/log-groups", routes.ResourceRequestMiddleware(routes.LogGroupsHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/metrics", routes.ResourceRequestMiddleware(routes.MetricsHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/dimension-keys", routes.ResourceRequestMiddleware(routes.DimensionKeysHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/accounts", routes.ResourceRequestMiddleware(routes.AccountsHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/log-group-fields", routes.ResourceRequestMiddleware(routes.LogGroupFieldsHandler, logger, e.getRequestContext))
 	return mux
 }
 
@@ -33,19 +37,23 @@ func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *ht
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		data, err := handleFunc(pluginContext, req.URL.Query())
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		body, err := json.Marshal(data)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
-			plog.Error("Unable to write HTTP response", "error", err)
+			logger.Error("Unable to write HTTP response", "error", err)
+			return
 		}
 	}
 }
@@ -54,6 +62,6 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(code)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		plog.Error("Unable to write HTTP response", "error", err)
+		logger.Error("Unable to write HTTP response", "error", err)
 	}
 }

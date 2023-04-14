@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 
 export interface AzureAuthSettings {
   /** Set to true if Azure authentication supported by the datasource */
@@ -19,7 +19,7 @@ export interface AzureAuthSettings {
   readonly azureSettingsUI?: React.ComponentType<HttpSettingsBaseProps>;
 }
 
-export interface HttpSettingsBaseProps<JSONData = any, SecureJSONData = any> {
+export interface HttpSettingsBaseProps<JSONData extends DataSourceJsonData = any, SecureJSONData = any> {
   /** The configuration object of the data source */
   dataSourceConfig: DataSourceSettings<JSONData, SecureJSONData>;
   /** Callback for handling changes to the configuration object */

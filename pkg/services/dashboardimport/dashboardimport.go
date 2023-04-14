@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ImportDashboardInput definition of input parameters when importing a dashboard.
@@ -25,7 +25,7 @@ type ImportDashboardRequest struct {
 	FolderId  int64                  `json:"folderId"`
 	FolderUid string                 `json:"folderUid"`
 
-	User *models.SignedInUser `json:"-"`
+	User *user.SignedInUser `json:"-"`
 }
 
 // ImportDashboardResponse response object returned when importing a dashboard.
@@ -39,8 +39,9 @@ type ImportDashboardResponse struct {
 	Slug             string `json:"slug"`
 	DashboardId      int64  `json:"dashboardId"`
 	FolderId         int64  `json:"folderId"`
-	ImportedRevision int64  `json:"importedRevision"`
-	Revision         int64  `json:"revision"`
+	FolderUID        string `json:"folderUid"`
+	ImportedRevision int64  `json:"importedRevision,omitempty"` // Only used for plugin imports
+	Revision         int64  `json:"revision,omitempty"`         // Only used for plugin imports
 	Description      string `json:"description"`
 	Path             string `json:"path"`
 	Removed          bool   `json:"removed"`

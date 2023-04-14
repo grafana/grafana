@@ -8,8 +8,8 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 
 import { InstanceState } from '../CanvasPanel';
 
-import { LayerElementListEditor } from './LayerElementListEditor';
 import { PlacementEditor } from './PlacementEditor';
+import { TreeNavigationEditor } from './TreeNavigationEditor';
 import { optionBuilder } from './options';
 
 export interface LayerEditorProps {
@@ -32,7 +32,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         break;
       }
 
-      if (element.parent) {
+      if (element && element.parent) {
         scene.currentLayer = element.parent;
         break;
       }
@@ -72,7 +72,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         id: 'content',
         path: 'root',
         name: 'Elements',
-        editor: LayerElementListEditor,
+        editor: TreeNavigationEditor,
         settings: { scene, layer: scene.currentLayer, selected },
       });
 

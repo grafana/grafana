@@ -1,0 +1,33 @@
+{
+  "type": "datasource",
+  "name": "Phlare",
+  "id": "phlare",
+  "category": "profiling",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+  "streaming": false,
+  "tracing": false,
+  "backend": true,
+
+  "info": {
+    "description": "Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://www.grafana.com"
+    },
+    "keywords": ["grafana", "datasource", "phlare", "flamegraph"],
+    "logos": {
+      "small": "img/phlare_icon_color.svg",
+      "large": "img/phlare_icon_color.svg"
+    },
+    "links": [
+      {
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/phlare"
+      }
+    ]
+  }
+}

@@ -1,24 +1,25 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useAsync } from 'react-use';
 
-import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
+import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema';
+import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { changeDatasource } from 'app/features/explore/state/datasource';
+import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
+import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-
-import { ShowConfirmModalEvent } from '../../../types/events';
-import { changeDatasource } from '../state/datasource';
-import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
-import { setQueries } from '../state/query';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
@@ -41,115 +42,107 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps<T extends DataQuery = DataQuery> {
   query: RichHistoryQuery<T>;
-  dsImg: string;
-  isRemoved: boolean;
 }
 
 export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
 
-const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
-  const rigtColumnWidth = '240px';
-  const rigtColumnContentWidth = '170px';
+  const rightColumnWidth = '240px';
+  const rightColumnContentWidth = '170px';
 
   /* If datasource was removed, card will have inactive color */
-  const cardColor = theme.colors.bg2;
+  const cardColor = theme.colors.background.secondary;
 
   return {
     queryCard: css`
+      position: relative;
       display: flex;
       flex-direction: column;
-      border: 1px solid ${theme.colors.border1};
-      margin: ${theme.spacing.sm} 0;
+      border: 1px solid ${theme.colors.border.weak};
+      margin: ${theme.spacing(1)} 0;
       background-color: ${cardColor};
-      border-radius: ${theme.border.radius.sm};
+      border-radius: ${theme.shape.borderRadius(1)};
       .starred {
-        color: ${theme.palette.orange};
+        color: ${theme.v1.palette.orange};
       }
     `,
     cardRow: css`
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${theme.colors.border1};
-        padding: ${theme.spacing.xs} ${theme.spacing.sm};
+        border-bottom: 1px solid ${theme.colors.border.weak};
+        padding: ${theme.spacing(0.5, 1)};
       }
       img {
-        height: ${theme.typography.size.base};
-        max-width: ${theme.typography.size.base};
-        margin-right: ${theme.spacing.sm};
+        height: ${theme.typography.fontSize}px;
+        max-width: ${theme.typography.fontSize}px;
+        margin-right: ${theme.spacing(1)};
       }
     `,
-    datasourceContainer: css`
-      display: flex;
-      align-items: center;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-    `,
     queryActionButtons: css`
-      max-width: ${rigtColumnContentWidth};
+      max-width: ${rightColumnContentWidth};
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
       button {
-        margin-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing(1)};
       }
     `,
     queryContainer: css`
-      font-weight: ${theme.typography.weight.semibold};
-      width: calc(100% - ${rigtColumnWidth});
-    `,
-    queryRow: css`
-      border-top: 1px solid ${theme.colors.border1};
-      word-break: break-all;
-      padding: 4px 2px;
-      :first-child {
-        border-top: none;
-        padding: 0 0 4px 0;
-      }
+      font-weight: ${theme.typography.fontWeightMedium};
+      width: calc(100% - ${rightColumnWidth});
     `,
     updateCommentContainer: css`
-      width: calc(100% + ${rigtColumnWidth});
-      margin-top: ${theme.spacing.sm};
+      width: calc(100% + ${rightColumnWidth});
+      margin-top: ${theme.spacing(1)};
     `,
     comment: css`
       overflow-wrap: break-word;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-top: ${theme.spacing.xs};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightRegular};
+      margin-top: ${theme.spacing(0.5)};
     `,
     commentButtonRow: css`
       > * {
-        margin-right: ${theme.spacing.sm};
+        margin-top: ${theme.spacing(1)};
+        margin-right: ${theme.spacing(1)};
       }
     `,
     textArea: css`
       width: 100%;
     `,
     runButton: css`
-      max-width: ${rigtColumnContentWidth};
+      max-width: ${rightColumnContentWidth};
       display: flex;
       justify-content: flex-end;
       button {
         height: auto;
-        padding: ${theme.spacing.xs} ${theme.spacing.md};
+        padding: ${theme.spacing(0.5, 2)};
         line-height: 1.4;
         span {
           white-space: normal !important;
         }
       }
     `,
+    loader: css`
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: ${theme.colors.background.secondary};
+    `,
   };
-});
+};
 
 export function RichHistoryCard(props: Props) {
   const {
     query,
-    dsImg,
-    isRemoved,
     commentHistoryItem,
     starHistoryItem,
     deleteHistoryItem,
@@ -160,38 +153,68 @@ export function RichHistoryCard(props: Props) {
   } = props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
-  const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);
+  const { value, loading } = useAsync(async () => {
+    let dsInstance: DataSourceApi | undefined;
+    try {
+      dsInstance = await getDataSourceSrv().get(query.datasourceUid);
+    } catch (e) {}
 
-  useEffect(() => {
-    const getQueryDsInstance = async () => {
-      const ds = await getDataSourceSrv().get(query.datasourceName);
-      setQueryDsInstance(ds);
+    return {
+      dsInstance,
+      queries: await Promise.all(
+        query.queries.map(async (query) => {
+          let datasource;
+          if (dsInstance?.meta.mixed) {
+            try {
+              datasource = await getDataSourceSrv().get(query.datasource);
+            } catch (e) {}
+          } else {
+            datasource = dsInstance;
+          }
+
+          return {
+            query,
+            datasource,
+          };
+        })
+      ),
     };
+  }, [query.datasourceUid, query.queries]);
 
-    getQueryDsInstance();
-  }, [query.datasourceName]);
-
-  const theme = useTheme();
-  const styles = getStyles(theme, isRemoved);
+  const styles = useStyles2(getStyles);
 
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
-    const differentDataSource = query.datasourceName !== datasourceInstance?.name;
+    const differentDataSource = query.datasourceUid !== datasourceInstance?.uid;
     if (differentDataSource) {
-      await changeDatasource(exploreId, query.datasourceName, { importQueries: true });
-      setQueries(exploreId, queriesToRun);
-    } else {
-      setQueries(exploreId, queriesToRun);
+      await changeDatasource(exploreId, query.datasourceUid);
     }
+    setQueries(exploreId, queriesToRun);
+
     reportInteraction('grafana_explore_query_history_run', {
       queryHistoryEnabled: config.queryHistoryEnabled,
       differentDataSource,
     });
   };
 
-  const onCopyQuery = () => {
-    const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
-    copyStringToClipboard(queriesToCopy);
+  const onCopyQuery = async () => {
+    const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
+    reportInteraction('grafana_explore_query_history_copy_query', {
+      datasources,
+      mixed: Boolean(value?.dsInstance?.meta.mixed),
+    });
+
+    if (loading || !value) {
+      return;
+    }
+
+    const queriesText = value.queries
+      .map((q) => {
+        return createQueryText(q.query, q.datasource);
+      })
+      .join('\n');
+
+    copyStringToClipboard(queriesText);
     dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
   };
 
@@ -261,15 +284,14 @@ export function RichHistoryCard(props: Props) {
   const updateComment = (
     <div className={styles.updateCommentContainer} aria-label={comment ? 'Update comment form' : 'Add comment form'}>
       <TextArea
+        onKeyDown={onKeyDown}
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={(e) => setComment(e.currentTarget.value)}
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Button onClick={onUpdateComment} aria-label="Submit button">
-          Save comment
-        </Button>
+        <Button onClick={onUpdateComment}>Save comment</Button>
         <Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
         </Button>
@@ -285,7 +307,7 @@ export function RichHistoryCard(props: Props) {
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
       <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
-      {!isRemoved && (
+      {value?.dsInstance && (
         <IconButton name="share-alt" onClick={onCreateShortLink} title="Copy shortened link to clipboard" />
       )}
       <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
@@ -299,25 +321,16 @@ export function RichHistoryCard(props: Props) {
   );
 
   return (
-    <div className={styles.queryCard} onKeyDown={onKeyDown}>
+    <div className={styles.queryCard}>
       <div className={styles.cardRow}>
-        <div className={styles.datasourceContainer}>
-          <img src={dsImg} aria-label="Data source icon" />
-          <div aria-label="Data source name">
-            {isRemoved ? 'Data source does not exist anymore' : query.datasourceName}
-          </div>
-        </div>
+        <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
+
         {queryActionButtons}
       </div>
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
-          {query.queries.map((q, i) => {
-            const queryText = createQueryText(q, queryDsInstance);
-            return (
-              <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {queryText}
-              </div>
-            );
+          {value?.queries.map((q, i) => {
+            return <Query query={q} key={`${q}-${i}`} showDsInfo={value?.dsInstance?.meta.mixed} />;
           })}
           {!activeUpdateComment && query.comment && (
             <div aria-label="Query comment" className={styles.comment}>
@@ -328,12 +341,89 @@ export function RichHistoryCard(props: Props) {
         </div>
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
-              {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
+            <Button
+              variant="secondary"
+              onClick={onRunQuery}
+              disabled={!value?.dsInstance || value.queries.some((query) => !query.datasource)}
+            >
+              {datasourceInstance?.uid === query.datasourceUid ? 'Run query' : 'Switch data source and run query'}
             </Button>
           </div>
         )}
       </div>
+      {loading && <LoadingPlaceholder text="loading..." className={styles.loader} />}
+    </div>
+  );
+}
+
+const getQueryStyles = (theme: GrafanaTheme2) => ({
+  queryRow: css`
+    border-top: 1px solid ${theme.colors.border.weak};
+    display: flex;
+    flex-direction: row;
+    padding: 4px 0px;
+    gap: 4px;
+    :first-child {
+      border-top: none;
+    }
+  `,
+  dsInfoContainer: css`
+    display: flex;
+    align-items: center;
+  `,
+  queryText: css`
+    word-break: break-all;
+  `,
+});
+
+interface QueryProps {
+  query: {
+    query: DataQuery;
+    datasource?: DataSourceApi;
+  };
+  /** Show datasource info (icon+name) alongside the query text */
+  showDsInfo?: boolean;
+}
+
+const Query = ({ query, showDsInfo = false }: QueryProps) => {
+  const styles = useStyles2(getQueryStyles);
+
+  return (
+    <div className={styles.queryRow}>
+      {showDsInfo && (
+        <div className={styles.dsInfoContainer}>
+          <DatasourceInfo dsApi={query.datasource} size="md" />
+          {': '}
+        </div>
+      )}
+      <span aria-label="Query text" className={styles.queryText}>
+        {createQueryText(query.query, query.datasource)}
+      </span>
+    </div>
+  );
+};
+
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
+  css`
+    display: flex;
+    align-items: center;
+    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    white-space: nowrap;
+  `;
+
+function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
+  const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles}>
+      <img
+        src={dsApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
+        alt={dsApi?.type || 'Data source does not exist anymore'}
+        aria-label="Data source icon"
+      />
+      <div aria-label="Data source name">{dsApi?.name || 'Data source does not exist anymore'}</div>
     </div>
   );
 }

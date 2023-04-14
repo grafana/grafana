@@ -3,14 +3,16 @@ package notifiers
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 )
 
 func TestLineNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
@@ -21,7 +23,7 @@ func TestLineNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		_, err := NewLINENotifier(model, encryptionService.GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 	t.Run("settings should trigger incident", func(t *testing.T) {
@@ -36,7 +38,7 @@ func TestLineNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+		not, err := NewLINENotifier(model, encryptionService.GetDecryptedValue, nil)
 		lineNotifier := not.(*LineNotifier)
 
 		require.Nil(t, err)

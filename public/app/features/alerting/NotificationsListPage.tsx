@@ -4,7 +4,7 @@ import { useAsyncFn } from 'react-use';
 import { getBackendSrv } from '@grafana/runtime';
 import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { appEvents } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { AlertNotification } from 'app/types/alerting';
@@ -52,7 +52,7 @@ const NotificationsListPage: FC = () => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        {state.error && <p>{state.error}</p>}
+        {state.error && <p>{state.error.message}</p>}
         {!!notifications.length && (
           <>
             <div className="page-action-bar">

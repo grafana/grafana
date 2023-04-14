@@ -1,9 +1,9 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 
-import { QueryBuilderOperation } from './types';
+import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './types';
 
-// This is used for error type for some reason
-export const ErrorName = '⚠';
+// Although 0 isn't explicitly provided in the lezer-promql & @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
+export const ErrorId = 0;
 
 export function getLeftMostChild(cur: SyntaxNode): SyntaxNode {
   return cur.firstChild ? getLeftMostChild(cur.firstChild) : cur;
@@ -32,7 +32,7 @@ const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\
 
 /**
  * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
- * the same time we can get the variable and it's format back from it.
+ * the same time we can get the variable and its format back from it.
  * @param expr
  */
 export function replaceVariables(expr: string) {
@@ -65,7 +65,7 @@ const varTypeFunc = [
  * Get back the text with variables in their original format.
  * @param expr
  */
-function returnVariables(expr: string) {
+export function returnVariables(expr: string) {
   return expr.replace(/__V_(\d)__(.+?)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
     return varTypeFunc[parseInt(type, 10)](v, f);
   });
@@ -97,7 +97,7 @@ export function makeBinOp(
   numberNode: SyntaxNode,
   hasBool: boolean
 ): QueryBuilderOperation {
-  const params: any[] = [parseFloat(getString(expr, numberNode))];
+  const params: QueryBuilderOperationParamValue[] = [parseFloat(getString(expr, numberNode))];
   if (opDef.comparison) {
     params.push(hasBool);
   }
@@ -113,10 +113,11 @@ export function makeBinOp(
  * not be safe is it would also find arguments of nested functions.
  * @param expr
  * @param cur
- * @param type
+ * @param type - can be string or number, some data-sources (loki) haven't migrated over to using numeric constants defined in the lezer parsing library (e.g. lezer-promql).
+ * @todo Remove string type definition when all data-sources have migrated to numeric constants
  */
-export function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
-  if (cur.name === type) {
+export function getAllByType(expr: string, cur: SyntaxNode, type: number | string): string[] {
+  if (cur.type.id === type || cur.name === type) {
     return [getString(expr, cur)];
   }
   const values: string[] = [];
@@ -183,7 +184,7 @@ function jsonToText(
   let text = newIndent + name;
 
   const children = node.children;
-  children.forEach((child: any, index: number) => {
+  children.forEach((child, index) => {
     const isLastChild = index === children.length - 1;
     text +=
       '\n' +
@@ -199,3 +200,11 @@ function jsonToText(
 function nodeToString(expr: string, node: SyntaxNode) {
   return node.name + ': ' + getString(expr, node);
 }
+
+/**
+ * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
+ */
+export const regexifyLabelValuesQueryString = (query: string) => {
+  const queryArray = query.split(' ');
+  return queryArray.map((query) => `${query}.*`).join('');
+};

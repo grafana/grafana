@@ -25,15 +25,12 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
       <div className={styles.header}>
         <div className={styles.group} data-testid="alert-group">
           <CollapseToggle
+            size="sm"
             isCollapsed={isCollapsed}
             onToggle={() => setIsCollapsed(!isCollapsed)}
             data-testid="alert-group-collapse-toggle"
           />
-          {Object.keys(group.labels).length ? (
-            <AlertLabels className={styles.headerLabels} labels={group.labels} />
-          ) : (
-            <span>No grouping</span>
-          )}
+          {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : <span>No grouping</span>}
         </div>
         <AlertGroupHeader group={group} />
       </div>
@@ -47,10 +44,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & + & {
       margin-top: ${theme.spacing(2)};
     }
-  `,
-  headerLabels: css`
-    padding-bottom: 0 !important;
-    margin-bottom: -${theme.spacing(0.5)};
   `,
   header: css`
     display: flex;

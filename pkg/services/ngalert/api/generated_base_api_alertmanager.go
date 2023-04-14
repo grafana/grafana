@@ -12,145 +12,177 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type AlertmanagerApiForkingService interface {
-	RouteCreateGrafanaSilence(*models.ReqContext) response.Response
-	RouteCreateSilence(*models.ReqContext) response.Response
-	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
-	RouteDeleteGrafanaAlertingConfig(*models.ReqContext) response.Response
-	RouteDeleteGrafanaSilence(*models.ReqContext) response.Response
-	RouteDeleteSilence(*models.ReqContext) response.Response
-	RouteGetAMAlertGroups(*models.ReqContext) response.Response
-	RouteGetAMAlerts(*models.ReqContext) response.Response
-	RouteGetAMStatus(*models.ReqContext) response.Response
-	RouteGetAlertingConfig(*models.ReqContext) response.Response
-	RouteGetGrafanaAMAlertGroups(*models.ReqContext) response.Response
-	RouteGetGrafanaAMAlerts(*models.ReqContext) response.Response
-	RouteGetGrafanaAMStatus(*models.ReqContext) response.Response
-	RouteGetGrafanaAlertingConfig(*models.ReqContext) response.Response
-	RouteGetGrafanaSilence(*models.ReqContext) response.Response
-	RouteGetGrafanaSilences(*models.ReqContext) response.Response
-	RouteGetSilence(*models.ReqContext) response.Response
-	RouteGetSilences(*models.ReqContext) response.Response
-	RoutePostAMAlerts(*models.ReqContext) response.Response
-	RoutePostAlertingConfig(*models.ReqContext) response.Response
-	RoutePostGrafanaAMAlerts(*models.ReqContext) response.Response
-	RoutePostGrafanaAlertingConfig(*models.ReqContext) response.Response
-	RoutePostTestGrafanaReceivers(*models.ReqContext) response.Response
-	RoutePostTestReceivers(*models.ReqContext) response.Response
+type AlertmanagerApi interface {
+	RouteCreateGrafanaSilence(*contextmodel.ReqContext) response.Response
+	RouteCreateSilence(*contextmodel.ReqContext) response.Response
+	RouteDeleteAlertingConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteGrafanaSilence(*contextmodel.ReqContext) response.Response
+	RouteDeleteSilence(*contextmodel.ReqContext) response.Response
+	RouteGetAMAlertGroups(*contextmodel.ReqContext) response.Response
+	RouteGetAMAlerts(*contextmodel.ReqContext) response.Response
+	RouteGetAMStatus(*contextmodel.ReqContext) response.Response
+	RouteGetAlertingConfig(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAMAlertGroups(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAMAlerts(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAMStatus(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAlertingConfigHistory(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaReceivers(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaSilence(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaSilences(*contextmodel.ReqContext) response.Response
+	RouteGetSilence(*contextmodel.ReqContext) response.Response
+	RouteGetSilences(*contextmodel.ReqContext) response.Response
+	RoutePostAMAlerts(*contextmodel.ReqContext) response.Response
+	RoutePostAlertingConfig(*contextmodel.ReqContext) response.Response
+	RoutePostGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
+	RoutePostGrafanaAlertingConfigHistoryActivate(*contextmodel.ReqContext) response.Response
+	RoutePostTestGrafanaReceivers(*contextmodel.ReqContext) response.Response
 }
 
-func (f *ForkedAlertmanagerApi) RouteCreateGrafanaSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteCreateGrafanaSilence(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteCreateGrafanaSilence(ctx, conf)
+	return f.handleRouteCreateGrafanaSilence(ctx, conf)
 }
-func (f *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteCreateSilence(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteCreateSilence(ctx, conf)
+	return f.handleRouteCreateSilence(ctx, conf, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteAlertingConfig(ctx)
+func (f *AlertmanagerApiHandler) RouteDeleteAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteDeleteAlertingConfig(ctx, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteGrafanaAlertingConfig(ctx)
+func (f *AlertmanagerApiHandler) RouteDeleteGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteDeleteGrafanaAlertingConfig(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteGrafanaSilence(ctx)
+func (f *AlertmanagerApiHandler) RouteDeleteGrafanaSilence(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	return f.handleRouteDeleteGrafanaSilence(ctx, silenceIdParam)
 }
-func (f *ForkedAlertmanagerApi) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteSilence(ctx)
+func (f *AlertmanagerApiHandler) RouteDeleteSilence(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteDeleteSilence(ctx, silenceIdParam, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAMAlertGroups(ctx)
+func (f *AlertmanagerApiHandler) RouteGetAMAlertGroups(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetAMAlertGroups(ctx, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAMAlerts(ctx)
+func (f *AlertmanagerApiHandler) RouteGetAMAlerts(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetAMAlerts(ctx, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAMStatus(ctx)
+func (f *AlertmanagerApiHandler) RouteGetAMStatus(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetAMStatus(ctx, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertingConfig(ctx)
+func (f *AlertmanagerApiHandler) RouteGetAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetAlertingConfig(ctx, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMAlertGroups(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaAMAlertGroups(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAMAlertGroups(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAMAlertGroups(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaAMAlerts(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAMAlerts(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAMAlerts(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMStatus(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaAMStatus(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAMStatus(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAMStatus(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteGetGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaAlertingConfig(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAlertingConfig(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaSilence(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfigHistory(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAlertingConfigHistory(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaSilences(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaReceivers(ctx)
 }
-func (f *ForkedAlertmanagerApi) RouteGetSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetSilence(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaSilence(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	return f.handleRouteGetGrafanaSilence(ctx, silenceIdParam)
 }
-func (f *ForkedAlertmanagerApi) RouteGetSilences(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetSilences(ctx)
+func (f *AlertmanagerApiHandler) RouteGetGrafanaSilences(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaSilences(ctx)
 }
-func (f *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetSilence(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetSilence(ctx, silenceIdParam, datasourceUIDParam)
+}
+func (f *AlertmanagerApiHandler) RouteGetSilences(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetSilences(ctx, datasourceUIDParam)
+}
+func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	// Parse Request Body
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostAMAlerts(ctx, conf)
+	return f.handleRoutePostAMAlerts(ctx, conf, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	// Parse Request Body
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostAlertingConfig(ctx, conf)
+	return f.handleRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
 }
-func (f *ForkedAlertmanagerApi) RoutePostGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
-	conf := apimodels.PostableAlerts{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	return f.forkRoutePostGrafanaAMAlerts(ctx, conf)
-}
-func (f *ForkedAlertmanagerApi) RoutePostGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostGrafanaAlertingConfig(ctx, conf)
+	return f.handleRoutePostGrafanaAlertingConfig(ctx, conf)
 }
-func (f *ForkedAlertmanagerApi) RoutePostTestGrafanaReceivers(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	idParam := web.Params(ctx.Req)[":id"]
+	return f.handleRoutePostGrafanaAlertingConfigHistoryActivate(ctx, idParam)
+}
+func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostTestGrafanaReceivers(ctx, conf)
-}
-func (f *ForkedAlertmanagerApi) RoutePostTestReceivers(ctx *models.ReqContext) response.Response {
-	conf := apimodels.TestReceiversConfigBodyParams{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	return f.forkRoutePostTestReceivers(ctx, conf)
+	return f.handleRoutePostTestGrafanaReceivers(ctx, conf)
 }
 
-func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingService, m *metrics.API) {
+func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silences"),
@@ -293,6 +325,26 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 			),
 		)
 		group.Get(
+			toMacaronPath("/api/alertmanager/grafana/config/history"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/history"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/grafana/config/history",
+				srv.RouteGetGrafanaAlertingConfigHistory,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/alertmanager/grafana/config/api/v1/receivers"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/receivers"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/grafana/config/api/v1/receivers",
+				srv.RouteGetGrafanaReceivers,
+				m,
+			),
+		)
+		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
@@ -353,16 +405,6 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts"),
-			api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts"),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/alertmanager/grafana/api/v2/alerts",
-				srv.RoutePostGrafanaAMAlerts,
-				m,
-			),
-		)
-		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
@@ -373,22 +415,22 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 			),
 		)
 		group.Post(
+			toMacaronPath("/api/alertmanager/grafana/config/history/{id}/_activate"),
+			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/history/{id}/_activate"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/alertmanager/grafana/config/history/{id}/_activate",
+				srv.RoutePostGrafanaAlertingConfigHistoryActivate,
+				m,
+			),
+		)
+		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/receivers/test"),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/receivers/test"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/config/api/v1/receivers/test",
 				srv.RoutePostTestGrafanaReceivers,
-				m,
-			),
-		)
-		group.Post(
-			toMacaronPath("/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test"),
-			api.authorize(http.MethodPost, "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test"),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test",
-				srv.RoutePostTestReceivers,
 				m,
 			),
 		)

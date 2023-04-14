@@ -1,23 +1,15 @@
 /**
- * Returns where the subMenu should be positioned (left or right)
+ * Returns whether the provided element overflows the viewport bounds
  *
- * @param element HTMLElement for the subMenu wrapper
+ * @param element The element we want to know about
  */
-export const getPosition = (element: HTMLElement | null) => {
+export const isElementOverflowing = (element: HTMLElement | null) => {
   if (!element) {
-    return 'left';
+    return false;
   }
 
   const wrapperPos = element.parentElement!.getBoundingClientRect();
   const pos = element.getBoundingClientRect();
 
-  if (pos.width === 0) {
-    return 'left';
-  }
-
-  if (wrapperPos.right + pos.width + 10 > window.innerWidth) {
-    return 'right';
-  } else {
-    return 'left';
-  }
+  return pos.width !== 0 && wrapperPos.right + pos.width + 10 > window.innerWidth;
 };

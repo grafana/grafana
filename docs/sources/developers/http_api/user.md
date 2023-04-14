@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/user/
-  - /docs/grafana/latest/http_api/user/
+  - ../../http_api/user/
+canonical: /docs/grafana/latest/developers/http_api/user/
 description: Grafana User HTTP API
 keywords:
   - grafana
@@ -9,12 +9,12 @@ keywords:
   - documentation
   - api
   - user
-title: 'User HTTP API '
+title: User HTTP API
 ---
 
 # User API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Search Users
 

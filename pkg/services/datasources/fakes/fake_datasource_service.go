@@ -5,100 +5,108 @@ import (
 	"net/http"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type FakeDataSourceService struct {
-	lastId      int64
-	DataSources []*models.DataSource
+	lastID                int64
+	DataSources           []*datasources.DataSource
+	SimulatePluginFailure bool
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
-func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
-	for _, datasource := range s.DataSources {
-		idMatch := query.Id != 0 && query.Id == datasource.Id
-		uidMatch := query.Uid != "" && query.Uid == datasource.Uid
-		nameMatch := query.Name != "" && query.Name == datasource.Name
+func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	for _, dataSource := range s.DataSources {
+		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		uidMatch := query.UID != "" && query.UID == dataSource.UID
+		nameMatch := query.Name != "" && query.Name == dataSource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			return dataSource, nil
 		}
 	}
-	return models.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
+	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
-		orgMatch := query.OrgId != 0 && query.OrgId == datasource.OrgId
+		orgMatch := query.OrgID != 0 && query.OrgID == datasource.OrgID
 		if orgMatch {
-			query.Result = append(query.Result, datasource)
+			dataSources = append(dataSources, datasource)
 		}
 	}
-	return nil
+	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	return s.DataSources, nil
+}
+
+func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
+		if query.OrgID > 0 && datasource.OrgID != query.OrgID {
+			continue
+		}
 		typeMatch := query.Type != "" && query.Type == datasource.Type
 		if typeMatch {
-			query.Result = append(query.Result, datasource)
+			dataSources = append(dataSources, datasource)
 		}
 	}
-	return nil
+	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-	if s.lastId == 0 {
-		s.lastId = int64(len(s.DataSources) - 1)
+func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	if s.lastID == 0 {
+		s.lastID = int64(len(s.DataSources) - 1)
 	}
-	cmd.Result = &models.DataSource{
-		Id:    s.lastId + 1,
+	dataSource := &datasources.DataSource{
+		ID:    s.lastID + 1,
 		Name:  cmd.Name,
 		Type:  cmd.Type,
-		Uid:   cmd.Uid,
-		OrgId: cmd.OrgId,
+		UID:   cmd.UID,
+		OrgID: cmd.OrgID,
 	}
-	s.DataSources = append(s.DataSources, cmd.Result)
-	return nil
+	s.DataSources = append(s.DataSources, dataSource)
+	return dataSource, nil
 }
 
-func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	for i, datasource := range s.DataSources {
-		idMatch := cmd.ID != 0 && cmd.ID == datasource.Id
-		uidMatch := cmd.UID != "" && cmd.UID == datasource.Uid
+		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
+		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
 		nameMatch := cmd.Name != "" && cmd.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
 			s.DataSources = append(s.DataSources[:i], s.DataSources[i+1:]...)
 			return nil
 		}
 	}
-	return models.ErrDataSourceNotFound
+	return datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	for _, datasource := range s.DataSources {
-		idMatch := cmd.Id != 0 && cmd.Id == datasource.Id
-		uidMatch := cmd.Uid != "" && cmd.Uid == datasource.Uid
+		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
+		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
 		nameMatch := cmd.Name != "" && cmd.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
 			if cmd.Name != "" {
 				datasource.Name = cmd.Name
 			}
-			return nil
+			return datasource, nil
 		}
 	}
-	return models.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
-	return nil
+func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
+	return nil, nil
 }
 
-func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	rt, err := provider.GetTransport(sdkhttpclient.Options{})
 	if err != nil {
 		return nil, err
@@ -106,19 +114,22 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *models
 	return rt, nil
 }
 
-func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	if s.SimulatePluginFailure {
+		return nil, datasources.ErrDatasourceSecretsPluginUserFriendly{Err: "unknown error"}
+	}
 	values := make(map[string]string)
 	return values, nil
 }
 
-func (s *FakeDataSourceService) DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error) {
+func (s *FakeDataSourceService) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {
 	return "", false, nil
 }
 
-func (s *FakeDataSourceService) DecryptedBasicAuthPassword(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *FakeDataSourceService) DecryptedBasicAuthPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	return "", nil
 }
 
-func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	return "", nil
 }

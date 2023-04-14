@@ -71,7 +71,7 @@ describe('EventBus', () => {
   describe('Legacy emitter behavior', () => {
     it('Supports legacy events', () => {
       const bus = new EventBusSrv();
-      const events: any = [];
+      const events: LegacyEventPayload[] = [];
       const handler = (event: LegacyEventPayload) => {
         events.push(event);
       };
@@ -88,8 +88,8 @@ describe('EventBus', () => {
 
     it('Interoperability with legacy events', () => {
       const bus = new EventBusSrv();
-      const legacyEvents: any = [];
-      const newEvents: any = [];
+      const legacyEvents: LegacyEventPayload[] = [];
+      const newEvents: AlertSuccessEvent[] = [];
 
       bus.on(legacyEvent, (event) => {
         legacyEvents.push(event);
@@ -181,15 +181,18 @@ describe('EventBus', () => {
     it('removeAllListeners should unsubscribe to all', () => {
       const bus = new EventBusSrv();
       const events: LoginEvent[] = [];
+      let completed = false;
 
-      bus.subscribe(LoginEvent, (event) => {
-        events.push(event);
+      bus.getStream(LoginEvent).subscribe({
+        next: (evt) => events.push(evt),
+        complete: () => (completed = true),
       });
 
       bus.removeAllListeners();
       bus.publish(new LoginEvent({ logins: 10 }));
 
       expect(events.length).toBe(0);
+      expect(completed).toBe(true);
     });
   });
 });

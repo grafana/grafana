@@ -8,41 +8,49 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-		store := sqlstore.InitTestDB(t)
+		store := db.InitTestDB(t)
 		store.Cfg = hs.Cfg
+		hs.teamService = teamimpl.ProvideService(store, hs.Cfg)
 		hs.SQLStore = store
-		mock := &mockstore.SQLStoreMock{}
+		mock := dbtest.NewFakeDB()
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
-			models.ROLE_ADMIN, func(sc *scenarioContext) {
-				_, err := hs.SQLStore.CreateTeam("team1", "", 1)
+			org.RoleAdmin, func(sc *scenarioContext) {
+				_, err := hs.teamService.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
-				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+				_, err = hs.teamService.CreateTeam("team2", "", 1)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -52,19 +60,19 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenario(t, "When editor (with editors_can_admin) is calling GET on", "/api/teams/search",
 			"/api/teams/search", func(sc *scenarioContext) {
-				team1, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				team1, err := hs.teamService.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
-				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+				_, err = hs.teamService.CreateTeam("team2", "", 1)
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -74,21 +82,21 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenario(t, "When editor (with editors_can_admin) calling GET with pagination on",
 			"/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
-				team1, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				team1, err := hs.teamService.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
-				team2, err := hs.SQLStore.CreateTeam("team2", "", 1)
+				team2, err := hs.teamService.CreateTeam("team2", "", 1)
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
-				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team2.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team2.ID, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -100,7 +108,8 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("When creating team with API key", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-		hs.SQLStore = mockstore.NewSQLStoreMock()
+		hs.SQLStore = dbtest.NewFakeDB()
+		hs.teamService = &teamtest.FakeService{}
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
@@ -115,13 +124,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		t.Run("with no real signed in user", func(t *testing.T) {
 			logger := &logtest.Fake{}
-			c := &models.ReqContext{
+			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{},
+				SignedInUser: &user.SignedInUser{},
 				Logger:       logger,
 			}
-			c.OrgRole = models.ROLE_EDITOR
-			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.OrgRole = org.RoleEditor
+			c.Req.Body = mockRequestBody(team.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 
@@ -132,13 +141,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		t.Run("with real signed in user", func(t *testing.T) {
 			logger := &logtest.Fake{}
-			c := &models.ReqContext{
+			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{UserId: 42},
+				SignedInUser: &user.SignedInUser{UserID: 42},
 				Logger:       logger,
 			}
-			c.OrgRole = models.ROLE_EDITOR
-			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.OrgRole = org.RoleEditor
+			c.Req.Body = mockRequestBody(team.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())
@@ -158,124 +167,144 @@ const (
 )
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.teamService = teamtest.NewFakeService()
+	})
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Organisation admin can create a team", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: org.RoleAdmin})
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	setInitCtxSignedInEditor(sc.initCtx)
-	sc.initCtx.IsGrafanaAdmin = true
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
 	t.Run("Org editor and server admin cannot create a team", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, strings.NewReader(teamCmd), t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
+		cfg.EditorsCanAdmin = true
+		hs.Cfg = cfg
+		hs.teamService = teamtest.NewFakeService()
+	})
 
-	setInitCtxSignedInEditor(sc.initCtx)
-	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Editors can create a team if editorsCanAdmin is set to true", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: org.RoleAdmin})
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
 func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.teamService = teamtest.NewFakeService()
+		hs.AccessControl = acimpl.ProvideAccessControl(setting.NewCfg())
+		hs.accesscontrolService = actest.FakeService{}
+	})
 
-	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}, 1)
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}))
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
 	t.Run("Access control prevents creating teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "teams:invalid"}}, accesscontrol.GlobalOrgID)
-		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := server.NewPostRequest(createTeamURL, input)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{}))
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
 func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	// Seed three teams
-	for i := 1; i <= 3; i++ {
-		_, err := sc.db.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)
-		require.NoError(t, err)
-	}
-
-	setInitCtxSignedInViewer(sc.initCtx)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.teamService = teamtest.NewFakeService()
+	})
 
 	t.Run("Access control prevents searching for teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:*"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := server.NewGetRequest(searchTeamsURL)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows searching for teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:*"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		res := &models.SearchTeamQueryResult{}
-		err := json.Unmarshal(response.Body.Bytes(), res)
+		req := server.NewGetRequest(searchTeamsURL)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+		}))
+		res, err := server.Send(req)
 		require.NoError(t, err)
-		require.Len(t, res.Teams, 3, "expected all teams to have been returned")
-		require.Equal(t, res.TotalCount, int64(3), "expected count to match teams length")
-	})
-
-	t.Run("Access control filters teams based on user permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		res := &models.SearchTeamQueryResult{}
-		err := json.Unmarshal(response.Body.Bytes(), res)
-		require.NoError(t, err)
-		require.Len(t, res.Teams, 2, "expected a subset of teams to have been returned")
-		require.Equal(t, res.TotalCount, int64(2), "expected count to match teams length")
-		for _, team := range res.Teams {
-			require.NotEqual(t, team.Name, "team2", "expected team2 to have been filtered")
-		}
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
 func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
+	})
 
-	_, err := sc.db.CreateTeam("team1", "team1@example.org", 1)
-	require.NoError(t, err)
+	url := fmt.Sprintf(detailTeamURL, 1)
 
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	t.Run("Access control prevents getting a team with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+	t.Run("Access control prevents getting a team when missing permissions", func(t *testing.T) {
+		req := server.NewGetRequest(url)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows getting a team with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		res := &models.TeamDTO{}
-		err := json.Unmarshal(response.Body.Bytes(), res)
+		req := server.NewGetRequest(url)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+		}))
+		res, err := server.Send(req)
 		require.NoError(t, err)
-		assert.Equal(t, "team1", res.Name)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Access control allows getting a team with wildcard scope", func(t *testing.T) {
+		req := server.NewGetRequest(url)
+		req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:*"},
+		}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -283,48 +312,42 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
-
-	require.NoError(t, err)
-
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
-	t.Run("Access control allows updating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
-		require.NoError(t, err)
-		assert.Equal(t, "MyTestTeam1", teamQuery.Result.Name)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
-	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
-	t.Run("Access control allows updating teams with the correct global permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:*"}}, 1)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+		req := server.NewRequest(http.MethodPut, fmt.Sprintf(detailTeamURL, teamID), strings.NewReader(teamCmd))
+		req = webtest.RequestWithSignedInUser(req, user)
+		return server.SendJSON(req)
+	}
 
-		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+	t.Run("Access control allows updating team with the correct permissions", func(t *testing.T) {
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
+		}))
 		require.NoError(t, err)
-		assert.Equal(t, "MyTestTeam2", teamQuery.Result.Name)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	input = strings.NewReader(fmt.Sprintf(teamCmd, 3))
-	t.Run("Access control prevents updating teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+	t.Run("Access control allows updating teams with the wildcard scope", func(t *testing.T) {
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
 
-		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
-		assert.NoError(t, err)
-		assert.Equal(t, "MyTestTeam2", teamQuery.Result.Name)
+	t.Run("Access control prevent updating a team with wrong scope", func(t *testing.T) {
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -332,31 +355,33 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
-	require.NoError(t, err)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
+	})
 
-	setInitCtxSignedInViewer(sc.initCtx)
+	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, teamID), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, user)
+		return server.Send(req)
+	}
 
 	t.Run("Access control prevents deleting teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:7"}}, 1)
-		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-
-		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:2"},
+		}))
 		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control allows deleting teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
-		require.ErrorIs(t, err, models.ErrTeamNotFound)
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -364,32 +389,33 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+	})
 
-	sqlstore := mockstore.NewSQLStoreMock()
-	sc.hs.SQLStore = sqlstore
-
-	prefService := preftest.NewPreferenceServiceFake()
-	prefService.ExpectedPreference = &pref.Preference{}
-	sc.hs.preferenceService = prefService
-
-	require.NoError(t, err)
-
-	setInitCtxSignedInViewer(sc.initCtx)
+	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+		req := server.NewGetRequest(fmt.Sprintf(detailTeamPreferenceURL, teamID))
+		req = webtest.RequestWithSignedInUser(req, user)
+		return server.Send(req)
+	}
 
 	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock,
-			[]*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("Access control prevents getting team preferences with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
@@ -397,41 +423,32 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	sqlStore := sqlstore.InitTestDB(t)
-	sc.db = sqlStore
-
-	prefService := preftest.NewPreferenceServiceFake()
-	prefService.ExpectedPreference = &pref.Preference{Theme: "dark"}
-	sc.hs.preferenceService = prefService
-
-	_, err := sc.db.CreateTeam("team1", "", 1)
-
-	require.NoError(t, err)
-
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	input := strings.NewReader(teamPreferenceCmd)
-	t.Run("Access control allows updating team preferences with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		prefQuery := &pref.GetPreferenceQuery{OrgID: 1, TeamID: 1}
-		preference, err := prefService.Get(context.Background(), prefQuery)
-		require.NoError(t, err)
-		assert.Equal(t, "dark", preference.Theme)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
 	})
 
-	input = strings.NewReader(teamPreferenceCmdLight)
-	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+		req := server.NewRequest(http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, teamID), strings.NewReader(teamPreferenceCmd))
+		req = webtest.RequestWithSignedInUser(req, user)
+		return server.SendJSON(req)
+	}
 
-		prefQuery := &pref.GetPreferenceQuery{OrgID: 1, TeamID: 1}
-		preference, err := prefService.Get(context.Background(), prefQuery)
-		assert.NoError(t, err)
-		assert.Equal(t, "dark", preference.Theme)
+	t.Run("Access control allows updating team preferences with the correct permissions", func(t *testing.T) {
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
+		res, err := request(1, userWithPermissions(1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }

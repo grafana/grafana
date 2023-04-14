@@ -2,382 +2,79 @@ package store
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
-	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/util"
-
-	models2 "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
-	return &FakeRuleStore{
-		t:     t,
-		Rules: map[int64][]*models.AlertRule{},
-		Hook: func(interface{}) error {
-			return nil
-		},
-		Folders: map[int64][]*models2.Folder{},
+func NewFakeImageStore(t *testing.T) *FakeImageStore {
+	return &FakeImageStore{
+		t:      t,
+		images: make(map[string]*models.Image),
 	}
 }
 
-// FakeRuleStore mocks the RuleStore of the scheduler.
-type FakeRuleStore struct {
-	t   *testing.T
-	mtx sync.Mutex
-	// OrgID -> RuleGroup -> Namespace -> Rules
-	Rules       map[int64][]*models.AlertRule
-	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
-	RecordedOps []interface{}
-	Folders     map[int64][]*models2.Folder
+type FakeImageStore struct {
+	t      *testing.T
+	mtx    sync.Mutex
+	images map[string]*models.Image
 }
 
-type GenericRecordedQuery struct {
-	Name   string
-	Params []interface{}
+func (s *FakeImageStore) GetImage(_ context.Context, token string) (*models.Image, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	if image, ok := s.images[token]; ok {
+		return image, nil
+	}
+	return nil, models.ErrImageNotFound
 }
 
-// PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-mainloop:
-	for _, r := range rules {
-		rgs := f.Rules[r.OrgID]
-		for idx, rulePtr := range rgs {
-			if rulePtr.UID == r.UID {
-				rgs[idx] = r
-				continue mainloop
-			}
-		}
-		rgs = append(rgs, r)
-		f.Rules[r.OrgID] = rgs
-
-		var existing *models2.Folder
-		folders := f.Folders[r.OrgID]
-		for _, folder := range folders {
-			if folder.Uid == r.NamespaceUID {
-				existing = folder
-				break
-			}
-		}
-		if existing == nil {
-			folders = append(folders, &models2.Folder{
-				Id:    rand.Int63(),
-				Uid:   r.NamespaceUID,
-				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
-			})
-			f.Folders[r.OrgID] = folders
+func (s *FakeImageStore) GetImages(_ context.Context, tokens []string) ([]models.Image, []string, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	images := make([]models.Image, 0, len(tokens))
+	for _, token := range tokens {
+		if image, ok := s.images[token]; ok {
+			images = append(images, *image)
 		}
 	}
+	if len(images) < len(tokens) {
+		return images, unmatchedTokens(tokens, images), models.ErrImageNotFound
+	}
+	return images, nil, nil
 }
 
-// GetRecordedCommands filters recorded commands using predicate function. Returns the subset of the recorded commands that meet the predicate
-func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-
-	result := make([]interface{}, 0, len(f.RecordedOps))
-	for _, op := range f.RecordedOps {
-		cmd, ok := predicate(op)
-		if !ok {
-			continue
-		}
-		result = append(result, cmd)
+func (s *FakeImageStore) SaveImage(_ context.Context, image *models.Image) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	if image.ID == 0 {
+		image.ID = int64(len(s.images)) + 1
 	}
-	return result
-}
-
-func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		Name:   "DeleteAlertRulesByUID",
-		Params: []interface{}{orgID, UIDs},
-	})
-
-	rules := f.Rules[orgID]
-
-	var result = make([]*models.AlertRule, 0, len(rules))
-
-	for _, rule := range rules {
-		add := true
-		for _, UID := range UIDs {
-			if rule.UID == UID {
-				add = false
-				break
-			}
-		}
-		if add {
-			result = append(result, rule)
-		}
+	if image.Token == "" {
+		tmp := strings.Split(image.Path, ".")
+		image.Token = strings.Join(tmp[:len(tmp)-1], ".")
 	}
-
-	f.Rules[orgID] = result
-	return nil
-}
-
-func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
-	return nil
-}
-func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil
-	}
-
-	for _, rule := range rules {
-		if rule.UID == q.UID {
-			q.Result = rule
-			break
-		}
-	}
-	return nil
-}
-
-func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil
-	}
-
-	var selected *models.AlertRule
-	for _, rule := range rules {
-		if rule.UID == q.UID {
-			selected = rule
-			break
-		}
-	}
-	if selected == nil {
-		return nil
-	}
-
-	for _, rule := range rules {
-		if rule.GetGroupKey() == selected.GetGroupKey() {
-			q.Result = append(q.Result, rule)
-		}
-	}
-	return nil
-}
-
-// For now, we're not implementing namespace filtering.
-func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			q.Result = append(q.Result, &models.SchedulableAlertRule{
-				UID:             rule.UID,
-				OrgID:           rule.OrgID,
-				IntervalSeconds: rule.IntervalSeconds,
-				Version:         rule.Version,
-			})
-		}
-	}
-	return nil
-}
-
-func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-
-	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
-		if dashboardUID != "" {
-			if r.DashboardUID == nil || *r.DashboardUID != dashboardUID {
-				return false
-			}
-			if panelID > 0 {
-				if r.PanelID == nil || *r.PanelID != panelID {
-					return false
-				}
-			}
-		}
-		return true
-	}
-
-	hasNamespace := func(r *models.AlertRule, namespaceUIDs []string) bool {
-		if len(namespaceUIDs) > 0 {
-			var ok bool
-			for _, uid := range q.NamespaceUIDs {
-				if uid == r.NamespaceUID {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return false
-			}
-		}
-		return true
-	}
-
-	for _, r := range f.Rules[q.OrgID] {
-		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
-			continue
-		}
-		if !hasNamespace(r, q.NamespaceUIDs) {
-			continue
-		}
-		if q.RuleGroup != "" && r.RuleGroup != q.RuleGroup {
-			continue
-		}
-		q.Result = append(q.Result, r)
-	}
-
-	return nil
-}
-
-func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroupsQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	m := make(map[string]struct{})
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			m[rule.RuleGroup] = struct{}{}
-		}
-	}
-
-	for s := range m {
-		q.Result = append(q.Result, s)
-	}
-
-	return nil
-}
-
-func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-
-	namespacesMap := map[string]*models2.Folder{}
-
-	_, ok := f.Rules[orgID]
-	if !ok {
-		return namespacesMap, nil
-	}
-
-	for _, folder := range f.Folders[orgID] {
-		namespacesMap[folder.Uid] = folder
-	}
-	return namespacesMap, nil
-}
-
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
-	folders := f.Folders[orgID]
-	for _, folder := range folders {
-		if folder.Title == title {
-			return folder, nil
-		}
-	}
-	return nil, fmt.Errorf("not found")
-}
-
-func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, q)
-	if err := f.Hook(q); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, q)
-	ids := make(map[string]int64, len(q))
-	if err := f.Hook(q); err != nil {
-		return ids, err
-	}
-	return ids, nil
-}
-
-func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
-	return fn(ctx)
-}
-
-func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	for _, rule := range f.Rules[orgID] {
-		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
-			return rule.IntervalSeconds, nil
-		}
-	}
-	return 0, ErrAlertRuleGroupNotFound
-}
-
-func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	for _, rule := range f.Rules[orgID] {
-		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
-			rule.IntervalSeconds = interval
-		}
-	}
-	return nil
-}
-
-type FakeInstanceStore struct {
-	mtx         sync.Mutex
-	RecordedOps []interface{}
-}
-
-func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
+	s.images[image.Token] = image
 	return nil
 }
 
@@ -422,119 +119,44 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	return nil
 }
 
-type FakeExternalAlertmanager struct {
-	t      *testing.T
-	mtx    sync.Mutex
-	alerts amv2.PostableAlerts
-	Server *httptest.Server
+func SetupFolderService(tb testing.TB, cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus) folder.Service {
+	tb.Helper()
+
+	ac := acmock.New()
+	features := featuremgmt.WithFeatures()
+
+	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, nil, features)
 }
 
-func NewFakeExternalAlertmanager(t *testing.T) *FakeExternalAlertmanager {
-	t.Helper()
+func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
+	tb.Helper()
 
-	am := &FakeExternalAlertmanager{
-		t:      t,
-		alerts: amv2.PostableAlerts{},
-	}
-	am.Server = httptest.NewServer(http.HandlerFunc(am.Handler()))
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue:  true,
+		CanViewValue:  true,
+		CanAdminValue: true,
+	})
+	tb.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
 
-	return am
-}
+	ac := acmock.New()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
-func (am *FakeExternalAlertmanager) URL() string {
-	return am.Server.URL
-}
+	features := featuremgmt.WithFeatures()
+	quotaService := quotatest.New(false, nil)
 
-func (am *FakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
-	n := []string{}
-	alerts := am.Alerts()
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, fs, nil,
+		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
+	)
 
-	if len(expected) != len(alerts) {
-		return false
-	}
+	require.NoError(tb, err)
 
-	for _, a := range am.Alerts() {
-		for k, v := range a.Alert.Labels {
-			if k == model.AlertNameLabel {
-				n = append(n, v)
-			}
-		}
-	}
-
-	return assert.ObjectsAreEqual(expected, n)
-}
-
-func (am *FakeExternalAlertmanager) AlertsCount() int {
-	am.mtx.Lock()
-	defer am.mtx.Unlock()
-
-	return len(am.alerts)
-}
-
-func (am *FakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
-	am.mtx.Lock()
-	defer am.mtx.Unlock()
-	return am.alerts
-}
-
-func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		require.NoError(am.t, err)
-
-		a := amv2.PostableAlerts{}
-		require.NoError(am.t, json.Unmarshal(b, &a))
-
-		am.mtx.Lock()
-		am.alerts = append(am.alerts, a...)
-		am.mtx.Unlock()
-	}
-}
-
-func (am *FakeExternalAlertmanager) Close() {
-	am.Server.Close()
-}
-
-type FakeAnnotationsRepo struct {
-	mtx   sync.Mutex
-	Items []*annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
-	return &FakeAnnotationsRepo{
-		Items: make([]*annotations.Item, 0),
-	}
-}
-
-func (repo *FakeAnnotationsRepo) Len() int {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	return len(repo.Items)
-}
-
-func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	repo.Items = append(repo.Items, item)
-
-	return nil
-}
-func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	annotations := []*annotations.ItemDTO{{Id: 1}}
-	return annotations, nil
-}
-
-func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
+	return dashboardService, dashboardStore
 }

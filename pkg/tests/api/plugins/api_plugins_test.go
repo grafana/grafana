@@ -5,17 +5,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 const (
@@ -26,7 +32,11 @@ const (
 
 var updateSnapshotFlag = false
 
-func TestPlugins(t *testing.T) {
+func TestIntegrationPlugins(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
 	})
@@ -41,17 +51,17 @@ func TestPlugins(t *testing.T) {
 	}
 
 	t.Run("Install", func(t *testing.T) {
-		createUser(t, store, models.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
-		createUser(t, store, models.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
+		createUser(t, store, user.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
+		createUser(t, store, user.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 
 		t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 			status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
 			assert.Equal(t, 403, status)
-			assert.Equal(t, "Permission denied", body["message"])
+			assert.Equal(t, "You'll need additional permissions to perform this action. Permissions needed: plugins:install", body["message"])
 
 			status, body = makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/uninstall"))
 			assert.Equal(t, 403, status)
-			assert.Equal(t, "Permission denied", body["message"])
+			assert.Equal(t, "You'll need additional permissions to perform this action. Permissions needed: plugins:install", body["message"])
 		})
 
 		t.Run("Request is not forbidden if from an admin", func(t *testing.T) {
@@ -86,7 +96,7 @@ func TestPlugins(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, tc.expStatus, resp.StatusCode)
-				b, err := ioutil.ReadAll(resp.Body)
+				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 
 				expResp := expectedResp(t, tc.expRespPath)
@@ -95,7 +105,11 @@ func TestPlugins(t *testing.T) {
 				if !same {
 					if updateSnapshotFlag {
 						t.Log("updating snapshot results")
-						updateRespSnapshot(t, tc.expRespPath, string(b))
+						var prettyJSON bytes.Buffer
+						if err := json.Indent(&prettyJSON, b, "", "  "); err != nil {
+							t.FailNow()
+						}
+						updateRespSnapshot(t, tc.expRespPath, prettyJSON.String())
 					}
 					t.FailNow()
 				}
@@ -104,10 +118,70 @@ func TestPlugins(t *testing.T) {
 	})
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) {
+func TestIntegrationPluginAssets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		desc            string
+		url             string
+		env             string
+		expStatus       int
+		expCacheControl string
+	}
+	t.Run("Assets", func(t *testing.T) {
+		testCases := []testCase{
+			{
+				desc:            "should return no-cache settings for Dev env",
+				env:             setting.Dev,
+				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
+				expStatus:       http.StatusOK,
+				expCacheControl: "max-age=0, must-revalidate, no-cache",
+			},
+			{
+				desc:            "should return cache settings for Prod env",
+				env:             setting.Prod,
+				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
+				expStatus:       http.StatusOK,
+				expCacheControl: "public, max-age=3600",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+					AppModeProduction: tc.env == setting.Prod,
+				})
+
+				grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, cfgPath)
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				// nolint:gosec
+				resp, err := http.Get(url)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				require.Equal(t, tc.expCacheControl, resp.Header.Get("Cache-Control"))
+			})
+		}
+	})
+}
+
+func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) {
 	t.Helper()
 
-	_, err := store.CreateUser(context.Background(), cmd)
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
+
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	_, err = usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 }
 
@@ -118,10 +192,9 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	resp, err := http.Post(URL, "application/json", bytes.NewBufferString(""))
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		_ = resp.Body.Close()
-		fmt.Printf("Failed to close response body err: %s", err)
+		require.NoError(t, resp.Body.Close())
 	})
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
 	var body = make(map[string]interface{})
@@ -137,7 +210,7 @@ func grafanaAPIURL(username string, grafanaListedAddr string, path string) strin
 
 func expectedResp(t *testing.T, filename string) string {
 	//nolint:GOSEC
-	contents, err := ioutil.ReadFile(filepath.Join("data", filename))
+	contents, err := os.ReadFile(filepath.Join("data", filename))
 	if err != nil {
 		t.Errorf("failed to load %s: %v", filename, err)
 	}
@@ -146,7 +219,7 @@ func expectedResp(t *testing.T, filename string) string {
 }
 
 func updateRespSnapshot(t *testing.T, filename string, body string) {
-	err := ioutil.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
+	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
 	if err != nil {
 		t.Errorf("error writing snapshot %s: %v", filename, err)
 	}

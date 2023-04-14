@@ -1,8 +1,8 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { useDispatch } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';

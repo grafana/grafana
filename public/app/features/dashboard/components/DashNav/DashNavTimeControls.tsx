@@ -3,9 +3,10 @@ import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { defaultIntervals, RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
+import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
@@ -14,6 +15,7 @@ import { DashboardModel } from '../../state';
 export interface Props {
   dashboard: DashboardModel;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  isOnCanvas?: boolean;
 }
 
 export class DashNavTimeControls extends Component<Props> {
@@ -76,7 +78,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   render() {
-    const { dashboard } = this.props;
+    const { dashboard, isOnCanvas } = this.props;
     const { refresh_intervals } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
@@ -86,7 +88,7 @@ export class DashNavTimeControls extends Component<Props> {
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
 
     return (
-      <ToolbarButtonRow>
+      <>
         <TimePickerWithHistory
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
@@ -97,16 +99,18 @@ export class DashNavTimeControls extends Component<Props> {
           onZoom={this.onZoom}
           onChangeTimeZone={this.onChangeTimeZone}
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
+          isOnCanvas={isOnCanvas}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
           onRefresh={this.onRefresh}
           value={dashboard.refresh}
           intervals={intervals}
-          tooltip="Refresh dashboard"
+          isOnCanvas={isOnCanvas}
+          tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
           noIntervalPicker={hideIntervalPicker}
         />
-      </ToolbarButtonRow>
+      </>
     );
   }
 }

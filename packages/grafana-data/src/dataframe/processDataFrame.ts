@@ -19,6 +19,9 @@ import {
   DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
+  DataQueryResponseData,
+  PanelData,
+  LoadingState,
 } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
 import { SortedVector } from '../vector/SortedVector';
@@ -180,7 +183,7 @@ const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 /**
  * Given a name and value, this will pick a reasonable field type
  */
-export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType {
+export function guessFieldTypeFromNameAndValue(name: string, v: unknown): FieldType {
   if (name) {
     name = name.toLowerCase();
     if (name === 'date' || name === 'time') {
@@ -193,7 +196,7 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
 /**
  * Check the field type to see what the contents are
  */
-export function getFieldTypeFromValue(v: any): FieldType {
+export function getFieldTypeFromValue(v: unknown): FieldType {
   if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
@@ -218,7 +221,7 @@ export function getFieldTypeFromValue(v: any): FieldType {
  *
  * NOTE: this is will try to see if string values can be mapped to other types (like number)
  */
-export function guessFieldTypeFromValue(v: any): FieldType {
+export function guessFieldTypeFromValue(v: unknown): FieldType {
   if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
@@ -299,9 +302,9 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
   return series;
 };
 
-export const isTableData = (data: any): data is DataFrame => data && data.hasOwnProperty('columns');
+export const isTableData = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('columns'));
 
-export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
+export const isDataFrame = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('fields'));
 
 /**
  * Inspect any object and return the results as a DataFrame
@@ -510,3 +513,63 @@ export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?
   }
   return {};
 };
+
+function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
+  const dataFrame = guessFieldTypes(toDataFrame(data));
+
+  if (dataFrame.fields && dataFrame.fields.length) {
+    // clear out the cached info
+    for (const field of dataFrame.fields) {
+      field.state = null;
+    }
+  }
+
+  return dataFrame;
+}
+
+/**
+ * Given data request results, will return data frames with field types set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!results || !isArray(results)) {
+    return [];
+  }
+
+  return results.map((data) => getProcessedDataFrame(data));
+}
+
+/**
+ * Will process the panel data frames and in case of loading state with no data, will return the last result data but with loading state
+ * This is to have panels not flicker temporarily with "no data" while loading
+ */
+export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
+  const { series, annotations } = data;
+
+  //  for loading states with no data, use last result
+  if (data.state === LoadingState.Loading && series.length === 0) {
+    if (!lastResult) {
+      lastResult = data;
+    }
+
+    return {
+      ...lastResult,
+      state: LoadingState.Loading,
+      request: data.request,
+    };
+  }
+
+  // Make sure the data frames are properly formatted
+  const STARTTIME = performance.now();
+  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
+  const annotationsProcessed = getProcessedDataFrames(annotations);
+  const STOPTIME = performance.now();
+
+  return {
+    ...data,
+    series: processedDataFrames,
+    annotations: annotationsProcessed,
+    timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
+}

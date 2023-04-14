@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -9,25 +13,30 @@
 //  }
 //  Name: 1 / 0
 //  Dimensions: 2 Fields by 3 Rows
-//  +-------------------------------+------------------+
-//  | Name: Time                    | Name: Value      |
-//  | Labels:                       | Labels:          |
-//  | Type: []time.Time             | Type: []*float64 |
-//  +-------------------------------+------------------+
-//  | 2022-01-11 08:25:30 +0000 UTC | +Inf             |
-//  | 2022-01-11 08:25:31 +0000 UTC | +Inf             |
-//  | 2022-01-11 08:25:32 +0000 UTC | +Inf             |
-//  +-------------------------------+------------------+
+//  +-------------------------------+-----------------+
+//  | Name: Time                    | Name: Value     |
+//  | Labels:                       | Labels:         |
+//  | Type: []time.Time             | Type: []float64 |
+//  +-------------------------------+-----------------+
+//  | 2022-01-11 08:25:30 +0000 UTC | +Inf            |
+//  | 2022-01-11 08:25:31 +0000 UTC | +Inf            |
+//  | 2022-01-11 08:25:32 +0000 UTC | +Inf            |
+//  +-------------------------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "1 / 0",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "matrix"
           },
@@ -48,8 +57,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {},
             "config": {

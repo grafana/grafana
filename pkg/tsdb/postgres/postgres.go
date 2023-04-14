@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -59,17 +61,24 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			ConnMaxLifetime:     14400,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
+			SecureDSProxy:       false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -82,20 +91,27 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
+		}
+
+		driverName := "postgres"
+		// register a proxy driver if the secure socks proxy is enabled
+		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			driverName, err = createPostgresProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			if err != nil {
+				return "", nil
+			}
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "postgres",
+			DriverName:        driverName,
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := postgresQueryResultTransformer{
-			log: logger,
-		}
+		queryResultTransformer := postgresQueryResultTransformer{}
 
 		handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
@@ -185,12 +201,27 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	return connStr, nil
 }
 
-type postgresQueryResultTransformer struct {
-	log log.Logger
+type postgresQueryResultTransformer struct{}
+
+func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
+	return err
 }
 
-func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
-	return err
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	if err != nil {
+		logger.Error("Check health failed", "error", err)
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+	}
+
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

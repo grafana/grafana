@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 
-import { TempoDatasource, TempoQuery } from '../datasource';
+import { TempoDatasource } from '../datasource';
+import { TempoQuery } from '../types';
 
 import NativeSearch from './NativeSearch';
 
-const getOptions = jest.fn().mockImplementation(() => {
+const getOptionsV1 = jest.fn().mockImplementation(() => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
@@ -24,13 +24,31 @@ const getOptions = jest.fn().mockImplementation(() => {
   });
 });
 
+// Have to mock CodeEditor else it causes act warnings
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value, onSave }: { value: string; onSave: (newQuery: string) => void }) {
+    return <input data-testid="mockeditor" value={value} onChange={(event) => onSave(event.target.value)} />;
+  },
+}));
+
 jest.mock('../language_provider', () => {
   return jest.fn().mockImplementation(() => {
-    return { getOptions };
+    return { getOptionsV1 };
   });
 });
 
-const mockQuery = {
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: jest.fn(),
+    containsTemplate: (val: string): boolean => {
+      return val.includes('$');
+    },
+  }),
+}));
+
+let mockQuery = {
   refId: 'A',
   queryType: 'nativeSearch',
   key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
@@ -39,7 +57,7 @@ const mockQuery = {
 } as TempoQuery;
 
 describe('NativeSearch', () => {
-  let user: UserEvent;
+  let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -113,11 +131,42 @@ describe('NativeSearch', () => {
     expect(select).toBeInTheDocument();
 
     await user.type(select, 'd');
-    var option = await screen.findByText('driver');
+    let option = await screen.findByText('driver');
     expect(option).toBeDefined();
 
     await user.type(select, 'a');
-    option = await screen.findByText('No options found');
+    option = await screen.findByText('Hit enter to add');
     expect(option).toBeDefined();
+  });
+
+  it('should add variable to select menu options', async () => {
+    mockQuery = {
+      ...mockQuery,
+      refId: '121314',
+      serviceName: '$service',
+      spanName: '$span',
+    };
+
+    render(
+      <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
+    );
+
+    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    expect(asyncServiceSelect).toBeInTheDocument();
+    await user.click(asyncServiceSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncServiceSelect, '$');
+    const serviceOption = await screen.findByText('$service');
+    expect(serviceOption).toBeDefined();
+
+    const asyncSpanSelect = screen.getByRole('combobox', { name: 'select-span-name' });
+    expect(asyncSpanSelect).toBeInTheDocument();
+    await user.click(asyncSpanSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncSpanSelect, '$');
+    const operationOption = await screen.findByText('$span');
+    expect(operationOption).toBeDefined();
   });
 });

@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { memo, useState, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
-import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
+import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
 
@@ -51,7 +54,7 @@ function LogsNavigation({
   const onFirstPage = oldestLogsFirst ? currentPageIndex === pages.length - 1 : currentPageIndex === 0;
   const onLastPage = oldestLogsFirst ? currentPageIndex === 0 : currentPageIndex === pages.length - 1;
   const theme = useTheme2();
-  const styles = getStyles(theme, oldestLogsFirst, loading);
+  const styles = getStyles(theme, oldestLogsFirst);
 
   // Main effect to set pages and index
   useEffect(() => {
@@ -88,10 +91,13 @@ function LogsNavigation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const changeTime = ({ from, to }: AbsoluteTimeRange) => {
-    expectedRangeRef.current = { from, to };
-    onChangeTime({ from, to });
-  };
+  const changeTime = useCallback(
+    ({ from, to }: AbsoluteTimeRange) => {
+      expectedRangeRef.current = { from, to };
+      onChangeTime({ from, to });
+    },
+    [onChangeTime]
+  );
 
   const sortPages = (a: LogsPage, b: LogsPage, logsSortOrder?: LogsSortOrder | null) => {
     if (logsSortOrder === LogsSortOrder.Ascending) {
@@ -107,6 +113,9 @@ function LogsNavigation({
       variant="secondary"
       onClick={() => {
         //If we are not on the last page, use next page's range
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'olderLogsButton',
+        });
         if (!onLastPage) {
           const indexChange = oldestLogsFirst ? -1 : 1;
           changeTime({
@@ -117,6 +126,7 @@ function LogsNavigation({
           //If we are on the last page, create new range
           changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
         }
+        scrollToTopLogs();
       }}
       disabled={loading}
     >
@@ -133,6 +143,9 @@ function LogsNavigation({
       className={styles.navButton}
       variant="secondary"
       onClick={() => {
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'newerLogsButton',
+        });
         //If we are not on the first page, use previous page's range
         if (!onFirstPage) {
           const indexChange = oldestLogsFirst ? 1 : -1;
@@ -141,6 +154,7 @@ function LogsNavigation({
             to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         }
+        scrollToTopLogs();
         //If we are on the first page, button is disabled and we do nothing
       }}
       disabled={loading || onFirstPage}
@@ -153,6 +167,18 @@ function LogsNavigation({
     </Button>
   );
 
+  const onPageClick = useCallback(
+    (page: LogsPage, pageNumber: number) => {
+      reportInteraction('grafana_explore_logs_pagination_clicked', {
+        pageType: 'page',
+        pageNumber,
+      });
+      !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to });
+      scrollToTopLogs();
+    },
+    [changeTime, loading, scrollToTopLogs]
+  );
+
   return (
     <div className={styles.navContainer}>
       {oldestLogsFirst ? olderLogsButton : newerLogsButton}
@@ -162,7 +188,7 @@ function LogsNavigation({
         oldestLogsFirst={oldestLogsFirst}
         timeZone={timeZone}
         loading={loading}
-        changeTime={changeTime}
+        onClick={onPageClick}
       />
       {oldestLogsFirst ? newerLogsButton : olderLogsButton}
       <Button
@@ -180,10 +206,13 @@ function LogsNavigation({
 
 export default memo(LogsNavigation);
 
-const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean, loading: boolean) => {
+const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
+  const navContainerHeight = theme.flags.topnav
+    ? `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`
+    : '95vh';
   return {
     navContainer: css`
-      max-height: 95vh;
+      max-height: ${navContainerHeight};
       display: flex;
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};

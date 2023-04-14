@@ -1,38 +1,31 @@
 import { css } from '@emotion/css';
 import { FeatureLike } from 'ol/Feature';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { comparisonOperationOptions } from '@grafana/ui/src/components/MatchersUI/FieldValueMatcher';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { StyleEditor } from '../layers/data/StyleEditor';
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { defaultStyleConfig, StyleConfig } from '../style/types';
-import { ComparisonOperation, FeatureStyleConfig } from '../types';
+import { FeatureStyleConfig } from '../types';
 import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { getSelectionInfo } from '../utils/selection';
+
+import { StyleEditor } from './StyleEditor';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;
   layerInfo: Observable<LayerContentInfo>;
 }
 
-const comparators = [
-  { label: '==', value: ComparisonOperation.EQ },
-  { label: '!=', value: ComparisonOperation.NEQ },
-  { label: '>', value: ComparisonOperation.GT },
-  { label: '>=', value: ComparisonOperation.GTE },
-  { label: '<', value: ComparisonOperation.LT },
-  { label: '<=', value: ComparisonOperation.LTE },
-];
+type Props = StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>;
 
-export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
-  props
-) => {
-  const { value, onChange, item, context } = props;
+export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
   const settings: StyleRuleEditorSettings = item.settings;
   const { features, layerInfo } = settings;
 
@@ -148,8 +141,8 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
         </InlineField>
         <InlineField className={styles.inline}>
           <Select
-            value={comparators.find((v) => v.value === check.operation)}
-            options={comparators}
+            value={comparisonOperationOptions.find((v) => v.value === check.operation)}
+            options={comparisonOperationOptions}
             onChange={onChangeComparison}
             aria-label={'Comparison operator'}
             width={8}
@@ -198,7 +191,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
                 simpleFixedValues: true,
                 layerInfo,
               },
-            } as any
+            } as StandardEditorsRegistryItem
           }
         />
       </div>

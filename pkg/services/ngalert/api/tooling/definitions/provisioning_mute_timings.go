@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 )
 
@@ -11,7 +10,6 @@ import (
 //
 //     Responses:
 //       200: MuteTimings
-//       400: ValidationError
 
 // swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning stable RouteGetMuteTiming
 //
@@ -19,7 +17,7 @@ import (
 //
 //     Responses:
 //       200: MuteTimeInterval
-//       400: ValidationError
+//       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/mute-timings provisioning stable RoutePostMuteTiming
 //
@@ -48,7 +46,7 @@ import (
 // Delete a mute timing.
 //
 //     Responses:
-//       204: Ack
+//       204: description: The mute timing was deleted successfully.
 
 // swagger:route
 
@@ -57,7 +55,7 @@ type MuteTimings []MuteTimeInterval
 
 // swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming
 type RouteGetMuteTimingParam struct {
-	// Template Name
+	// Mute timing name
 	// in:path
 	Name string `json:"name"`
 }
@@ -70,8 +68,8 @@ type MuteTimingPayload struct {
 
 // swagger:model
 type MuteTimeInterval struct {
-	config.MuteTimeInterval
-	Provenance models.Provenance `json:"provenance,omitempty"`
+	config.MuteTimeInterval `json:",inline" yaml:",inline"`
+	Provenance              Provenance `json:"provenance,omitempty"`
 }
 
 func (mt *MuteTimeInterval) ResourceType() string {

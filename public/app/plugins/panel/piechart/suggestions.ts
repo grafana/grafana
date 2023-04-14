@@ -1,12 +1,11 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PieChartLabels, PieChartOptions, PieChartType } from './types';
+import { PieChartLabels, PanelOptions, PieChartType } from './panelcfg.gen';
 
 export class PieChartSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = builder.getListAppender<PieChartOptions, {}>({
+    const list = builder.getListAppender<PanelOptions, {}>({
       name: SuggestionName.PieChart,
       pluginId: 'piechart',
       options: {
@@ -23,7 +22,7 @@ export class PieChartSuggestionsSupplier {
       cardOptions: {
         previewModifier: (s) => {
           // Hide labels in preview
-          s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+          s.options!.legend.showLegend = false;
         },
       },
     });

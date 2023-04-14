@@ -1,8 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
@@ -13,7 +12,6 @@ import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 
 import {
   fetchAlertManagerConfig,
@@ -50,19 +48,15 @@ const mocks = {
 };
 
 const renderAdminPage = (alertManagerSourceName?: string) => {
-  const store = configureStore();
-
   locationService.push(
     '/alerting/notifications' +
       (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
   );
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <AlertmanagerConfig />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <AlertmanagerConfig />
+    </TestProvider>
   );
 };
 
@@ -106,9 +100,7 @@ describe('Admin config', () => {
       alertmanager_config: {},
     });
     mocks.api.deleteAlertManagerConfig.mockResolvedValue();
-
-    await renderAdminPage(dataSources.alertManager.name);
-
+    renderAdminPage(dataSources.alertManager.name);
     await userEvent.click(await ui.resetButton.find());
     await userEvent.click(ui.confirmButton.get());
     await waitFor(() => expect(mocks.api.deleteAlertManagerConfig).toHaveBeenCalled());
@@ -134,7 +126,7 @@ describe('Admin config', () => {
 
     mocks.api.fetchConfig.mockImplementation(() => Promise.resolve(savedConfig ?? defaultConfig));
     mocks.api.updateAlertManagerConfig.mockResolvedValue();
-    await renderAdminPage(dataSources.alertManager.name);
+    renderAdminPage(dataSources.alertManager.name);
     const input = await ui.configInput.find();
     expect(input.value).toEqual(JSON.stringify(defaultConfig, null, 2));
     await userEvent.clear(input);
@@ -153,7 +145,7 @@ describe('Admin config', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderAdminPage(dataSources.promAlertManager.name);
+    renderAdminPage(dataSources.promAlertManager.name);
 
     await ui.readOnlyConfig.find();
     expect(ui.configInput.query()).not.toBeInTheDocument();

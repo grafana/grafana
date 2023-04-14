@@ -1,7 +1,6 @@
 import { LinkModel } from '@grafana/data';
 
 import { MenuItemProps } from '../components/Menu/MenuItem';
-import { IconName } from '../types';
 
 /**
  * Delays creating links until we need to open the ContextMenu
@@ -14,8 +13,13 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
       // TODO: rename to href
       url: link.href,
       target: link.target,
-      icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
+      icon: `${link.target === '_blank' ? 'external-link-alt' : 'link'}`,
       onClick: link.onClick,
     };
   });
+};
+
+export const isCompactUrl = (url: string) => {
+  const compactExploreUrlRegex = /\/explore\?.*&(left|right)=\[(.*\,){2,}(.*){1}\]/;
+  return compactExploreUrlRegex.test(url);
 };

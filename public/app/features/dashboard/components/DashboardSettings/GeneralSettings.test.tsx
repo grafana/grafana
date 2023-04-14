@@ -1,36 +1,67 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { selectOptionInTest } from '@grafana/ui';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
-import { DashboardModel } from '../../state';
+import { configureStore } from '../../../../store/configureStore';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
 
+setBackendSrv({
+  get: jest.fn().mockResolvedValue([]),
+} as unknown as BackendSrv);
+
 const setupTestContext = (options: Partial<Props>) => {
+  const store = configureStore();
   const defaults: Props = {
-    dashboard: {
-      title: 'test dashboard title',
-      description: 'test dashboard description',
-      timepicker: {
-        refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
-        time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+    dashboard: createDashboardModelFixture(
+      {
+        title: 'test dashboard title',
+        description: 'test dashboard description',
+        timepicker: {
+          refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+          time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+          collapse: true,
+          enable: true,
+          hidden: false,
+        },
+        timezone: 'utc',
       },
-      meta: {
+      {
         folderId: 1,
         folderTitle: 'test',
-      },
-      timezone: 'utc',
-    } as unknown as DashboardModel,
+      }
+    ),
     updateTimeZone: jest.fn(),
     updateWeekStart: jest.fn(),
+    sectionNav: {
+      main: { text: 'Dashboard' },
+      node: {
+        text: 'Settings',
+      },
+    },
   };
 
   const props = { ...defaults, ...options };
-  const { rerender } = render(<GeneralSettings {...props} />);
+
+  const { rerender } = render(
+    <GrafanaContext.Provider value={getGrafanaContextMock()}>
+      <Provider store={store}>
+        <BrowserRouter>
+          <GeneralSettings {...props} />
+        </BrowserRouter>
+      </Provider>
+    </GrafanaContext.Provider>
+  );
 
   return { rerender, props };
 };

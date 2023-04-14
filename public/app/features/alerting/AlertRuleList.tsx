@@ -5,9 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Button, FilterInput, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { AlertRule, StoreState } from 'app/types';
 
 import { ShowModalReactEvent } from '../../types/events';
@@ -21,7 +20,6 @@ import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'alert-list'),
     alertRules: getAlertRuleItems(state),
     search: getSearchQuery(state.alertRules),
     isLoading: state.alertRules.isLoading,
@@ -94,10 +92,10 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const { navModel, alertRules, search, isLoading } = this.props;
+    const { alertRules, search, isLoading } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="alert-list">
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
@@ -132,10 +130,10 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
             {alertRules.map((rule) => {
               return (
                 <AlertRuleItem
-                  rule={rule as AlertRule}
+                  rule={rule}
                   key={rule.id}
                   search={search}
-                  onTogglePause={() => this.onTogglePause(rule as AlertRule)}
+                  onTogglePause={() => this.onTogglePause(rule)}
                 />
               );
             })}

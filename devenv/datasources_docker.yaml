@@ -1,6 +1,12 @@
 
 apiVersion: 1
 
+deleteDatasources:
+  - name: gdev-elasticsearch-v7-metrics
+  - name: gdev-elasticsearch-v7-logs
+  - name: gdev-elasticsearch-v7-metricbeat
+  - name: gdev-elasticsearch-v7-filebeat
+
 datasources:
   - name: gdev-graphite
     type: graphite
@@ -26,11 +32,12 @@ datasources:
   - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
-    database: site
     user: grafana
     url: http://influxdb1:8086
     secureJsonData:
       password: grafana
+    jsonData:
+      dbName: site
 
   - name: gdev-influxdb-flux
     type: influxdb
@@ -46,9 +53,9 @@ datasources:
   - name: gdev-influxdb-influxql
     type: influxdb
     access: proxy
-    database: mybucket
     url: http://influxdb:8086
     jsonData:
+      dbName: mybucket
       httpHeaderName1: "Authorization"
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
@@ -61,17 +68,7 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 
-  - name: gdev-elasticsearch-v2-metrics
-    type: elasticsearch
-    access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 2
-
-  - name: gdev-elasticsearch-v2-logs
+  - name: gdev-elasticsearch
     type: elasticsearch
     access: proxy
     database: "[logs-]YYYY.MM.DD"
@@ -79,121 +76,27 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 2
 
-  - name: gdev-elasticsearch-v5-metrics
-    type: elasticsearch
-    access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch5:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 5
-
-  - name: gdev-elasticsearch-v5-logs
-    type: elasticsearch
-    access: proxy
-    database: "[logs-]YYYY.MM.DD"
-    url: http://elasticsearch5:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 5
-
-  - name: gdev-elasticsearch-v56-metrics
-    type: elasticsearch
-    access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch5:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 56
-
-  - name: gdev-elasticsearch-v56-logs
-    type: elasticsearch
-    access: proxy
-    database: "[logs-]YYYY.MM.DD"
-    url: http://elasticsearch5:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 56
-
-  - name: gdev-elasticsearch-v6-metrics
-    type: elasticsearch
-    access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch6:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 60
-
-  - name: gdev-elasticsearch-v6-logs
-    type: elasticsearch
-    access: proxy
-    database: "[logs-]YYYY.MM.DD"
-    url: http://elasticsearch6:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 60
-
-  - name: gdev-elasticsearch-v6-filebeat
+  - name: gdev-elasticsearch-filebeat
     type: elasticsearch
     access: proxy
     database: "[filebeat-]YYYY.MM.DD"
-    url: http://elasticsearch6:9200
+    url: http://elasticsearch:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 60
-
-  - name: gdev-elasticsearch-v7-metrics
-    type: elasticsearch
-    access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
-    jsonData:
-      timeInterval: 10s
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 70
-
-  - name: gdev-elasticsearch-v7-logs
-    type: elasticsearch
-    access: proxy
-    database: "[logs-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 70
-
-  - name: gdev-elasticsearch-v7-filebeat
-    type: elasticsearch
-    access: proxy
-    database: "[filebeat-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 70
       timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
 
-  - name: gdev-elasticsearch-v7-metricbeat
+  - name: gdev-elasticsearch-metricbeat
     type: elasticsearch
     access: proxy
     database: "[metricbeat-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
+    url: http://elasticsearch:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
       timeInterval: "10s"
 
   - name: gdev-mysql

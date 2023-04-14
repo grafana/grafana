@@ -1,49 +1,43 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, PropsWithChildren, ReactElement, useCallback } from 'react';
+import { useId } from '@react-aria/utils';
+import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { InlineField, TextArea, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Field, TextArea, useStyles2 } from '@grafana/ui';
 
-interface VariableTextAreaFieldProps<T> {
+interface VariableTextAreaFieldProps {
   name: string;
   value: string;
   placeholder: string;
   onChange: (event: FormEvent<HTMLTextAreaElement>) => void;
   width: number;
-  tooltip?: string;
   ariaLabel?: string;
   required?: boolean;
-  labelWidth?: number;
   testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
+  description?: React.ReactNode;
 }
 
 export function VariableTextAreaField({
-  name,
   value,
+  name,
+  description,
   placeholder,
-  tooltip,
   onChange,
   onBlur,
   ariaLabel,
   required,
   width,
-  labelWidth,
   testId,
-}: PropsWithChildren<VariableTextAreaFieldProps<any>>): ReactElement {
-  const styles = useStyles(getStyles);
-  const getLineCount = useCallback((value: any) => {
-    if (value && typeof value === 'string') {
-      return value.split('\n').length;
-    }
-
-    return 1;
-  }, []);
+}: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
+  const styles = useStyles2(getStyles);
+  const id = useId();
 
   return (
-    <InlineField label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip}>
+    <Field label={name} description={description} htmlFor={id}>
       <TextArea
-        rows={getLineCount(value)}
+        id={id}
+        rows={2}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
@@ -54,18 +48,19 @@ export function VariableTextAreaField({
         className={styles.textarea}
         data-testid={testId}
       />
-    </InlineField>
+    </Field>
   );
 }
 
-function getStyles(theme: GrafanaTheme) {
+export function getStyles(theme: GrafanaTheme2) {
   return {
     textarea: css`
       white-space: pre-wrap;
-      min-height: 32px;
+      min-height: ${theme.spacing(4)};
       height: auto;
       overflow: auto;
-      padding: 6px 8px;
+      padding: ${theme.spacing(0.75, 1)};
+      width: inherit;
     `,
   };
 }

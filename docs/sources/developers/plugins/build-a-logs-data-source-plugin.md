@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin/
 title: Build a logs data source plugin
 ---
 
@@ -8,7 +6,7 @@ title: Build a logs data source plugin
 
 This guide explains how to build a logs data source plugin.
 
-Data sources in Grafana supports both metrics and log data. The steps to build a logs data source plugin are largely the same as for a metrics data source. This guide assumes that you're already familiar with how to [Build a data source plugin]({{< ref "/tutorials/build-a-data-source-plugin/" >}}) for metrics.
+Data sources in Grafana supports both metrics and log data. The steps to build a logs data source plugin are largely the same as for a metrics data source. This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin/) for metrics.
 
 ## Add logs support to your data source
 
@@ -49,7 +47,7 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../visualizations/logs-panel/" >}}).
+That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 

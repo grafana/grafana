@@ -1,16 +1,11 @@
-import {
-  ArrayVector,
-  DataTransformerConfig,
-  DataTransformerID,
-  Field,
-  FieldType,
-  toDataFrame,
-  transformDataFrame,
-} from '@grafana/data';
-
+import { toDataFrame } from '../../dataframe';
+import { DataTransformerConfig, FieldType, Field, SpecialValue } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
 
 import { GroupingToMatrixTransformerOptions, groupingToMatrixTransformer } from './groupingToMatrix';
+import { DataTransformerID } from './ids';
 
 describe('Grouping to Matrix', () => {
   beforeAll(() => {
@@ -110,6 +105,49 @@ describe('Grouping to Matrix', () => {
     });
   });
 
+  it('generates Matrix with empty entries', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        emptyValue: SpecialValue.Null,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 1001] },
+        { name: 'Value', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Time\\Time',
+          type: FieldType.string,
+          values: new ArrayVector([1000, 1001]),
+          config: {},
+        },
+        {
+          name: '1000',
+          type: FieldType.number,
+          values: new ArrayVector([1, null]),
+          config: {},
+        },
+        {
+          name: '1001',
+          type: FieldType.number,
+          values: new ArrayVector([null, 2]),
+          config: {},
+        },
+      ];
+
+      expect(processed[0].fields).toEqual(expected);
+    });
+  });
+
   it('generates Matrix with multiple fields and value type', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
@@ -133,34 +171,34 @@ describe('Grouping to Matrix', () => {
       const processed = received[0];
 
       expect(processed[0].fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
-            "name": "Row\\\\Column",
+        [
+          {
+            "config": {},
+            "name": "Row\\Column",
             "type": "string",
-            "values": Array [
+            "values": [
               "R1",
               "R2",
             ],
           },
-          Object {
-            "config": Object {
+          {
+            "config": {
               "units": "celsius",
             },
             "name": "C1",
             "type": "number",
-            "values": Array [
+            "values": [
               1,
               4,
             ],
           },
-          Object {
-            "config": Object {
+          {
+            "config": {
               "units": "celsius",
             },
             "name": "C2",
             "type": "number",
-            "values": Array [
+            "values": [
               5,
               "",
             ],

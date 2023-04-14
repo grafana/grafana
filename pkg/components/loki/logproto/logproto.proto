@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// COPIED FROM LOKI
+// If you modify this file, you need to manually generate the
+// logproto.pb.go file as well.
+//
+// Install gogoslick from https://github.com/gogo/protobuf
+// protoc --proto_path=$GOPATH/src/ --proto_path=. --gogoslick_out=plugins=grpc:. logproto.proto
+
+package logproto;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "logproto";
+
+service Pusher {
+  rpc Push(PushRequest) returns (PushResponse) {}
+}
+
+message PushRequest {
+  repeated StreamAdapter streams = 1 [
+    (gogoproto.jsontag) = "streams",
+    (gogoproto.customtype) = "Stream"
+  ];
+}
+
+message PushResponse {}
+
+message StreamAdapter {
+  string labels = 1 [(gogoproto.jsontag) = "labels"];
+  repeated EntryAdapter entries = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "entries"
+  ];
+  // hash contains the original hash of the stream.
+  uint64 hash = 3 [(gogoproto.jsontag) = "-"];
+}
+
+message EntryAdapter {
+  google.protobuf.Timestamp timestamp = 1 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "ts"
+  ];
+  string line = 2 [(gogoproto.jsontag) = "line"];
+}

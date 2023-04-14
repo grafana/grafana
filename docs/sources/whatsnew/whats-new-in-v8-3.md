@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v8-3/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v8-3/
+  - ../guides/whats-new-in-v8-3/
 description: Feature and improvement highlights for Grafana v8.3
 keywords:
   - grafana
@@ -15,7 +14,7 @@ title: What's new in Grafana v8.3
 weight: -33
 ---
 
-# What’s new in Grafana v8.3
+# What's new in Grafana v8.3
 
 Grafana 8.3 is an exciting release for Grafana Labs. This release includes the new Candlestick Panel, a new visualization suggestions engine and, for enterprise users, Recorded Queries.
 

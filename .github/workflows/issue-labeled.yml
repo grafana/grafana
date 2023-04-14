@@ -1,0 +1,71 @@
+name: Notify Slack channel based on issue label
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Download teams.yml to know which label is for which team"
+        run: wget https://raw.githubusercontent.com/grafana/grafana/main/.github/teams.yml
+
+      - name: "Determine which team to notify"
+        run: |
+          # Default to null values.
+          BOARD="null"
+          CHANNEL="null"
+
+          echo "${{ github.event.label.name }} label added"
+          export CURRENT_LABEL="${{ github.event.label.name }}" # Enable the use of the label in yq evaluations
+          # yq is installed by default in ubuntu-latest
+          if [[ $(yq e 'keys | .[] | select(. == env(CURRENT_LABEL))' teams.yml ) ]]; then
+            # Check if we have a board set to use.
+            if [[ $(yq '.[env(CURRENT_LABEL)] | has("github-board")' teams.yml ) == true ]]; then
+              BOARD=$(yq '.[env(CURRENT_LABEL)].github-board' teams.yml)
+              echo "Ready to add issue to Grafana board ${BOARD}"
+            fi
+            # Check if we have a channel set to notify on comments.
+            if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' teams.yml ) == true ]]; then
+              CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' teams.yml)
+              echo "Ready to send issue to channel ID ${CHANNEL}"
+            fi
+          fi
+
+          # set environment for next step
+          echo "BOARD=${BOARD}" >> $GITHUB_ENV
+          echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
+
+      - name: "Add to GitHub board"
+        if: ${{ env.BOARD != 'null' }}
+        uses: leonsteinhaeuser/project-beta-automations@v2.1.0
+        with:
+          project_id: ${{ env.BOARD }}
+          organization: grafana
+          resource_node_id: ${{ github.event.issue.node_id }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Prepare payload"
+        uses: frabert/replace-string-action@v2.0
+        id: preparePayload
+        with:
+          # replace double quotes with single quotes to avoid breaking the JSON payload sent to Slack
+          string: ${{ github.event.issue.title }}
+          pattern: '"'
+          replace-with: "'"
+          flags: 'g'
+
+      - name: "Send Slack notification"
+        if: ${{ env.CHANNEL != 'null' }}
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":grafana:",
+              "username": "Grafana issue labeled",
+              "text": "Issue \"${{ steps.preparePayload.outputs.replaced }}\" labeled \"${{ github.event.label.name }}\": ${{ github.event.issue.html_url }}",
+              "channel": "${{ env.CHANNEL }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

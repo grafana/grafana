@@ -1,14 +1,17 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 
+import { SegmentAsyncProps } from './SegmentAsync';
+
 const AddButton = (
-  <a className="gf-form-label query-part">
+  <span className="gf-form-label query-part">
     <Icon name="plus" />
-  </a>
+  </span>
 );
 
 const toOption = (value: any) => ({ label: value, value: value });
@@ -49,7 +52,7 @@ export const ArrayOptions = () => {
   );
 };
 
-export default {
+const meta: ComponentMeta<typeof SegmentAsync> = {
   title: 'Data Source/Segment/SegmentAsync',
   component: SegmentAsync,
 };
@@ -200,3 +203,73 @@ export const HtmlAttributes = () => {
     </SegmentFrame>
   );
 };
+
+export const Basic: ComponentStory<React.ComponentType<SegmentAsyncProps<string>>> = (
+  args: SegmentAsyncProps<string>
+) => {
+  const [value, setValue] = useState(args.value);
+
+  const props: SegmentAsyncProps<string> = {
+    ...args,
+    value,
+    loadOptions: async (query = '') => {
+      action('loadOptions fired')({ query });
+      const result = await loadOptions(options);
+      if (query) {
+        return result.filter((data) => data.label?.includes(query));
+      }
+      return loadOptions(options);
+    },
+    onChange: ({ value }) => {
+      setValue(value);
+      action('onChange fired')(value);
+    },
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
+    noOptionMessageHandler: (state) => {
+      action('noOptionMessageHandler fired')(state);
+      if (state.loading) {
+        return 'Loading...';
+      }
+      if (state.error) {
+        return 'Failed to load options';
+      }
+      if (!Array.isArray(state.value) || state.value.length === 0) {
+        return 'No options found';
+      }
+      return '';
+    },
+  };
+
+  return (
+    <SegmentSection label="Segment:">
+      <SegmentAsync<string> {...props} />
+    </SegmentSection>
+  );
+};
+
+Basic.parameters = {
+  controls: {
+    exclude: [
+      'value',
+      'loadOptions',
+      'onChange',
+      'noOptionMessageHandler',
+      'Component',
+      'className',
+      'onExpandedChange',
+    ],
+  },
+};
+
+Basic.args = {
+  inputMinWidth: 0,
+  allowCustomValue: false,
+  reloadOptionsOnChange: false,
+  placeholder: 'Placeholder text',
+  disabled: false,
+  autofocus: false,
+  allowEmptyValue: false,
+  inputPlaceholder: 'Start typing...',
+};
+
+export default meta;

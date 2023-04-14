@@ -2,114 +2,223 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { first } from 'rxjs/operators';
 
-import { ContextMenu, MenuItem } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { Scene } from '../../../features/canvas/runtime/scene';
+import { ElementState } from '../../../features/canvas/runtime/element';
+import { FrameState } from '../../../features/canvas/runtime/frame';
 
-import { LayerActionID } from './types';
+import { CanvasPanel } from './CanvasPanel';
+import { AnchorPoint, LayerActionID } from './types';
+import { getElementTypes, onAddItem } from './utils';
 
 type Props = {
   scene: Scene;
+  panel: CanvasPanel;
 };
 
-type AnchorPoint = {
-  x: number;
-  y: number;
-};
-
-export const CanvasContextMenu = ({ scene }: Props) => {
+export const CanvasContextMenu = ({ scene, panel }: Props) => {
+  const inlineEditorOpen = panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
 
   const styles = getStyles();
 
   const selectedElements = scene.selecto?.getSelectedTargets();
+  const rootLayer: FrameState | undefined = panel.context?.instanceState?.layer;
 
   const handleContextMenu = useCallback(
-    (event) => {
+    (event: Event) => {
+      if (!(event instanceof MouseEvent)) {
+        return;
+      }
+
       event.preventDefault();
-      if (event.currentTarget) {
-        scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
+      panel.setActivePanel();
+
+      const shouldSelectElement = event.currentTarget !== scene.div;
+      if (
+        shouldSelectElement &&
+        (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+      ) {
+        scene.select({ targets: [event.currentTarget] });
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
     },
-    [scene]
+    [scene, panel]
   );
 
   useEffect(() => {
-    if (selectedElements && selectedElements.length === 1) {
-      const element = selectedElements[0];
-      element.addEventListener('contextmenu', handleContextMenu);
+    if (scene.selecto) {
+      scene.selecto.getSelectableElements().forEach((element) => {
+        element.addEventListener('contextmenu', handleContextMenu);
+      });
     }
-  }, [selectedElements, handleContextMenu]);
+  }, [handleContextMenu, scene.selecto]);
 
-  if (!selectedElements) {
-    return <></>;
-  }
+  useEffect(() => {
+    if (scene.div) {
+      scene.div.addEventListener('contextmenu', handleContextMenu);
+    }
+  }, [handleContextMenu, scene.div]);
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
   };
 
   const renderMenuItems = () => {
-    return (
-      <>
-        <MenuItem
-          label="Delete"
-          onClick={() => {
-            contextMenuAction(LayerActionID.Delete);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Duplicate"
-          onClick={() => {
-            contextMenuAction(LayerActionID.Duplicate);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Bring to front"
-          onClick={() => {
-            contextMenuAction(LayerActionID.MoveTop);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-        <MenuItem
-          label="Send to back"
-          onClick={() => {
-            contextMenuAction(LayerActionID.MoveBottom);
-            closeContextMenu();
-          }}
-          className={styles.menuItem}
-        />
-      </>
+    const openCloseEditorMenuItem = !scene.isPanelEditing && (
+      <MenuItem
+        label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+        onClick={() => {
+          if (scene.inlineEditingCallback) {
+            if (inlineEditorOpen) {
+              panel.closeInlineEdit();
+            } else {
+              scene.inlineEditingCallback();
+            }
+          }
+          closeContextMenu();
+        }}
+        className={styles.menuItem}
+      />
     );
+
+    const editElementMenuItem = () => {
+      if (selectedElements?.length === 1) {
+        const onClickEditElementMenuItem = () => {
+          scene.editModeEnabled.next(true);
+          closeContextMenu();
+        };
+
+        const element = scene.findElementByTarget(selectedElements[0]);
+        return (
+          element &&
+          element.item.hasEditMode && (
+            <MenuItem label="Edit" onClick={onClickEditElementMenuItem} className={styles.menuItem} />
+          )
+        );
+      }
+      return null;
+    };
+
+    const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes).options;
+
+    const getTypeOptionsSubmenu = () => {
+      const submenuItems: Array<
+        React.ReactElement<MenuItemProps<unknown>, string | React.JSXElementConstructor<unknown>>
+      > = [];
+
+      const onClickItem = (option: SelectableValue<string>) => {
+        let offsetY = anchorPoint.y;
+        let offsetX = anchorPoint.x;
+        if (scene.div) {
+          const sceneContainerDimensions = scene.div.getBoundingClientRect();
+          offsetY = offsetY - sceneContainerDimensions.top;
+          offsetX = offsetX - sceneContainerDimensions.left;
+        }
+
+        onAddItem(option, rootLayer, {
+          ...anchorPoint,
+          y: offsetY,
+          x: offsetX,
+        });
+      };
+
+      typeOptions.map((option) => {
+        submenuItems.push(
+          <MenuItem key={option.value} label={option.label ?? 'Canvas item'} onClick={() => onClickItem(option)} />
+        );
+      });
+
+      return submenuItems;
+    };
+
+    const addItemMenuItem = !scene.isPanelEditing && (
+      <MenuItem
+        label="Add item"
+        className={styles.menuItem}
+        childItems={getTypeOptionsSubmenu()}
+        customSubMenuContainerStyles={{ maxHeight: '150px', overflowY: 'auto' }}
+      />
+    );
+
+    const setBackgroundMenuItem = !scene.isPanelEditing && (
+      <MenuItem
+        label={'Set background'}
+        onClick={() => {
+          if (scene.setBackgroundCallback) {
+            scene.setBackgroundCallback(anchorPoint);
+          }
+          closeContextMenu();
+        }}
+        className={styles.menuItem}
+      />
+    );
+
+    if (selectedElements && selectedElements.length >= 1) {
+      return (
+        <>
+          {editElementMenuItem()}
+          <MenuItem
+            label="Delete"
+            onClick={() => {
+              contextMenuAction(LayerActionID.Delete);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Duplicate"
+            onClick={() => {
+              contextMenuAction(LayerActionID.Duplicate);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Bring to front"
+            onClick={() => {
+              contextMenuAction(LayerActionID.MoveTop);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          <MenuItem
+            label="Send to back"
+            onClick={() => {
+              contextMenuAction(LayerActionID.MoveBottom);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
+          {openCloseEditorMenuItem}
+        </>
+      );
+    } else {
+      return (
+        <>
+          {openCloseEditorMenuItem}
+          {setBackgroundMenuItem}
+          {addItemMenuItem}
+        </>
+      );
+    }
   };
 
-  const contextMenuAction = (actionType: string) => {
+  const contextMenuAction = (actionType: LayerActionID) => {
     scene.selection.pipe(first()).subscribe((currentSelectedElements) => {
-      const currentSelectedElement = currentSelectedElements[0];
-      const currentLayer = currentSelectedElement.parent!;
+      const currentLayer = currentSelectedElements[0].parent!;
+      currentSelectedElements.forEach((currentSelectedElement: ElementState) => {
+        currentLayer.doAction(actionType, currentSelectedElement);
+      });
+    });
 
-      switch (actionType) {
-        case LayerActionID.Delete:
-          currentLayer.doAction(LayerActionID.Delete, currentSelectedElement);
-          break;
-        case LayerActionID.Duplicate:
-          currentLayer.doAction(LayerActionID.Duplicate, currentSelectedElement);
-          break;
-        case LayerActionID.MoveTop:
-          currentLayer.doAction(LayerActionID.MoveTop, currentSelectedElement);
-          break;
-        case LayerActionID.MoveBottom:
-          currentLayer.doAction(LayerActionID.MoveBottom, currentSelectedElement);
-          break;
-      }
+    setTimeout(() => {
+      scene.addToSelection();
+      scene.targetsToSelect.clear();
     });
   };
 
@@ -137,7 +246,6 @@ export const CanvasContextMenu = ({ scene }: Props) => {
 
 const getStyles = () => ({
   menuItem: css`
-    max-width: 60ch;
-    overflow: hidden;
+    max-width: 200px;
   `,
 });

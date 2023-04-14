@@ -1,11 +1,9 @@
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { RangeSlider } from '@grafana/ui';
 
-import { RangeSliderProps } from './types';
-
-export default {
+const meta: ComponentMeta<typeof RangeSlider> = {
   title: 'Forms/Slider/Range',
   component: RangeSlider,
   parameters: {
@@ -14,32 +12,32 @@ export default {
     },
   },
   argTypes: {
-    isStep: { name: 'step' },
     orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
+    step: { control: { type: 'number', min: 1 } },
   },
-} as Meta;
+  args: {
+    min: 0,
+    max: 100,
+    orientation: 'horizontal',
+    reverse: false,
+    step: undefined,
+  },
+};
 
-interface StoryProps extends Partial<RangeSliderProps> {
-  isStep: boolean;
-}
-
-export const Basic: Story<StoryProps> = (args) => {
+export const Basic: ComponentStory<typeof RangeSlider> = (args) => {
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <RangeSlider
-        step={args.isStep ? 10 : undefined}
-        value={[10, 20]}
-        min={args.min as number}
-        max={args.max as number}
-        {...args}
-      />
+      <RangeSlider {...args} value={[10, 62]} />
     </div>
   );
 };
-Basic.args = {
-  min: 0,
-  max: 100,
-  isStep: false,
-  orientation: 'horizontal',
-  reverse: false,
+
+export const Vertical: ComponentStory<typeof RangeSlider> = (args) => {
+  return (
+    <div style={{ width: '200px', height: '200px' }}>
+      <RangeSlider {...args} value={[10, 62]} orientation="vertical" />
+    </div>
+  );
 };
+
+export default meta;

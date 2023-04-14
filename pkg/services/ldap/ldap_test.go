@@ -5,18 +5,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestNew(t *testing.T) {
 	result := New(&ServerConfig{
 		Attr:          AttributeMap{},
 		SearchBaseDNs: []string{"BaseDNHere"},
-	})
+	}, &setting.Cfg{})
 
 	assert.Implements(t, (*IServer)(nil), result)
 }
@@ -65,7 +67,11 @@ func TestServer_Users(t *testing.T) {
 		conn.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
+
 		server := &Server{
+			cfg: cfg,
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -158,6 +164,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		server := &Server{
+			cfg: setting.NewCfg(),
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -204,7 +211,11 @@ func TestServer_Users(t *testing.T) {
 			}
 		})
 
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
+
 		server := &Server{
+			cfg: cfg,
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -220,6 +231,161 @@ func TestServer_Users(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		assert.Equal(t, "Grot the First", res[0].Name)
+	})
+
+	t.Run("org role mapping", func(t *testing.T) {
+		conn := &MockConnection{}
+
+		usersOU := "ou=users,dc=example,dc=org"
+		grootDN := "dn=groot," + usersOU
+		grootSearch := ldap.SearchResult{Entries: []*ldap.Entry{{DN: grootDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"groot"}},
+				{Name: "name", Values: []string{"I am Groot"}},
+			}}}}
+		babyGrootDN := "dn=babygroot," + usersOU
+		babyGrootSearch := ldap.SearchResult{Entries: []*ldap.Entry{{DN: grootDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"babygroot"}},
+				{Name: "name", Values: []string{"I am baby Groot"}},
+			}}}}
+		peterDN := "dn=peter," + usersOU
+		peterSearch := ldap.SearchResult{Entries: []*ldap.Entry{{DN: peterDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"peter"}},
+				{Name: "name", Values: []string{"Peter"}},
+			}}}}
+		groupsOU := "ou=groups,dc=example,dc=org"
+		creaturesDN := "dn=creatures," + groupsOU
+		grootGroups := ldap.SearchResult{Entries: []*ldap.Entry{{DN: creaturesDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "member", Values: []string{grootDN}},
+			}}},
+		}
+		babyCreaturesDN := "dn=babycreatures," + groupsOU
+		babyGrootGroups := ldap.SearchResult{Entries: []*ldap.Entry{{DN: babyCreaturesDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "member", Values: []string{babyGrootDN}},
+			}}},
+		}
+		humansDN := "dn=humans," + groupsOU
+		peterGroups := ldap.SearchResult{Entries: []*ldap.Entry{{DN: humansDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "member", Values: []string{peterDN}},
+			}}},
+		}
+
+		conn.setSearchFunc(func(request *ldap.SearchRequest) (*ldap.SearchResult, error) {
+			switch request.BaseDN {
+			case usersOU:
+				switch request.Filter {
+				case "(|(username=groot))":
+					return &grootSearch, nil
+				case "(|(username=babygroot))":
+					return &babyGrootSearch, nil
+				case "(|(username=peter))":
+					return &peterSearch, nil
+				default:
+					return nil, fmt.Errorf("test case not defined for user filter: '%s'", request.Filter)
+				}
+			case groupsOU:
+				switch request.Filter {
+				case "(member=groot)":
+					return &grootGroups, nil
+				case "(member=babygroot)":
+					return &babyGrootGroups, nil
+				case "(member=peter)":
+					return &peterGroups, nil
+				default:
+					return nil, fmt.Errorf("test case not defined for group filter: '%s'", request.Filter)
+				}
+			default:
+				return nil, fmt.Errorf("test case not defined for baseDN: '%s'", request.BaseDN)
+			}
+		})
+
+		isGrafanaAdmin := true
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
+
+		server := &Server{
+			cfg: cfg,
+			Config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+				},
+				SearchBaseDNs:      []string{usersOU},
+				SearchFilter:       "(username=%s)",
+				GroupSearchFilter:  "(member=%s)",
+				GroupSearchBaseDNs: []string{groupsOU},
+				Groups: []*GroupToOrgRole{
+					{
+						GroupDN:        creaturesDN,
+						OrgId:          2,
+						IsGrafanaAdmin: &isGrafanaAdmin,
+						OrgRole:        "Admin",
+					},
+					{
+						GroupDN: babyCreaturesDN,
+						OrgId:   2,
+						OrgRole: "Editor",
+					},
+				},
+			},
+			Connection: conn,
+			log:        log.New("test-logger"),
+		}
+
+		t.Run("disable user with no mapping", func(t *testing.T) {
+			res, err := server.Users([]string{"peter"})
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Equal(t, "Peter", res[0].Name)
+			require.ElementsMatch(t, res[0].Groups, []string{humansDN})
+			require.Empty(t, res[0].OrgRoles)
+			require.True(t, res[0].IsDisabled)
+		})
+		t.Run("skip org role sync", func(t *testing.T) {
+			server.cfg.LDAPSkipOrgRoleSync = true
+
+			res, err := server.Users([]string{"groot"})
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Equal(t, "I am Groot", res[0].Name)
+			require.ElementsMatch(t, res[0].Groups, []string{creaturesDN})
+			require.Empty(t, res[0].OrgRoles)
+			require.False(t, res[0].IsDisabled)
+		})
+		t.Run("sync org role", func(t *testing.T) {
+			server.cfg.LDAPSkipOrgRoleSync = false
+			res, err := server.Users([]string{"groot"})
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Equal(t, "I am Groot", res[0].Name)
+			require.ElementsMatch(t, res[0].Groups, []string{creaturesDN})
+			require.Len(t, res[0].OrgRoles, 1)
+			role, mappingExist := res[0].OrgRoles[2]
+			require.True(t, mappingExist)
+			require.Equal(t, roletype.RoleAdmin, role)
+			require.False(t, res[0].IsDisabled)
+			require.NotNil(t, res[0].IsGrafanaAdmin)
+			assert.True(t, *res[0].IsGrafanaAdmin)
+		})
+		t.Run("set Grafana Admin to false by default", func(t *testing.T) {
+			res, err := server.Users([]string{"babygroot"})
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Equal(t, "I am baby Groot", res[0].Name)
+			require.ElementsMatch(t, res[0].Groups, []string{babyCreaturesDN})
+			require.Len(t, res[0].OrgRoles, 1)
+			role, mappingExist := res[0].OrgRoles[2]
+			require.True(t, mappingExist)
+			require.Equal(t, roletype.RoleEditor, role)
+			require.False(t, res[0].IsDisabled)
+			require.NotNil(t, res[0].IsGrafanaAdmin)
+			assert.False(t, *res[0].IsGrafanaAdmin)
+		})
 	})
 }
 

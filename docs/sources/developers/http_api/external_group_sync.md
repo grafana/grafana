@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/external_group_sync/
-  - /docs/grafana/latest/http_api/external_group_sync/
+  - ../../http_api/external_group_sync/
+canonical: /docs/grafana/latest/developers/http_api/external_group_sync/
 description: Grafana External Group Sync HTTP API
 keywords:
   - grafana
@@ -13,14 +13,14 @@ keywords:
   - group
   - member
   - enterprise
-title: 'External Group Sync HTTP API '
+title: External Group Sync HTTP API
 ---
 
 # External Group Synchronization API
 
-> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Get External Groups
 

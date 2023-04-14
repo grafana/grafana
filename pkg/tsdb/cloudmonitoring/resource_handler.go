@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -35,7 +34,7 @@ func (s *Service) newResourceMux() *http.ServeMux {
 }
 
 func (s *Service) getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
-	project, err := s.gceDefaultProjectGetter(req.Context())
+	project, err := s.gceDefaultProjectGetter(req.Context(), resourceManagerScope)
 	if err != nil {
 		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		return
@@ -216,7 +215,7 @@ func decode(encoding string, original io.ReadCloser) ([]byte, error) {
 		return nil, fmt.Errorf("unexpected encoding type %v", err)
 	}
 
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

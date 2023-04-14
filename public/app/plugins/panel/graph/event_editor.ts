@@ -18,12 +18,11 @@ export class EventEditorCtrl {
   close: any;
   timeFormated?: string;
 
-  /** @ngInject */
   constructor() {}
 
   $onInit() {
     this.event.panelId = this.panelCtrl.panel.id; // set correct id if in panel edit
-    this.event.dashboardId = this.panelCtrl.dashboard.id;
+    this.event.dashboardUID = this.panelCtrl.dashboard.uid;
 
     // Annotations query returns time as Unix timestamp in milliseconds
     this.event.time = tryEpochToMoment(this.event.time);

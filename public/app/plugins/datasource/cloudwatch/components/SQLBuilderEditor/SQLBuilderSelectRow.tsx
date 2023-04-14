@@ -4,9 +4,9 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
-import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { STATISTICS } from '../../language/cloudwatch-sql/language';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 
@@ -32,7 +32,7 @@ interface SQLBuilderSelectRowProps {
 
 const AGGREGATIONS = STATISTICS.map(toOption);
 
-const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, query, onQueryChange }) => {
+const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSelectRowProps) => {
   const sql = query.sql ?? {};
 
   const aggregation = sql.select?.name;
@@ -48,9 +48,14 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   const withSchemaEnabled = isUsingWithSchema(sql.from);
 
   const namespaceOptions = useNamespaces(datasource);
-  const metricOptions = useMetrics(datasource, query.region, namespace);
+  const metricOptions = useMetrics(datasource, { region: query.region, namespace });
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
-  const unusedDimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const unusedDimensionKeys = useDimensionKeys(datasource, {
+    region: query.region,
+    namespace,
+    metricName,
+    dimensionFilters: existingFilters,
+  });
   const dimensionKeys = useMemo(
     () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
     [unusedDimensionKeys, schemaLabels]
@@ -62,8 +67,8 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   };
 
   const validateMetricName = async (query: CloudWatchMetricsQuery) => {
-    let { region, sql } = query;
-    await datasource.getMetrics(query.namespace, region).then((result: Array<SelectableValue<string>>) => {
+    let { region, sql, namespace } = query;
+    await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.some((metric) => metric.value === metricName)) {
         sql = removeMetricName(query).sql;
       }

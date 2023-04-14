@@ -15,11 +15,6 @@ jest.mock('react-use/lib/useMeasure', () => {
 });
 
 describe('NodeGraph', () => {
-  const origError = console.error;
-  const consoleErrorMock = jest.fn();
-  afterEach(() => (console.error = origError));
-  beforeEach(() => (console.error = consoleErrorMock));
-
   it('shows no data message without any data', async () => {
     render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
 
@@ -27,7 +22,12 @@ describe('NodeGraph', () => {
   });
 
   it('can zoom in and out', async () => {
-    render(<NodeGraph dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]} getLinks={() => []} />);
+    render(
+      <NodeGraph
+        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
+        getLinks={() => []}
+      />
+    );
     const zoomIn = await screen.findByTitle(/Zoom in/);
     const zoomOut = await screen.findByTitle(/Zoom out/);
 
@@ -44,8 +44,8 @@ describe('NodeGraph', () => {
         dataFrames={[
           makeNodesDataFrame(3),
           makeEdgesDataFrame([
-            [0, 1],
-            [1, 2],
+            { source: '0', target: '1' },
+            { source: '1', target: '2' },
           ]),
         ]}
         getLinks={() => []}
@@ -70,7 +70,7 @@ describe('NodeGraph', () => {
   it('shows context menu when clicking on node or edge', async () => {
     render(
       <NodeGraph
-        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]}
+        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
         getLinks={(dataFrame) => {
           return [
             {
@@ -83,6 +83,12 @@ describe('NodeGraph', () => {
         }}
       />
     );
+
+    // We mock this because for some reason the simulated click events don't have pageX/Y values resulting in some NaNs
+    // for positioning and this creates a warning message.
+    const origError = console.error;
+    console.error = jest.fn();
+
     const node = await screen.findByLabelText(/Node: service:0/);
     await userEvent.click(node);
     await screen.findByText(/Node traces/);
@@ -90,6 +96,7 @@ describe('NodeGraph', () => {
     const edge = await screen.findByLabelText(/Edge from/);
     await userEvent.click(edge);
     await screen.findByText(/Edge traces/);
+    console.error = origError;
   });
 
   it('lays out 3 nodes in single line', async () => {
@@ -98,8 +105,8 @@ describe('NodeGraph', () => {
         dataFrames={[
           makeNodesDataFrame(3),
           makeEdgesDataFrame([
-            [0, 1],
-            [1, 2],
+            { source: '0', target: '1' },
+            { source: '1', target: '2' },
           ]),
         ]}
         getLinks={() => []}
@@ -117,8 +124,8 @@ describe('NodeGraph', () => {
         dataFrames={[
           makeNodesDataFrame(3),
           makeEdgesDataFrame([
-            [0, 1],
-            [0, 2],
+            { source: '0', target: '1' },
+            { source: '0', target: '2' },
           ]),
         ]}
         getLinks={() => []}
@@ -137,10 +144,10 @@ describe('NodeGraph', () => {
         dataFrames={[
           makeNodesDataFrame(5),
           makeEdgesDataFrame([
-            [0, 1],
-            [0, 2],
-            [2, 3],
-            [3, 4],
+            { source: '0', target: '1' },
+            { source: '0', target: '2' },
+            { source: '2', target: '3' },
+            { source: '3', target: '4' },
           ]),
         ]}
         getLinks={() => []}
@@ -162,10 +169,10 @@ describe('NodeGraph', () => {
         dataFrames={[
           makeNodesDataFrame(5),
           makeEdgesDataFrame([
-            [0, 1],
-            [1, 2],
-            [2, 3],
-            [3, 4],
+            { source: '0', target: '1' },
+            { source: '1', target: '2' },
+            { source: '2', target: '3' },
+            { source: '3', target: '4' },
           ]),
         ]}
         getLinks={() => []}
@@ -192,8 +199,8 @@ describe('NodeGraph', () => {
         dataFrames={[
           makeNodesDataFrame(3),
           makeEdgesDataFrame([
-            [0, 1],
-            [1, 2],
+            { source: '0', target: '1' },
+            { source: '1', target: '2' },
           ]),
         ]}
         getLinks={() => []}

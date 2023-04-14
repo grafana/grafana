@@ -16,7 +16,7 @@ describe('get features utils', () => {
     const info = getLayerPropertyInfo(features);
     expect(info.geometryType).toBe(GeometryTypeId.Point);
     expect(info.propertes.map((v) => v.value)).toMatchInlineSnapshot(`
-      Array [
+      [
         "a",
         "b",
         "hello",
@@ -29,13 +29,13 @@ describe('get features utils', () => {
     const uniqueA = getUniqueFeatureValues(features, 'a');
     const uniqueB = getUniqueFeatureValues(features, 'b');
     expect(uniqueA).toMatchInlineSnapshot(`
-      Array [
+      [
         "1",
         "2",
       ]
     `);
     expect(uniqueB).toMatchInlineSnapshot(`
-      Array [
+      [
         "10",
         "20",
         "30",

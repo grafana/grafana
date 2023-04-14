@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 )
 
 // NotificationTestCommand initiates an test
@@ -32,8 +33,8 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Con
 	notificationSvc := newNotificationService(nil, nil, nil, nil)
 
 	model := models.AlertNotification{
-		Id:       cmd.ID,
-		OrgId:    cmd.OrgID,
+		ID:       cmd.ID,
+		OrgID:    cmd.OrgID,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -57,9 +58,9 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		ID:          rand.Int63(),
 	}
 
-	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{}, nil, nil)
+	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
-		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
+		ctx.ImagePublicURL = "https://grafana.com/static/assets/img/blog/mixed_styles.png"
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true

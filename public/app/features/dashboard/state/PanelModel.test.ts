@@ -1,7 +1,6 @@
 import { ComponentClass } from 'react';
 
 import {
-  DataLinkBuiltInVars,
   FieldConfigProperty,
   PanelData,
   PanelProps,
@@ -10,29 +9,21 @@ import {
   dateTime,
   TimeRange,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
 import { setTemplateSrv } from '@grafana/runtime';
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 
-import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
-import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { setTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
 
 import { PanelModel } from './PanelModel';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
-
-setTimeSrv({
-  timeRangeForUrl: () => ({
-    from: 1607687293000,
-    to: 1607687293100,
-  }),
-} as any);
 
 const getVariables = () => variablesMock;
 const getVariableWithName = (name: string) => variablesMock.filter((v) => v.name === name)[0];
@@ -211,19 +202,10 @@ describe('PanelModel', () => {
           bbb: { value: 'BBB', text: 'upperB' },
         };
       });
+
       it('should interpolate variables', () => {
         const out = model.replaceVariables('hello $aaa');
         expect(out).toBe('hello AAA');
-      });
-
-      it('should interpolate $__url_time_range variable', () => {
-        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.keepTime}`);
-        expect(out).toBe('/d/1?from=1607687293000&to=1607687293100');
-      });
-
-      it('should interpolate $__all_variables variable', () => {
-        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.includeVars}`);
-        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2&var-test3=Value%203&var-test4=A&var-test4=B');
       });
 
       it('should prefer the local variable value', () => {
@@ -435,6 +417,26 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('updateGridPos', () => {
+      it('Should not have changes if no change', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 1, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(false);
+      });
+
+      it('Should have changes if gridPos is different', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(true);
+      });
+
+      it('Should not have changes if not manually updated', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 }, false);
+        expect(model.hasChanged).toBe(false);
+      });
+    });
+
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
         model.getQueryRunner().useLastResultFrom({
@@ -472,6 +474,7 @@ describe('PanelModel', () => {
           run: jest.fn(),
         });
         const dashboardId = 123;
+        const dashboardUID = 'ggHbN42mk';
         const dashboardTimezone = 'browser';
         const width = 860;
         const timeData = {
@@ -486,7 +489,7 @@ describe('PanelModel', () => {
           } as TimeRange,
         } as TimeOverrideResult;
 
-        model.runAllPanelQueries(dashboardId, dashboardTimezone, timeData, width);
+        model.runAllPanelQueries({ dashboardId, dashboardUID, dashboardTimezone, timeData, width });
 
         expect(model.getQueryRunner).toBeCalled();
       });

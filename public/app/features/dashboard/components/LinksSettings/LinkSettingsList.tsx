@@ -13,7 +13,7 @@ type LinkSettingsListProps = {
   onEdit: (idx: number) => void;
 };
 
-export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, onNew, onEdit }) => {
+export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListProps) => {
   const [links, setLinks] = useState(dashboard.links);
 
   const moveLink = (idx: number, direction: number) => {
@@ -35,23 +35,25 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, o
 
   if (isEmptyList) {
     return (
-      <EmptyListCTA
-        onClick={onNew}
-        title="There are no dashboard links added yet"
-        buttonIcon="link"
-        buttonTitle="Add dashboard link"
-        infoBoxTitle="What are dashboard links?"
-        infoBox={{
-          __html:
-            '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
-        }}
-      />
+      <div>
+        <EmptyListCTA
+          onClick={onNew}
+          title="There are no dashboard links added yet"
+          buttonIcon="link"
+          buttonTitle="Add dashboard link"
+          infoBoxTitle="What are dashboard links?"
+          infoBox={{
+            __html:
+              '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
+          }}
+        />
+      </div>
     );
   }
 
   return (
     <>
-      <table className="filter-table filter-table--hover">
+      <table role="grid" className="filter-table filter-table--hover">
         <thead>
           <tr>
             <th>Type</th>
@@ -62,28 +64,28 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, o
         <tbody>
           {links.map((link, idx) => (
             <tr key={`${link.title}-${idx}`}>
-              <td className="pointer" onClick={() => onEdit(idx)}>
+              <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                 <Icon name="external-link-alt" /> &nbsp; {link.type}
               </td>
-              <td>
+              <td role="gridcell">
                 <HorizontalGroup>
                   {link.title && <span>{link.title}</span>}
                   {link.type === 'link' && <span>{link.url}</span>}
                   {link.type === 'dashboards' && <TagList tags={link.tags ?? []} />}
                 </HorizontalGroup>
               </td>
-              <td style={{ width: '1%' }}>
+              <td style={{ width: '1%' }} role="gridcell">
                 {idx !== 0 && <IconButton name="arrow-up" aria-label="arrow-up" onClick={() => moveLink(idx, -1)} />}
               </td>
-              <td style={{ width: '1%' }}>
+              <td style={{ width: '1%' }} role="gridcell">
                 {links.length > 1 && idx !== links.length - 1 ? (
                   <IconButton name="arrow-down" aria-label="arrow-down" onClick={() => moveLink(idx, 1)} />
                 ) : null}
               </td>
-              <td style={{ width: '1%' }}>
+              <td style={{ width: '1%' }} role="gridcell">
                 <IconButton aria-label="copy" name="copy" onClick={() => duplicateLink(link, idx)} />
               </td>
-              <td style={{ width: '1%' }}>
+              <td style={{ width: '1%' }} role="gridcell">
                 <DeleteButton
                   aria-label={`Delete link with title "${link.title}"`}
                   size="sm"

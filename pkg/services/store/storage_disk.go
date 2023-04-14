@@ -2,36 +2,33 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"gocloud.dev/blob"
+
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 )
 
 const rootStorageTypeDisk = "disk"
 
-type rootStorageDisk struct {
-	baseStorageRuntime
+var _ storageRuntime = &rootStorageDisk{}
 
+type rootStorageDisk struct {
 	settings *StorageLocalDiskConfig
+	meta     RootStorageMeta
+	store    filestorage.FileStorage
 }
 
-func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *rootStorageDisk {
+func newDiskStorage(meta RootStorageMeta, scfg RootStorageConfig) *rootStorageDisk {
+	cfg := scfg.Disk
 	if cfg == nil {
 		cfg = &StorageLocalDiskConfig{}
+		scfg.Disk = cfg
 	}
-
-	meta := RootStorageMeta{
-		Config: RootStorageConfig{
-			Type:   rootStorageTypeDisk,
-			Prefix: prefix,
-			Name:   name,
-			Disk:   cfg,
-		},
-	}
-	if prefix == "" {
+	scfg.Type = rootStorageTypeDisk
+	meta.Config = scfg
+	if scfg.Prefix == "" {
 		meta.Notice = append(meta.Notice, data.Notice{
 			Severity: data.NoticeSeverityError,
 			Text:     "Missing prefix",
@@ -43,13 +40,17 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 			Text:     "Missing path configuration",
 		})
 	}
-	s := &rootStorageDisk{}
+
+	s := &rootStorageDisk{
+		settings: cfg,
+	}
 
 	if meta.Notice == nil {
-		path := fmt.Sprintf("file://%s", cfg.Path)
+		protocol := "file:///"
+		path := protocol + cfg.Path
 		bucket, err := blob.OpenBucket(context.Background(), path)
 		if err != nil {
-			grafanaStorageLogger.Warn("error loading storage", "prefix", prefix, "err", err)
+			grafanaStorageLogger.Warn("error loading storage", "prefix", scfg.Prefix, "err", err)
 			meta.Notice = append(meta.Notice, data.Notice{
 				Severity: data.NoticeSeverityError,
 				Text:     "Failed to initialize storage",
@@ -64,8 +65,15 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 	}
 
 	s.meta = meta
-	s.settings = cfg
 	return s
+}
+
+func (s *rootStorageDisk) Meta() RootStorageMeta {
+	return s.meta
+}
+
+func (s *rootStorageDisk) Store() filestorage.FileStorage {
+	return s.store
 }
 
 func (s *rootStorageDisk) Sync() error {

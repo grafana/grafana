@@ -7,6 +7,7 @@ import { LabelParamEditor } from '../components/LabelParamEditor';
 import { PromVisualQueryOperationCategory } from '../types';
 
 import {
+  QueryBuilderLabelFilter,
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
@@ -261,7 +262,7 @@ function getAggregationWithoutRenderer(aggregation: string) {
 /**
  * Very simple poc implementation, needs to be modified to support all aggregation operators
  */
-function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
+export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
     const labelWord = pluralize('label', model.params.length);
@@ -279,22 +280,20 @@ function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without'
 
 function getAggregationByRendererWithParameter(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    function mapType(p: QueryBuilderOperationParamValue) {
-      if (typeof p === 'string') {
-        return `\"${p}\"`;
-      }
-      return p;
-    }
-    const params = model.params.slice(0, -1);
-    const restParams = model.params.slice(1);
-    return `${aggregation} by(${restParams.join(', ')}) (${params.map(mapType).join(', ')}, ${innerExpr})`;
+    const restParamIndex = def.params.findIndex((param) => param.restParam);
+    const params = model.params.slice(0, restParamIndex);
+    const restParams = model.params.slice(restParamIndex);
+
+    return `${aggregation} by(${restParams.join(', ')}) (${params
+      .map((param, idx) => (def.params[idx].type === 'string' ? `\"${param}\"` : param))
+      .join(', ')}, ${innerExpr})`;
   };
 }
 
 /**
  * This function will transform operations without labels to their plan aggregation operation
  */
-function getLastLabelRemovedHandler(changeToOperationId: string) {
+export function getLastLabelRemovedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
     // If definition has more params then is defined there are no optional rest params anymore.
     // We then transform this operation into a different one
@@ -309,11 +308,11 @@ function getLastLabelRemovedHandler(changeToOperationId: string) {
   };
 }
 
-function getOnLabelAddedHandler(changeToOperationId: string) {
+export function getOnLabelAddedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
-    // as it's definition, and now we can change it to it's `_by` variant.
+    // as its definition, and now we can change it to its `_by` variant.
     if (op.params.length === def.params.length) {
       return {
         ...op,
@@ -322,4 +321,35 @@ function getOnLabelAddedHandler(changeToOperationId: string) {
     }
     return op;
   };
+}
+
+export function isConflictingSelector(
+  newLabel: Partial<QueryBuilderLabelFilter>,
+  labels: Array<Partial<QueryBuilderLabelFilter>>
+): boolean {
+  if (!newLabel.label || !newLabel.op || !newLabel.value) {
+    return false;
+  }
+
+  if (labels.length < 2) {
+    return false;
+  }
+
+  const operationIsNegative = newLabel.op.toString().startsWith('!');
+
+  const candidates = labels.filter(
+    (label) => label.label === newLabel.label && label.value === newLabel.value && label.op !== newLabel.op
+  );
+
+  const conflict = candidates.some((candidate) => {
+    if (operationIsNegative && candidate?.op?.toString().startsWith('!') === false) {
+      return true;
+    }
+    if (operationIsNegative === false && candidate?.op?.toString().startsWith('!')) {
+      return true;
+    }
+    return false;
+  });
+
+  return conflict;
 }

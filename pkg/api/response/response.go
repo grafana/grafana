@@ -3,18 +3,24 @@ package response
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
+
+	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Response is an HTTP response interface.
 type Response interface {
 	// WriteTo writes to a context.
-	WriteTo(ctx *models.ReqContext)
+	WriteTo(ctx *contextmodel.ReqContext)
 	// Body gets the response's body.
 	Body() []byte
 	// Status gets the response's status.
@@ -72,17 +78,13 @@ func (r *NormalResponse) ErrMessage() string {
 	return r.errMessage
 }
 
-func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
+func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	if r.err != nil {
-		v := map[string]interface{}{}
-		traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
-		if err := json.Unmarshal(r.body.Bytes(), &v); err == nil {
-			v["traceID"] = traceID
-			if b, err := json.Marshal(v); err == nil {
-				r.body = bytes.NewBuffer(b)
-			}
+		if errutil.HasUnifiedLogging(ctx.Req.Context()) {
+			ctx.Error = r.err
+		} else {
+			r.writeLogLine(ctx)
 		}
-		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	header := ctx.Resp.Header()
@@ -93,6 +95,24 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if _, err := ctx.Resp.Write(r.body.Bytes()); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
+}
+
+func (r *NormalResponse) writeLogLine(c *contextmodel.ReqContext) {
+	v := map[string]interface{}{}
+	traceID := tracing.TraceIDFromContext(c.Req.Context(), false)
+	if err := json.Unmarshal(r.body.Bytes(), &v); err == nil {
+		v["traceID"] = traceID
+		if b, err := json.Marshal(v); err == nil {
+			r.body = bytes.NewBuffer(b)
+		}
+	}
+
+	logger := c.Logger.Error
+	var gfErr errutil.Error
+	if errors.As(r.err, &gfErr) {
+		logger = gfErr.LogLevel.LogFunc(c.Logger)
+	}
+	logger(r.errMessage, "error", r.err, "remote_addr", c.RemoteAddr(), "traceID", traceID)
 }
 
 func (r *NormalResponse) SetHeader(key, value string) *NormalResponse {
@@ -121,7 +141,7 @@ func (r StreamingResponse) Body() []byte {
 
 // WriteTo writes the response to the provided context.
 // Required to implement api.Response.
-func (r StreamingResponse) WriteTo(ctx *models.ReqContext) {
+func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	header := ctx.Resp.Header()
 	for k, v := range r.header {
 		header[k] = v
@@ -144,7 +164,7 @@ type RedirectResponse struct {
 }
 
 // WriteTo writes to a response.
-func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
+func (r *RedirectResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	ctx.Redirect(r.location)
 }
 
@@ -162,7 +182,8 @@ func (r *RedirectResponse) Body() []byte {
 
 // JSON creates a JSON response.
 func JSON(status int, body interface{}) *NormalResponse {
-	return Respond(status, body).SetHeader("Content-Type", "application/json")
+	return Respond(status, body).
+		SetHeader("Content-Type", "application/json")
 }
 
 // JSONStreaming creates a streaming JSON response.
@@ -174,6 +195,30 @@ func JSONStreaming(status int, body interface{}) StreamingResponse {
 		status: status,
 		header: header,
 	}
+}
+
+// JSONDownload creates a JSON response indicating that it should be downloaded.
+func JSONDownload(status int, body interface{}, filename string) *NormalResponse {
+	return JSON(status, body).
+		SetHeader("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
+}
+
+// YAML creates a YAML response.
+func YAML(status int, body interface{}) *NormalResponse {
+	b, err := yaml.Marshal(body)
+	if err != nil {
+		return Error(http.StatusInternalServerError, "body yaml marshal", err)
+	}
+	// As of now, application/yaml is downloaded by default in chrome regardless of Content-Disposition, so we use text/yaml instead.
+	return Respond(status, b).
+		SetHeader("Content-Type", "text/yaml")
+}
+
+// YAMLDownload creates a YAML response indicating that it should be downloaded.
+func YAMLDownload(status int, body interface{}, filename string) *NormalResponse {
+	return YAML(status, body).
+		SetHeader("Content-Type", "application/yaml").
+		SetHeader("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
 }
 
 // Success create a successful response
@@ -212,6 +257,36 @@ func Error(status int, message string, err error) *NormalResponse {
 	}
 
 	return resp
+}
+
+// Err creates an error response based on an errutil.Error error.
+func Err(err error) *NormalResponse {
+	grafanaErr := errutil.Error{}
+	if !errors.As(err, &grafanaErr) {
+		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
+	}
+
+	resp := JSON(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public())
+	resp.errMessage = string(grafanaErr.Reason.Status())
+	resp.err = grafanaErr
+
+	return resp
+}
+
+// ErrOrFallback uses the information in an errutil.Error if available
+// and otherwise falls back to the status and message provided as
+// arguments.
+//
+// The signature is equivalent to that of Error which allows us to
+// rename this to Error when we're confident that that would be safe to
+// do.
+func ErrOrFallback(status int, message string, err error) *NormalResponse {
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
+		return Err(err)
+	}
+
+	return Error(status, message, err)
 }
 
 // Empty creates an empty NormalResponse.

@@ -19,13 +19,10 @@
 package web
 
 import (
-	_ "unsafe"
-
 	"context"
 	"net/http"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/infra/log"
+	_ "unsafe"
 )
 
 const _VERSION = "1.3.4.0805"
@@ -53,28 +50,16 @@ type Handler interface{}
 //go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
 func hack_wrap(Handler) http.HandlerFunc
 
-// validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
-// When the handler is also potential to be any built-in inject.FastInvoker,
-// it wraps the handler automatically to have some performance gain.
-func validateAndWrapHandler(h Handler) http.Handler {
+// wrapHandler turns any supported handler type into a http.Handler by wrapping it accordingly
+func wrapHandler(h Handler) http.Handler {
 	return hack_wrap(h)
-}
-
-// validateAndWrapHandlers preforms validation and wrapping for each input handler.
-// It accepts an optional wrapper function to perform custom wrapping on handlers.
-func validateAndWrapHandlers(handlers []Handler) []http.Handler {
-	wrappedHandlers := make([]http.Handler, len(handlers))
-	for i, h := range handlers {
-		wrappedHandlers[i] = validateAndWrapHandler(h)
-	}
-
-	return wrappedHandlers
 }
 
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.
 type Macaron struct {
-	handlers []http.Handler
+	// handlers    []http.Handler
+	mws []Middleware
 
 	urlPrefix string // For suburl support.
 	*Router
@@ -119,43 +104,54 @@ func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), paramsKey{}, vars))
 }
 
-// UseMiddleware is a traditional approach to writing middleware in Go.
-// A middleware is a function that has a reference to the next handler in the chain
-// and returns the actual middleware handler, that may do its job and optionally
-// call next.
-// Due to how Macaron handles/injects requests and responses we patch the web.Context
-// to use the new ResponseWriter and http.Request here. The caller may only call
-// `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
-// further middlewares in the chain.
-func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
-	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		c := FromContext(req.Context())
-		c.Req = req
-		if mrw, ok := rw.(*responseWriter); ok {
-			c.Resp = mrw
-		} else {
-			c.Resp = NewResponseWriter(req.Method, rw)
-		}
-		c.Next()
-	})
-	m.handlers = append(m.handlers, middleware(next))
+type Middleware = func(next http.Handler) http.Handler
+
+// UseMiddleware registers the given Middleware
+func (m *Macaron) UseMiddleware(mw Middleware) {
+	m.mws = append(m.mws, mw)
 }
 
-// Use adds a middleware Handler to the stack,
-// and panics if the handler is not a callable func.
-// Middleware Handlers are invoked in the order that they are added.
-func (m *Macaron) Use(handler Handler) {
-	h := validateAndWrapHandler(handler)
-	m.handlers = append(m.handlers, h)
+// Use registers the provided Handler as a middleware.
+// The argument may be any supported handler or the Middleware type
+// Deprecated: use UseMiddleware instead
+func (m *Macaron) Use(h Handler) {
+	m.mws = append(m.mws, mwFromHandler(h))
+}
+
+func mwFromHandler(handler Handler) Middleware {
+	if mw, ok := handler.(Middleware); ok {
+		return mw
+	}
+
+	h := wrapHandler(handler)
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mrw, ok := w.(*responseWriter)
+			if !ok {
+				mrw = NewResponseWriter(r.Method, w).(*responseWriter)
+			}
+
+			h.ServeHTTP(mrw, r)
+			if mrw.Written() {
+				return
+			}
+
+			ctx := r.Context().Value(macaronContextKey{}).(*Context)
+			next.ServeHTTP(ctx.Resp, ctx.Req)
+		})
+	}
 }
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
+	// NOTE: we have to explicitly copy the middleware chain here to avoid
+	// passing a shared slice to the *Context, which leads to racy behavior in
+	// case of later appends
+	mws := make([]Middleware, len(m.mws))
+	copy(mws, m.mws)
+
 	c := &Context{
-		handlers: m.handlers,
-		index:    0,
-		Router:   m.Router,
-		Resp:     NewResponseWriter(req.Method, rw),
-		logger:   log.New("macaron.context"),
+		mws:  mws,
+		Resp: NewResponseWriter(req.Method, rw),
 	}
 
 	c.Req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))

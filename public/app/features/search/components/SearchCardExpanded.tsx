@@ -6,7 +6,7 @@ import SVG from 'react-inlinesvg';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
 
-import { DashboardSectionItem } from '../types';
+import { DashboardViewItem } from '../types';
 
 import { getThumbnailURL } from './SearchCard';
 
@@ -14,24 +14,26 @@ export interface Props {
   className?: string;
   imageHeight: number;
   imageWidth: number;
-  item: DashboardSectionItem;
+  item: DashboardViewItem;
   lastUpdated?: string | null;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
+export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated, onClick }: Props) {
   const theme = useTheme2();
   const [hasImage, setHasImage] = useState(true);
   const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(theme, imageHeight, imageWidth);
 
-  const folderTitle = item.folderTitle || 'General';
+  const folderTitle = item.parentTitle || 'General';
 
   return (
-    <a className={classNames(className, styles.card)} key={item.uid} href={item.url}>
+    <a className={classNames(className, styles.card)} key={item.uid} href={item.url} onClick={onClick}>
       <div className={styles.imageContainer}>
         {hasImage ? (
           <img
             loading="lazy"
+            alt="Dashboard preview"
             className={styles.image}
             src={imageSrc}
             onLoad={() => setHasImage(true)}
@@ -64,7 +66,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
           )}
         </div>
         <div>
-          <TagList className={styles.tagList} tags={item.tags} />
+          <TagList className={styles.tagList} tags={item.tags ?? []} />
         </div>
       </div>
     </a>

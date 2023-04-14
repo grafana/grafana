@@ -1,76 +1,88 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
+import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
-import { ColorPickerProps } from './ColorPickerPopover';
+import { ColorPickerInput } from './ColorPickerInput';
 
-export default {
+const meta: ComponentMeta<typeof ColorPicker> = {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
-  subcomponents: { SeriesColorPicker },
+  subcomponents: { SeriesColorPicker, ColorPickerInput },
   decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
     controls: {
-      exclude: ['color', 'onChange', 'onColorChange'],
+      exclude: ['onChange', 'onColorChange'],
     },
   },
   args: {
     enableNamedColors: false,
+    color: '#00ff00',
   },
-} as Meta;
+};
 
-export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
+export const Basic: ComponentStory<typeof ColorPicker> = ({ color, enableNamedColors }) => {
+  const [, updateArgs] = useArgs();
+  return renderComponentWithTheme(ColorPicker, {
+    enableNamedColors,
+    color,
+    onChange: (color: string) => {
+      action('Color changed')(color);
+      updateArgs({ color });
+    },
+  });
+};
+
+export const SeriesPicker: ComponentStory<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
+  const [, updateArgs] = useArgs();
+  const clearButton = useStyles2(clearButtonStyles);
   return (
-    <UseState initialState="#00ff00">
-      {(selectedColor, updateSelectedColor) => {
-        return renderComponentWithTheme(ColorPicker, {
-          enableNamedColors,
-          color: selectedColor,
-          onChange: (color: any) => {
-            action('Color changed')(color);
-            updateSelectedColor(color);
-          },
-        });
+    <SeriesColorPicker
+      enableNamedColors={enableNamedColors}
+      yaxis={1}
+      onToggleAxis={() => {}}
+      color={color}
+      onChange={(color) => {
+        action('Color changed')(color);
+        updateArgs({ color });
       }}
-    </UseState>
+    >
+      {({ ref, showColorPicker, hideColorPicker }) => (
+        <button
+          type="button"
+          ref={ref}
+          onMouseLeave={hideColorPicker}
+          onClick={showColorPicker}
+          style={{ color }}
+          className={clearButton}
+        >
+          Open color picker
+        </button>
+      )}
+    </SeriesColorPicker>
   );
 };
 
-export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => {
+export const Input: ComponentStory<typeof ColorPickerInput> = ({ color }) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState="#00ff00">
-      {(selectedColor, updateSelectedColor) => {
-        return (
-          <SeriesColorPicker
-            enableNamedColors={enableNamedColors}
-            yaxis={1}
-            onToggleAxis={() => {}}
-            color={selectedColor}
-            onChange={(color) => updateSelectedColor(color)}
-          >
-            {({ ref, showColorPicker, hideColorPicker }) => (
-              <div
-                ref={ref}
-                onMouseLeave={hideColorPicker}
-                onClick={showColorPicker}
-                style={{ color: selectedColor, cursor: 'pointer' }}
-              >
-                Open color picker
-              </div>
-            )}
-          </SeriesColorPicker>
-        );
+    <ColorPickerInput
+      value={color}
+      onChange={(color) => {
+        action('Color changed')(color);
+        updateArgs({ color });
       }}
-    </UseState>
+    />
   );
 };
+
+export default meta;

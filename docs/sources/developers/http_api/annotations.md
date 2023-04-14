@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/annotations/
-  - /docs/grafana/latest/http_api/annotations/
+  - ../../http_api/annotations/
+canonical: /docs/grafana/latest/developers/http_api/annotations/
 description: Grafana Annotations HTTP API
 keywords:
   - grafana
@@ -11,14 +11,14 @@ keywords:
   - annotation
   - annotations
   - comment
-title: 'Annotations HTTP API '
+title: Annotations HTTP API
 ---
 
 # Annotations API
 
-This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
+Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Find Annotations
 
@@ -48,6 +48,7 @@ Query Parameters:
 - `limit`: number. Optional - default is 100. Max limit for results returned.
 - `alertId`: number. Optional. Find annotations for a specified alert.
 - `dashboardId`: number. Optional. Find annotations that are scoped to a specific dashboard
+- `dashboardUID`: string. Optional. Find annotations that are scoped to a specific dashboard, when dashboardUID presents, dashboardId would be ignored.
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
 - `userId`: number. Optional. Find annotations created by a specific user
 - `type`: string. Optional. `alert`|`annotation` Return alerts or user created annotations
@@ -120,6 +121,10 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | Action             | Scope                   |
 | ------------------ | ----------------------- |
 | annotations:create | annotations:type:<type> |
+
+**Required JSON Body Fields**
+
+- `text`: description of the annotation.
 
 **Example Request**:
 

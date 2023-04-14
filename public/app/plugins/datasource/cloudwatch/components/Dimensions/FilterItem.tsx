@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
@@ -32,15 +32,15 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
     return acc;
   }, {});
 
-export const FilterItem: FunctionComponent<Props> = ({
+export const FilterItem = ({
   filter,
-  metricStat: { region, namespace, metricName, dimensions },
+  metricStat: { region, namespace, metricName, dimensions, accountId },
   datasource,
   dimensionKeys,
   disableExpressions,
   onChange,
   onDelete,
-}) => {
+}: Props) => {
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]
@@ -51,17 +51,31 @@ export const FilterItem: FunctionComponent<Props> = ({
       return [];
     }
 
-    return datasource
-      .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
+    return datasource.resources
+      .getDimensionValues({
+        dimensionKey: filter.key,
+        dimensionFilters: dimensionsExcludingCurrentKey,
+        region,
+        namespace,
+        metricName,
+        accountId,
+      })
       .then((result: Array<SelectableValue<string>>) => {
-        if (result.length && !disableExpressions) {
+        if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
         }
         return appendTemplateVariables(datasource, result);
       });
   };
 
-  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [filter.key, dimensions]);
+  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [
+    filter.key,
+    dimensions,
+    region,
+    namespace,
+    metricName,
+    accountId,
+  ]);
   const theme = useTheme2();
   const styles = getOperatorStyles(theme);
 

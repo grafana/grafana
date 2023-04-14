@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
+func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(hs.Cfg, 400, "Render parameters error", err)
@@ -57,8 +58,8 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   c.OrgId,
-			UserID:  c.UserId,
+			OrgID:   c.OrgID,
+			UserID:  c.UserID,
 			OrgRole: c.OrgRole,
 		},
 		Width:             width,

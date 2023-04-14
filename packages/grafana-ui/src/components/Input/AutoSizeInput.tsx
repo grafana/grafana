@@ -63,7 +63,7 @@ function getWidthFor(value: string, minWidth: number, maxWidth: number | undefin
   }
 
   if (maxWidth && realWidth > maxWidth) {
-    return realWidth;
+    return maxWidth;
   }
 
   return realWidth;

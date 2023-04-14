@@ -56,7 +56,7 @@ export class OptionSearchEngine {
   }
 
   getAllOptionsCount(categories: OptionsPaneCategoryDescriptor[]) {
-    var total = 0;
+    let total = 0;
 
     for (const category of categories) {
       total += category.items.length;

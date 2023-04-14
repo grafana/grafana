@@ -1,15 +1,16 @@
 import pluralize from 'pluralize';
-import React, { FC, Fragment, useMemo } from 'react';
+import React, { Fragment, useState } from 'react';
+import { useDebounce } from 'react-use';
 
+import { Stack } from '@grafana/experimental';
+import { Badge } from '@grafana/ui';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { isAlertingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
-import { StateColoredText } from '../StateColoredText';
+import { isAlertingRule, isRecordingRule, isRecordingRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 
 interface Props {
-  showInactive?: boolean;
-  showRecording?: boolean;
+  includeTotal?: boolean;
   group?: CombinedRuleGroup;
   namespaces?: CombinedRuleNamespace[];
 }
@@ -20,96 +21,120 @@ const emptyStats = {
   [PromAlertingRuleState.Firing]: 0,
   [PromAlertingRuleState.Pending]: 0,
   [PromAlertingRuleState.Inactive]: 0,
+  paused: 0,
   error: 0,
 } as const;
 
-export const RuleStats: FC<Props> = ({ showInactive, showRecording, group, namespaces }) => {
-  const calculated = useMemo(() => {
-    const stats = { ...emptyStats };
-    const calcRule = (rule: CombinedRule) => {
-      if (rule.promRule && isAlertingRule(rule.promRule)) {
-        stats[rule.promRule.state] += 1;
+export const RuleStats = ({ group, namespaces, includeTotal }: Props) => {
+  const evaluationInterval = group?.interval;
+  const [calculated, setCalculated] = useState(emptyStats);
+
+  // Performance optimization allowing reducing number of stats calculation
+  // The problem occurs when we load many data sources.
+  // Then redux store gets updated multiple times in a pretty short period, triggering calculating stats many times.
+  // debounce allows to skip calculations which results would be abandoned in milliseconds
+  useDebounce(
+    () => {
+      const stats = { ...emptyStats };
+
+      const calcRule = (rule: CombinedRule) => {
+        if (rule.promRule && isAlertingRule(rule.promRule)) {
+          if (isGrafanaRulerRulePaused(rule)) {
+            stats.paused += 1;
+          }
+          stats[rule.promRule.state] += 1;
+        }
+        if (ruleHasError(rule)) {
+          stats.error += 1;
+        }
+        if (
+          (rule.promRule && isRecordingRule(rule.promRule)) ||
+          (rule.rulerRule && isRecordingRulerRule(rule.rulerRule))
+        ) {
+          stats.recording += 1;
+        }
+        stats.total += 1;
+      };
+
+      if (group) {
+        group.rules.forEach(calcRule);
       }
-      if (rule.promRule?.health === 'err' || rule.promRule?.health === 'error') {
-        stats.error += 1;
+
+      if (namespaces) {
+        namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
       }
-      if (
-        (rule.promRule && isRecordingRule(rule.promRule)) ||
-        (rule.rulerRule && isRecordingRulerRule(rule.rulerRule))
-      ) {
-        stats.recording += 1;
-      }
-      stats.total += 1;
-    };
-    if (group) {
-      group.rules.forEach(calcRule);
-    }
-    if (namespaces) {
-      namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
-    }
-    return stats;
-  }, [group, namespaces]);
+
+      setCalculated(stats);
+    },
+    400,
+    [group, namespaces]
+  );
 
   const statsComponents: React.ReactNode[] = [];
-  if (calculated[PromAlertingRuleState.Firing]) {
+
+  if (includeTotal) {
     statsComponents.push(
-      <StateColoredText key="firing" status={PromAlertingRuleState.Firing}>
-        {calculated[PromAlertingRuleState.Firing]} firing
-      </StateColoredText>
-    );
-  }
-  if (calculated.error) {
-    statsComponents.push(
-      <StateColoredText key="errors" status={PromAlertingRuleState.Firing}>
-        {calculated.error} errors
-      </StateColoredText>
-    );
-  }
-  if (calculated[PromAlertingRuleState.Pending]) {
-    statsComponents.push(
-      <StateColoredText key="pending" status={PromAlertingRuleState.Pending}>
-        {calculated[PromAlertingRuleState.Pending]} pending
-      </StateColoredText>
-    );
-  }
-  if (showInactive && calculated[PromAlertingRuleState.Inactive]) {
-    statsComponents.push(
-      <StateColoredText key="inactive" status="neutral">
-        {calculated[PromAlertingRuleState.Inactive]} normal
-      </StateColoredText>
-    );
-  }
-  if (showRecording && calculated.recording) {
-    statsComponents.push(
-      <StateColoredText key="recording" status="neutral">
-        {calculated.recording} recording
-      </StateColoredText>
+      <Fragment key="total">
+        {calculated.total} {pluralize('rule', calculated.total)}
+      </Fragment>
     );
   }
 
+  if (calculated[PromAlertingRuleState.Firing]) {
+    statsComponents.push(
+      <Badge color="red" key="firing" text={`${calculated[PromAlertingRuleState.Firing]} firing`} />
+    );
+  }
+
+  if (calculated.error) {
+    statsComponents.push(<Badge color="red" key="errors" text={`${calculated.error} errors`} />);
+  }
+
+  if (calculated[PromAlertingRuleState.Pending]) {
+    statsComponents.push(
+      <Badge color={'orange'} key="pending" text={`${calculated[PromAlertingRuleState.Pending]} pending`} />
+    );
+  }
+
+  if (calculated[PromAlertingRuleState.Inactive] && calculated.paused) {
+    statsComponents.push(
+      <Badge
+        color="green"
+        key="paused"
+        text={`${calculated[PromAlertingRuleState.Inactive]} normal (${calculated.paused} paused)`}
+      />
+    );
+  }
+
+  if (calculated[PromAlertingRuleState.Inactive] && !calculated.paused) {
+    statsComponents.push(
+      <Badge color="green" key="inactive" text={`${calculated[PromAlertingRuleState.Inactive]} normal`} />
+    );
+  }
+
+  if (calculated.recording) {
+    statsComponents.push(<Badge color="purple" key="recording" text={`${calculated.recording} recording`} />);
+  }
+
+  const hasStats = Boolean(statsComponents.length);
+
   return (
-    <div>
-      <span>
-        {calculated.total} {pluralize('rule', calculated.total)}
-      </span>
-      {!!statsComponents.length && (
+    <Stack direction="row">
+      {hasStats && (
+        <div>
+          <Stack gap={0.5}>{statsComponents}</Stack>
+        </div>
+      )}
+      {evaluationInterval && (
         <>
-          <span>: </span>
-          {statsComponents.reduce<React.ReactNode[]>(
-            (prev, curr, idx) =>
-              prev.length
-                ? [
-                    prev,
-                    <Fragment key={idx}>
-                      <span>, </span>
-                    </Fragment>,
-                    curr,
-                  ]
-                : [curr],
-            []
-          )}
+          <div>|</div>
+          <Badge text={evaluationInterval} icon="clock-nine" color={'blue'} />
         </>
       )}
-    </div>
+    </Stack>
   );
 };
+
+function ruleHasError(rule: CombinedRule) {
+  return rule.promRule?.health === 'err' || rule.promRule?.health === 'error';
+}

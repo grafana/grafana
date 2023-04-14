@@ -3,6 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes } from './pluginExtensions';
 
 /**
  * @public
@@ -13,12 +14,13 @@ export enum CoreApp {
   UnifiedAlerting = 'unified-alerting',
   Dashboard = 'dashboard',
   Explore = 'explore',
+  Correlations = 'correlations',
   Unknown = 'unknown',
   PanelEditor = 'panel-editor',
   PanelViewer = 'panel-viewer',
 }
 
-export interface AppRootProps<T = KeyValue> {
+export interface AppRootProps<T extends KeyValue = KeyValue> {
   meta: AppPluginMeta<T>;
   /**
    * base URL segment for an app, /app/pluginId
@@ -27,6 +29,7 @@ export interface AppRootProps<T = KeyValue> {
 
   /**
    * Pass the nav model to the container... is there a better way?
+   * @deprecated Use PluginPage component exported from @grafana/runtime instead
    */
   onNavChanged: (nav: NavModel) => void;
 
@@ -43,33 +46,31 @@ export interface AppRootProps<T = KeyValue> {
   path: string;
 }
 
-export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
+export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta<T> {
   // TODO anything specific to apps?
 }
 
-export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
+export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
+  private _extensionConfigs: PluginExtensionLinkConfig[] = [];
+
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
-  rootNav?: NavModel; // Initial navigation model
 
   /**
    * Called after the module has loaded, and before the app is used.
    * This function may be called multiple times on the same instance.
    * The first time, `this.meta` will be undefined
    */
-  init(meta: AppPluginMeta) {}
+  init(meta: AppPluginMeta<T>) {}
 
   /**
    * Set the component displayed under:
    *   /a/${plugin-id}/*
    *
    * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
-   *
-   * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
    */
-  setRootPage(root: ComponentType<AppRootProps<T>>, rootNav?: NavModel) {
+  setRootPage(root: ComponentType<AppRootProps<T>>) {
     this.root = root;
-    this.rootNav = rootNav;
     return this;
   }
 
@@ -90,6 +91,19 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
         }
       }
     }
+  }
+
+  get extensionConfigs() {
+    return this._extensionConfigs;
+  }
+
+  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
+    this._extensionConfigs.push({
+      ...extension,
+      type: PluginExtensionTypes.link,
+    } as PluginExtensionLinkConfig);
+
+    return this;
   }
 }
 

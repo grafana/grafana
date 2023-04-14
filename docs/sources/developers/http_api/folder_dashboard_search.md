@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/folder_dashboard_search/
-  - /docs/grafana/latest/http_api/folder_dashboard_search/
+  - ../../http_api/folder_dashboard_search/
+canonical: /docs/grafana/latest/developers/http_api/folder_dashboard_search/
 description: Grafana Folder/Dashboard Search HTTP API
 keywords:
   - grafana
@@ -11,7 +11,7 @@ keywords:
   - search
   - folder
   - dashboard
-title: 'Folder/Dashboard Search HTTP API '
+title: Folder/Dashboard Search HTTP API
 ---
 
 # Folder/Dashboard Search API
@@ -20,7 +20,7 @@ title: 'Folder/Dashboard Search HTTP API '
 
 `GET /api/search/`
 
-> Note: When using [Role-based access control]({{< relref "../../enterprise/access-control/" >}}), search results will contain only dashboards and folders which you have access to.
+> Note: When using [Role-based access control]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control" >}}), search results will contain only dashboards and folders which you have access to.
 
 Query parameters:
 
@@ -28,6 +28,8 @@ Query parameters:
 - **tag** – List of tags to search for
 - **type** – Type to search for, `dash-folder` or `dash-db`
 - **dashboardIds** – List of dashboard id's to search for
+- **dashboardUID** - List of dashboard uid's to search for, It is deprecated since Grafana v9.1, please use dashboardUIDs instead
+- **dashboardUIDs** – List of dashboard uid's to search for
 - **folderIds** – List of folder id's to search in for dashboards
 - **starred** – Flag indicating if only starred Dashboards should be returned
 - **limit** – Limit the number of returned results (max is 5000; default is 1000)

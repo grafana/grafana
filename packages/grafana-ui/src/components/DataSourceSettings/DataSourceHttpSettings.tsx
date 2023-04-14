@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
@@ -61,7 +61,7 @@ const HttpAccessHelp = () => (
 
 const LABEL_WIDTH = 26;
 
-export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
+export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   const {
     defaultUrl,
     dataSourceConfig,
@@ -74,7 +74,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
-  const theme = useTheme();
+  const theme = useTheme2();
 
   const onSettingsChange = useCallback(
     (change: Partial<DataSourceSettings<any, any>>) => {
@@ -113,6 +113,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
       onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
+      disabled={dataSourceConfig.readOnly}
     />
   );
 
@@ -121,7 +122,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   );
 
   const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.palette.red};
+    box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
   `;
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
@@ -133,6 +134,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
       value={dataSourceConfig.url}
       aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
+      disabled={dataSourceConfig.readOnly}
     />
   );
 
@@ -155,13 +157,14 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
                 </div>
                 <div className="gf-form">
-                  <label
+                  <button
+                    type="button"
                     className="gf-form-label query-keyword pointer"
                     onClick={() => setIsAccessHelpVisible((isVisible) => !isVisible)}
                   >
                     Help&nbsp;
                     <Icon name={isAccessHelpVisible ? 'angle-down' : 'angle-right'} style={{ marginBottom: 0 }} />
-                  </label>
+                  </button>
                 </div>
               </div>
               {isAccessHelpVisible && <HttpAccessHelp />}
@@ -182,6 +185,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   onChange={(cookies) =>
                     onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
                   }
+                  disabled={dataSourceConfig.readOnly}
                 />
               </div>
               <div className="gf-form">
@@ -199,6 +203,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                       jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
                     });
                   }}
+                  disabled={dataSourceConfig.readOnly}
                 />
               </div>
             </div>
@@ -210,7 +215,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">Auth</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
-            <InlineField label="Basic auth" labelWidth={LABEL_WIDTH}>
+            <InlineField label="Basic auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
               <InlineSwitch
                 id="http-settings-basic-auth"
                 value={dataSourceConfig.basicAuth}
@@ -224,6 +229,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               label="With Credentials"
               tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
               labelWidth={LABEL_WIDTH}
+              disabled={dataSourceConfig.readOnly}
             >
               <InlineSwitch
                 id="http-settings-with-credentials"
@@ -241,6 +247,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                 label="Azure Authentication"
                 tooltip="Use Azure authentication for Azure endpoint."
                 labelWidth={LABEL_WIDTH}
+                disabled={dataSourceConfig.readOnly}
               >
                 <InlineSwitch
                   id="http-settings-azure-auth"
@@ -257,7 +264,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
 
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
-              <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH}>
+              <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
                 <InlineSwitch
                   id="http-settings-sigv4-auth"
                   value={dataSourceConfig.jsonData.sigV4Auth || false}

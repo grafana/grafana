@@ -10,7 +10,6 @@ import (
 	"html/template"
 	"net/mail"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -54,9 +53,9 @@ func (ns *NotificationService) Send(msg *Message) (int, error) {
 	return ns.mailer.Send(messages...)
 }
 
-func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
+func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Message, error) {
 	if !ns.Cfg.Smtp.Enabled {
-		return nil, models.ErrSmtpNotEnabled
+		return nil, ErrSmtpNotEnabled
 	}
 
 	data := cmd.Data
@@ -83,26 +82,31 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 	subject := cmd.Subject
 	if cmd.Subject == "" {
-		var subjectText interface{}
 		subjectData := data["Subject"].(map[string]interface{})
-		subjectText, hasSubject := subjectData["value"]
+		subjectText, hasSubject := subjectData["executed_template"].(string)
+		if hasSubject {
+			// first check to see if the template has already been executed in a template func
+			subject = subjectText
+		} else {
+			subjectTemplate, hasSubject := subjectData["value"]
 
-		if !hasSubject {
-			return nil, fmt.Errorf("missing subject in template %s", cmd.Template)
+			if !hasSubject {
+				return nil, fmt.Errorf("missing subject in template %s", cmd.Template)
+			}
+
+			subjectTmpl, err := template.New("subject").Parse(subjectTemplate.(string))
+			if err != nil {
+				return nil, err
+			}
+
+			var subjectBuffer bytes.Buffer
+			err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+			if err != nil {
+				return nil, err
+			}
+
+			subject = subjectBuffer.String()
 		}
-
-		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
-		if err != nil {
-			return nil, err
-		}
-
-		var subjectBuffer bytes.Buffer
-		err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
-		if err != nil {
-			return nil, err
-		}
-
-		subject = subjectBuffer.String()
 	}
 
 	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
@@ -120,7 +124,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 // buildAttachedFiles build attached files
 func buildAttachedFiles(
-	attached []*models.SendEmailAttachFile,
+	attached []*SendEmailAttachFile,
 ) []*AttachedFile {
 	result := make([]*AttachedFile, 0)
 

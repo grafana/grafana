@@ -1,36 +1,35 @@
-import React, { FormEvent, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 import {
   HistogramTransformerOptions,
   histogramFieldInfo,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTransformerOptions>> = ({
+export const HistogramTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<HistogramTransformerOptions>) => {
   const labelWidth = 18;
 
   const onBucketSizeChanged = useCallback(
-    (evt: FormEvent<HTMLInputElement>) => {
-      const val = evt.currentTarget.valueAsNumber;
+    (val?: number) => {
       onChange({
         ...options,
-        bucketSize: isNaN(val) ? undefined : val,
+        bucketSize: val,
       });
     },
     [onChange, options]
   );
 
   const onBucketOffsetChanged = useCallback(
-    (evt: FormEvent<HTMLInputElement>) => {
-      const val = evt.currentTarget.valueAsNumber;
+    (val?: number) => {
       onChange({
         ...options,
-        bucketOffset: isNaN(val) ? undefined : val,
+        bucketOffset: val,
       });
     },
     [onChange, options]
@@ -51,7 +50,7 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
           label={histogramFieldInfo.bucketSize.name}
           tooltip={histogramFieldInfo.bucketSize.description}
         >
-          <Input type="number" value={options.bucketSize} placeholder="auto" onChange={onBucketSizeChanged} min={0} />
+          <NumberInput value={options.bucketSize} placeholder="auto" onChange={onBucketSizeChanged} min={0} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -60,13 +59,7 @@ export const HistogramTransformerEditor: React.FC<TransformerUIProps<HistogramTr
           label={histogramFieldInfo.bucketOffset.name}
           tooltip={histogramFieldInfo.bucketOffset.description}
         >
-          <Input
-            type="number"
-            value={options.bucketOffset}
-            placeholder="none"
-            onChange={onBucketOffsetChanged}
-            min={0}
-          />
+          <NumberInput value={options.bucketOffset} placeholder="none" onChange={onBucketOffsetChanged} min={0} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>

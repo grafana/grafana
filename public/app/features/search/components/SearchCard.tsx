@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Placement, Rect } from '@popperjs/core';
 import React, { useCallback, useRef, useState } from 'react';
 import SVG from 'react-inlinesvg';
 import { usePopper } from 'react-popper';
@@ -8,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardSectionItem, OnToggleChecked } from '../types';
+import { DashboardViewItem, OnToggleChecked } from '../types';
 
 import { SearchCardExpanded } from './SearchCardExpanded';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -17,31 +18,36 @@ const DELAY_BEFORE_EXPANDING = 500;
 
 export interface Props {
   editable?: boolean;
-  item: DashboardSectionItem;
+  item: DashboardViewItem;
+  isSelected?: boolean;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export function getThumbnailURL(uid: string, isLight?: boolean) {
   return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCard({ editable, item, isSelected, onTagSelected, onToggleChecked, onClick }: Props) {
   const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
 
   // Popper specific logic
-  const offsetCallback = useCallback(({ placement, reference, popper }) => {
-    let result: [number, number] = [0, 0];
-    if (placement === 'bottom' || placement === 'top') {
-      result = [0, -(reference.height + popper.height) / 2];
-    } else if (placement === 'left' || placement === 'right') {
-      result = [-(reference.width + popper.width) / 2, 0];
-    }
-    return result;
-  }, []);
+  const offsetCallback = useCallback(
+    ({ placement, reference, popper }: { placement: Placement; reference: Rect; popper: Rect }) => {
+      let result: [number, number] = [0, 0];
+      if (placement === 'bottom' || placement === 'top') {
+        result = [0, -(reference.height + popper.height) / 2];
+      } else if (placement === 'left' || placement === 'right') {
+        result = [-(reference.width + popper.width) / 2, 0];
+      }
+      return result;
+    },
+    []
+  );
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
   const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
@@ -118,17 +124,24 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}
+      onClick={onClick}
     >
       <div className={styles.imageContainer}>
         <SearchCheckbox
           className={styles.checkbox}
-          aria-label="Select dashboard"
+          aria-label={`Select dashboard ${item.title}`}
           editable={editable}
-          checked={item.checked}
+          checked={isSelected}
           onClick={onCheckboxClick}
         />
         {hasImage ? (
-          <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
+          <img
+            loading="lazy"
+            className={styles.image}
+            src={imageSrc}
+            alt="Dashboard preview"
+            onError={() => setHasImage(false)}
+          />
         ) : (
           <div className={styles.imagePlaceholder}>
             {item.icon ? (
@@ -141,7 +154,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       </div>
       <div className={styles.info}>
         <div className={styles.title}>{item.title}</div>
-        <TagList displayMax={1} tags={item.tags} onClick={onTagClick} />
+        <TagList displayMax={1} tags={item.tags ?? []} onClick={onTagClick} />
       </div>
       {showExpandedView && (
         <Portal className={styles.portal}>
@@ -152,6 +165,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
               imageWidth={320}
               item={item}
               lastUpdated={lastUpdated}
+              onClick={onClick}
             />
           </div>
         </Portal>
@@ -167,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
     card: css`
       background-color: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.border.medium};
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.default};
       display: flex;
       flex-direction: column;
 
@@ -227,8 +241,8 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
     info: css`
       align-items: center;
       background-color: ${theme.colors.background.canvas};
-      border-bottom-left-radius: 4px;
-      border-bottom-right-radius: 4px;
+      border-bottom-left-radius: ${theme.shape.radius.default};
+      border-bottom-right-radius: ${theme.shape.radius.default};
       display: flex;
       height: ${theme.spacing(7)};
       gap: ${theme.spacing(1)};

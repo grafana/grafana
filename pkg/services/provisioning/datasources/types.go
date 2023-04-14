@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -42,6 +42,7 @@ type upsertDataSourceFromConfig struct {
 	BasicAuthUser   string
 	WithCredentials bool
 	IsDefault       bool
+	Correlations    []map[string]interface{}
 	JSONData        map[string]interface{}
 	SecureJSONData  map[string]string
 	Editable        bool
@@ -74,21 +75,22 @@ type deleteDatasourceConfigV1 struct {
 }
 
 type upsertDataSourceFromConfigV0 struct {
-	OrgID           int64                  `json:"org_id" yaml:"org_id"`
-	Version         int                    `json:"version" yaml:"version"`
-	Name            string                 `json:"name" yaml:"name"`
-	Type            string                 `json:"type" yaml:"type"`
-	Access          string                 `json:"access" yaml:"access"`
-	URL             string                 `json:"url" yaml:"url"`
-	User            string                 `json:"user" yaml:"user"`
-	Database        string                 `json:"database" yaml:"database"`
-	BasicAuth       bool                   `json:"basic_auth" yaml:"basic_auth"`
-	BasicAuthUser   string                 `json:"basic_auth_user" yaml:"basic_auth_user"`
-	WithCredentials bool                   `json:"with_credentials" yaml:"with_credentials"`
-	IsDefault       bool                   `json:"is_default" yaml:"is_default"`
-	JSONData        map[string]interface{} `json:"json_data" yaml:"json_data"`
-	SecureJSONData  map[string]string      `json:"secure_json_data" yaml:"secure_json_data"`
-	Editable        bool                   `json:"editable" yaml:"editable"`
+	OrgID           int64                    `json:"org_id" yaml:"org_id"`
+	Version         int                      `json:"version" yaml:"version"`
+	Name            string                   `json:"name" yaml:"name"`
+	Type            string                   `json:"type" yaml:"type"`
+	Access          string                   `json:"access" yaml:"access"`
+	URL             string                   `json:"url" yaml:"url"`
+	User            string                   `json:"user" yaml:"user"`
+	Database        string                   `json:"database" yaml:"database"`
+	BasicAuth       bool                     `json:"basic_auth" yaml:"basic_auth"`
+	BasicAuthUser   string                   `json:"basic_auth_user" yaml:"basic_auth_user"`
+	WithCredentials bool                     `json:"with_credentials" yaml:"with_credentials"`
+	IsDefault       bool                     `json:"is_default" yaml:"is_default"`
+	Correlations    []map[string]interface{} `json:"correlations" yaml:"correlations"`
+	JSONData        map[string]interface{}   `json:"json_data" yaml:"json_data"`
+	SecureJSONData  map[string]string        `json:"secure_json_data" yaml:"secure_json_data"`
+	Editable        bool                     `json:"editable" yaml:"editable"`
 }
 
 type upsertDataSourceFromConfigV1 struct {
@@ -104,6 +106,7 @@ type upsertDataSourceFromConfigV1 struct {
 	BasicAuthUser   values.StringValue    `json:"basicAuthUser" yaml:"basicAuthUser"`
 	WithCredentials values.BoolValue      `json:"withCredentials" yaml:"withCredentials"`
 	IsDefault       values.BoolValue      `json:"isDefault" yaml:"isDefault"`
+	Correlations    values.JSONSliceValue `json:"correlations" yaml:"correlations"`
 	JSONData        values.JSONValue      `json:"jsonData" yaml:"jsonData"`
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
@@ -132,6 +135,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			BasicAuthUser:   ds.BasicAuthUser.Value(),
 			WithCredentials: ds.WithCredentials.Value(),
 			IsDefault:       ds.IsDefault.Value(),
+			Correlations:    ds.Correlations.Value(),
 			JSONData:        ds.JSONData.Value(),
 			SecureJSONData:  ds.SecureJSONData.Value(),
 			Editable:        ds.Editable.Value(),
@@ -172,6 +176,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			BasicAuthUser:   ds.BasicAuthUser,
 			WithCredentials: ds.WithCredentials,
 			IsDefault:       ds.IsDefault,
+			Correlations:    ds.Correlations,
 			JSONData:        ds.JSONData,
 			SecureJSONData:  ds.SecureJSONData,
 			Editable:        ds.Editable,
@@ -189,7 +194,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	return r
 }
 
-func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCommand {
+func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -197,12 +202,12 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		}
 	}
 
-	cmd := &models.AddDataSourceCommand{
-		OrgId:           ds.OrgID,
+	cmd := &datasources.AddDataSourceCommand{
+		OrgID:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
-		Access:          models.DsAccess(ds.Access),
-		Url:             ds.URL,
+		Access:          datasources.DsAccess(ds.Access),
+		URL:             ds.URL,
 		User:            ds.User,
 		Database:        ds.Database,
 		BasicAuth:       ds.BasicAuth,
@@ -212,11 +217,11 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		JsonData:        jsonData,
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
-		Uid:             ds.UID,
+		UID:             ds.UID,
 	}
 
-	if cmd.Uid == "" {
-		cmd.Uid = safeUIDFromName(cmd.Name)
+	if cmd.UID == "" {
+		cmd.UID = safeUIDFromName(cmd.Name)
 	}
 	return cmd
 }
@@ -228,7 +233,7 @@ func safeUIDFromName(name string) string {
 	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }
 
-func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
+func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.UpdateDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -236,14 +241,14 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.Updat
 		}
 	}
 
-	return &models.UpdateDataSourceCommand{
-		Id:              id,
-		Uid:             ds.UID,
-		OrgId:           ds.OrgID,
+	return &datasources.UpdateDataSourceCommand{
+		ID:              id,
+		UID:             ds.UID,
+		OrgID:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
-		Access:          models.DsAccess(ds.Access),
-		Url:             ds.URL,
+		Access:          datasources.DsAccess(ds.Access),
+		URL:             ds.URL,
 		User:            ds.User,
 		Database:        ds.Database,
 		BasicAuth:       ds.BasicAuth,

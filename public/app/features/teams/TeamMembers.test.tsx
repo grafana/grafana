@@ -21,6 +21,7 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockResolvedValue([{ userId: 1, login: 'Test' }]),
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     bootData: { navTree: [], user: {} },
   },
 }));

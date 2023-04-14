@@ -25,6 +25,7 @@ import { findMidPointYPosition, pluginLog } from '../utils';
 interface TooltipPluginProps {
   timeZone: TimeZone;
   data: DataFrame;
+  frames?: DataFrame[];
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
@@ -39,7 +40,7 @@ const TOOLTIP_OFFSET = 10;
 /**
  * @alpha
  */
-export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
+export const TooltipPlugin = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   sync,
@@ -47,7 +48,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   config,
   renderTooltip,
   ...otherProps
-}) => {
+}: TooltipPluginProps) => {
   const plotInstance = useRef<uPlot>();
   const theme = useTheme2();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
@@ -203,7 +204,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
           series={[
             {
               color: display.color || FALLBACK_COLOR,
-              label: getFieldDisplayName(field, otherProps.data),
+              label: getFieldDisplayName(field, otherProps.data, otherProps.frames),
               value: display ? formattedValueToString(display) : null,
             },
           ]}
@@ -216,7 +217,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       let series: SeriesTableRowProps[] = [];
       const frame = otherProps.data;
       const fields = frame.fields;
-      const sortIdx: any[] = [];
+      const sortIdx: unknown[] = [];
 
       for (let i = 0; i < fields.length; i++) {
         const field = frame.fields[i];
@@ -237,7 +238,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         sortIdx.push(v);
         series.push({
           color: display.color || FALLBACK_COLOR,
-          label: getFieldDisplayName(field, frame),
+          label: getFieldDisplayName(field, frame, otherProps.frames),
           value: display ? formattedValueToString(display) : null,
           isActive: focusedSeriesIdx === i,
         });

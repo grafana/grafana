@@ -65,15 +65,22 @@ function dateInfo(date: Date): number[] {
 }
 
 export const getBodyStyles = (theme: GrafanaTheme2) => {
+  // If a time range is part of only 1 day but does not encompass the whole day,
+  // the class that react-calendar uses is '--hasActive' by itself (without being part of a '--range')
+  const hasActiveSelector = `.react-calendar__tile--hasActive:not(.react-calendar__tile--range)`;
   return {
     title: css`
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       background-color: ${theme.colors.background.primary};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
 
       &:hover {
         position: relative;
+      }
+
+      &:disabled {
+        color: ${theme.colors.action.disabledText};
       }
     `,
     body: css`
@@ -90,7 +97,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       .react-calendar__navigation {
         padding-top: 4px;
         background-color: inherit;
-        color: ${theme.colors.text};
+        color: ${theme.colors.text.primary};
         border: 0;
         font-weight: ${theme.typography.fontWeightMedium};
       }
@@ -126,6 +133,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         outline: 0;
       }
 
+      ${hasActiveSelector},
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
         color: ${theme.colors.primary.contrastText};
@@ -152,11 +160,13 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         }
       }
 
+      ${hasActiveSelector},
       .react-calendar__tile--rangeStart {
         border-top-left-radius: 20px;
         border-bottom-left-radius: 20px;
       }
 
+      ${hasActiveSelector},
       .react-calendar__tile--rangeEnd {
         border-top-right-radius: 20px;
         border-bottom-right-radius: 20px;

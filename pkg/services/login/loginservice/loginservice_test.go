@@ -7,13 +7,18 @@ import (
 	"testing"
 
 	"github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
@@ -21,15 +26,11 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	externalUser := createSimpleExternalUser()
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 
-	store := &mockstore.SQLStoreMock{
-		ExpectedUserOrgList:     createUserOrgDTO(),
-		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
-	}
-
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
-		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
+		orgService:      orgtest.NewOrgServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -45,119 +46,167 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 
-	store := &mockstore.SQLStoreMock{
-		ExpectedUserOrgList:     createUserOrgDTO(),
-		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
-	}
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedUserOrgDTO = createUserOrgDTO()
+	orgService.ExpectedOrgListResponse = createResponseWithOneErrLastOrgAdminItem()
 
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
-		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
+		orgService:      orgService,
+		accessControl:   &actest.FakeService{},
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
-	assert.Contains(t, buf.String(), models.ErrLastOrgAdmin.Error())
+	assert.Contains(t, buf.String(), org.ErrLastOrgAdmin.Error())
 }
 
 func Test_teamSync(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
-	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+	loginsvc := Implementation{
+		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
 	}
 
-	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
-	expectedUser := &models.User{
-		Id:    1,
-		Email: "test_user@example.org",
+	email := "test_user@example.org"
+	upsertCmd := &login.UpsertUserCommand{ExternalUser: &login.ExternalUserInfo{Email: email},
+		UserLookupParams: login.UserLookupParams{Email: &email}}
+	expectedUser := &user.User{
+		ID:    1,
+		Email: email,
 		Name:  "test_user",
 		Login: "test_user",
 	}
 	authInfoMock.ExpectedUser = expectedUser
 
-	var actualUser *models.User
-	var actualExternalUser *models.ExternalUserInfo
+	var actualUser *user.User
+	var actualExternalUser *login.ExternalUserInfo
 
-	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
-		err := login.UpsertUser(context.Background(), upserCmd)
+	t.Run("login.TeamSync should not be called when nil", func(t *testing.T) {
+		_, err := loginsvc.UpsertUser(context.Background(), upsertCmd)
 		require.Nil(t, err)
 		assert.Nil(t, actualUser)
 		assert.Nil(t, actualExternalUser)
 
 		t.Run("login.TeamSync should be called when not nil", func(t *testing.T) {
-			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+			teamSyncFunc := func(user *user.User, externalUser *login.ExternalUserInfo) error {
 				actualUser = user
 				actualExternalUser = externalUser
 				return nil
 			}
-			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(context.Background(), upserCmd)
+			loginsvc.TeamSync = teamSyncFunc
+			_, err := loginsvc.UpsertUser(context.Background(), upsertCmd)
 			require.Nil(t, err)
 			assert.Equal(t, actualUser, expectedUser)
-			assert.Equal(t, actualExternalUser, upserCmd.ExternalUser)
+			assert.Equal(t, actualExternalUser, upsertCmd.ExternalUser)
+		})
+
+		t.Run("login.TeamSync should not be called when not nil and skipTeamSync is set for externalUserInfo", func(t *testing.T) {
+			var actualUser *user.User
+			var actualExternalUser *login.ExternalUserInfo
+			upsertCmdSkipTeamSync := &login.UpsertUserCommand{
+				ExternalUser: &login.ExternalUserInfo{
+					Email: email,
+					// sending in ExternalUserInfo with SkipTeamSync yields no team sync
+					SkipTeamSync: true,
+				},
+				UserLookupParams: login.UserLookupParams{Email: &email},
+			}
+			teamSyncFunc := func(user *user.User, externalUser *login.ExternalUserInfo) error {
+				actualUser = user
+				actualExternalUser = externalUser
+				return nil
+			}
+			loginsvc.TeamSync = teamSyncFunc
+			_, err := loginsvc.UpsertUser(context.Background(), upsertCmdSkipTeamSync)
+			require.Nil(t, err)
+			assert.Nil(t, actualUser)
+			assert.Nil(t, actualExternalUser)
 		})
 
 		t.Run("login.TeamSync should propagate its errors to the caller", func(t *testing.T) {
-			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+			teamSyncFunc := func(user *user.User, externalUser *login.ExternalUserInfo) error {
 				return errors.New("teamsync test error")
 			}
-			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(context.Background(), upserCmd)
+			loginsvc.TeamSync = teamSyncFunc
+			_, err := loginsvc.UpsertUser(context.Background(), upsertCmd)
 			require.Error(t, err)
 		})
 	})
 }
 
-func createSimpleUser() models.User {
-	user := models.User{
-		Id: 1,
+func TestUpsertUser_crashOnLog_issue62538(t *testing.T) {
+	authInfoMock := &logintest.AuthInfoServiceFake{}
+	authInfoMock.ExpectedError = user.ErrUserNotFound
+	loginsvc := Implementation{
+		QuotaService:    quotatest.New(false, nil),
+		AuthInfoService: authInfoMock,
+	}
+
+	email := "test_user@example.org"
+	upsertCmd := &login.UpsertUserCommand{
+		ExternalUser:     &login.ExternalUserInfo{Email: email},
+		UserLookupParams: login.UserLookupParams{Email: &email},
+		SignupAllowed:    false,
+	}
+
+	var err error
+	require.NotPanics(t, func() {
+		_, err = loginsvc.UpsertUser(context.Background(), upsertCmd)
+	})
+	require.ErrorIs(t, err, login.ErrSignupNotAllowed)
+}
+
+func createSimpleUser() user.User {
+	user := user.User{
+		ID: 1,
 	}
 
 	return user
 }
 
-func createUserOrgDTO() []*models.UserOrgDTO {
-	users := []*models.UserOrgDTO{
+func createUserOrgDTO() []*org.UserOrgDTO {
+	users := []*org.UserOrgDTO{
 		{
-			OrgId: 1,
+			OrgID: 1,
 			Name:  "Bar",
-			Role:  models.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 		{
-			OrgId: 10,
+			OrgID: 10,
 			Name:  "Foo",
-			Role:  models.ROLE_ADMIN,
+			Role:  org.RoleAdmin,
 		},
 		{
-			OrgId: 11,
+			OrgID: 11,
 			Name:  "Stuff",
-			Role:  models.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 	}
 	return users
 }
 
-func createSimpleExternalUser() models.ExternalUserInfo {
-	externalUser := models.ExternalUserInfo{
-		AuthModule: "ldap",
-		OrgRoles: map[int64]models.RoleType{
-			1: models.ROLE_VIEWER,
+func createSimpleExternalUser() login.ExternalUserInfo {
+	externalUser := login.ExternalUserInfo{
+		AuthModule: login.LDAPAuthModule,
+		OrgRoles: map[int64]org.RoleType{
+			1: org.RoleViewer,
 		},
 	}
 
 	return externalUser
 }
 
-func createResponseWithOneErrLastOrgAdminItem() mockstore.OrgListResponse {
-	remResp := mockstore.OrgListResponse{
+func createResponseWithOneErrLastOrgAdminItem() orgtest.OrgListResponse {
+	remResp := orgtest.OrgListResponse{
 		{
-			OrgId:    10,
-			Response: models.ErrLastOrgAdmin,
+			OrgID:    10,
+			Response: org.ErrLastOrgAdmin,
 		},
 		{
-			OrgId:    11,
+			OrgID:    11,
 			Response: nil,
 		},
 	}

@@ -34,23 +34,28 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     // Use metric metadata for exact types
     const nameMatch = query.match(/\b(\w+_(total|sum|count))\b/);
     let counterNameMetric = nameMatch ? nameMatch[1] : '';
-    const metricsMetadata = datasource?.languageProvider?.metricsMetadata ?? {};
-    const metricMetadataKeys = Object.keys(metricsMetadata);
+    const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
     let certain = false;
 
-    if (metricMetadataKeys.length > 0) {
+    if (metricsMetadata) {
+      // Tokenize the query into its identifiers (see https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels)
+      const queryTokens = Array.from(query.matchAll(/\$?[a-zA-Z_:][a-zA-Z0-9_:]*/g))
+        .map(([match]) => match)
+        // Exclude variable identifiers
+        .filter((token) => !token.startsWith('$'))
+        // Split composite keys to match the tokens returned by the language provider
+        .flatMap((token) => token.split(':'));
+      // Determine whether any of the query identifier tokens refers to a counter metric
       counterNameMetric =
-        metricMetadataKeys.find((metricName) => {
+        queryTokens.find((metricName) => {
           // Only considering first type information, could be non-deterministic
           const metadata = metricsMetadata[metricName];
-          if (metadata.type.toLowerCase() === 'counter') {
-            const metricRegex = new RegExp(`\\b${metricName}\\b`);
-            if (query.match(metricRegex)) {
-              certain = true;
-              return true;
-            }
+          if (metadata && metadata.type.toLowerCase() === 'counter') {
+            certain = true;
+            return true;
+          } else {
+            return false;
           }
-          return false;
         }) ?? '';
     }
 
@@ -103,9 +108,9 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           action: {
             type: 'EXPAND_RULES',
             query,
-            mapping: mappingForQuery,
+            options: mappingForQuery,
           },
-        } as any as QueryFix,
+        } as unknown as QueryFix,
       });
     }
   }

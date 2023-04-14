@@ -1,8 +1,7 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
-import { FC, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useState } from 'react';
 
-import { ExploreId } from 'app/types';
+import { ExploreId, useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose } from './state/main';
 import { runQueries } from './state/query';
@@ -13,7 +12,7 @@ interface Props {
   exploreIdRight?: ExploreId;
 }
 
-export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Props) => {
+export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
   const dispatch = useDispatch();

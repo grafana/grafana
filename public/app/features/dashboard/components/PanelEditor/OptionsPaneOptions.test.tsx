@@ -10,13 +10,15 @@ import {
   PanelData,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { PanelModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
@@ -24,10 +26,10 @@ import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from '
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 jest.mock('react-router-dom', () => ({
-  ...(jest.requireActual('react-router-dom') as any),
+  ...jest.requireActual('react-router-dom'),
   useLocation: () => ({
     pathname: 'localhost:3000/example/path',
   }),
@@ -41,7 +43,7 @@ class OptionsPaneOptionsTestScenario {
   panelData: PanelData = {
     series: [],
     state: LoadingState.Done,
-    timeRange: {} as any,
+    timeRange: {} as TimeRange,
   };
 
   plugin = getPanelPlugin({
@@ -88,7 +90,7 @@ class OptionsPaneOptionsTestScenario {
     options: {},
   });
 
-  dashboard = new DashboardModel({});
+  dashboard = createDashboardModelFixture();
   store = mockStore({
     dashboard: { panels: [] },
     templating: {

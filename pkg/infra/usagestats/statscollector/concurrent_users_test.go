@@ -8,18 +8,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestConcurrentUsersMetrics(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
-	s := createService(t, setting.NewCfg(), sqlStore)
+	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
+	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
 
@@ -35,8 +36,9 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 }
 
 func TestConcurrentUsersStats(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
-	s := createService(t, setting.NewCfg(), sqlStore)
+	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
+	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
 
@@ -82,7 +84,7 @@ func TestConcurrentUsersStats(t *testing.T) {
 	assert.Equal(t, expectedResult, actualResult)
 }
 
-func createConcurrentTokens(t *testing.T, sqlStore sqlstore.Store) {
+func createConcurrentTokens(t *testing.T, sqlStore db.DB) {
 	t.Helper()
 	for u := 1; u <= 6; u++ {
 		for tkn := 1; tkn <= u*3; tkn++ {
@@ -91,7 +93,7 @@ func createConcurrentTokens(t *testing.T, sqlStore sqlstore.Store) {
 	}
 }
 
-func createToken(t *testing.T, uID int, sqlStore sqlstore.Store) {
+func createToken(t *testing.T, uID int, sqlStore db.DB) {
 	t.Helper()
 	token, err := util.RandomHex(16)
 	require.NoError(t, err)
@@ -115,7 +117,7 @@ func createToken(t *testing.T, uID int, sqlStore sqlstore.Store) {
 		AuthTokenSeen: false,
 	}
 
-	err = sqlStore.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
 		_, err = dbSession.Insert(&userAuthToken)
 		return err
 	})

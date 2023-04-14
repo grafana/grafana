@@ -5,41 +5,27 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-type cloudWatchFakeClient struct {
-	cloudwatchiface.CloudWatchAPI
-
-	counterForGetMetricDataWithContext int
-}
-
-func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
-	nextToken := "next"
-	res := []*cloudwatch.MetricDataResult{{
-		Values: []*float64{aws.Float64(12.3), aws.Float64(23.5)},
-	}}
-	if client.counterForGetMetricDataWithContext == 0 {
-		nextToken = ""
-		res = []*cloudwatch.MetricDataResult{{
-			Values: []*float64{aws.Float64(100)},
-		}}
-	}
-	client.counterForGetMetricDataWithContext--
-	return &cloudwatch.GetMetricDataOutput{
-		MetricDataResults: res,
-		NextToken:         aws.String(nextToken),
-	}, nil
-}
 
 func TestGetMetricDataExecutorTest(t *testing.T) {
 	executor := &cloudWatchExecutor{}
 	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-	res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{counterForGetMetricDataWithContext: 1}, inputs)
+	mockMetricClient := &mocks.MetricsAPI{}
+	mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
+		&cloudwatch.GetMetricDataOutput{
+			MetricDataResults: []*cloudwatch.MetricDataResult{{Values: []*float64{aws.Float64(12.3), aws.Float64(23.5)}}},
+			NextToken:         aws.String("next"),
+		}, nil).Once()
+	mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
+		&cloudwatch.GetMetricDataOutput{
+			MetricDataResults: []*cloudwatch.MetricDataResult{{Values: []*float64{aws.Float64(100)}}},
+		}, nil).Once()
+	res, err := executor.executeRequest(context.Background(), mockMetricClient, inputs)
 	require.NoError(t, err)
 	require.Len(t, res, 2)
 	require.Len(t, res[0].MetricDataResults[0].Values, 2)

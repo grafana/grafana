@@ -1,9 +1,21 @@
 import { MonoTypeOperatorFunction } from 'rxjs';
 
+import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
+
 import { RegistryItemWithOptions } from '../utils/Registry';
 
-import { ScopedVars } from './ScopedVars';
 import { DataFrame, Field } from './dataFrame';
+import { InterpolateFunction } from './panel';
+
+/** deprecated, use it from schema */
+export type { MatcherConfig };
+
+/**
+ * Context passed to transformDataFrame and to each transform operator
+ */
+export interface DataTransformContext {
+  interpolate: InterpolateFunction;
+}
 
 /**
  * Function that transform data frames (AKA transformer)
@@ -15,11 +27,15 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  operator: (
-    options: TOptions,
-    replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string
-  ) => MonoTypeOperatorFunction<DataFrame[]>;
+  operator: (options: TOptions, context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
 }
+
+/**
+ * Function that returns a cutsom transform operator for transforming data frames
+ *
+ * @public
+ */
+export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
 
 /**
  * Many transformations can be called with a simple synchronous function.
@@ -28,30 +44,13 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
  * @public
  */
 export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTransformerInfo<TOptions> {
-  transformer: (options: TOptions) => (frames: DataFrame[]) => DataFrame[];
+  transformer: (options: TOptions, context: DataTransformContext) => (frames: DataFrame[]) => DataFrame[];
 }
 
 /**
- * @public
+ * @deprecated use TransformationConfig from schema
  */
-export interface DataTransformerConfig<TOptions = any> {
-  /**
-   * Unique identifier of transformer
-   */
-  id: string;
-  /**
-   * Disabled transformations are skipped
-   */
-  disabled?: boolean;
-  /**
-   * Options to be passed to the transformer
-   */
-  options: TOptions;
-  /**
-   * Function to apply template variable substitution to the DataTransformerConfig
-   */
-  replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string;
-}
+export type { DataTransformerConfig };
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
 export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
@@ -80,7 +79,13 @@ export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOption
   isApplicable: (field: Field) => boolean;
   getDefaultOptions: (field: Field) => TOptions;
 }
-export interface MatcherConfig<TOptions = any> {
-  id: string;
-  options?: TOptions;
+
+/**
+ * @public
+ */
+export enum SpecialValue {
+  True = 'true',
+  False = 'false',
+  Null = 'null',
+  Empty = 'empty',
 }

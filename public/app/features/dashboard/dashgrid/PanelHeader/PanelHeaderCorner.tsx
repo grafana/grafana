@@ -14,7 +14,7 @@ enum InfoMode {
   Links = 'Links',
 }
 
-interface Props {
+export interface Props {
   panel: PanelModel;
   title?: string;
   description?: string;
@@ -86,10 +86,10 @@ export class PanelHeaderCorner extends Component<Props> {
 
     return (
       <Tooltip content={content} placement="top-start" theme={theme} interactive>
-        <section className={className} onClick={onClick} aria-label={ariaLabel}>
+        <button type="button" className={className} onClick={onClick} aria-label={ariaLabel}>
           <i aria-hidden className="fa" />
           <span className="panel-info-corner-inner" />
-        </section>
+        </button>
       </Tooltip>
     );
   }

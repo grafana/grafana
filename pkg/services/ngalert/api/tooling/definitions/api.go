@@ -3,31 +3,25 @@
 // Package definitions includes the types required for generating or consuming an OpenAPI
 // spec for the Grafana Alerting API.
 //
+//	 Schemes: http, https
+//	 BasePath: /api/v1
+//	 Version: 1.1.0
 //
-//     Schemes: http, https
-//     BasePath: /api/v1
-//     Version: 1.1.0
+//	 Consumes:
+//	 - application/json
 //
-//     Consumes:
-//     - application/json
+//	 Produces:
+//	 - application/json
 //
-//     Produces:
-//     - application/json
+//	 Security:
+//	 - basic
 //
-//     Security:
-//     - basic
-//
-//    SecurityDefinitions:
-//    basic:
-//      type: basic
+//	SecurityDefinitions:
+//	basic:
+//	  type: basic
 //
 // swagger:meta
 package definitions
-
-// swagger:model
-type ValidationError struct {
-	Msg string `json:"msg"`
-}
 
 type Backend int
 

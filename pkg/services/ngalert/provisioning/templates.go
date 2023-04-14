@@ -38,15 +38,15 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[st
 	return revision.cfg.TemplateFiles, nil
 }
 
-func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate) (definitions.MessageTemplate, error) {
+func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
 	err := tmpl.Validate()
 	if err != nil {
-		return definitions.MessageTemplate{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.NotificationTemplate{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision, err := getLastConfiguration(ctx, orgID, t.config)
 	if err != nil {
-		return definitions.MessageTemplate{}, err
+		return definitions.NotificationTemplate{}, err
 	}
 
 	if revision.cfg.TemplateFiles == nil {
@@ -56,7 +56,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
-		return definitions.MessageTemplate{}, err
+		return definitions.NotificationTemplate{}, err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
@@ -66,18 +66,18 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		OrgID:                     orgID,
 	}
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = t.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, t.config, &cmd)
 		if err != nil {
 			return err
 		}
-		err = t.prov.SetProvenance(ctx, &tmpl, orgID, tmpl.Provenance)
+		err = t.prov.SetProvenance(ctx, &tmpl, orgID, models.Provenance(tmpl.Provenance))
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		return definitions.MessageTemplate{}, err
+		return definitions.NotificationTemplate{}, err
 	}
 
 	return tmpl, nil
@@ -104,11 +104,11 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name 
 		OrgID:                     orgID,
 	}
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = t.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, t.config, &cmd)
 		if err != nil {
 			return err
 		}
-		tgt := definitions.MessageTemplate{
+		tgt := definitions.NotificationTemplate{
 			Name: name,
 		}
 		err = t.prov.DeleteProvenance(ctx, &tgt, orgID)

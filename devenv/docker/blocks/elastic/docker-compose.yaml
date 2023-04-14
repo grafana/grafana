@@ -1,6 +1,6 @@
 # You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
 
-  elasticsearch:
+  elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_version}
     command: elasticsearch
     environment:
@@ -10,15 +10,11 @@
     ports:
       - "9200:9200"
 
-  data:
+  elastic-data:
     build: docker/blocks/elastic/data
-    command: node /home/node/data.js http://elasticsearch:9200
+    command: node /home/node/data.js http://elastic:9200
     depends_on:
-      - elasticsearch
+      - elastic
     # elastic starts slowly, the first couple start of data.js
     # might fail, so we auto-restart it on failure.
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 20 # should be enough
+    restart: "on-failure"

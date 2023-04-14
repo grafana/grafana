@@ -15,6 +15,7 @@ import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
 import { TimeModel } from '../state/TimeModel';
@@ -24,7 +25,7 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  previousAutoRefresh: any;
+  autoRefreshPaused = false;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
   timeAtLoad: any;
@@ -147,6 +148,10 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
+    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+      return;
+    }
+
     const params = locationService.getSearch();
 
     if (params.get('time') && params.get('time.window')) {
@@ -232,7 +237,7 @@ export class TimeSrv {
 
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
-      this.refreshTimeModel();
+      !this.autoRefreshPaused && this.refreshTimeModel();
     }, intervalMs);
 
     const refresh = this.contextSrv.getValidInterval(interval);
@@ -250,7 +255,7 @@ export class TimeSrv {
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
-        this.refreshTimeModel();
+        !this.autoRefreshPaused && this.refreshTimeModel();
       } else {
         this.autoRefreshBlocked = true;
       }
@@ -264,13 +269,13 @@ export class TimeSrv {
   // store timeModel refresh value and pause auto-refresh in some places
   // i.e panel edit
   pauseAutoRefresh() {
-    this.previousAutoRefresh = this.timeModel?.refresh;
-    this.setAutoRefresh('');
+    this.autoRefreshPaused = true;
   }
 
   // resume auto-refresh based on old dashboard refresh property
   resumeAutoRefresh() {
-    this.setAutoRefresh(this.previousAutoRefresh);
+    this.autoRefreshPaused = false;
+    this.refreshTimeModel();
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {
@@ -316,19 +321,7 @@ export class TimeSrv {
   };
 
   timeRange(): TimeRange {
-    // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
-    const raw = {
-      from: isDateTime(this.time.from) ? dateTime(this.time.from) : this.time.from,
-      to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
-    };
-
-    const timezone = this.timeModel ? this.timeModel.getTimezone() : undefined;
-
-    return {
-      from: dateMath.parse(raw.from, false, timezone, this.timeModel?.fiscalYearStartMonth)!,
-      to: dateMath.parse(raw.to, true, timezone, this.timeModel?.fiscalYearStartMonth)!,
-      raw: raw,
-    };
+    return getTimeRange(this.time, this.timeModel);
   }
 
   zoomOut(factor: number, updateUrl = true) {

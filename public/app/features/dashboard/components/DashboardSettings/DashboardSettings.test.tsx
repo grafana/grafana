@@ -1,31 +1,21 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
+import { NavModel, NavModelItem } from '@grafana/data';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-import { DashboardModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashboardSettings } from './DashboardSettings';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  locationService: {
-    partial: jest.fn(),
-  },
-}));
-
 setBackendSrv({
-  get: jest.fn().mockResolvedValue({}),
-} as any);
+  get: jest.fn().mockResolvedValue([]),
+} as unknown as BackendSrv);
 
 describe('DashboardSettings', () => {
   it('pressing escape navigates away correctly', async () => {
-    jest.spyOn(locationService, 'partial');
-    const dashboard = new DashboardModel(
+    const dashboard = createDashboardModelFixture(
       {
         title: 'Foo',
       },
@@ -33,19 +23,16 @@ describe('DashboardSettings', () => {
         folderId: 1,
       }
     );
-    const store = configureStore();
+
+    const sectionNav: NavModel = { main: { text: 'Dashboards' }, node: { text: 'Dashboards' } };
+    const pageNav: NavModelItem = { text: 'My cool dashboard' };
+
     render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <DashboardSettings editview="settings" dashboard={dashboard} />
-        </BrowserRouter>
-      </Provider>
+      <TestProvider>
+        <DashboardSettings editview="settings" dashboard={dashboard} sectionNav={sectionNav} pageNav={pageNav} />
+      </TestProvider>
     );
 
-    expect(screen.getByText('Foo / Settings')).toBeInTheDocument();
-
-    await userEvent.keyboard('{Escape}');
-
-    expect(locationService.partial).toHaveBeenCalledWith({ editview: null });
+    expect(await screen.findByRole('tab', { name: 'Tab Settings' })).toBeInTheDocument();
   });
 });

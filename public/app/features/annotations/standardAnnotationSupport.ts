@@ -10,12 +10,14 @@ import {
   AnnotationSupport,
   DataFrame,
   DataSourceApi,
+  DataTransformContext,
   Field,
   FieldType,
   getFieldDisplayName,
   KeyValue,
   standardTransformers,
 } from '@grafana/data';
+import { config } from 'app/core/config';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -65,8 +67,12 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           return of(data[0]);
         }
 
+        const ctx: DataTransformContext = {
+          interpolate: (v: string) => v,
+        };
+
         return of(data).pipe(
-          standardTransformers.mergeTransformer.operator({}),
+          standardTransformers.mergeTransformer.operator({}, ctx),
           map((d) => d[0])
         );
       })
@@ -112,9 +118,22 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   },
 ];
 
+export const publicDashboardEventNames: AnnotationFieldInfo[] = [
+  {
+    key: 'color',
+  },
+  {
+    key: 'isRegion',
+  },
+  {
+    key: 'source',
+  },
+];
+
 // Given legacy infrastructure, alert events are passed though the same annotation
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+  ...(config.isPublicDashboardView ? publicDashboardEventNames : []),
   ...annotationEventNames,
   { key: 'userId' },
   { key: 'login' },
@@ -125,6 +144,7 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   { key: 'panelId' },
   { key: 'alertId' },
   { key: 'dashboardId' },
+  { key: 'dashboardUID' },
 ];
 
 export function getAnnotationsFromData(
@@ -184,7 +204,8 @@ export function getAnnotationsFromData(
       }
 
       if (!hasTime || !hasText) {
-        return []; // throw an error?
+        console.error('Cannot process annotation fields. No time or text present.');
+        return [];
       }
 
       // Add each value to the string
@@ -231,12 +252,22 @@ export function getAnnotationsFromData(
 // annotation support API needs some work to support less "standard" editors like prometheus and here it is not
 // polluting public API.
 
+const legacyRunner = [
+  'prometheus',
+  'loki',
+  'elasticsearch',
+  'grafana-opensearch-datasource', // external
+];
+
 /**
  * Opt out of using the default mapping functionality on frontend.
  */
 export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return type !== 'prometheus' && type !== 'elasticsearch';
+  return !(
+    type === 'datasource' || //  ODD behavior for "-- Grafana --" datasource
+    legacyRunner.includes(type)
+  );
 }
 
 /**
@@ -244,5 +275,5 @@ export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
  */
 export function shouldUseLegacyRunner(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return type === 'prometheus' || type === 'elasticsearch';
+  return legacyRunner.includes(type);
 }

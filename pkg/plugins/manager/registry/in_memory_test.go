@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -213,6 +214,11 @@ func TestInMemory_Plugins(t *testing.T) {
 				store: tt.mocks.store,
 			}
 			result := i.Plugins(context.Background())
+
+			// to ensure we can compare with expected
+			sort.SliceStable(result, func(i, j int) bool {
+				return result[i].ID < result[j].ID
+			})
 			require.Equal(t, tt.expected, result)
 		})
 	}

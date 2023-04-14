@@ -1,50 +1,26 @@
-import React, { FC, useState } from 'react';
-import { connect, MapStateToProps } from 'react-redux';
-import { useDebounce } from 'react-use';
+import React, { useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
-import { NavModel } from '@grafana/data';
 import { ConfirmModal } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
-
-import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { deletePlaylist, getAllPlaylist } from './api';
-import { PlaylistDTO } from './types';
+import { deletePlaylist, getAllPlaylist, searchPlaylists } from './api';
+import { Playlist } from './types';
 
-interface ConnectedProps {
-  navModel: NavModel;
-}
-export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponentProps {}
-
-export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-  const [hasFetched, setHasFetched] = useState(false);
-  const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
-  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
+export const PlaylistPage = () => {
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const allPlaylists = useAsync(() => getAllPlaylist(), [forcePlaylistsFetch]);
+  const playlists = useMemo(() => searchPlaylists(allPlaylists.value ?? [], searchQuery), [searchQuery, allPlaylists]);
 
-  const [playlists, setPlaylists] = useState<PlaylistDTO[]>([]);
-
-  useDebounce(
-    async () => {
-      const playlists = await getAllPlaylist(searchQuery);
-      if (!hasFetched) {
-        setHasFetched(true);
-      }
-      setPlaylists(playlists);
-      setDebouncedSearchQuery(searchQuery);
-    },
-    350,
-    [forcePlaylistsFetch, searchQuery]
-  );
+  const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
+  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | undefined>();
 
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
@@ -52,7 +28,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     if (!playlistToDelete) {
       return;
     }
-    deletePlaylist(playlistToDelete.id).finally(() => {
+    deletePlaylist(playlistToDelete.uid).finally(() => {
       setForcePlaylistsFetch(forcePlaylistsFetch + 1);
       setPlaylistToDelete(undefined);
     });
@@ -64,6 +40,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
       buttonIcon="plus"
       buttonLink="playlists/new"
       buttonTitle="Create Playlist"
+      buttonDisabled={!contextSrv.isEditor}
       proTip="You can use playlists to cycle dashboards on TVs without user control"
       proTipLink="http://docs.grafana.org/reference/playlist/"
       proTipLinkTitle="Learn more"
@@ -71,15 +48,15 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     />
   );
 
-  const showSearch = playlists.length > 0 || searchQuery.length > 0 || debouncedSearchQuery.length > 0;
+  const showSearch = playlists.length > 0 || searchQuery.length > 0;
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents isLoading={!hasFetched}>
+    <Page navId="dashboards/playlists">
+      <Page.Contents isLoading={allPlaylists.loading}>
         {showSearch && (
           <PageActionBar
             searchQuery={searchQuery}
-            linkButton={{ title: 'New playlist', href: '/playlists/new' }}
+            linkButton={contextSrv.isEditor ? { title: 'New playlist', href: '/playlists/new' } : undefined}
             setSearchQuery={setSearchQuery}
           />
         )}
@@ -110,8 +87,4 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   );
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'playlists'),
-});
-
-export default connect(mapStateToProps)(PlaylistPage);
+export default PlaylistPage;

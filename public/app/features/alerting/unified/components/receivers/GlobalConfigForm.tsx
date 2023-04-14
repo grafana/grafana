@@ -1,12 +1,10 @@
-import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
@@ -14,6 +12,7 @@ import { globalConfigOptions } from '../../utils/cloud-alertmanager-notifier-typ
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { omitEmptyValues } from '../../utils/receiver-form';
+import { initialAsyncRequestState } from '../../utils/redux';
 
 import { OptionField } from './form/fields/OptionField';
 
@@ -28,12 +27,13 @@ const defaultValues: FormValues = {
   smtp_require_tls: true,
 } as const;
 
-export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) => {
+export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
   const dispatch = useDispatch();
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-  const styles = useStyles2(getStyles);
 
   const formAPI = useForm<FormValues>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -71,7 +71,6 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmitCallback)}>
-        <h4 className={styles.heading}>Global config</h4>
         {error && (
           <Alert severity="error" title="Error saving receiver">
             {error.message || String(error)}
@@ -113,9 +112,3 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
     </FormProvider>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    margin: ${theme.spacing(4, 0)};
-  `,
-});

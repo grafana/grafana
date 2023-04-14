@@ -4,7 +4,7 @@ import { Observable, Subscription } from 'rxjs';
 
 import { expectObservable, forceObservableCompletion } from './utils';
 
-function passMessage(received: any[], expected: any[]) {
+function passMessage(received: unknown[], expected: unknown[]) {
   return `${matcherHint('.not.toEmitValues')}
 
   Expected observable to emit values:
@@ -14,7 +14,7 @@ function passMessage(received: any[], expected: any[]) {
     `;
 }
 
-function failMessage(received: any[], expected: any[]) {
+function failMessage(received: unknown[], expected: unknown[]) {
   return `${matcherHint('.toEmitValues')}
 
   Expected observable to emit values:
@@ -24,7 +24,7 @@ function failMessage(received: any[], expected: any[]) {
     `;
 }
 
-function tryExpectations(received: any[], expected: any[]): jest.CustomMatcherResult {
+function tryExpectations(received: unknown[], expected: unknown[]): jest.CustomMatcherResult {
   try {
     if (received.length !== expected.length) {
       return {
@@ -50,21 +50,22 @@ function tryExpectations(received: any[], expected: any[]): jest.CustomMatcherRe
       message: () => passMessage(received, expected),
     };
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'An unknown error occurred';
     return {
       pass: false,
-      message: () => err,
+      message: () => message,
     };
   }
 }
 
-export function toEmitValues(received: Observable<any>, expected: any[]): Promise<jest.CustomMatcherResult> {
+export function toEmitValues(received: Observable<unknown>, expected: unknown[]): Promise<jest.CustomMatcherResult> {
   const failsChecks = expectObservable(received);
   if (failsChecks) {
     return Promise.resolve(failsChecks);
   }
 
   return new Promise((resolve) => {
-    const receivedValues: any[] = [];
+    const receivedValues: unknown[] = [];
     const subscription = new Subscription();
 
     subscription.add(

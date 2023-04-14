@@ -6,12 +6,16 @@ import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem } from '../element';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { ElementState } from './element';
 import { RootElement } from './root';
 import { Scene } from './scene';
+
+const DEFAULT_OFFSET = 10;
+const HORIZONTAL_OFFSET = 50;
 
 export const frameItemDummy: CanvasElementItem = {
   id: 'frame',
@@ -74,6 +78,19 @@ export class FrameState extends ElementState {
     this.reinitializeMoveable();
   }
 
+  // used for tree view
+  reorderTree(src: ElementState, dest: ElementState, firstPosition = false) {
+    const result = Array.from(this.elements);
+    const srcIndex = this.elements.indexOf(src);
+    const destIndex = firstPosition ? this.elements.length - 1 : this.elements.indexOf(dest);
+
+    const [removed] = result.splice(srcIndex, 1);
+    result.splice(destIndex, 0, removed);
+    this.elements = result;
+
+    this.reinitializeMoveable();
+  }
+
   doMove(child: ElementState, action: LayerActionID) {
     const vals = this.elements.filter((v) => v !== child);
     if (action === LayerActionID.MoveBottom) {
@@ -98,6 +115,7 @@ export class FrameState extends ElementState {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
+        updateConnectionsForSource(element, this.scene);
         this.scene.byName.delete(element.options.name);
         this.scene.save();
         this.reinitializeMoveable();
@@ -112,46 +130,83 @@ export class FrameState extends ElementState {
         if (shiftItemsOnDuplicate) {
           const { constraint, placement: oldPlacement } = element.options;
           const { vertical, horizontal } = constraint ?? {};
-          const placement = oldPlacement ?? ({} as Placement);
+          const placement = { ...oldPlacement } ?? ({} as Placement);
 
           switch (vertical) {
             case VerticalConstraint.Top:
-            case VerticalConstraint.TopBottom:
               if (placement.top == null) {
                 placement.top = 25;
               } else {
-                placement.top += 10;
+                placement.top += DEFAULT_OFFSET;
               }
               break;
             case VerticalConstraint.Bottom:
               if (placement.bottom == null) {
                 placement.bottom = 100;
               } else {
-                placement.bottom -= 10;
+                placement.bottom -= DEFAULT_OFFSET;
+              }
+              break;
+            case VerticalConstraint.TopBottom:
+              if (placement.top == null) {
+                placement.top = 25;
+              } else {
+                placement.top += DEFAULT_OFFSET;
+              }
+
+              if (placement.bottom == null) {
+                placement.bottom = 100;
+              } else {
+                placement.bottom -= DEFAULT_OFFSET;
+              }
+              break;
+            case VerticalConstraint.Center:
+              if (placement.top != null) {
+                placement.top -= DEFAULT_OFFSET;
               }
               break;
           }
 
           switch (horizontal) {
             case HorizontalConstraint.Left:
-            case HorizontalConstraint.LeftRight:
               if (placement.left == null) {
-                placement.left = 50;
+                placement.left = HORIZONTAL_OFFSET;
               } else {
-                placement.left += 10;
+                placement.left += DEFAULT_OFFSET;
               }
               break;
             case HorizontalConstraint.Right:
               if (placement.right == null) {
-                placement.right = 50;
+                placement.right = HORIZONTAL_OFFSET;
               } else {
-                placement.right -= 10;
+                placement.right -= DEFAULT_OFFSET;
+              }
+              break;
+            case HorizontalConstraint.LeftRight:
+              if (placement.left == null) {
+                placement.left = HORIZONTAL_OFFSET;
+              } else {
+                placement.left += DEFAULT_OFFSET;
+              }
+
+              if (placement.right == null) {
+                placement.right = HORIZONTAL_OFFSET;
+              } else {
+                placement.right -= DEFAULT_OFFSET;
+              }
+              break;
+            case HorizontalConstraint.Center:
+              if (placement.left != null) {
+                placement.left -= DEFAULT_OFFSET;
               }
               break;
           }
 
           opts.placement = placement;
         }
+
+        // Clear connections on duplicate
+        opts.connections = undefined;
 
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
@@ -160,8 +215,16 @@ export class FrameState extends ElementState {
         }
         this.elements.push(copy);
         this.scene.byName.set(copy.options.name, copy);
+
+        // Update scene byName map for original element (to avoid stale references (e.g. for connections))
+        this.scene.byName.set(element.options.name, element);
+
         this.scene.save();
         this.reinitializeMoveable();
+
+        setTimeout(() => {
+          this.scene.targetsToSelect.add(copy.div!);
+        });
         break;
       case LayerActionID.MoveTop:
       case LayerActionID.MoveBottom:
@@ -176,7 +239,7 @@ export class FrameState extends ElementState {
 
   render() {
     return (
-      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
+      <div key={this.UID} ref={this.initElement}>
         {this.elements.map((v) => v.render())}
       </div>
     );

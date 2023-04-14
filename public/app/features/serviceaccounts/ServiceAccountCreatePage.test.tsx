@@ -1,13 +1,16 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { ServiceAccountCreatePageUnconnected, Props } from './ServiceAccountCreatePage';
+import { ServiceAccountCreatePage, Props } from './ServiceAccountCreatePage';
 
 const postMock = jest.fn().mockResolvedValue({});
 const patchMock = jest.fn().mockResolvedValue({});
 const putMock = jest.fn().mockResolvedValue({});
+
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     post: postMock,
     patch: patchMock,
@@ -26,6 +29,7 @@ jest.mock('@grafana/runtime', () => ({
       licenseUrl: '',
     },
     appSubUrl: '',
+    featureToggles: {},
   },
 }));
 
@@ -52,7 +56,11 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<ServiceAccountCreatePageUnconnected {...props} />);
+  render(
+    <TestProvider>
+      <ServiceAccountCreatePage {...props} />
+    </TestProvider>
+  );
 };
 
 describe('ServiceAccountCreatePage tests', () => {

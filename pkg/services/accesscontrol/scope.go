@@ -2,12 +2,33 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
 const (
 	maxPrefixParts = 2
 )
+
+func ParseScopeID(scope string) (int64, error) {
+	id, err := strconv.ParseInt(ScopeSuffix(scope), 10, 64)
+	if err != nil {
+		return 0, ErrInvalidScope
+	}
+	return id, nil
+}
+
+func ParseScopeUID(scope string) (string, error) {
+	uid := ScopeSuffix(scope)
+	if len(uid) == 0 {
+		return "", ErrInvalidScope
+	}
+	return uid, nil
+}
+
+func ScopeSuffix(scope string) string {
+	return scope[len(ScopePrefix(scope)):]
+}
 
 func GetResourceScope(resource string, resourceID string) string {
 	return Scope(resource, "id", resourceID)
@@ -119,4 +140,44 @@ func (s scopeProviderImpl) GetResourceAllScope() string {
 // GetResourceAllIDScope returns scope that has the format "<rootScope>:id:*"
 func (s scopeProviderImpl) GetResourceAllIDScope() string {
 	return GetResourceAllIDScope(s.root)
+}
+
+func WildcardsFromPrefix(prefix string) Wildcards {
+	return WildcardsFromPrefixes([]string{prefix})
+}
+
+// WildcardsFromPrefixes generates valid wildcards from prefixes
+// datasource:uid: => "*", "datasource:*", "datasource:uid:*"
+func WildcardsFromPrefixes(prefixes []string) Wildcards {
+	var b strings.Builder
+	wildcards := Wildcards{"*"}
+	for _, prefix := range prefixes {
+		parts := strings.Split(prefix, ":")
+		for _, p := range parts {
+			if p == "" {
+				continue
+			}
+			b.WriteString(p)
+			b.WriteRune(':')
+			wildcards = append(wildcards, b.String()+"*")
+		}
+		b.Reset()
+	}
+	return wildcards
+}
+
+type Wildcards []string
+
+// Contains check if wildcards contains scope
+func (wildcards Wildcards) Contains(scope string) bool {
+	for _, w := range wildcards {
+		if scope == w {
+			return true
+		}
+	}
+	return false
+}
+
+func isWildcard(scope string) bool {
+	return scope == "*" || strings.HasSuffix(scope, ":*")
 }

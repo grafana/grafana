@@ -89,7 +89,18 @@ export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();
 };
 
-export const isDateTime = (value: any): value is DateTime => {
+export const isDateTimeInput = (value: unknown): value is DateTimeInput => {
+  return (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    value instanceof Date ||
+    (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number')) ||
+    isDateTime(value)
+  );
+};
+
+export const isDateTime = (value: unknown): value is DateTime => {
   return moment.isMoment(value);
 };
 
@@ -126,10 +137,15 @@ export const getWeekdayIndex = (day: string) => {
   return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
 };
 
+export const getWeekdayIndexByEnglishName = (day: string) =>
+  ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].findIndex(
+    (wd) => wd.toLowerCase() === day.toLowerCase()
+  );
+
 export const setWeekStart = (weekStart?: string) => {
   const suffix = '-weekStart';
   const language = getLocale().replace(suffix, '');
-  const dow = weekStart ? getWeekdayIndex(weekStart) : -1;
+  const dow = weekStart ? getWeekdayIndexByEnglishName(weekStart) : -1;
   if (dow !== -1) {
     moment.locale(language + suffix, {
       parentLocale: language,

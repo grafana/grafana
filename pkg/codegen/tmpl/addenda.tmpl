@@ -1,0 +1,64 @@
+
+
+//go:embed coremodel.cue
+var cueFS embed.FS
+
+// The current version of the coremodel schema, as declared in coremodel.cue.
+// This version determines what schema version is returned from [Coremodel.CurrentSchema],
+// and which schema version is used for code generation within the grafana/grafana repository.
+//
+// The code generator ensures that this is always the latest Thema schema version.
+var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
+
+// Lineage returns the Thema lineage representing a Grafana {{ .Name }}.
+//
+// The lineage is the canonical specification of the current {{ .Name }} schema,
+// all prior schema versions, and the mappings that allow migration between
+// schema versions.
+{{- if .IsComposed }}//
+// This is the base variant of the schema. It does not include any composed
+// plugin schemas.{{ end }}
+func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "{{ .Name }}"), cueFS, rt, opts...)
+}
+
+var _ thema.LineageFactory = Lineage
+var _ coremodel.Interface = &Coremodel{}
+
+// Coremodel contains the foundational schema declaration for {{ .Name }}s.
+// It implements coremodel.Interface.
+type Coremodel struct {
+	lin thema.Lineage
+}
+
+// Lineage returns the canonical {{ .Name }} Lineage.
+func (c *Coremodel) Lineage() thema.Lineage {
+	return c.lin
+}
+
+// CurrentSchema returns the current (latest) {{ .Name }} Thema schema.
+func (c *Coremodel) CurrentSchema() thema.Schema {
+	return thema.SchemaP(c.lin, currentVersion)
+}
+
+// GoType returns a pointer to an empty Go struct that corresponds to
+// the current Thema schema.
+func (c *Coremodel) GoType() interface{} {
+	return &Model{}
+}
+
+// New returns a new instance of the {{ .Name }} coremodel.
+//
+// Note that this function does not cache, and initially loading a Thema lineage
+// can be expensive. As such, the Grafana backend should prefer to access this
+// coremodel through a registry (pkg/framework/coremodel/registry), which does cache.
+func New(rt *thema.Runtime) (*Coremodel, error) {
+	lin, err := Lineage(rt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Coremodel{
+		lin: lin,
+	}, nil
+}

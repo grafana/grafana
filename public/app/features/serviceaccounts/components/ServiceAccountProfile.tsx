@@ -3,6 +3,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
@@ -12,20 +13,13 @@ import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
-  roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
   onChange: (serviceAccount: ServiceAccountDTO) => void;
 }
 
-export function ServiceAccountProfile({
-  serviceAccount,
-  timeZone,
-  roleOptions,
-  builtInRoles,
-  onChange,
-}: Props): JSX.Element {
+export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
+  const [roles, setRoleOptions] = React.useState<Role[]>([]);
 
   const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
@@ -35,9 +29,25 @@ export function ServiceAccountProfile({
     onChange({ ...serviceAccount, name: newValue });
   };
 
+  React.useEffect(() => {
+    async function fetchOptions() {
+      try {
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+          let options = await fetchRoleOptions(serviceAccount.orgId);
+          setRoleOptions(options);
+        }
+      } catch (e) {
+        console.error('Error loading options for service account');
+      }
+    }
+    if (contextSrv.licensedAccessControlEnabled()) {
+      fetchOptions();
+    }
+  }, [serviceAccount.orgId]);
+
   return (
     <div className={styles.section}>
-      <h4>Information</h4>
+      <h3>Information</h3>
       <table className="filter-table">
         <tbody>
           <ServiceAccountProfileRow
@@ -51,8 +61,7 @@ export function ServiceAccountProfile({
             label="Roles"
             serviceAccount={serviceAccount}
             onRoleChange={onRoleChange}
-            builtInRoles={builtInRoles}
-            roleOptions={roleOptions}
+            roleOptions={roles}
           />
           <ServiceAccountProfileRow
             label="Creation date"

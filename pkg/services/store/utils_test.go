@@ -7,6 +7,12 @@ import (
 )
 
 func TestUtils(t *testing.T) {
+	require.Equal(t, "name", GuessNameFromUID("hello/name.xyz"))
+	require.Equal(t, "name", GuessNameFromUID("name.xyz"))
+	require.Equal(t, "name", GuessNameFromUID("name"))
+	require.Equal(t, "name", GuessNameFromUID("name."))
+	require.Equal(t, "name", GuessNameFromUID("/name."))
+
 	a, b := splitFirstSegment("")
 	require.Equal(t, "", a)
 	require.Equal(t, "", b)

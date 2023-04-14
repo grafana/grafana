@@ -12,6 +12,14 @@ datasources:
     basicAuthUser: basic_auth_user
     withCredentials: true
     isDefault: true
+    correlations:
+      - targetUID: a target
+        label: a label
+        description: a description
+        config:
+          field: "fieldName"
+          target:
+            target: "test.query"
     jsonData:
       graphiteVersion: "1.1"
       tlsAuth: true

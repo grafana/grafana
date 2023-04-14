@@ -8,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
@@ -15,7 +16,10 @@ import { getDashboardSrv } from './DashboardSrv';
 
 export class DashboardLoaderSrv {
   constructor() {}
-  _dashboardLoadFailed(title: string, snapshot?: boolean) {
+  _dashboardLoadFailed(
+    title: string,
+    snapshot?: boolean
+  ): { meta: DashboardMeta; dashboard: Partial<DashboardDataDTO> } {
     snapshot = snapshot || false;
     return {
       meta: {
@@ -30,7 +34,7 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
+  loadDashboard(type: UrlQueryValue, slug: any, uid: any): Promise<DashboardDTO> {
     let promise;
 
     if (type === 'script') {
@@ -47,8 +51,24 @@ export class DashboardLoaderSrv {
         .then((result: any) => {
           return result;
         })
-        .catch(() => {
-          return this._dashboardLoadFailed('Public Dashboard Not found', true);
+        .catch((e) => {
+          const isPublicDashboardPaused =
+            e.data.statusCode === 403 && e.data.messageId === 'publicdashboards.notEnabled';
+          const isPublicDashboardNotFound =
+            e.data.statusCode === 404 && e.data.messageId === 'publicdashboards.notFound';
+
+          const dashboardModel = this._dashboardLoadFailed(
+            isPublicDashboardPaused ? 'Public Dashboard paused' : 'Public Dashboard Not found',
+            true
+          );
+          return {
+            ...dashboardModel,
+            meta: {
+              ...dashboardModel.meta,
+              publicDashboardEnabled: isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused,
+              dashboardNotFound: isPublicDashboardNotFound,
+            },
+          };
         });
     } else {
       promise = backendSrv
@@ -65,9 +85,9 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then((result: any) => {
+    promise.then((result: DashboardDTO) => {
       if (result.meta.dashboardNotFound !== true) {
-        impressionSrv.addDashboardImpression(result.dashboard.id);
+        impressionSrv.addDashboardImpression(result.dashboard.uid);
       }
 
       return result;
@@ -129,7 +149,7 @@ export class DashboardLoaderSrv {
     });
 
     return getBackendSrv()
-      .get(`/api/datasources/${ds.id}/resources/${path}`, queryParams)
+      .get(`/api/datasources/uid/${ds.uid}/resources/${path}`, queryParams)
       .then((data) => {
         return {
           meta: {

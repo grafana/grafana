@@ -13,25 +13,36 @@ interface CellActionProps extends TableCellProps {
   previewMode: 'text' | 'code';
 }
 
-export function CellActions({ field, cell, previewMode, onCellFilterAdded }: CellActionProps) {
+interface CommonButtonProps {
+  size: IconSize;
+  showFilters?: boolean;
+  tooltipPlacement: TooltipPlacement;
+}
+
+export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
   const [isInspecting, setIsInspecting] = useState(false);
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
-  const showFilters = Boolean(field.config.filterable) && cell.value !== undefined;
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
-  const commonButtonProps = {
-    size: 'sm' as IconSize,
-    tooltipPlacement: 'top' as TooltipPlacement,
+  const commonButtonProps: CommonButtonProps = {
+    size: 'sm',
+    tooltipPlacement: 'top',
   };
 
   const onFilterFor = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) =>
-      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value }),
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (onCellFilterAdded) {
+        onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value });
+      }
+    },
     [cell, field, onCellFilterAdded]
   );
   const onFilterOut = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) =>
-      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value }),
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (onCellFilterAdded) {
+        onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value });
+      }
+    },
     [cell, field, onCellFilterAdded]
   );
 

@@ -5,7 +5,7 @@ import { AddRemove } from './AddRemove';
 
 const noop = () => {};
 
-const TestComponent = ({ items }: { items: any[] }) => (
+const TestComponent = ({ items }: { items: string[] }) => (
   <>
     {items.map((_, index) => (
       <AddRemove key={index} elements={items} index={index} onAdd={noop} onRemove={noop} />

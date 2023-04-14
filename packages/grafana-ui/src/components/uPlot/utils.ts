@@ -20,6 +20,7 @@ const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
 };
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
+  ms: 1,
   focus: {
     alpha: 1,
   },
@@ -115,19 +116,7 @@ export function getStackingGroups(frame: DataFrame) {
     // will this be stacked up or down after any transforms applied
     let vals = values.toArray();
     let transform = custom.transform;
-    let firstValue = vals.find((v) => v != null);
-    let stackDir =
-      transform === GraphTransform.Constant
-        ? firstValue >= 0
-          ? StackDirection.Pos
-          : StackDirection.Neg
-        : transform === GraphTransform.NegativeY
-        ? firstValue >= 0
-          ? StackDirection.Neg
-          : StackDirection.Pos
-        : firstValue >= 0
-        ? StackDirection.Pos
-        : StackDirection.Neg;
+    let stackDir = getStackDirection(transform, vals);
 
     let drawStyle = custom.drawStyle as GraphDrawStyle;
     let drawStyle2 =
@@ -216,7 +205,10 @@ export function preparePlotData2(
 
     // apply transforms
     if (custom.transform === GraphTransform.Constant) {
-      vals = Array(vals.length).fill(vals[0]);
+      let firstValIdx = vals.findIndex((v) => v != null);
+      let firstVal = vals[firstValIdx];
+      vals = Array(vals.length).fill(undefined);
+      vals[firstValIdx] = firstVal;
     } else {
       vals = vals.slice();
 
@@ -283,7 +275,7 @@ export function preparePlotData2(
 
         if (v != null) {
           // v / accum will always be pos, so properly (re)sign by group stacking dir
-          stacked[i] = group.dir * (v / accum[i]);
+          stacked[i] = accum[i] === 0 ? 0 : group.dir * (v / accum[i]);
         }
       }
     }
@@ -346,6 +338,61 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
   }
 
   return y;
+}
+
+function getStackDirection(transform: GraphTransform, data: unknown[]) {
+  const hasNegSamp = hasNegSample(data);
+
+  if (transform === GraphTransform.NegativeY) {
+    return hasNegSamp ? StackDirection.Pos : StackDirection.Neg;
+  }
+  return hasNegSamp ? StackDirection.Neg : StackDirection.Pos;
+}
+
+// similar to isLikelyAscendingVector()
+function hasNegSample(data: unknown[], samples = 100) {
+  const len = data.length;
+
+  if (len === 0) {
+    return false;
+  }
+
+  // skip leading & trailing nullish
+  let firstIdx = 0;
+  let lastIdx = len - 1;
+
+  while (firstIdx <= lastIdx && data[firstIdx] == null) {
+    firstIdx++;
+  }
+
+  while (lastIdx >= firstIdx && data[lastIdx] == null) {
+    lastIdx--;
+  }
+
+  let negCount = 0;
+  let posCount = 0;
+
+  if (lastIdx >= firstIdx) {
+    const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
+
+    for (let i = firstIdx; i <= lastIdx; i += stride) {
+      const v = data[i];
+
+      if (v != null) {
+        if (v < 0 || Object.is(v, -0)) {
+          negCount++;
+        } else if (v > 0) {
+          posCount++;
+        }
+      }
+    }
+
+    if (negCount > posCount) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // Dev helpers

@@ -1,4 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { ScopedVars } from '../../types';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
@@ -193,6 +194,42 @@ describe('filterByName transformer', () => {
         const filtered = data[0];
         expect(filtered.fields.length).toBe(1);
         expect(filtered.fields[0].name).toBe('B');
+      });
+    });
+
+    it('uses template variable substituion', async () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          include: {
+            pattern: '/^$var1/',
+          },
+        },
+      };
+
+      const ctx = {
+        interpolate: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
+          if (!target) {
+            return '';
+          }
+          const variables: ScopedVars = {
+            var1: {
+              value: 'startsWith',
+              text: 'Test',
+            },
+          };
+          for (const key of Object.keys(variables)) {
+            return target.replace(`$${key}`, variables[key]!.value);
+          }
+          return target;
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch], ctx)).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('startsWithA');
       });
     });
   });

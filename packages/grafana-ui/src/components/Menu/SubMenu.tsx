@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import React, { ReactElement, useRef } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { CSSProperties, ReactElement, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,7 +9,7 @@ import { Icon } from '../Icon/Icon';
 
 import { MenuItemProps } from './MenuItem';
 import { useMenuFocus } from './hooks';
-import { getPosition } from './utils';
+import { isElementOverflowing } from './utils';
 
 /** @internal */
 export interface SubMenuProps {
@@ -23,11 +23,13 @@ export interface SubMenuProps {
   setOpenedWithArrow: (openedWithArrow: boolean) => void;
   /** Closes the subMenu */
   close: () => void;
+  /** Custom style */
+  customStyle?: CSSProperties;
 }
 
 /** @internal */
-export const SubMenu: React.FC<SubMenuProps> = React.memo(
-  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close }) => {
+export const SubMenu = React.memo(
+  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close, customStyle }: SubMenuProps) => {
     const styles = useStyles2(getStyles);
     const localRef = useRef<HTMLDivElement>(null);
     const [handleKeys] = useMenuFocus({
@@ -38,6 +40,13 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
       close,
     });
 
+    const [pushLeft, setPushLeft] = useState(false);
+    useEffect(() => {
+      if (isOpen && localRef.current) {
+        setPushLeft(isElementOverflowing(localRef.current));
+      }
+    }, [isOpen]);
+
     return (
       <>
         <div className={styles.iconWrapper} aria-label={selectors.components.Menu.SubMenu.icon}>
@@ -46,10 +55,11 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
         {isOpen && (
           <div
             ref={localRef}
-            className={styles.subMenu(localRef.current)}
+            className={cx(styles.subMenu, { [styles.pushLeft]: pushLeft })}
             aria-label={selectors.components.Menu.SubMenu.container}
+            style={customStyle}
           >
-            <div className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
+            <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
               {items}
             </div>
           </div>
@@ -58,6 +68,7 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
     );
   }
 );
+
 SubMenu.displayName = 'SubMenu';
 
 /** @internal */
@@ -70,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     icon: css`
       opacity: 0.7;
-      margin-left: 10px;
+      margin-left: ${theme.spacing(1)};
       color: ${theme.colors.text.secondary};
     `,
     itemsWrapper: css`
@@ -79,11 +90,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: inline-block;
       border-radius: ${theme.shape.borderRadius()};
     `,
-    subMenu: (element: HTMLElement | null) => css`
+    pushLeft: css`
+      right: 100%;
+      left: unset;
+    `,
+    subMenu: css`
       position: absolute;
       top: 0;
+      left: 100%;
       z-index: ${theme.zIndex.dropdown};
-      ${getPosition(element)}: 100%;
     `,
   };
 };

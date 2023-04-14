@@ -1,13 +1,13 @@
 import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
-import { Icon, Button, AutoSizeInput } from '@grafana/ui';
+import { Button, AutoSizeInput } from '@grafana/ui';
 
-import { IconName } from '../../types';
-import { iconOptions } from '../../utils/storybook/knobs';
+import { iconOptions } from '../../utils/storybook/icons';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './AutoSizeInput.mdx';
+import { parseAccessory } from './storyUtils';
 
 const icons: { [key: string]: string | undefined } = { ...iconOptions };
 Object.keys(icons).forEach((key) => {
@@ -19,7 +19,7 @@ const prefixSuffixOpts = {
   ...icons,
 };
 
-export default {
+const meta: Meta = {
   title: 'Forms/Input/AutoSizeInput',
   component: AutoSizeInput,
   decorators: [withCenteredStory],
@@ -60,29 +60,21 @@ export default {
     },
     minWidth: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-} as Meta;
+};
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>AutoSizeInput</div>;
-  const prefix = args.prefixVisible;
-  const suffix = args.suffixVisible;
-  let prefixEl: any = prefix;
-  if (prefix && prefix.match(/icon-/g)) {
-    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
-  }
-  let suffixEl: any = suffix;
-  if (suffix && suffix.match(/icon-/g)) {
-    suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconName} />;
-  }
+  const prefix = parseAccessory(args.prefixVisible);
+  const suffix = parseAccessory(args.suffixVisible);
 
   return (
     <AutoSizeInput
       disabled={args.disabled}
-      prefix={prefixEl}
+      prefix={prefix}
       invalid={args.invalid}
       width={args.width}
-      suffix={suffixEl}
+      suffix={suffix}
       loading={args.loading}
       addonBefore={args.before && addonBefore}
       addonAfter={args.after && addonAfter}
@@ -98,3 +90,5 @@ Simple.args = {
   after: false,
   placeholder: 'Enter your name here...',
 };
+
+export default meta;

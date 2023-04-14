@@ -2,33 +2,34 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-type reloadProvisioningTestCase struct {
-	desc         string
-	url          string
-	expectedCode int
-	expectedBody string
-	permissions  []*accesscontrol.Permission
-	exit         bool
-	checkCall    func(mock provisioning.ProvisioningServiceMock)
-}
-
 func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
-	tests := []reloadProvisioningTestCase{
+	type testCase struct {
+		desc         string
+		url          string
+		expectedBody string
+		expectedCode int
+		permissions  []accesscontrol.Permission
+		checkCall    func(mock provisioning.ProvisioningServiceMock)
+	}
+	tests := []testCase{
 		{
 			desc:         "should work for dashboards with specific scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Dashboards config reloaded"}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersDashboards,
@@ -43,7 +44,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			desc:         "should work for dashboards with broader scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Dashboards config reloaded"}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersAll,
@@ -57,26 +58,24 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 		{
 			desc:         "should fail for dashboard with wrong scope",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  "services:noservice",
 				},
 			},
-			url:  "/api/admin/provisioning/dashboards/reload",
-			exit: true,
+			url: "/api/admin/provisioning/dashboards/reload",
 		},
 		{
 			desc:         "should fail for dashboard with no permission",
 			expectedCode: http.StatusForbidden,
 			url:          "/api/admin/provisioning/dashboards/reload",
-			exit:         true,
 		},
 		{
 			desc:         "should work for notifications with specific scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Notifications config reloaded"}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersNotifications,
@@ -91,13 +90,12 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			desc:         "should fail for notifications with no permission",
 			expectedCode: http.StatusForbidden,
 			url:          "/api/admin/provisioning/notifications/reload",
-			exit:         true,
 		},
 		{
 			desc:         "should work for datasources with specific scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Datasources config reloaded"}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersDatasources,
@@ -112,13 +110,12 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			desc:         "should fail for datasources with no permission",
 			expectedCode: http.StatusForbidden,
 			url:          "/api/admin/provisioning/datasources/reload",
-			exit:         true,
 		},
 		{
 			desc:         "should work for plugins with specific scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Plugins config reloaded"}`,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersPlugins,
@@ -133,38 +130,58 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			desc:         "should fail for plugins with no permission",
 			expectedCode: http.StatusForbidden,
 			url:          "/api/admin/provisioning/plugins/reload",
-			exit:         true,
+		},
+		{
+			desc:         "should fail for alerting with no permission",
+			expectedCode: http.StatusForbidden,
+			url:          "/api/admin/provisioning/alerting/reload",
+		},
+		{
+			desc:         "should work for alert rules with specific scope",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"message":"Alerting config reloaded"}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningReload,
+					Scope:  ScopeProvisionersAlertRules,
+				},
+			},
+			url: "/api/admin/provisioning/alerting/reload",
+			checkCall: func(mock provisioning.ProvisioningServiceMock) {
+				assert.Len(t, mock.Calls.ProvisionAlerting, 1)
+			},
+		},
+		{
+			desc:         "should fail for alerting with no permission",
+			expectedCode: http.StatusForbidden,
+			url:          "/api/admin/provisioning/alerting/reload",
 		},
 	}
 
-	cfg := setting.NewCfg()
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			pService := provisioning.NewProvisioningServiceMock(context.Background())
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.ProvisioningService = pService
+			})
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewPostRequest(tt.url, nil), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
 
-			// Setup the mock
-			provisioningMock := provisioning.NewProvisioningServiceMock(context.Background())
-			hs.ProvisioningService = provisioningMock
-
-			sc.resp = httptest.NewRecorder()
-			var err error
-			sc.req, err = http.NewRequest(http.MethodPost, test.url, nil)
-			assert.NoError(t, err)
-
-			sc.exec()
-
-			// Check return code
-			assert.Equal(t, test.expectedCode, sc.resp.Code)
-			if test.exit {
-				return
+			if tt.expectedCode == http.StatusOK {
+				body, err := io.ReadAll(res.Body)
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedBody, string(body))
 			}
 
-			// Check body
-			assert.Equal(t, test.expectedBody, sc.resp.Body.String())
+			require.NoError(t, res.Body.Close())
 
-			// Check we actually called the provisioning service
-			test.checkCall(*provisioningMock)
+			if tt.checkCall != nil {
+				// Check we actually called the provisioning service
+				tt.checkCall(*pService)
+			}
 		})
 	}
 }

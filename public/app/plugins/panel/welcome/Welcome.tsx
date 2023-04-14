@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 const helpOptions = [
   { value: 0, label: 'Documentation', href: 'https://grafana.com/docs/grafana/latest' },
@@ -11,8 +11,8 @@ const helpOptions = [
   { value: 3, label: 'Public Slack', href: 'http://slack.grafana.com' },
 ];
 
-export const WelcomeBanner: FC = () => {
-  const styles = getStyles(useTheme());
+export const WelcomeBanner = () => {
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
@@ -37,7 +37,7 @@ export const WelcomeBanner: FC = () => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
@@ -47,31 +47,31 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       padding: 0 16px;
       justify-content: space-between;
-      padding: 0 ${theme.spacing.lg};
+      padding: 0 ${theme.spacing(3)};
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+      ${theme.breakpoints.down('lg')} {
         background-position: 0px;
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        padding: 0 ${theme.spacing.sm};
+      ${theme.breakpoints.down('sm')} {
+        padding: 0 ${theme.spacing(1)};
       }
     `,
     title: css`
       margin-bottom: 0;
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        margin-bottom: ${theme.spacing.sm};
+      ${theme.breakpoints.down('lg')} {
+        margin-bottom: ${theme.spacing(1)};
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        font-size: ${theme.typography.heading.h2};
+      ${theme.breakpoints.down('md')} {
+        font-size: ${theme.typography.h2.fontSize};
       }
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        font-size: ${theme.typography.heading.h3};
+      ${theme.breakpoints.down('sm')} {
+        font-size: ${theme.typography.h3.fontSize};
       }
     `,
     help: css`
@@ -79,14 +79,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: baseline;
     `,
     helpText: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing(2)};
       margin-bottom: 0;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        font-size: ${theme.typography.heading.h4};
+      ${theme.breakpoints.down('md')} {
+        font-size: ${theme.typography.h4.fontSize};
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      ${theme.breakpoints.down('sm')} {
         display: none;
       }
     `,
@@ -95,13 +95,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-wrap: wrap;
     `,
     helpLink: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing(2)};
       text-decoration: underline;
       text-wrap: no-wrap;
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      ${theme.breakpoints.down('sm')} {
         margin-right: 8px;
       }
     `,
   };
-});
+};

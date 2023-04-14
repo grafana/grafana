@@ -12,6 +12,7 @@ jest.mock('./prometheus');
 jest.mock('./ruler');
 jest.mock('app/core/services/context_srv', () => {});
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch }),
 }));
 
@@ -92,7 +93,7 @@ describe('discoverDataSourceFeatures', () => {
 
       const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
 
-      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
@@ -125,7 +126,7 @@ describe('discoverDataSourceFeatures', () => {
         type: 'prometheus',
       });
 
-      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(false);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
@@ -151,7 +152,7 @@ describe('discoverDataSourceFeatures', () => {
         type: 'prometheus',
       });
 
-      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.application).toBe(PromApplication.Cortex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);

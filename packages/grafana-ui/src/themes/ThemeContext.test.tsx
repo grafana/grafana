@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
-import { render } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { render, renderHook } from '@testing-library/react';
 import React from 'react';
 
-import { mockThemeContext, useStyles } from './ThemeContext';
+import { mockThemeContext, useStyles2 } from './ThemeContext';
 
 describe('useStyles', () => {
   it('memoizes the passed in function correctly', () => {
     const stylesCreator = () => ({});
-    const { rerender, result } = renderHook(() => useStyles(stylesCreator));
+    const { rerender, result } = renderHook(() => useStyles2(stylesCreator));
     const storedReference = result.current;
 
     rerender();
@@ -16,7 +15,7 @@ describe('useStyles', () => {
   });
 
   it('does not memoize if the passed in function changes every time', () => {
-    const { rerender, result } = renderHook(() => useStyles(() => ({})));
+    const { rerender, result } = renderHook(() => useStyles2(() => ({})));
     const storedReference = result.current;
     rerender();
     expect(storedReference).not.toBe(result.current);
@@ -24,7 +23,7 @@ describe('useStyles', () => {
 
   it('updates the memoized function when the theme changes', () => {
     const stylesCreator = () => ({});
-    const { rerender, result } = renderHook(() => useStyles(stylesCreator));
+    const { rerender, result } = renderHook(() => useStyles2(stylesCreator));
     const storedReference = result.current;
 
     const restoreThemeContext = mockThemeContext({});
@@ -34,11 +33,11 @@ describe('useStyles', () => {
   });
 
   it('passes in theme and returns style object', (done) => {
-    const Dummy: React.FC = function () {
-      const styles = useStyles((theme) => {
+    const Dummy = function () {
+      const styles = useStyles2((theme) => {
         return {
           someStyle: css`
-            color: ${theme.palette.critical};
+            color: ${theme.colors.success.main};
           `,
         };
       });

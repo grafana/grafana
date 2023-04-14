@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, LegacyForms } from '@grafana/ui';
 const { Input } = LegacyForms;
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -20,7 +20,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const uid = props.match.params.uid;
   return {
-    navModel: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
+    pageNav: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
     folderUid: uid,
     folder: state.folder,
   };
@@ -84,20 +84,23 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { navModel, folder } = this.props;
+    const { pageNav, folder } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="dashboards/browse" pageNav={pageNav.main}>
         <Page.Contents isLoading={this.state.isLoading}>
           <h3 className="page-sub-heading">Folder settings</h3>
 
           <div className="section gf-form-group">
             <form name="folderSettingsForm" onSubmit={this.onSave}>
               <div className="gf-form">
-                <label className="gf-form-label width-7">Name</label>
+                <label htmlFor="folder-title" className="gf-form-label width-7">
+                  Name
+                </label>
                 <Input
                   type="text"
                   className="gf-form-input width-30"
+                  id="folder-title"
                   value={folder.title}
                   onChange={this.onTitleChange}
                 />

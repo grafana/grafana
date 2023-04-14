@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "heatmap-cells-sparse"
+//      "type": "heatmap-cells",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 5 Fields by 932 Rows
@@ -25,11 +29,16 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "meta": {
-          "type": "heatmap-cells-sparse"
+          "type": "heatmap-cells",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {

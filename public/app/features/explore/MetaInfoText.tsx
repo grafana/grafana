@@ -17,7 +17,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(2)};
     margin-top: ${theme.spacing(0.5)};
     display: flex;
-    align-items: baseline;
+    align-items: center;
 
     .logs-meta-item__error {
       color: ${theme.colors.error.text};

@@ -1,4 +1,3 @@
-import { MouseEventHandler } from 'react';
 import { Row } from 'react-table';
 
 import { Field, LinkModel } from '@grafana/data';
@@ -7,29 +6,33 @@ import { Field, LinkModel } from '@grafana/data';
  * @internal
  */
 export const getCellLinks = (field: Field, row: Row<any>) => {
-  let link: LinkModel<any> | undefined;
-  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
+  let links: Array<LinkModel<unknown>> | undefined;
   if (field.getLinks) {
-    link = field.getLinks({
+    links = field.getLinks({
       valueRowIndex: row.index,
-    })[0];
+    });
   }
 
-  //const fieldLink = link?.onClick;
-  if (link?.onClick) {
-    onClick = (event) => {
-      // Allow opening in new tab
-      if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
-        event.preventDefault();
-        link!.onClick!(event, {
-          field,
-          rowIndex: row.index,
-        });
-      }
-    };
+  if (!links) {
+    return;
   }
-  return {
-    link,
-    onClick,
-  };
+
+  for (let i = 0; i < links?.length; i++) {
+    if (links[i].onClick) {
+      const origOnClick = links[i].onClick;
+
+      links[i].onClick = (event) => {
+        // Allow opening in new tab
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
+          event.preventDefault();
+          origOnClick!(event, {
+            field,
+            rowIndex: row.index,
+          });
+        }
+      };
+    }
+  }
+
+  return links;
 };

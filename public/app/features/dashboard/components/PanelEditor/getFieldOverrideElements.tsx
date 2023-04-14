@@ -10,6 +10,7 @@ import {
   DynamicConfigValue,
   ConfigOverrideRule,
   GrafanaTheme2,
+  fieldMatchers,
 } from '@grafana/data';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -33,7 +34,7 @@ export function getFieldOverrideCategories(
     return [];
   }
 
-  const onOverrideChange = (index: number, override: any) => {
+  const onOverrideChange = (index: number, override: ConfigOverrideRule) => {
     let overrides = cloneDeep(currentFieldConfig.overrides);
     overrides[index] = override;
     props.onFieldConfigsChange({ ...currentFieldConfig, overrides });
@@ -46,13 +47,19 @@ export function getFieldOverrideCategories(
   };
 
   const onOverrideAdd = (value: SelectableValue<string>) => {
+    const info = fieldMatchers.get(value.value!);
+    if (!info) {
+      return;
+    }
+
     props.onFieldConfigsChange({
       ...currentFieldConfig,
       overrides: [
         ...currentFieldConfig.overrides,
         {
           matcher: {
-            id: value.value!,
+            id: info.id,
+            options: info.defaultOptions,
           },
           properties: [],
         },
@@ -148,7 +155,7 @@ export function getFieldOverrideCategories(
         continue;
       }
 
-      const onPropertyChange = (value: any) => {
+      const onPropertyChange = (value: DynamicConfigValue) => {
         override.properties[propIdx].value = value;
         onOverrideChange(idx, override);
       };

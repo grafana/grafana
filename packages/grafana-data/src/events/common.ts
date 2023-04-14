@@ -40,3 +40,17 @@ export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
 export class AnnotationChangeEvent extends BusEventWithPayload<Partial<AnnotationEvent>> {
   static type = 'annotation-event';
 }
+
+// Loaded the first time a dashboard is loaded (not on every render)
+export type DashboardLoadedEventPayload<T> = {
+  dashboardId: string;
+  orgId?: number;
+  userId?: number;
+  grafanaVersion?: string;
+  queries: Record<string, T[]>;
+};
+
+/** @alpha */
+export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
+  static type = 'dashboard-loaded';
+}

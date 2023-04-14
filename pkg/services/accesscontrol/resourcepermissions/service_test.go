@@ -8,12 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,25 +42,29 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, sql, _ := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed user
-			user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			require.NoError(t, err)
+			user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetUser = func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+				service.options.OnSetUser = func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
 			}
 
-			_, err = service.SetUserPermission(context.Background(), user.OrgId, accesscontrol.User{ID: user.Id}, "1", "")
+			_, err = service.SetUserPermission(context.Background(), user.OrgID, accesscontrol.User{ID: user.ID}, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -80,25 +90,25 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, _, teamSvc := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Teams: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed team
-			team, err := sql.CreateTeam("test", "test@test.com", 1)
+			team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetTeam = func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error {
+				service.options.OnSetTeam = func(session *db.Session, orgID, teamID int64, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
 			}
 
-			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, "1", "")
+			_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -124,7 +134,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, _, _ := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{BuiltInRoles: true},
 				PermissionsToActions: nil,
@@ -132,7 +142,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetBuiltInRole = func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error {
+				service.options.OnSetBuiltInRole = func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -197,12 +207,16 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, tt.options)
+			service, sql, teamSvc := setupTestEnvironment(t, []accesscontrol.Permission{}, tt.options)
 
 			// seed user
-			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "user", OrgId: 1})
+			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
-			_, err = sql.CreateTeam("team", "", 1)
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			require.NoError(t, err)
+			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
+			require.NoError(t, err)
+			_, err = teamSvc.CreateTeam("team", "", 1)
 			require.NoError(t, err)
 
 			permissions, err := service.SetPermissions(context.Background(), 1, "1", tt.commands...)
@@ -216,19 +230,22 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore) {
+func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore, team.Service) {
 	t.Helper()
 
-	sql := sqlstore.InitTestDB(t)
-	store := database.ProvideService(sql)
+	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
+	teamSvc := teamimpl.ProvideService(sql, cfg)
+	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	mock := accesscontrolmock.New().WithPermissions(permissions)
 	service, err := New(
 		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), store, sql,
+		accesscontrolmock.New().WithPermissions(permissions), mock, sql, teamSvc, userSvc,
 	)
 	require.NoError(t, err)
 
-	return service, sql
+	return service, sql, teamSvc
 }

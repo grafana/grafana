@@ -5,9 +5,8 @@ import { GrafanaTheme2 } from '../themes';
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
-import { GrafanaTheme } from './theme';
 
-import { NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -60,14 +59,22 @@ export interface SentryConfig {
 }
 
 /**
- * Describes the plugins that should be preloaded prior to start Grafana.
+ * Describes GrafanaJavascriptAgentConfig integration config
  *
  * @public
  */
-export type PreloadPlugin = {
-  path: string;
-  version: string;
-};
+export interface GrafanaJavascriptAgentConfig {
+  enabled: boolean;
+  customEndpoint: string;
+  errorInstrumentalizationEnabled: boolean;
+  consoleInstrumentalizationEnabled: boolean;
+  webVitalsInstrumentalizationEnabled: boolean;
+  apiKey: string;
+}
+
+export interface UnifiedAlertingConfig {
+  minInterval: string;
+}
 
 /** Supported OAuth services
  *
@@ -87,7 +94,17 @@ export type OAuth =
  *
  * @public
  */
-export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string }>>;
+export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconName }>>;
+
+/**
+ * Information needed for analytics providers
+ *
+ * @internal
+ */
+export interface AnalyticsSettings {
+  identifier: string;
+  intercomIdentifier?: string;
+}
 
 /** Current user info included in bootData
  *
@@ -100,7 +117,7 @@ export interface CurrentUserDTO {
   login: string;
   email: string;
   name: string;
-  lightTheme: boolean;
+  theme: string; // dark | light | system
   orgCount: number;
   orgId: number;
   orgName: string;
@@ -110,7 +127,12 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   permissions?: Record<string, boolean>;
+  analytics: AnalyticsSettings;
+
+  /** @deprecated Use theme instead */
+  lightTheme: boolean;
 }
 
 /** Contains essential user and config info
@@ -134,8 +156,10 @@ export interface BootData {
  */
 export interface GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
+  auth: AuthSettings;
   minRefreshInterval: string;
   appSubUrl: string;
   windowTitlePrefix: string;
@@ -159,33 +183,59 @@ export interface GrafanaConfig {
   profileEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
+  azureAuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
   rbacEnabled: boolean;
-  rbacBuiltInRoleAssignmentEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;
   loginError?: string;
-  navTree: any;
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   liveEnabled: boolean;
+  /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[];
+  anonymousEnabled: boolean;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
+  unifiedAlerting: UnifiedAlertingConfig;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
+  secretsManagerPluginEnabled: boolean;
+  supportBundlesEnabled: boolean;
+  googleAnalyticsId: string | undefined;
+  googleAnalytics4Id: string | undefined;
+  googleAnalytics4SendManualPageViews: boolean;
+  rudderstackWriteKey: string | undefined;
+  rudderstackDataPlaneUrl: string | undefined;
+  rudderstackSdkUrl: string | undefined;
+  rudderstackConfigUrl: string | undefined;
+}
+
+export interface AuthSettings {
+  OAuthSkipOrgRoleUpdateSync?: boolean;
+  SAMLSkipOrgRoleSync?: boolean;
+  LDAPSkipOrgRoleSync?: boolean;
+  JWTAuthSkipOrgRoleSync?: boolean;
+  GrafanaComSkipOrgRoleSync?: boolean;
+  GithubSkipOrgRoleSync?: boolean;
+  GitLabSkipOrgRoleSync?: boolean;
+  OktaSkipOrgRoleSync?: boolean;
+  AzureADSkipOrgRoleSync?: boolean;
+  GoogleSkipOrgRoleSync?: boolean;
+  GenericOAuthSkipOrgRoleSync?: boolean;
+  DisableSyncLock?: boolean;
 }

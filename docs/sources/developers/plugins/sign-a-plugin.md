@@ -1,12 +1,10 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/sign-a-plugin/
 title: Sign a plugin
 ---
 
 # Sign a plugin
 
-Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../plugins/plugin-signatures/" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
+Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
 
 > **Important:** Future versions of Grafana will require all plugins to be signed.
 
@@ -14,9 +12,7 @@ Before you can sign your plugin, you need to decide whether you want to sign it 
 
 If you want to make your plugin publicly available outside of your organization, you need to sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from [grafana.com/plugins](https://grafana.com/plugins) and can be installed by anyone.
 
-For more information on how to install public plugin, refer to [Install Grafana plugins]({{< relref "../../plugins/installation/" >}}).
-
-If you intend to only use the plugin within your organization, you can to sign it under a _private_ [signature level](#plugin-signature-levels).
+If you intend to only use the plugin within your organization, you can sign it under a _private_ [signature level](#plugin-signature-levels).
 
 ## Generate an API key
 
@@ -34,26 +30,24 @@ To verify ownership of your plugin, you need to generate an API key that you'll 
 
 Public plugins need to be reviewed by the Grafana team before you can sign them.
 
-1. Submit your plugin for [review]({{< relref "package-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
+1. Submit your plugin for [review]({{< relref "publish-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
 2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
-3. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
+3. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/toolkit plugin:sign
+   npx @grafana/sign-plugin@latest
    ```
-
-> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
 
 ## Sign a private plugin
 
-1. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
+1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    The `rootUrls` flag accepts a comma-separated list of URLs to the Grafana instances where you intend to install the plugin.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/toolkit plugin:sign --rootUrls https://example.com/grafana
+   npx @grafana/sign-plugin@latest --rootUrls https://example.com/grafana
    ```
 
 ## Plugin signature levels
@@ -119,7 +113,7 @@ T6scfmuhWC/TOcm83EVoCzIV3R5dOTKHqkjIUg==
 
 ### Why am I getting a "Modified signature" in Grafana?
 
-Due to an issue when signing the plugin on Windows, grafana-toolkit generates an invalid MANIFEST.txt. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
+Due to an issue when signing the plugin on Windows, in some cases an invalid MANIFEST.txt is being generated. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
 
 ### Error signing manifest: Field is required: rootUrls
 

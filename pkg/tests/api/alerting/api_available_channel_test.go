@@ -3,21 +3,20 @@ package alerting
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAvailableChannels(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+func TestIntegrationAvailableChannels(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -29,8 +28,8 @@ func TestAvailableChannels(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -43,11 +42,11 @@ func TestAvailableChannels(t *testing.T) {
 		err := resp.Body.Close()
 		require.NoError(t, err)
 	})
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 
-	expNotifiers := notifier.GetAvailableNotifiers()
+	expNotifiers := channels_config.GetAvailableNotifiers()
 	expJson, err := json.Marshal(expNotifiers)
 	require.NoError(t, err)
 	require.Equal(t, string(expJson), string(b))

@@ -1,10 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/
-  - /docs/grafana/latest/guides/reference/admin/
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
-description: Guides, Installation and Feature Documentation
+  - guides/reference/admin/
+description: Guides, installation, and feature documentation
 keywords:
   - grafana
   - installation
@@ -41,7 +40,7 @@ title: Grafana documentation
         </div>
         <h5>Grafana Cloud</h5>
     </a>
-    <a href="https://grafana.com/grafana/download" class="nav-cards__item nav-cards__item--install">
+    <a href="https://grafana.com/grafana/nightly?edition=oss" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-moon-o">
         </div>
         <h5>Nightly builds</h5>
@@ -55,15 +54,15 @@ title: Grafana documentation
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>
-    <a href="{{< relref "basics/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Grafana basics</h4>
+    <a href="{{< relref "fundamentals/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>Grafana fundamentals</h4>
         <p>Learn basic observability.</p>
     </a>
     <a href="{{< relref "setup-grafana/configure-grafana/" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>
-    <a href="{{< relref "basics/timeseries/" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "fundamentals/timeseries/" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Intro to time series</h4>
         <p>Learn about time series data.</p>
     </a>
@@ -71,8 +70,8 @@ title: Grafana documentation
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "whatsnew/whats-new-in-v8-0/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v8.0</h4>
+    <a href="{{< relref "whatsnew/whats-new-in-v9-5/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v9.5</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
 
@@ -105,7 +104,7 @@ title: Grafana documentation
       <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
-    <a href="{{< relref "datasources/azuremonitor/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/azure-monitor/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -18,8 +18,8 @@ export type LoadingIndicatorProps = {
 /**
  * @internal
  */
-export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, loading }) => {
-  const styles = useStyles(getStyles);
+export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
+  const styles = useStyles2(getStyles);
 
   if (!loading) {
     return null;
@@ -40,8 +40,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, lo
 
 const getStyles = () => {
   return {
-    clickable: css`
-      cursor: pointer;
-    `,
+    clickable: css({
+      cursor: 'pointer',
+    }),
   };
 };

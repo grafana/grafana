@@ -5,6 +5,7 @@ import { colorManipulator, DataFrame, DataFrameFieldIndex, DataFrameView, TimeZo
 import { EventsCanvas, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker } from './annotations/AnnotationMarker';
+import { AnnotationsDataFrameViewDTO } from './types';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
@@ -12,7 +13,7 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
 }
 
-export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
+export const AnnotationsPlugin = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
   const theme = useTheme2();
   const plotInstance = useRef<uPlot>();
 
@@ -113,7 +114,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
   const renderMarker = useCallback(
     (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      let markerStyle;
+      let width = 0;
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(dataFrameFieldIndex.fieldIndex);
       const isRegionAnnotation = Boolean(annotation.isRegion);
@@ -130,10 +131,10 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         if (x1 > plotInstance.current.bbox.width / window.devicePixelRatio) {
           x1 = plotInstance.current.bbox.width / window.devicePixelRatio;
         }
-        markerStyle = { width: `${x1 - x0}px` };
+        width = x1 - x0;
       }
 
-      return <AnnotationMarker annotation={annotation} timeZone={timeZone} style={markerStyle} />;
+      return <AnnotationMarker annotation={annotation} timeZone={timeZone} width={width} />;
     },
     [timeZone]
   );

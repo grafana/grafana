@@ -9,8 +9,9 @@ import { IconName } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
+import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
@@ -24,6 +25,10 @@ type CommonProps = {
   children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
+  /** Tooltip content to display on hover */
+  tooltip?: PopoverContent;
+  /** Position of the tooltip */
+  tooltipPlacement?: TooltipPlacement;
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -39,6 +44,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       className,
       type = 'button',
+      tooltip,
+      tooltipPlacement,
       ...otherProps
     },
     ref
@@ -53,12 +60,22 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
-    return (
+    const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} placement={tooltipPlacement}>
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
   }
 );
 
@@ -79,6 +96,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       onBlur,
       onFocus,
       disabled,
+      tooltip,
+      tooltipPlacement,
       ...otherProps
     },
     ref
@@ -103,12 +122,22 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
-    return (
+    const button = (
       <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} placement={tooltipPlacement}>
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
   }
 );
 
@@ -277,8 +306,35 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
     case 'destructive':
       return getButtonVariantStyles(theme, theme.colors.error, fill);
 
+    case 'success':
+      return getButtonVariantStyles(theme, theme.colors.success, fill);
+
     case 'primary':
     default:
       return getButtonVariantStyles(theme, theme.colors.primary, fill);
   }
 }
+
+export const clearButtonStyles = (theme: GrafanaTheme2) => {
+  return css`
+    background: transparent;
+    color: ${theme.colors.text.primary};
+    border: none;
+    padding: 0;
+  `;
+};
+
+export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
+  return css`
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    color: inherit;
+    height: 100%;
+    &:hover {
+      background: transparent;
+      color: inherit;
+    }
+  `;
+};

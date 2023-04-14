@@ -1,8 +1,9 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, JSONFormatter, StringValueEditor } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, JSONFormatter } from '@grafana/ui';
+import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 
 export interface APIEditorConfig {
@@ -38,12 +39,13 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
   }
 };
 
-export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (props) => {
-  const { value, context, onChange } = props;
+type Props = StandardEditorProps<APIEditorConfig, any, any>;
+
+export function APIEditor({ value, context, onChange }: Props) {
   const labelWidth = 9;
 
   const onEndpointChange = useCallback(
-    (endpoint) => {
+    (endpoint = '') => {
       onChange({
         ...value,
         endpoint,
@@ -53,7 +55,7 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
   );
 
   const onDataChange = useCallback(
-    (data) => {
+    (data?: string) => {
       onChange({
         ...value,
         data,
@@ -67,7 +69,11 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
       const json = JSON.parse(data);
       return <JSONFormatter json={json} />;
     } catch (error) {
-      return `Invalid JSON provided: ${error.message}`;
+      if (error instanceof Error) {
+        return `Invalid JSON provided: ${error.message}`;
+      } else {
+        return 'Invalid JSON provided';
+      }
     }
   };
 
@@ -112,4 +118,4 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
   );
-};
+}

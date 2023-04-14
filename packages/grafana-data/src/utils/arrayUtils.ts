@@ -15,7 +15,7 @@ const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'bas
 const numericCompare = (a: number, b: number) => a - b;
 
 export function sortValues(sort: SortOrder.Ascending | SortOrder.Descending) {
-  return (a: any, b: any) => {
+  return (a: unknown, b: unknown) => {
     if (a === b) {
       return 0;
     }

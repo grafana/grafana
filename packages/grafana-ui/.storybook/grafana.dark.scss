@@ -1,0 +1,6 @@
+// reset font file paths so storybook loads them based on
+// staticDirs defined in packages/grafana-ui/.storybook/main.ts
+$font-file-path: './public/fonts';
+$fa-font-path: $font-file-path;
+
+@import '../../../public/sass/grafana.dark.scss';

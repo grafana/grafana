@@ -143,6 +143,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           id={id}
           readOnly={readOnly}
           invalid={invalid}
+          placeholder={option.placeholder}
           {...register(name, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),

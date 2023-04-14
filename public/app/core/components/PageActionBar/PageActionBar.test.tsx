@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import PageActionBar, { Props } from './PageActionBar';
@@ -13,13 +13,20 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<PageActionBar {...props} />);
+  return render(<PageActionBar {...props} />);
 };
 
 describe('Render', () => {
   it('should render component', () => {
-    const wrapper = setup();
+    setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'test' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument();
+  });
+  it('should render button when text is present', () => {
+    setup({ searchQuery: 'test query' });
+
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
   });
 });

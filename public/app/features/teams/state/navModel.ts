@@ -13,6 +13,10 @@ const loadingTeam = {
   email: 'loading',
   memberCount: 0,
   permission: TeamPermissionLevel.Member,
+  accessControl: { isEditor: false },
+  created: '',
+  orgId: 0,
+  updated: '',
 };
 
 export function buildNavModel(team: Team): NavModelItem {

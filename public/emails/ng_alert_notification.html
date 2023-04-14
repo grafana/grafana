@@ -1,366 +1,1315 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=device-width" />
-	
-<style>body {
-width: 100% !important; min-width: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; margin: 0; padding: 0;
-}
-img {
-outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; width: auto; float: left; clear: both; display: block;
-}
-body {
-color: #222222; font-family: "Helvetica", "Arial", sans-serif; font-weight: normal; padding: 0; margin: 0; text-align: left; line-height: 1.3;
-}
-body {
-font-size: 14px; line-height: 19px;
-}
-a:hover {
-color: #2795b6 !important;
-}
-a:active {
-color: #2795b6 !important;
-}
-a:visited {
-color: #2ba6cb !important;
-}
-body {
-font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none;
-}
-a:hover {
-color: #ff8f2b !important;
-}
-a:active {
-color: #F2821E !important;
-}
-a:visited {
-color: #E67612 !important;
-}
-.better-button:hover a {
-color: #FFFFFF !important; background-color: #F2821E; border: 1px solid #F2821E;
-}
-.better-button:visited a {
-color: #FFFFFF !important;
-}
-.better-button:active a {
-color: #FFFFFF !important;
-}
-.better-button-alt:hover a {
-color: #ff8f2b !important; background-color: #DDDDDD; border: 1px solid #F2821E;
-}
-.better-button-alt:visited a {
-color: #ff8f2b !important;
-}
-.better-button-alt:active a {
-color: #ff8f2b !important;
-}
-body {
-height: 100% !important; width: 100% !important;
-}
-body .copy {
--ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;
-}
-.ExternalClass {
-width: 100%;
-}
-.ExternalClass {
-line-height: 100%;
-}
-img {
--ms-interpolation-mode: bicubic;
-}
-img {
-border: 0 !important; outline: none !important; text-decoration: none !important;
-}
-a:hover {
-text-decoration: underline;
-}
-@media only screen and (max-width: 600px) {
-  table[class="body"] center {
-    min-width: 0 !important;
-  }
-  table[class="body"] .container {
-    width: 95% !important;
-  }
-  table[class="body"] .row {
-    width: 100% !important; display: block !important;
-  }
-  table[class="body"] .wrapper {
-    display: block !important; padding-right: 0 !important;
-  }
-  table[class="body"] .columns {
-    table-layout: fixed !important; float: none !important; width: 100% !important; padding-right: 0px !important; padding-left: 0px !important; display: block !important;
-  }
-  table[class="body"] table.columns td {
-    width: 100% !important;
-  }
-  table[class="body"] .columns td.six {
-    width: 50% !important;
-  }
-  table[class="body"] .columns td.twelve {
-    width: 100% !important;
-  }
-  table[class="body"] table.columns td.expander {
-    width: 1px !important;
-  }
-  .logo {
-    margin-left: 10px;
-  }
-}
-@media (max-width: 600px) {
-  table[class="email-container"] {
-    width: 95% !important;
-  }
-  img[class="fluid"] {
-    width: 100% !important; max-width: 100% !important; height: auto !important; margin: auto !important;
-  }
-  img[class="fluid-centered"] {
-    width: 100% !important; max-width: 100% !important; height: auto !important; margin: auto !important;
-  }
-  img[class="fluid-centered"] {
-    margin: auto !important;
-  }
-  td[class="comms-content"] {
-    padding: 20px !important;
-  }
-  td[class="stack-column"] {
-    display: block !important; width: 100% !important; direction: ltr !important;
-  }
-  td[class="stack-column-center"] {
-    display: block !important; width: 100% !important; direction: ltr !important;
-  }
-  td[class="stack-column-center"] {
-    text-align: center !important;
-  }
-  td[class="copy"] {
-    font-size: 14px !important; line-height: 24px !important; padding: 0 30px !important;
-  }
-  td[class="copy -center"] {
-    font-size: 14px !important; line-height: 24px !important; padding: 0 30px !important;
-  }
-  td[class="copy -bold"] {
-    font-size: 14px !important; line-height: 24px !important; padding: 0 30px !important;
-  }
-  td[class="small-text"] {
-    font-size: 14px !important; line-height: 24px !important; padding: 0 30px !important;
-  }
-  td[class="mini-centered-text"] {
-    font-size: 14px !important; line-height: 24px !important; padding: 15px 30px !important;
-  }
-  td[class="copy -padd"] {
-    padding: 0 40px !important;
-  }
-  span[class="sep"] {
-    display: none !important;
-  }
-  td[class="mb-hide"] {
-    display: none !important; height: 0 !important;
-  }
-  td[class="spacer mb-shorten"] {
-    height: 25px !important;
-  }
-  .two-up td {
-    width: 270px;
-  }
-}
-</style></head>
-<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" class="main" style="height: 100% !important; width: 100% !important; min-width: 100%; -webkit-text-size-adjust: none; -ms-text-size-adjust: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; text-align: left; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; margin: 0 auto; padding: 0;" bgcolor="#2e2e2e">
+  <title>
+    {{ Subject .Subject .TemplateData "{{ .Title }}" }}
+  </title>
+  {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style type="text/css">
+    #outlook a {
+      padding: 0;
+    }
 
-	<table class="body" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; height: 100%; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" bgcolor="#2e2e2e">
-		<tr style="vertical-align: top; padding: 0;" align="left">
-			<td class="center" align="center" valign="top" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;">
-        <center style="width: 100%; min-width: 580px;">
-					<table class="row header" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 100%; position: relative; margin-top: 25px; margin-bottom: 25px; padding: 0px;">
-						<tr style="vertical-align: top; padding: 0;" align="left">
-						  <td class="center" align="center" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" valign="top">
-						    <center style="width: 100%; min-width: 580px;">
+    body {
+      margin: 0;
+      padding: 0;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
 
-						      <table class="container" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: inherit; width: 580px; margin: 0 auto; padding: 0;">
-						        <tr style="vertical-align: top; padding: 0;" align="left">
-						          <td class="wrapper last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; position: relative; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 10px 0px 0px;" align="left" valign="top">
+    table,
+    td {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
 
-						            <table class="twelve columns" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 580px; margin: 0 auto; padding: 0;">
-						              <tr style="vertical-align: top; padding: 0;" align="left">
-						                <td class="twelve sub-columns center" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; min-width: 0px; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 10px 10px 0px;" align="center" valign="top">
-                              <img class="logo" src="https://grafana.com/assets/img/logo_new_transparent_200x48.png" style="width: 200px; display: inline; outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; clear: both; border-width: 0;" align="none" />
-                            </td>
-                            <td class="expander" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; visibility: hidden; width: 0px; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top"></td>
-                          </tr>
-						            </table>
+    img {
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+      -ms-interpolation-mode: bicubic;
+    }
 
-						          </td>
-						        </tr>
-						      </table>
+    p {
+      display: block;
+      margin: 13px 0;
+    }
 
-						    </center>
-						  </td>
-						</tr>
-					</table>
+  </style>
+  {{ __dangerouslyInjectHTML `<!--[if mso]>
+    <noscript>
+    <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    </xml>
+    </noscript>
+    <![endif]-->` }}
+  {{ __dangerouslyInjectHTML `<!--[if lte mso 11]>
+    <style type="text/css">
+      .mj-outlook-group-fix { width:100% !important; }
+    </style>
+    <![endif]-->` }}
+  {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css">
+  <style type="text/css">
+    @import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);
 
-					<table class="container" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: inherit; width: 580px; margin: 0 auto; padding: 0;" width="600" bgcolor="#efefef">
-						<tr style="vertical-align: top; padding: 0;" align="left">
-							<td height="2" class="spacer mb-shorten" style="font-size: 0; line-height: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: linear-gradient(to right, #ffed00 0%, #f26529 75%); height: 2px !important; word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0; border-width: 0;" valign="top" align="left"> </td>
-						</tr>
-						<tr style="vertical-align: top; padding: 0;" align="left">
-							<td class="mini-centered-text" style="color: #343b41; mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 25px 35px; font: 400 16px/27px 'Helvetica Neue', Helvetica, Arial, sans-serif;" align="center" valign="top">
-								
-<div>
+  </style>
+  {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
+  <style type="text/css">
+    @media only screen and (min-width:480px) {
+      .mj-column-per-100 {
+        width: 100% !important;
+        max-width: 100%;
+      }
 
-{{Subject .Subject "{{.Title}}"}}
+      .mj-column-per-33-333333333333336 {
+        width: 33.333333333333336% !important;
+        max-width: 33.333333333333336%;
+      }
 
-{{ define "alert" }}
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" class="value" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 0;" align="left" valign="top">
-      <span class="value-heading" style="font-weight: bold;">Value:</span> <span class="value-value" style="padding-left: 8px;">{{ .ValueString }}</span>
-    </td>
-  </tr>
-  {{ if gt (len .Annotations.SortedPairs) 0 }}
-      <tr style="vertical-align: top; padding: 0;" align="left">
-        <td colspan="2" class="annotations" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 12px;" align="left" valign="top">
-          {{ range .Annotations.SortedPairs }}
-          <p style="color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0 0 10px; padding: 0;" align="left"><span class="annotations-heading" style="font-weight: bold; text-transform: capitalize;">{{ .Name }}:</span> <span class="annotations-value" style="padding-left: 8px;">{{ .Value }}</span></p>
-          {{ end }}
-        </td>
-      </tr>
-  {{ end }}
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-      <span class="labels-heading" style="font-size: 14px; font-weight: bold; vertical-align: top; display: inline-block;">Labels:</span>
-      <ul class="labels-list" style="font-size: 14px; vertical-align: top; display: inline-block; padding-left: 8px; margin: 0;">
-        {{ range .Labels.SortedPairs }}<li>{{ .Name }}: {{ .Value }}</li>{{ end }}
-      </ul>
-    </td>
-  </tr>
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" class="actions" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 12px;" align="left" valign="top">
-      {{ if .SilenceURL }}
-        <a href="{{ .SilenceURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
-          <img alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAF1SURBVHgBrZLNTsJAEMf/2wYTPfEI9Q1qvBgjsEl5gB498gj1SDHpEKUckaMn4eiNFyAp4cJN30CPHrn5BV1noTWlFD3oJNuZ3Z39zUcH+A9pUffJpzAoOO/xuvvprZHooYCgLISoa7FyFSCbdOXuApj6M43GUVXWhYZUpKP3k1NZ14+kAOYChleVjnssK/ezKHrLAkQuZWIVKCgKyW+n55cUciZClzLoUPOiqISVlPB+s6ZulnNN/ihG3GfT84jKOwGvMO0krVEewoBoHeTA2glIhRuno7WzkH0Yc633sCz/CoiVshdYRGxGKYSo9ahgHnEPoqzvdxP1b/sEHtgsF2e12ditDD6gPE59XgIO8ytfTlbM1DiTzjk7WQvEYgllZ5fSXeE7vnfTOdkC1GqOBSFO2Mk22JG1TB4l+1VzX/IQgQJpBaHHsB6bA47+rNOHUI1O4A/zw2YWAaaT8UyPNkdcZ6JUs0P+7eouGXuO3WC7j7/KF29iokiLUdaFAAAAAElFTkSuQmCC" class="button-img" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border-style: none; border-width: 0;" align="left" />
-          Silence
-        </a>
+      .mj-column-per-25 {
+        width: 25% !important;
+        max-width: 25%;
+      }
+    }
+
+  </style>
+  <style media="screen and (min-width:480px)">
+    .moz-text-html .mj-column-per-100 {
+      width: 100% !important;
+      max-width: 100%;
+    }
+
+    .moz-text-html .mj-column-per-33-333333333333336 {
+      width: 33.333333333333336% !important;
+      max-width: 33.333333333333336%;
+    }
+
+    .moz-text-html .mj-column-per-25 {
+      width: 25% !important;
+      max-width: 25%;
+    }
+
+  </style>
+  <style type="text/css">
+    @media only screen and (max-width:480px) {
+      table.mj-full-width-mobile {
+        width: 100% !important;
+      }
+
+      td.mj-full-width-mobile {
+        width: auto !important;
+      }
+    }
+
+  </style>
+  <style type="text/css">
+  </style>
+  {{ $numberOfFiringInstance := (len .Alerts.Firing) }}
+  {{ $numberOfResolvedAlerts := (len .Alerts.Resolved) }}
+</head>
+
+<body style="word-spacing:normal;background-color:#111217;">
+  <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+    <mj-raw>
+      {{ if $numberOfFiringInstance }}
+    </mj-raw>
+    <strong>{{ $numberOfFiringInstance }} firing</strong> alert {{ $numberOfFiringInstance| plural "instance" "instances" }}
+    <mj-raw>
       {{ end }}
-      {{ if .Annotations.runbook_url }}
-        <a href="{{ .Annotations.runbook_url }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
-          <img class="button-img" alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADaSURBVHgBrVNLDoIwFJwq0bjTG+ARvIGeQI/ADdSVARY8oki8jZxEbyDewLUfahttAoEWDM7m9bVvJtN0CrQEyzdENLyjt2RgtoFzjcgl1XTyJw/0T4K8ghmBH8Zz1VhqsaHtVBT7CYwP5KY6tk+xw3k2Kgl0YdmyKrIYvEjB73EqbI+rBC1owMDXGdjws0aqm9MK7Mg7ogE6aInWAqUreLQPanJgdtAgB2YHIgeTuhxUOlBPNcBvKPwFT4RHbnDgLOpNw3EEaxEFblJwIPECZhw8MZAlQkX+C95zCzqWDYrK2AAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border-style: none; border-width: 0;" align="left" />
-          View Runbook
-        </a>
+    </mj-raw>
+    <mj-raw>
+      {{ if and $numberOfFiringInstance $numberOfResolvedAlerts }}
+    </mj-raw> &nbsp;and&nbsp; <mj-raw>
       {{ end }}
-      {{ if .DashboardURL}}
-        <a href="{{ .DashboardURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
-          <img alt="" height="14" class="button-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAE9SURBVHgBrVLNWcMwDH220/bjhEdIR2AC6ASMQEeAU6G9+FLycQojdAUmgE7ACGSEcEybRkj5cUKbnFp9X2JZ8nuypQecaUp+Kxf98BIeJ3cwNxqZDRB89mCTtXuZBvVGwBsCtiUrkYVS8RgHmzeVFB4Lwm9d9Y6XB/EbAhCK7atbbcRfuCjkRNwtt6fs4825RPyli4SkJNA40/wNFCm7cC6sdnnYSdVmQs6Xnla4JjoikDcHmMQYrCSNrI434C7BrA/EXf6Slad0kieY1BPsUKQahcWA5cj7otYTjKG/+/oplQU8oAMx1aKInkbAVL6BJ818ns82wVYHilLnlon4rIOTGeTIWHleB6mq4xfUAfTts1tXPh1YyubfwZGa3HO+K+WWgMeacHBuoOc1m7cr6HSPcvbvpnNhweAS9gdSqGSnoVA2cQAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border-style: none; border-width: 0;" align="left" />
-          Go to Dashboard
-        </a>
+    </mj-raw>
+    <mj-raw>
+      {{ if $numberOfResolvedAlerts }}
+    </mj-raw>
+    <strong>{{ $numberOfResolvedAlerts }} resolved</strong> alert {{ $numberOfResolvedAlerts| plural "instance" "instances" }}
+    <mj-raw>
       {{ end }}
-      {{ if .PanelURL}}
-        <a href="{{ .PanelURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
-          <img alt="" class="button-img" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAE9SURBVHgBrVLNWcMwDH220/bjhEdIR2AC6ASMQEeAU6G9+FLycQojdAUmgE7ACGSEcEybRkj5cUKbnFp9X2JZ8nuypQecaUp+Kxf98BIeJ3cwNxqZDRB89mCTtXuZBvVGwBsCtiUrkYVS8RgHmzeVFB4Lwm9d9Y6XB/EbAhCK7atbbcRfuCjkRNwtt6fs4825RPyli4SkJNA40/wNFCm7cC6sdnnYSdVmQs6Xnla4JjoikDcHmMQYrCSNrI434C7BrA/EXf6Slad0kieY1BPsUKQahcWA5cj7otYTjKG/+/oplQU8oAMx1aKInkbAVL6BJ818ns82wVYHilLnlon4rIOTGeTIWHleB6mq4xfUAfTts1tXPh1YyubfwZGa3HO+K+WWgMeacHBuoOc1m7cr6HSPcvbvpnNhweAS9gdSqGSnoVA2cQAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border-style: none; border-width: 0;" align="left" />
-            Go to Panel
-          </a>
-      {{ end }}
-      {{ if gt (len .GeneratorURL) 0 }}<a href="{{ .GeneratorURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">Source</a>{{ end }}
-    </td>
-  </tr>
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-      <div style="height: 24px;"></div>
-      <div style="background-color: #c7d0d9; height: 1px;"></div>
-      <div style="height: 24px;"></div>
-    </td>
-  </tr>
-{{ end }}
-
-{{ if gt (len .Message) 0 }}
- {{ .Message }}
-{{ else }}
-
-
-
-<table class="row" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 100%; position: relative; display: block; padding: 0px;">
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td class="twelve" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-      <table style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; padding: 0;">
-          {{ if gt (len .Alerts.Firing) 0 }}
-            <tr style="vertical-align: top; padding: 0;" align="left">
-              <td colspan="2" class="section-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #2c3235; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0 32px;" align="left" valign="top">
-                Firing: {{ .Alerts.Firing | len }} alert{{ if gt (len .Alerts.Firing) 1 }}s{{ end }}{{ if gt (len .GroupLabels.SortedPairs) 1 }} for
-                {{ range .GroupLabels.SortedPairs }}
-                {{ .Name }}={{ .Value }}
-                {{ end }}{{ end }}
-              </td>
-            </tr>
-            {{ range .Alerts.Firing }}
-              <tr style="vertical-align: top; padding: 0;" align="left">
-                <td class="status-tag status-firing" width="68" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #ffffff; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 68px; margin: 0; padding: 4px 8px;" align="center" bgcolor="#e02f44" valign="top">
-                  Firing
-                </td>
-                <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="middle">
-                  {{ .Labels.alertname }}
-                </td>
-              </tr>
-              {{ template "alert" . }}
-            {{ end }}
-          {{ end }}
-          {{ if gt (len .Alerts.Resolved) 0 }}
-            <tr style="vertical-align: top; padding: 0;" align="left">
-              <td colspan="2" class="section-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #2c3235; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0 32px;" align="left" valign="top">
-                Resolved: {{ .Alerts.Resolved | len }} alert{{ if gt (len .Alerts.Resolved) 1 }}s{{ end }}{{ if gt (len .GroupLabels.SortedPairs) 1 }} for
-                {{ range .GroupLabels.SortedPairs }}
-                  {{ .Name }}={{ .Value }}
-                {{ end }}{{ end }}
-              </td>
-            </tr>
-            {{ range .Alerts.Resolved }}
-              <tr style="vertical-align: top; padding: 0;" align="left">
-                <td class="status-tag status-resolved" width="68" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #ffffff; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 68px; margin: 0; padding: 4px 8px;" align="center" bgcolor="#464c54" valign="top">
-                  Resolved
-                </td>
-                <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="middle">
-                  {{ .Labels.alertname }}
-                </td>
-              </tr>
-              {{ template "alert" . }}
-            {{ end }}
-          {{ end }}
-          <tr style="vertical-align: top; padding: 0;" align="left">
-            <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-              <a href="{{ .AlertPageUrl }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">Go to alerts page</a>
+    </mj-raw>
+  </div>
+  <div style="background-color:#111217;">
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:20px 0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->` }}
+              <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color:transparent;vertical-align:top;" width="100%">
+                  <tbody>
+                    <tr>
+                      <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                        <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:200px;">
+                                <img height="auto" src="https://grafana.com/static/assets/img/logo_new_transparent_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200">
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
             </td>
           </tr>
+        </tbody>
       </table>
-    </td>
-  </tr>
-</table>
-{{ end }}
-
-</div>
-								
-							</td>
-						</tr>
-					</table>
-					
-					<table class="footer center" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: center; color: #999999; width: 100%; margin: 0 auto; padding: 0;" bgcolor="#2e2e2e">
-						<tr style="vertical-align: top; padding: 0;" align="left">
-							<td class="wrapper last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; position: relative; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 10px 20px 0px 0px;" align="left" valign="top">
-								<table class="twelve columns center" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: center; width: 580px; margin: 0 auto; padding: 0;">
-									<tr style="vertical-align: top; padding: 0;" align="left">
-										<td class="twelve" align="center" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" valign="top">
-											<center style="width: 100%; min-width: 580px;">
-												<p style="font-size: 12px; color: #999999; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0 0 10px; padding: 0;" align="center">
-													Sent by <a href="{{.AppUrl}}" style="color: #E67612; text-decoration: none;">Grafana v{{.BuildVersion}}</a>
-													<br />© 2022 Grafana Labs
-												</p>
-											</center>
-										</td>
-										<td class="expander" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; visibility: hidden; width: 0px; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top"></td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-					</table>
-				</center>
-			</td>
-		</tr>
-	</table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->` }}
+              <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                  <tbody>
+                    {{ if eq (.GroupLabels.SortedPairs.Names | join ",") "alertname,grafana_folder" }}
+                    <tr>
+                      <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                          <h2>📁 {{ .GroupLabels.grafana_folder }} &rsaquo; {{ .GroupLabels.alertname }}</h2>
+                        </div>
+                      </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                      <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                          <h2> 📁 Grouped by&nbsp; </h2>
+                          <mj-raw>
+                            {{ range .GroupLabels.SortedPairs }}
+                          </mj-raw>
+                          {{ .Name }}={{ .Value }}
+                          <mj-raw>
+                            {{ end }}
+                          </mj-raw>
+                        </div>
+                      </td>
+                    </tr>
+                    {{ end }}
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+    {{ if .Message }}
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#22252b" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="background:#22252b;background-color:#22252b;margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#22252b;background-color:#22252b;width:100%;">
+        <tbody>
+          <tr>
+            <td style="border:1px solid #2f3037;direction:ltr;font-size:0px;padding:0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                                    <mj-raw>
+                                      {{ range $line := (splitList "\n" .Message) }}
+                                    </mj-raw>
+                                    {{ $line }}<br>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+    {{ else }}{{ if .Alerts.Firing  }}
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->` }}
+              <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                  <tbody>
+                    <tr>
+                      <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                          <h3>🔥 {{ .Alerts.Firing | len }} firing instances</h3>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+    {{ range .Alerts.Firing }}
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#22252b" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="background:#22252b;background-color:#22252b;margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#22252b;background-color:#22252b;width:100%;">
+        <tbody>
+          <tr>
+            <td style="border:1px solid #2f3037;direction:ltr;font-size:0px;padding:0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="border-bottom:1px solid #2f3037;direction:ltr;font-size:0px;padding:10px 0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:middle;width:199.33333333333337px;" ><![endif]-->` }}
+                        <div class="mj-column-per-33-333333333333336 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:middle;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#392228" role="presentation" style="border:1px solid #970a1b;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#392228;" valign="middle">
+                                          <a href="{{ .GeneratorURL }}" rel="noopener" style="display: inline-block; background: #392228; color: #f7919d; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> Firing </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><td class="" style="vertical-align:middle;width:199.33333333333337px;" ><![endif]-->` }}
+                        <div class="mj-column-per-33-333333333333336 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:middle;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:center;color:#FFFFFF;"><strong>{{ .Labels.alertname }}</strong></div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ if gt (len .GeneratorURL) 0 }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:middle;width:199.33333333333337px;" ><![endif]-->` }}
+                        <div class="mj-column-per-33-333333333333336 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:middle;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .GeneratorURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View alert </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ if .ImageURL }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-bottom:1px solid #2f3037;vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;">
+                                    <tbody>
+                                      <tr>
+                                        <td style="width:598px;">
+                                          <a href="{{ .ImageURL }}" target="_blank" style="color: #6E9FFF;">
+                                            <img height="auto" src="{{ .ImageURL }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="598">
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ end }}{{ if .EmbeddedImage }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-bottom:1px solid #2f3037;vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;">
+                                    <tbody>
+                                      <tr>
+                                        <td style="width:598px;">
+                                          <img height="auto" src="cid:{{ .EmbeddedImage }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="598">
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ end }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              {{ if .Annotations.summary }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Summary</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">{{- .Annotations.summary -}}</div>
+                                </td>
+                              </tr>
+                              {{ end }}{{ if .Annotations.description }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Description</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                                    <mj-raw>
+                                      {{ range $line := (splitList "\n" .Annotations.description) }}
+                                    </mj-raw>
+                                    {{ $line }}<br>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </div>
+                                </td>
+                              </tr>
+                              {{ end }}
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ if .Values }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Values</strong></div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0 25px;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:548px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+                            <tbody>
+                              <tr>
+                                <td style="background-color:#111217;border:1px solid #2f3037;vertical-align:top;padding:10px;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style width="100%">
+                                    <tbody>
+                                      <tr>
+                                        <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                          <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                                            <mj-raw>
+                                              {{ range $refID, $value := .Values }}
+                                            </mj-raw>
+                                            {{ $refID }}={{ $value }}&nbsp; <mj-raw>
+                                              {{ end }}
+                                            </mj-raw>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ end }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:20px 0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              {{ if .Labels.SortedPairs }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Labels</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <table cellpadding="0" cellspacing="0" width="100%" border="0" style="color:white;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;table-layout:auto;width:100%;border:none;">
+                                    <mj-raw>
+                                      {{ range .Labels.SortedPairs }}
+                                    </mj-raw>
+                                    <tr>
+                                      <td>
+                                        <strong>{{ .Name }}</strong>
+                                      </td>
+                                      <td>
+                                        {{ .Value }}
+                                      </td>
+                                    </tr>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </table>
+                                </td>
+                              </tr>
+                              {{ end }}{{ if .Annotations.SortedPairs }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Annotations</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <table cellpadding="0" cellspacing="0" width="100%" border="0" style="color:white;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;table-layout:auto;width:100%;border:none;">
+                                    <mj-raw>
+                                      {{ range .Annotations.SortedPairs }}
+                                    </mj-raw>
+                                    <tr>
+                                      <td>
+                                        <strong>{{ .Name }}</strong>
+                                      </td>
+                                      <td>
+                                        {{ .Value }}
+                                      </td>
+                                    </tr>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </table>
+                                </td>
+                              </tr>
+                              {{ end }}
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="border-top:1px solid #2f3037;direction:ltr;font-size:0px;padding:15px 0px;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><![endif]-->` }}
+                        {{ if .SilenceURL }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .SilenceURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> Silence </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}{{ if .Annotations.runbook_url }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .Annotations.runbook_url }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View runbook </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}{{ if .DashboardURL }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .DashboardURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View dashboard </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}{{ if .PanelURL }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .PanelURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View panel </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="border-top:1px solid #2f3037;direction:ltr;font-size:0px;padding:5px 0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:10px;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+    {{ end }}{{ end }}{{ if .Alerts.Resolved }}
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->` }}
+              <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                  <tbody>
+                    <tr>
+                      <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                          <h3>✅ {{ .Alerts.Resolved | len }} resolved instances</h3>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+    {{ range .Alerts.Resolved }}
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#22252b" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="background:#22252b;background-color:#22252b;margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#22252b;background-color:#22252b;width:100%;">
+        <tbody>
+          <tr>
+            <td style="border:1px solid #2f3037;direction:ltr;font-size:0px;padding:0;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="border-bottom:1px solid #2f3037;direction:ltr;font-size:0px;padding:10px 0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:middle;width:199.33333333333337px;" ><![endif]-->` }}
+                        <div class="mj-column-per-33-333333333333336 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:middle;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#26322a" role="presentation" style="border:1px solid #32632b;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#26322a;" valign="middle">
+                                          <p rel="noopener" style="display:inline-block;background:#26322a;color:#a5d69e;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;font-weight:normal;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:5px 12px;mso-padding-alt:0px;border-radius:3px;"> Resolved </p>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><td class="" style="vertical-align:middle;width:199.33333333333337px;" ><![endif]-->` }}
+                        <div class="mj-column-per-33-333333333333336 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:middle;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:center;color:#FFFFFF;"><strong>{{ .Labels.alertname }}</strong></div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ if gt (len .GeneratorURL) 0 }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:middle;width:199.33333333333337px;" ><![endif]-->` }}
+                        <div class="mj-column-per-33-333333333333336 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:middle;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .GeneratorURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View alert </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ if .ImageURL }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-bottom:1px solid #2f3037;vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;">
+                                    <tbody>
+                                      <tr>
+                                        <td style="width:598px;">
+                                          <a href="{{ .ImageURL }}" target="_blank" style="color: #6E9FFF;">
+                                            <img height="auto" src="{{ .ImageURL }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="598">
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ end }}{{ if .EmbeddedImage }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-bottom:1px solid #2f3037;vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;">
+                                    <tbody>
+                                      <tr>
+                                        <td style="width:598px;">
+                                          <img height="auto" src="cid:{{ .EmbeddedImage }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="598">
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ end }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              {{ if .Annotations.summary }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Summary</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">{{- .Annotations.summary -}}</div>
+                                </td>
+                              </tr>
+                              {{ end }}{{ if .Annotations.description }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Description</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                                    <mj-raw>
+                                      {{ range $line := (splitList "\n" .Annotations.description) }}
+                                    </mj-raw>
+                                    {{ $line }}<br>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </div>
+                                </td>
+                              </tr>
+                              {{ end }}
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ if .Values }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Values</strong></div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:0 25px;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:548px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+                            <tbody>
+                              <tr>
+                                <td style="background-color:#111217;border:1px solid #2f3037;vertical-align:top;padding:10px;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style width="100%">
+                                    <tbody>
+                                      <tr>
+                                        <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                          <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;">
+                                            <mj-raw>
+                                              {{ range $refID, $value := .Values }}
+                                            </mj-raw>
+                                            {{ $refID }}={{ $value }}&nbsp; <mj-raw>
+                                              {{ end }}
+                                            </mj-raw>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><![endif]-->` }}
+              {{ end }}
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="direction:ltr;font-size:0px;padding:20px 0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              {{ if .Labels.SortedPairs }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Labels</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <table cellpadding="0" cellspacing="0" width="100%" border="0" style="color:white;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;table-layout:auto;width:100%;border:none;">
+                                    <mj-raw>
+                                      {{ range .Labels.SortedPairs }}
+                                    </mj-raw>
+                                    <tr>
+                                      <td>
+                                        <strong>{{ .Name }}</strong>
+                                      </td>
+                                      <td>
+                                        {{ .Value }}
+                                      </td>
+                                    </tr>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </table>
+                                </td>
+                              </tr>
+                              {{ end }}{{ if .Annotations.SortedPairs }}
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#FFFFFF;"><strong>Annotations</strong></div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <table cellpadding="0" cellspacing="0" width="100%" border="0" style="color:white;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;table-layout:auto;width:100%;border:none;">
+                                    <mj-raw>
+                                      {{ range .Annotations.SortedPairs }}
+                                    </mj-raw>
+                                    <tr>
+                                      <td>
+                                        <strong>{{ .Name }}</strong>
+                                      </td>
+                                      <td>
+                                        {{ .Value }}
+                                      </td>
+                                    </tr>
+                                    <mj-raw>
+                                      {{ end }}
+                                    </mj-raw>
+                                  </table>
+                                </td>
+                              </tr>
+                              {{ end }}
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="border-top:1px solid #2f3037;direction:ltr;font-size:0px;padding:15px 0px;text-align:left;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><![endif]-->` }}
+                        {{ if .SilenceURL }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .SilenceURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> Silence </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}{{ if .Annotations.runbook_url }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .Annotations.runbook_url }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View runbook </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}{{ if .DashboardURL }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .DashboardURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View dashboard </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}{{ if .PanelURL }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><td class="" style="vertical-align:top;width:149.5px;" ><![endif]-->` }}
+                        <div class="mj-column-per-25 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                    <tbody>
+                                      <tr>
+                                        <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:5px 12px;background:#3D71D9;" valign="middle">
+                                          <a href="{{ .PanelURL }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 5px 12px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> View panel </a>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td><![endif]-->` }}
+                        {{ end }}
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:598px;" width="598" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+              <div style="margin:0px auto;max-width:598px;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                  <tbody>
+                    <tr>
+                      <td style="border-top:1px solid #2f3037;direction:ltr;font-size:0px;padding:5px 0;text-align:center;">
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:598px;" ><![endif]-->` }}
+                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
+                            <tbody>
+                              <tr>
+                                <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                                  <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:10px;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+    {{ end }}{{ end }}{{ end }}
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
+    <div style="margin:0px auto;max-width:600px;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+        <tbody>
+          <tr>
+            <td style="direction:ltr;font-size:0px;padding:20px 0;padding-top:10px;text-align:center;">
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:600px;" ><![endif]-->` }}
+              <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color:transparent;vertical-align:top;" width="100%">
+                  <tbody>
+                    <tr>
+                      <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                        <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;text-align:center;color:#FFFFFF;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
+  </div>
 </body>
+
 </html>

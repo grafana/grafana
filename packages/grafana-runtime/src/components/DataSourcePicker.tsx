@@ -46,6 +46,9 @@ export interface DataSourcePickerProps {
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  invalid?: boolean;
+  disabled?: boolean;
+  isLoading?: boolean;
 }
 
 /**
@@ -161,7 +164,17 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { autoFocus, onBlur, onClear, openMenuOnFocus, placeholder, width, inputId } = this.props;
+    const {
+      autoFocus,
+      onBlur,
+      onClear,
+      openMenuOnFocus,
+      placeholder,
+      width,
+      inputId,
+      disabled = false,
+      isLoading = false,
+    } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
@@ -170,6 +183,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
+          isLoading={isLoading}
+          disabled={disabled}
           aria-label={selectors.components.DataSourcePicker.inputV2}
           inputId={inputId || 'data-source-picker'}
           className="ds-picker select-container"
@@ -186,11 +201,11 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
           value={value ?? null}
-          invalid={!!error}
+          invalid={Boolean(error) || Boolean(this.props.invalid)}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (
-                <HorizontalGroup align="center" justify="space-between">
+                <HorizontalGroup align="center" justify="space-between" height="auto">
                   <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
                 </HorizontalGroup>
               );

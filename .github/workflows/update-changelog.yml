@@ -4,18 +4,7 @@ on:
     inputs:
       version:
         required: true
-        description: Needs to match, exactly, the name of a milestone
-  workflow_call:
-    inputs:
-      version_call:
-        description: Needs to match, exactly, the name of a milestone
-        required: true
-        type: string
-    secrets:
-        token:
-          required: true
-        metricsWriteAPIKey:
-          required: true
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -28,16 +17,9 @@ jobs:
           ref: main
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: Run update changelog (manually invoked)
-        if: ${{ github.event.inputs.version != '' }}
+      - name: Run update changelog (manually invoked)        
         uses: ./actions/update-changelog
         with:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
           metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-      - name: Run update changelog (workflow invoked)
-        if: ${{ inputs.version_call != '' }}
-        uses: ./actions/update-changelog
-        with:
-          version_call: ${{ inputs.version_call }}
-          token: ${{ secrets.token }}
-          metricsWriteAPIKey: ${{ secrets.metricsWriteAPIKey }}
+          grafanabotForumKey: ${{ secrets.GRAFANABOT_FORUM_KEY }}

@@ -1,13 +1,18 @@
 import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
+import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { locationService, setEchoSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { Echo } from 'app/core/services/echo/Echo';
+import { configureStore } from 'app/store/configureStore';
 
-import { getMockPlugin } from '../__mocks__/pluginMocks';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
 
@@ -61,12 +66,43 @@ class RootComponent extends Component<AppRootProps> {
 }
 
 function renderUnderRouter() {
-  const route = { component: AppRootPage };
+  const appPluginNavItem: NavModelItem = {
+    text: 'App',
+    id: 'plugin-page-app',
+    url: '/a/plugin-page-app',
+    children: [
+      {
+        text: 'Page 1',
+        url: '/a/plugin-page-app/page-1',
+      },
+      {
+        text: 'Page 2',
+        url: '/a/plugin-page-app/page-2',
+      },
+    ],
+  };
+
+  const appsSection = {
+    text: 'apps',
+    id: 'apps',
+    children: [appPluginNavItem],
+  };
+
+  appPluginNavItem.parentItem = appsSection;
+
+  const store = configureStore();
+  const route = {
+    component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
+  } as unknown as RouteDescriptor;
   locationService.push('/a/my-awesome-plugin');
 
   render(
     <Router history={locationService.getHistory()}>
-      <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+      <Provider store={store}>
+        <GrafanaContext.Provider value={getGrafanaContextMock()}>
+          <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route} />} />
+        </GrafanaContext.Provider>
+      </Provider>
     </Router>
   );
 }
@@ -77,17 +113,18 @@ describe('AppRootPage', () => {
     setEchoSrv(new Echo());
   });
 
+  const pluginMeta = getMockPlugin({
+    id: 'my-awesome-plugin',
+    type: PluginType.app,
+    enabled: true,
+  });
+
   it('should not mount plugin twice if nav is changed', async () => {
     // reproduces https://github.com/grafana/grafana/pull/28105
-
-    getPluginSettingsMock.mockResolvedValue(
-      getMockPlugin({
-        type: PluginType.app,
-        enabled: true,
-      })
-    );
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
@@ -102,12 +139,7 @@ describe('AppRootPage', () => {
   });
 
   it('should not render component if not at plugin path', async () => {
-    getPluginSettingsMock.mockResolvedValue(
-      getMockPlugin({
-        type: PluginType.app,
-        enabled: true,
-      })
-    );
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     class RootComponent extends Component<AppRootProps> {
       static timesRendered = 0;
@@ -118,6 +150,7 @@ describe('AppRootPage', () => {
     }
 
     const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
@@ -127,18 +160,18 @@ describe('AppRootPage', () => {
     expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(RootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(2);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(RootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(2);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(4);
   });
 });

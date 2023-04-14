@@ -2,10 +2,16 @@ package kvstore
 
 import (
 	"context"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -13,15 +19,49 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service) SecretsKVStore {
-	return &secretsKVStoreSQL{
-		sqlStore:       sqlStore,
-		secretsService: secretsService,
-		log:            log.New("secrets.kvstore"),
-		decryptionCache: decryptionCache{
-			cache: make(map[int64]cachedDecrypted),
-		},
+func ProvideService(
+	sqlStore db.DB,
+	secretsService secrets.Service,
+	pluginsManager plugins.SecretsPluginManager,
+	kvstore kvstore.KVStore,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+) (SecretsKVStore, error) {
+	var logger = log.New("secrets.kvstore")
+	var store SecretsKVStore
+	ctx := context.Background()
+	store = NewSQLSecretsKVStore(sqlStore, secretsService, logger)
+	err := EvaluateRemoteSecretsPlugin(ctx, pluginsManager, cfg)
+	if err != nil {
+		logger.Debug("secrets manager evaluator returned false", "reason", err.Error())
+	} else {
+		// Attempt to start the plugin
+		var secretsPlugin secretsmanagerplugin.SecretsManagerPlugin
+		secretsPlugin, err = StartAndReturnPlugin(pluginsManager, ctx)
+		namespacedKVStore := GetNamespacedKVStore(kvstore)
+		if err != nil || secretsPlugin == nil {
+			logger.Error("failed to start remote secrets management plugin")
+			if isFatal, readErr := IsPluginStartupErrorFatal(ctx, namespacedKVStore); isFatal || readErr != nil {
+				// plugin error was fatal or there was an error determining if the error was fatal
+				logger.Error("secrets management plugin is required to start -- exiting app")
+				if readErr != nil {
+					return nil, readErr
+				}
+				return nil, err
+			}
+		} else {
+			// as the plugin is installed, SecretsKVStoreSQL is now replaced with
+			// an instance of SecretsKVStorePlugin with the sql store as a fallback
+			// (used for migration and in case a secret is not found).
+			store = NewPluginSecretsKVStore(secretsPlugin, secretsService, namespacedKVStore, features, WithCache(store, 5*time.Second, 5*time.Minute), logger)
+		}
 	}
+
+	if err != nil {
+		logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
+	}
+
+	return WithCache(store, 5*time.Second, 5*time.Minute), nil
 }
 
 // SecretsKVStore is an interface for k/v store.
@@ -31,6 +71,7 @@ type SecretsKVStore interface {
 	Del(ctx context.Context, orgId int64, namespace string, typ string) error
 	Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error)
 	Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error
+	GetAll(ctx context.Context) ([]Item, error)
 }
 
 // WithType returns a kvstore wrapper with fixed orgId and type.

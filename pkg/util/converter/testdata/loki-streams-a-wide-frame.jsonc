@@ -1,6 +1,10 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "stats": {
 //              "ingester": {
@@ -54,10 +58,15 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "stats": {
               "ingester": {
@@ -176,6 +185,19 @@
             "1645030245539423744",
             "1645030244091700992"
           ]
+        ],
+        "nanos": [
+          null,
+          [
+            757120,
+            735040,
+            587968,
+            587968,
+            423744,
+            700992
+          ],
+          null,
+          null
         ]
       }
     }

@@ -22,7 +22,10 @@ export const intervalVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createIntervalOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<IntervalVariableModel>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'interval') {
+        return;
+      }
       const options: VariableOption[] = map(instanceState.query.match(/(["'])(.*?)\1|\w+/g), (text) => {
         text = text.replace(/["']+/g, '');
         return { text: text.trim(), value: text.trim(), selected: false };

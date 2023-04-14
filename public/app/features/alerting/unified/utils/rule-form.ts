@@ -7,32 +7,41 @@ import {
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { LokiQuery } from 'app/plugins/datasource/loki/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
   PostableRuleGrafanaRuleDTO,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
+import { MINUTE } from '../components/rule-editor/AlertRuleForm';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation } from './constants';
-import { isGrafanaRulesSource } from './datasource';
+import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
+
+export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
@@ -52,11 +61,12 @@ export const getDefaultFormValues = (): RuleFormValues => {
     // grafana
     folder: null,
     queries: [],
+    recordingRulesQueries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
-    execErrState: GrafanaAlertStateDecision.Alerting,
-    evaluateEvery: '1m',
+    execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
+    evaluateEvery: MINUTE,
 
     // cortex / loki
     namespace: '',
@@ -91,7 +101,7 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
   if (condition) {
     return {
       grafana_alert: {
@@ -99,7 +109,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
-        data: queries,
+        data: queries.map(fixBothInstantAndRangeQuery),
+        is_paused: Boolean(isPaused),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -121,8 +132,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.grafana,
         group: group.name,
-        evaluateFor: rule.for || '0',
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
+        evaluateFor: rule.for || '0',
         noDataState: ga.no_data_state,
         execErrState: ga.exec_err_state,
         queries: ga.data,
@@ -130,38 +141,33 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
         folder: { title: namespace, id: ga.namespace_id },
+        isPaused: ga.is_paused,
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
     }
   } else {
     if (isAlertingRulerRule(rule)) {
-      const [forTime, forTimeUnit] = rule.for
-        ? parseInterval(rule.for)
-        : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.alert,
+        ...alertingRuleValues,
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        forTime,
-        forTimeUnit,
-        annotations: listifyLabelsOrAnnotations(rule.annotations),
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else if (isRecordingRulerRule(rule)) {
+      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.record,
+        ...recordingRuleValues,
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
@@ -169,11 +175,40 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   }
 }
 
+export function alertingRulerRuleToRuleForm(
+  rule: RulerAlertingRuleDTO
+): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+  const defaultFormValues = getDefaultFormValues();
+
+  const [forTime, forTimeUnit] = rule.for
+    ? parseInterval(rule.for)
+    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+
+  return {
+    name: rule.alert,
+    expression: rule.expr,
+    forTime,
+    forTimeUnit,
+    annotations: listifyLabelsOrAnnotations(rule.annotations),
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
+export function recordingRulerRuleToRuleForm(
+  rule: RulerRecordingRuleDTO
+): Pick<RuleFormValues, 'name' | 'expression' | 'labels'> {
+  return {
+    name: rule.record,
+    expression: rule.expr,
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
 export const getDefaultQueries = (): AlertQuery[] => {
-  const dataSource = getDataSourceSrv().getInstanceSettings('default');
+  const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
-    return [getDefaultExpression('A')];
+    return [...getDefaultExpressions('A', 'B')];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
@@ -188,15 +223,37 @@ export const getDefaultQueries = (): AlertQuery[] => {
         hide: false,
       },
     },
-    getDefaultExpression('B'),
+    ...getDefaultExpressions('B', 'C'),
   ];
 };
 
-const getDefaultExpression = (refId: string): AlertQuery => {
-  const model: ExpressionQuery = {
-    refId,
+export const getDefaultRecordingRulesQueries = (
+  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
+): AlertQuery[] => {
+  const relativeTimeRange = getDefaultRelativeTimeRange();
+
+  return [
+    {
+      refId: 'A',
+      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
+      queryType: '',
+      relativeTimeRange,
+      model: {
+        refId: 'A',
+        hide: false,
+      },
+    },
+  ];
+};
+
+const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+  const refOne = refIds[0];
+  const refTwo = refIds[1];
+
+  const reduceExpression: ExpressionQuery = {
+    refId: refIds[0],
     hide: false,
-    type: ExpressionQueryType.classic,
+    type: ExpressionQueryType.reduce,
     datasource: {
       uid: ExpressionDatasourceUID,
       type: ExpressionDatasourceRef.type,
@@ -205,14 +262,14 @@ const getDefaultExpression = (refId: string): AlertQuery => {
       {
         type: 'query',
         evaluator: {
-          params: [3],
+          params: [],
           type: EvalFunction.IsAbove,
         },
         operator: {
           type: 'and',
         },
         query: {
-          params: ['A'],
+          params: [refOne],
         },
         reducer: {
           params: [],
@@ -220,14 +277,54 @@ const getDefaultExpression = (refId: string): AlertQuery => {
         },
       },
     ],
+    reducer: 'last',
+    expression: 'A',
   };
 
-  return {
-    refId,
-    datasourceUid: ExpressionDatasourceUID,
-    queryType: '',
-    model,
+  const thresholdExpression: ExpressionQuery = {
+    refId: refTwo,
+    hide: false,
+    type: ExpressionQueryType.threshold,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [0],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refTwo],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    expression: refOne,
   };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
+    },
+    {
+      refId: refTwo,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: thresholdExpression,
+    },
+  ];
 };
 
 const dataQueriesToGrafanaQueries = async (
@@ -312,7 +409,14 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    queries.push(getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model))));
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    queries.push(reduceExpression);
+
+    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
+      reduceExpression.refId,
+      getNextRefIdChar(queries)
+    );
+    queries.push(thresholdExpression);
   }
 
   const { folderId, folderTitle } = dashboard.meta;
@@ -355,4 +459,27 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+export function fixBothInstantAndRangeQuery(query: AlertQuery) {
+  const model = query.model;
+
+  if (!isPromQuery(model)) {
+    return query;
+  }
+
+  const isBothInstantAndRange = model.instant && model.range;
+  if (isBothInstantAndRange) {
+    return { ...query, model: { ...model, range: true, instant: false } };
+  }
+
+  return query;
+}
+
+function isPromQuery(model: AlertDataQuery): model is PromQuery {
+  return 'expr' in model && 'instant' in model && 'range' in model;
+}
+
+export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
+  return 'expr' in model;
 }

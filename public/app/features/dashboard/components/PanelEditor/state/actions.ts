@@ -1,7 +1,7 @@
 import { pick } from 'lodash';
 
 import store from 'app/core/store';
-import { cleanUpPanelState, initPanelState } from 'app/features/panel/state/actions';
+import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { ThunkResult } from 'app/types';
 
@@ -19,8 +19,6 @@ import {
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
     const panel = dashboard.initEditPanel(sourcePanel);
-
-    await dispatch(initPanelState(panel));
 
     dispatch(
       updateEditorInitState({
@@ -66,10 +64,9 @@ export function updateDuplicateLibraryPanels(
       panel.configRev++;
 
       if (pluginChanged) {
-        const cleanUpKey = panel.key;
         panel.generateNewKey();
 
-        dispatch(panelModelAndPluginReady({ key: panel.key, plugin: panel.plugin!, cleanUpKey }));
+        dispatch(panelModelAndPluginReady({ key: panel.key, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
@@ -116,7 +113,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
-    if (!shouldDiscardChanges) {
+    if (hasPanelChangedInPanelEdit(panel) && !shouldDiscardChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
@@ -129,10 +126,9 @@ export function exitPanelEditor(): ThunkResult<void> {
       if (panelTypeChanged) {
         // Loaded plugin is not included in the persisted properties so is not handled by restoreModel
         sourcePanel.plugin = panel.plugin;
-        const cleanUpKey = sourcePanel.key;
         sourcePanel.generateNewKey();
 
-        await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin!, cleanUpKey }));
+        await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
@@ -140,12 +136,21 @@ export function exitPanelEditor(): ThunkResult<void> {
       setTimeout(() => {
         sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
         sourcePanel.render();
+
+        // If all changes where saved then reset configRev after applying changes
+        if (panel.hasSavedPanelEditChange && !panel.hasChanged) {
+          sourcePanel.configRev = 0;
+        }
       }, 20);
     }
 
     dispatch(cleanUpPanelState(panel.key));
     dispatch(closeEditor());
   };
+}
+
+function hasPanelChangedInPanelEdit(panel: PanelModel) {
+  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

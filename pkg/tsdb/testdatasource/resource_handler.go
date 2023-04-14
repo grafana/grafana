@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
 func (s *Service) registerRoutes() *http.ServeMux {
@@ -118,7 +115,7 @@ func createJSONHandler(logger log.Logger) http.Handler {
 					logger.Warn("Failed to close response body", "err", err)
 				}
 			}()
-			b, err := ioutil.ReadAll(req.Body)
+			b, err := io.ReadAll(req.Body)
 			if err != nil {
 				logger.Error("Failed to read request body to bytes", "error", err)
 			} else {
@@ -131,8 +128,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 			}
 		}
 
-		config := httpadapter.PluginConfigFromContext(req.Context())
-
 		data := map[string]interface{}{
 			"message": "Hello world from test datasource!",
 			"request": map[string]interface{}{
@@ -140,7 +135,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 				"url":     req.URL,
 				"headers": req.Header,
 				"body":    reqData,
-				"config":  config,
 			},
 		}
 		bytes, err := json.Marshal(&data)

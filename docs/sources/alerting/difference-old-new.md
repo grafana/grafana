@@ -1,20 +1,19 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/difference-old-new/
-  - /docs/grafana/latest/alerting/unified-alerting/difference-old-new/
+  - unified-alerting/difference-old-new/
 description: What's New with Grafana alerts
 draft: true
 keywords:
   - grafana
   - alerting
   - guide
-title: What's new in Grafana alerting
+title: What's new in Grafana Alerting
 weight: 108
 ---
 
-# What's new in Grafana alerting
+# What's new in Grafana Alerting
 
-Grafana alerting has several enhancements over legacy dashboard alerting.
+Grafana Alerting has several enhancements over legacy dashboard alerting.
 
 ## Multi-dimensional alerting
 
@@ -28,7 +27,7 @@ Since unified alerts are no longer directly tied to panel queries, they do not i
 
 ## Create Loki and Grafana Mimir alerting rules
 
-In Grafana alerting, you can manage Loki and Grafana Mimir alerting rules using the same UI and API as your Grafana managed alerts.
+In Grafana Alerting, you can manage Loki and Grafana Mimir alerting rules using the same UI and API as your Grafana managed alerts.
 
 ## View and search for alerts from Prometheus compatible data sources
 
@@ -36,7 +35,7 @@ Alerts for Prometheus compatible data sources are now listed under the Grafana a
 
 ## Special alerts for alert state NoData and Error
 
-Grafana alerting introduced a new concept of the alert states. When evaluation of an alerting rule produces state NoData or Error, Grafana alerting will generate special alerts that will have the following labels:
+Grafana Alerting introduced a new concept of the alert states. When evaluation of an alerting rule produces state NoData or Error, Grafana Alerting will generate special alerts that will have the following labels:
 
 - `alertname` with value DatasourceNoData or DatasourceError depending on the state.
 - `rulename` name of the alert rule the special alert belongs to.

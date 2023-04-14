@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 
 import * as runtime from '@grafana/runtime';
@@ -105,7 +104,7 @@ describe('VariablesUnknownTable', () => {
       });
 
       describe('but when the unknown processing takes a while', () => {
-        let user: UserEvent;
+        let user: ReturnType<typeof userEvent.setup>;
 
         beforeEach(() => {
           jest.useFakeTimers();

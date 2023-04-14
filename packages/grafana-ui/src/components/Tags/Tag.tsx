@@ -1,9 +1,9 @@
 import { cx, css } from '@emotion/css';
 import React, { forwardRef, HTMLAttributes } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getTagColor, getTagColorsFromName } from '../../utils';
 import { Icon } from '../Icon/Icon';
@@ -11,7 +11,7 @@ import { Icon } from '../Icon/Icon';
 /**
  * @public
  */
-export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => any;
+export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => void;
 
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
@@ -23,7 +23,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 }
 
 export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getTagStyles(theme, name, colorIndex);
 
   const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -50,7 +50,7 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, icon, classN
 
 Tag.displayName = 'Tag';
 
-const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) => {
+const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
   let colors;
   if (colorIndex === undefined) {
     colors = getTagColorsFromName(name);
@@ -61,16 +61,16 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
     wrapper: css`
       appearance: none;
       border-style: none;
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.xs};
+      line-height: ${theme.typography.bodySmall.lineHeight};
       vertical-align: baseline;
       background-color: ${colors.color};
-      color: ${theme.palette.gray98};
+      color: ${theme.v1.palette.gray98};
       white-space: nowrap;
       text-shadow: none;
       padding: 3px 6px;
-      border-radius: ${theme.border.radius.md};
+      border-radius: ${theme.shape.radius.default};
     `,
     hover: css`
       &:hover {

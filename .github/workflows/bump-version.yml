@@ -3,19 +3,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
         required: true
-        default: '7.x.x'
-  workflow_call:
-    inputs:
-      version_call:
-        description: Needs to match, exactly, the name of a version
-        required: true
-        type: string
-    secrets:
-        token:
-          required: true
-        metricsWriteAPIKey:
-          required: true
 env:
     YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
@@ -28,19 +17,19 @@ jobs:
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
-          regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-(?:(beta\d+)|(pre)))?$'
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ inputs.version_call != '' }}
         id: regex-match-version-call
         with:
           text: ${{ inputs.version_call }}
-          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-(?:(beta\d+)|(pre)))?$'
       - name: Validate input version
         if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
         run: |
           echo "The input version format is not correct, please respect:\
           major.minor.patch or major.minor.patch-beta.number format. \
-          example: 7.4.3 or 7.4.3-beta.1"
+          example: 7.4.3 or 7.4.3-beta1"
           exit 1
       - name: Validate input version call
         if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}
@@ -55,13 +44,13 @@ jobs:
       - name: Set intermedia variables
         id: intermedia
         run: |
-          echo "::set-output name=short_ref::${GITHUB_REF#refs/*/}"
-          echo "::set-output name=check_passed::false"
-          echo "::set-output name=branch_name::v${{steps.regex-match.outputs.group1}}"
-          echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
+          echo "short_ref=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+          echo "check_passed=false" >> $GITHUB_OUTPUT
+          echo "branch_name=v${{steps.regex-match.outputs.group1}}" >> $GITHUB_OUTPUT
+          echo "branch_exist=$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)" >> $GITHUB_OUTPUT
 
       - name: Check input version is aligned with branch(main)
-        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main') }}
+        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(github.event.inputs.version, 'pre') && !contains(steps.intermedia.outputs.short_ref, 'main') }}
         run: |
           echo "When you want to deliver a new new minor version, you might want to create a new branch first \
           with naming convention v[major].[minor].x, and just run the workflow on that branch. \
@@ -74,21 +63,13 @@ jobs:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
-      - uses: actions/setup-node@v3.2.0
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: '16'
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: Run bump version (manually invoked)
-        if: ${{ github.event.inputs.version != '' }}
+      - name: Run bump version (manually invoked)        
         uses: ./actions/bump-version
         with:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
           metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-      - name: Run bump version (workflow invoked)
-        if: ${{ inputs.version_call != '' }}
-        uses: ./actions/bump-version
-        with:
-          version_call: ${{ inputs.version_call }}
-          token: ${{ secrets.token }}
-          metricsWriteAPIKey: ${{ secrets.metricsWriteAPIKey }}

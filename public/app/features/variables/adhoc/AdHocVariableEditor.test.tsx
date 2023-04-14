@@ -1,12 +1,41 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { selectOptionInTest } from '@grafana/ui';
-import { getSelectParent } from '@grafana/ui/src/components/Select/test-utils';
+import { selectors } from '@grafana/e2e-selectors';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { adHocBuilder } from '../shared/testing/builders';
 
 import { AdHocVariableEditorUnConnected as AdHocVariableEditor } from './AdHocVariableEditor';
+
+const promDsMock = mockDataSource({
+  name: 'Prometheus',
+  type: DataSourceType.Prometheus,
+});
+
+const lokiDsMock = mockDataSource({
+  name: 'Loki',
+  type: DataSourceType.Loki,
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => {
+        return Promise.resolve(promDsMock);
+      },
+      getList: () => [promDsMock, lokiDsMock],
+      getInstanceSettings: (v: string) => {
+        if (v === 'Prometheus') {
+          return promDsMock;
+        }
+        return lokiDsMock;
+      },
+    }),
+  };
+});
 
 const props = {
   extended: {
@@ -31,17 +60,17 @@ describe('AdHocVariableEditor', () => {
   it('has a datasource select menu', async () => {
     render(<AdHocVariableEditor {...props} />);
 
-    const selectContainer = getSelectParent(screen.getByLabelText('Data source'));
-    expect(selectContainer).toHaveTextContent('Prometheus');
+    expect(await screen.findByLabelText(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
   });
 
   it('calls the callback when changing the datasource', async () => {
     render(<AdHocVariableEditor {...props} />);
-    await selectOptionInTest(screen.getByLabelText('Data source'), 'Loki');
+    const selectEl = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
+    await selectOptionInTest(selectEl, 'Loki');
 
     expect(props.changeVariableDatasource).toBeCalledWith(
       { type: 'adhoc', id: 'adhoc', rootStateKey: 'key' },
-      { type: 'loki-ds', uid: 'abc' }
+      { type: 'loki', uid: 'mock-ds-3' }
     );
   });
 

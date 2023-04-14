@@ -6,18 +6,21 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/util/converter"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
+	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.log.Error("Failed to close response body", "err", err)
+			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -25,9 +28,12 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
+		Dataplane:        s.enableDataplane,
 	})
-	if r == nil {
-		return nil, fmt.Errorf("received empty response from prometheus")
+
+	// Add frame to attach metadata
+	if len(r.Frames) == 0 && !q.ExemplarQuery {
+		r.Frames = append(r.Frames, data.NewFrame(""))
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
@@ -35,14 +41,68 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
 		} else {
-			addMetadataToMultiFrame(q, frame)
+			addMetadataToMultiFrame(q, frame, s.enableDataplane)
 		}
 	}
 
-	return r, nil
+	if r.Error == nil {
+		r = s.processExemplars(q, r)
+	}
+
+	return r
 }
 
-func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
+func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
+	sampler := s.exemplarSampler()
+	labelTracker := exemplar.NewLabelTracker()
+
+	// we are moving from a multi-frame response returned
+	// by the converter to a single exemplar frame,
+	// so we need to build a new frame array with the
+	// old exemplar frames filtered out
+	framer := exemplar.NewFramer(sampler, labelTracker)
+
+	for _, frame := range dr.Frames {
+		// we don't need to process non-exemplar frames
+		// so they can be added to the response
+		if !isExemplarFrame(frame) {
+			framer.AddFrame(frame)
+			continue
+		}
+
+		// copy the current exemplar frame metadata
+		framer.SetMeta(frame.Meta)
+		framer.SetRefID(frame.RefID)
+
+		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
+		sampler.SetStep(step)
+
+		seriesLabels := getSeriesLabels(frame)
+		labelTracker.Add(seriesLabels)
+		labelTracker.AddFields(frame.Fields[2:])
+		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
+			ts := frame.CopyAt(0, rowIdx).(time.Time)
+			val := frame.CopyAt(1, rowIdx).(float64)
+			ex := models.Exemplar{
+				RowIdx:       rowIdx,
+				Fields:       frame.Fields[2:],
+				Value:        val,
+				Timestamp:    ts,
+				SeriesLabels: seriesLabels,
+			}
+			sampler.Add(ex)
+		}
+	}
+
+	frames, err := framer.Frames()
+
+	return backend.DataResponse{
+		Frames: frames,
+		Error:  err,
+	}
+}
+
+func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane bool) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
@@ -50,10 +110,20 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	if len(frame.Fields) < 2 {
 		return
 	}
-	frame.Name = getName(q, frame.Fields[1])
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
-	if frame.Name != "" {
-		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: frame.Name}
+
+	customName := getName(q, frame.Fields[1])
+	if customName != "" {
+		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
+	}
+
+	if enableDataplane {
+		valueField := frame.Fields[1]
+		if n, ok := valueField.Labels["__name__"]; ok {
+			valueField.Name = n
+		}
+	} else {
+		frame.Name = customName
 	}
 }
 
@@ -67,7 +137,7 @@ func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
 	}
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	for _, f := range frame.Fields {
-		if f.Name != data.TimeSeriesTimeFieldName {
+		if f.Type() == data.FieldTypeFloat64 || f.Type() == data.FieldTypeNullableFloat64 {
 			f.Name = getName(q, f)
 		}
 	}
@@ -108,11 +178,11 @@ func getName(q *models.Query, field *data.Field) string {
 	labels := field.Labels
 	legend := metricNameFromLabels(field)
 
-	if q.LegendFormat == legendFormatAuto && len(labels) > 0 {
-		return ""
-	}
-
-	if q.LegendFormat != "" {
+	if q.LegendFormat == legendFormatAuto {
+		if len(labels) > 0 {
+			legend = ""
+		}
+	} else if q.LegendFormat != "" {
 		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendFormat), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
@@ -131,4 +201,14 @@ func getName(q *models.Query, field *data.Field) string {
 	}
 
 	return legend
+}
+
+func isExemplarFrame(frame *data.Frame) bool {
+	rt := models.ResultTypeFromFrame(frame)
+	return rt == models.ResultTypeExemplar
+}
+
+func getSeriesLabels(frame *data.Frame) data.Labels {
+	// series labels are stored on the value field (index 1)
+	return frame.Fields[1].Labels.Copy()
 }

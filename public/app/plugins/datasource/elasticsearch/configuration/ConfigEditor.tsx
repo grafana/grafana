@@ -2,11 +2,10 @@ import React, { useEffect, useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { Alert, DataSourceHttpSettings } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
-import { isSupportedVersion } from '../utils';
 
 import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
@@ -34,18 +33,11 @@ export const ConfigEditor = (props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const supportedVersion = isSupportedVersion(options.jsonData.esVersion);
-
   return (
     <>
       {options.access === 'direct' && (
         <Alert title="Error" severity="error">
           Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.
-        </Alert>
-      )}
-      {!supportedVersion && (
-        <Alert title="Deprecation notice" severity="error">
-          {`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed`}
         </Alert>
       )}
       <DataSourceHttpSettings
@@ -56,6 +48,10 @@ export const ConfigEditor = (props: Props) => {
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
+
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <ElasticDetails value={options} onChange={onOptionsChange} />
 

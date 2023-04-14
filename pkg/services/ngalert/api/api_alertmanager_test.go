@@ -9,22 +9,25 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -105,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -113,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}}))
 	})
@@ -125,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -133,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})
@@ -145,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -153,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})
@@ -163,12 +166,12 @@ func TestAlertmanagerConfig(t *testing.T) {
 	sut := createSut(t, nil)
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
-				OrgId: 12,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 12,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -180,12 +183,12 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -197,12 +200,12 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
 		sut := createSut(t, nil)
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
-				OrgId: 3, // Org 3 was initialized with broken config.
+			SignedInUser: &user.SignedInUser{
+				OrgID: 3, // Org 3 was initialized with broken config.
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -220,7 +223,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -229,7 +232,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -251,7 +254,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -271,7 +274,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response = sut.RouteGetAlertingConfig(rc)
 			body = asGettableUserConfig(t, response)
 
-			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -283,8 +286,138 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.NotNil(t, body.TemplateFileProvenances)
 			require.Len(t, body.TemplateFileProvenances, 1)
-			require.Equal(t, ngmodels.ProvenanceAPI, body.TemplateFileProvenances["a"])
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
+	})
+}
+
+func TestRouteGetAlertingConfigHistory(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 200 and empty slice when no applied configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "10")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		var configs []apimodels.GettableHistoricUserConfig
+		err = json.Unmarshal(response.Body(), &configs)
+		require.NoError(tt, err)
+
+		require.Len(tt, configs, 0)
+	})
+
+	t.Run("assert 200 and one config in the response for an org that has one successfully applied configuration", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "10")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		var configs []apimodels.GettableHistoricUserConfig
+		err = json.Unmarshal(response.Body(), &configs)
+		require.NoError(tt, err)
+
+		require.Len(tt, configs, 1)
+	})
+
+	t.Run("assert 200 when no limit is provided", func(tt *testing.T) {
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+
+	t.Run("assert 200 when limit is < 1", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "0")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+
+	t.Run("assert 200 when limit is > 100", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "1000")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+}
+
+func TestRoutePostGrafanaAlertingConfigHistoryActivate(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 404 when no historical configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 404, response.Status())
+	})
+
+	t.Run("assert 202 for a valid org and id", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 202, response.Status())
+	})
+
+	t.Run("assert 400 when id is not parseable", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "abc")
+		require.Equal(tt, 400, response.Status())
 	})
 }
 
@@ -327,13 +460,13 @@ func TestSilenceCreate(t *testing.T) {
 
 	for _, cas := range cases {
 		t.Run(cas.name, func(t *testing.T) {
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
-				SignedInUser: &models.SignedInUser{
-					OrgRole: models.ROLE_EDITOR,
-					OrgId:   1,
+				SignedInUser: &user.SignedInUser{
+					OrgRole: org.RoleEditor,
+					OrgID:   1,
 				},
 			}
 
@@ -353,7 +486,7 @@ func TestRouteCreateSilence(t *testing.T) {
 		name           string
 		silence        func() apimodels.PostableSilence
 		accessControl  func() accesscontrol.AccessControl
-		role           models.RoleType
+		role           org.RoleType
 		expectedStatus int
 	}{
 		{
@@ -368,7 +501,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "new silence, role-based access control is enabled, authorized",
 			silence: silenceGen(withEmptyID),
 			accessControl: func() accesscontrol.AccessControl {
-				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+				return acMock.New().WithPermissions([]accesscontrol.Permission{
 					{Action: accesscontrol.ActionAlertingInstanceCreate},
 				})
 			},
@@ -380,7 +513,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -389,7 +522,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_EDITOR,
+			role:           org.RoleEditor,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -398,7 +531,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -413,7 +546,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "update silence, role-based access control is enabled, authorized",
 			silence: silenceGen(),
 			accessControl: func() accesscontrol.AccessControl {
-				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+				return acMock.New().WithPermissions([]accesscontrol.Permission{
 					{Action: accesscontrol.ActionAlertingInstanceUpdate},
 				})
 			},
@@ -425,7 +558,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -434,7 +567,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_EDITOR,
+			role:           org.RoleEditor,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -443,7 +576,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 	}
@@ -453,13 +586,13 @@ func TestRouteCreateSilence(t *testing.T) {
 			ac := tesCase.accessControl()
 			sut := createSut(t, ac)
 
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					OrgRole: tesCase.role,
-					OrgId:   1,
+					OrgID:   1,
 				},
 			}
 
@@ -532,7 +665,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -619,13 +752,13 @@ func withEmptyID(silence *apimodels.PostableSilence) {
 	silence.ID = ""
 }
 
-func createRequestCtxInOrg(org int64) *models.ReqContext {
-	return &models.ReqContext{
+func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
+	return &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &models.SignedInUser{
-			OrgId: org,
+		SignedInUser: &user.SignedInUser{
+			OrgID: org,
 		},
 	}
 }
@@ -647,7 +780,7 @@ func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisi
 // setTemplateProvenance marks a template as provisioned.
 func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.MessageTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &apimodels.NotificationTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
@@ -655,6 +788,14 @@ func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.Gettable
 	t.Helper()
 	body := &apimodels.GettableUserConfig{}
 	err := json.Unmarshal(r.Body(), body)
+	require.NoError(t, err)
+	return body
+}
+
+func asGettableHistoricUserConfigs(t *testing.T, r response.Response) []apimodels.GettableHistoricUserConfig {
+	t.Helper()
+	var body []apimodels.GettableHistoricUserConfig
+	err := json.Unmarshal(r.Body(), &body)
 	require.NoError(t, err)
 	return body
 }

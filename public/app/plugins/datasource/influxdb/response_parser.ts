@@ -2,7 +2,7 @@ import { each, flatten, groupBy, isArray } from 'lodash';
 
 import { AnnotationEvent, DataFrame, DataQuery, FieldType, QueryResultMeta } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
-import TableModel from 'app/core/table_model';
+import TableModel from 'app/core/TableModel';
 
 import { InfluxQuery } from './types';
 
@@ -18,8 +18,8 @@ export default class ResponseParser {
     }
 
     const normalizedQuery = query.toLowerCase();
-    const isValueFirst =
-      normalizedQuery.indexOf('show field keys') >= 0 || normalizedQuery.indexOf('show retention policies') >= 0;
+    const isRetentionPolicyQuery = normalizedQuery.indexOf('show retention policies') >= 0;
+    const isValueFirst = normalizedQuery.indexOf('show field keys') >= 0 || isRetentionPolicyQuery;
 
     const res = new Set<string>();
     each(influxResults.series, (serie) => {
@@ -38,14 +38,27 @@ export default class ResponseParser {
           // (while the newer versions—first).
 
           if (isValueFirst) {
-            addUnique(res, value[0]);
+            // We want to know whether the given retention policy is the default one or not.
+            // If it is default policy then we should add it to the beginning.
+            // The index 4 gives us if that policy is default or not.
+            // https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
+            // Only difference is v0.9. In that version we don't receive shardGroupDuration value.
+            // https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
+            // Since it is always the last value we will check that last value always.
+            if (isRetentionPolicyQuery && value[value.length - 1] === true) {
+              const newSetValues = [value[0].toString(), ...Array.from(res)];
+              res.clear();
+              newSetValues.forEach((sv) => res.add(sv));
+            } else {
+              res.add(value[0].toString());
+            }
           } else if (value[1] !== undefined) {
-            addUnique(res, value[1]);
+            res.add(value[1].toString());
           } else {
-            addUnique(res, value[0]);
+            res.add(value[0].toString());
           }
         } else {
-          addUnique(res, value);
+          res.add(value.toString());
         }
       });
     });
@@ -88,7 +101,7 @@ export default class ResponseParser {
     return table;
   }
 
-  async transformAnnotationResponse(options: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
+  async transformAnnotationResponse(annotation: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
     const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
 
     if (rsp) {
@@ -105,19 +118,19 @@ export default class ResponseParser {
           timeCol = index;
           return;
         }
-        if (column.text === options.annotation.titleColumn) {
+        if (column.text === annotation.titleColumn) {
           titleCol = index;
           return;
         }
-        if (colContainsTag(column.text, options.annotation.tagsColumn)) {
+        if (colContainsTag(column.text, annotation.tagsColumn)) {
           tagsCol.push(index);
           return;
         }
-        if (column.text.includes(options.annotation.textColumn)) {
+        if (column.text.includes(annotation.textColumn)) {
           textCol = index;
           return;
         }
-        if (column.text === options.annotation.timeEndColumn) {
+        if (column.text === annotation.timeEndColumn) {
           timeEndCol = index;
           return;
         }
@@ -129,7 +142,7 @@ export default class ResponseParser {
 
       each(table.rows, (value) => {
         const data = {
-          annotation: options.annotation,
+          annotation: annotation,
           time: +new Date(value[timeCol]),
           title: value[titleCol],
           timeEnd: value[timeEndCol],
@@ -157,7 +170,7 @@ export default class ResponseParser {
 
 function colContainsTag(colText: string, tagsColumn: string): boolean {
   const tags = (tagsColumn || '').replace(' ', '').split(',');
-  for (var tag of tags) {
+  for (const tag of tags) {
     if (colText.includes(tag)) {
       return true;
     }
@@ -196,6 +209,25 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
   // Select (metric) column(s)
   for (let i = 0; i < selectedParams.length; i++) {
     table.columns.push({ text: selectedParams[i] });
+  }
+
+  // ISSUE: https://github.com/grafana/grafana/issues/63842
+  // if rawQuery and
+  // has other selected fields in the query and
+  // dfs field names are in the rawQuery but
+  // the selected params object doesn't exist in the query then
+  // add columns to the table
+  if (
+    target.rawQuery &&
+    selectedParams.length === 0 &&
+    rawQuerySelectedFieldsInDataframe(target.query, dfs) &&
+    dfs[0].refId !== 'metricFindQuery'
+  ) {
+    dfs.map((df) => {
+      if (df.name) {
+        table.columns.push({ text: df.name });
+      }
+    });
   }
 
   return table;
@@ -245,6 +277,29 @@ function incrementName(name: string, nameIncremenet: string, params: string[], i
   return nameIncremenet;
 }
 
-function addUnique(s: Set<string>, value: string | number) {
-  s.add(value.toString());
+function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {
+  const names: Array<string | undefined> = dfs.map((df: DataFrame) => df.name);
+
+  const colsInRawQuery = names.every((name: string | undefined) => {
+    if (name && query) {
+      // table name and field, i.e. cpu.usage_guest_nice becomes ['cpu', 'usage_guest_nice']
+      const nameParts = name.split('.');
+
+      return nameParts.every((np) => query.toLowerCase().includes(np.toLowerCase()));
+    }
+
+    return false;
+  });
+
+  const queryChecks = ['*', 'SHOW'];
+
+  const otherChecks: boolean = queryChecks.some((qc: string) => {
+    if (query) {
+      return query.toLowerCase().includes(qc.toLowerCase());
+    }
+
+    return false;
+  });
+
+  return colsInRawQuery || otherChecks;
 }

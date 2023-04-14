@@ -1,15 +1,15 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
-import React, { useState, useCallback } from 'react';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
+import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { UseState } from '../../../../utils/storybook/UseState';
 import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
-export default {
+const meta: ComponentMeta<typeof Select> = {
   title: 'Forms/Legacy/Select',
   component: Select,
   decorators: [withCenteredStory],
@@ -31,7 +31,6 @@ export default {
         'id',
         'inputId',
         'defaultValue',
-        'loading',
         'aria-label',
         'noOptionsMessage',
         'onChange',
@@ -52,7 +51,7 @@ export default {
   argTypes: {
     width: { control: { type: 'range', min: 5, max: 30 } },
   },
-} as Meta;
+};
 
 const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
 
@@ -66,21 +65,16 @@ const options = [
   { label: 'Another label', value: 'Another value ' },
 ];
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof Select> = (args) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState={initialValue}>
-      {(value, updateValue) => {
-        return (
-          <Select
-            {...args}
-            onChange={(value: SelectableValue<string>) => {
-              action('onChanged fired')(value);
-              updateValue(value);
-            }}
-          />
-        );
+    <Select
+      {...args}
+      onChange={(value) => {
+        action('onChange fired')(value);
+        updateArgs({ value });
       }}
-    </UseState>
+    />
   );
 };
 Basic.args = {
@@ -89,32 +83,34 @@ Basic.args = {
   width: 20,
 };
 
-export const AsyncSelect: Story = (args) => {
-  const [isLoading, setIsLoading] = useState<boolean>(args.loading);
-  const [asyncValue, setAsyncValue] = useState<SelectableValue<any>>();
-  const loadAsyncOptions = useCallback((inputValue) => {
-    return new Promise<Array<SelectableValue<string>>>((resolve) => {
-      setTimeout(() => {
-        setIsLoading(false);
-        resolve(options.filter((option) => option.label && option.label.includes(inputValue)));
-      }, 1000);
-    });
-  }, []);
+export const AsyncSelect: ComponentStory<typeof AsyncSelectComponent> = (args) => {
+  const [, updateArgs] = useArgs();
+  const loadAsyncOptions = useCallback(
+    (inputValue: string) => {
+      return new Promise<Array<SelectableValue<string>>>((resolve) => {
+        setTimeout(() => {
+          updateArgs({ isLoading: false });
+          resolve(options.filter((option) => option.label && option.label.includes(inputValue)));
+        }, 1000);
+      });
+    },
+    [updateArgs]
+  );
   return (
     <AsyncSelectComponent
       {...args}
-      value={asyncValue}
-      isLoading={isLoading}
       loadOptions={loadAsyncOptions}
       onChange={(value) => {
         action('onChange')(value);
-        setAsyncValue(value);
+        updateArgs({ value });
       }}
     />
   );
 };
 AsyncSelect.args = {
-  loading: true,
+  isLoading: true,
   defaultOptions: true,
   width: 20,
 };
+
+export default meta;

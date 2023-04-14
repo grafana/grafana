@@ -1,219 +1,105 @@
-import { map as _map } from 'lodash';
-import { lastValueFrom, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { LanguageDefinition } from '@grafana/experimental';
+import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
+import { DB, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
+import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
-import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import PostgresQueryModel from 'app/plugins/datasource/postgres/postgres_query_model';
+import { PostgresQueryModel } from './PostgresQueryModel';
+import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
+import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
+import { getFieldConfig, toRawSql } from './sqlUtil';
+import { PostgresOptions } from './types';
 
-import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+export class PostgresDatasource extends SqlDatasource {
+  sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
 
-import ResponseParser from './response_parser';
-import { PostgresOptions, PostgresQuery, PostgresQueryForInterpolation } from './types';
-
-export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, PostgresOptions> {
-  id: any;
-  name: any;
-  jsonData: any;
-  responseParser: ResponseParser;
-  queryModel: PostgresQueryModel;
-  interval: string;
-
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<PostgresOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
-    this.jsonData = instanceSettings.jsonData;
-    this.responseParser = new ResponseParser();
-    this.queryModel = new PostgresQueryModel({});
-    const settingsData = instanceSettings.jsonData || ({} as PostgresOptions);
-    this.interval = settingsData.timeInterval || '1m';
   }
 
-  interpolateVariable = (value: string | string[], variable: { multi: any; includeAll: any }) => {
-    if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return this.queryModel.quoteLiteral(value);
-      } else {
-        return value;
-      }
-    }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    const quotedValues = _map(value, (v) => {
-      return this.queryModel.quoteLiteral(v);
-    });
-    return quotedValues.join(',');
-  };
-
-  interpolateVariablesInQueries(
-    queries: PostgresQueryForInterpolation[],
-    scopedVars: ScopedVars
-  ): PostgresQueryForInterpolation[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        const expandedQuery = {
-          ...query,
-          datasource: this.getRef(),
-          rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
-          rawQuery: true,
-        };
-        return expandedQuery;
-      });
-    }
-    return expandedQueries;
+  getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
+    return new PostgresQueryModel(target, templateSrv, scopedVars);
   }
 
-  filterQuery(query: PostgresQuery): boolean {
-    return !query.hide;
+  async getVersion(): Promise<string> {
+    const value = await this.runSql<{ version: number }>(getVersion());
+    const results = value.fields.version?.values.toArray();
+
+    if (!results) {
+      return '';
+    }
+
+    return results[0].toString();
   }
 
-  applyTemplateVariables(target: PostgresQuery, scopedVars: ScopedVars): Record<string, any> {
-    const queryModel = new PostgresQueryModel(target, this.templateSrv, scopedVars);
+  async getTimescaleDBVersion(): Promise<string | undefined> {
+    const value = await this.runSql<{ extversion: string }>(getTimescaleDBVersion());
+    const results = value.fields.extversion?.values.toArray();
+
+    if (!results) {
+      return undefined;
+    }
+
+    return results[0];
+  }
+
+  async fetchTables(): Promise<string[]> {
+    const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
+    return tables.fields.table?.values.toArray().flat() ?? [];
+  }
+
+  getSqlLanguageDefinition(db: DB): LanguageDefinition {
+    if (this.sqlLanguageDefinition !== undefined) {
+      return this.sqlLanguageDefinition;
+    }
+
+    const args = {
+      getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
+      getTables: { current: () => fetchTables(db) },
+    };
+    this.sqlLanguageDefinition = {
+      id: 'pgsql',
+      completionProvider: getSqlCompletionProvider(args),
+      formatter: formatSQL,
+    };
+    return this.sqlLanguageDefinition;
+  }
+
+  async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
+    const result: SQLSelectableValue[] = [];
+    for (let i = 0; i < schema.length; i++) {
+      const column = schema.fields.column.values.get(i);
+      const type = schema.fields.type.values.get(i);
+      result.push({ label: column, value: column, type, ...getFieldConfig(type) });
+    }
+    return result;
+  }
+
+  getDB(): DB {
+    if (this.db !== undefined) {
+      return this.db;
+    }
     return {
-      refId: target.refId,
-      datasource: this.getRef(),
-      rawSql: queryModel.render(this.interpolateVariable as any),
-      format: target.format,
-    };
-  }
-
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    if (!options.annotation.rawQuery) {
-      return Promise.reject({
-        message: 'Query missing in annotation definition',
-      });
-    }
-
-    const query = {
-      refId: options.annotation.name,
-      datasource: this.getRef(),
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
-      format: 'table',
-    };
-
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries: [query],
-          },
-          requestId: options.annotation.name,
-        })
-        .pipe(
-          map(
-            async (res: FetchResponse<BackendDataSourceResponse>) =>
-              await this.responseParser.transformAnnotationResponse(options, res.data)
-          )
-        )
-    );
-  }
-
-  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
-    let refId = 'tempvar';
-    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-      refId = optionalOptions.variable.name;
-    }
-
-    const rawSql = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
-      this.interpolateVariable
-    );
-
-    const interpolatedQuery = {
-      refId: refId,
-      datasource: this.getRef(),
-      rawSql,
-      format: 'table',
-    };
-
-    const range = optionalOptions?.range as TimeRange;
-
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: range?.from?.valueOf()?.toString(),
-            to: range?.to?.valueOf()?.toString(),
-            queries: [interpolatedQuery],
-          },
-          requestId: refId,
-        })
-        .pipe(
-          map((rsp) => {
-            return this.responseParser.transformMetricFindResponse(rsp);
-          }),
-          catchError((err) => {
-            return of([]);
-          })
-        )
-    );
-  }
-
-  private _metaRequest(rawSql: string) {
-    const refId = 'meta';
-    const query = {
-      refId: refId,
-      datasource: this.getRef(),
-      rawSql,
-      format: 'table',
-    };
-    return getBackendSrv().fetch<BackendDataSourceResponse>({
-      url: '/api/ds/query',
-      method: 'POST',
-      data: {
-        queries: [query],
+      init: () => Promise.resolve(true),
+      datasets: () => Promise.resolve([]),
+      tables: () => this.fetchTables(),
+      getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
+      fields: async (query: SQLQuery) => {
+        if (!query?.table) {
+          return [];
+        }
+        return this.fetchFields(query);
       },
-      requestId: refId,
-    });
-  }
-
-  getVersion(): Promise<any> {
-    return lastValueFrom(this._metaRequest("SELECT current_setting('server_version_num')::int/100"));
-  }
-
-  getTimescaleDBVersion(): Promise<any> {
-    return lastValueFrom(this._metaRequest("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'"));
-  }
-
-  testDatasource(): Promise<any> {
-    return lastValueFrom(this._metaRequest('SELECT 1'))
-      .then(() => {
-        return { status: 'success', message: 'Database Connection OK' };
-      })
-      .catch((err: any) => {
-        return toTestingStatus(err);
-      });
-  }
-
-  targetContainsTemplate(target: any) {
-    let rawSql = '';
-
-    if (target.rawQuery) {
-      rawSql = target.rawSql;
-    } else {
-      const query = new PostgresQueryModel(target);
-      rawSql = query.buildQuery();
-    }
-
-    rawSql = rawSql.replace('$__', '');
-
-    return this.templateSrv.containsTemplate(rawSql);
+      validateQuery: (query) =>
+        Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
+      dsID: () => this.id,
+      toRawSql,
+      lookup: async () => {
+        const tables = await this.fetchTables();
+        return tables.map((t) => ({ name: t, completion: t }));
+      },
+    };
   }
 }

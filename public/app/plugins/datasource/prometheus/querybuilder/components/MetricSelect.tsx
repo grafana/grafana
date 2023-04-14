@@ -1,24 +1,39 @@
 import { css } from '@emotion/css';
+import debounce from 'debounce-promise';
 import React, { useCallback, useState } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
-import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 
+import { PrometheusDatasource } from '../../datasource';
+import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
+import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 // We are matching words split with space
 const splitSeparator = ' ';
 
 export interface Props {
+  metricLookupDisabled: boolean;
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
   onGetMetrics: () => Promise<SelectableValue[]>;
+  datasource: PrometheusDatasource;
+  labelsFilters: QueryBuilderLabelFilter[];
 }
 
-export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
+export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
+
+export function MetricSelect({
+  datasource,
+  query,
+  onChange,
+  onGetMetrics,
+  labelsFilters,
+  metricLookupDisabled,
+}: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
@@ -58,24 +73,88 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     [styles.highlight]
   );
 
+  const formatLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
+    return labelsFilters.map((label) => {
+      return `,${label.label}="${label.value}"`;
+    });
+  };
+
+  /**
+   * Transform queryString and any currently set label filters into label_values() string
+   */
+  const queryAndFilterToLabelValuesString = (
+    queryString: string,
+    labelsFilters: QueryBuilderLabelFilter[] | undefined
+  ): string => {
+    return `label_values({__name__=~".*${queryString}"${
+      labelsFilters ? formatLabelFilters(labelsFilters).join() : ''
+    }},__name__)`;
+  };
+
+  /**
+   * Reformat the query string and label filters to return all valid results for current query editor state
+   */
+  const formatKeyValueStringsForLabelValuesQuery = (
+    query: string,
+    labelsFilters?: QueryBuilderLabelFilter[]
+  ): string => {
+    const queryString = regexifyLabelValuesQueryString(query);
+
+    return queryAndFilterToLabelValuesString(queryString, labelsFilters);
+  };
+
+  /**
+   * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
+   */
+  const getMetricLabels = (query: string) => {
+    // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
+    const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
+    return results.then((results) => {
+      if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+        results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+      }
+      return results.map((result) => {
+        return {
+          label: result.text,
+          value: result.text,
+        };
+      });
+    });
+  };
+
+  // When metric and label lookup is disabled we won't request labels
+  const metricLookupDisabledSearch = () => Promise.resolve([]);
+
+  const debouncedSearch = debounce(
+    (query: string) => getMetricLabels(query),
+    datasource.getDebounceTimeInMilliseconds()
+  );
+
   return (
     <EditorFieldGroup>
       <EditorField label="Metric">
-        <Select
+        <AsyncSelect
           inputId="prometheus-metric-select"
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
-          placeholder="Select metric"
+          placeholder={'Select metric'}
           allowCustomValue
           formatOptionLabel={formatOptionLabel}
           filterOption={customFilterOption}
           onOpenMenu={async () => {
+            if (metricLookupDisabled) {
+              return;
+            }
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
+            if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+              metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+            }
             setState({ metrics, isLoading: undefined });
           }}
+          loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
           isLoading={state.isLoading}
-          options={state.metrics}
+          defaultOptions={state.metrics}
           onChange={({ value }) => {
             if (value) {
               onChange({ ...query, metric: value });

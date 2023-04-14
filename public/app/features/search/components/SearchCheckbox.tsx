@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 
 import { Checkbox } from '@grafana/ui';
 
@@ -10,12 +10,10 @@ interface Props {
   'aria-label'?: string;
 }
 
-export const SearchCheckbox: FC<Props> = memo(
-  ({ onClick, className, checked = false, editable = false, 'aria-label': ariaLabel }) => {
+export const SearchCheckbox = memo(
+  ({ onClick, className, checked = false, editable = false, 'aria-label': ariaLabel }: Props) => {
     return editable ? (
-      <div onClick={onClick} className={className}>
-        <Checkbox value={checked} aria-label={ariaLabel} />
-      </div>
+      <Checkbox onClick={onClick} className={className} value={checked} aria-label={ariaLabel} />
     ) : null;
   }
 );

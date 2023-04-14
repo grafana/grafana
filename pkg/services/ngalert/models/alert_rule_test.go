@@ -2,7 +2,9 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -80,55 +83,141 @@ func TestErrStateFromString(t *testing.T) {
 	})
 }
 
+func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		annotations          map[string]string
+		expectedError        error
+		expectedDashboardUID string
+		expectedPanelID      int64
+	}{
+		{
+			name:                 "annotations is empty",
+			annotations:          nil,
+			expectedError:        nil,
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "dashboardUID is not present",
+			annotations: map[string]string{PanelIDAnnotation: "1234567890"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "dashboardUID is present but empty",
+			annotations: map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "panelID is not present",
+			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "panelID is present but empty",
+			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
+			expectedError:        fmt.Errorf("annotation %s must be a valid integer Panel ID", PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:                 "dashboardUID and panelID are present and correct",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "65"},
+			expectedError:        nil,
+			expectedDashboardUID: "cKy7f6Hk",
+			expectedPanelID:      65,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := AlertRuleGen(func(rule *AlertRule) {
+				rule.Annotations = tc.annotations
+				rule.DashboardUID = nil
+				rule.PanelID = nil
+			})()
+			err := rule.SetDashboardAndPanelFromAnnotations()
+
+			require.Equal(t, tc.expectedError, err)
+			require.Equal(t, tc.expectedDashboardUID, rule.GetDashboardUID())
+			require.Equal(t, tc.expectedPanelID, rule.GetPanelID())
+		})
+	}
+}
+
 func TestPatchPartialAlertRule(t *testing.T) {
 	t.Run("patches", func(t *testing.T) {
 		testCases := []struct {
 			name    string
-			mutator func(r *AlertRule)
+			mutator func(r *AlertRuleWithOptionals)
 		}{
 			{
 				name: "title is empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.Title = ""
 				},
 			},
 			{
 				name: "condition and data are empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.Condition = ""
 					r.Data = nil
 				},
 			},
 			{
 				name: "ExecErrState is empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.ExecErrState = ""
 				},
 			},
 			{
 				name: "NoDataState is empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.NoDataState = ""
 				},
 			},
 			{
-				name: "For is 0",
-				mutator: func(r *AlertRule) {
-					r.For = 0
+				name: "For is -1",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.For = -1
+				},
+			},
+			{
+				name: "IsPaused did not come in request",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.IsPaused = true
 				},
 			},
 		}
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				var existing *AlertRule
+				var existing *AlertRuleWithOptionals
 				for {
-					existing = AlertRuleGen(func(rule *AlertRule) {
+					rule := AlertRuleGen(func(rule *AlertRule) {
 						rule.For = time.Duration(rand.Int63n(1000) + 1)
 					})()
+					existing = &AlertRuleWithOptionals{AlertRule: *rule}
 					cloned := *existing
 					testCase.mutator(&cloned)
-					if !cmp.Equal(*existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
+					if !cmp.Equal(existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
 						return path.String() == "Data.modelProps"
 					}, cmp.Ignore())) {
 						break
@@ -138,7 +227,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				testCase.mutator(&patch)
 
 				require.NotEqual(t, *existing, patch)
-				PatchPartialAlertRule(existing, &patch)
+				PatchPartialAlertRule(&existing.AlertRule, &patch)
 				require.Equal(t, *existing, patch)
 			})
 		}
@@ -219,10 +308,10 @@ func TestPatchPartialAlertRule(t *testing.T) {
 						break
 					}
 				}
-				patch := *existing
-				testCase.mutator(&patch)
+				patch := AlertRuleWithOptionals{AlertRule: *existing}
+				testCase.mutator(&patch.AlertRule)
 				PatchPartialAlertRule(existing, &patch)
-				require.NotEqual(t, *existing, patch)
+				require.NotEqual(t, *existing, &patch.AlertRule)
 			})
 		}
 	})
@@ -352,6 +441,13 @@ func TestDiff(t *testing.T) {
 			assert.Len(t, diff, 1)
 			assert.Equal(t, rule1.For, diff[0].Left.Interface())
 			assert.Equal(t, rule2.For, diff[0].Right.Interface())
+			difCnt++
+		}
+		if rule1.RuleGroupIndex != rule2.RuleGroupIndex {
+			diff := diffs.GetDiffsForField("RuleGroupIndex")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.RuleGroupIndex, diff[0].Left.Interface())
+			assert.Equal(t, rule2.RuleGroupIndex, diff[0].Right.Interface())
 			difCnt++
 		}
 
@@ -537,4 +633,54 @@ func TestDiff(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestSortByGroupIndex(t *testing.T) {
+	ensureNotSorted := func(t *testing.T, rules []*AlertRule, less func(i, j int) bool) {
+		for i := 0; i < 5; i++ {
+			rand.Shuffle(len(rules), func(i, j int) {
+				rules[i], rules[j] = rules[j], rules[i]
+			})
+			if !sort.SliceIsSorted(rules, less) {
+				return
+			}
+		}
+		t.Fatalf("unable to ensure that alerts are not sorted")
+	}
+
+	t.Run("should sort rules by GroupIndex", func(t *testing.T) {
+		rules := GenerateAlertRules(rand.Intn(15)+5, AlertRuleGen(WithUniqueGroupIndex()))
+		ensureNotSorted(t, rules, func(i, j int) bool {
+			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+		})
+		RulesGroup(rules).SortByGroupIndex()
+		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+		}))
+	})
+
+	t.Run("should sort by ID if same GroupIndex", func(t *testing.T) {
+		rules := GenerateAlertRules(rand.Intn(15)+5, AlertRuleGen(WithUniqueID(), WithGroupIndex(rand.Int())))
+		ensureNotSorted(t, rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		})
+		RulesGroup(rules).SortByGroupIndex()
+		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		}))
+	})
+}
+
+func TestTimeRangeYAML(t *testing.T) {
+	yamlRaw := "from: 600\nto: 0\n"
+	var rtr RelativeTimeRange
+	err := yaml.Unmarshal([]byte(yamlRaw), &rtr)
+	require.NoError(t, err)
+	// nanoseconds
+	require.Equal(t, Duration(600000000000), rtr.From)
+	require.Equal(t, Duration(0), rtr.To)
+
+	serialized, err := yaml.Marshal(rtr)
+	require.NoError(t, err)
+	require.Equal(t, yamlRaw, string(serialized))
 }

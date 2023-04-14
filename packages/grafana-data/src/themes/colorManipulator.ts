@@ -82,6 +82,17 @@ export function asHexString(color: string): string {
 }
 
 /**
+ * Converts a color to rgb string
+ */
+export function asRgbString(color: string) {
+  if (color.startsWith('rgb')) {
+    return color;
+  }
+
+  return tinycolor(color).toRgbString();
+}
+
+/**
  * Converts a color from hsl format to rgb format.
  * @param color - HSL color values
  * @returns rgb color values
@@ -166,7 +177,7 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
  */
 export function recomposeColor(color: DecomposeColor) {
   const { type, colorSpace } = color;
-  let values: any = color.values;
+  let values = color.values;
 
   if (type.indexOf('rgb') !== -1) {
     // Only convert the first 3 values to int (i.e. not alpha)

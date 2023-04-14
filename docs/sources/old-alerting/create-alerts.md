@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/create-alerts/
-  - /docs/grafana/latest/old-alerting/create-alerts/
+  - ../alerting/create-alerts/
 description: Configure alert rules
 draft: true
 keywords:
@@ -15,7 +14,7 @@ weight: 200
 
 # Create alerts
 
-Grafana alerting allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
+Grafana Alerting allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
 ![Alerting overview](/static/img/docs/alerting/drag_handles_gif.gif)
 

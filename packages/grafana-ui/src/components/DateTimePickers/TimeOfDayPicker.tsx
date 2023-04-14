@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
 import RcTimePicker from 'rc-time-picker';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
+import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
 
-import { Icon, useStyles } from '../../index';
-import { stylesFactory } from '../../themes';
+import { Icon, useStyles2 } from '../../index';
 import { focusCss } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
@@ -18,9 +17,14 @@ export interface Props {
   minuteStep?: number;
   size?: FormInputSize;
   disabled?: boolean;
+  disabledHours?: () => number[];
+  disabledMinutes?: () => number[];
+  disabledSeconds?: () => number[];
 }
 
-export const TimeOfDayPicker: FC<Props> = ({
+export const POPUP_CLASS_NAME = 'time-of-day-picker-panel';
+
+export const TimeOfDayPicker = ({
   minuteStep = 1,
   showHour = true,
   showSeconds = false,
@@ -28,13 +32,16 @@ export const TimeOfDayPicker: FC<Props> = ({
   value,
   size = 'auto',
   disabled,
-}) => {
-  const styles = useStyles(getStyles);
+  disabledHours,
+  disabledMinutes,
+  disabledSeconds,
+}: Props) => {
+  const styles = useStyles2(getStyles);
 
   return (
     <RcTimePicker
       className={cx(inputSizes()[size], styles.input)}
-      popupClassName={styles.picker}
+      popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
       defaultValue={dateTimeAsMoment()}
       onChange={(value: any) => onChange(dateTime(value))}
       allowEmpty={false}
@@ -44,6 +51,9 @@ export const TimeOfDayPicker: FC<Props> = ({
       minuteStep={minuteStep}
       inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
       disabled={disabled}
+      disabledHours={disabledHours}
+      disabledMinutes={disabledMinutes}
+      disabledSeconds={disabledSeconds}
     />
   );
 };
@@ -52,7 +62,7 @@ interface CaretProps {
   wrapperStyle?: string;
 }
 
-const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
+const Caret = ({ wrapperStyle = '' }: CaretProps) => {
   return (
     <div className={wrapperStyle}>
       <Icon name="angle-down" />
@@ -60,12 +70,12 @@ const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = theme.colors.formInputBg;
-  const menuShadowColor = theme.colors.dropdownShadow;
-  const optionBgHover = theme.colors.dropdownOptionHoverBg;
-  const borderRadius = theme.border.radius.sm;
-  const borderColor = theme.colors.formInputBorder;
+const getStyles = (theme: GrafanaTheme2) => {
+  const bgColor = theme.components.input.background;
+  const menuShadowColor = theme.v1.palette.black;
+  const optionBgHover = theme.colors.background.secondary;
+  const borderRadius = theme.shape.borderRadius(1);
+  const borderColor = theme.components.input.borderColor;
   return {
     caretWrapper: css`
       position: absolute;
@@ -74,7 +84,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       transform: translateY(-50%);
       display: inline-block;
       text-align: right;
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
     picker: css`
       .rc-time-picker-panel-select {
@@ -85,12 +95,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           outline-width: 2px;
           &.rc-time-picker-panel-select-option-selected {
             background-color: inherit;
-            border: 1px solid ${theme.palette.orange};
+            border: 1px solid ${theme.v1.palette.orange};
             border-radius: ${borderRadius};
           }
 
           &:hover {
             background: ${optionBgHover};
+          }
+
+          &.rc-time-picker-panel-select-option-disabled {
+            color: ${theme.colors.action.disabledText};
           }
         }
       }
@@ -122,16 +136,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${bgColor};
         border-radius: ${borderRadius};
         border-color: ${borderColor};
-        height: ${theme.spacing.formInputHeight}px;
+        height: ${theme.spacing(4)};
 
         &:focus {
           ${focusCss(theme)}
         }
 
         &:disabled {
-          background-color: ${theme.colors.formInputBgDisabled};
-          color: ${theme.colors.formInputDisabledText};
-          border: 1px solid ${theme.colors.formInputBgDisabled};
+          background-color: ${theme.colors.action.disabledBackground};
+          color: ${theme.colors.action.disabledText};
+          border: 1px solid ${theme.colors.action.disabledBackground};
           &:focus {
             box-shadow: none;
           }
@@ -139,4 +153,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
   };
-});
+};

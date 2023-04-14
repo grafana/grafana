@@ -261,15 +261,15 @@ describe('Reducer Transformer', () => {
     expect(frames[0].length).toEqual(1);
     expect(frames[1].length).toEqual(1);
 
-    const view0 = new DataFrameView<any>(frames[0]);
-    const view1 = new DataFrameView<any>(frames[1]);
+    const view0 = new DataFrameView(frames[0]);
+    const view1 = new DataFrameView(frames[1]);
     expect({ ...view0.get(0) }).toMatchInlineSnapshot(`
-      Object {
+      {
         "temperature": 6,
       }
     `);
     expect({ ...view1.get(0) }).toMatchInlineSnapshot(`
-      Object {
+      {
         "humidity": 10000.6,
         "temperature": 6,
       }
@@ -398,45 +398,45 @@ describe('Reducer Transformer', () => {
 
       expect(processed.length).toEqual(1);
       expect(processed[0].fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
+        [
+          {
+            "config": {},
             "name": "Field",
             "type": "string",
-            "values": Array [
+            "values": [
               "value",
               "value",
               "value",
               "value",
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "state",
             "type": "string",
-            "values": Array [
+            "values": [
               "CA",
               "NY",
               "CA",
               ,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "country",
             "type": "string",
-            "values": Array [
+            "values": [
               ,
               ,
               "USA",
               "USA",
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "Max",
             "type": "number",
-            "values": Array [
+            "values": [
               6,
               6,
               6,

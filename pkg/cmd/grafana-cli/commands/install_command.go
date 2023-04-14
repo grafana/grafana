@@ -1,26 +1,20 @@
 package commands
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
@@ -49,6 +43,10 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 	return nil
 }
 
+func logRestartNotice() {
+	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
+}
+
 func (cmd Command) installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
@@ -57,102 +55,53 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	skipTLSVerify := c.Bool("insecure")
-
-	i := installer.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
-	return i.Install(context.Background(), pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
+	err := installPlugin(context.Background(), pluginID, version, c)
+	if err == nil {
+		logRestartNotice()
+	}
+	return err
 }
 
-// InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
-// and then extracts the zip into the plugins directory.
-func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils.ApiClient) error {
-	pluginFolder := c.PluginDirectory()
-	downloadURL := c.PluginURL()
-	isInternal := false
+// installPlugin downloads the plugin code as a zip file from the Grafana.com API
+// and then extracts the zip into the plugin's directory.
+func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
+	skipTLSVerify := c.Bool("insecure")
+	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
-	var checksum string
-	if downloadURL == "" {
-		if strings.HasPrefix(pluginName, "grafana-") {
-			// At this point the plugin download is going through grafana.com API and thus the name is validated.
-			// Checking for grafana prefix is how it is done there so no 3rd party plugin should have that prefix.
-			// You can supply custom plugin name and then set custom download url to 3rd party plugin but then that
-			// is up to the user to know what she is doing.
-			isInternal = true
+	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+
+	var archive *repo.PluginArchive
+	var err error
+	pluginZipURL := c.PluginURL()
+	if pluginZipURL != "" {
+		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
+			return err
 		}
-		plugin, err := client.GetPlugin(pluginName, c.PluginRepoURL())
+	} else {
+		if archive, err = repository.GetPluginArchive(ctx, pluginID, version, compatOpts); err != nil {
+			return err
+		}
+	}
+
+	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
+	extractedArchive, err := pluginFs.Add(ctx, pluginID, archive.File)
+	if err != nil {
+		return err
+	}
+
+	for _, dep := range extractedArchive.Dependencies {
+		services.Logger.Infof("Fetching %s dependency...", dep.ID)
+		d, err := repository.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		if err != nil {
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+
+		_, err = pluginFs.Add(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}
-
-		v, err := SelectVersion(&plugin, version)
-		if err != nil {
-			return err
-		}
-
-		if version == "" {
-			version = v.Version
-		}
-		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
-			c.String("repo"),
-			pluginName,
-			version,
-		)
-
-		// Plugins which are downloaded just as sourcecode zipball from github do not have checksum
-		if v.Arch != nil {
-			archMeta, exists := v.Arch[osAndArchString()]
-			if !exists {
-				archMeta = v.Arch["any"]
-			}
-			checksum = archMeta.SHA256
-		}
 	}
-
-	logger.Infof("installing %v @ %v\n", pluginName, version)
-	logger.Infof("from: %v\n", downloadURL)
-	logger.Infof("into: %v\n", pluginFolder)
-	logger.Info("\n")
-
-	// Create temp file for downloading zip file
-	tmpFile, err := ioutil.TempFile("", "*.zip")
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to create temporary file", err)
-	}
-	defer func() {
-		if err := os.Remove(tmpFile.Name()); err != nil {
-			logger.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
-		}
-	}()
-
-	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
-	if err != nil {
-		if err := tmpFile.Close(); err != nil {
-			logger.Warn("Failed to close file", "err", err)
-		}
-		return fmt.Errorf("%v: %w", "failed to download plugin archive", err)
-	}
-	err = tmpFile.Close()
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to close tmp file", err)
-	}
-
-	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
-	}
-
-	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
-
-	res, _ := services.ReadPlugin(pluginFolder, pluginName)
-	for _, v := range res.Dependencies.Plugins {
-		if err := InstallPlugin(v.ID, "", c, client); err != nil {
-			return fmt.Errorf("failed to install plugin '%s': %w", v.ID, err)
-		}
-
-		logger.Infof("Installed dependency: %v ✔\n", v.ID)
-	}
-
-	return err
+	return nil
 }
 
 func osAndArchString() string {
@@ -181,178 +130,4 @@ func latestSupportedVersion(plugin *models.Plugin) *models.Version {
 		}
 	}
 	return nil
-}
-
-// SelectVersion returns latest version if none is specified or the specified version. If the version string is not
-// matched to existing version it errors out. It also errors out if version that is matched is not available for current
-// os and platform. It expects plugin.Versions to be sorted so the newest version is first.
-func SelectVersion(plugin *models.Plugin, version string) (*models.Version, error) {
-	var ver models.Version
-
-	latestForArch := latestSupportedVersion(plugin)
-	if latestForArch == nil {
-		return nil, fmt.Errorf("plugin is not supported on your architecture and OS")
-	}
-
-	if version == "" {
-		return latestForArch, nil
-	}
-	for _, v := range plugin.Versions {
-		if v.Version == version {
-			ver = v
-			break
-		}
-	}
-
-	if len(ver.Version) == 0 {
-		return nil, fmt.Errorf("could not find the version you're looking for")
-	}
-
-	if !supportsCurrentArch(&ver) {
-		return nil, fmt.Errorf(
-			"the version you want is not supported on your architecture and OS, latest suitable version is %s",
-			latestForArch.Version)
-	}
-
-	return &ver, nil
-}
-
-var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-
-func removeGitBuildFromName(pluginName, filename string) string {
-	return reGitBuild.ReplaceAllString(filename, pluginName+"/")
-}
-
-const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
-
-func extractFiles(archiveFile string, pluginName string, dstDir string, allowSymlinks bool) error {
-	var err error
-	dstDir, err = filepath.Abs(dstDir)
-	if err != nil {
-		return err
-	}
-	logger.Debugf("Extracting archive %q to %q...\n", archiveFile, dstDir)
-
-	existingInstallDir := filepath.Join(dstDir, pluginName)
-	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
-		err = os.RemoveAll(existingInstallDir)
-		if err != nil {
-			return err
-		}
-
-		logger.Infof("Removed existing installation of %s\n\n", pluginName)
-	}
-
-	r, err := zip.OpenReader(archiveFile)
-	if err != nil {
-		return err
-	}
-	for _, zf := range r.File {
-		if filepath.IsAbs(zf.Name) || strings.HasPrefix(zf.Name, ".."+string(filepath.Separator)) {
-			return fmt.Errorf(
-				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, dstDir)
-		}
-
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
-
-		if zf.FileInfo().IsDir() {
-			// We can ignore gosec G304 here since it makes sense to give all users read access
-			// nolint:gosec
-			if err := os.MkdirAll(dstPath, 0755); err != nil {
-				if os.IsPermission(err) {
-					return fmt.Errorf(permissionsDeniedMessage, dstPath)
-				}
-
-				return err
-			}
-
-			continue
-		}
-
-		// Create needed directories to extract file
-		// We can ignore gosec G304 here since it makes sense to give all users read access
-		// nolint:gosec
-		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return fmt.Errorf("%v: %w", "failed to create directory to extract plugin files", err)
-		}
-
-		if isSymlink(zf) {
-			if !allowSymlinks {
-				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name)
-				continue
-			}
-			if err := extractSymlink(zf, dstPath); err != nil {
-				logger.Errorf("Failed to extract symlink: %v \n", err)
-				continue
-			}
-			continue
-		}
-
-		if err := extractFile(zf, dstPath); err != nil {
-			return fmt.Errorf("%v: %w", "failed to extract file", err)
-		}
-	}
-
-	return nil
-}
-
-func isSymlink(file *zip.File) bool {
-	return file.Mode()&os.ModeSymlink == os.ModeSymlink
-}
-
-func extractSymlink(file *zip.File, filePath string) error {
-	// symlink target is the contents of the file
-	src, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to extract file", err)
-	}
-	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, src); err != nil {
-		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
-	}
-	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
-	}
-	return nil
-}
-
-func extractFile(file *zip.File, filePath string) (err error) {
-	fileMode := file.Mode()
-	// This is entry point for backend plugins so we want to make them executable
-	if strings.HasSuffix(filePath, "_linux_amd64") || strings.HasSuffix(filePath, "_darwin_amd64") {
-		fileMode = os.FileMode(0755)
-	}
-
-	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
-	// from command line flag "pluginsDir", and the only possible damage would be writing to the wrong directory.
-	// If the user shouldn't be writing to this directory, they shouldn't have the permission in the file system.
-	// nolint:gosec
-	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
-	if err != nil {
-		if os.IsPermission(err) {
-			return fmt.Errorf(permissionsDeniedMessage, filePath)
-		}
-
-		unwrappedError := errors.Unwrap(err)
-		if unwrappedError != nil && strings.EqualFold(unwrappedError.Error(), "text file busy") {
-			return fmt.Errorf("file %q is in use - please stop Grafana, install the plugin and restart Grafana", filePath)
-		}
-
-		return fmt.Errorf("%v: %w", "failed to open file", err)
-	}
-	defer func() {
-		err = dst.Close()
-	}()
-
-	src, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to extract file", err)
-	}
-	defer func() {
-		err = src.Close()
-	}()
-
-	_, err = io.Copy(dst, src)
-	return err
 }

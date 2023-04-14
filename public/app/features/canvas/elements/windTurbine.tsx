@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 
 interface WindTurbineData {
   rpm?: number;
@@ -16,15 +16,13 @@ interface WindTurbineConfig {
   rpm?: ScalarDimensionConfig;
 }
 
-const WindTurbineDisplay: FC<CanvasElementProps<WindTurbineConfig, WindTurbineData>> = (props) => {
+const WindTurbineDisplay = ({ data }: CanvasElementProps<WindTurbineConfig, WindTurbineData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const windTurbineAnimation = `spin ${data?.rpm ? 60 / Math.abs(data.rpm) : 0}s linear infinite`;
 
   return (
-    <svg viewBox="0 0 189.326 283.989" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 189.326 283.989" preserveAspectRatio="xMidYMid meet" style={{ fill: defaultBgColor }}>
       <symbol id="blade">
         <path
           fill="#e6e6e6"
@@ -74,11 +72,22 @@ export const windTurbineItem: CanvasElementItem<any, any> = {
 
   defaultSize: {
     width: 100,
-    height: 100,
+    height: 155,
   },
 
   getNewOptions: (options) => ({
     ...options,
+    background: {
+      color: {
+        fixed: 'transparent',
+      },
+    },
+    placement: {
+      width: options?.placement?.width ?? 100,
+      height: options?.placement?.height ?? 155,
+      top: options?.placement?.top,
+      left: options?.placement?.left,
+    },
   }),
 
   // Called when data changes

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -40,11 +39,29 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
+func (d Duration) MarshalYAML() (interface{}, error) {
+	return time.Duration(d).Seconds(), nil
+}
+
+func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var v interface{}
+	if err := unmarshal(&v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case int:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
 // RelativeTimeRange is the per query start and end time
 // for requests.
 type RelativeTimeRange struct {
-	From Duration `json:"from"`
-	To   Duration `json:"to"`
+	From Duration `json:"from" yaml:"from"`
+	To   Duration `json:"to" yaml:"to"`
 }
 
 // isValid checks that From duration is greater than To duration.
@@ -52,10 +69,10 @@ func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) ToTimeRange(now time.Time) backend.TimeRange {
-	return backend.TimeRange{
-		From: now.Add(-time.Duration(rtr.From)),
-		To:   now.Add(-time.Duration(rtr.To)),
+func (rtr *RelativeTimeRange) ToTimeRange() expr.TimeRange {
+	return expr.RelativeTimeRange{
+		From: -time.Duration(rtr.From),
+		To:   -time.Duration(rtr.To),
 	}
 }
 
@@ -71,13 +88,17 @@ type AlertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
-	// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
+	// Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.
 	DatasourceUID string `json:"datasourceUid"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
 	modelProps map[string]interface{}
+}
+
+func (aq *AlertQuery) String() string {
+	return fmt.Sprintf("refID: %s, queryType: %s, datasourceUID: %s", aq.RefID, aq.QueryType, aq.DatasourceUID)
 }
 
 func (aq *AlertQuery) setModelProps() error {

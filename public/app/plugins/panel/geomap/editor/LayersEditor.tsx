@@ -6,13 +6,10 @@ import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
-import { GeomapInstanceState } from '../GeomapPanel';
-import { geomapLayerRegistry } from '../layers/registry';
-import { GeomapPanelOptions, MapLayerState } from '../types';
+import { getLayersOptions } from '../layers/registry';
+import { PanelOptions, MapLayerState, GeomapInstanceState } from '../types';
 
-import { dataLayerFilter } from './layerEditor';
-
-type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
+type LayersEditorProps = StandardEditorProps<unknown, unknown, PanelOptions, GeomapInstanceState>;
 
 export const LayersEditor = (props: LayersEditorProps) => {
   const { layers, selected, actions } = props.context.instanceState ?? {};
@@ -38,19 +35,19 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.reorder(src, dst);
   };
 
-  const onSelect = (element: MapLayerState<any>) => {
+  const onSelect = (element: MapLayerState<unknown>) => {
     actions.selectLayer(element.options.name);
   };
 
-  const onDelete = (element: MapLayerState<any>) => {
+  const onDelete = (element: MapLayerState<unknown>) => {
     actions.deleteLayer(element.options.name);
   };
 
-  const getLayerInfo = (element: MapLayerState<any>) => {
+  const getLayerInfo = (element: MapLayerState<unknown>) => {
     return element.options.type;
   };
 
-  const onNameChange = (element: MapLayerState<any>, name: string) => {
+  const onNameChange = (element: MapLayerState<unknown>, name: string) => {
     element.onChange({ ...element.options, name });
   };
 
@@ -61,7 +58,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
       <Container>
         <AddLayerButton
           onChange={(v) => actions.addlayer(v.value!)}
-          options={geomapLayerRegistry.selectOptions(undefined, dataLayerFilter).options}
+          options={getLayersOptions(false).options}
           label={'Add layer'}
         />
       </Container>

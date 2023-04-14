@@ -1,0 +1,16 @@
+name: "doc-validator"
+on:
+  pull_request:
+    paths: ["docs/sources/**"]
+  workflow_dispatch:
+jobs:
+  doc-validator:
+    runs-on: "ubuntu-latest"
+    container:
+      image: "grafana/doc-validator:v1.10.0"
+    steps:
+      - name: "Checkout code"
+        uses: "actions/checkout@v3"
+      - name: "Run doc-validator tool"
+        # Ensure that the CI always passes until all errors are resolved.
+        run: "doc-validator --skip-image-validation ./docs/sources /docs/grafana/latest || true"

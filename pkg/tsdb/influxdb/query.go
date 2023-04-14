@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -44,7 +45,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 }
 
 func (query *Query) renderTags() []string {
-	var res []string
+	res := make([]string, 0, len(query.Tags))
 	for i, tag := range query.Tags {
 		str := ""
 
@@ -77,7 +78,17 @@ func (query *Query) renderTags() []string {
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
 
-		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
+		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
+
+		if strings.HasSuffix(tag.Key, "::tag") {
+			escapedKey = fmt.Sprintf(`"%s"::tag`, strings.TrimSuffix(tag.Key, "::tag"))
+		}
+
+		if strings.HasSuffix(tag.Key, "::field") {
+			escapedKey = fmt.Sprintf(`"%s"::field`, strings.TrimSuffix(tag.Key, "::field"))
+		}
+
+		res = append(res, fmt.Sprintf(`%s%s %s %s`, str, escapedKey, tag.Operator, textValue))
 	}
 
 	return res
@@ -85,13 +96,13 @@ func (query *Query) renderTags() []string {
 
 func (query *Query) renderTimeFilter(queryContext *backend.QueryDataRequest) string {
 	from, to := epochMStoInfluxTime(&queryContext.Queries[0].TimeRange)
-	return fmt.Sprintf("time > %s and time < %s", from, to)
+	return fmt.Sprintf("time >= %s and time <= %s", from, to)
 }
 
 func (query *Query) renderSelectors(queryContext *backend.QueryDataRequest) string {
 	res := "SELECT "
 
-	var selectors []string
+	selectors := make([]string, 0, len(query.Selects))
 	for _, sel := range query.Selects {
 		stk := ""
 		for _, s := range *sel {

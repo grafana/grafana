@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import React, { ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {}
 
-export const ListNewButton: React.FC<Props> = ({ children, ...restProps }) => {
-  const styles = useStyles(getStyles);
+export const ListNewButton = ({ children, ...restProps }: Props) => {
+  const styles = useStyles2(getStyles);
   return (
     <div className={styles.buttonWrapper}>
       <Button icon="plus" variant="secondary" {...restProps}>
@@ -17,8 +17,8 @@ export const ListNewButton: React.FC<Props> = ({ children, ...restProps }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   buttonWrapper: css`
-    padding: ${theme.spacing.lg} 0;
+    padding: ${theme.spacing(3)} 0;
   `,
 });

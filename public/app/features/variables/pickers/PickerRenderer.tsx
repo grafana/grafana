@@ -1,16 +1,18 @@
-import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
+import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
+import { VARIABLE_PREFIX } from '../constants';
 import { VariableHide, VariableModel } from '../types';
 
 interface Props {
   variable: VariableModel;
+  readOnly?: boolean;
 }
 
-export const PickerRenderer: FunctionComponent<Props> = (props) => {
+export const PickerRenderer = (props: Props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
 
   if (!props.variable) {
@@ -21,7 +23,7 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
     <div className="gf-form">
       <PickerLabel variable={props.variable} />
       {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
-        <PickerToRender variable={props.variable} />
+        <PickerToRender variable={props.variable} readOnly={props.readOnly ?? false} />
       )}
     </div>
   );
@@ -34,7 +36,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     return null;
   }
 
-  const elementId = `var-${variable.id}`;
+  const elementId = VARIABLE_PREFIX + variable.id;
   if (variable.description) {
     return (
       <Tooltip content={variable.description} placement={'bottom'}>

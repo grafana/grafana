@@ -1,0 +1,25 @@
+package crd
+
+import (
+  _ "embed"
+
+  "github.com/grafana/grafana/pkg/kinds/{{ .Props.MachineName }}"
+  "github.com/grafana/kindsys/k8ssys"
+)
+
+// The CRD YAML representation of the {{ .Props.Name }} kind.
+//
+//go:embed {{ .Props.MachineName }}.crd.yml
+var CRDYaml []byte
+
+// {{ .Props.Name }} is the Go CRD representation of a single {{ .Props.Name }} object.
+// It implements [runtime.Object], and is used in k8s scheme construction.
+type {{ .Props.Name }} struct {
+  k8ssys.Base[{{ .Props.MachineName }}.{{ .Props.Name }}]
+}
+
+// {{ .Props.Name }}List is the Go CRD representation of a list {{ .Props.Name }} objects.
+// It implements [runtime.Object], and is used in k8s scheme construction.
+type {{ .Props.Name }}List struct {
+  k8ssys.ListBase[{{ .Props.MachineName }}.{{ .Props.Name }}]
+}

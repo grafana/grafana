@@ -1,19 +1,21 @@
-import { setContextSrv } from '../../../../core/services/context_srv';
-import { DashboardModel } from '../../state/DashboardModel';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+
+import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
-function getDefaultDashboardModel(): DashboardModel {
-  return new DashboardModel({
-    refresh: false,
+function getDefaultDashboardModel() {
+  return createDashboardModelFixture({
     panels: [
-      {
+      createPanelJSONFixture({
         id: 1,
         type: 'graph',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
-        legend: { sortDesc: false },
-      },
+        legend: { show: true, sortDesc: false }, // TODO legend is marked as a non-persisted field
+      }),
+
       {
         id: 2,
         type: 'row',
@@ -24,16 +26,16 @@ function getDefaultDashboardModel(): DashboardModel {
           { id: 4, type: 'graph', gridPos: { x: 12, y: 6, w: 12, h: 2 } },
         ],
       },
-      { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 } },
+      { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 }, collapsed: false, panels: [] },
     ],
   });
 }
 
 function getTestContext() {
-  const contextSrv: any = { isSignedIn: true, isEditor: true };
+  const contextSrv = { isSignedIn: true, isEditor: true } as ContextSrv;
   setContextSrv(contextSrv);
-  const dash: any = getDefaultDashboardModel();
-  const original: any = dash.getSaveModelClone();
+  const dash = getDefaultDashboardModel();
+  const original = dash.getSaveModelClone();
 
   return { dash, original, contextSrv };
 }
@@ -53,14 +55,8 @@ describe('DashboardPrompt', () => {
   it('Should ignore a lot of changes', () => {
     const { original, dash } = getTestContext();
     dash.time = { from: '1h' };
-    dash.refresh = true;
+    dash.refresh = '30s';
     dash.schemaVersion = 10;
-    expect(hasChanges(dash, original)).toBe(false);
-  });
-
-  it('Should ignore .iteration changes', () => {
-    const { original, dash } = getTestContext();
-    dash.iteration = new Date().getTime() + 1;
     expect(hasChanges(dash, original)).toBe(false);
   });
 
@@ -72,8 +68,8 @@ describe('DashboardPrompt', () => {
 
   it('Should ignore panel legend changes', () => {
     const { original, dash } = getTestContext();
-    dash.panels[0].legend.sortDesc = true;
-    dash.panels[0].legend.sort = 'avg';
+    dash.panels[0]!.legend!.sortDesc = true;
+    dash.panels[0]!.legend!.sort = 'avg';
     expect(hasChanges(dash, original)).toBe(false);
   });
 
@@ -94,65 +90,72 @@ describe('DashboardPrompt', () => {
     describe('when called without current dashboard', () => {
       it('then it should return true', () => {
         const { original } = getTestContext();
-        expect(ignoreChanges(null as unknown as DashboardModel, original)).toBe(true);
-      });
-    });
-
-    describe('when called without meta in current dashboard', () => {
-      it('then it should return true', () => {
-        const { original, dash } = getTestContext();
-        expect(ignoreChanges({ ...dash, meta: undefined }, original)).toBe(true);
+        expect(ignoreChanges(null, original)).toBe(true);
       });
     });
 
     describe('when called for a viewer without save permissions', () => {
       it('then it should return true', () => {
-        const { original, dash, contextSrv } = getTestContext();
+        const { contextSrv } = getTestContext();
+        const dash = createDashboardModelFixture({}, { canSave: false });
+        const original = dash.getSaveModelClone();
         contextSrv.isEditor = false;
-        expect(ignoreChanges({ ...dash, meta: { canSave: false } }, original)).toBe(true);
+        expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
 
     describe('when called for a viewer with save permissions', () => {
       it('then it should return undefined', () => {
-        const { original, dash, contextSrv } = getTestContext();
+        const { contextSrv } = getTestContext();
+        const dash = createDashboardModelFixture({}, { canSave: true });
+        const original = dash.getSaveModelClone();
         contextSrv.isEditor = false;
-        expect(ignoreChanges({ ...dash, meta: { canSave: true } }, original)).toBe(undefined);
+        expect(ignoreChanges(dash, original)).toBe(undefined);
       });
     });
 
     describe('when called for an user that is not signed in', () => {
       it('then it should return true', () => {
-        const { original, dash, contextSrv } = getTestContext();
+        const { contextSrv } = getTestContext();
+        const dash = createDashboardModelFixture({}, { canSave: true });
+        const original = dash.getSaveModelClone();
         contextSrv.isSignedIn = false;
-        expect(ignoreChanges({ ...dash, meta: { canSave: true } }, original)).toBe(true);
+        expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
 
     describe('when called with fromScript', () => {
       it('then it should return true', () => {
-        const { original, dash } = getTestContext();
-        expect(
-          ignoreChanges({ ...dash, meta: { canSave: true, fromScript: true, fromFile: undefined } }, original)
-        ).toBe(true);
+        const dash = createDashboardModelFixture({}, { canSave: true, fromScript: true, fromFile: undefined });
+        const original = dash.getSaveModelClone();
+        expect(ignoreChanges(dash, original)).toBe(true);
       });
+    });
+
+    it('Should ignore panel schema migrations', () => {
+      const { original, dash } = getTestContext();
+      const plugin = getPanelPlugin({}).setMigrationHandler((panel) => {
+        delete (panel as any).legend;
+        return { option1: 'Aasd' };
+      });
+
+      dash.panels[0].pluginLoaded(plugin);
+      expect(hasChanges(dash, original)).toBe(false);
     });
 
     describe('when called with fromFile', () => {
       it('then it should return true', () => {
-        const { original, dash } = getTestContext();
-        expect(
-          ignoreChanges({ ...dash, meta: { canSave: true, fromScript: undefined, fromFile: true } }, original)
-        ).toBe(true);
+        const dash = createDashboardModelFixture({}, { canSave: true, fromScript: undefined, fromFile: true });
+        const original = dash.getSaveModelClone();
+        expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
 
     describe('when called with canSave but without fromScript and fromFile', () => {
       it('then it should return false', () => {
-        const { original, dash } = getTestContext();
-        expect(
-          ignoreChanges({ ...dash, meta: { canSave: true, fromScript: undefined, fromFile: undefined } }, original)
-        ).toBe(undefined);
+        const dash = createDashboardModelFixture({}, { canSave: true, fromScript: undefined, fromFile: undefined });
+        const original = dash.getSaveModelClone();
+        expect(ignoreChanges(dash, original)).toBe(undefined);
       });
     });
   });

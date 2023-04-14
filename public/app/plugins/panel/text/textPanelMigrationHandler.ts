@@ -1,6 +1,6 @@
 import { PanelModel } from '@grafana/data';
 
-import { TextMode, PanelOptions } from './models.gen';
+import { TextMode, PanelOptions } from './panelcfg.gen';
 
 export const textPanelMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
@@ -21,7 +21,8 @@ export const textPanelMigrationHandler = (panel: PanelModel<PanelOptions>): Part
   }
 
   // The 'text' mode has been removed so we need to update any panels still using it to markdown
-  if (options.mode !== 'html' && options.mode !== 'markdown') {
+  const modes = [TextMode.Code, TextMode.HTML, TextMode.Markdown];
+  if (!modes.find((f) => f === options.mode)) {
     options = { ...options, mode: TextMode.Markdown };
   }
 

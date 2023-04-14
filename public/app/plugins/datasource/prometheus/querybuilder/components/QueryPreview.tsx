@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow } from '@grafana/experimental';
 
 import promqlGrammar from '../../promql';
 import { RawQuery } from '../shared/RawQuery';
@@ -10,12 +10,14 @@ export interface Props {
 }
 
 export function QueryPreview({ query }: Props) {
+  if (!query) {
+    return null;
+  }
+
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Raw query">
-          <RawQuery query={query} lang={{ grammar: promqlGrammar, name: 'promql' }} />
-        </EditorField>
+        <RawQuery query={query} lang={{ grammar: promqlGrammar, name: 'promql' }} />
       </EditorFieldGroup>
     </EditorRow>
   );

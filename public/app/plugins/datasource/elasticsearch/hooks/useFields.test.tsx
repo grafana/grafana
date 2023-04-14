@@ -1,15 +1,13 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import React, { PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { BucketAggregationType } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
-import { MetricAggregationType } from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { ElasticDatasource } from '../datasource';
-import { defaultBucketAgg, defaultMetricAgg } from '../query_def';
-import { ElasticsearchQuery } from '../types';
+import { defaultBucketAgg, defaultMetricAgg } from '../queryDef';
+import { ElasticsearchQuery, MetricAggregationType, BucketAggregationType } from '../types';
 
 import { useFields } from './useFields';
 

@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -53,17 +55,24 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			MaxOpenConns:    0,
 			MaxIdleConns:    2,
 			ConnMaxLifetime: 14400,
+			SecureDSProxy:   false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -73,6 +82,16 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		protocol := "tcp"
 		if strings.HasPrefix(dsInfo.URL, "/") {
 			protocol = "unix"
+		}
+
+		// register the secure socks proxy dialer context, if enabled
+		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
+			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
+			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, uniqueIdentifier)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
@@ -106,7 +125,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 
 		config := sqleng.DataPluginConfiguration{
@@ -118,9 +137,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		rowTransformer := mysqlQueryResultTransformer{
-			log: logger,
-		}
+		rowTransformer := mysqlQueryResultTransformer{}
 
 		return sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 	}
@@ -135,6 +152,25 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 	return instance, nil
 }
 
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	if err != nil {
+		var driverErr *mysql.MySQLError
+		if errors.As(err, &driverErr) {
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, driverErr).Error()}, nil
+		}
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+	}
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
 	if err != nil {
@@ -144,15 +180,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 type mysqlQueryResultTransformer struct {
-	log log.Logger
 }
 
-func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
+func (t *mysqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
 	var driverErr *mysql.MySQLError
 	if errors.As(err, &driverErr) {
 		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR &&
 			driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
-			t.log.Error("query error", "err", err)
+			logger.Error("Query error", "error", err)
 			return errQueryFailed
 		}
 	}

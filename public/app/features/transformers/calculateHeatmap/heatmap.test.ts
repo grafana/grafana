@@ -1,8 +1,8 @@
 import { FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
+import { HeatmapCalculationOptions } from '@grafana/schema';
 
-import { bucketsToScanlines, calculateHeatmapFromData } from './heatmap';
-import { HeatmapCalculationOptions } from './models.gen';
+import { rowsToCellsHeatmap, calculateHeatmapFromData } from './heatmap';
 
 describe('Heatmap transformer', () => {
   it('calculate heatmap from input data', async () => {
@@ -19,16 +19,16 @@ describe('Heatmap transformer', () => {
 
     const heatmap = calculateHeatmapFromData([data], options);
     expect(heatmap.fields.map((f) => ({ name: f.name, type: f.type, config: f.config }))).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "config": Object {},
+      [
+        {
+          "config": {},
           "name": "xMin",
           "type": "time",
         },
-        Object {
-          "config": Object {
-            "custom": Object {
-              "scaleDistribution": Object {
+        {
+          "config": {
+            "custom": {
+              "scaleDistribution": {
                 "type": "linear",
               },
             },
@@ -37,8 +37,8 @@ describe('Heatmap transformer', () => {
           "name": "yMin",
           "type": "number",
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": "short",
           },
           "name": "Count",
@@ -58,23 +58,23 @@ describe('Heatmap transformer', () => {
       ],
     });
 
-    const heatmap = bucketsToScanlines({ frame, value: 'Speed' });
+    const heatmap = rowsToCellsHeatmap({ frame, value: 'Speed' });
     expect(heatmap.fields.map((f) => ({ name: f.name, type: f.type, config: f.config }))).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "config": Object {},
+      [
+        {
+          "config": {},
           "name": "xMax",
           "type": "time",
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": "short",
           },
           "name": "y",
           "type": "number",
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": "m2",
           },
           "name": "Speed",
@@ -83,20 +83,20 @@ describe('Heatmap transformer', () => {
       ]
     `);
     expect(heatmap.meta).toMatchInlineSnapshot(`
-      Object {
-        "custom": Object {
+      {
+        "custom": {
           "yMatchWithLabel": undefined,
-          "yOrdinalDisplay": Array [
+          "yOrdinalDisplay": [
             "A",
             "B",
             "C",
           ],
         },
-        "type": "heatmap-scanlines",
+        "type": "heatmap-cells",
       }
     `);
     expect(heatmap.fields[1].values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         0,
         1,
         2,

@@ -2,21 +2,23 @@ package webtest
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/require"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestServer(t *testing.T) {
 	routeRegister := routing.NewRouteRegister()
 	var actualRequest *http.Request
-	routeRegister.Post("/api", routing.Wrap(func(c *models.ReqContext) response.Response {
+	routeRegister.Post("/api", routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		actualRequest = c.Req
 		return response.JSON(http.StatusOK, c.SignedInUser)
 	}))
@@ -60,14 +62,14 @@ func verifyRequest(t *testing.T, s *Server, req *http.Request, expectedBody stri
 	} else {
 		require.Equal(t, http.MethodPost, req.Method)
 		require.NotNil(t, req.Body)
-		bytes, err := ioutil.ReadAll(req.Body)
+		bytes, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		require.Equal(t, expectedBody, string(bytes))
 	}
 
 	require.NotEmpty(t, requestIdentifierFromRequest(req))
 
-	req = RequestWithWebContext(req, &models.ReqContext{
+	req = RequestWithWebContext(req, &contextmodel.ReqContext{
 		IsSignedIn: true,
 	})
 	require.NotNil(t, req)
@@ -78,7 +80,7 @@ func verifyRequest(t *testing.T, s *Server, req *http.Request, expectedBody stri
 
 func TestServerClient(t *testing.T) {
 	routeRegister := routing.NewRouteRegister()
-	routeRegister.Get("/test", routing.Wrap(func(c *models.ReqContext) response.Response {
+	routeRegister.Get("/test", routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		return response.JSON(http.StatusOK, c.SignedInUser)
 	}))
 
@@ -86,45 +88,45 @@ func TestServerClient(t *testing.T) {
 
 	t.Run("Making a request with user 1 should return user 1 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
-		req = RequestWithWebContext(req, &models.ReqContext{
-			SignedInUser: &models.SignedInUser{
-				UserId: 1,
+		req = RequestWithWebContext(req, &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{
+				UserID: 1,
 			},
 		})
 		resp, err := s.Send(req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
-		var user models.SignedInUser
+		var user user.SignedInUser
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)
-		require.Equal(t, int64(1), user.UserId)
+		require.Equal(t, int64(1), user.UserID)
 	})
 
 	t.Run("Making a request with user 2 should return user 2 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
-		req = RequestWithWebContext(req, &models.ReqContext{
-			SignedInUser: &models.SignedInUser{
-				UserId: 2,
+		req = RequestWithWebContext(req, &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{
+				UserID: 2,
 			},
 		})
 		resp, err := s.Send(req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
-		var user models.SignedInUser
+		var user user.SignedInUser
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)
-		require.Equal(t, int64(2), user.UserId)
+		require.Equal(t, int64(2), user.UserID)
 	})
 }

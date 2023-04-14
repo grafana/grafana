@@ -15,7 +15,7 @@ const (
 	azureMonitorPublic       = "azuremonitor"
 	azureMonitorChina        = "chinaazuremonitor"
 	azureMonitorUSGovernment = "govazuremonitor"
-	azureMonitorGermany      = "germanyazuremonitor"
+	azureMonitorCustomized   = "customizedazuremonitor"
 )
 
 func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
@@ -43,7 +43,10 @@ func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
 
 func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 	// Allow only known cloud names
-	cloudName := cfg.Azure.Cloud
+	cloudName := ""
+	if cfg != nil && cfg.Azure != nil {
+		cloudName = cfg.Azure.Cloud
+	}
 	switch cloudName {
 	case azsettings.AzurePublic:
 		return azsettings.AzurePublic, nil
@@ -51,8 +54,8 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 		return azsettings.AzureChina, nil
 	case azsettings.AzureUSGovernment:
 		return azsettings.AzureUSGovernment, nil
-	case azsettings.AzureGermany:
-		return azsettings.AzureGermany, nil
+	case azsettings.AzureCustomized:
+		return azsettings.AzureCustomized, nil
 	case "":
 		// Not set cloud defaults to public
 		return azsettings.AzurePublic, nil
@@ -70,8 +73,8 @@ func normalizeAzureCloud(cloudName string) (string, error) {
 		return azsettings.AzureChina, nil
 	case azureMonitorUSGovernment:
 		return azsettings.AzureUSGovernment, nil
-	case azureMonitorGermany:
-		return azsettings.AzureGermany, nil
+	case azureMonitorCustomized:
+		return azsettings.AzureCustomized, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err
@@ -108,6 +111,9 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 		cloud, err := getAzureCloud(cfg, jsonData)
 		if err != nil {
 			return nil, err
+		}
+		if secureJsonData["clientSecret"] == "" {
+			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
 		}
 		credentials := &azcredentials.AzureClientSecretCredentials{
 			AzureCloud:   cloud,

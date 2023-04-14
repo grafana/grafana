@@ -2,26 +2,20 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups       []string
-	apiUrl              string
-	roleAttributePath   string
-	roleAttributeStrict bool
-}
-
-func (s *SocialGitlab) Type() int {
-	return int(models.GITLAB)
+	allowedGroups   []string
+	apiUrl          string
+	skipOrgRoleSync bool
 }
 
 func (s *SocialGitlab) IsGroupMember(groups []string) bool {
@@ -92,7 +86,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id       int
 		Username string
@@ -106,8 +100,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(response.Body, &data)
-	if err != nil {
+	if err = json.Unmarshal(response.Body, &data); err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
@@ -117,21 +110,31 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	groups := s.GetGroups(client)
 
-	role, err := s.extractRole(response.Body)
-	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
+	var role roletype.RoleType
+	var isGrafanaAdmin *bool = nil
+	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
+		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, groups, true)
+		if s.roleAttributeStrict && !role.IsValid() {
+			return nil, &InvalidBasicRoleError{idP: "Gitlab", assignedRole: string(role)}
+		}
+
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
 	}
-	if s.roleAttributeStrict && !models.RoleType(role).IsValid() {
-		return nil, errors.New("invalid role")
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	userInfo := &BasicUserInfo{
-		Id:     fmt.Sprintf("%d", data.Id),
-		Name:   data.Name,
-		Login:  data.Username,
-		Email:  data.Email,
-		Groups: groups,
-		Role:   role,
+		Id:             fmt.Sprintf("%d", data.Id),
+		Name:           data.Name,
+		Login:          data.Username,
+		Email:          data.Email,
+		Groups:         groups,
+		Role:           role,
+		IsGrafanaAdmin: isGrafanaAdmin,
 	}
 
 	if !s.IsGroupMember(groups) {
@@ -139,17 +142,4 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	return userInfo, nil
-}
-
-func (s *SocialGitlab) extractRole(rawJSON []byte) (string, error) {
-	if s.roleAttributePath == "" {
-		return "", nil
-	}
-
-	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
-
-	if err != nil {
-		return "", err
-	}
-	return role, nil
 }

@@ -4,39 +4,9 @@
   color: $orange-dark !important;
 }
 
-// TODO: check if this is used
-.explore {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-}
-
-.explore + .explore {
-  border-left: 1px dotted $table-border;
-}
-
-.explore-wrapper {
-  display: flex;
-  height: 100%;
-
-  > .explore-split {
-    width: 50%;
-  }
-}
-
 // TODO: this is used in Loki & Prometheus, move it
 .explore-input-margin {
   margin-right: 4px;
-}
-
-// TODO: move to public/app/features/explore/Time.tsx
-.navbar .elapsed-time {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 48px;
-  text-align: center;
-  font-size: 11px;
 }
 
 .graph-legend {
@@ -169,7 +139,11 @@
 
 .cheat-sheet-item__example {
   margin: $space-xs 0;
-  cursor: pointer;
+  // element is interactive, clear button styles
+  text-align: left;
+  border: none;
+  background: transparent;
+  display: block;
 }
 
 .query-type-toggle {

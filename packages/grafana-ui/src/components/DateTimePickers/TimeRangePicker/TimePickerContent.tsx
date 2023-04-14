@@ -7,12 +7,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FilterInput } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
+import { t, Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
-import { TimeRangeForm } from './TimeRangeForm';
+import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
@@ -42,7 +43,7 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (props) => {
+export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
     isReversed,
@@ -85,7 +86,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
                 autoFocus={true}
                 value={searchTerm}
                 onChange={setSearchQuery}
-                placeholder={'Search quick ranges'}
+                placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
             <CustomScrollbar>
@@ -114,14 +115,14 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   );
 };
 
-export const TimePickerContent: React.FC<Props> = (props) => {
+export const TimePickerContent = (props: Props) => {
   const { widthOverride } = props;
   const theme = useTheme2();
   const isFullscreen = (widthOverride || window.innerWidth) >= theme.breakpoints.values.lg;
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm: React.FC<FormProps> = (props) => {
+const NarrowScreenForm = (props: FormProps) => {
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory } = props;
   const theme = useTheme2();
   const styles = getNarrowScreenStyles(theme);
@@ -130,7 +131,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   const collapsed = hideQuickRanges ? false : collapsedFlag;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption));
+    return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
 
   return (
@@ -148,18 +149,20 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           aria-expanded={!collapsed}
           aria-controls="expanded-timerange"
         >
-          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          <TimePickerTitle>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+          </TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
       </div>
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
-            <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
+            <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
           {showHistory && (
             <TimeRangeList
-              title="Recently used absolute ranges"
+              title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
               options={historyOptions}
               onChange={onChangeTimeOption}
               placeholderEmpty={null}
@@ -171,21 +174,23 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   );
 };
 
-const FullScreenForm: React.FC<FormProps> = (props) => {
+const FullScreenForm = (props: FormProps) => {
   const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions } = props;
   const theme = useTheme2();
   const styles = getFullScreenStyles(theme, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption));
+    return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
 
   return (
     <>
       <div className={styles.container}>
         <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
-          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          <TimePickerTitle>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+          </TimePickerTitle>
         </div>
-        <TimeRangeForm
+        <TimeRangeContent
           value={value}
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
@@ -197,7 +202,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
-            title="Recently used absolute ranges"
+            title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
             options={historyOptions || []}
             onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
@@ -214,22 +219,24 @@ const EmptyRecentList = memo(() => {
 
   return (
     <div className={styles.container}>
-      <div>
-        <span>
-          It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-          recently used intervals will appear here.
-        </span>
-      </div>
-      <div>
-        <a
-          className={styles.link}
-          href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
-          target="_new"
-        >
-          Read the documentation
-        </a>
-        <span> to find out more about how to enter custom time ranges.</span>
-      </div>
+      <Trans i18nKey="time-picker.content.empty-recent-list">
+        <div>
+          <span>
+            It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
+            recently used intervals will appear here.
+          </span>
+        </div>
+        <div>
+          <a
+            className={styles.link}
+            href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
+            target="_new"
+          >
+            Read the documentation
+          </a>
+          <span> to find out more about how to enter custom time ranges.</span>
+        </div>
+      </Trans>
     </div>
   );
 });
@@ -238,7 +245,8 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   if (!Array.isArray(ranges) || ranges.length === 0) {
     return [];
   }
-  return ranges.slice(ranges.length - 4).map((range) => mapRangeToTimeOption(range, timeZone));
+
+  return ranges.map((range) => mapRangeToTimeOption(range, timeZone));
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';
@@ -259,10 +267,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
     container: css`
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
       width: ${isFullscreen ? '546px' : '262px'};
-      top: 116%;
       border-radius: 2px;
       border: 1px solid ${theme.colors.border.weak};
       ${isReversed ? 'left' : 'right'}: 0;
@@ -353,7 +358,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
       a,
       span {
         font-size: 13px;
-      }
+      }\
     `,
     link: css`
       color: ${theme.colors.text.link};

@@ -1,4 +1,5 @@
-import { DataQuery, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -23,21 +24,23 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   if (isCloudRulesSource(rulesSource)) {
     const model = cloudAlertRuleToModel(rulesSource, combinedRule);
 
-    return [
-      {
-        refId: model.refId,
-        datasourceUid: rulesSource.uid,
-        queryType: '',
-        model,
-        relativeTimeRange: {
-          from: 360,
-          to: 0,
-        },
-      },
-    ];
+    return [dataQueryToAlertQuery(model, rulesSource.uid)];
   }
 
   return [];
+}
+
+export function dataQueryToAlertQuery(dataQuery: DataQuery, dataSourceUid: string): AlertQuery {
+  return {
+    refId: dataQuery.refId,
+    datasourceUid: dataSourceUid,
+    queryType: '',
+    model: dataQuery,
+    relativeTimeRange: {
+      from: 360,
+      to: 0,
+    },
+  };
 }
 
 function cloudAlertRuleToModel(dsSettings: DataSourceInstanceSettings, rule: CombinedRule): DataQuery {

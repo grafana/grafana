@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 2,
 //          "sortBy": "test"
@@ -9,24 +13,29 @@
 //  }
 //  Name: Query results
 //  Dimensions: 9 Fields by 2 Rows
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+-----------------+
-//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location | Name: test num  |
-//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        | Labels:         |
-//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string | Type: []float64 |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+-----------------+
-//  | dashboard      | 1              | a-test         |                  | /pfix/d/1/     | null                     | null                     |                | 0               |
-//  | dashboard      | 2              | z-test         |                  | /pfix/d/2/     | null                     | null                     |                | 1               |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+-----------------+
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
+//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location | Name: test num  |
+//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        | Labels:         |
+//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string | Type: []float64 |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
+//  | dashboard      | 1              | a-test         |                  | /pfix/d/1/     | null                     | []                      | general        | 0               |
+//  | dashboard      | 2              | z-test         |                  | /pfix/d/2/     | null                     | []                      | general        | 1               |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 2,
             "sortBy": "test"
@@ -88,8 +97,7 @@
             "name": "ds_uid",
             "type": "other",
             "typeInfo": {
-              "frame": "json.RawMessage",
-              "nullable": true
+              "frame": "json.RawMessage"
             }
           },
           {
@@ -135,12 +143,12 @@
             null
           ],
           [
-            null,
-            null
+            [],
+            []
           ],
           [
-            "",
-            ""
+            "general",
+            "general"
           ],
           [
             0,

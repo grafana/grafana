@@ -10,12 +10,13 @@ jobs:
     name: Report
     runs-on: ubuntu-latest
     env:
-      ARTIFACT_FOLDER: '${{ github.workspace }}/tmp'
-      ARTIFACT_NAME: 'levitate'
+      ARTIFACT_NAME: 'levitate' # The name of the artifact that we would like to download
+      ARTIFACT_FOLDER: '${{ github.workspace }}/tmp' # The name of the folder where we will download the artifact to
 
     steps:
     - uses: actions/checkout@v3
-    
+
+    # Download artifact (as a .zip archive)
     - name: 'Download artifact'
       uses: actions/github-script@v6
       env:
@@ -49,9 +50,12 @@ jobs:
           fs.mkdirSync(artifactFolder, { recursive: true });
           fs.writeFileSync(`${ artifactFolder }/${ artifactName }.zip`, Buffer.from(download.data));
         
+    # Unzip artifact
     - name: Unzip artifact
       run: unzip "${ARTIFACT_FOLDER}/${ARTIFACT_NAME}.zip" -d "${ARTIFACT_FOLDER}"
     
+     # Parse the artifact and register fields as step output variables
+      # (All fields in the JSON will be available as ${{ steps.levitate-run.outputs.<field-name> }}
     - name: Parsing levitate result
       uses: actions/github-script@v6
       id: levitate-run
@@ -61,8 +65,15 @@ jobs:
           const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
           await script({ core, filePath });
 
+    # Skip - print a message if the "Detect" workflow was skipped
+    - name: Check if the workflow should be skipped
+      if: steps.levitate-run.outputs.shouldSkip == 'true'
+      run: echo "Skipping."
+
+    # Check if label exists
     - name: Check if "levitate breaking change" label exists
       id: does-label-exist
+      if: steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
@@ -78,8 +89,9 @@ jobs:
 
           return doesExist ? 1 : 0;
 
+    # Comment on the PR
     - name: Comment on PR
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
@@ -93,8 +105,9 @@ jobs:
           [Console output](${{ steps.levitate-run.outputs.job_link }})
           [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide.md)
 
-    - name: Remove comment on PR
-      if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
+    # Remove comment from the PR (no more breaking changes)
+    - name: Remove comment from PR
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
@@ -103,8 +116,8 @@ jobs:
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
     - name: Post to Slack
       id: slack
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
-      uses: slackapi/slack-github-action@v1.18.0
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: slackapi/slack-github-action@v1.23.0
       with:
         payload: |
           {
@@ -117,8 +130,9 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
 
+    # Add the label
     - name: Add "levitate breaking change" label
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
@@ -132,8 +146,9 @@ jobs:
             labels: ['levitate breaking change']
           })
 
+    # Remove label (no more breaking changes)
     - name: Remove "levitate breaking change" label
-      if: ${{ steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 }}
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
@@ -147,10 +162,11 @@ jobs:
             name: 'levitate breaking change'
           })
 
+    # Add reviewers
     # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
     # Related issue: https://github.com/renovatebot/renovate/issues/1908
     - name: Add "grafana/plugins-platform-frontend" as a reviewer
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
+      if: steps.levitate-run.outputs.exit_code && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
@@ -165,8 +181,9 @@ jobs:
             team_reviewers: ['grafana/plugins-platform-frontend']
           });
 
+    # Remove reviewers (no more breaking changes)
     - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
-      if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}

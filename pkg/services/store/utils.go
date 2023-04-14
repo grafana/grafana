@@ -1,12 +1,23 @@
 package store
 
 import (
-	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func GuessNameFromUID(uid string) string {
+	sidx := strings.LastIndex(uid, "/") + 1
+	didx := strings.LastIndex(uid, ".")
+	if didx > sidx && didx != sidx {
+		return uid[sidx:didx]
+	}
+	if sidx > 0 {
+		return uid[sidx:]
+	}
+	return uid
+}
 
 func splitFirstSegment(path string) (string, string) {
 	idx := strings.Index(path, "/")
@@ -21,11 +32,16 @@ func splitFirstSegment(path string) (string, string) {
 	return path, ""
 }
 
-func getPathAndScope(c *models.ReqContext) (string, string) {
+func getPathAndScope(c *contextmodel.ReqContext) (string, string) {
 	params := web.Params(c.Req)
 	path := params["*"]
 	if path == "" {
 		return "", ""
 	}
-	return splitFirstSegment(filepath.Clean(path))
+	return splitFirstSegment(path)
+}
+
+func getFirstSegment(path string) string {
+	firstSegment, _ := splitFirstSegment(path)
+	return firstSegment
 }

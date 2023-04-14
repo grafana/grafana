@@ -1,5 +1,6 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataFrameJSON } from '@grafana/data';
 import { LiveDataFilter } from '@grafana/runtime';
+import { SearchQuery } from 'app/features/search/service';
 
 //----------------------------------------------
 // Query
@@ -8,6 +9,7 @@ import { LiveDataFilter } from '@grafana/runtime';
 export enum GrafanaQueryType {
   LiveMeasurements = 'measurements',
   Annotations = 'annotations',
+  Snapshot = 'snapshot',
 
   // backend
   RandomWalk = 'randomWalk',
@@ -22,8 +24,15 @@ export interface GrafanaQuery extends DataQuery {
   filter?: LiveDataFilter;
   buffer?: number;
   path?: string; // for list and read
-  query?: string; // for query endpoint
-} // NOTE, query will have more field!!!
+  search?: SearchQuery;
+  snapshot?: DataFrameJSON[];
+  file?: GrafanaQueryFile;
+}
+
+export interface GrafanaQueryFile {
+  name: string;
+  size: number;
+}
 
 export const defaultQuery: GrafanaQuery = {
   refId: 'A',

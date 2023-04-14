@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/serviceaccount/
-  - /docs/grafana/latest/http_api/serviceaccount/
+  - ../../http_api/serviceaccount/
+canonical: /docs/grafana/latest/developers/http_api/serviceaccount/
 description: Grafana service account HTTP API
 keywords:
   - grafana
@@ -9,12 +9,12 @@ keywords:
   - documentation
   - api
   - serviceaccount
-title: 'Service account HTTP API '
+title: Service account HTTP API
 ---
 
 # Service account API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Search service accounts with Paging
 
@@ -24,9 +24,9 @@ title: 'Service account HTTP API '
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope                     |
-| -------------------- | ------------------------- |
-| serviceaccounts:read | global:serviceaccounts:\* |
+| Action               | Scope |
+| -------------------- | ----- |
+| serviceaccounts:read | n/a   |
 
 **Example Request**:
 
@@ -91,9 +91,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                 | Scope |
+| ---------------------- | ----- |
+| serviceaccounts:create | n/a   |
 
 **Example Request**:
 
@@ -105,16 +105,15 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 {
   "name": "grafana",
-  "role": "Admin",
+  "role": "Viewer",
+  "isDisabled" : false
 }
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 201
 Content-Type: application/json
 
 {
@@ -131,7 +130,7 @@ Content-Type: application/json
 }
 ```
 
-## Get single serviceaccount by Id
+## Get a service account by ID
 
 `GET /api/serviceaccounts/:id`
 
@@ -139,9 +138,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope              |
-| -------------------- | ------------------ |
-| serviceaccounts:read | serviceaccounts:\* |
+| Action               | Scope                 |
+| -------------------- | --------------------- |
+| serviceaccounts:read | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -151,8 +150,6 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -182,14 +179,14 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                | Scope                 |
+| --------------------- | --------------------- |
+| serviceaccounts:write | serviceaccounts:id:\* |
 
 **Example Request**:
 
 ```http
-PUT /api/serviceaccounts/2 HTTP/1.1
+PATCH /api/serviceaccounts/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
@@ -199,8 +196,6 @@ Authorization: Basic YWRtaW46YWRtaW4=
 	"role": "Editor"
 }
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -224,8 +219,6 @@ Content-Type: application/json
 
 ---
 
-## Service account tokens
-
 ## Get service account tokens
 
 `GET /api/serviceaccounts/:id/tokens`
@@ -234,9 +227,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action               | Scope              |
-| -------------------- | ------------------ |
-| serviceaccounts:read | serviceaccounts:\* |
+| Action               | Scope                 |
+| -------------------- | --------------------- |
+| serviceaccounts:read | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -246,8 +239,6 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -276,9 +267,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                | Scope                 |
+| --------------------- | --------------------- |
+| serviceaccounts:write | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -293,8 +284,6 @@ Authorization: Basic YWRtaW46YWRtaW4=
 	"role": "Viewer"
 }
 ```
-
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -317,9 +306,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
+| Action                | Scope                 |
+| --------------------- | --------------------- |
+| serviceaccounts:write | serviceaccounts:id:\* |
 
 **Example Request**:
 
@@ -330,8 +319,6 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
-
 **Example Response**:
 
 ```http
@@ -340,5 +327,39 @@ Content-Type: application/json
 
 {
 	"message": "API key deleted"
+}
+```
+
+## Revert service account token to API key
+
+`DELETE /api/serviceaccounts/:serviceAccountId/revert/:keyId`
+
+This operation will delete the service account and create a legacy API Key for the given `keyId`.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                 | Scope                 |
+| ---------------------- | --------------------- |
+| serviceaccounts:delete | serviceaccounts:id:\* |
+
+**Example Request**:
+
+```http
+DELETE /api/serviceaccounts/1/revert/glsa_VVQjot0nijQ59lun6pMZRtsdBXxnFQ9M_77c34a79 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "Reverted service account to API key"
 }
 ```

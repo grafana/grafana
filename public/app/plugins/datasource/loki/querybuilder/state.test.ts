@@ -4,7 +4,7 @@ import { changeEditorMode, getQueryWithDefaults } from './state';
 
 describe('getQueryWithDefaults(', () => {
   it('should set defaults', () => {
-    expect(getQueryWithDefaults({ refId: 'A' } as any)).toEqual({
+    expect(getQueryWithDefaults({ refId: 'A', expr: '' })).toEqual({
       editorMode: 'builder',
       expr: '',
       queryType: 'range',
@@ -17,6 +17,6 @@ describe('getQueryWithDefaults(', () => {
       expect(query.editorMode).toBe(QueryEditorMode.Code);
     });
 
-    expect(getQueryWithDefaults({ refId: 'A' } as any).editorMode).toEqual(QueryEditorMode.Code);
+    expect(getQueryWithDefaults({ refId: 'A', expr: '' }).editorMode).toEqual(QueryEditorMode.Code);
   });
 });

@@ -1,11 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginType } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginMetaInfo, PluginType } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { JaegerDatasource, JaegerJsonData } from '../datasource';
@@ -13,6 +12,16 @@ import { testResponse } from '../testResponse';
 import { JaegerQuery } from '../types';
 
 import SearchForm from './SearchForm';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: jest.fn(),
+    containsTemplate: (val: string): boolean => {
+      return val.includes('$');
+    },
+  }),
+}));
 
 describe('SearchForm', () => {
   it('should call the `onChange` function on click of the Input', async () => {
@@ -23,10 +32,11 @@ describe('SearchForm', () => {
       refId: '121314',
     };
     const ds = {
-      async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
+      async metadataRequest(url) {
         if (url === '/api/services') {
           return Promise.resolve(['jaeger-query', 'service2', 'service3']);
         }
+        return undefined;
       },
     } as JaegerDatasource;
     setupFetchMock({ data: [testResponse] });
@@ -60,7 +70,7 @@ describe('SearchForm', () => {
 });
 
 describe('SearchForm', () => {
-  let user: UserEvent;
+  let user: ReturnType<typeof userEvent.setup>;
   let query: JaegerQuery;
   let ds: JaegerDatasource;
 
@@ -108,21 +118,50 @@ describe('SearchForm', () => {
     render(<SearchForm datasource={ds} query={query} onChange={() => {}} />);
 
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    expect(asyncServiceSelect).toBeInTheDocument();
     await user.click(asyncServiceSelect);
     jest.advanceTimersByTime(3000);
-    expect(asyncServiceSelect).toBeInTheDocument();
 
     await user.type(asyncServiceSelect, 'j');
-    var option = await screen.findByText('jaeger-query');
+    let option = await screen.findByText('jaeger-query');
     expect(option).toBeDefined();
 
     await user.type(asyncServiceSelect, 'c');
-    option = await screen.findByText('No options found');
+    option = await screen.findByText('Hit enter to add');
     expect(option).toBeDefined();
+  });
+
+  it('should add variable to select menu options', async () => {
+    query = {
+      ...defaultQuery,
+      refId: '121314',
+      service: '$service',
+      operation: '$operation',
+    };
+
+    render(<SearchForm datasource={ds} query={query} onChange={() => {}} />);
+
+    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    expect(asyncServiceSelect).toBeInTheDocument();
+    await user.click(asyncServiceSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncServiceSelect, '$');
+    const serviceOption = await screen.findByText('$service');
+    expect(serviceOption).toBeDefined();
+
+    const asyncOperationSelect = screen.getByRole('combobox', { name: 'select-operation-name' });
+    expect(asyncOperationSelect).toBeInTheDocument();
+    await user.click(asyncOperationSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncOperationSelect, '$');
+    const operationOption = await screen.findByText('$operation');
+    expect(operationOption).toBeDefined();
   });
 });
 
-function setupFetchMock(response: any, mock?: any) {
+function setupFetchMock(response: unknown, mock?: ReturnType<typeof backendSrv.fetch>) {
   const defaultMock = () => mock ?? of(createFetchResponse(response));
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
@@ -141,7 +180,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
     id: 'jaeger',
     name: 'jaeger',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },
@@ -150,6 +189,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {

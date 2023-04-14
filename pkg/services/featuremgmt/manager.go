@@ -3,13 +3,10 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
 var (
@@ -18,7 +15,7 @@ var (
 
 type FeatureManager struct {
 	isDevMod  bool
-	licensing models.Licensing
+	licensing licensing.Licensing
 	flags     map[string]*FeatureFlag
 	enabled   map[string]bool // only the "on" values
 	config    string          // path to config file
@@ -73,7 +70,8 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 	fm.update()
 }
 
-func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
+// meetsRequirements checks if grafana is able to run the given feature due to dev mode or licensing requirements
+func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
 	if ff.RequiresDevMode && !fm.isDevMod {
 		return false
 	}
@@ -82,19 +80,22 @@ func (fm *FeatureManager) evaluate(ff *FeatureFlag) bool {
 		return false
 	}
 
-	// TODO: CEL - expression
-	return ff.Expression == "true"
+	return true
 }
 
 // Update
 func (fm *FeatureManager) update() {
 	enabled := make(map[string]bool)
 	for _, flag := range fm.flags {
-		val := fm.evaluate(flag)
+		// if grafana cannot run the feature, omit metrics around it
+		if !fm.meetsRequirements(flag) {
+			continue
+		}
 
 		// Update the registry
 		track := 0.0
-		if val {
+		// TODO: CEL - expression
+		if flag.Expression == "true" {
 			track = 1
 			enabled[flag.Name] = true
 		}
@@ -147,22 +148,9 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
-	res := make(map[string]interface{}, 3)
-	res["enabled"] = fm.GetEnabled(c.Req.Context())
-
-	vv := make([]*FeatureFlag, 0, len(fm.flags))
-	for _, v := range fm.flags {
-		vv = append(vv, v)
-	}
-
-	res["info"] = vv
-
-	response.JSON(http.StatusOK, res).WriteTo(c)
-}
-
 // WithFeatures is used to define feature toggles for testing.
-// The arguments are a list of strings that are optionally followed by a boolean value
+// The arguments are a list of strings that are optionally followed by a boolean value for example:
+// WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
 	enabled := make(map[string]bool, count)

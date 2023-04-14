@@ -1,13 +1,20 @@
 import React, { PureComponent } from 'react';
 
-import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { LoadingPlaceholder, JSONFormatter, Icon, HorizontalGroup, ClipboardButton } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import {
+  LoadingPlaceholder,
+  JSONFormatter,
+  Icon,
+  HorizontalGroup,
+  ClipboardButton,
+  clearButtonStyles,
+  withTheme2,
+  Themeable2,
+} from '@grafana/ui';
 
 import { DashboardModel, PanelModel } from '../dashboard/state';
 
-export interface Props {
+export interface Props extends Themeable2 {
   dashboard: DashboardModel;
   panel: PanelModel;
 }
@@ -18,7 +25,7 @@ interface State {
   testRuleResponse: {};
 }
 
-export class TestRuleResult extends PureComponent<Props, State> {
+class UnThemedTestRuleResult extends PureComponent<Props, State> {
   readonly state: State = {
     isLoading: false,
     allNodesExpanded: null,
@@ -58,10 +65,6 @@ export class TestRuleResult extends PureComponent<Props, State> {
     return JSON.stringify(this.formattedJson, null, 2);
   };
 
-  onClipboardSuccess = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   onToggleExpand = () => {
     this.setState((prevState) => ({
       ...prevState,
@@ -96,6 +99,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
 
   render() {
     const { testRuleResponse, isLoading } = this.state;
+    const clearButton = clearButtonStyles(this.props.theme);
 
     if (isLoading === true) {
       return <LoadingPlaceholder text="Evaluating rule" />;
@@ -107,8 +111,10 @@ export class TestRuleResult extends PureComponent<Props, State> {
       <>
         <div className="pull-right">
           <HorizontalGroup spacing="md">
-            <div onClick={this.onToggleExpand}>{this.renderExpandCollapse()}</div>
-            <ClipboardButton getText={this.getTextForClipboard} onClipboardCopy={this.onClipboardSuccess} icon="copy">
+            <button type="button" className={clearButton} onClick={this.onToggleExpand}>
+              {this.renderExpandCollapse()}
+            </button>
+            <ClipboardButton getText={this.getTextForClipboard} icon="copy">
               Copy to Clipboard
             </ClipboardButton>
           </HorizontalGroup>
@@ -119,3 +125,5 @@ export class TestRuleResult extends PureComponent<Props, State> {
     );
   }
 }
+
+export const TestRuleResult = withTheme2(UnThemedTestRuleResult);

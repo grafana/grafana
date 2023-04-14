@@ -66,21 +66,21 @@ $border1: ${theme.colors.border.medium};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.v1.colors.textBlue};
+$blue: ${theme.colors.primary.text};
 $red: $red-base;
 $yellow: ${theme.v1.palette.yellow};
 $orange: ${theme.v1.palette.orange};
 $purple: ${theme.v1.palette.purple};
-$variable: ${theme.v1.colors.textBlue};
+$variable: ${theme.colors.primary.text};
 
-$brand-primary: ${theme.v1.palette.brandPrimary};
-$brand-success: ${theme.v1.palette.brandSuccess};
-$brand-warning: ${theme.v1.palette.brandWarning};
-$brand-danger: ${theme.v1.palette.brandDanger};
+$brand-primary: ${theme.v1.palette.orange};
+$brand-success: ${theme.colors.success.main};
+$brand-warning: ${theme.colors.warning.main};
+$brand-danger: ${theme.colors.error.main};
 
-$query-red: ${theme.v1.palette.queryRed};
-$query-green: ${theme.v1.palette.queryGreen};
-$query-purple: ${theme.v1.palette.queryPurple};
+$query-red: ${theme.colors.error.text};
+$query-green: ${theme.colors.success.text};
+$query-purple: #fe85fc;
 $query-orange: ${theme.v1.palette.orange};
 
 // Status colors
@@ -92,17 +92,17 @@ $critical: ${theme.colors.error.text};
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.v1.colors.bodyBg};
-$page-bg: ${theme.v1.colors.bodyBg};
-$dashboard-bg: ${theme.v1.colors.dashboardBg};
+$body-bg: ${theme.colors.background.canvas};
+$page-bg: ${theme.colors.background.canvas};
+$dashboard-bg: ${theme.colors.background.canvas};
 
-$text-color: ${theme.v1.colors.text};
-$text-color-strong: ${theme.v1.colors.textStrong};
-$text-color-semi-weak: ${theme.v1.colors.textSemiWeak};
-$text-color-weak: ${theme.v1.colors.textWeak};
-$text-color-faint: ${theme.v1.colors.textFaint};
-$text-color-emphasis: ${theme.v1.colors.textStrong};
-$text-blue: ${theme.v1.colors.textBlue};
+$text-color: ${theme.colors.text.primary};
+$text-color-strong: ${theme.colors.text.maxContrast};
+$text-color-semi-weak: ${theme.colors.text.secondary};
+$text-color-weak: ${theme.colors.text.secondary};
+$text-color-faint: ${theme.colors.text.disabled};
+$text-color-emphasis: ${theme.colors.text.maxContrast};
+$text-blue: ${theme.colors.primary.text};
 
 $text-shadow-faint: none;
 
@@ -112,14 +112,14 @@ $brand-gradient-vertical: ${theme.colors.gradients.brandVertical};
 
 // Links
 // -------------------------
-$link-color: ${theme.v1.colors.link};
-$link-color-disabled: ${theme.v1.colors.linkDisabled};
-$link-hover-color: ${theme.v1.colors.linkHover};
-$external-link-color: ${theme.v1.colors.linkExternal};
+$link-color: ${theme.colors.text.primary};
+$link-color-disabled: ${theme.colors.text.disabled};
+$link-hover-color: ${theme.colors.text.maxContrast};
+$external-link-color: ${theme.colors.text.link};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.v1.colors.textHeading};
+$headings-color: ${theme.colors.text.primary};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -134,17 +134,17 @@ $panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: ${theme.v1.colors.pageHeaderBg};
+$page-header-bg: ${theme.colors.background.canvas};
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: ${theme.v1.colors.pageHeaderBorder};
+$page-header-border-color: ${theme.colors.background.canvas};
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.v1.colors.bg2};
+$tight-form-func-bg: ${theme.colors.background.secondary};
 $tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.background.secondary, theme)};
 
-$modal-backdrop-bg: ${theme.v1.colors.bg1};
+$modal-backdrop-bg: ${theme.colors.background.primary};
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
@@ -214,8 +214,8 @@ $input-border-color: ${theme.components.input.borderColor};
 $input-box-shadow: none;
 $input-border-focus: ${theme.v1.palette.blue95};
 $input-box-shadow-focus: ${theme.v1.palette.blue95};
-$input-color-placeholder: ${theme.v1.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.v1.colors.bg2};
+$input-color-placeholder: ${theme.colors.text.disabled};
+$input-label-bg: ${theme.colors.background.secondary};
 $input-color-select-arrow: ${theme.v1.palette.gray60};
 
 // search
@@ -304,7 +304,7 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: ${theme.v1.colors.bg1};
+$popover-code-bg: ${theme.colors.background.primary};
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
@@ -333,14 +333,14 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: ${theme.v1.colors.bg3};
+$diff-label-bg: ${theme.colors.action.hover};
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: ${theme.v1.colors.bg2};
+$diff-group-bg: ${theme.colors.background.secondary};
 
-$diff-json-bg: ${theme.v1.colors.bg2};
-$diff-json-fg: ${theme.v1.colors.text};
+$diff-json-bg: ${theme.colors.background.secondary};
+$diff-json-fg: ${theme.colors.text.primary};
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;
@@ -352,9 +352,6 @@ $diff-json-changed-fg: $gray-7;
 $diff-json-changed-num: $gray-4;
 
 $diff-json-icon: $gray-4;
-
-//Submenu
-$variable-option-bg: $dropdownLinkBackgroundHover;
 
 //Switch Slider
 // -------------------------

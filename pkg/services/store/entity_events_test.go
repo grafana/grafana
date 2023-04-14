@@ -5,27 +5,40 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func TestIntegrationEntityEventsService(t *testing.T) {
-	var ctx context.Context
-	var service EntityEventsService
+func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
+	entityEvent := &EntityEvent{
+		EventType: cmd.EventType,
+		EntityId:  cmd.EntityId,
+		Created:   time.Now().Unix(),
+	}
+	return sql.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Insert(entityEvent)
+		return err
+	})
+}
 
-	setup := func() {
-		service = &entityEventService{
-			sql: sqlstore.InitTestDB(t),
+func TestIntegrationEntityEventsService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	ctx := context.Background()
+
+	setup := func() *entityEventService {
+		return &entityEventService{
+			sql: db.InitTestDB(t),
 			log: log.New("entity-event-test"),
 		}
-		ctx = context.Background()
 	}
 
 	t.Run("Should insert an entity event", func(t *testing.T) {
-		setup()
-
-		err := service.SaveEvent(ctx, SaveEventCmd{
+		service := setup()
+		err := saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
@@ -33,28 +46,27 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 	})
 
 	t.Run("Should retrieve nil entity if database is empty", func(t *testing.T) {
-		setup()
-
+		service := setup()
 		ev, err := service.GetLastEvent(ctx)
 		require.NoError(t, err)
 		require.Nil(t, ev)
 	})
 
 	t.Run("Should retrieve last entity event", func(t *testing.T) {
-		setup()
+		service := setup()
 		lastEventEntityId := "database/dash/1"
 
-		err := service.SaveEvent(ctx, SaveEventCmd{
+		err := saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.SaveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.SaveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  lastEventEntityId,
 			EventType: EntityEventTypeCreate,
 		})
@@ -66,10 +78,10 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 	})
 
 	t.Run("Should retrieve sorted events after an id", func(t *testing.T) {
-		setup()
+		service := setup()
 		lastEventEntityId := "database/dash/1"
 
-		err := service.SaveEvent(ctx, SaveEventCmd{
+		err := saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
@@ -78,12 +90,12 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 		require.NoError(t, err)
 		firstEvId := firstEv.Id
 
-		err = service.SaveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.SaveEvent(ctx, SaveEventCmd{
+		err = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  lastEventEntityId,
 			EventType: EntityEventTypeCreate,
 		})
@@ -97,16 +109,16 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 	})
 
 	t.Run("Should delete old events", func(t *testing.T) {
-		setup()
-		_ = service.SaveEvent(ctx, SaveEventCmd{
+		service := setup()
+		_ = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.SaveEvent(ctx, SaveEventCmd{
+		_ = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.SaveEvent(ctx, SaveEventCmd{
+		_ = saveEvent(ctx, service.sql, SaveEventCmd{
 			EntityId:  "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
@@ -135,6 +147,9 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 }
 
 func TestIntegrationCreateDatabaseEntityId(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []struct {
 		name       string
 		entityType EntityType

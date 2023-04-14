@@ -6,12 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type FakeCondition struct{}
@@ -84,16 +86,16 @@ func TestAlertRuleForParsing(t *testing.T) {
 }
 
 func TestAlertRuleModel(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := &sqlStore{db: db.InitTestDB(t), cache: localcache.New(time.Minute, time.Minute)}
 	RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 		return &FakeCondition{}, nil
 	})
 
-	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-	err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
+	firstNotification := models.CreateAlertNotificationCommand{UID: "notifier1", OrgID: 1, Name: "1"}
+	_, err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 	require.Nil(t, err)
-	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-	err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
+	secondNotification := models.CreateAlertNotificationCommand{UID: "notifier2", OrgID: 1, Name: "2"}
+	_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
@@ -122,10 +124,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 
 			Settings: alertJSON,
 		}
@@ -161,10 +163,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 
 			Settings: alertJSON,
 		}
@@ -191,10 +193,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 			Frequency:   0,
 
 			Settings: alertJSON,
@@ -229,10 +231,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 			Frequency:   0,
 
 			Settings: alertJSON,

@@ -11,7 +11,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { Step } from './components/Step';
 import { getSteps } from './steps';
-import { Card, SetupStep } from './types';
+import { SetupStep } from './types';
 
 interface State {
   checksDone: boolean;
@@ -30,7 +30,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const { steps } = this.state;
 
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
-      const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {
+      const checkedCardsPromises = step.cards.map(async (card) => {
         return card.check().then((passed) => {
           return { ...card, done: passed };
         });
@@ -71,15 +71,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     dashboard?.removePanel(panel!);
 
-    backendSrv
-      .request({
-        method: 'PUT',
-        url: '/api/user/helpflags/1',
-        showSuccessAlert: false,
-      })
-      .then((res: any) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-      });
+    backendSrv.put('/api/user/helpflags/1', undefined, { showSuccessAlert: false }).then((res) => {
+      contextSrv.user.helpFlags1 = res.helpFlags1;
+    });
   };
 
   render() {
@@ -96,21 +90,29 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           </div>
         ) : (
           <>
-            <div className={styles.dismiss}>
-              <div onClick={this.dismiss}>Remove this panel</div>
-            </div>
+            <Button variant="secondary" fill="text" className={styles.dismiss} onClick={this.dismiss}>
+              Remove this panel
+            </Button>
             {currentStep === steps.length - 1 && (
-              <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-                <Button aria-label="To advanced tutorials" icon="angle-left" variant="secondary" />
-              </div>
+              <Button
+                className={cx(styles.backForwardButtons, styles.previous)}
+                onClick={this.onPreviousClick}
+                aria-label="To advanced tutorials"
+                icon="angle-left"
+                variant="secondary"
+              />
             )}
             <div className={styles.content}>
               <Step step={step} />
             </div>
             {currentStep < steps.length - 1 && (
-              <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-                <Button aria-label="To basic tutorials" icon="angle-right" variant="secondary" />
-              </div>
+              <Button
+                className={cx(styles.backForwardButtons, styles.forward)}
+                onClick={this.onForwardClick}
+                aria-label="To basic tutorials"
+                icon="angle-right"
+                variant="secondary"
+              />
             )}
           </>
         )}
@@ -120,83 +122,79 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 }
 
 const getStyles = stylesFactory(() => {
-  const { theme } = config;
+  const theme = config.theme2;
   return {
     container: css`
       display: flex;
       flex-direction: column;
       height: 100%;
-      // background: url(public/img/getting_started_bg_${theme.type}.svg) no-repeat;
+      // background: url(public/img/getting_started_bg_${theme.colors.mode}.svg) no-repeat;
       background-size: cover;
-      padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
+      padding: ${theme.spacing(4)} ${theme.spacing(2)} 0;
     `,
     content: css`
       label: content;
       display: flex;
       justify-content: center;
 
-      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
-        margin-left: ${theme.spacing.lg};
+      ${theme.breakpoints.down('xxl')} {
+        margin-left: ${theme.spacing(3)};
         justify-content: flex-start;
       }
     `,
     header: css`
       label: header;
-      margin-bottom: ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing(3)};
       display: flex;
       flex-direction: column;
 
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+      ${theme.breakpoints.down('lg')} {
         flex-direction: row;
       }
     `,
     headerLogo: css`
       height: 58px;
-      padding-right: ${theme.spacing.md};
+      padding-right: ${theme.spacing(2)};
       display: none;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: block;
       }
     `,
     heading: css`
       label: heading;
-      margin-right: ${theme.spacing.lg};
-      margin-bottom: ${theme.spacing.lg};
+      margin-right: ${theme.spacing(3)};
+      margin-bottom: ${theme.spacing(3)};
       flex-grow: 1;
       display: flex;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         margin-bottom: 0;
       }
     `,
     backForwardButtons: css`
       position: absolute;
-      bottom: 50%;
       top: 50%;
-      height: 50px;
+      transform: translateY(-50%);
     `,
     previous: css`
       left: 10px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         left: 0;
       }
     `,
     forward: css`
       right: 10px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         right: 0;
       }
     `,
     dismiss: css`
-      display: flex;
-      justify-content: flex-end;
-      cursor: pointer;
+      align-self: flex-end;
       text-decoration: underline;
-      margin-right: ${theme.spacing.md};
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     loading: css`
       display: flex;
@@ -205,7 +203,7 @@ const getStyles = stylesFactory(() => {
       height: 100%;
     `,
     loadingText: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     `,
   };
 });

@@ -1,23 +1,22 @@
-import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
+import { DataTransformerConfig, FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
-import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
-import {
-  changePanelKey,
-  cleanUpAngularComponent,
-  panelModelAndPluginReady,
-  removePanel,
-  removePanels,
-} from './reducers';
+import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';
 
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
+    if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
+      // this will call init with a loaded libary panel if it loads succesfully
+      dispatch(loadLibraryPanelAndUpdate(panel));
+      return;
+    }
+
     let pluginToLoad = panel.type;
     let plugin = getStore().plugins.panels[pluginToLoad];
 
@@ -39,20 +38,8 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
 }
 
 export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const store = getStore().panels;
-    cleanUpAngularComponent(store[panelKey]);
+  return (dispatch) => {
     dispatch(removePanel({ key: panelKey }));
-  };
-}
-
-export function cleanAndRemoveMany(panelKeys: string[]): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const store = getStore().panels;
-    for (const key of panelKeys) {
-      cleanUpAngularComponent(store[key]);
-    }
-    dispatch(removePanels({ keys: panelKeys }));
   };
 }
 
@@ -83,8 +70,6 @@ export function changePanelPlugin({
       plugin = await dispatch(loadPanelPlugin(pluginId));
     }
 
-    let cleanUpKey = panel.key;
-
     if (panel.type !== pluginId) {
       panel.changePlugin(plugin);
     }
@@ -104,7 +89,7 @@ export function changePanelPlugin({
 
     panel.generateNewKey();
 
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey }));
+    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
   };
 }
 
@@ -118,7 +103,7 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       ...libraryPanel.model,
       gridPos: panel.gridPos,
       id: panel.id,
-      libraryPanel: toPanelModelLibraryPanel(libraryPanel),
+      libraryPanel: libraryPanel,
     });
 
     // a new library panel usually means new queries, clear any current result
@@ -133,12 +118,10 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
         plugin = await dispatch(loadPanelPlugin(newPluginId));
       }
 
-      const oldKey = panel.key;
-
       panel.pluginLoaded(plugin);
       panel.generateNewKey();
 
-      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey: oldKey }));
+      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
     } else {
       // Even if the plugin is the same, we want to change the key
       // to force a rerender
@@ -148,9 +131,29 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
     }
 
     panel.configRev = 0;
+    panel.hasSavedPanelEditChange = true;
     panel.refresh();
 
     panel.events.publish(PanelQueriesChangedEvent);
     panel.events.publish(PanelOptionsChangedEvent);
+  };
+}
+
+export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
+  return async (dispatch) => {
+    const uid = panel.libraryPanel!.uid!;
+    try {
+      const libPanel = await getLibraryPanel(uid, true);
+      panel.initLibraryPanel(libPanel);
+      dispatch(initPanelState(panel));
+    } catch (ex) {
+      console.log('ERROR: ', ex);
+      dispatch(
+        panelModelAndPluginReady({
+          key: panel.key,
+          plugin: getPanelPluginNotFound('Unable to load library panel: ' + uid, false),
+        })
+      );
+    }
   };
 }

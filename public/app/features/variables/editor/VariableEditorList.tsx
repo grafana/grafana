@@ -2,9 +2,12 @@ import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
+import { Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
+import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
 import { VariableModel } from '../types';
@@ -38,7 +41,7 @@ export function VariableEditorList({
     }
     reportInteraction('Variable drag and drop');
     const identifier = JSON.parse(result.draggableId);
-    onChangeOrder(identifier, result.source.index, result.destination.index);
+    onChangeOrder(identifier, variables[result.source.index].index, variables[result.destination.index].index);
   };
 
   return (
@@ -47,10 +50,11 @@ export function VariableEditorList({
         {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
         {variables.length > 0 && (
-          <div>
+          <Stack direction="column" gap={4}>
             <table
               className="filter-table filter-table--hover"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+              role="grid"
             >
               <thead>
                 <tr>
@@ -81,7 +85,17 @@ export function VariableEditorList({
                 </Droppable>
               </DragDropContext>
             </table>
-          </div>
+            <Stack>
+              <VariablesDependenciesButton variables={variables} />
+              <Button
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+                onClick={onAdd}
+                icon="plus"
+              >
+                New variable
+              </Button>
+            </Stack>
+          </Stack>
         )}
       </div>
     </div>

@@ -2,22 +2,25 @@ package prometheus
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/patrickmn/go-cache"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 var plog = log.New("tsdb.prometheus")
@@ -28,9 +31,9 @@ type Service struct {
 }
 
 type instance struct {
-	buffered  *buffered.Buffered
-	queryData *querydata.QueryData
-	resource  *resource.Resource
+	queryData    *querydata.QueryData
+	resource     *resource.Resource
+	versionCache *cache.Cache
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
@@ -43,31 +46,32 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		// Creates a http roundTripper.
+		opts, err := client.CreateTransportOptions(settings, cfg, plog)
 		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
+			return nil, fmt.Errorf("error creating transport options: %v", err)
+		}
+		httpClient, err := httpClientProvider.New(*opts)
+		if err != nil {
+			return nil, fmt.Errorf("error creating http client: %v", err)
 		}
 
-		b, err := buffered.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		// New version using custom client and better response parsing
+		qd, err := querydata.New(httpClient, features, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
-		qd, err := querydata.New(httpClientProvider, cfg, features, tracer, settings, plog)
-		if err != nil {
-			return nil, err
-		}
-
-		r, err := resource.New(httpClientProvider, cfg, features, settings, plog)
+		// Resource call management using new custom client same as querydata
+		r, err := resource.New(httpClient, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
 		return instance{
-			buffered:  b,
-			queryData: qd,
-			resource:  r,
+			queryData:    qd,
+			resource:     r,
+			versionCache: cache.New(time.Minute*1, time.Minute*5),
 		}, nil
 	}
 }
@@ -82,11 +86,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) || s.features.IsEnabled(featuremgmt.FlagPrometheusWideSeries) {
-		return i.queryData.Execute(ctx, req)
-	}
-
-	return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
+	return i.queryData.Execute(ctx, req)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -95,19 +95,26 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	statusCode, bytes, err := i.resource.Execute(ctx, req)
-	body := bytes
-	if err != nil {
-		body = []byte(err.Error())
+	if strings.EqualFold(req.Path, "version-detect") {
+		versionObj, found := i.versionCache.Get("version")
+		if found {
+			return sender.Send(versionObj.(*backend.CallResourceResponse))
+		}
+
+		vResp, err := i.resource.DetectVersion(ctx, req)
+		if err != nil {
+			return err
+		}
+		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
+		return sender.Send(vResp)
 	}
 
-	return sender.Send(&backend.CallResourceResponse{
-		Status: statusCode,
-		Headers: map[string][]string{
-			"content-type": {"application/json"},
-		},
-		Body: body,
-	})
+	resp, err := i.resource.Execute(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return sender.Send(resp)
 }
 
 func (s *Service) getInstance(pluginCtx backend.PluginContext) (*instance, error) {

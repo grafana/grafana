@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { MediaType } from '../types';
+
 interface Props {
   setFormData: Dispatch<SetStateAction<FormData>>;
   mediaType: MediaType;
@@ -36,8 +37,8 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   const Preview = () => (
     <Field label="Preview">
       <div className={styles.iconPreview}>
-        {mediaType === MediaType.Icon && <SVG src={file} className={styles.img} />}
-        {mediaType === MediaType.Image && <img src={file} className={styles.img} />}
+        {mediaType === MediaType.Icon && <SanitizedSVG src={file} className={styles.img} />}
+        {mediaType === MediaType.Image && <img src={file} alt="Preview of the uploaded file" className={styles.img} />}
       </div>
     </Field>
   );
@@ -49,7 +50,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   };
 
   const acceptableFiles =
-    mediaType === 'icon' ? 'image/svg+xml' : 'image/jpeg,image/png,image/gif,image/png, image/webp';
+    mediaType === 'icon' ? { 'image/*': ['.svg', '.xml'] } : { 'image/*': ['.jpeg', '.png', '.gif', '.webp'] };
   return (
     <FileDropzone
       readAs="readAsBinaryString"

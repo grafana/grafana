@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -240,7 +239,7 @@ func (f *FileStorage) readRules() (ChannelRules, error) {
 	ruleFile := f.ruleFilePath()
 	// Safe to ignore gosec warning G304.
 	// nolint:gosec
-	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	ruleBytes, err := os.ReadFile(ruleFile)
 	if err != nil {
 		return ChannelRules{}, fmt.Errorf("can't read pipeline rules: %s: %w", f.ruleFilePath(), err)
 	}
@@ -309,7 +308,7 @@ func (f *FileStorage) readWriteConfigs() (WriteConfigs, error) {
 	filePath := f.writeConfigsFilePath()
 	// Safe to ignore gosec warning G304.
 	// nolint:gosec
-	bytes, err := ioutil.ReadFile(filePath)
+	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return WriteConfigs{}, fmt.Errorf("can't read %s file: %w", filePath, err)
 	}

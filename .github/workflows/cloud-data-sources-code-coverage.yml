@@ -5,7 +5,7 @@ on:
       - 'pkg/tsdb/azuremonitor/**'
       - 'pkg/tsdb/cloudwatch/**'
       - 'pkg/tsdb/cloudmonitoring/**'
-      - 'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+      - 'public/app/plugins/datasource/azuremonitor/**'
       - 'public/app/plugins/datasource/cloudwatch/**'
       - 'public/app/plugins/datasource/cloud-monitoring/**'
     branches-ignore:
@@ -14,4 +14,7 @@ on:
 
 jobs:
   workflow-call:
-    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.2
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.19
+    with:
+      frontend-path-regexp: public\/app\/plugins\/datasource\/(azuremonitor|cloud-monitoring|cloudwatch)
+      backend-path-regexp: pkg\/tsdb\/(azuremonitor|cloudmonitoring|cloudwatch)

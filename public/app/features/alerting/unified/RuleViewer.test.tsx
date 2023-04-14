@@ -1,139 +1,22 @@
 import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
+import { byRole } from 'testing-library-selector';
 
-import { DataSourceJsonData, PluginMeta } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { configureStore } from 'app/store/configureStore';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { RuleViewer } from './RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { useIsRuleEditable } from './hooks/useIsRuleEditable';
+import { getCloudRule, getGrafanaRule, grantUserPermissions } from './mocks';
 
-jest.mock('./hooks/useCombinedRule');
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: () => ({ name: 'prometheus' }),
-      get: () =>
-        Promise.resolve({
-          filterQuery: () => true,
-        }),
-    };
-  },
-}));
-
-const store = configureStore();
-const renderRuleViewer = () => {
-  return act(async () => {
-    render(
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <RuleViewer {...mockRoute} />
-        </Router>
-      </Provider>
-    );
-  });
-};
-describe('RuleViewer', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  it('should render page with grafana alert', async () => {
-    jest.mocked(useCombinedRule).mockReturnValue({
-      result: mockGrafanaRule as CombinedRule,
-      loading: false,
-      dispatched: true,
-      requestId: 'A',
-      error: undefined,
-    });
-    await renderRuleViewer();
-
-    expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
-    expect(screen.getByText('Test alert')).toBeInTheDocument();
-  });
-
-  it('should render page with cloud alert', async () => {
-    jest.mocked(useCombinedRule).mockReturnValue({
-      result: mockCloudRule as CombinedRule,
-      loading: false,
-      dispatched: true,
-      requestId: 'A',
-      error: undefined,
-    });
-    await renderRuleViewer();
-    expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
-    expect(screen.getByText('Cloud test alert')).toBeInTheDocument();
-  });
-});
-
-const mockGrafanaRule = {
-  name: 'Test alert',
-  query: 'up',
-  labels: {},
-  annotations: {},
-  group: {
-    name: 'Prom up alert',
-    rules: [],
-  },
-  namespace: {
-    rulesSource: GRAFANA_RULES_SOURCE_NAME,
-    name: 'Alerts',
-    groups: [],
-  },
-  rulerRule: {
-    for: '',
-    annotations: {},
-    labels: {},
-    grafana_alert: {
-      condition: 'B',
-      exec_err_state: GrafanaAlertStateDecision.Alerting,
-      namespace_id: 11,
-      namespace_uid: 'namespaceuid123',
-      no_data_state: GrafanaAlertStateDecision.NoData,
-      title: 'Test alert',
-      uid: 'asdf23',
-      data: [],
-    },
-  },
-};
-
-const mockCloudRule = {
-  name: 'Cloud test alert',
-  labels: {},
-  query: 'up == 0',
-  annotations: {},
-  group: {
-    name: 'test',
-    rules: [],
-  },
-  promRule: {
-    health: 'ok',
-    name: 'cloud up alert',
-    query: 'up == 0',
-    type: 'alerting',
-  },
-  namespace: {
-    name: 'prom test alerts',
-    groups: [],
-    rulesSource: {
-      name: 'prom test',
-      type: 'prometheus',
-      uid: 'asdf23',
-      id: 1,
-      meta: {} as PluginMeta,
-      jsonData: {} as DataSourceJsonData,
-      access: 'proxy',
-    },
-  },
-};
-
+const mockGrafanaRule = getGrafanaRule({ name: 'Test alert' });
+const mockCloudRule = getCloudRule({ name: 'cloud test alert' });
 const mockRoute: GrafanaRouteComponentProps<{ id?: string; sourceName?: string }> = {
   route: {
     path: '/',
@@ -145,3 +28,249 @@ const mockRoute: GrafanaRouteComponentProps<{ id?: string; sourceName?: string }
   location: { pathname: '', hash: '', search: '', state: '' },
   staticContext: {},
 };
+
+jest.mock('./hooks/useCombinedRule');
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => ({ name: 'prometheus' }),
+      get: () =>
+        Promise.resolve({
+          filterQuery: () => true,
+        }),
+    };
+  },
+}));
+
+const renderRuleViewer = () => {
+  return act(async () => {
+    render(
+      <TestProvider>
+        <RuleViewer {...mockRoute} />
+      </TestProvider>
+    );
+  });
+};
+
+const ui = {
+  actionButtons: {
+    edit: byRole('link', { name: /edit/i }),
+    clone: byRole('link', { name: /copy/i }),
+    delete: byRole('button', { name: /delete/i }),
+    silence: byRole('link', { name: 'Silence' }),
+  },
+};
+jest.mock('./hooks/useIsRuleEditable');
+
+const mocks = {
+  useIsRuleEditable: jest.mocked(useIsRuleEditable),
+};
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
+
+describe('RuleViewer', () => {
+  let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+
+  beforeEach(() => {
+    mockCombinedRule = jest.mocked(useCombinedRule);
+  });
+
+  afterEach(() => {
+    mockCombinedRule.mockReset();
+  });
+
+  it('should render page with grafana alert', async () => {
+    mockCombinedRule.mockReturnValue({
+      result: mockGrafanaRule as CombinedRule,
+      loading: false,
+      dispatched: true,
+      requestId: 'A',
+      error: undefined,
+    });
+    mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+    await renderRuleViewer();
+
+    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+    expect(screen.getByText(/test alert/i)).toBeInTheDocument();
+  });
+
+  it('should render page with cloud alert', async () => {
+    mockCombinedRule.mockReturnValue({
+      result: mockCloudRule as CombinedRule,
+      loading: false,
+      dispatched: true,
+      requestId: 'A',
+      error: undefined,
+    });
+    mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+    await renderRuleViewer();
+    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+    expect(screen.getByText(/cloud test alert/i)).toBeInTheDocument();
+  });
+});
+
+describe('RuleDetails RBAC', () => {
+  describe('Grafana rules action buttons in details', () => {
+    let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+
+    beforeEach(() => {
+      mockCombinedRule = jest.mocked(useCombinedRule);
+    });
+
+    afterEach(() => {
+      mockCombinedRule.mockReset();
+    });
+    it('Should render Edit button for users with the update permission', async () => {
+      // Arrange
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mockCombinedRule.mockReturnValue({
+        result: mockGrafanaRule as CombinedRule,
+        loading: false,
+        dispatched: true,
+        requestId: 'A',
+        error: undefined,
+      });
+
+      // Act
+      await renderRuleViewer();
+
+      // Assert
+      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
+    });
+
+    it('Should  render Delete button for users with the delete permission', async () => {
+      // Arrange
+      mockCombinedRule.mockReturnValue({
+        result: mockGrafanaRule as CombinedRule,
+        loading: false,
+        dispatched: true,
+        requestId: 'A',
+        error: undefined,
+      });
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+
+      // Act
+      await renderRuleViewer();
+
+      // Assert
+      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
+    });
+
+    it('Should not render Silence button for users wihout the instance create permission', async () => {
+      // Arrange
+      mockCombinedRule.mockReturnValue({
+        result: mockGrafanaRule as CombinedRule,
+        loading: false,
+        dispatched: true,
+        requestId: 'A',
+        error: undefined,
+      });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      // Act
+      await renderRuleViewer();
+
+      // Assert
+      expect(ui.actionButtons.silence.query()).not.toBeInTheDocument();
+    });
+
+    it('Should render Silence button for users with the instance create permissions', async () => {
+      // Arrange
+      mockCombinedRule.mockReturnValue({
+        result: mockGrafanaRule as CombinedRule,
+        loading: false,
+        dispatched: true,
+        requestId: 'A',
+        error: undefined,
+      });
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
+
+      // Act
+      await renderRuleViewer();
+
+      // Assert
+      expect(ui.actionButtons.silence.query()).toBeInTheDocument();
+    });
+
+    it('Should render clone button for users having create rule permission', async () => {
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+      mockCombinedRule.mockReturnValue({
+        result: getGrafanaRule({ name: 'Grafana rule' }),
+        loading: false,
+        dispatched: true,
+      });
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+      await renderRuleViewer();
+
+      expect(ui.actionButtons.clone.get()).toBeInTheDocument();
+    });
+
+    it('Should NOT render clone button for users without create rule permission', async () => {
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mockCombinedRule.mockReturnValue({
+        result: getGrafanaRule({ name: 'Grafana rule' }),
+        loading: false,
+        dispatched: true,
+      });
+
+      const { AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete } = AccessControlAction;
+      grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
+
+      await renderRuleViewer();
+
+      expect(ui.actionButtons.clone.query()).not.toBeInTheDocument();
+    });
+  });
+  describe('Cloud rules action buttons', () => {
+    let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+
+    beforeEach(() => {
+      mockCombinedRule = jest.mocked(useCombinedRule);
+    });
+
+    afterEach(() => {
+      mockCombinedRule.mockReset();
+    });
+    it('Should render edit button for users with the update permission', async () => {
+      // Arrange
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mockCombinedRule.mockReturnValue({
+        result: mockCloudRule as CombinedRule,
+        loading: false,
+        dispatched: true,
+        requestId: 'A',
+        error: undefined,
+      });
+
+      // Act
+      await renderRuleViewer();
+
+      // Assert
+      expect(ui.actionButtons.edit.query()).toBeInTheDocument();
+    });
+
+    it('Should render Delete button for users with the delete permission', async () => {
+      // Arrange
+      mockCombinedRule.mockReturnValue({
+        result: mockCloudRule as CombinedRule,
+        loading: false,
+        dispatched: true,
+        requestId: 'A',
+        error: undefined,
+      });
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+
+      // Act
+      await renderRuleViewer();
+
+      // Assert
+      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
+    });
+  });
+});

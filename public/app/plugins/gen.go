@@ -1,67 +1,100 @@
-// go:build ignore
 //go:build ignore
 // +build ignore
+
+//go:generate go run gen.go
 
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"cuelang.org/go/cue/cuecontext"
-	"github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/codejen"
+	"github.com/grafana/kindsys"
+
+	corecodegen "github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/codegen"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
-// Generate TypeScript for all plugin models.cue
+var skipPlugins = map[string]bool{
+	"canvas":      true,
+	"candlestick": true,
+	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":       true, // plugin.json fails validation (mixed)
+	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
+}
+
+const sep = string(filepath.Separator)
+
 func main() {
 	if len(os.Args) > 1 {
-		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("plugin thema code generator does not currently accept any arguments\n, got %q", os.Args))
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
+	}
+	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
+	rt := cuectx.GrafanaThemaRuntime()
+
+	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
+		return d.PluginMeta.Id
+	})
+
+	pluginKindGen.Append(
+		codegen.PluginTreeListJenny(),
+		codegen.PluginGoTypesJenny("pkg/tsdb"),
+		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
+		kind2pd(corecodegen.DocsJenny(
+			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
+		)),
+	)
+
+	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
+
+	declParser := pfs.NewDeclParser(rt, skipPlugins)
+	decls, err := declParser.Parse(os.DirFS(cwd))
+	if err != nil {
+		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
 	}
 
-	var find func(path string) (string, error)
-	find = func(path string) (string, error) {
-		parent := filepath.Dir(path)
-		if parent == path {
-			return "", errors.New("grafana root directory could not be found")
-		}
-		fp := filepath.Join(path, "go.mod")
-		if _, err := os.Stat(fp); err == nil {
-			return path, nil
-		}
-		return find(parent)
-	}
-	groot, err := find(cwd)
+	jfs, err := pluginKindGen.GenerateFS(decls...)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	wd, err := codegen.CuetsifyPlugins(cuecontext.New(), groot)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error while generating code:\n%s\n", err)
-		os.Exit(1)
+		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
 	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		err = wd.Verify()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate\n\n", err)
-			os.Exit(1)
+		if err = jfs.Verify(context.Background(), groot); err != nil {
+			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
 		}
-	} else {
-		err = wd.Write()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
-			os.Exit(1)
-		}
+	} else if err = jfs.Write(context.Background(), groot); err != nil {
+		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
+}
+
+func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
+		return corecodegen.SchemaForGen{
+			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
+			Schema:  pd.Lineage.Latest(),
+			IsGroup: pd.SchemaInterface.IsGroup(),
+		}
+	})
+}
+
+func kind2pd(j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
+		kd, err := kindsys.BindComposable(nil, pd.KindDecl)
+		if err != nil {
+			return nil
+		}
+		return kd
+	})
 }

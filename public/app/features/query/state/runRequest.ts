@@ -6,7 +6,7 @@ import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 // Utils & Services
 // Types
 import {
-  DataFrame,
+  CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -14,15 +14,14 @@ import {
   DataSourceApi,
   DataTopic,
   dateMath,
-  guessFieldTypes,
   LoadingState,
   PanelData,
   TimeRange,
-  toDataFrame,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -51,6 +50,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   let loadingState = packet.state || LoadingState.Done;
   let error: DataQueryError | undefined = undefined;
+  let errors: DataQueryError[] | undefined = undefined;
 
   const series: DataQueryResponseData[] = [];
   const annotations: DataQueryResponseData[] = [];
@@ -58,9 +58,10 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   for (const key in packets) {
     const packet = packets[key];
 
-    if (packet.error) {
+    if (packet.error || packet.errors?.length) {
       loadingState = LoadingState.Error;
       error = packet.error;
+      errors = packet.errors;
     }
 
     if (packet.data && packet.data.length) {
@@ -77,14 +78,22 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const timeRange = getRequestTimeRange(request, loadingState);
 
-  const panelData = {
+  const panelData: PanelData = {
     state: loadingState,
     series,
     annotations,
     error,
+    errors,
     request,
     timeRange,
   };
+
+  // we use a Set to deduplicate the traceIds
+  const traceIdSet = new Set([...(state.panelData.traceIds ?? []), ...(packet.traceIds ?? [])]);
+
+  if (traceIdSet.size > 0) {
+    panelData.traceIds = Array.from(traceIdSet);
+  }
 
   return { packets, panelData };
 }
@@ -174,7 +183,21 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  // If any query has an expression, use the expression endpoint
+  // If the datasource has defined a default query, make sure it's applied
+  request.targets = request.targets.map((t) =>
+    queryIsEmpty(t)
+      ? {
+          ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
+          ...t,
+        }
+      : t
+  );
+
+  // If its a public datasource, just return the result. Expressions will be handled on the backend.
+  if (datasource.type === 'public-ds') {
+    return from(datasource.query(request));
+  }
+
   for (const target of request.targets) {
     if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
@@ -184,60 +207,4 @@ export function callQueryMethod(
   // Otherwise it is a standard datasource request
   const returnVal = queryFunction ? queryFunction(request) : datasource.query(request);
   return from(returnVal);
-}
-
-function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
-  const dataFrame = guessFieldTypes(toDataFrame(data));
-
-  if (dataFrame.fields && dataFrame.fields.length) {
-    // clear out the cached info
-    for (const field of dataFrame.fields) {
-      field.state = null;
-    }
-  }
-
-  return dataFrame;
-}
-
-/**
- * All panels will be passed tables that have our best guess at column type set
- *
- * This is also used by PanelChrome for snapshot support
- */
-export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
-  if (!results || !isArray(results)) {
-    return [];
-  }
-
-  return results.map((data) => getProcessedDataFrame(data));
-}
-
-export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
-  const { series, annotations } = data;
-
-  //  for loading states with no data, use last result
-  if (data.state === LoadingState.Loading && series.length === 0) {
-    if (!lastResult) {
-      lastResult = data;
-    }
-
-    return {
-      ...lastResult,
-      state: LoadingState.Loading,
-      request: data.request,
-    };
-  }
-
-  // Make sure the data frames are properly formatted
-  const STARTTIME = performance.now();
-  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
-  const annotationsProcessed = getProcessedDataFrames(annotations);
-  const STOPTIME = performance.now();
-
-  return {
-    ...data,
-    series: processedDataFrames,
-    annotations: annotationsProcessed,
-    timings: { dataProcessingTime: STOPTIME - STARTTIME },
-  };
 }

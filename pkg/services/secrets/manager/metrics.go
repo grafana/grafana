@@ -1,8 +1,10 @@
 package manager
 
 import (
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
 
 const (
@@ -11,21 +13,29 @@ const (
 )
 
 var (
-	opsCounter = prometheus.NewCounterVec(
+	opsCounter = metricutil.NewCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Namespace: metrics.ExporterName,
 			Name:      "encryption_ops_total",
 			Help:      "A counter for encryption operations",
 		},
 		[]string{"success", "operation"},
+		map[string][]string{
+			"success":   {"true", "false"},
+			"operation": {OpEncrypt, OpDecrypt},
+		},
 	)
-	cacheReadsCounter = prometheus.NewCounterVec(
+	cacheReadsCounter = metricutil.NewCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Namespace: metrics.ExporterName,
 			Name:      "encryption_cache_reads_total",
 			Help:      "A counter for encryption cache reads",
 		},
 		[]string{"hit", "method"},
+		map[string][]string{
+			"hit":    {"true", "false"},
+			"method": {"byId", "byName"},
+		},
 	)
 )
 

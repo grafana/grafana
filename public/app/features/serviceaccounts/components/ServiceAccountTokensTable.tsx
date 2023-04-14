@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
@@ -17,24 +17,28 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
   const styles = getStyles(theme);
 
   return (
-    <table className="filter-table">
+    <table className={cx(styles.section, 'filter-table')}>
       <thead>
         <tr>
           <th>Name</th>
           <th>Expires</th>
           <th>Created</th>
+          <th>Last used at</th>
+          <th />
           <th />
         </tr>
       </thead>
       <tbody>
         {tokens.map((key) => {
           return (
-            <tr key={key.id} className={styles.tableRow(key.hasExpired)}>
+            <tr key={key.id} className={styles.tableRow(key.hasExpired || key.isRevoked)}>
               <td>{key.name}</td>
               <td>
                 <TokenExpiration timeZone={timeZone} token={key} />
               </td>
               <td>{formatDate(timeZone, key.created)}</td>
+              <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
+              <td className="width-1 text-center">{key.isRevoked && <TokenRevoked />}</td>
               <td>
                 <DeleteButton
                   aria-label={`Delete service account token ${key.name}`}
@@ -51,6 +55,13 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
   );
 };
 
+function formatLastUsedAtDate(timeZone: TimeZone, lastUsedAt?: string): string {
+  if (!lastUsedAt) {
+    return 'Never';
+  }
+  return dateTimeFormat(lastUsedAt, { timeZone });
+}
+
 function formatDate(timeZone: TimeZone, expiration?: string): string {
   if (!expiration) {
     return 'No expiration date';
@@ -63,6 +74,20 @@ function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): strin
   const daysFormat = days > 1 ? `${days} days` : `${days} day`;
   return `Expires in ${daysFormat}`;
 }
+
+const TokenRevoked = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={styles.hasExpired}>
+      Revoked
+      <span className={styles.tooltipContainer}>
+        <Tooltip content="This token has been publicly exposed. Please rotate this token">
+          <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
+        </Tooltip>
+      </span>
+    </span>
+  );
+};
 
 interface TokenExpirationProps {
   timeZone: TimeZone;
@@ -114,5 +139,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   neverExpire: css`
     color: ${theme.colors.text.secondary};
+  `,
+  section: css`
+    margin-bottom: ${theme.spacing(4)};
   `,
 });

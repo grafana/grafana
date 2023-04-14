@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/data_source/
-  - /docs/grafana/latest/http_api/data_source/
-  - /docs/grafana/latest/http_api/datasource/
+  - ../../http_api/data_source/
+  - ../../http_api/datasource/
+canonical: /docs/grafana/latest/developers/http_api/data_source/
 description: Grafana Data source HTTP API
 keywords:
   - grafana
@@ -10,12 +10,12 @@ keywords:
   - documentation
   - api
   - data source
-title: 'Data source HTTP API '
+title: Data source HTTP API
 ---
 
 # Data source API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Get all data sources
 
@@ -62,7 +62,6 @@ Content-Type: application/json
      "basicAuth": false,
      "isDefault": false,
      "jsonData": {
-         "esVersion": 5,
          "logLevelField": "",
          "logMessageField": "",
          "maxConcurrentShardRequests": 256,
@@ -714,7 +713,7 @@ Proxies all calls to the actual data source identified by the `uid`.
 
 `GET /api/datasources/:datasourceId/health`
 
-Makes a call to the health endpoint of data source identified by the given `dashboardId`.
+Makes a call to the health endpoint of data source identified by the given `datasourceId`. This is not mandatory - every plugin author has to <a href="https://grafana.com/tutorials/build-a-data-source-backend-plugin/#add-support-for-health-checks" target="_blank">implement support for health checks</a> in their plugin themselves.
 
 ### Examples
 
@@ -743,7 +742,7 @@ Content-Type: application/json
 
 `GET /api/datasources/uid/:uid/health`
 
-Makes a call to the health endpoint of data source identified by the given `uid`.
+Makes a call to the health endpoint of data source identified by the given `uid`. This is not mandatory - every plugin author has to <a href="https://grafana.com/tutorials/build-a-data-source-backend-plugin/#add-support-for-health-checks" target="_blank">implement support for health checks</a> in their plugin themselves.
 
 ### Examples
 

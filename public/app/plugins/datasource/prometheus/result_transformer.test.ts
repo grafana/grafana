@@ -1,6 +1,13 @@
-import { DataFrame, FieldType, DataQueryRequest, DataQueryResponse, MutableDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  DataQueryRequest,
+  DataQueryResponse,
+  FieldType,
+  MutableDataFrame,
+  PreferredVisualisationType,
+} from '@grafana/data';
 
-import { transform, transformV2, transformDFToTable, parseSampleValue } from './result_transformer';
+import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -9,10 +16,16 @@ jest.mock('@grafana/runtime', () => ({
   }),
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: () => {
-        return { name: 'Tempo' };
+      getInstanceSettings: (uid: string) => {
+        const uids = ['Tempo', 'jaeger'];
+        return uids.find((u) => u === uid) ? { name: uid } : undefined;
       },
     };
+  },
+  config: {
+    featureToggles: {
+      prometheusDataplane: true,
+    },
   },
 }));
 
@@ -98,6 +111,74 @@ describe('Prometheus Result Transformer', () => {
       });
     });
 
+    it('dataplane handling, adds displayNameFromDs from calculateFieldDisplayName() when __name__ is the field name when legendFormat is auto', () => {
+      const request = {
+        targets: [
+          {
+            format: 'time_series',
+            refId: 'A',
+            legendFormat: '__auto',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                name: 'up',
+                labels: { __name__: 'up' },
+                config: {},
+                values: [1],
+              },
+            ],
+            length: 1,
+            refId: 'A',
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+            },
+          },
+        ],
+      } as unknown as DataQueryResponse;
+      const series = transformV2(response, request, {});
+      expect(series).toEqual({
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                config: { displayNameFromDS: 'up' },
+                labels: { __name__: 'up' },
+                name: 'up',
+                values: [1],
+              },
+            ],
+            length: 1,
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+              preferredVisualisationType: 'graph',
+            },
+            refId: 'A',
+          },
+        ],
+        state: 'Done',
+      });
+    });
+
     it('results with table format should be transformed to table dataFrames', () => {
       const request = {
         targets: [
@@ -130,7 +211,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('Value');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus');
     });
 
     it('results with table format and multiple data frames should be transformed to 1 table dataFrame', () => {
@@ -180,7 +261,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[3].name).toEqual('label3');
       expect(series.data[0].fields[4].name).toEqual('label4');
       expect(series.data[0].fields[5].name).toEqual('Value');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
     it('results with table and time_series format should be correctly transformed', () => {
@@ -229,7 +310,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields.length).toEqual(2);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('graph');
       expect(series.data[1].fields.length).toEqual(4);
-      expect(series.data[1].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
     it('results with heatmap format should be correctly transformed', () => {
@@ -238,6 +319,71 @@ describe('Prometheus Result Transformer', () => {
           {
             format: 'heatmap',
             refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
+    });
+
+    it('results with heatmap format from multiple queries should be correctly transformed', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+          {
+            format: 'heatmap',
+            refId: 'B',
           },
         ],
       } as unknown as DataQueryRequest<PromQuery>;
@@ -276,7 +422,43 @@ describe('Prometheus Result Transformer', () => {
                 name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
-                labels: { le: '3' },
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
               },
             ],
           }),
@@ -288,6 +470,147 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
       expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
       expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
+    });
+
+    it('results with heatmap format and multiple histograms should be grouped and de-accumulated by non-le labels', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          // 10
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', additionalProperty: '10' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', additionalProperty: '10' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf', additionalProperty: '10' },
+              },
+            ],
+          }),
+          // 20
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [0, 10, 10],
+                labels: { le: '1', additionalProperty: '20' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 40],
+                labels: { le: '2', additionalProperty: '20' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 60],
+                labels: { le: '+Inf', additionalProperty: '20' },
+              },
+            ],
+          }),
+          // 30
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 30, 60],
+                labels: { le: '1', additionalProperty: '30' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 40, 60],
+                labels: { le: '2', additionalProperty: '30' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [40, 40, 60],
+                labels: { le: '+Inf', additionalProperty: '30' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
+
+      expect(series.data[1].fields[1].values.toArray()).toEqual([0, 10, 10]);
+      expect(series.data[1].fields[2].values.toArray()).toEqual([20, 0, 30]);
+      expect(series.data[1].fields[3].values.toArray()).toEqual([10, 0, 20]);
+
+      expect(series.data[2].fields[1].values.toArray()).toEqual([30, 30, 60]);
+      expect(series.data[2].fields[2].values.toArray()).toEqual([0, 10, 0]);
+      expect(series.data[2].fields[3].values.toArray()).toEqual([10, 0, 0]);
     });
 
     it('Retains exemplar frames when data returned is a heatmap', () => {
@@ -354,7 +677,75 @@ describe('Prometheus Result Transformer', () => {
       ]);
       expect(series.data[1].fields.length).toEqual(3);
     });
+
+    it('should not add a link with an error when exemplarTraceIdDestinations is not configured properly', () => {
+      const response = {
+        state: 'Done',
+        data: [
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            name: 'exemplar',
+            meta: {
+              custom: {
+                resultType: 'exemplar',
+              },
+            },
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40, 90, 14, 21],
+                labels: { le: '6' },
+              },
+              {
+                name: 'traceID',
+                type: FieldType.string,
+                values: ['unknown'],
+                labels: { le: '6' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+      const request = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const testOptions: any = {
+        exemplarTraceIdDestinations: [
+          {
+            name: 'traceID',
+            datasourceUid: 'unknown',
+          },
+        ],
+      };
+
+      const series = transformV2(response, request, testOptions);
+      expect(series.data[1].fields.length).toEqual(3);
+      expect(series.data[1].name).toEqual('exemplar');
+      const traceField = series.data[1].fields.find((f) => f.name === 'traceID');
+      expect(traceField).toBeDefined();
+      expect(traceField!.config.links?.length).toBe(0);
+    });
   });
+
   describe('transformDFToTable', () => {
     it('transforms dataFrame with response length 1 to table dataFrame', () => {
       const df = new MutableDataFrame({
@@ -402,6 +793,47 @@ describe('Prometheus Result Transformer', () => {
       expect(tableDf.fields[2].name).toBe('label2');
       expect(tableDf.fields[2].values.get(0)).toBe('value2');
       expect(tableDf.fields[3].name).toBe('Value');
+    });
+
+    // Queries do not always return results
+    it('transforms dataFrame and empty dataFrame mock responses to table dataFrames', () => {
+      const value1 = 'value1';
+      const value2 = 'value2';
+
+      const dataframes = [
+        new MutableDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+        new MutableDataFrame({
+          refId: 'B',
+          fields: [],
+        }),
+      ];
+
+      const transformedTableDataFrames = transformDFToTable(dataframes);
+      // Expect the first query to still return valid results
+      expect(transformedTableDataFrames[0].fields.length).toBe(4);
+      expect(transformedTableDataFrames[0].fields[0].name).toBe('Time');
+      expect(transformedTableDataFrames[0].fields[1].name).toBe('label1');
+      expect(transformedTableDataFrames[0].fields[1].values.get(0)).toBe(value1);
+      expect(transformedTableDataFrames[0].fields[2].name).toBe('label2');
+      expect(transformedTableDataFrames[0].fields[2].values.get(0)).toBe(value2);
+      expect(transformedTableDataFrames[0].fields[3].name).toBe('Value #A');
+
+      // Expect the invalid/empty results not to throw an error and to return empty arrays
+      expect(transformedTableDataFrames[1].fields[1].labels).toBe(undefined);
+      expect(transformedTableDataFrames[1].fields[1].name).toBe('Value #B');
+      expect(transformedTableDataFrames[1].fields[1].values.toArray()).toEqual([]);
+      expect(transformedTableDataFrames[1].fields[0].values.toArray()).toEqual([]);
     });
   });
 
@@ -960,6 +1392,24 @@ describe('Prometheus Result Transformer', () => {
           const result = transform({ data: exemplarsResponse } as any, options);
 
           expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
+        });
+
+        it('should not add a datalink with an error when exemplarTraceIdDestinations is not configured', () => {
+          const testOptions: any = {
+            target: {},
+            query: {},
+            exemplarTraceIdDestinations: [
+              {
+                name: 'traceID',
+                datasourceUid: 'unknown',
+              },
+            ],
+          };
+
+          const result = transform({ data: exemplarsResponse } as any, testOptions);
+          const traceField = result[0].fields.find((f) => f.name === 'traceID');
+          expect(traceField).toBeDefined();
+          expect(traceField!.config.links?.length).toBe(0);
         });
       });
     });

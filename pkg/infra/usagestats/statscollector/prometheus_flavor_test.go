@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,47 +32,49 @@ func TestDetectPrometheusVariant(t *testing.T) {
 	}))
 	t.Cleanup(cortex.Close)
 
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
+	statsService := statstest.NewFakeService()
 	s := createService(
 		t,
 		setting.NewCfg(),
 		sqlStore,
-		withDatasources(mockDatasourceService{datasources: []*models.DataSource{
+		statsService,
+		withDatasources(mockDatasourceService{datasources: []*datasources.DataSource{
 			{
-				Id:      1,
-				OrgId:   1,
+				ID:      1,
+				OrgID:   1,
 				Version: 1,
 				Name:    "Vanilla",
 				Type:    "prometheus",
 				Access:  "proxy",
-				Url:     vanilla.URL,
+				URL:     vanilla.URL,
 			},
 			{
-				Id:      2,
-				OrgId:   1,
+				ID:      2,
+				OrgID:   1,
 				Version: 1,
 				Name:    "Mimir",
 				Type:    "prometheus",
 				Access:  "proxy",
-				Url:     mimir.URL,
+				URL:     mimir.URL,
 			},
 			{
-				Id:      3,
-				OrgId:   1,
+				ID:      3,
+				OrgID:   1,
 				Version: 1,
 				Name:    "Another Mimir",
 				Type:    "prometheus",
 				Access:  "proxy",
-				Url:     mimir.URL,
+				URL:     mimir.URL,
 			},
 			{
-				Id:      4,
-				OrgId:   1,
+				ID:      4,
+				OrgID:   1,
 				Version: 1,
 				Name:    "Cortex",
 				Type:    "prometheus",
 				Access:  "proxy",
-				Url:     cortex.URL,
+				URL:     cortex.URL,
 			},
 		}}),
 	)

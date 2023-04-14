@@ -1,7 +1,5 @@
-import { DataTransformerConfig } from '@grafana/data';
-
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -50,9 +48,9 @@ describe('SortBy transformer', () => {
 
     await expect(transformDataFrame([cfg], [testFrame])).toEmitValuesWith((received) => {
       expect(getFieldSnapshot(received[0][0].fields[0])).toMatchInlineSnapshot(`
-        Object {
+        {
           "name": "time",
-          "values": Array [
+          "values": [
             5,
             6,
             7,
@@ -80,9 +78,9 @@ describe('SortBy transformer', () => {
 
     await expect(transformDataFrame([cfg], [testFrame])).toEmitValuesWith((received) => {
       expect(getFieldSnapshot(received[0][0].fields[0])).toMatchInlineSnapshot(`
-        Object {
+        {
           "name": "time",
-          "values": Array [
+          "values": [
             10,
             9,
             8,

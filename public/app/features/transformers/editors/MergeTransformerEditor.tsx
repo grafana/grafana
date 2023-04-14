@@ -1,15 +1,10 @@
 import React from 'react';
 
 import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 import { FieldValidationMessage } from '@grafana/ui';
 
-import { MergeTransformerOptions } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
-
-export const MergeTransformerEditor: React.FC<TransformerUIProps<MergeTransformerOptions>> = ({
-  input,
-  options,
-  onChange,
-}) => {
+export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
   if (input.length <= 1) {
     // Show warning that merge is useless only apply on a single frame
     return <FieldValidationMessage>Merge has no effect when applied on a single frame.</FieldValidationMessage>;

@@ -1,7 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/overview/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/
+  - ../../auth/
+  - ../../auth/overview/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 title: Configure authentication
@@ -12,7 +18,7 @@ weight: 100
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync/" >}}) and [active sync]({{< relref "enhanced_ldap/#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
+The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync/" >}}) and [active sync]({{< relref "enhanced-ldap/#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
 | Provider                                         | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
 | ------------------------------------------------ | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
@@ -30,24 +36,24 @@ The following table shows all supported authentication providers and the feature
 ## Grafana Auth
 
 Grafana of course has a built in user authentication system with password authentication enabled by default. You can
-disable authentication by enabling anonymous access. You can also hide login form and only allow login through an auth
+disable authentication by enabling anonymous access. You can also hide the login form and only allow login through an auth
 provider (listed above). There are also options for allowing self sign up.
 
 ### Login and short-lived tokens
 
 > The following applies when using Grafana's built in user authentication, LDAP (without Auth proxy) or OAuth integration.
 
-Grafana are using short-lived tokens as a mechanism for verifying authenticated users.
-These short-lived tokens are rotated each `token_rotation_interval_minutes` for an active authenticated user.
+Grafana uses short-lived tokens as a mechanism for verifying authenticated users.
+These short-lived tokens are rotated on an interval specified by `token_rotation_interval_minutes` for active authenticated users.
 
-An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
-This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_duration` and still being authenticated.
-This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
+Inactive authenticated users will remain logged in for a duration specified by `login_maximum_inactive_lifetime_duration`.
+This means that a user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
+This is true as long as the time since last user login is less than `login_maximum_lifetime_duration`.
 
 #### Remote logout
 
 You can logout from other devices by removing login sessions from the bottom of your profile page. If you are
-a Grafana admin user you can also do the same for any user from the Server Admin / Edit User view.
+a Grafana admin user, you can also do the same for any user from the Server Admin / Edit User view.
 
 ## Settings
 
@@ -59,15 +65,13 @@ Example:
 # Login cookie name
 login_cookie_name = grafana_session
 
-
 # The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
 login_maximum_inactive_lifetime_duration =
-
 
 # The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
 login_maximum_lifetime_duration =
 
-# How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
+# How often should auth tokens be rotated for authenticated users when being active. The default is every 10 minutes.
 token_rotation_interval_minutes = 10
 
 # The maximum lifetime (seconds) an API key can be used. If it is set all the API keys should have limited lifetime that is lower than this value.
@@ -91,11 +95,11 @@ org_name = Main Org.
 org_role = Viewer
 ```
 
-If you change your organization name in the Grafana UI this setting needs to be updated to match the new name.
+If you change your organization name in the Grafana UI, this setting needs to be updated to match the new name.
 
 ### Basic authentication
 
-Basic auth is enabled by default and works with the built in Grafana user password authentication system and LDAP
+Basic auth is enabled by default and works with the built-in Grafana user-password authentication system and LDAP
 authentication integration.
 
 To disable basic auth:
@@ -107,7 +111,7 @@ enabled = false
 
 ### Disable login form
 
-You can hide the Grafana login form using the below configuration settings.
+Hide the Grafana login form using the below configuration settings.
 
 ```bash
 [auth]
@@ -116,13 +120,13 @@ disable_login_form = true
 
 ### Automatic OAuth login
 
-Set to true to attempt login with OAuth automatically, skipping the login screen.
-This setting is ignored if multiple OAuth providers are configured.
+Set to true to attempt login with specific OAuth provider automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
 Defaults to `false`.
 
 ```bash
-[auth]
-oauth_auto_login = true
+[auth.generic_oauth]
+auto_login = true
 ```
 
 ### Avoid automatic OAuth login
@@ -147,3 +151,18 @@ URL to redirect the user to after signing out from Grafana. This can for example
 [auth]
 signout_redirect_url =
 ```
+
+### Protected roles
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "../../../introduction/grafana-cloud" >}}).
+
+By default, after you configure an authorization provider, Grafana will adopt existing users into the new authentication scheme. For example, if you have created a user with basic authentication having the login `jsmith@example.com`, then set up SAML authentication where `jsmith@example.com` is an account, the user's authentication type will be changed to SAML if they perform a SAML sign-in.
+
+You can disable this user adoption for certain roles using the `protected_roles` property:
+
+```bash
+[auth.security]
+protected_roles = server_admins org_admins
+```
+
+The value of `protected_roles` should be a list of roles to protect, separated by spaces. Valid roles are `viewers`, `editors`, `org_admins`, `server_admins`, and `all` (a superset of the other roles).

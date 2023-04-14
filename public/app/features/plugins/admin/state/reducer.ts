@@ -5,7 +5,15 @@ import { PanelPlugin } from '@grafana/data';
 import { STATE_PREFIX } from '../constants';
 import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
 
-import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
+import {
+  fetchAll,
+  fetchDetails,
+  install,
+  uninstall,
+  loadPluginDashboards,
+  panelPluginLoaded,
+  fetchAllLocal,
+} from './actions';
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
 
@@ -22,25 +30,27 @@ const getOriginalActionType = (type: string) => {
   return type.substring(0, separator);
 };
 
+export const initialState: ReducerState = {
+  items: pluginsAdapter.getInitialState(),
+  requests: {},
+  settings: {
+    displayMode: PluginListDisplayMode.Grid,
+  },
+  // Backwards compatibility
+  // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
+  // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
+  plugins: [],
+  errors: [],
+  searchQuery: '',
+  hasFetched: false,
+  dashboards: [],
+  isLoadingPluginDashboards: false,
+  panels: {},
+};
+
 const slice = createSlice({
   name: 'plugins',
-  initialState: {
-    items: pluginsAdapter.getInitialState(),
-    requests: {},
-    settings: {
-      displayMode: PluginListDisplayMode.Grid,
-    },
-    // Backwards compatibility
-    // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
-    // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
-    plugins: [],
-    errors: [],
-    searchQuery: '',
-    hasFetched: false,
-    dashboards: [],
-    isLoadingPluginDashboards: false,
-    panels: {},
-  } as ReducerState,
+  initialState,
   reducers: {
     setDisplayMode(state, action: PayloadAction<PluginListDisplayMode>) {
       state.settings.displayMode = action.payload;
@@ -50,6 +60,10 @@ const slice = createSlice({
     builder
       // Fetch All
       .addCase(fetchAll.fulfilled, (state, action) => {
+        pluginsAdapter.upsertMany(state.items, action.payload);
+      })
+      // Fetch All local
+      .addCase(fetchAllLocal.fulfilled, (state, action) => {
         pluginsAdapter.upsertMany(state.items, action.payload);
       })
       // Fetch Details
@@ -79,7 +93,8 @@ const slice = createSlice({
       // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
       .addCase(loadPluginDashboards.fulfilled, (state, action) => {
         state.isLoadingPluginDashboards = false;
-        state.dashboards = action.payload;
+        // eslint-disable-next-line
+        state.dashboards = action.payload as any; // WritableDraft<PluginDashboard>[],...>
       })
       .addMatcher(isPendingRequest, (state, action) => {
         state.requests[getOriginalActionType(action.type)] = {

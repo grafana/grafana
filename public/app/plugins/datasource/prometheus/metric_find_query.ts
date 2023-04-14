@@ -6,6 +6,7 @@ import { MetricFindValue, TimeRange } from '@grafana/data';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PrometheusDatasource } from './datasource';
+import { getPrometheusTime } from './language_utils';
 import { PromQueryRequest } from './types';
 
 export default class PrometheusMetricFindQuery {
@@ -24,7 +25,7 @@ export default class PrometheusMetricFindQuery {
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
     const labelNamesQuery = this.query.match(labelNamesRegex);
     if (labelNamesQuery) {
-      return this.labelNamesQuery();
+      return this.datasource.getTagKeys();
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
@@ -47,39 +48,21 @@ export default class PrometheusMetricFindQuery {
     }
 
     // if query contains full metric name, return metric name and label list
-    return this.metricNameAndLabelsQuery(this.query);
-  }
+    const expressions = ['label_values()', 'metrics()', 'query_result()'];
+    if (!expressions.includes(this.query)) {
+      return this.metricNameAndLabelsQuery(this.query);
+    }
 
-  labelNamesQuery() {
-    const start = this.datasource.getPrometheusTime(this.range.from, false);
-    const end = this.datasource.getPrometheusTime(this.range.to, true);
-    const params = {
-      start: start.toString(),
-      end: end.toString(),
-    };
-
-    const url = `/api/v1/labels`;
-
-    return this.datasource.metadataRequest(url, params).then((result: any) => {
-      return _map(result.data.data, (value) => {
-        return { text: value };
-      });
-    });
+    return Promise.resolve([]);
   }
 
   labelValuesQuery(label: string, metric?: string) {
-    const start = this.datasource.getPrometheusTime(this.range.from, false);
-    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const start = getPrometheusTime(this.range.from, false);
+    const end = getPrometheusTime(this.range.to, true);
+    const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
-    let url: string;
-
-    if (!metric) {
-      const params = {
-        start: start.toString(),
-        end: end.toString(),
-      };
-      // return label values globally
-      url = `/api/v1/label/${label}/values`;
+    if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
+      const url = `/api/v1/label/${label}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {
         return _map(result.data.data, (value) => {
@@ -87,12 +70,7 @@ export default class PrometheusMetricFindQuery {
         });
       });
     } else {
-      const params = {
-        'match[]': metric,
-        start: start.toString(),
-        end: end.toString(),
-      };
-      url = `/api/v1/series`;
+      const url = `/api/v1/series`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {
         const _labels = _map(result.data.data, (metric) => {
@@ -112,8 +90,8 @@ export default class PrometheusMetricFindQuery {
   }
 
   metricNameQuery(metricFilterPattern: string) {
-    const start = this.datasource.getPrometheusTime(this.range.from, false);
-    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const start = getPrometheusTime(this.range.from, false);
+    const end = getPrometheusTime(this.range.to, true);
     const params = {
       start: start.toString(),
       end: end.toString(),
@@ -137,33 +115,46 @@ export default class PrometheusMetricFindQuery {
   }
 
   queryResultQuery(query: string) {
-    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const end = getPrometheusTime(this.range.to, true);
     const instantQuery: PromQueryRequest = { expr: query } as PromQueryRequest;
     return this.datasource.performInstantQuery(instantQuery, end).pipe(
       map((result) => {
-        return _map(result.data.data.result, (metricData) => {
-          let text = metricData.metric.__name__ || '';
-          delete metricData.metric.__name__;
-          text +=
-            '{' +
-            _map(metricData.metric, (v, k) => {
-              return k + '="' + v + '"';
-            }).join(',') +
-            '}';
-          text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
+        switch (result.data.data.resultType) {
+          case 'scalar': // [ <unix_time>, "<scalar_value>" ]
+          case 'string': // [ <unix_time>, "<string_value>" ]
+            return [
+              {
+                text: result.data.data.result[1] || '',
+                expandable: false,
+              },
+            ];
+          case 'vector':
+            return _map(result.data.data.result, (metricData) => {
+              let text = metricData.metric.__name__ || '';
+              delete metricData.metric.__name__;
+              text +=
+                '{' +
+                _map(metricData.metric, (v, k) => {
+                  return k + '="' + v + '"';
+                }).join(',') +
+                '}';
+              text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
 
-          return {
-            text: text,
-            expandable: true,
-          };
-        });
+              return {
+                text: text,
+                expandable: true,
+              };
+            });
+          default:
+            throw Error(`Unknown/Unhandled result type: [${result.data.data.resultType}]`);
+        }
       })
     );
   }
 
   metricNameAndLabelsQuery(query: string): Promise<MetricFindValue[]> {
-    const start = this.datasource.getPrometheusTime(this.range.from, false);
-    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const start = getPrometheusTime(this.range.from, false);
+    const end = getPrometheusTime(this.range.to, true);
     const params = {
       'match[]': query,
       start: start.toString(),

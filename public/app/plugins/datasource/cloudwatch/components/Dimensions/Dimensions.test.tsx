@@ -10,9 +10,9 @@ const ds = setupMockedDataSource({
   variables: [],
 });
 
-ds.datasource.getNamespaces = jest.fn().mockResolvedValue([]);
-ds.datasource.getMetrics = jest.fn().mockResolvedValue([]);
-ds.datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
 const q: CloudWatchMetricsQuery = {
   id: '',
@@ -33,7 +33,6 @@ const props = {
   query: q,
   disableExpressions: false,
   onChange: jest.fn(),
-  onRunQuery: jest.fn(),
 };
 
 describe('Dimensions', () => {
@@ -42,6 +41,24 @@ describe('Dimensions', () => {
       props.query.dimensions = {
         InstanceId: '*',
         InstanceGroup: 'Group1',
+      };
+      render(<Dimensions {...props} metricStat={props.query} dimensionKeys={[]} />);
+      const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');
+      expect(filterItems.length).toBe(2);
+
+      expect(within(filterItems[0]).getByText('InstanceId')).toBeInTheDocument();
+      expect(within(filterItems[0]).getByText('*')).toBeInTheDocument();
+
+      expect(within(filterItems[1]).getByText('InstanceGroup')).toBeInTheDocument();
+      expect(within(filterItems[1]).getByText('Group1')).toBeInTheDocument();
+    });
+  });
+
+  describe('when rendered with two existing dimensions and values are represented as arrays', () => {
+    it('should render two filter items', async () => {
+      props.query.dimensions = {
+        InstanceId: ['*'],
+        InstanceGroup: ['Group1'],
       };
       render(<Dimensions {...props} metricStat={props.query} dimensionKeys={[]} />);
       const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');

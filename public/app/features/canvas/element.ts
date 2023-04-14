@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 
 import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { config } from 'app/core/config';
 
 import { DimensionContext } from '../dimensions/context';
 
@@ -26,6 +27,26 @@ export interface CanvasElementOptions<TConfig = any> {
   placement?: Placement;
   background?: BackgroundConfig;
   border?: LineConfig;
+  connections?: CanvasConnection[];
+}
+
+// Unit is percentage from the middle of the element
+// 0, 0 middle; -1, -1 bottom left; 1, 1 top right
+export interface ConnectionCoordinates {
+  x: number;
+  y: number;
+}
+
+export enum ConnectionPath {
+  Straight = 'straight',
+}
+
+export interface CanvasConnection {
+  source: ConnectionCoordinates;
+  target: ConnectionCoordinates;
+  targetName?: string;
+  path: ConnectionPath;
+  // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
 export interface CanvasElementProps<TConfig = any, TData = any> {
@@ -34,6 +55,9 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
 
   // Raw data
   data?: TData;
+
+  // If the element is currently selected
+  isSelected?: boolean;
 }
 
 /**
@@ -54,4 +78,11 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** Build the configuration UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
+
+  /** If item has an edit mode */
+  hasEditMode?: boolean;
 }
+
+export const defaultBgColor = '#D9D9D9';
+export const defaultTextColor = '#000000';
+export const defaultThemeTextColor = config.theme2.colors.text.primary;

@@ -1,26 +1,20 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import {
-  useFieldDisplayNames,
-  useSelectOptions,
-} from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 import { ScaleDimensionConfig, ScaleDimensionOptions } from '../types';
-
-import { NumberInput } from './NumberInput';
 
 const fixedValueOption: SelectableValue<string> = {
   label: 'Fixed value',
   value: '_____fixed_____',
 };
 
-export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions, any>> = (
-  props
-) => {
+export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
   const { value, context, onChange, item } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);

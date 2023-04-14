@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -20,13 +19,14 @@ const (
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
-	alertmanagerDefaultConfigPollInterval = 60 * time.Second
+	alertmanagerDefaultConfigPollInterval = time.Minute
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email"
+			"receiver": "grafana-default-email",
+			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
 			"name": "grafana-default-email",
@@ -44,11 +44,13 @@ const (
 }
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
-	schedulerDefaultAdminConfigPollInterval = 60 * time.Second
+	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
-	screenshotsDefaultEnabled               = false
+	screenshotsDefaultCapture               = false
+	screenshotsDefaultCaptureTimeout        = 10 * time.Second
+	screenshotsMaxCaptureTimeout            = 30 * time.Second
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -57,6 +59,7 @@ const (
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled    = true
 )
 
 type UnifiedAlertingSettings struct {
@@ -81,18 +84,47 @@ type UnifiedAlertingSettings struct {
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
+	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	StateHistory                  UnifiedAlertingStateHistorySettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
-	Enabled                    bool
+	Capture                    bool
+	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
+}
+
+type UnifiedAlertingReservedLabelSettings struct {
+	DisabledLabels map[string]struct{}
+}
+
+type UnifiedAlertingStateHistorySettings struct {
+	Enabled       bool
+	Backend       string
+	LokiRemoteURL string
+	LokiReadURL   string
+	LokiWriteURL  string
+	LokiTenantID  string
+	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
+	// if one of them is set.
+	LokiBasicAuthPassword string
+	LokiBasicAuthUsername string
+	MultiPrimary          string
+	MultiSecondaries      []string
+	ExternalLabels        map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
 // It hides the implementation details of the Enabled and simplifies its usage.
 func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
+}
+
+// IsReservedLabelDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the given reserved label.
+func (u *UnifiedAlertingReservedLabelSettings) IsReservedLabelDisabled(label string) bool {
+	_, ok := u.DisabledLabels[label]
+	return ok
 }
 
 // readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
@@ -103,29 +135,37 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// At present an invalid value is considered the same as no value. This means that a
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
-	unifiedAlerting, err := section.Key("enabled").Bool()
-	if err != nil {
-		// TODO: Remove in Grafana v9
+	hasEnabled := section.Key("enabled").Value() != ""
+	if !hasEnabled {
+		// TODO: Remove in Grafana v10
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
 			AlertingEnabled = &legacyAlerting
-			unifiedAlerting = true
+			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// if legacy alerting has not been configured then enable unified alerting
 		if AlertingEnabled == nil {
-			unifiedAlerting = true
+			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// enable unified alerting and disable legacy alerting
 		legacyAlerting := false
 		AlertingEnabled = &legacyAlerting
-		unifiedAlerting = true
+		unifiedAlerting := true
 		return &unifiedAlerting, nil
+	}
+
+	unifiedAlerting, err := section.Key("enabled").Bool()
+	if err != nil {
+		// the value for unified alerting is invalid so disable all alerting
+		legacyAlerting := false
+		AlertingEnabled = &legacyAlerting
+		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
@@ -149,7 +189,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -260,10 +300,43 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
 
-	uaCfgScreenshots.Enabled = screenshots.Key("enabled").MustBool(screenshotsDefaultEnabled)
+	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+
+	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
+	if captureTimeout > screenshotsMaxCaptureTimeout {
+		return fmt.Errorf("value of setting 'capture_timeout' cannot exceed %s", screenshotsMaxCaptureTimeout)
+	}
+	uaCfgScreenshots.CaptureTimeout = captureTimeout
+
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
+
+	reservedLabels := iniFile.Section("unified_alerting.reserved_labels")
+	uaCfgReservedLabels := UnifiedAlertingReservedLabelSettings{
+		DisabledLabels: make(map[string]struct{}),
+	}
+	for _, label := range util.SplitString(reservedLabels.Key("disabled_labels").MustString("")) {
+		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
+	}
+	uaCfg.ReservedLabels = uaCfgReservedLabels
+
+	stateHistory := iniFile.Section("unified_alerting.state_history")
+	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
+	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
+		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend:               stateHistory.Key("backend").MustString("annotations"),
+		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
+		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
+		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
+		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		MultiPrimary:          stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
+		ExternalLabels:        stateHistoryLabels.KeysHash(),
+	}
+	uaCfg.StateHistory = uaCfgStateHistory
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
@@ -271,4 +344,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 func GetAlertmanagerDefaultConfiguration() string {
 	return alertmanagerDefaultConfiguration
+}
+
+func splitTrim(s string, sep string) []string {
+	spl := strings.Split(s, sep)
+	for i := range spl {
+		spl[i] = strings.TrimSpace(spl[i])
+	}
+	return spl
 }

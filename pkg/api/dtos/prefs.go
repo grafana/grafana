@@ -4,19 +4,9 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
-type Prefs struct {
-	Theme            string                      `json:"theme"`
-	HomeDashboardID  int64                       `json:"homeDashboardId"`
-	HomeDashboardUID string                      `json:"homeDashboardUID,omitempty"`
-	Timezone         string                      `json:"timezone"`
-	WeekStart        string                      `json:"weekStart"`
-	Navbar           pref.NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory     pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
-}
-
 // swagger:model
 type UpdatePrefsCmd struct {
-	// Enum: light,dark
+	// Enum: light,dark,system
 	Theme string `json:"theme"`
 	// The numerical :id of a favorited dashboard
 	// Default:0
@@ -25,8 +15,9 @@ type UpdatePrefsCmd struct {
 	// Enum: utc,browser
 	Timezone     string                       `json:"timezone"`
 	WeekStart    string                       `json:"weekStart"`
-	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Language     string                       `json:"language"`
+	Cookies      []pref.CookieType            `json:"cookies,omitempty"`
 }
 
 // swagger:model
@@ -39,7 +30,8 @@ type PatchPrefsCmd struct {
 	// Enum: utc,browser
 	Timezone         *string                      `json:"timezone,omitempty"`
 	WeekStart        *string                      `json:"weekStart,omitempty"`
-	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
+	Language         *string                      `json:"language,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
+	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
 }

@@ -6,7 +6,8 @@ import { AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { SegmentSelect } from './SegmentSelect';
@@ -14,7 +15,7 @@ import { getSegmentStyles } from './styles';
 
 import { useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   /**
@@ -48,10 +49,11 @@ export function SegmentAsync<T>({
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
-  const styles = useStyles(getSegmentStyles);
+  const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -69,7 +71,7 @@ export function SegmentAsync<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }
@@ -101,15 +103,15 @@ export function SegmentAsync<T>({
 
 function mapStateToNoOptionsMessage<T>(state: AsyncState<Array<SelectableValue<T>>>): string {
   if (state.loading) {
-    return 'Loading options...';
+    return t('grafana-ui.segment-async.loading', 'Loading options...');
   }
 
   if (state.error) {
-    return 'Failed to load options';
+    return t('grafana-ui.segment-async.error', 'Failed to load options');
   }
 
   if (!Array.isArray(state.value) || state.value.length === 0) {
-    return 'No options found';
+    return t('grafana-ui.segment-async.no-options', 'No options found');
   }
 
   return '';

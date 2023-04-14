@@ -1,15 +1,17 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	amConfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
-	amConfig "github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 func (srv AlertmanagerSrv) provenanceGuard(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
@@ -32,7 +34,7 @@ func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels
 	reporter := cmputil.DiffReporter{}
 	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
 	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, options...)
-	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != ngmodels.ProvenanceNone {
+	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != apimodels.Provenance(ngmodels.ProvenanceNone) {
 		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
 	}
 	return nil
@@ -42,7 +44,7 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 	for name, template := range currentConfig.TemplateFiles {
 		provenance := ngmodels.ProvenanceNone
 		if prov, present := currentConfig.TemplateFileProvenances[name]; present {
-			provenance = prov
+			provenance = ngmodels.Provenance(prov)
 		}
 		if provenance == ngmodels.ProvenanceNone {
 			continue // we are only interested in non none
@@ -74,7 +76,7 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 	}
 	for _, existingReceiver := range currReceivers {
 		for _, contactPoint := range existingReceiver.GrafanaManagedReceivers {
-			if contactPoint.Provenance == ngmodels.ProvenanceNone {
+			if contactPoint.Provenance == apimodels.Provenance(ngmodels.ProvenanceNone) {
 				continue // we are only interested in non none
 			}
 			postedContactPoint, present := newCPs[contactPoint.UID]
@@ -96,11 +98,16 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 					return editErr
 				}
 			}
-			existingSettings, err := contactPoint.Settings.Map()
+			existingSettings := map[string]interface{}{}
+			err := json.Unmarshal(contactPoint.Settings, &existingSettings)
 			if err != nil {
 				return err
 			}
-			newSettings, err := postedContactPoint.Settings.Map()
+			newSettings := map[string]interface{}{}
+			err = json.Unmarshal(contactPoint.Settings, &newSettings)
+			if err != nil {
+				return err
+			}
 			if err != nil {
 				return err
 			}
@@ -126,7 +133,7 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 	for _, muteTime := range currentConfig.AlertmanagerConfig.MuteTimeIntervals {
 		provenance := ngmodels.ProvenanceNone
 		if prov, present := currentConfig.AlertmanagerConfig.MuteTimeProvenances[muteTime.Name]; present {
-			provenance = prov
+			provenance = ngmodels.Provenance(prov)
 		}
 		if provenance == ngmodels.ProvenanceNone {
 			continue // we are only interested in non none

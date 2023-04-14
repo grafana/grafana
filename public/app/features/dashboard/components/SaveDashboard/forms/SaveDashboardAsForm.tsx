@@ -9,17 +9,16 @@ import { SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;
-  $folder: { id?: number; title?: string };
+  $folder: { uid?: string; title?: string };
   copyTags: boolean;
 }
 
 const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
-  const clone: any = dashboard.getSaveModelClone();
+  const clone = dashboard.getSaveModelClone();
   clone.id = null;
   clone.uid = '';
   clone.title += ' Copy';
   clone.editable = true;
-  clone.hideControls = false;
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
@@ -32,7 +31,6 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
     });
   }
 
-  delete clone.autoUpdate;
   return clone;
 };
 
@@ -40,17 +38,11 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
-  dashboard,
-  isNew,
-  onSubmit,
-  onCancel,
-  onSuccess,
-}) => {
+export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
-      id: dashboard.meta.folderId,
+      uid: dashboard.meta.folderUid,
       title: dashboard.meta.folderTitle,
     },
     copyTags: false,
@@ -61,10 +53,10 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
       return 'Dashboard name cannot be the same as folder name';
     }
     try {
-      await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid, dashboardName);
       return true;
     } catch (e) {
-      return e.message;
+      return e instanceof Error ? e.message : 'Dashboard name is invalid';
     }
   };
 
@@ -85,7 +77,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
         const result = await onSubmit(
           clone,
           {
-            folderId: data.$folder.id,
+            folderUid: data.$folder.uid,
           },
           dashboard
         );
@@ -112,7 +104,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
                 <FolderPicker
                   {...field}
                   dashboardId={dashboard.id}
-                  initialFolderId={dashboard.meta.folderId}
+                  initialFolderUid={dashboard.meta.folderUid}
                   initialTitle={dashboard.meta.folderTitle}
                   enableCreateNew
                 />

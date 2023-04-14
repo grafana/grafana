@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { Monaco } from '../../monarch/types';
+import { Monaco } from '../../language/monarch/types';
 import * as SQLTestData from '../cloudwatch-sql-test-data';
 import * as DynamicLabelTestData from '../dynamic-label-test-data';
 import * as MetricMathTestData from '../metric-math-test-data';
@@ -52,7 +52,7 @@ const MonacoMock: Monaco = {
       );
     },
     fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => {
-      return {} as any as monacoTypes.Range;
+      return {} as unknown as monacoTypes.Range;
     },
   },
   languages: {

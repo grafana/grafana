@@ -9,12 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
-	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil)
+	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 	t.Run("ok -> alerting", func(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK
@@ -92,7 +93,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 			name:     "alerting -> alerting. should not update regardless of FOR",
 			expected: models.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateAlerting
+				ec.PrevAlertState = models.AlertStatePending
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
 				ec.Rule.For = time.Minute * 2
@@ -199,7 +200,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		tc.applyFn(evalContext)
 		newState := evalContext.GetNewState()
@@ -391,7 +392,7 @@ func TestEvaluateNotificationTemplateFields(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
 			evalContext := NewEvalContext(context.Background(), &Rule{Name: "Rule name: ${value1}", Message: "Rule message: ${value2}",
-				Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil)
+				Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.EvalMatches = test.evalMatches
 			evalContext.AllMatches = test.allMatches
 
@@ -402,4 +403,19 @@ func TestEvaluateNotificationTemplateFields(t *testing.T) {
 			require.Equal(tt, test.expectedMessage, evalContext.Rule.Message)
 		})
 	}
+}
+
+func TestGetDurationFromEvalContext(t *testing.T) {
+	startTime, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", "2022-10-03 11:33:14.438803 +0200 CEST")
+	require.NoError(t, err)
+
+	endTime, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", "2022-10-03 11:33:15.291075 +0200 CEST")
+	require.NoError(t, err)
+
+	evalContext := EvalContext{
+		StartTime: startTime,
+		EndTime:   endTime,
+	}
+
+	assert.Equal(t, float64(852.272), evalContext.GetDurationMs())
 }

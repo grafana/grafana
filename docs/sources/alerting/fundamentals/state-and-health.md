@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/fundamentals/state-and-health/
-  - /docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state-and-health/
+  - ../unified-alerting/alerting-rules/state-and-health/
 description: State and Health of alerting rules
 keywords:
   - grafana
@@ -9,6 +8,7 @@ keywords:
   - guide
   - state
 title: State and health of alerting rules
+weight: 405
 ---
 
 # State and health of alerting rules
@@ -53,7 +53,7 @@ An alert rule can have one the following health statuses:
 
 ## Special alerts for `NoData` and `Error`
 
-When evaluation of an alerting rule produces state `NoData` or `Error`, Grafana alerting will generate alert instances that have the following additional labels:
+When evaluation of an alerting rule produces state `NoData` or `Error`, Grafana Alerting will generate alert instances that have the following additional labels:
 
 | Label              | Description                                                            |
 | ------------------ | ---------------------------------------------------------------------- |

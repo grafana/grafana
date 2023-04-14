@@ -1,8 +1,12 @@
+import { Observable } from 'rxjs';
+
+import { DataQuery } from '@grafana/schema';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryResponse } from './datasource';
-import { DataQuery } from './query';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { AbsoluteTimeRange } from './time';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -35,11 +39,6 @@ export enum LogsMetaKind {
   String,
   LabelsMap,
   Error,
-}
-
-export enum LogsSortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
 }
 
 export interface LogsMetaItem {
@@ -78,6 +77,7 @@ export interface LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels?: Labels;
+  datasourceType?: string;
 }
 
 export interface LogsModel {
@@ -88,6 +88,7 @@ export interface LogsModel {
   // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
+  bucketSize?: number;
 }
 
 export interface LogSearchMatch {
@@ -103,41 +104,6 @@ export interface LogLabelStatsModel {
   value: string;
 }
 
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
-}
-
-export interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
 export enum LogsDedupDescription {
   none = 'No de-duplication',
   exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
@@ -145,26 +111,40 @@ export enum LogsDedupDescription {
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
 
+export interface LogRowContextOptions {
+  direction?: LogRowContextQueryDirection;
+  limit?: number;
+}
+
+export enum LogRowContextQueryDirection {
+  Backward = 'BACKWARD',
+  Forward = 'FORWARD',
+}
+
 /**
  * Data sources that allow showing context rows around the provided LowRowModel should implement this method.
  * This will enable "context" button in Logs Panel.
  */
-export interface DataSourceWithLogsContextSupport {
+export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = DataQuery> {
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions
-  ) => Promise<DataQueryResponse>;
+  getLogRowContext: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<DataQueryResponse>;
 
   /**
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
    */
   showContextToggle(row?: LogRowModel): boolean;
+
+  /**
+   * This method can be used to display a custom UI in the context view.
+   * @alpha
+   * @internal
+   */
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
 }
 
-export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
     return false;
   }
@@ -172,4 +152,86 @@ export const hasLogsContextSupport = (datasource: any): datasource is DataSource
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};
+
+/**
+ * Types of supplementary queries that can be run in Explore.
+ * @internal
+ */
+export enum SupplementaryQueryType {
+  LogsVolume = 'LogsVolume',
+  LogsSample = 'LogsSample',
+}
+
+/**
+ * Types of logs volume responses. A data source may return full range histogram (based on selected range)
+ * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
+ * @internal
+ */
+export enum LogsVolumeType {
+  FullRange = 'FullRange',
+  Limited = 'Limited',
+}
+
+/**
+ * Custom meta information required by Logs Volume responses
+ */
+export type LogsVolumeCustomMetaData = {
+  absoluteRange: AbsoluteTimeRange;
+  logsVolumeType: LogsVolumeType;
+  datasourceName: string;
+  sourceQuery: DataQuery;
+};
+
+/**
+ * Data sources that support supplementary queries in Explore.
+ * This will enable users to see additional data when running original queries.
+ * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ * @internal
+ */
+export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  /**
+   * Returns an observable that will be used to fetch supplementary data based on the provided
+   * supplementary query type and original request.
+   */
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Returns supplementary query types that data source supports.
+   */
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  /**
+   * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
+   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   */
+  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+}
+
+export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
+  datasource: unknown,
+  type: SupplementaryQueryType
+): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
+
+  return (
+    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
+    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+  );
+};
+
+export const hasLogsContextUiSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
+
+  return withLogsSupport.getLogRowContextUi !== undefined;
 };

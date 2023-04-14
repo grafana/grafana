@@ -16,7 +16,7 @@ import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
@@ -24,7 +24,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height, count } = valueProps;
+    const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
     if (sparkline) {
@@ -41,6 +41,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
+        parentOrientation={orientation}
         text={options.text}
         width={width}
         height={height}
@@ -68,7 +69,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks} config={value.field}>
+        <DataLinksContextMenu links={getLinks}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}

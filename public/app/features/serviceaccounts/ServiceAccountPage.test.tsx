@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { History, Location } from 'history';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
 
 import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
@@ -11,6 +14,7 @@ jest.mock('app/core/core', () => ({
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,
+    hasAccessInMetadata: () => false,
   },
 }));
 
@@ -23,29 +27,19 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
 
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Service accounts',
-      },
-    },
     serviceAccount: {} as ServiceAccountDTO,
     tokens: [],
-    builtInRoles: {},
     isLoading: false,
-    roleOptions: [],
     match: {
       params: { id: '1' },
       isExact: true,
       path: '/org/serviceaccounts/1',
       url: 'http://localhost:3000/org/serviceaccounts/1',
     },
-    history: {} as any,
-    location: {} as any,
+    history: {} as History,
+    location: {} as Location,
     queryParams: {},
-    route: {} as any,
+    route: {} as RouteDescriptor,
     timezone: '',
     createServiceAccountToken: createServiceAccountTokenMock,
     deleteServiceAccount: deleteServiceAccountMock,
@@ -57,7 +51,11 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ServiceAccountPageUnconnected {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <ServiceAccountPageUnconnected {...props} />
+    </TestProvider>
+  );
   return {
     rerender,
     props,

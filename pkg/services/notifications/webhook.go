@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
@@ -22,6 +21,15 @@ type Webhook struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+
+	// Validation is a function that will validate the response body and statusCode of the webhook. Any returned error will cause the webhook request to be considered failed.
+	// This can be useful when a webhook service communicates failures in creative ways, such as using the response body instead of the status code.
+	Validation func(body []byte, statusCode int) error
+}
+
+// WebhookClient exists to mock the client in tests.
+type WebhookClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 var netTransport = &http.Transport{
@@ -34,7 +42,7 @@ var netTransport = &http.Transport{
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }
-var netClient = &http.Client{
+var netClient WebhookClient = &http.Client{
 	Timeout:   time.Second * 30,
 	Transport: netTransport,
 }
@@ -80,20 +88,24 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		}
 	}()
 
-	if resp.StatusCode/100 == 2 {
-		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)
-		// flushing the body enables the transport to reuse the same connection
-		if _, err := io.Copy(ioutil.Discard, resp.Body); err != nil {
-			ns.log.Error("Failed to copy resp.Body to ioutil.Discard", "err", err)
-		}
-		return nil
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
+	if webhook.Validation != nil {
+		err := webhook.Validation(body, resp.StatusCode)
+		if err != nil {
+			ns.log.Debug("Webhook failed validation", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
+			return fmt.Errorf("webhook failed validation: %w", err)
+		}
+	}
+
+	if resp.StatusCode/100 == 2 {
+		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)
+		return nil
+	}
+
 	ns.log.Debug("Webhook failed", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
-	return fmt.Errorf("Webhook response status %v", resp.Status)
+	return fmt.Errorf("webhook response status %v", resp.Status)
 }

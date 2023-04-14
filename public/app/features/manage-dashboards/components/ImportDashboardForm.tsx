@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -30,26 +30,26 @@ import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanels
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
-  initialFolderId: number;
+  initialFolderUid: string;
 
   onCancel: () => void;
   onUidReset: () => void;
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
 }
 
-export const ImportDashboardForm: FC<Props> = ({
+export const ImportDashboardForm = ({
   register,
   errors,
   control,
   getValues,
   uidReset,
   inputs,
-  initialFolderId,
+  initialFolderUid,
   onUidReset,
   onCancel,
   onSubmit,
   watch,
-}) => {
+}: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
   const watchFolder = watch('folder');
@@ -64,7 +64,7 @@ export const ImportDashboardForm: FC<Props> = ({
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
   const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
-  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exits) ?? [];
+  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exists) ?? [];
 
   return (
     <>
@@ -73,7 +73,7 @@ export const ImportDashboardForm: FC<Props> = ({
         <Input
           {...register('title', {
             required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folder.id),
+            validate: async (v: string) => await validateTitle(v, getValues().folder.uid),
           })}
           type="text"
           data-testid={selectors.components.ImportDashboardForm.name}
@@ -82,7 +82,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <Field label="Folder">
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <FolderPicker {...field} enableCreateNew initialFolderId={initialFolderId} />
+            <FolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
           )}
           name="folder"
           control={control}

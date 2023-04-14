@@ -10,7 +10,7 @@ import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 /**
  * Run a reducer and get back the value
  */
-function reduce(field: Field, id: string): any {
+function reduce(field: Field, id: string) {
   return reduceField({ field, reducers: [id] })[id];
 }
 
@@ -80,11 +80,13 @@ describe('Stats Calculators', () => {
   it('should get non standard stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [ReducerID.distinctCount, ReducerID.changeCount],
+      reducers: [ReducerID.distinctCount, ReducerID.changeCount, ReducerID.variance, ReducerID.stdDev],
     });
 
     expect(stats.distinctCount).toEqual(2);
     expect(stats.changeCount).toEqual(1);
+    expect(stats.variance).toEqual(25);
+    expect(stats.stdDev).toEqual(5);
   });
 
   it('should calculate step', () => {

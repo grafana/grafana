@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/team/
-  - /docs/grafana/latest/http_api/team/
+  - ../../http_api/team/
+canonical: /docs/grafana/latest/developers/http_api/team/
 description: Grafana Team HTTP API
 keywords:
   - grafana
@@ -11,7 +11,7 @@ keywords:
   - team
   - teams
   - group
-title: 'Team HTTP API '
+title: Team HTTP API
 ---
 
 # Team API
@@ -25,7 +25,7 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Team Search With Paging
 

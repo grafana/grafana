@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { toDataFrame, FieldType } from '@grafana/data';
-import { selectOptionInTest } from '@grafana/ui';
 
 import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 

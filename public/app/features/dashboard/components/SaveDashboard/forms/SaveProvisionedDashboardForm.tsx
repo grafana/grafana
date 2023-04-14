@@ -2,16 +2,12 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
-import { useAppNotification } from 'app/core/copy/appNotification';
+import { Button, ClipboardButton, HorizontalGroup, TextArea } from '@grafana/ui';
 
 import { SaveDashboardFormProps } from '../types';
 
-export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
-  const theme = useTheme();
-  const notifyApp = useAppNotification();
+export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: SaveDashboardFormProps) => {
   const [dashboardJSON, setDashboardJson] = useState(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
@@ -25,11 +21,6 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     saveAs(blob, dashboard.title + '-' + new Date().getTime() + '.json');
   }, [dashboard.title, dashboardJSON]);
 
-  const onCopyToClipboardSuccess = useCallback(() => {
-    notifyApp.success('Dashboard JSON copied to clipboard');
-  }, [notifyApp]);
-
-  const styles = getStyles(theme);
   return (
     <>
       <Stack direction="column" gap={2}>
@@ -64,7 +55,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           <Button variant="secondary" onClick={onCancel} fill="outline">
             Cancel
           </Button>
-          <ClipboardButton getText={() => dashboardJSON} onClipboardCopy={onCopyToClipboardSuccess}>
+          <ClipboardButton icon="copy" getText={() => dashboardJSON}>
             Copy JSON to clipboard
           </ClipboardButton>
           <Button type="submit" onClick={saveToFile}>
@@ -76,14 +67,12 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    json: css`
-      height: 400px;
-      width: 100%;
-      overflow: auto;
-      resize: none;
-      font-family: monospace;
-    `,
-  };
-});
+const styles = {
+  json: css`
+    height: 400px;
+    width: 100%;
+    overflow: auto;
+    resize: none;
+    font-family: monospace;
+  `,
+};

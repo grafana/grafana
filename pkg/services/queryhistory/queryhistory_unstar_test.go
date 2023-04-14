@@ -3,11 +3,15 @@ package queryhistory
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegrationUnstarQueryInQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "When users tries to unstar query in query history that does not exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.starHandler(sc.reqContext)

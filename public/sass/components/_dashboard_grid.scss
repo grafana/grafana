@@ -1,5 +1,5 @@
-@import 'react-grid-layout/css/styles.css';
-@import 'react-resizable/css/styles.css';
+@import 'react-grid-layout/css/styles';
+@import 'react-resizable/css/styles';
 
 .react-resizable-handle {
   // this needs to use visibility and not display none in order not to cause resize flickering
@@ -18,6 +18,9 @@
 }
 
 .panel-in-fullscreen {
+  .react-grid-layout {
+    height: auto !important;
+  }
   .react-grid-item {
     display: none !important;
     transition-property: none !important;

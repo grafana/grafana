@@ -1,4 +1,7 @@
 {
   "projectId": "zb7k1c",
-  "supportFile": "cypress/support/index.ts"
+  "supportFile": "cypress/support/index.ts",
+  "videoCompression": 20,
+  "viewportWidth": 1920,
+  "viewportHeight": 1080
 }

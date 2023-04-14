@@ -2,12 +2,12 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/go-kit/log/level"
 	"go.etcd.io/etcd/api/v3/version"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,9 @@ import (
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	trace "go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -32,26 +35,13 @@ const (
 	w3cPropagator    string = "w3c"
 )
 
-type Tracer interface {
-	Run(context.Context) error
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
-	Inject(context.Context, http.Header, Span)
-}
-
-type Span interface {
-	End()
-	SetAttributes(key string, value interface{}, kv attribute.KeyValue)
-	SetName(name string)
-	SetStatus(code codes.Code, description string)
-	RecordError(err error, options ...trace.EventOption)
-	AddEvents(keys []string, values []EventValue)
-}
-
 type Opentelemetry struct {
-	enabled     string
-	address     string
-	propagation string
-	log         log.Logger
+	Enabled       string
+	Address       string
+	Propagation   string
+	customAttribs []attribute.KeyValue
+
+	log log.Logger
 
 	tracerProvider tracerProvider
 	tracer         trace.Tracer
@@ -89,54 +79,55 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
-	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
+	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
+	var err error
+	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(""))
 	if err != nil {
 		return err
 	}
-	ots.enabled = noopExporter
 
-	ots.address = section.Key("address").MustString("")
-	if ots.address != "" {
-		ots.enabled = jaegerExporter
+	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
+	ots.Enabled = noopExporter
+
+	ots.Address = section.Key("address").MustString("")
+	ots.Propagation = section.Key("propagation").MustString("")
+	if ots.Address != "" {
+		ots.Enabled = jaegerExporter
 		return nil
 	}
-	ots.propagation = section.Key("propagation").MustString("")
 
-	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.otlp")
-	if err != nil {
-		return err
+	section = ots.Cfg.Raw.Section("tracing.opentelemetry.otlp")
+	ots.Address = section.Key("address").MustString("")
+	if ots.Address != "" {
+		ots.Enabled = otlpExporter
 	}
-
-	ots.address = section.Key("address").MustString("")
-	if ots.address != "" {
-		ots.enabled = otlpExporter
-	}
-	ots.propagation = section.Key("propagation").MustString("")
+	ots.Propagation = section.Key("propagation").MustString("")
 	return nil
+}
+
+func (ots *Opentelemetry) OTelExporterEnabled() bool {
+	return ots.Enabled == otlpExporter
+}
+
+func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
+	res := []attribute.KeyValue{}
+
+	attribs := strings.Split(s, ",")
+	for _, v := range attribs {
+		parts := strings.SplitN(v, ":", 2)
+		if len(parts) > 1 {
+			res = append(res, attribute.String(parts[0], parts[1]))
+		} else if v != "" {
+			return nil, fmt.Errorf("custom attribute malformed - must be in 'key:value' form: %q", v)
+		}
+	}
+
+	return res, nil
 }
 
 func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
-	if err != nil {
-		return nil, err
-	}
-
-	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithBatcher(exp),
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("grafana"),
-			attribute.String("environment", "production"),
-		)),
-	)
-
-	return tp, nil
-}
-
-func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
-	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.address), otlptracegrpc.WithInsecure())
-	exp, err := otlptrace.New(context.Background(), client)
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address)))
 	if err != nil {
 		return nil, err
 	}
@@ -144,9 +135,43 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
+			// TODO: why are these attributes different from ones added to the
+			// OTLP provider?
+			semconv.ServiceNameKey.String("grafana"),
+			attribute.String("environment", "production"),
+		),
+		resource.WithAttributes(ots.customAttribs...),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tp := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exp),
+		tracesdk.WithResource(res),
+	)
+
+	return tp, nil
+}
+
+func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
+	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.Address), otlptracegrpc.WithInsecure())
+	exp, err := otlptrace.New(context.Background(), client)
+	if err != nil {
+		return nil, err
+	}
+
+	return initTracerProvider(exp, ots.customAttribs...)
+}
+
+func initTracerProvider(exp tracesdk.SpanExporter, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
 			semconv.ServiceNameKey.String("grafana"),
 			semconv.ServiceVersionKey.String(version.Version),
 		),
+		resource.WithAttributes(customAttribs...),
 		resource.WithProcessRuntimeDescription(),
 		resource.WithTelemetrySDK(),
 	)
@@ -171,7 +196,7 @@ func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
 func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
-	switch ots.enabled {
+	switch ots.Enabled {
 	case jaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
@@ -192,19 +217,38 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.enabled != "" {
+	if ots.Enabled != "" {
 		otel.SetTracerProvider(tp)
 	}
 
-	switch ots.propagation {
-	case w3cPropagator:
-		otel.SetTextMapPropagator(propagation.TraceContext{})
-	case jaegerPropagator:
-		otel.SetTextMapPropagator(jaegerpropagator.Jaeger{})
-	default:
-		otel.SetTextMapPropagator(propagation.TraceContext{})
+	propagators := []propagation.TextMapPropagator{}
+	for _, p := range strings.Split(ots.Propagation, ",") {
+		switch p {
+		case w3cPropagator:
+			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})
+		case jaegerPropagator:
+			propagators = append(propagators, jaegerpropagator.Jaeger{})
+		case "":
+		default:
+			return fmt.Errorf("unsupported OpenTelemetry propagator: %q", p)
+		}
 	}
-	ots.tracerProvider = tp
+
+	switch len(propagators) {
+	case 0:
+		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{}, propagation.Baggage{},
+		))
+	case 1:
+		otel.SetTextMapPropagator(propagators[0])
+	default:
+		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagators...))
+	}
+
+	if ots.tracerProvider == nil {
+		ots.tracerProvider = tp
+	}
+
 	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
 
 	return nil
@@ -234,11 +278,15 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	ctx, span := ots.tracer.Start(ctx, spanName)
+	ctx, span := ots.tracer.Start(ctx, spanName, opts...)
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
 	}
-	ctx = context.WithValue(ctx, traceKey{}, traceValue{span.SpanContext().TraceID().String(), span.SpanContext().IsSampled()})
+
+	if traceID := span.SpanContext().TraceID(); traceID.IsValid() {
+		ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), span.SpanContext().IsSampled()})
+	}
+
 	return ctx, opentelemetrySpan
 }
 
@@ -263,18 +311,28 @@ func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
 }
 
 func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
-	for _, o := range options {
-		s.span.RecordError(err, o)
-	}
+	s.span.RecordError(err, options...)
 }
 
 func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	for i, v := range values {
-		if v.Num != 0 {
+		if v.Str != "" {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))
 		}
-		if v.Str != "" {
+		if v.Num != 0 {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
 		}
 	}
+}
+
+func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
+	if s.span != nil {
+		ctx = trace.ContextWithSpan(ctx, s.span)
+		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
+		// It's derived from the span. Ensure that we propagate this too.
+		if traceID := s.span.SpanContext().TraceID(); traceID.IsValid() {
+			ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), s.span.SpanContext().IsSampled()})
+		}
+	}
+	return ctx
 }

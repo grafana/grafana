@@ -11,20 +11,21 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"sync"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	gocache "github.com/patrickmn/go-cache"
 )
 
 const (
@@ -98,7 +99,7 @@ type AvatarCacheServer struct {
 
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
 
-func (a *AvatarCacheServer) Handler(ctx *models.ReqContext) {
+func (a *AvatarCacheServer) Handler(ctx *contextmodel.ReqContext) {
 	hash := web.Params(ctx.Req)[":hash"]
 
 	if len(hash) != 32 || !validMD5.MatchString(hash) {
@@ -188,7 +189,7 @@ func newNotFound(cfg *setting.Cfg) *Avatar {
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
 	// variable.
 	// nolint:gosec
-	if data, err := ioutil.ReadFile(path); err != nil {
+	if data, err := os.ReadFile(path); err != nil {
 		alog.Error("Failed to read user_profile.png", "path", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)

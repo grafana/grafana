@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/playlist/
-  - /docs/grafana/latest/http_api/playlist/
+  - ../../http_api/playlist/
+canonical: /docs/grafana/latest/developers/http_api/playlist/
 description: Playlist Admin HTTP API
 keywords:
   - grafana
@@ -42,7 +42,7 @@ HTTP/1.1 200
 Content-Type: application/json
 [
   {
-    "id": 1,
+    "uid": "1",
     "name": "my playlist",
     "interval": "5m"
   }
@@ -51,7 +51,7 @@ Content-Type: application/json
 
 ## Get one playlist
 
-`GET /api/playlists/:id`
+`GET /api/playlists/:uid`
 
 **Example Request**:
 
@@ -67,14 +67,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "id" : 1,
+  "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
-  "orgId": "my org",
   "items": [
     {
       "id": 1,
-      "playlistId": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
@@ -82,7 +81,7 @@ Content-Type: application/json
     },
     {
       "id": 2,
-      "playlistId": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
@@ -94,7 +93,7 @@ Content-Type: application/json
 
 ## Get Playlist items
 
-`GET /api/playlists/:id/items`
+`GET /api/playlists/:uid/items`
 
 **Example Request**:
 
@@ -112,7 +111,7 @@ Content-Type: application/json
 [
   {
     "id": 1,
-    "playlistId": 1,
+    "playlistUid": "1",
     "type": "dashboard_by_id",
     "value": "3",
     "order": 1,
@@ -120,7 +119,7 @@ Content-Type: application/json
   },
   {
     "id": 2,
-    "playlistId": 1,
+    "playlistUid": "1",
     "type": "dashboard_by_tag",
     "value": "myTag",
     "order": 2,
@@ -131,7 +130,7 @@ Content-Type: application/json
 
 ## Get Playlist dashboards
 
-`GET /api/playlists/:id/dashboards`
+`GET /api/playlists/:uid/dashboards`
 
 **Example Request**:
 
@@ -198,7 +197,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
   {
-    "id": 1,
+    "uid": "1",
     "name": "my playlist",
     "interval": "5m"
   }
@@ -206,7 +205,7 @@ Content-Type: application/json
 
 ## Update a playlist
 
-`PUT /api/playlists/:id`
+`PUT /api/playlists/:uid`
 
 **Example Request**:
 
@@ -220,14 +219,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "interval": "5m",
     "items": [
       {
-        "playlistId": 1,
+        "playlistUid": "1",
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
         "title":"my third dashboard"
       },
       {
-        "playlistId": 1,
+        "playlistUid": "1",
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
@@ -243,14 +242,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "id" : 1,
+  "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
-  "orgId": "my org",
   "items": [
     {
       "id": 1,
-      "playlistId": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
@@ -258,7 +256,7 @@ Content-Type: application/json
     },
     {
       "id": 2,
-      "playlistId": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
@@ -270,7 +268,7 @@ Content-Type: application/json
 
 ## Delete a playlist
 
-`DELETE /api/playlists/:id`
+`DELETE /api/playlists/:uid`
 
 **Example Request**:
 

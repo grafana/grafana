@@ -14,7 +14,7 @@ import {
 import { AxisPlacement } from '@grafana/schema';
 
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
-import { getStackingBands, pluginLog, StackingGroup } from '../utils';
+import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
 
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
@@ -39,7 +39,7 @@ type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
-  private series: UPlotSeriesBuilder[] = [];
+  series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
@@ -87,8 +87,14 @@ export class UPlotConfigBuilder {
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
     props.grid = props.grid ?? {};
-    if (this.axes[props.scaleKey]) {
-      this.axes[props.scaleKey].merge(props);
+    let scaleKey = props.scaleKey;
+
+    if (scaleKey === 'x') {
+      scaleKey += props.timeZone ?? '';
+    }
+
+    if (this.axes[scaleKey]) {
+      this.axes[scaleKey].merge(props);
       return;
     }
 
@@ -106,7 +112,7 @@ export class UPlotConfigBuilder {
       props.size = 0;
     }
 
-    this.axes[props.scaleKey] = new UPlotAxisBuilder(props);
+    this.axes[scaleKey] = new UPlotAxisBuilder(props);
   }
 
   getAxisPlacement(scaleKey: string): AxisPlacement {
@@ -185,6 +191,7 @@ export class UPlotConfigBuilder {
 
   getConfig() {
     const config: PlotConfig = {
+      ...DEFAULT_PLOT_CONFIG,
       mode: this.mode,
       series: [
         this.mode === 2
@@ -232,7 +239,10 @@ export class UPlotConfigBuilder {
     );
 
     config.tzDate = this.tzDate;
-    config.padding = this.padding;
+
+    if (Array.isArray(this.padding)) {
+      config.padding = this.padding;
+    }
 
     if (this.stackingGroups.length) {
       this.stackingGroups.forEach((group) => {
@@ -259,7 +269,10 @@ export class UPlotConfigBuilder {
     const xAxis = axes.find((a) => a.props.scaleKey === 'x');
     const axesWithoutGridSet = axes.filter((a) => a.props.grid?.show === undefined);
     const firstValueAxisIdx = axesWithoutGridSet.findIndex(
-      (a) => a.props.placement === AxisPlacement.Left || (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
+      (a) =>
+        a.props.placement === AxisPlacement.Left ||
+        a.props.placement === AxisPlacement.Right ||
+        (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
     );
 
     // For all axes with no grid set, set the grid automatically (grid only for first left axis )
@@ -285,7 +298,7 @@ export type Renderers = Array<{
 type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
-  timeZone: TimeZone;
+  timeZones: TimeZone[];
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];

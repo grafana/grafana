@@ -1,10 +1,10 @@
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
 
 import { AppEvents } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
-import { isFetchError } from './alertmanager';
+import { logInfo, LogMessages } from '../Analytics';
 
 export interface AsyncRequestState<T> {
   result?: T;
@@ -28,7 +28,7 @@ export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
 
 export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
 
-function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
+function requestStateReducer<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
   state: Draft<AsyncRequestState<T>> = initialAsyncRequestState,
   action: AsyncRequestAction<T>
@@ -63,10 +63,10 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
 }
 
 /*
- * createAsyncSlice creates a slice based on a given async action, exposing it's state.
+ * createAsyncSlice creates a slice based on a given async action, exposing its state.
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
-export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
+export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
   name: string,
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>
 ) {
@@ -86,7 +86,7 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
  * separate requests are uniquely indentified by result of provided getEntityId function
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
-export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
+export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
   name: string,
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
   getEntityId: (arg: ThunkArg) => string
@@ -139,6 +139,7 @@ export function withAppEvents<T>(
     });
 }
 
+export const UNKNOW_ERROR = 'Unknown Error';
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
@@ -156,7 +157,23 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
       return e.statusText;
     }
   }
-  return (e as Error)?.message || String(e);
+  // message in e object, return message
+  const errorMessage = (e as Error)?.message;
+  if (errorMessage) {
+    return errorMessage;
+  }
+  // for some reason (upstream this code), sometimes we get an object without the message field neither in the e.data and nor in e.message
+  // in this case we want to avoid String(e) printing [object][object]
+  logInfo(LogMessages.unknownMessageFromError, { error: JSON.stringify(e) });
+  return UNKNOW_ERROR;
+}
+
+export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateSettled);
+}
+
+export function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading;
 }
 
 export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
@@ -171,6 +188,10 @@ export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>)
   return Object.values(slice).some(isAsyncRequestStatePending);
 }
 
-export function isAsyncRequestStatePending<T>(state: AsyncRequestState<T>): boolean {
+export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
+  if (!state) {
+    return false;
+  }
+
   return state.dispatched && state.loading;
 }

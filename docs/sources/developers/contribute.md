@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/contribute/
 keywords:
   - grafana
   - documentation
@@ -22,13 +20,13 @@ These resources are useful for all developers.
 
 - [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md): A guide to help you get started developing Grafana software, includes instructions for how to configure Grafana for development.
 
-- [Contributing to documentation](https://github.com/grafana/grafana/blob/main/contribute/documentation.md): A guide to help you contribute to Grafana documentation, includes links to beginner-friendly issues.
+- [Contributing to documentation](https://github.com/grafana/grafana/blob/main/contribute/documentation): A guide to help you contribute to Grafana documentation, includes links to beginner-friendly issues.
 
 - [Architecture guides](https://github.com/grafana/grafana/tree/main/contribute/architecture): These guides explain Grafana’s background architecture.
 
 - [Create a pull request](https://github.com/grafana/grafana/blob/main/contribute/create-pull-request.md): A guide for new contributors about how to create your first Grafana pull request.
 
-- [REST APIs](https://grafana.com/docs/grafana/next/http_api/) allow you to interact programmatically with the Grafana backend.
+- [REST APIs](https://grafana.com/docs/grafana/next/developers/http_api) allow you to interact programmatically with the Grafana backend.
 
 ## Best practices and style
 

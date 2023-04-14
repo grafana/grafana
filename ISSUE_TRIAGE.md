@@ -20,43 +20,52 @@ If you don't have the knowledge or time to code, consider helping with triage. T
 <!-- https://textik.com/#610afa78553def29 -->
 
 ```
-                        +--------------------------+
-       +----------------+  New issue opened/       |
-       |                |  more information added  |
-       |                +-------------+------------+
-       |  Ask for more                |
-       |  information   +-------------+------------+
-       |                | All information needed   |
-       |       +--------+ to categorize the issue? +--------+
-       |       |        |                          |        |
-       |       |   NO   +--------------------------+  YES   |
-       |       |                                            |
-+------+-------+-------------+                 +------------+---------+        +----------------------------+
-|                            |                 |                      |        |                            |
-| label: needs more info     |                 | Needs investigation? +--YES---+ label: needs investigation |
-|                            |                 |                      |        |                            |
-+----------------------------+                 +----------------+-----+        +--------------+-------------+
-                                                             NO |                             |
-                                                                |               Investigate   |
-                                                    +-----------+----------+                  |
-                                                    | label: type/*        |                  |
-                                                    | label: area/*        +------------------+
-                                                    | label: datasource/*  |
-                                                    +-----|----------+-----+
-                                                          |          |
-                                                          |          |
-                                                          |       +--+--------------------+         +--------------------+
-                                                          |       |                       |         | label: priority/*  |
-                                                          |       |    Needs priority?    +--YES---+| milestone?         |
-                                                          |       |                       |         |                    |
-                                                          |       +--------------------+--+         +----+---------------+
-                                                          |                        NO  |                 |
-                                                          |                            |                 |
-                                                     +----+-------------+          +---+----------+      |
-                                                     |                  |          |              |      |
-                                                     |   Close issue    +----------+     Done     +------+
-                                                     |                  |          |              |
-                                                     +------------------+          +--------------+
+                         +-------------------+
+                        |                   |
+                        |  new issue/       |                                                                             +
+                        |  more info added  |
+                        |                   |
+                        +---------|---------+
+                                  |
+                    +-------------|-----------+
+                    |                         |
+        NO   +-------  all info needed to     ------+  YES
+             |      |  categorize the issue?  |     |
+             |      |                         |     |
+             |      +-------------------------+     |
+      +------|-----------+             +------------|----------+
+      |                  |             |                       |
+      | label:           |             |  label: type/*        |
+      | needs more info  |             |  label: area/*        |
+      |                  |             |  label: datasource/*  |
+      +------------------+             |            |          |
+                                       +------------|----------+
+                                                    |
+                                           +--------|-------+
+                                           |                |
+                             NO  +---------- is duplicate?  --------------------+ YES
+                                 |         |                |                   |
+                                 |         +----------------+                   |
+                                 |                             +----------------|---------------+
+                          +------|-----+                       |                                |
+                          |            |                       |  add comment:                  |
+          NO  +------------ can repro? ------------+  YES      |                                |
+              |           |            |           |           |  /duplicate of #<issue number> |
+              |           +------------+           |           |                                |
+              |                                    |           +--------------------------------+
++-------------|-------------+                      |
+|                           |             +--------|---------+
+| label:                    |             |                  |
+| triage/needs-confirmation |  NO +-------- needs priority?  ------+ YES
+|                           |     |       |                  |     |
++-------------|-------------+     |       +------------------+     |
+              |                   |                                |
++-------------|------+    +-------|--------+            +----------|---------+
+|                    |    |                |            |                    |
+| Assign to project  ------     Done       -------------- label: priority/*  |
+|                    |    |                |            |                    |
++--------------------+    +----------------+            +--------------------+
+
 ```
 
 ## 1. Find uncategorized issues
@@ -87,28 +96,29 @@ Given a certain [issue template](https://github.com/grafana/grafana/issues/new/c
 
 Should explain what happened, what was expected and how to reproduce it together with any additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output and any environment related information that's applicable and/or maybe related to the reported problem:
 
-- Grafana version
-- Data source type & version
-- Platform & OS Grafana is installed on
-- User OS & Browser + versions
-- Using docker + what environment
-- Which plugins
-- Configuration database in use (sqlite, mysql, postgres)
-- Reverse proxy in front of Grafana, what version and configuration
-- Non-default configuration settings
-- Development environment like Go and Node versions, if applicable
+- Grafana version:
+- Data source type & version:
+- OS Grafana is installed on:
+- User OS & Browser:
+- Grafana plugins:
+- Others:
 
 #### Enhancement requests
 
-Should explain what enhancement or feature that the author wants to be added and why that is needed.
+Enhancement requests (aka. feature requests) should be created as a [Github discussion](https://github.com/grafana/grafana/discussions). When submitting an enhancement request we ask that users focus on the problem they'd like to solve and why it’s a problem rather than focusing on the solution itself. To facilitate this we recommend using the following template:
+
+- What would you like to be added?:
+- Why is this needed (describe your use case and goals)\*\*?:
 
 #### Accessibility issues
 
-This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant WCAG criteria, if applicable.
+This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant [WCAG criteria](https://www.w3.org/WAI/WCAG21/quickref/?versions=2.0), if applicable.
+
+Grafana Labs is dedicated to improving our graphical user interfaces and overall experience so that our product becomes usable and accessible for people with disabilities as well as anyone else. Learn more about Grafana's commitment to [A11y](https://grafana.com/accessibility/) (accessibility).
 
 #### Support requests
 
-In general, if the issue description and title is perceived as a question no more information is needed.
+In general, if the issue description and title is perceived as a question no more information is needed. See how to categorize these requests [here](#support-requests-1).
 
 ### Good practices
 
@@ -122,7 +132,7 @@ To make it easier for everyone to understand and find issues they're searching f
 
 ### Do you have all the information needed to categorize an issue?
 
-Depending on the issue, you might not feel all this information is needed. Use your best judgement. If you cannot triage an issue using what its author provided, explain kindly to the author that they must provide the above information to clarify the problem. Label issue with `needs more detail` and add any related `area/*` or `datasource/*` labels.
+Depending on the issue, you might not feel all this information is needed. Use your best judgement. If you cannot triage an issue using what its author provided, explain kindly to the author that they must provide the above information to clarify the problem. Label issue with `needs more info` and add any related `area/*` or `datasource/*` labels. Alternatively, use `bot/needs more info` label and the Grafana bot will request it for you.
 
 If the author provides the standard information but you are still unable to triage the issue, request additional information. Do this kindly and politely because you are asking for more of the author's time.
 
@@ -158,7 +168,7 @@ Make sure it's not a duplicate by searching existing issues using related terms 
 
 1. Add a comment `/duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
 2. The Grafana bot will do the rest, adding the correct label and closing comment
-3. Optionally add any related `area/*` or `datasource/*` labels.
+3. Add `type/duplicate` label. Optionally add any related `area/*` or `datasource/*` labels.
 
 ### Bug reports
 
@@ -183,8 +193,8 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 
 ### Enhancement/feature?
 
-1. Label the issue `type/feature-request` and at least one `area/*` or `datasource/*` label.
-2. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+1. Remind the contributor that enhancement/feature request should be created as a GitHub discussion. See [Enhancements requests.](https://github.com/grafana/grafana/blob/main/ISSUE_TRIAGE.md#enhancement-requests)
+2. Label the issue `type/feature-request` and at least one `area/*` or `datasource/*` label.
 
 ### Documentation issue?
 
@@ -215,7 +225,7 @@ There's a minor typo/error/lack of information that adds a lot of confusion for 
 ### Support requests
 
 1. Kindly and politely direct the issue author to the [community site](https://community.grafana.com/) and explain that GitHub is mainly used for tracking bugs and feature requests. If possible, it's usually a good idea to add some pointers to the issue author's question.
-2. Close the issue and label it with `type/question`.
+2. Label the issue with `bot/question`. The Grafana bot will automatically close the issue, and it will add the type/question label for you.
 
 ## 4. Prioritization of issues
 
@@ -296,7 +306,7 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 ## Investigation of issues
 
-When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending on the perceived severity and/or number of [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
+When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [`triage/needs-confirmation`](https://github.com/grafana/grafana/labels/triage%2Fneeds-confirmation). Depending on the perceived severity and/or number of [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
 
 Investigating issues can be a very time consuming task, especially for the maintainers, given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services, etc that are being used with Grafana. There is a certain number of combinations that are more common than others, and these are in general easier for maintainers to investigate.
 
@@ -308,19 +318,16 @@ Even if you don't have the time or knowledge to investigate an issue we highly r
 
 We have some automation that triggers on comments or labels being added to issues. Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/main/.github/workflows)
 
-- Add /duplicate `#<issue number>` to have Grafana label & close issue with an appropriate message.
-- Add `bot/question` and the bot will close it with an appropriate message.
-
 [Read more on bot actions](https://github.com/grafana/grafana/blob/main/.github/bot.md)
 
 ## External PRs
 
 Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
 
-1. Check new external PRs which do not have a reviewer.
-1. Check if there is a link to an existing issue.
-1. If not and you know which issue it is solving, add the link yourself, otherwise ask the author to link the issue or create one.
-1. Assign a reviewer based on who was handling the linked issue or what code or feature does the PR touches (look at who was the last to make changes there if all else fails).
+1. Check new external PRs which do not have a reviewer. You can easily search for pull requests made by external contributors by using the label: `pr/external` in your [query search](https://github.com/grafana/grafana/pulls?q=is%3Aopen+is%3Apr+label%3Apr%2Fexternal) Note: external PRs are automatically labeled with `pr/external` upon creation.
+2. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”.
+3. If not and you know which issue it is solving, add the link yourself, otherwise ask the author to link the issue or create one.
+4. Assign a reviewer based on who was handling the linked issue or what code or feature does the PR touches (look at who was the last to make changes there if all else fails).
 
 ## Appendix
 

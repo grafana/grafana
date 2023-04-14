@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FormEvent } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';
@@ -19,8 +20,8 @@ const reducerFunctions = alertDef.reducerTypes.map((rt) => ({ label: rt.text, va
 const evalOperators = alertDef.evalOperators.map((eo) => ({ label: eo.text, value: eo.value }));
 const evalFunctions = alertDef.evalFunctions.map((ef) => ({ label: ef.text, value: ef.value }));
 
-export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondition, refIds }) => {
-  const styles = useStyles(getStyles);
+export const Condition = ({ condition, index, onChange, onRemoveCondition, refIds }: Props) => {
+  const styles = useStyles2(getStyles);
 
   const onEvalOperatorChange = (evalOperator: SelectableValue<string>) => {
     onChange({
@@ -69,72 +70,77 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
-    <InlineFieldRow>
-      {index === 0 ? (
-        <div className={cx(styles.button, buttonWidth)}>WHEN</div>
-      ) : (
-        <ButtonSelect
-          className={cx(styles.buttonSelectText, buttonWidth)}
-          options={evalOperators}
-          onChange={onEvalOperatorChange}
-          value={evalOperators.find((ea) => ea.value === condition.operator!.type)}
-        />
-      )}
-      <Select
-        options={reducerFunctions}
-        onChange={onReducerFunctionChange}
-        width={20}
-        value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
-      />
-      <div className={styles.button}>OF</div>
-      <Select
-        onChange={onRefIdChange}
-        options={refIds}
-        width={15}
-        value={refIds.find((r) => r.value === condition.query.params[0])}
-      />
-      <ButtonSelect
-        className={styles.buttonSelectText}
-        options={evalFunctions}
-        onChange={onEvalFunctionChange}
-        value={evalFunctions.find((ef) => ef.value === condition.evaluator.type)}
-      />
-      {isRange ? (
-        <>
-          <Input
-            type="number"
-            width={10}
-            onChange={(event) => onEvaluateValueChange(event, 0)}
-            value={condition.evaluator.params[0]}
+    <Stack direction="row">
+      <div style={{ flex: 1 }}>
+        <InlineFieldRow>
+          {index === 0 ? (
+            <div className={cx(styles.button, buttonWidth)}>WHEN</div>
+          ) : (
+            <ButtonSelect
+              className={cx(styles.buttonSelectText, buttonWidth)}
+              options={evalOperators}
+              onChange={onEvalOperatorChange}
+              value={evalOperators.find((ea) => ea.value === condition.operator!.type)}
+            />
+          )}
+          <Select
+            options={reducerFunctions}
+            onChange={onReducerFunctionChange}
+            width={20}
+            value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
           />
-          <div className={styles.button}>TO</div>
-          <Input
-            type="number"
-            width={10}
-            onChange={(event) => onEvaluateValueChange(event, 1)}
-            value={condition.evaluator.params[1]}
+          <div className={styles.button}>OF</div>
+          <Select
+            onChange={onRefIdChange}
+            options={refIds}
+            width={'auto'}
+            value={refIds.find((r) => r.value === condition.query.params[0])}
           />
-        </>
-      ) : condition.evaluator.type !== EvalFunction.HasNoValue ? (
-        <Input
-          type="number"
-          width={10}
-          onChange={(event) => onEvaluateValueChange(event, 0)}
-          value={condition.evaluator.params[0]}
-        />
-      ) : null}
-
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <ButtonSelect
+            className={styles.buttonSelectText}
+            options={evalFunctions}
+            onChange={onEvalFunctionChange}
+            value={evalFunctions.find((ef) => ef.value === condition.evaluator.type)}
+          />
+          {isRange ? (
+            <>
+              <Input
+                type="number"
+                width={10}
+                onChange={(event) => onEvaluateValueChange(event, 0)}
+                value={condition.evaluator.params[0]}
+              />
+              <div className={styles.button}>TO</div>
+              <Input
+                type="number"
+                width={10}
+                onChange={(event) => onEvaluateValueChange(event, 1)}
+                value={condition.evaluator.params[1]}
+              />
+            </>
+          ) : condition.evaluator.type !== EvalFunction.HasNoValue ? (
+            <Input
+              type="number"
+              width={10}
+              onChange={(event) => onEvaluateValueChange(event, 0)}
+              value={condition.evaluator.params[0]}
+            />
+          ) : null}
+        </InlineFieldRow>
+      </div>
       <Button variant="secondary" type="button" onClick={() => onRemoveCondition(index)}>
         <Icon name="trash-alt" />
       </Button>
-    </InlineFieldRow>
+    </Stack>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const buttonStyle = css`
-    color: ${theme.colors.textBlue};
-    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.primary.text};
+    font-size: ${theme.typography.bodySmall.fontSize};
   `;
   return {
     buttonSelectText: buttonStyle,
@@ -142,12 +148,12 @@ const getStyles = (theme: GrafanaTheme) => {
       css`
         display: flex;
         align-items: center;
-        border-radius: ${theme.border.radius.sm};
-        font-weight: ${theme.typography.weight.semibold};
-        border: 1px solid ${theme.colors.border1};
+        border-radius: ${theme.shape.borderRadius(1)};
+        font-weight: ${theme.typography.fontWeightMedium};
+        border: 1px solid ${theme.colors.border.weak};
         white-space: nowrap;
-        padding: 0 ${theme.spacing.sm};
-        background-color: ${theme.colors.bodyBg};
+        padding: 0 ${theme.spacing(1)};
+        background-color: ${theme.colors.background.canvas};
       `,
       buttonStyle
     ),

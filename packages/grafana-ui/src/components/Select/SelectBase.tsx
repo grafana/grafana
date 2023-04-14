@@ -4,6 +4,8 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
+import { SelectableValue, toOption } from '@grafana/data';
+
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -13,14 +15,14 @@ import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
-import { SelectMenu, SelectMenuOptions } from './SelectMenu';
+import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, SelectBaseProps, SelectValue } from './types';
-import { cleanValue, findSelectedValue } from './utils';
+import { ActionMeta, SelectBaseProps } from './types';
+import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -95,6 +97,7 @@ export function SelectBase<T>({
   className,
   closeMenuOnSelect = true,
   components,
+  createOptionPosition = 'last',
   defaultOptions,
   defaultValue,
   disabled = false,
@@ -137,9 +140,11 @@ export function SelectBase<T>({
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
   value,
+  virtualized = false,
   width,
   isValidNewOption,
   formatOptionLabel,
+  hideSelectedOptions,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -166,7 +171,7 @@ export function SelectBase<T>({
   }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
 
   const onChangeWithEmpty = useCallback(
-    (value: SelectValue<T>, action: ActionMeta) => {
+    (value: SelectableValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
         return onChange([], action);
       }
@@ -177,7 +182,7 @@ export function SelectBase<T>({
 
   let ReactSelectComponent = ReactSelect;
 
-  const creatableProps: ComponentProps<typeof Creatable> = {};
+  const creatableProps: ComponentProps<typeof Creatable<SelectableValue<T>>> = {};
   let asyncSelectProps: any = {};
   let selectedValue;
   if (isMulti && loadOptions) {
@@ -186,8 +191,16 @@ export function SelectBase<T>({
     // If option is passed as a plain value (value property from SelectableValue property)
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
-      // @ts-ignore
-      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => {
+        // @ts-ignore
+        const selectableValue = findSelectedValue(v.value ?? v, options);
+        // If the select allows custom values there likely won't be a selectableValue in options
+        // so we must return a new selectableValue
+        if (!allowCustomValue || selectableValue) {
+          return selectableValue;
+        }
+        return typeof v === 'string' ? toOption(v) : v;
+      });
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -210,6 +223,7 @@ export function SelectBase<T>({
     filterOption,
     getOptionLabel,
     getOptionValue,
+    hideSelectedOptions,
     inputValue,
     invalid,
     isClearable,
@@ -239,7 +253,7 @@ export function SelectBase<T>({
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
-    options,
+    options: virtualized ? omitDescriptions(options) : options,
     placeholder,
     prefix,
     renderControl,
@@ -253,6 +267,7 @@ export function SelectBase<T>({
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
+    creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
   }
 
@@ -266,12 +281,14 @@ export function SelectBase<T>({
     };
   }
 
+  const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
+
   return (
     <>
       <ReactSelectComponent
         ref={reactSelectRef}
         components={{
-          MenuList: SelectMenu,
+          MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
           ValueContainer,
           IndicatorsContainer(props: any) {
@@ -317,28 +334,28 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator(props: any) {
-            return <Spinner inline={true} />;
+          LoadingIndicator() {
+            return <Spinner inline />;
           },
-          LoadingMessage(props: any) {
+          LoadingMessage() {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage(props: any) {
+          NoOptionsMessage() {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator(props: any) {
+          DropdownIndicator(props) {
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
             return <SingleValue {...props} disabled={disabled} />;
           },
+          SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
-          SelectContainer,
           ...components,
         }}
         styles={selectStyles}

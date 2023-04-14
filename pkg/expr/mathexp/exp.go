@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
@@ -117,6 +118,8 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 			newVal, err = e.unaryNumber(rt, node.OpStr)
 		case Series:
 			newVal, err = e.unarySeries(rt, node.OpStr)
+		case NoData:
+			newVal = NoData{}.New()
 		default:
 			return newResults, fmt.Errorf("can not perform a unary operation on type %v", rt.Type())
 		}
@@ -192,8 +195,20 @@ type Union struct {
 // number of tags.
 func union(aResults, bResults Results) []*Union {
 	unions := []*Union{}
-	if len(aResults.Values) == 0 || len(bResults.Values) == 0 {
+	aValueLen := len(aResults.Values)
+	bValueLen := len(bResults.Values)
+	if aValueLen == 0 || bValueLen == 0 {
 		return unions
+	}
+	if aValueLen == 1 || bValueLen == 1 {
+		if aResults.Values[0].Type() == parse.TypeNoData || bResults.Values[0].Type() == parse.TypeNoData {
+			unions = append(unions, &Union{
+				Labels: nil,
+				A:      aResults.Values[0],
+				B:      bResults.Values[0],
+			})
+			return unions
+		}
 	}
 	for _, a := range aResults.Values {
 		for _, b := range bResults.Values {
@@ -276,6 +291,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// Scalar op Series
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -292,6 +309,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// case Series op Series
 			case Series:
 				value, err = e.biSeriesSeries(uni.Labels, node.OpStr, at, bt)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -306,9 +325,13 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 				value, err = e.biScalarNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
+		case NoData:
+			value = uni.A
 		default:
 			return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 		}

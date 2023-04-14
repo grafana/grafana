@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/alerts/grafana-managed-alerts/
 title: Grafana managed alerts
 ---
 
@@ -20,7 +18,7 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 ## Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../setup-grafana/set-up-grafana-monitoring/" >}}). See also, [View alert rules and their current state]({{< relref "../../alerting/old-alerting/view-alerts/" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../setup-grafana/set-up-grafana-monitoring/" >}}). See also, [View alert rules and their current state]({{< relref "../../alerting/fundamentals/state-and-health/" >}}).
 
 | Metric Name                                 | Type      | Description                                                                              |
 | ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |

@@ -1,23 +1,60 @@
 ---
-aliases:
-  - /docs/grafana/latest/release-notes/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 title: Release notes
 weight: 10000
 ---
 
 # Release notes
 
-Here you can find detailed release notes that list everything that is included in every release as well as notices
-about deprecations, breaking changes as well as changes that relate to plugin development.
+Here you can find detailed release notes that list everything included in past releases,
+as well as notices about deprecations, breaking changes, and changes related to plugin development.
 
+> **Note:** As of Grafana v9.2 we no longer publish release notes, which are redundant with other release lists that we publish:
+>
+> - For details about new features, deprecations, and breaking changes in new Grafana releases, see [What's New in Grafana]({{< relref "../whatsnew/" >}}).
+> - For lists of changes to Grafana, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+
+- [Release notes for 9.1.7]({{< relref "release-notes-9-1-7" >}})
+- [Release notes for 9.1.6]({{< relref "release-notes-9-1-6" >}})
+- [Release notes for 9.1.5]({{< relref "release-notes-9-1-5" >}})
+- [Release notes for 9.1.4]({{< relref "release-notes-9-1-4" >}})
+- [Release notes for 9.1.3]({{< relref "release-notes-9-1-3" >}})
+- [Release notes for 9.1.2]({{< relref "release-notes-9-1-2" >}})
+- [Release notes for 9.1.1]({{< relref "release-notes-9-1-1" >}})
+- [Release notes for 9.1.0]({{< relref "release-notes-9-1-0" >}})
+- [Release notes for 9.1.0-beta1]({{< relref "release-notes-9-1-0-beta1" >}})
+- [Release notes for 9.0.9]({{< relref "release-notes-9-0-9" >}})
+- [Release notes for 9.0.8]({{< relref "release-notes-9-0-8" >}})
+- [Release notes for 9.0.7]({{< relref "release-notes-9-0-7" >}})
+- [Release notes for 9.0.6]({{< relref "release-notes-9-0-6" >}})
+- [Release notes for 9.0.5]({{< relref "release-notes-9-0-5" >}})
+- [Release notes for 9.0.4]({{< relref "release-notes-9-0-4" >}})
+- [Release notes for 9.0.3]({{< relref "release-notes-9-0-3" >}})
+- [Release notes for 9.0.2]({{< relref "release-notes-9-0-2" >}})
+- [Release notes for 9.0.1]({{< relref "release-notes-9-0-1" >}})
+- [Release notes for 9.0.0]({{< relref "release-notes-9-0-0/" >}})
+- [Release notes for 9.0.0-beta3]({{< relref "release-notes-9-0-0-beta3/" >}})
 - [Release notes for 9.0.0-beta2]({{< relref "release-notes-9-0-0-beta2/" >}})
 - [Release notes for 9.0.0-beta1]({{< relref "release-notes-9-0-0-beta1/" >}})
+- [Release notes for 8.5.13]({{< relref "release-notes-8-5-13" >}})
+- [Release notes for 8.5.11]({{< relref "release-notes-8-5-11" >}})
+- [Release notes for 8.5.10]({{< relref "release-notes-8-5-10" >}})
+- [Release notes for 8.5.9]({{< relref "release-notes-8-5-9" >}})
+- [Release notes for 8.5.6]({{< relref "release-notes-8-5-6/" >}})
+- [Release notes for 8.5.5]({{< relref "release-notes-8-5-5/" >}})
 - [Release notes for 8.5.4]({{< relref "release-notes-8-5-4/" >}})
 - [Release notes for 8.5.3]({{< relref "release-notes-8-5-3/" >}})
 - [Release notes for 8.5.2]({{< relref "release-notes-8-5-2/" >}})
 - [Release notes for 8.5.1]({{< relref "release-notes-8-5-1/" >}})
 - [Release notes for 8.5.0]({{< relref "release-notes-8-5-0/" >}})
 - [Release notes for 8.5.0-beta1]({{< relref "release-notes-8-5-0-beta1/" >}})
+- [Release notes for 8.4.11]({{< relref "release-notes-8-4-11" >}})
+- [Release notes for 8.4.10]({{< relref "release-notes-8-4-10" >}})
 - [Release notes for 8.4.7]({{< relref "release-notes-8-4-7/" >}})
 - [Release notes for 8.4.6]({{< relref "release-notes-8-4-6/" >}})
 - [Release notes for 8.4.5]({{< relref "release-notes-8-4-5/" >}})
@@ -26,6 +63,7 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 8.4.2]({{< relref "release-notes-8-4-2/" >}})
 - [Release notes for 8.4.1]({{< relref "release-notes-8-4-1/" >}})
 - [Release notes for 8.4.0-beta1]({{< relref "release-notes-8-4-0-beta1/" >}})
+- [Release notes for 8.3.11]({{< relref "release-notes-8-3-11/" >}})
 - [Release notes for 8.3.7]({{< relref "release-notes-8-3-7/" >}})
 - [Release notes for 8.3.6]({{< relref "release-notes-8-3-6/" >}})
 - [Release notes for 8.3.5]({{< relref "release-notes-8-3-5/" >}})

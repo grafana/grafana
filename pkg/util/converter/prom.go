@@ -21,11 +21,12 @@ func logf(format string, a ...interface{}) {
 type Options struct {
 	MatrixWideSeries bool
 	VectorWideSeries bool
+	Dataplane        bool
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
-func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) *backend.DataResponse {
-	var rsp *backend.DataResponse
+func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
+	var rsp backend.DataResponse
 	status := "unknown"
 	errorType := ""
 	err := ""
@@ -55,7 +56,7 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) *backend.Da
 	}
 
 	if status == "error" {
-		return &backend.DataResponse{
+		return backend.DataResponse{
 			Error: fmt.Errorf("%s: %s", errorType, err),
 		}
 	}
@@ -91,20 +92,20 @@ func readWarnings(iter *jsoniter.Iterator) []data.Notice {
 	return warnings
 }
 
-func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataResponse {
+func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
 	t := iter.WhatIsNext()
 	if t == jsoniter.ArrayValue {
 		return readArrayData(iter)
 	}
 
 	if t != jsoniter.ObjectValue {
-		return &backend.DataResponse{
+		return backend.DataResponse{
 			Error: fmt.Errorf("expected object type"),
 		}
 	}
 
 	resultType := ""
-	var rsp *backend.DataResponse
+	var rsp backend.DataResponse
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
@@ -115,15 +116,15 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataRespo
 			switch resultType {
 			case "matrix":
 				if opt.MatrixWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
+					rsp = readMatrixOrVectorWide(iter, resultType, opt)
 				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
+					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 				}
 			case "vector":
 				if opt.VectorWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
+					rsp = readMatrixOrVectorWide(iter, resultType, opt)
 				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
+					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 				}
 			case "streams":
 				rsp = readStream(iter)
@@ -133,7 +134,7 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataRespo
 				rsp = readScalar(iter)
 			default:
 				iter.Skip()
-				rsp = &backend.DataResponse{
+				rsp = backend.DataResponse{
 					Error: fmt.Errorf("unknown result type: %s", resultType),
 				}
 			}
@@ -161,11 +162,11 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataRespo
 }
 
 // will return strings or exemplars
-func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
+func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 	lookup := make(map[string]*data.Field)
 
 	var labelFrame *data.Frame
-	rsp := &backend.DataResponse{}
+	rsp := backend.DataResponse{}
 	stringField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	stringField.Name = "Value"
 	for iter.ReadArray() {
@@ -311,7 +312,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 	return frame, pairs
 }
 
-func readString(iter *jsoniter.Iterator) *backend.DataResponse {
+func readString(iter *jsoniter.Iterator) backend.DataResponse {
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	valueField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -330,16 +331,16 @@ func readString(iter *jsoniter.Iterator) *backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeTimeSeriesMulti,
 		Custom: resultTypeToCustomMeta("string"),
 	}
 
-	return &backend.DataResponse{
+	return backend.DataResponse{
 		Frames: []*data.Frame{frame},
 	}
 }
 
-func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
+func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
@@ -354,26 +355,35 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeNumericMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
 	}
 
-	return &backend.DataResponse{
+	return backend.DataResponse{
 		Frames: []*data.Frame{frame},
 	}
 }
 
-func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
+func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rowIdx := 0
 	timeMap := map[int64]int{}
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	frame := data.NewFrame("", timeField)
-	frame.Meta = &data.FrameMeta{
+
+	frame.Meta = &data.FrameMeta{ // Overwritten if histogram
 		Type:   data.FrameTypeTimeSeriesWide,
 		Custom: resultTypeToCustomMeta(resultType),
 	}
-	rsp := &backend.DataResponse{
+
+	if opt.Dataplane && resultType == "vector" {
+		frame.Meta.Type = data.FrameTypeNumericWide
+	}
+	if opt.Dataplane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
+	}
+
+	rsp := backend.DataResponse{
 		Frames: []*data.Frame{},
 	}
 
@@ -429,7 +439,7 @@ func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) *backend
 			histogram.yMin.Labels = valueField.Labels
 			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
-				Type: "heatmap-cells-sparse",
+				Type: "heatmap-cells",
 			}
 			if frame.Name == data.TimeSeriesValueFieldName {
 				frame.Name = "" // only set the name if useful
@@ -471,8 +481,8 @@ func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, i
 	return timeMap, rowIdx
 }
 
-func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
-	rsp := &backend.DataResponse{}
+func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
+	rsp := backend.DataResponse{}
 
 	for iter.ReadArray() {
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -535,7 +545,7 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) *backen
 			histogram.yMin.Labels = valueField.Labels
 			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
-				Type: "heatmap-cells-sparse",
+				Type: "heatmap-cells",
 			}
 			if frame.Name == data.TimeSeriesValueFieldName {
 				frame.Name = "" // only set the name if useful
@@ -544,8 +554,14 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) *backen
 		} else {
 			frame := data.NewFrame("", timeField, valueField)
 			frame.Meta = &data.FrameMeta{
-				Type:   data.FrameTypeTimeSeriesMany,
+				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
+			}
+			if opt.Dataplane && resultType == "vector" {
+				frame.Meta.Type = data.FrameTypeNumericMulti
+			}
+			if opt.Dataplane {
+				frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		}
@@ -669,8 +685,8 @@ func appendValueFromString(iter *jsoniter.Iterator, field *data.Field) error {
 	return nil
 }
 
-func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
-	rsp := &backend.DataResponse{}
+func readStream(iter *jsoniter.Iterator) backend.DataResponse {
+	rsp := backend.DataResponse{}
 
 	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
 	labelsField.Name = "__labels" // avoid automatically spreading this by labels
@@ -688,17 +704,20 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	labels := data.Labels{}
 	labelJson, err := labelsToRawJson(labels)
 	if err != nil {
-		return &backend.DataResponse{Error: err}
+		return backend.DataResponse{Error: err}
 	}
 
 	for iter.ReadArray() {
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "stream":
+				// we need to clear `labels`, because `iter.ReadVal`
+				// only appends to it
+				labels := data.Labels{}
 				iter.ReadVal(&labels)
 				labelJson, err = labelsToRawJson(labels)
 				if err != nil {
-					return &backend.DataResponse{Error: err}
+					return backend.DataResponse{Error: err}
 				}
 
 			case "values":

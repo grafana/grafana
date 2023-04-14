@@ -1,61 +1,99 @@
 import { of } from 'rxjs';
 
-import { dateTime } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+  PluginMetaInfo,
+  PluginType,
+  VariableHide,
+} from '@grafana/data';
+import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 import { CustomVariableModel } from 'app/features/variables/types';
 
-import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
 import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchJsonData } from '../types';
+
+export function setupMockedTemplateService(variables: CustomVariableModel[]) {
+  const templateService = new TemplateSrv();
+  templateService.init(variables);
+  templateService.getVariables = jest.fn().mockReturnValue(variables);
+  return templateService;
+}
+
+const info: PluginMetaInfo = {
+  author: {
+    name: '',
+  },
+  description: '',
+  links: [],
+  logos: {
+    large: '',
+    small: '',
+  },
+  screenshots: [],
+  updated: '',
+  version: '',
+};
+
+export const meta: DataSourcePluginMeta<CloudWatchJsonData> = {
+  id: '',
+  name: '',
+  type: PluginType.datasource,
+  info,
+  module: '',
+  baseUrl: '',
+};
+
+export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> = {
+  jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray', logGroups: [] },
+  id: 0,
+  uid: '',
+  type: '',
+  name: 'CloudWatch Test Datasource',
+  meta,
+  readOnly: false,
+  access: 'direct',
+};
 
 export function setupMockedDataSource({
-  data = [],
   variables,
   mockGetVariableName = true,
-}: { data?: any; variables?: any; mockGetVariableName?: boolean } = {}) {
-  let templateService = new TemplateSrvMock({
-    region: 'templatedRegion',
-    fields: 'templatedField',
-    group: 'templatedGroup',
-  }) as any;
+  getMock = jest.fn(),
+  customInstanceSettings = CloudWatchSettings,
+}: {
+  getMock?: jest.Func;
+  variables?: CustomVariableModel[];
+  mockGetVariableName?: boolean;
+  customInstanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
+} = {}) {
+  let templateService = new TemplateSrv();
   if (variables) {
-    templateService = new TemplateSrv();
-    templateService.init(variables);
-    templateService.getVariables = jest.fn().mockReturnValue(variables);
+    templateService = setupMockedTemplateService(variables);
     if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name;
+      templateService.getVariableName = (name: string) => name.replace('$', '');
     }
   }
 
-  const datasource = new CloudWatchDatasource(
-    {
-      jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray' },
-    } as any,
-    templateService,
-    {
-      timeRange() {
-        const time = dateTime('2021-01-01T01:00:00Z');
-        const range = {
-          from: time.subtract(6, 'hour'),
-          to: time,
-        };
-
-        return {
-          ...range,
-          raw: range,
-        };
-      },
-    } as any
-  );
+  const timeSrv = getTimeSrv();
+  const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
+  datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
+  datasource.resources.getLogGroups = jest.fn().mockResolvedValue([]);
+  const fetchMock = jest.fn().mockReturnValue(of({}));
+  setBackendSrv({
+    ...getBackendSrv(),
+    fetch: fetchMock,
+    get: getMock,
+  });
 
-  datasource.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.getRegions = jest.fn().mockResolvedValue([]);
-  const fetchMock = jest.fn().mockReturnValue(of({ data }));
-  setBackendSrv({ fetch: fetchMock } as any);
-
-  return { datasource, fetchMock, templateService };
+  return { datasource, fetchMock, templateService, timeSrv };
 }
 
 export const metricVariable: CustomVariableModel = {
@@ -155,7 +193,7 @@ export const logGroupNamesVariable: CustomVariableModel = {
   id: 'groups',
   name: 'groups',
   current: {
-    value: ['templatedGroup-1', 'templatedGroup-2'],
+    value: ['templatedGroup-arn-1', 'templatedGroup-arn-2'],
     text: ['templatedGroup-1', 'templatedGroup-2'],
     selected: true,
   },
@@ -179,7 +217,7 @@ export const regionVariable: CustomVariableModel = {
   multi: false,
 };
 
-export const expressionVariable: CustomVariableModel = {
+export const fieldsVariable: CustomVariableModel = {
   ...initialCustomVariableModelState,
   id: 'fields',
   name: 'fields',
@@ -189,5 +227,32 @@ export const expressionVariable: CustomVariableModel = {
     selected: true,
   },
   options: [{ value: 'templatedField', text: 'templatedField', selected: true }],
+  multi: false,
+};
+
+export const periodIntervalVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'period',
+  name: 'period',
+  index: 0,
+  current: { value: '10m', text: '10m', selected: true },
+  options: [{ value: '10m', text: '10m', selected: true }],
+  multi: false,
+  includeAll: false,
+  query: '',
+  hide: VariableHide.dontHide,
+  type: 'custom',
+};
+
+export const accountIdVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'accountId',
+  name: 'accountId',
+  current: {
+    value: 'templatedaccountId',
+    text: 'templatedaccountId',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
   multi: false,
 };

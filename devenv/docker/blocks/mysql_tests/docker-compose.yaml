@@ -3,6 +3,7 @@
       context: docker/blocks/mysql_tests
       args:
         - mysql_version=${mysql_version}
+    platform: linux/amd64
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana_tests

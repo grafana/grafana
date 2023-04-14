@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
+import React, { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Icon, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
@@ -21,7 +21,7 @@ import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
 import { useZoom } from './useZoom';
-import { processNodes, Bounds } from './utils';
+import { processNodes, Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
@@ -120,21 +120,29 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
 
-  // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
-  // sure they are visible on top of everything else
-  const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
-
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
-
-  const theme = useTheme2();
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
   const processed = useMemo(
-    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme),
-    [firstEdgesDataFrame, firstNodesDataFrame, theme]
+    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame),
+    [firstEdgesDataFrame, firstNodesDataFrame]
   );
+
+  // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
+  // sure they are visible on top of everything else
+  const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
+  const [hoveringIds, setHoveringIds] = useState<string[]>([]);
+  useEffect(() => {
+    let linked: string[] = [];
+    if (nodeHover) {
+      linked = findConnectedNodesForNode(processed.nodes, processed.edges, nodeHover);
+    } else if (edgeHover) {
+      linked = findConnectedNodesForEdge(processed.nodes, processed.edges, edgeHover);
+    }
+    setHoveringIds(linked);
+  }, [nodeHover, edgeHover, processed]);
 
   // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
   const [focusedNodeId, setFocusedNodeId] = useState<string>();
@@ -152,7 +160,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     focusedNodeId
   );
 
-  // If we move from grid to graph layout and we have focused node lets get it's position to center there. We want do
+  // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
   // do it specifically only in that case.
   const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
@@ -170,11 +178,11 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   );
   const styles = useStyles2(getStyles);
 
-  // This cannot be inline func or it will create infinite render cycle.
+  // This cannot be inline func, or it will create infinite render cycle.
   const topLevelRef = useCallback(
-    (r) => {
+    (r: HTMLDivElement) => {
       measureRef(r);
-      (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
+      zoomRef.current = r;
     },
     [measureRef, zoomRef]
   );
@@ -216,7 +224,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
               onMouseEnter={setNodeHover}
               onMouseLeave={clearNodeHover}
               onClick={onNodeOpen}
-              hoveringId={nodeHover || highlightId}
+              hoveringIds={hoveringIds || [highlightId]}
             />
 
             <Markers markers={markers || []} onClick={setFocused} />
@@ -274,14 +282,16 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   );
 }
 
-// These components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
+// Active -> emphasized, inactive -> de-emphasized, and default -> normal styling
+export type HoverState = 'active' | 'inactive' | 'default';
 
+// These components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
 interface NodesProps {
   nodes: NodeDatum[];
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
-  hoveringId?: string;
+  hoveringIds?: string[];
 }
 const Nodes = memo(function Nodes(props: NodesProps) {
   return (
@@ -293,7 +303,13 @@ const Nodes = memo(function Nodes(props: NodesProps) {
           onMouseEnter={props.onMouseEnter}
           onMouseLeave={props.onMouseLeave}
           onClick={props.onClick}
-          hovering={props.hoveringId === n.id}
+          hovering={
+            !props.hoveringIds || props.hoveringIds.length === 0
+              ? 'default'
+              : props.hoveringIds?.includes(n.id)
+              ? 'active'
+              : 'inactive'
+          }
         />
       ))}
     </>
@@ -352,10 +368,13 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>
       {props.edges.map((e, index) => {
+        // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
+        // connected to.
         const shouldShow =
           (e.source as NodeDatum).id === props.nodeHoveringId ||
           (e.target as NodeDatum).id === props.nodeHoveringId ||
           props.edgeHoveringId === e.id;
+
         const hasStats = e.mainStat || e.secondaryStat;
         return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
       })}

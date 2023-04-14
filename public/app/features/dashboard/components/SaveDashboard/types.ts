@@ -1,4 +1,5 @@
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardDataDTO } from 'app/types';
 
 import { Diffs } from '../VersionHistory/utils';
 
@@ -10,10 +11,17 @@ export interface SaveDashboardData {
 }
 
 export interface SaveDashboardOptions extends CloneOptions {
-  folderId?: number;
+  folderUid?: string;
   overwrite?: boolean;
   message?: string;
   makeEditable?: boolean;
+}
+
+export interface SaveDashboardCommand {
+  dashboard: DashboardDataDTO;
+  message?: string;
+  folderUid?: string;
+  overwrite?: boolean;
 }
 
 export interface SaveDashboardFormProps {

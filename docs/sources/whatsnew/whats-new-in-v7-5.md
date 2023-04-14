@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-5/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-5/
+  - ../guides/whats-new-in-v7-5/
 description: Feature and improvement highlights for Grafana v7.5
 keywords:
   - grafana
@@ -15,7 +14,7 @@ title: What's new in Grafana v7.5
 weight: -32
 ---
 
-# What’s new in Grafana v7.5
+# What's new in Grafana v7.5
 
 This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -29,7 +28,7 @@ Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
 ![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-For more information, refer to [Pie chart panel]({{< relref "../visualizations/pie-chart-panel/" >}}).
+For more information, refer to [Pie chart panel]({{< relref "../panels-visualizations/visualizations/pie-chart/" >}}).
 
 ### Alerting for Loki
 
@@ -81,7 +80,7 @@ In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor/#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azure-monitor#application-insights-and-insights-analytics--removed-" >}}).
 
 ### Cloudwatch data source enhancements
 
@@ -90,7 +89,7 @@ For more information, refer to [Deprecating Application Insights and Insights An
 - You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../setup-grafana/configure-grafana/#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../setup-grafana/configure-grafana/#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access and secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
 - You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
 
-  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch/" >}}) was updated as a result of this change.
+  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch" >}}) was updated as a result of this change.
 
 ### Increased API limit for CloudMonitoring Services
 
@@ -105,7 +104,7 @@ server:
   http_listen_port: 3101
 ```
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor/" >}}) was updated as a result of this change.
+[Azure Monitor data source]({{< relref "../datasources/azure-monitor/" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
@@ -123,7 +122,7 @@ Query caching advantages:
 
 Caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is currently in-memory.
 
-For more information, refer to [Query caching]({{< relref "../enterprise/query-caching/" >}}).
+For more information, refer to [Query caching]({{< relref "../administration/data-source-management/#query-caching" >}}).
 
 ### Use template variable in reports
 
@@ -131,7 +130,7 @@ If you have created dashboards with template variables, then you can choose whic
 
 Enable this feature in configuration settings using the `templateVariables` flag.
 
-For more information, refer to [Reporting]({{< relref "../enterprise/reporting/#choose-template-variables" >}}).
+For more information, refer to [Reporting]({{< relref "../dashboards/share-dashboards-panels/#choose-template-variables" >}}).
 
 ### Active user limits
 
@@ -153,7 +152,7 @@ Each Grafana Enterprise user will be limited to three concurrent user sessions. 
 
 A new session is created when you sign in to Grafana from a different device or a different browser. Multiple windows and tabs in the same browser are all part of the same session, so having many Grafana tabs open will not cause any issues.
 
-For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license/license-restrictions/" >}}).
+For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../administration/enterprise-licensing#license-restrictions" >}}).
 
 ## Breaking changes
 

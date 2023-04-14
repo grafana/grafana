@@ -1,8 +1,8 @@
 import TimeSeries, { updateLegendValues } from 'app/core/time_series2';
 
 describe('TimeSeries', () => {
-  let points, series: any;
-  const yAxisFormats = ['short', 'ms'];
+  let points: any[][];
+  let series: TimeSeries;
   let testData: { alias?: string; datapoints: any };
 
   beforeEach(() => {
@@ -20,13 +20,13 @@ describe('TimeSeries', () => {
   describe('when getting flot pairs', () => {
     it('with connected style, should ignore nulls', () => {
       series = new TimeSeries(testData);
-      points = series.getFlotPairs('connected', yAxisFormats);
+      points = series.getFlotPairs('connected');
       expect(points.length).toBe(3);
     });
 
     it('with null as zero style, should replace nulls with zero', () => {
       series = new TimeSeries(testData);
-      points = series.getFlotPairs('null as zero', yAxisFormats);
+      points = series.getFlotPairs('null as zero');
       expect(points.length).toBe(4);
       expect(points[1][1]).toBe(0);
     });
@@ -38,7 +38,7 @@ describe('TimeSeries', () => {
           [null, 2],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.current).toBe(10);
     });
 
@@ -49,13 +49,13 @@ describe('TimeSeries', () => {
           [-4, 2],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.max).toBe(-4);
     });
 
     it('average value should ignore nulls', () => {
       series = new TimeSeries(testData);
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.avg).toBe(6.333333333333333);
     });
 
@@ -69,7 +69,7 @@ describe('TimeSeries', () => {
           [15, 6],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.delta).toBe(14);
     });
 
@@ -82,7 +82,7 @@ describe('TimeSeries', () => {
           [15, 5],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.delta).toBe(14);
     });
 
@@ -95,7 +95,7 @@ describe('TimeSeries', () => {
           [null, 5],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.delta).toBe(9);
     });
 
@@ -109,7 +109,7 @@ describe('TimeSeries', () => {
           [10, 6],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.delta).toBe(19);
     });
 
@@ -122,19 +122,19 @@ describe('TimeSeries', () => {
           [8, 5],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.delta).toBe(17);
     });
 
     it('the range value should be max - min', () => {
       series = new TimeSeries(testData);
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.range).toBe(9);
     });
 
     it('first value should ingone nulls', () => {
       series = new TimeSeries(testData);
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.first).toBe(1);
       series = new TimeSeries({
         datapoints: [
@@ -144,13 +144,13 @@ describe('TimeSeries', () => {
           [8, 5],
         ],
       });
-      series.getFlotPairs('null', yAxisFormats);
+      series.getFlotPairs('null');
       expect(series.stats.first).toBe(1);
     });
 
     it('with null as zero style, average value should treat nulls as 0', () => {
       series = new TimeSeries(testData);
-      series.getFlotPairs('null as zero', yAxisFormats);
+      series.getFlotPairs('null as zero');
       expect(series.stats.avg).toBe(4.75);
     });
 
@@ -238,7 +238,7 @@ describe('TimeSeries', () => {
   });
 
   describe('can detect if series contains ms precision', () => {
-    let fakedata: any;
+    let fakedata: typeof testData;
 
     beforeEach(() => {
       fakedata = testData;
@@ -258,7 +258,7 @@ describe('TimeSeries', () => {
   });
 
   describe('series overrides', () => {
-    let series: any;
+    let series: TimeSeries;
     beforeEach(() => {
       series = new TimeSeries(testData);
     });
@@ -390,14 +390,14 @@ describe('TimeSeries', () => {
   });
 
   describe('value formatter', () => {
-    let series: any;
+    let series: TimeSeries;
     beforeEach(() => {
       series = new TimeSeries(testData);
     });
 
     it('should format non-numeric values as empty string', () => {
       expect(series.formatValue(null)).toBe('');
-      expect(series.formatValue(undefined)).toBe('');
+      expect(series.formatValue(undefined as unknown as null)).toBe('');
       expect(series.formatValue(NaN)).toBe('');
       expect(series.formatValue(Infinity)).toBe('');
       expect(series.formatValue(-Infinity)).toBe('');
@@ -405,7 +405,8 @@ describe('TimeSeries', () => {
   });
 
   describe('legend decimals', () => {
-    let series: any, panel: any;
+    let series: TimeSeries;
+    let panel: any;
     const height = 200;
     beforeEach(() => {
       testData = {
@@ -418,7 +419,7 @@ describe('TimeSeries', () => {
         ],
       };
       series = new TimeSeries(testData);
-      series.getFlotPairs();
+      series.getFlotPairs('connected');
       panel = {
         decimals: null,
         yaxes: [

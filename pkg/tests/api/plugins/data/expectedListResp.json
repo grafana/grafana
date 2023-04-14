@@ -1,1 +1,1773 @@
-[{"name":"Alert list","type":"panel","id":"alertlist","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Shows list of alerts and their current status","links":null,"logos":{"small":"public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg","large":"public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/alertlist/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Alertmanager","type":"datasource","id":"alertmanager","enabled":true,"pinned":false,"info":{"author":{"name":"Prometheus alertmanager","url":"https://grafana.com"},"description":"","links":[{"name":"Learn more","url":"https://prometheus.io/docs/alerting/latest/alertmanager/"}],"logos":{"small":"public/app/plugins/datasource/alertmanager/img/logo.svg","large":"public/app/plugins/datasource/alertmanager/img/logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/alertmanager/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Annotations list","type":"panel","id":"annolist","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"List annotations","links":null,"logos":{"small":"public/app/plugins/panel/annolist/img/icn-annolist-panel.svg","large":"public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/annolist/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Azure Monitor","type":"datasource","id":"grafana-azure-monitor-datasource","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Data source for Microsoft Azure Monitor \u0026 Application Insights","links":[{"name":"Learn more","url":"https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"},{"name":"Apache License","url":"https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE"}],"logos":{"small":"public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg","large":"public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg"},"build":{},"screenshots":[{"name":"Azure Contoso Loans","path":"public/app/plugins/datasource/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"},{"name":"Azure Monitor Network","path":"public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_network.png"},{"name":"Azure Monitor CPU","path":"public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"}],"version":"1.0.0","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"5.2.x","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/grafana-azure-monitor-datasource/","category":"cloud","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Bar chart","type":"panel","id":"barchart","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Categorical charts with group support","links":null,"logos":{"small":"public/app/plugins/panel/barchart/img/barchart.svg","large":"public/app/plugins/panel/barchart/img/barchart.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/barchart/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Bar gauge","type":"panel","id":"bargauge","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Horizontal and vertical gauges","links":null,"logos":{"small":"public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg","large":"public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/bargauge/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Candlestick","type":"panel","id":"candlestick","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/candlestick/img/candlestick.svg","large":"public/app/plugins/panel/candlestick/img/candlestick.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/candlestick/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"CloudWatch","type":"datasource","id":"cloudwatch","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Data source for Amazon AWS monitoring service","links":null,"logos":{"small":"public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png","large":"public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/cloudwatch/","category":"cloud","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Dashboard list","type":"panel","id":"dashlist","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"List of dynamic links to other dashboards","links":null,"logos":{"small":"public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg","large":"public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/dashlist/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Elasticsearch","type":"datasource","id":"elasticsearch","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Open source logging \u0026 analytics database","links":[{"name":"Learn more","url":"https://grafana.com/docs/features/datasources/elasticsearch/"}],"logos":{"small":"public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg","large":"public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/elasticsearch/","category":"logging","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Gauge","type":"panel","id":"gauge","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Standard gauge visualization","links":null,"logos":{"small":"public/app/plugins/panel/gauge/img/icon_gauge.svg","large":"public/app/plugins/panel/gauge/img/icon_gauge.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/gauge/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Geomap","type":"panel","id":"geomap","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Geomap panel","links":null,"logos":{"small":"public/app/plugins/panel/geomap/img/icn-geomap.svg","large":"public/app/plugins/panel/geomap/img/icn-geomap.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/geomap/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Getting Started","type":"panel","id":"gettingstarted","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg","large":"public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/gettingstarted/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Google Cloud Monitoring","type":"datasource","id":"stackdriver","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Data source for Google's monitoring service (formerly named Stackdriver)","links":null,"logos":{"small":"public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg","large":"public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"},"build":{},"screenshots":null,"version":"1.0.0","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/stackdriver/","category":"cloud","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Graph (old)","type":"panel","id":"graph","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"The old default graph panel","links":null,"logos":{"small":"public/app/plugins/panel/graph/img/icn-graph-panel.svg","large":"public/app/plugins/panel/graph/img/icn-graph-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/graph/","category":"","state":"deprecated","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Graphite","type":"datasource","id":"graphite","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Open source time series database","links":[{"name":"Learn more","url":"https://graphiteapp.org/"},{"name":"Graphite 1.1 Release","url":"https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"}],"logos":{"small":"public/app/plugins/datasource/graphite/img/graphite_logo.png","large":"public/app/plugins/datasource/graphite/img/graphite_logo.png"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/graphite/","category":"tsdb","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Heatmap","type":"panel","id":"heatmap","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Like a histogram over time","links":[{"name":"Brendan Gregg - Heatmaps","url":"http://www.brendangregg.com/heatmaps.html"},{"name":"Brendan Gregg - Latency Heatmaps","url":" http://www.brendangregg.com/HeatMaps/latency.html"}],"logos":{"small":"public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg","large":"public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/heatmap/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Histogram","type":"panel","id":"histogram","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/histogram/img/histogram.svg","large":"public/app/plugins/panel/histogram/img/histogram.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/histogram/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"InfluxDB","type":"datasource","id":"influxdb","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Open source time series database","links":null,"logos":{"small":"public/app/plugins/datasource/influxdb/img/influxdb_logo.svg","large":"public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/influxdb/","category":"tsdb","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Jaeger","type":"datasource","id":"jaeger","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Open source, end-to-end distributed tracing","links":[{"name":"Learn more","url":"https://www.jaegertracing.io"},{"name":"GitHub Project","url":"https://github.com/jaegertracing/jaeger"}],"logos":{"small":"public/app/plugins/datasource/jaeger/img/jaeger_logo.svg","large":"public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/jaeger/","category":"tracing","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Logs","type":"panel","id":"logs","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/logs/img/icn-logs-panel.svg","large":"public/app/plugins/panel/logs/img/icn-logs-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/logs/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Loki","type":"datasource","id":"loki","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Like Prometheus but for logs. OSS logging solution from Grafana Labs","links":[{"name":"Learn more","url":"https://grafana.com/loki"},{"name":"GitHub Project","url":"https://github.com/grafana/loki"}],"logos":{"small":"public/app/plugins/datasource/loki/img/loki_icon.svg","large":"public/app/plugins/datasource/loki/img/loki_icon.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/loki/","category":"logging","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Microsoft SQL Server","type":"datasource","id":"mssql","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Data source for Microsoft SQL Server compatible databases","links":null,"logos":{"small":"public/app/plugins/datasource/mssql/img/sql_server_logo.svg","large":"public/app/plugins/datasource/mssql/img/sql_server_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/mssql/","category":"sql","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"MySQL","type":"datasource","id":"mysql","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Data source for MySQL databases","links":null,"logos":{"small":"public/app/plugins/datasource/mysql/img/mysql_logo.svg","large":"public/app/plugins/datasource/mysql/img/mysql_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/mysql/","category":"sql","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"News","type":"panel","id":"news","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"RSS feed reader","links":null,"logos":{"small":"public/app/plugins/panel/news/img/news.svg","large":"public/app/plugins/panel/news/img/news.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/news/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Node Graph","type":"panel","id":"nodeGraph","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg","large":"public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/nodeGraph/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"OpenTSDB","type":"datasource","id":"opentsdb","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Open source time series database","links":null,"logos":{"small":"public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png","large":"public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/opentsdb/","category":"tsdb","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Pie chart","type":"panel","id":"piechart","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"The new core pie chart visualization","links":null,"logos":{"small":"public/app/plugins/panel/piechart/img/icon_piechart.svg","large":"public/app/plugins/panel/piechart/img/icon_piechart.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/piechart/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"PostgreSQL","type":"datasource","id":"postgres","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Data source for PostgreSQL and compatible databases","links":null,"logos":{"small":"public/app/plugins/datasource/postgres/img/postgresql_logo.svg","large":"public/app/plugins/datasource/postgres/img/postgresql_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/postgres/","category":"sql","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Prometheus","type":"datasource","id":"prometheus","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Open source time series database \u0026 alerting","links":[{"name":"Learn more","url":"https://prometheus.io/"}],"logos":{"small":"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg","large":"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/prometheus/","category":"tsdb","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Stat","type":"panel","id":"stat","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Big stat values \u0026 sparklines","links":null,"logos":{"small":"public/app/plugins/panel/stat/img/icn-singlestat-panel.svg","large":"public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/stat/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"State timeline","type":"panel","id":"state-timeline","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"State changes and durations","links":null,"logos":{"small":"public/app/plugins/panel/state-timeline/img/timeline.svg","large":"public/app/plugins/panel/state-timeline/img/timeline.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/state-timeline/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Status history","type":"panel","id":"status-history","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Periodic status history","links":null,"logos":{"small":"public/app/plugins/panel/status-history/img/status.svg","large":"public/app/plugins/panel/status-history/img/status.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/status-history/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Table","type":"panel","id":"table","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Supports many column styles","links":null,"logos":{"small":"public/app/plugins/panel/table/img/icn-table-panel.svg","large":"public/app/plugins/panel/table/img/icn-table-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/table/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Table (old)","type":"panel","id":"table-old","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Table Panel for Grafana","links":null,"logos":{"small":"public/app/plugins/panel/table-old/img/icn-table-panel.svg","large":"public/app/plugins/panel/table-old/img/icn-table-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/table-old/","category":"","state":"deprecated","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Tempo","type":"datasource","id":"tempo","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"High volume, minimal dependency trace storage.  OSS tracing solution from Grafana Labs.","links":[{"name":"GitHub Project","url":"https://github.com/grafana/tempo"}],"logos":{"small":"public/app/plugins/datasource/tempo/img/tempo_logo.svg","large":"public/app/plugins/datasource/tempo/img/tempo_logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/tempo/","category":"tracing","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"TestData DB","type":"datasource","id":"testdata","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Generates test data in different forms","links":null,"logos":{"small":"public/app/plugins/datasource/testdata/img/testdata.svg","large":"public/app/plugins/datasource/testdata/img/testdata.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/testdata/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Text","type":"panel","id":"text","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Supports markdown and html content","links":null,"logos":{"small":"public/app/plugins/panel/text/img/icn-text-panel.svg","large":"public/app/plugins/panel/text/img/icn-text-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/text/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Time series","type":"panel","id":"timeseries","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Time based line, area and bar charts","links":null,"logos":{"small":"public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg","large":"public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/timeseries/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Traces","type":"panel","id":"traces","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/traces/img/traces-panel.svg","large":"public/app/plugins/panel/traces/img/traces-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/traces/","category":"","state":"beta","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Welcome","type":"panel","id":"welcome","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"","links":null,"logos":{"small":"public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg","large":"public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/welcome/","category":"","state":"","signature":"internal","signatureType":"","signatureOrg":""},{"name":"Zipkin","type":"datasource","id":"zipkin","enabled":true,"pinned":false,"info":{"author":{"name":"Grafana Labs","url":"https://grafana.com"},"description":"Placeholder for the distributed tracing system.","links":[{"name":"Learn more","url":"https://zipkin.io"}],"logos":{"small":"public/app/plugins/datasource/zipkin/img/zipkin-logo.svg","large":"public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"},"build":{},"screenshots":null,"version":"","updated":""},"dependencies":{"grafanaDependency":"","grafanaVersion":"*","plugins":[]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/zipkin/","category":"tracing","state":"","signature":"internal","signatureType":"","signatureOrg":""}]
+[
+  {
+    "name": "Alert list",
+    "type": "panel",
+    "id": "alertlist",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Shows list of alerts and their current status",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
+        "large": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertlist/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Alertmanager",
+    "type": "datasource",
+    "id": "alertmanager",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Prometheus alertmanager",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertmanager/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Annotations list",
+    "type": "panel",
+    "id": "annolist",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "List annotations",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
+        "large": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/annolist/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Azure Monitor",
+    "type": "datasource",
+    "id": "grafana-azure-monitor-datasource",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for Microsoft Azure Monitor \u0026 Application Insights",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"
+        },
+        {
+          "name": "Apache License",
+          "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
+      },
+      "build": {},
+      "screenshots": [
+        {
+          "name": "Azure Contoso Loans",
+          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
+        },
+        {
+          "name": "Azure Monitor Network",
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
+        },
+        {
+          "name": "Azure Monitor CPU",
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
+        }
+      ],
+      "version": "1.0.0",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "5.2.x",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/grafana-azure-monitor-datasource/",
+    "category": "cloud",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Bar chart",
+    "type": "panel",
+    "id": "barchart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Categorical charts with group support",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/barchart/img/barchart.svg",
+        "large": "public/app/plugins/panel/barchart/img/barchart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/barchart/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Bar gauge",
+    "type": "panel",
+    "id": "bargauge",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Horizontal and vertical gauges",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
+        "large": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/bargauge/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Candlestick",
+    "type": "panel",
+    "id": "candlestick",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
+        "large": "public/app/plugins/panel/candlestick/img/candlestick.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/candlestick/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Canvas",
+    "type": "panel",
+    "id": "canvas",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Explicit element placement",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
+        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/canvas/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "CloudWatch",
+    "type": "datasource",
+    "id": "cloudwatch",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for Amazon AWS monitoring service",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+        "large": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/cloudwatch/",
+    "category": "cloud",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Dashboard list",
+    "type": "panel",
+    "id": "dashlist",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "List of dynamic links to other dashboards",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
+        "large": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/dashlist/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Elasticsearch",
+    "type": "datasource",
+    "id": "elasticsearch",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source logging \u0026 analytics database",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://grafana.com/docs/features/datasources/elasticsearch/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
+        "large": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/elasticsearch/",
+    "category": "logging",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Flame Graph",
+    "type": "panel",
+    "id": "flamegraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/flamegraph/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Gauge",
+    "type": "panel",
+    "id": "gauge",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Standard gauge visualization",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/gauge/img/icon_gauge.svg",
+        "large": "public/app/plugins/panel/gauge/img/icon_gauge.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/gauge/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Geomap",
+    "type": "panel",
+    "id": "geomap",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Geomap panel",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/geomap/img/icn-geomap.svg",
+        "large": "public/app/plugins/panel/geomap/img/icn-geomap.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/geomap/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Getting Started",
+    "type": "panel",
+    "id": "gettingstarted",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
+        "large": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/gettingstarted/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Google Cloud Monitoring",
+    "type": "datasource",
+    "id": "stackdriver",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
+        "large": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "1.0.0",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/stackdriver/",
+    "category": "cloud",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Graph (old)",
+    "type": "panel",
+    "id": "graph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "The old default graph panel",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
+        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/graph/",
+    "category": "",
+    "state": "deprecated",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Graphite",
+    "type": "datasource",
+    "id": "graphite",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://graphiteapp.org/"
+        },
+        {
+          "name": "Graphite 1.1 Release",
+          "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/graphite/img/graphite_logo.png",
+        "large": "public/app/plugins/datasource/graphite/img/graphite_logo.png"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/graphite/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Heatmap",
+    "type": "panel",
+    "id": "heatmap",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like a histogram over time",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
+        "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/heatmap/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Histogram",
+    "type": "panel",
+    "id": "histogram",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/histogram/img/histogram.svg",
+        "large": "public/app/plugins/panel/histogram/img/histogram.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/histogram/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "InfluxDB",
+    "type": "datasource",
+    "id": "influxdb",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
+        "large": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/influxdb/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Jaeger",
+    "type": "datasource",
+    "id": "jaeger",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source, end-to-end distributed tracing",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://www.jaegertracing.io"
+        },
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/jaegertracing/jaeger"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
+        "large": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/jaeger/",
+    "category": "tracing",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Logs",
+    "type": "panel",
+    "id": "logs",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/logs/img/icn-logs-panel.svg",
+        "large": "public/app/plugins/panel/logs/img/icn-logs-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/logs/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Loki",
+    "type": "datasource",
+    "id": "loki",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://grafana.com/loki"
+        },
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/grafana/loki"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/loki/img/loki_icon.svg",
+        "large": "public/app/plugins/datasource/loki/img/loki_icon.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/loki/",
+    "category": "logging",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Microsoft SQL Server",
+    "type": "datasource",
+    "id": "mssql",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for Microsoft SQL Server compatible databases",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
+        "large": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/mssql/",
+    "category": "sql",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "MySQL",
+    "type": "datasource",
+    "id": "mysql",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for MySQL databases",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/mysql/img/mysql_logo.svg",
+        "large": "public/app/plugins/datasource/mysql/img/mysql_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/mysql/",
+    "category": "sql",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "News",
+    "type": "panel",
+    "id": "news",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "RSS feed reader",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/news/img/news.svg",
+        "large": "public/app/plugins/panel/news/img/news.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/news/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Node Graph",
+    "type": "panel",
+    "id": "nodeGraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
+        "large": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/nodeGraph/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "OpenTSDB",
+    "type": "datasource",
+    "id": "opentsdb",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
+        "large": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/opentsdb/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },{
+    "name": "Parca",
+    "type": "datasource",
+    "id": "parca",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
+      "links": [{
+        "name": "GitHub Project",
+        "url": "https://github.com/parca-dev/parca"
+      }],
+      "logos": {
+        "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
+        "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/parca/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Phlare",
+    "type": "datasource",
+    "id": "phlare",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.",
+      "links": [{
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/phlare"
+      }],
+      "logos": {
+        "small": "public/app/plugins/datasource/phlare/img/phlare_icon_color.svg",
+        "large": "public/app/plugins/datasource/phlare/img/phlare_icon_color.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/phlare/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Pie chart",
+    "type": "panel",
+    "id": "piechart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "The new core pie chart visualization",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/piechart/img/icon_piechart.svg",
+        "large": "public/app/plugins/panel/piechart/img/icon_piechart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/piechart/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "PostgreSQL",
+    "type": "datasource",
+    "id": "postgres",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for PostgreSQL and compatible databases",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
+        "large": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/postgres/",
+    "category": "sql",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Prometheus",
+    "type": "datasource",
+    "id": "prometheus",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database \u0026 alerting",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+        "large": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/prometheus/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Stat",
+    "type": "panel",
+    "id": "stat",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Big stat values \u0026 sparklines",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
+        "large": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/stat/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "State timeline",
+    "type": "panel",
+    "id": "state-timeline",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "State changes and durations",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/state-timeline/img/timeline.svg",
+        "large": "public/app/plugins/panel/state-timeline/img/timeline.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/state-timeline/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Status history",
+    "type": "panel",
+    "id": "status-history",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Periodic status history",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/status-history/img/status.svg",
+        "large": "public/app/plugins/panel/status-history/img/status.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/status-history/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Table",
+    "type": "panel",
+    "id": "table",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Supports many column styles",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/table/img/icn-table-panel.svg",
+        "large": "public/app/plugins/panel/table/img/icn-table-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/table/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Table (old)",
+    "type": "panel",
+    "id": "table-old",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Table Panel for Grafana",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
+        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/table-old/",
+    "category": "",
+    "state": "deprecated",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Tempo",
+    "type": "datasource",
+    "id": "tempo",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "High volume, minimal dependency trace storage.  OSS tracing solution from Grafana Labs.",
+      "links": [
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/grafana/tempo"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/tempo/img/tempo_logo.svg",
+        "large": "public/app/plugins/datasource/tempo/img/tempo_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/tempo/",
+    "category": "tracing",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "TestData",
+    "type": "datasource",
+    "id": "testdata",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Generates test data in different forms",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/datasource/testdata/img/testdata.svg",
+        "large": "public/app/plugins/datasource/testdata/img/testdata.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/testdata/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Text",
+    "type": "panel",
+    "id": "text",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Supports markdown and html content",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/text/img/icn-text-panel.svg",
+        "large": "public/app/plugins/panel/text/img/icn-text-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/text/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Time series",
+    "type": "panel",
+    "id": "timeseries",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Time based line, area and bar charts",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
+        "large": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/timeseries/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Traces",
+    "type": "panel",
+    "id": "traces",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
+        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/traces/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Welcome",
+    "type": "panel",
+    "id": "welcome",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
+        "large": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/welcome/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "XY Chart",
+    "type": "panel",
+    "id": "xychart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
+        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/xychart/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Zipkin",
+    "type": "datasource",
+    "id": "zipkin",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Placeholder for the distributed tracing system.",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://zipkin.io"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
+        "large": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/zipkin/",
+    "category": "tracing",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  }
+]

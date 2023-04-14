@@ -19,9 +19,9 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
-	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward}
-	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward}
-	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward}
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward, RefID: "mq"}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward, RefID: "vq"}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward, RefID: "sq"}
 
 	tt := []struct {
 		name     string
@@ -46,24 +46,34 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
 
 		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
+
+		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
+
+		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
+	}
+
+	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
+		responseFileName := filepath.Join(folder, path+".json")
+		goldenFileName := path + ".golden"
+
+		//nolint:gosec
+		bytes, err := os.ReadFile(responseFileName)
+		require.NoError(t, err)
+
+		frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &query, responseOpts)
+		require.NoError(t, err)
+
+		dr := &backend.DataResponse{
+			Frames: frames,
+			Error:  err,
+		}
+		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, true)
 	}
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			responseFileName := filepath.Join("testdata", test.filepath+".json")
-			goldenFileName := test.filepath + ".golden"
-
-			bytes, err := os.ReadFile(responseFileName)
-			require.NoError(t, err)
-
-			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &test.query)
-			require.NoError(t, err)
-
-			dr := &backend.DataResponse{
-				Frames: frames,
-				Error:  err,
-			}
-			experimental.CheckGoldenJSONResponse(t, "testdata", goldenFileName, dr, true)
+			runTest("testdata", test.filepath, test.query, ResponseOpts{metricDataplane: false})
+			runTest("testdata_metric_dataplane", test.filepath, test.query, ResponseOpts{metricDataplane: true})
 		})
 	}
 }
@@ -113,7 +123,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)

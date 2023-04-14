@@ -12,13 +12,34 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer {
+	sqlStore := db.InitTestDB(t)
+	features := featuremgmt.WithFeatures()
+
+	return &HTTPServer{
+		Cfg:            cfg,
+		License:        &licensing.OSSLicensingService{Cfg: cfg},
+		SQLStore:       sqlStore,
+		SocialService:  social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService()),
+		HooksService:   hooks.ProvideService(),
+		SecretsService: fakes.NewFakeSecretsService(),
+		Features:       features,
+	}
+}
 
 func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	t.Helper()
@@ -27,16 +48,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 		cfg = setting.NewCfg()
 	}
 	cfg.ErrTemplateName = "error-template"
-
-	sqlStore := sqlstore.InitTestDB(t)
-
-	hs := &HTTPServer{
-		Cfg:           cfg,
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		SQLStore:      sqlStore,
-		SocialService: social.ProvideService(cfg),
-		HooksService:  hooks.ProvideService(),
-	}
+	hs := setupSocialHTTPServerWithConfig(t, cfg)
 
 	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
@@ -55,9 +67,9 @@ func TestOAuthLogin_UnknownProvider(t *testing.T) {
 	recorder := httptest.NewRecorder()
 
 	m.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusNotFound, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), "OAuth not enabled")
+	// expect to be redirected to /login
+	assert.Equal(t, http.StatusFound, recorder.Code)
+	assert.Equal(t, "/login", recorder.Header().Get("Location"))
 }
 
 func TestOAuthLogin_Base(t *testing.T) {
@@ -155,4 +167,70 @@ func TestOAuthLogin_UsePKCE(t *testing.T) {
 		u.Query().Get("code_challenge"),
 		base64.RawURLEncoding.EncodeToString(shasum[:]),
 	)
+}
+
+func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
+	t.Helper()
+	cfgOAuthSkipRoleSync := setting.NewCfg()
+	authOAuthSec := cfgOAuthSkipRoleSync.Raw.Section("auth")
+	_, err := authOAuthSec.NewKey("oauth_skip_org_role_update_sync", "true")
+	require.NoError(t, err)
+	cfgOAuthSkipRoleSync.ErrTemplateName = "error-template"
+
+	cfgOAuthOrgRoleSync := setting.NewCfg()
+	authOAutoWithoutSec := cfgOAuthOrgRoleSync.Raw.Section("auth")
+	_, err = authOAutoWithoutSec.NewKey("oauth_skip_org_role_update_sync", "false")
+	require.NoError(t, err)
+	cfgOAuthOrgRoleSync.ErrTemplateName = "error-template"
+
+	testcases := []struct {
+		name             string
+		cfg              *setting.Cfg
+		basicUser        *social.BasicUserInfo
+		expectedOrgRoles map[int64]org.RoleType
+	}{
+		{
+			name: "should return empty map of org role mapping if the role for the basic info is empty",
+			cfg:  cfgOAuthOrgRoleSync,
+			basicUser: &social.BasicUserInfo{
+				Id:    "1",
+				Name:  "first lastname",
+				Email: "example@github.com",
+				Login: "example",
+				Role:  "",
+			},
+			expectedOrgRoles: map[int64]org.RoleType{},
+		},
+		{
+			name: "should set internal role if role exists and we are skipping org role sync",
+			cfg:  cfgOAuthSkipRoleSync,
+			basicUser: &social.BasicUserInfo{
+				Id:    "1",
+				Name:  "first lastname",
+				Email: "example@github.com",
+				Login: "example",
+				Role:  roletype.RoleAdmin,
+			},
+			expectedOrgRoles: map[int64]org.RoleType{1: roletype.RoleAdmin},
+		},
+		{
+			name: "should return empty external role, if the role for the basic info is empty",
+			cfg:  cfgOAuthSkipRoleSync,
+			basicUser: &social.BasicUserInfo{
+				Id:    "1",
+				Name:  "first lastname",
+				Email: "example@github.com",
+				Login: "example",
+				Role:  "",
+			},
+			expectedOrgRoles: map[int64]org.RoleType{},
+		},
+	}
+	for _, tc := range testcases {
+		t.Logf("%s", tc.name)
+		cfg := tc.cfg
+		hs := setupSocialHTTPServerWithConfig(t, cfg)
+		externalUser := hs.buildExternalUserInfo(nil, tc.basicUser, "")
+		require.Equal(t, tc.expectedOrgRoles, externalUser.OrgRoles)
+	}
 }

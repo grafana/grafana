@@ -12,31 +12,36 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-type PrometheusApiForkingService interface {
-	RouteGetAlertStatuses(*models.ReqContext) response.Response
-	RouteGetGrafanaAlertStatuses(*models.ReqContext) response.Response
-	RouteGetGrafanaRuleStatuses(*models.ReqContext) response.Response
-	RouteGetRuleStatuses(*models.ReqContext) response.Response
+type PrometheusApi interface {
+	RouteGetAlertStatuses(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaAlertStatuses(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaRuleStatuses(*contextmodel.ReqContext) response.Response
+	RouteGetRuleStatuses(*contextmodel.ReqContext) response.Response
 }
 
-func (f *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertStatuses(ctx)
+func (f *PrometheusApiHandler) RouteGetAlertStatuses(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetAlertStatuses(ctx, datasourceUIDParam)
 }
-func (f *ForkedPrometheusApi) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaAlertStatuses(ctx)
+func (f *PrometheusApiHandler) RouteGetGrafanaAlertStatuses(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaAlertStatuses(ctx)
 }
-func (f *ForkedPrometheusApi) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaRuleStatuses(ctx)
+func (f *PrometheusApiHandler) RouteGetGrafanaRuleStatuses(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaRuleStatuses(ctx)
 }
-func (f *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetRuleStatuses(ctx)
+func (f *PrometheusApiHandler) RouteGetRuleStatuses(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRouteGetRuleStatuses(ctx, datasourceUIDParam)
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, m *metrics.API) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/prometheus/{DatasourceUID}/api/v1/alerts"),

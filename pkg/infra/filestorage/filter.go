@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/armon/go-radix"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -244,6 +245,6 @@ func (m allOfPathFilter) asSQLFilter() accesscontrol.SQLFilter {
 	}
 }
 
-func newAndPathFilter(filters ...PathFilter) PathFilter {
+func NewAndPathFilter(filters ...PathFilter) PathFilter {
 	return &allOfPathFilter{filters: filters}
 }

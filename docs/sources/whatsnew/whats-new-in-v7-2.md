@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-2/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-2/
+  - ../guides/whats-new-in-v7-2/
 description: Feature and improvement highlights for Grafana v7.2
 keywords:
   - grafana
@@ -74,7 +73,7 @@ You can now dynamically apply value filters to any table column. This option can
 
 {{< figure src="/static/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
-[Filter table columns]({{< relref "../visualizations/table/filter-table-columns/" >}}) has been added as a result of this feature.
+[Filter table columns]({{< relref "../panels-visualizations/visualizations/table/#filter-table-columns" >}}) has been added as a result of this feature.
 
 ### New field override selection options
 
@@ -84,8 +83,8 @@ You can now add override rules that use a regex matcher to choose which fields t
 
 Grafana 7.2 includes the following transformation enhancements:
 
-- A new [Group By]({{< relref "../panels/transform-data/transformation-functions/#group-by" >}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
-- The [Labels to fields]({{< relref "../panels/transform-data/transformation-functions/#labels-to-fields" >}}) transformation now allows you to pick one label and use that as the name of the value field.
+- A new [Group By]({{< relref "../panels-visualizations/query-transform-data/transform-data/#group-by" >}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
+- The [Labels to fields]({{< relref "../panels-visualizations/query-transform-data/transform-data/#labels-to-fields" >}}) transformation now allows you to pick one label and use that as the name of the value field.
 - You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< figure src="/static/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
@@ -96,7 +95,7 @@ The up and down arrows, which were previously the only way to change query order
 
 {{< figure src="/static/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
 
-The [Queries]({{< relref "../panels/query-a-data-source/add-a-query/" >}}) topic has been updated as a result of this change.
+The [Queries]({{< relref "../panels-visualizations/#add-a-query" >}}) topic has been updated as a result of this change.
 
 ## Inspect queries in Explore
 
@@ -118,17 +117,15 @@ The [Toggle parsed fields]({{< relref "../explore/#toggle-detected-fields" >}}) 
 
 Alert notification channels now store sensitive settings and secrets, such as API tokens and passwords, encrypted in the database.
 
-Please read the [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#ensure-encryption-of-existing-alert-notification-channel-secrets" >}}) for more information and how to migrate.
-
 ## Grafana Enterprise features
 
 These features are included in the Grafana Enterprise edition software.
 
 ### Report and export dashboards in grid layout
 
-A new layout option is available when rendering reports: the grid layout. With this option, your report uses the panel layout from your dashboard, so that what you see is what you get. Learn more about the [grid layout]({{< relref "../enterprise/reporting/#layout-and-orientation" >}}) in the documentation.
+A new layout option is available when rendering reports: the grid layout. With this option, your report uses the panel layout from your dashboard, so that what you see is what you get. Learn more about the [grid layout]({{< relref "../dashboards/share-dashboards-panels/#layout-and-orientation" >}}) in the documentation.
 
-The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf/" >}}) feature.
+The grid layout is also available for the [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels/#export-dashboard-as-pdf" >}}) feature.
 
 {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -136,7 +133,7 @@ The grid layout is also available for the [Export dashboard as PDF]({{< relref "
 
 You can now generate a report with a different time range from the dashboard it is based on. This means that you no longer have to apply workarounds, such as copying dashboards or carefully aligning report generation with the end of the month, to generate reports that cover the period you want.
 
-For more information, refer to [Reports time range]({{< relref "../enterprise/reporting/#report-time-range" >}}).
+For more information, refer to [Reports time range]({{< relref "../dashboards/share-dashboards-panels/#report-time-range" >}}).
 
 ### Organization-wide report settings
 
@@ -144,11 +141,7 @@ You can now configure organization-wide report settings, such as report branding
 
 {{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
 
-For more information, refer to [Reports settings]({{< relref "../enterprise/reporting/#reports-settings" >}}).
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/" >}}).
+For more information, refer to [Report settings]({{< relref "../dashboards/share-dashboards-panels/#report-settings" >}}).
 
 ## Changelog
 

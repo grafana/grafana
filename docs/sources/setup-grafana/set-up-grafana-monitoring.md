@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/admin/metrics/
-  - /docs/grafana/latest/administration/jaeger-instrumentation/
-  - /docs/grafana/latest/administration/view-server/internal-metrics/
-  - /docs/grafana/latest/setup-grafana/set-up-grafana-monitoring/
+  - ../admin/metrics/
+  - ../administration/jaeger-instrumentation/
+  - ../administration/view-server/internal-metrics/
 description: Jaeger traces emitted and propagation by Grafana
 keywords:
   - grafana
@@ -15,13 +14,13 @@ weight: 800
 
 # Set up Grafana monitoring
 
-Grafana supports [Jaeger tracing](https://www.jaegertracing.io/).
+Grafana supports tracing.
 
-Grafana can emit Jaeger traces for its HTTP API endpoints and propagate Jaeger trace information to data sources.
+Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API endpoints and propagate Jaeger and [w3c Trace Context](https://www.w3.org/TR/trace-context/) trace information to compatible data sources.
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration]({{< relref "configure-grafana/#tracingjaeger" >}}) for information about enabling Jaeger tracing.
+Refer to [Configuration's OpenTelemetry section]({{< relref "configure-grafana/#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
 

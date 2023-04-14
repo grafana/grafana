@@ -1,0 +1,119 @@
+{
+  "name": "Panel Tests - Graph Time Regions",
+  "labels": {
+    "gdev": "",
+    "graph": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": 18
+  },
+  "nested": [
+    {
+      "uid": "graph-time-regions.json#2",
+      "kind": "panel",
+      "name": "Business Hours",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-time-regions.json#4",
+      "kind": "panel",
+      "name": "Sunday's 20-23",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-time-regions.json#3",
+      "kind": "panel",
+      "name": "Each day of week",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-time-regions.json#5",
+      "kind": "panel",
+      "name": "05:00",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-time-regions.json#7",
+      "kind": "panel",
+      "name": "From 22:00 to 00:30 (crossing midnight)",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds",
+          "ID": "gdev-testdata"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds",
+      "ID": "gdev-testdata"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "graph"
+    }
+  ]
+}

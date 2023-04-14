@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { FunctionComponent, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { Icon } from '../Icon/Icon';
 import { Tooltip, PopoverContent } from '../Tooltip';
@@ -12,9 +12,11 @@ interface Props {
   isInvalid?: boolean;
   tooltip?: PopoverContent;
   width?: number | 'auto';
+  /** Make tooltip interactive */
+  interactive?: boolean;
 }
 
-export const FormLabel: FunctionComponent<Props> = ({
+export const FormLabel = ({
   children,
   isFocused,
   isInvalid,
@@ -22,8 +24,9 @@ export const FormLabel: FunctionComponent<Props> = ({
   htmlFor,
   tooltip,
   width,
+  interactive,
   ...rest
-}) => {
+}: Props) => {
   const classes = classNames(className, `gf-form-label width-${width ? width : '10'}`, {
     'gf-form-label--is-focused': isFocused,
     'gf-form-label--is-invalid': isInvalid,
@@ -33,10 +36,8 @@ export const FormLabel: FunctionComponent<Props> = ({
     <label className={classes} {...rest} htmlFor={htmlFor}>
       {children}
       {tooltip && (
-        <Tooltip placement="top" content={tooltip} theme={'info'}>
-          <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
-          </div>
+        <Tooltip placement="top" content={tooltip} theme={'info'} interactive={interactive}>
+          <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
         </Tooltip>
       )}
     </label>

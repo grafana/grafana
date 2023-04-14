@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorHeader, EditorRow, InlineSelect, Space, EditorSwitch } from '@grafana/experimental';
+import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect, Space } from '@grafana/experimental';
 import { Alert, Input } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
@@ -45,7 +45,6 @@ export const AnnotationQueryEditor = (props: Props) => {
         metricStat={query}
         disableExpressions={true}
         onChange={(metricStat: MetricStat) => onChange({ ...query, ...metricStat })}
-        onRunQuery={() => {}}
       ></MetricStatEditor>
       <Space v={0.5} />
       <EditorRow>

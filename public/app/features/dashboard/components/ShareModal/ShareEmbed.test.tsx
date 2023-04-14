@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { BootData } from '@grafana/data';
+import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { Echo } from '../../../../core/services/echo/Echo';
+import { PanelModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { ShareEmbed } from './ShareEmbed';
 
@@ -37,7 +41,7 @@ function mockLocationHref(href: string) {
 
   // @ts-ignore
   delete window.location;
-  (window as any).location = {
+  window.location = {
     ...location,
     href,
     origin: new URL(href).origin,
@@ -46,9 +50,10 @@ function mockLocationHref(href: string) {
 }
 
 describe('ShareEmbed', () => {
-  let originalBootData: any;
+  let originalBootData: BootData;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 
@@ -56,7 +61,7 @@ describe('ShareEmbed', () => {
       user: {
         orgId: 1,
       },
-    } as any;
+    } as BootData;
   });
 
   afterAll(() => {
@@ -64,7 +69,7 @@ describe('ShareEmbed', () => {
   });
 
   it('generates the correct embed url for a dashboard', () => {
-    const mockDashboard = new DashboardModel({
+    const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
     const mockPanel = new PanelModel({
@@ -82,7 +87,7 @@ describe('ShareEmbed', () => {
 
   it('generates the correct embed url for a dashboard set to the homepage in the grafana config', () => {
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
-    const mockDashboard = new DashboardModel({
+    const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
     const mockPanel = new PanelModel({
@@ -100,7 +105,7 @@ describe('ShareEmbed', () => {
   it('generates the correct embed url for a snapshot', () => {
     const mockSlug = 'mockSlug';
     mockLocationHref(`http://dashboards.grafana.com/dashboard/snapshot/${mockSlug}?orgId=1`);
-    const mockDashboard = new DashboardModel({
+    const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
     const mockPanel = new PanelModel({
@@ -118,7 +123,7 @@ describe('ShareEmbed', () => {
   it('generates the correct embed url for a scripted dashboard', () => {
     const mockSlug = 'scripted.js';
     mockLocationHref(`http://dashboards.grafana.com/dashboard/script/${mockSlug}?orgId=1`);
-    const mockDashboard = new DashboardModel({
+    const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
     const mockPanel = new PanelModel({

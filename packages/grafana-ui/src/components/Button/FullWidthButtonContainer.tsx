@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { stylesFactory } from '../../themes';
 
@@ -7,7 +7,7 @@ export interface Props {
   className?: string;
 }
 
-export const FullWidthButtonContainer: FC<Props> = ({ className, children }) => {
+export const FullWidthButtonContainer = ({ className, children }: React.PropsWithChildren<Props>) => {
   const styles = getStyles();
 
   return <div className={cx(styles, className)}>{children}</div>;

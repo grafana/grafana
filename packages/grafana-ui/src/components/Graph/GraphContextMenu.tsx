@@ -8,9 +8,10 @@ import {
   dateTimeFormat,
   TimeZone,
   FormattedValue,
+  GrafanaTheme2,
 } from '@grafana/data';
 
-import { useTheme } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { ContextMenu, ContextMenuProps } from '../ContextMenu/ContextMenu';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { HorizontalGroup } from '../Layout/Layout';
@@ -31,14 +32,14 @@ export type GraphContextMenuProps = ContextMenuProps & {
 };
 
 /** @internal */
-export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
+export const GraphContextMenu = ({
   getContextMenuSource,
   timeZone,
   itemsGroup,
   dimensions,
   contextDimensions,
   ...otherProps
-}) => {
+}: GraphContextMenuProps) => {
   const source = getContextMenuSource();
 
   //  Do not render items that do not have label specified
@@ -113,31 +114,32 @@ export const GraphContextMenuHeader = ({
   displayName: string;
   displayValue: FormattedValue;
 }) => {
-  const theme = useTheme();
+  const styles = useStyles2(getStyles);
 
   return (
-    <div
-      className={css`
-        padding: ${theme.spacing.xs} ${theme.spacing.sm};
-        font-size: ${theme.typography.size.sm};
-        z-index: ${theme.zIndex.tooltip};
-      `}
-    >
+    <div className={styles.wrapper}>
       <strong>{timestamp}</strong>
       <HorizontalGroup>
         <div>
           <SeriesIcon color={seriesColor} />
-          <span
-            className={css`
-              white-space: nowrap;
-              padding-left: ${theme.spacing.xs};
-            `}
-          >
-            {displayName}
-          </span>
+          <span className={styles.displayName}>{displayName}</span>
         </div>
         {displayValue && <FormattedValueDisplay value={displayValue} />}
       </HorizontalGroup>
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css`
+      padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
+      font-size: ${theme.typography.size.sm};
+      z-index: ${theme.zIndex.tooltip};
+    `,
+    displayName: css`
+      white-space: nowrap;
+      padding-left: ${theme.spacing(0.5)};
+    `,
+  };
+}

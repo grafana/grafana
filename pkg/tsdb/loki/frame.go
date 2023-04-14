@@ -12,7 +12,7 @@ import (
 
 // we adjust the dataframes to be the way frontend & alerting
 // wants them.
-func adjustFrame(frame *data.Frame, query *lokiQuery) error {
+func adjustFrame(frame *data.Frame, query *lokiQuery, setMetricFrameName bool) error {
 	fields := frame.Fields
 
 	if len(fields) < 2 {
@@ -25,13 +25,13 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) error {
 	secondField := fields[1]
 
 	if secondField.Type() == data.FieldTypeFloat64 {
-		return adjustMetricFrame(frame, query)
+		return adjustMetricFrame(frame, query, setMetricFrameName)
 	} else {
 		return adjustLogsFrame(frame, query)
 	}
 }
 
-func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
+func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) error {
 	fields := frame.Fields
 	// we check if the fields are of correct type
 	if len(fields) != 2 {
@@ -50,7 +50,9 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
 	isMetricRange := query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
-	frame.Name = name
+	if setFrameName {
+		frame.Name = name
+	}
 
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
@@ -128,7 +130,7 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// so we send a separate timestamp-as-string field too. it is provided by the
 	// loki-json-parser-code
 
-	idField, err := makeIdField(stringTimeField, lineField, labelsField, frame.RefID)
+	idField, err := makeIdField(stringTimeField, lineField, labelsField, query.RefID)
 	if err != nil {
 		return err
 	}
@@ -178,7 +180,7 @@ func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField
 }
 
 func formatNamePrometheusStyle(labels map[string]string) string {
-	var parts []string
+	parts := make([]string, 0, len(labels))
 
 	for k, v := range labels {
 		parts = append(parts, fmt.Sprintf("%s=%q", k, v))
@@ -189,7 +191,7 @@ func formatNamePrometheusStyle(labels map[string]string) string {
 	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
 
-//If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
+// If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
 func formatName(labels map[string]string, query *lokiQuery) string {
 	if query.LegendFormat == "" {
 		return formatNamePrometheusStyle(labels)

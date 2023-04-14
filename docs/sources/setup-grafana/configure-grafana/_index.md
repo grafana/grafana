@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/configuration/
-  - /docs/grafana/latest/installation/configuration/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/
+  - ../administration/configuration/
+  - ../installation/configuration/
 description: Configuration documentation
 title: Configure Grafana
 weight: 200
@@ -10,7 +9,7 @@ weight: 200
 
 # Configure Grafana
 
-Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/view-server/view-server-settings/" >}}).
+Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/stats-and-license#view-server-settings" >}}).
 
 > **Note:** After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
 
@@ -26,7 +25,7 @@ If you installed Grafana using the `deb` or `rpm` packages, then your configurat
 
 ### Docker
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../administration/configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "../configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 
@@ -71,6 +70,9 @@ client_secret = 0ldS3cretKey
 
 [plugin.grafana-image-renderer]
 rendering_ignore_https_errors = true
+
+[feature_toggles]
+enable = newNavigation
 ```
 
 You can override them on Linux machines with:
@@ -80,6 +82,7 @@ export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
+export GF_FEATURE_TOGGLES_ENABLE=newNavigation
 ```
 
 ## Variable expansion
@@ -124,7 +127,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr />
 
@@ -170,7 +173,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../plugins/installation/" >}}).
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management/#install-grafana-plugins" >}}).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -188,7 +191,9 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 ### http_addr
 
-The IP address to bind to. If empty will bind to all interfaces
+The host for the server to listen on. If your machine has more than one network interface, you can use this setting to expose the Grafana service on only one network interface and not have it available on others, such as the loopback interface. An empty value is equivalent to setting the value to `0.0.0.0`, which means the Grafana service binds to all interfaces.
+
+In environments where network address translation (NAT) is used, ensure you use the network interface address and not a final public address; otherwise, you might see errors such as `bind: cannot assign requested address` in the logs.
 
 ### http_port
 
@@ -257,9 +262,20 @@ Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
+### socket_gid
+
+GID where the socket should be set when `protocol=socket`.
+Make sure that the target group is in the group of Grafana process and that Grafana process is the file owner before you change this setting.
+It is recommended to set the gid as http server user gid.
+Not set when the value is -1.
+
+### socket_mode
+
+Mode where the socket should be set when `protocol=socket`. Make sure that Grafana process is the file owner before you change this setting.
+
 ### socket
 
-Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
+Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
 
 ### cdn_url
 
@@ -274,6 +290,17 @@ For example, given a cdn url like `https://cdn.myserver.com` grafana will try to
 
 Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
 `0` means there is no timeout for reading the request.
+
+<hr />
+
+## [server.custom_response_headers]
+
+This setting enables you to specify additional headers that the server adds to HTTP(S) responses.
+
+```
+exampleHeader1 = exampleValue1
+exampleHeader2 = exampleValue2
+```
 
 <hr />
 
@@ -324,7 +351,7 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 ### locking_attempt_timeout_sec
 
-For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -365,11 +392,23 @@ will be stored.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to `private`.
 
+### wal
+
+For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
+
+### query_retries
+
+This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
+
+### transaction_retries
+
+This setting applies to `sqlite` only and controls the number of times the system retries a transaction when the database is locked. The default value is `5`.
+
 <hr />
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../enterprise/query-caching/" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management/#query-caching" >}}).
 
 ### type
 
@@ -447,6 +486,10 @@ Limits the amount of bytes that will be read/accepted from responses of outgoing
 
 Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
 
+### user_agent
+
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
+
 <hr />
 
 ## [analytics]
@@ -473,6 +516,10 @@ Set to false disables checking for new versions of installed plugins from https:
 
 If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
+
+### google_analytics_4_id
+
+If you want to track Grafana usage via Google Analytics 4 specify _your_ GA4 ID here. By default this feature is disabled.
 
 ### google_tag_manager_id
 
@@ -505,13 +552,13 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 ### application_insights_endpoint_url
 
-    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
+Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
-### enable_feedback_links
+### feedback_links_enabled
 
-If set to false will remove all feedback links from the UI. Defaults to true.
+Set to `false` to remove all feedback links from the UI. Default is `true`.
 
 ## [security]
 
@@ -529,6 +576,10 @@ Default is `admin`.
 ### admin_password
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
+
+### admin_email
+
+The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
 
 ### secret_key
 
@@ -576,15 +627,15 @@ Set to `true` to enable HSTS `preloading` option. Only applied if strict_transpo
 
 ### strict_transport_security_subdomains
 
-Set to `true` if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
+Set to `true` to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
 
 ### x_content_type_options
 
-Set to `true` to enable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false`.
+Set to `false` to disable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `true`.
 
 ### x_xss_protection
 
-Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
 
 ### content_security_policy
 
@@ -592,7 +643,16 @@ Set to `true` to add the Content-Security-Policy header to your requests. CSP al
 
 ### content_security_policy_template
 
-Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+Set the policy template that will be used when adding the `Content-Security-Policy` header to your requests. `$NONCE` in the template includes a random nonce.
+
+### content_security_policy_report_only
+
+Set to `true` to add the `Content-Security-Policy-Report-Only` header to your requests. CSP in Report Only mode enables you to experiment with policies by monitoring their effects without enforcing them.
+You can enable both policies simultaneously.
+
+### content_security_policy_template
+
+Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
 
 <hr />
 
@@ -611,7 +671,19 @@ Current core features that will stop working:
 
 Before we disable angular support by default we plan to migrate these remaining areas to React.
 
+### csrf_trusted_origins
+
+List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
+
+### csrf_additional_headers
+
+List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
+
 ## [snapshots]
+
+### enabled
+
+Set to `false` to disable the snapshot feature (default `true`).
 
 ### external_enabled
 
@@ -664,7 +736,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users. For more information about creating a user, refer to [Add a user]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/add-user/" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../../administration/user-management/server-user-management/#add-a-user" >}}).
 
 ### allow_org_create
 
@@ -675,7 +747,8 @@ Default is `false`.
 
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users automatically cause a new
-organization to be created for that new user. Default is `true`.
+organization to be created for that new user. The organization will be
+created even if the `allow_org_create` setting is set to `false`. Default is `true`.
 
 ### auto_assign_org_id
 
@@ -686,7 +759,7 @@ that this organization already exists. Default is 1.
 ### auto_assign_org_role
 
 The role new users will be assigned for the main organization (if the
-above setting is set to true). Defaults to `Viewer`, other valid
+`auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
 options are `Admin` and `Editor`. e.g.:
 
 `auto_assign_org_role = Viewer`
@@ -705,7 +778,13 @@ Text used as placeholder text on login page for password input.
 
 ### default_theme
 
-Set the default UI theme: `dark` or `light`. Default is `dark`.
+Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `dark`.
+
+`system` matches the user's system theme.
+
+### default_language
+
+This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
 
 ### home_page
 
@@ -772,6 +851,8 @@ URL to redirect the user to after they sign out.
 
 ### oauth_auto_login
 
+> **Note**: This option is deprecated - use `auto_login` option for specific OAuth provider instead.
+
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
 
@@ -782,9 +863,95 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### oauth_skip_org_role_update_sync
 
-Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
-Use this setting to distribute users with external login to multiple organizations.
-Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
+> **Note**: This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+
+If you want to change the `oauth_skip_org_role_update_sync` setting to `false`, then for each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
+
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
+> With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
+> reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
+
+### skip_org_role_sync
+
+`skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
+
+`skip_org_role_sync` default value is `false`.
+
+With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See provider specifities in the tables below.
+
+With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
+
+The behavior of `oauth_skip_org_role_update_sync` and `skip_org_role_sync`, can be seen in the tables below:
+
+**[auth.grafana_com]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with Grafana.com role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role synchronization for Grafana.com users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for Grafana.com users and all other OAuth providers. Role is set to `auto_assign_org_role`. | true |
+
+**[auth.azuread]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with AzureAD role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role synchronization for AzureAD users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for AzureAD users and all other OAuth providers. Role is set to `auto_assign_org_role`. | true |
+
+**[auth.google]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|----------------------------------------------------------------------------------------|---------------------------|
+| false | false | User organization role is set to `auto_assign_org_role` and cannot be changed. | false |
+| true | false | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
+| false | true | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
+| true | true | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
+
+> **Note:** For GitLab, GitHub, Okta, Generic OAuth providers, Grafana synchronizes organization roles and sets Grafana Admins. The `allow_assign_grafana_admin` setting is also accounted for, to allow or not setting the Grafana Admin role from the external provider.
+
+**[auth.github]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with GitHub role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for GitHub users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for GitHub users. Role is set to `auto_assign_org_role`. | true |
+
+**[auth.gitlab]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with Gitlab role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for Gitlab users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for Gitlab users. Role is set to `auto_assign_org_role`. | true |
+
+**[auth.generic_oauth]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with the provider's role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for the provider's users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for the provider's users. Role is set to `auto_assign_org_role`. | true |
+
+**[auth.okta]**
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
+|-----------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with Okta role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for Okta users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for Okta users. Role is set to `auto_assign_org_role`. | true |
+
+#### Example skip_org_role_sync
+
+[auth.google]
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | **Example Scenario** |
+|-----------------------------------|----------------------|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| false | false | Synchronized with Google Auth organization roles | A user logs in to Grafana using their Google account and their organization role is automatically set based on their role in Google. |
+| true | false | Skipped synchronization of organization roles from all OAuth providers | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role. But Grafana Administrators can modify the role from the UI. |
+| false | true | Skipped synchronization of organization roles Google | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role in Google. But Grafana Administrators can modify the role from the UI. |
+| true | true | Skipped synchronization of organization roles from all OAuth providers including Google | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role in Google. But Grafana Administrators can modify the role from the UI. |
 
 ### api_key_max_seconds_to_live
 
@@ -1117,6 +1284,10 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 Sentry javascript agent is initialized. Default is `false`.
 
+### provider
+
+Defines which provider to use `sentry` or `grafana`. Default is `sentry`
+
 ### sentry_dsn
 
 Sentry DSN if you want to send events to Sentry
@@ -1136,6 +1307,22 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 ### log_endpoint_burst_limit
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+
+### instrumentations_errors_enabled
+
+Turn on error instrumentation. Only affects Grafana Javascript Agent.
+
+### instrumentations_console_enabled
+
+Turn on console instrumentation. Only affects Grafana Javascript Agent
+
+### instrumentations_webvitals_enabled
+
+Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
+
+### api_key
+
+If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
 
 <hr>
 
@@ -1195,15 +1382,19 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
+### global_correlations
+
+Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../../alerting/" >}}).
+For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting/" >}}).
 
 ### enabled
 
-Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1225,11 +1416,11 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### ha_listen_address
 
-Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+Listen IP address and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
 
 ### ha_advertise_address
 
-Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+Explicit IP address and port to advertise other Grafana instances. The port is used for both TCP and UDP.
 
 ### ha_peers
 
@@ -1281,13 +1472,43 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 <hr>
 
+## [unified_alerting.screenshots]
+
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/manage-notifications/images-in-notifications">}}).
+
+### capture
+
+Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
+
+### max_concurrent_screenshots
+
+The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
+
+### upload_external_image_storage
+
+Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please see `[external_image_storage]` for further configuration options. If this option is false then screenshots will be persisted to disk for up to `temp_data_lifetime`.
+
+<hr>
+
+## [unified_alerting.reserved_labels]
+
+For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting](https://grafana.com/docs/grafana/next/alerting/fundamentals/annotation-label/how-to-use-labels/)
+
+### disabled_labels
+
+Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
+
+For example: `disabled_labels=grafana_folder`
+
+<hr>
+
 ## [alerting]
 
-For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../../alerting/" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/).
 
 ### enabled
 
-Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
+Set to `true` to [enable legacy dashboard alerting]({{<relref "#unified_alerting">}}). The default value is `false`.
 
 ### execute_alerts
 
@@ -1340,6 +1561,10 @@ Configures max number of alert annotations that Grafana stores. Default value is
 ### cleanupjob_batchsize
 
 Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
+
+### tags_length
+
+Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
 
 ## [annotations.dashboard]
 
@@ -1529,6 +1754,18 @@ Setting this to `true` turns off shared RPC spans. Leaving this available is the
 
 <hr>
 
+## [tracing.opentelemetry]
+
+Configure general parameters shared between OpenTelemetry providers.
+
+### custom_attributes
+
+Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
+
+Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+
+<hr>
+
 ## [tracing.opentelemetry.jaeger]
 
 Configure Grafana's Jaeger client for distributed tracing.
@@ -1539,7 +1776,7 @@ The host:port destination for reporting spans. (ex: `localhost:14268/api/traces`
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
 
 <hr>
 
@@ -1553,7 +1790,7 @@ The host:port destination for reporting spans. (ex: `localhost:4317`)
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
 
 <hr>
 
@@ -1673,6 +1910,10 @@ Storage account key
 
 Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
+### sas_token_expiration_days
+
+Number of days for SAS token validity. If specified SAS token will be attached to image URL. Allow storing images in private containers.
+
 <hr>
 
 ## [external_image_storage.local]
@@ -1684,6 +1925,12 @@ This option does not require any configuration.
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+#### renderer_token
+
+> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
+
+An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
 ### server_url
 
@@ -1718,13 +1965,13 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../plugins/plugin-signatures/" >}}).
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugin-management/#plugin-signatures" >}}).
 
 ### plugin_admin_enabled
 
 Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
-For more information, refer to [Plugin catalog]({{< relref "../../plugins/catalog/" >}}).
+For more information, refer to [Plugin catalog]({{< relref "../../administration/plugin-management/#plugin-catalog" >}}).
 
 ### plugin_admin_external_manage_enabled
 
@@ -1792,6 +2039,20 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
+
+<hr>
+
+## [plugin.plugin_id]
+
+This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
+
+Properties described in this section are available for all plugins, but you must set them individually for each plugin.
+
+### tracing
+
+> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+
+If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
 <hr>
 
@@ -1889,7 +2150,7 @@ Change the listening port of the gRPC server. Default port is `0` and will autom
 
 ## [enterprise]
 
-For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr>
 
@@ -1968,7 +2229,7 @@ default_baselayer_config = `{
 
 ### enable_custom_baselayers
 
-Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.
+Set this to `false` to disable loading other custom base maps and hide them in the Grafana UI. Default is `true`.
 
 ## [dashboard_previews]
 
@@ -1992,8 +2253,8 @@ Maximum duration of a single crawl. Default is 1h.
 
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
-Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) documentation for detailed instructions.
+Refer to the [dashboards previews]({{< relref "../../search/dashboard-previews/" >}}) documentation for detailed instructions.
 
 ## [rbac]
 
-Refer to [Role-based access control]({{< relref "../../enterprise/access-control/about-rbac/" >}}) for more information.
+Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) for more information.
