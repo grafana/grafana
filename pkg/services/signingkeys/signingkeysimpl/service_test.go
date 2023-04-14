@@ -102,7 +102,7 @@ func TestEmbeddedKeyService_GetJWK(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		args    args
+		keyID   string
 		want    jose.JSONWebKey
 		wantErr bool
 	}{
