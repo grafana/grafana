@@ -77,7 +77,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
       columns = [...state.columns];
       const widthFrom = state.columns[action.payload.from].width;
       //TODO FIX DRAGGING AND DROPPING COLUMNS
-      const widthTo = state.columns[action.payload.to].width;
+      // const widthTo = state.columns[action.payload.to].width;
 
       if (action.payload.from < action.payload.to) {
         for (let i = action.payload.from; i < action.payload.to; i++) {
