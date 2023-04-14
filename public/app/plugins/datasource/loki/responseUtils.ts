@@ -220,7 +220,7 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
     ...frame,
     fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
       ...field,
-      values: new ArrayVector(field.values.buffer),
+      values: new ArrayVector(field.values.toArray()),
     })),
   };
 }

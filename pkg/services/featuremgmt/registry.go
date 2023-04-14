@@ -100,7 +100,7 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
 		},
@@ -392,13 +392,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:         "drawerDataSourcePicker",
-			Description:  "Changes the user experience for data source selection to a drawer.",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
-		},
-		{
 			Name:         "traceqlSearch",
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
@@ -525,6 +518,13 @@ var (
 			Description: "Enables authentication configuration UI",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:         "advancedDataSourcePicker",
+			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )

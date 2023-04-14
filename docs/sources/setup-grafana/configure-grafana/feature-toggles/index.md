@@ -44,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
+| `exploreMixedDatasource`             | Enable mixed datasource in Explore                                                                                                                                                           |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
 | `newDBLibrary`                       | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `validateDashboardsOnSave`           | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
@@ -68,7 +69,6 @@ Alpha features might be changed or removed without prior notice.
 | `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                            |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                                              |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                                                     |
-| `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                                                  |
 | `newTraceView`                     | Shows the new trace view design                                                                                                                                                                     |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                                                    |
 | `traceToMetrics`                   | Enable trace to metrics links                                                                                                                                                                       |
@@ -92,7 +92,6 @@ Alpha features might be changed or removed without prior notice.
 | `lokiQuerySplittingConfig`         | Give users the option to configure split durations for Loki queries                                                                                                                                 |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                                                      |
 | `onlyExternalOrgRoleSync`          | Prohibits a user from changing organization roles synced with external auth providers                                                                                                               |
-| `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                                                  |
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                                           |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                                                |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                                                                                                          |
@@ -109,6 +108,7 @@ Alpha features might be changed or removed without prior notice.
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
 | `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                                                                                                             |
+| `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode                                                                                      |
 
 ## Development feature toggles
 
