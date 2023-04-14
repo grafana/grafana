@@ -61,7 +61,7 @@ describe('prepare timeline graph', () => {
     const out = info.frames![0];
 
     const field = out.fields.find((f) => f.name === 'b');
-    expect(field?.values.toArray()).toMatchInlineSnapshot(`
+    expect(field?.values).toMatchInlineSnapshot(`
       [
         1,
         1,
@@ -85,7 +85,7 @@ describe('prepare timeline graph', () => {
       }),
     ];
     const result = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(result.frames?.[0].fields[0].values.toArray()).toEqual([1, 2, 3, 4]);
+    expect(result.frames?.[0].fields[0].values).toEqual([1, 2, 3, 4]);
   });
 });
 

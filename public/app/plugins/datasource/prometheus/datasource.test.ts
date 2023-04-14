@@ -396,9 +396,9 @@ describe('PrometheusDatasource', () => {
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
         const results = result[0].data;
-        expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
-        expect(results[0].fields[2].values.toArray()).toEqual([10, 0]);
-        expect(results[0].fields[3].values.toArray()).toEqual([5, 0]);
+        expect(results[0].fields[1].values).toEqual([10, 10]);
+        expect(results[0].fields[2].values).toEqual([10, 0]);
+        expect(results[0].fields[3].values).toEqual([5, 0]);
       });
     });
 

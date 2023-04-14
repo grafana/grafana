@@ -142,7 +142,7 @@ describe('transformDataFrame', () => {
 
     // Only apply A
     await expect(transformDataFrame(cfg, [frameA, frameB])).toEmitValuesWith((received) => {
-      const processed = received[0].map((v) => v.fields[0].values.toArray());
+      const processed = received[0].map((v) => v.fields[0].values);
       expect(processed).toBeTruthy();
       expect(processed).toMatchObject([[5], [7, 8]]);
     });
@@ -150,7 +150,7 @@ describe('transformDataFrame', () => {
     // Only apply to B
     cfg[0].filter.options = 'B';
     await expect(transformDataFrame(cfg, [frameA, frameB])).toEmitValuesWith((received) => {
-      const processed = received[0].map((v) => v.fields[0].values.toArray());
+      const processed = received[0].map((v) => v.fields[0].values);
       expect(processed).toBeTruthy();
       expect(processed).toMatchObject([[5, 6], [7]]);
     });

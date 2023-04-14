@@ -143,7 +143,7 @@ describe('Tempo data source', () => {
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchObject([
       { name: 'traceID', values: ['04450900759028499335'] },
@@ -161,7 +161,7 @@ describe('Tempo data source', () => {
     expect(
       (response.data[1] as DataFrame).fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchObject([
       { name: 'id', values: ['4322526419282105830'] },
@@ -175,7 +175,7 @@ describe('Tempo data source', () => {
     expect(
       (response.data[2] as DataFrame).fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchObject([
       { name: 'id', values: [] },
@@ -456,14 +456,14 @@ describe('Tempo service graph view', () => {
 
     // Service Graph view
     expect(response.data[0].fields[0].name).toBe('Name');
-    expect(response.data[0].fields[0].values.toArray().length).toBe(2);
-    expect(response.data[0].fields[0].values.toArray()[0]).toBe('HTTP Client');
-    expect(response.data[0].fields[0].values.toArray()[1]).toBe('HTTP GET - root');
+    expect(response.data[0].fields[0].values.length).toBe(2);
+    expect(response.data[0].fields[0].values[0]).toBe('HTTP Client');
+    expect(response.data[0].fields[0].values[1]).toBe('HTTP GET - root');
 
     expect(response.data[0].fields[1].name).toBe('Rate');
-    expect(response.data[0].fields[1].values.toArray().length).toBe(2);
-    expect(response.data[0].fields[1].values.toArray()[0]).toBe(12.75164671814457);
-    expect(response.data[0].fields[1].values.toArray()[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[1].values.length).toBe(2);
+    expect(response.data[0].fields[1].values[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[1].values[1]).toBe(12.121331111401608);
     expect(response.data[0].fields[1].config.decimals).toBe(2);
     expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
     expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
@@ -473,9 +473,9 @@ describe('Tempo service graph view', () => {
     expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
     expect(response.data[0].fields[1].config.links[0].internal.query.instant).toBe(false);
 
-    expect(response.data[0].fields[2].values.toArray().length).toBe(2);
-    expect(response.data[0].fields[2].values.toArray()[0]).toBe(12.75164671814457);
-    expect(response.data[0].fields[2].values.toArray()[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[2].values.length).toBe(2);
+    expect(response.data[0].fields[2].values[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[2].values[1]).toBe(12.121331111401608);
     expect(response.data[0].fields[2].config.color.mode).toBe('continuous-BlPu');
     expect(response.data[0].fields[2].config.custom.cellOptions.mode).toBe(BarGaugeDisplayMode.Lcd);
     expect(response.data[0].fields[2].config.custom.cellOptions.type).toBe(TableCellDisplayMode.Gauge);

@@ -31,9 +31,9 @@ describe('loki sortDataFrame', () => {
   it('sorts a dataframe ascending', () => {
     const sortedFrame = sortDataFrameByTime(inputFrame, SortDirection.Ascending);
     expect(sortedFrame.length).toBe(5);
-    const timeValues = sortedFrame.fields[0].values.toArray();
-    const lineValues = sortedFrame.fields[1].values.toArray();
-    const tsNsValues = sortedFrame.fields[2].values.toArray();
+    const timeValues = sortedFrame.fields[0].values;
+    const lineValues = sortedFrame.fields[1].values;
+    const tsNsValues = sortedFrame.fields[2].values;
 
     expect(timeValues).toStrictEqual([1001, 1002, 1003, 1004, 1005]);
     expect(lineValues).toStrictEqual(['line1', 'line2', 'line3', 'line4', 'line5']);
@@ -42,9 +42,9 @@ describe('loki sortDataFrame', () => {
   it('sorts a dataframe descending', () => {
     const sortedFrame = sortDataFrameByTime(inputFrame, SortDirection.Descending);
     expect(sortedFrame.length).toBe(5);
-    const timeValues = sortedFrame.fields[0].values.toArray();
-    const lineValues = sortedFrame.fields[1].values.toArray();
-    const tsNsValues = sortedFrame.fields[2].values.toArray();
+    const timeValues = sortedFrame.fields[0].values;
+    const lineValues = sortedFrame.fields[1].values;
+    const tsNsValues = sortedFrame.fields[2].values;
 
     expect(timeValues).toStrictEqual([1005, 1004, 1003, 1002, 1001]);
     expect(lineValues).toStrictEqual(['line5', 'line4', 'line3', 'line2', 'line1']);

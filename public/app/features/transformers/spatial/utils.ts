@@ -10,7 +10,7 @@ import { SpatialCalculation, SpatialCalculationOption } from './models.gen';
 /** Will return a field with a single row */
 export function toLineString(field: Field<Geometry | undefined>): LineString {
   const coords: number[][] = [];
-  for (const geo of field.values.toArray()) {
+  for (const geo of field.values) {
     if (geo) {
       coords.push(getCenterPoint(geo));
     }
@@ -55,7 +55,7 @@ export function getCenterPointWGS84(geo?: Geometry): number[] | undefined {
 
 /** Will return a new field with calculated values */
 export function doGeomeryCalculation(field: Field<Geometry | undefined>, options: SpatialCalculationOption): Field {
-  const values = field.values.toArray();
+  const values = field.values;
   const buffer = new Array(field.values.length);
   const op = options.calc ?? SpatialCalculation.Heading;
   const name = options.field ?? op;

@@ -329,7 +329,7 @@ function getAllLabels(fields: LogFields): Labels[] {
   const { stringField, labelsField } = fields;
 
   if (labelsField !== undefined) {
-    return labelsField.values.toArray();
+    return labelsField.values;
   } else {
     return [stringField.labels ?? {}];
   }

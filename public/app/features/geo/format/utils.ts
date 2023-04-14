@@ -64,8 +64,8 @@ export function createGeometryCollection(
   src: Field<Geometry | undefined>,
   dest: Field<Geometry | undefined>
 ): Field<Geometry | undefined> {
-  const v0 = src.values.toArray();
-  const v1 = dest.values.toArray();
+  const v0 = src.values;
+  const v1 = dest.values;
   if (!v0 || !v1) {
     throw 'missing src/dest';
   }
@@ -98,8 +98,8 @@ export function createLineBetween(
   src: Field<Geometry | undefined>,
   dest: Field<Geometry | undefined>
 ): Field<Geometry | undefined> {
-  const v0 = src.values.toArray();
-  const v1 = dest.values.toArray();
+  const v0 = src.values;
+  const v1 = dest.values;
   if (!v0 || !v1) {
     throw 'missing src/dest';
   }

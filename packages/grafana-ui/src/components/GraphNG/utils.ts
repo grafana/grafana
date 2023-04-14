@@ -21,7 +21,7 @@ function isVisibleBarField(f: Field) {
 // will mutate the DataFrame's fields' values
 function applySpanNullsThresholds(frame: DataFrame) {
   let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
-  let refValues = refField?.values.toArray() as any[];
+  let refValues = refField?.values as any[];
 
   for (let i = 0; i < frame.fields.length; i++) {
     let field = frame.fields[i];
@@ -84,7 +84,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
         return;
       }
 
-      const xVals = frame.fields[0].values.toArray();
+      const xVals = frame.fields[0].values;
 
       for (let i = 0; i < xVals.length; i++) {
         if (i > 0) {
@@ -107,7 +107,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
     // append 2 null vals at minXDelta to bar series
     if (minXDelta !== Infinity) {
       alignedFrame.fields.forEach((f, fi) => {
-        let vals = f.values.toArray();
+        let vals = f.values;
 
         if (fi === 0) {
           let lastVal = vals[vals.length - 1];

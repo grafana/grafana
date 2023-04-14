@@ -104,12 +104,7 @@ export default function StoragePage(props: Props) {
   }, [path, listing]);
 
   const fileNames = useMemo(() => {
-    return (
-      listing.value?.fields
-        ?.find((f) => f.name === 'name')
-        ?.values?.toArray()
-        ?.filter((v) => typeof v === 'string') ?? []
-    );
+    return listing.value?.fields?.find((f) => f.name === 'name')?.values.filter((v) => typeof v === 'string') ?? [];
   }, [listing]);
 
   const renderView = () => {

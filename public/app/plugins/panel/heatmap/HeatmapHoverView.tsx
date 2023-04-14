@@ -51,9 +51,9 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     return `${v}`;
   };
 
-  const xVals = xField?.values.toArray();
-  const yVals = yField?.values.toArray();
-  const countVals = countField?.values.toArray();
+  const xVals = xField?.values;
+  const yVals = yField?.values;
+  const countVals = countField?.values;
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);

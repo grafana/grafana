@@ -329,7 +329,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
   const displayNameFromDS = valueField.config?.displayNameFromDS;
   const name = displayNameFromDS ?? (hasLabels ? formatLabels(valueField.labels ?? {}) : 'Series ' + index);
 
-  const timestamps = frame.fields[0].values.toArray();
+  const timestamps = frame.fields[0].values;
 
   const getTimestampFromIndex = (index: number) => frame.fields[0].values.get(index);
   const getValueFromIndex = (index: number) => frame.fields[1].values.get(index);

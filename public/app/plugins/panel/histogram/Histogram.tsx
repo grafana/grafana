@@ -221,7 +221,7 @@ const preparePlotData = (frame: DataFrame) => {
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values.toArray());
+      data.push(field.values);
     }
   }
 

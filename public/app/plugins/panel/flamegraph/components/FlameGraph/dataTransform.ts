@@ -75,7 +75,7 @@ export class FlameGraphDataContainer {
         text: value + '',
         numeric: 0,
       });
-      this.uniqueLabels = [...new Set<string>(this.labelField.values.toArray())];
+      this.uniqueLabels = [...new Set<string>(this.labelField.values)];
     }
 
     this.valueDisplayProcessor = getDisplayProcessor({

@@ -103,7 +103,7 @@ export interface RowsHeatmapOptions {
 export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
   const xField = opts.frame.fields[0];
-  const xValues = xField.values.toArray();
+  const xValues = xField.values;
   const yFields = opts.frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
 
   // similar to initBins() below
@@ -112,7 +112,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   const ys = new Array(len);
   const counts2 = new Array(len);
 
-  const counts = yFields.map((field) => field.values.toArray().slice());
+  const counts = yFields.map((field) => field.values.slice());
 
   // transpose
   counts.forEach((bucketCounts, bi) => {
@@ -228,7 +228,7 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
   frames.sort((a, b) => sortAscStrInf(a.name, b.name));
 
   // cumulative counts
-  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+  const counts = frames.map((frame) => frame.fields[1].values.slice());
 
   // de-accumulate
   counts.reverse();
@@ -288,10 +288,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
       xField = x; // the first X
     }
 
-    const xValues = x.values.toArray();
+    const xValues = x.values;
     for (let field of frame.fields) {
       if (field !== x && field.type === FieldType.number) {
-        const yValues = field.values.toArray();
+        const yValues = field.values;
 
         for (let i = 0; i < xValues.length; i++, j++) {
           xs[j] = xValues[i];

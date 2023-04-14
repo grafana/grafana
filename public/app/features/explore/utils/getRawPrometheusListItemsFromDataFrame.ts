@@ -18,7 +18,7 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): in
   const newFields = dataFrame.fields.filter((field) => !['Time'].includes(field.name));
 
   // Get name from each series
-  let metricNames: string[] = newFields.find((field) => field.name === '__name__')?.values.toArray() ?? [];
+  let metricNames: string[] = newFields.find((field) => field.name === '__name__')?.values ?? [];
   if (!metricNames.length && newFields.length && newFields[0].values.length) {
     // These results do not have series labels
     // Matching the native prometheus UI which appears to only show the permutations of the first field in the query result.

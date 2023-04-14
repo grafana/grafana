@@ -867,7 +867,7 @@ export class PrometheusDatasource
       const timeValueTuple: Array<[number, number]> = [];
 
       let idx = 0;
-      valueField.values.toArray().forEach((value: string) => {
+      valueField.values.forEach((value: string) => {
         let timeStampValue: number;
         let valueValue: number;
         const time = timeField.values.get(idx);

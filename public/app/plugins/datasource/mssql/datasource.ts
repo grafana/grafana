@@ -23,13 +23,13 @@ export class MssqlDatasource extends SqlDatasource {
 
   async fetchDatasets(): Promise<string[]> {
     const datasets = await this.runSql<{ name: string[] }>(showDatabases(), { refId: 'datasets' });
-    return datasets.fields.name?.values.toArray().flat() ?? [];
+    return datasets.fields.name?.values.flat() ?? [];
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
     // We get back the table name with the schema as well. like dbo.table
     const tables = await this.runSql<{ schemaAndName: string[] }>(getSchemaAndName(dataset), { refId: 'tables' });
-    return tables.fields.schemaAndName?.values.toArray().flat() ?? [];
+    return tables.fields.schemaAndName?.values.flat() ?? [];
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {

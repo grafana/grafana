@@ -31,7 +31,7 @@ describe('scalar dimensions', () => {
       mode: ScalarDimensionMode.Clamped,
     });
 
-    const clamped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    const clamped = frame.fields[0].values.map((k, i) => supplier.get(i));
     expect(clamped).toEqual([0, 0, 0, 0, 0]);
   });
   it('clamps out of range values', () => {
@@ -60,7 +60,7 @@ describe('scalar dimensions', () => {
       mode: ScalarDimensionMode.Clamped,
     });
 
-    const clamped = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    const clamped = frame.fields[0].values.map((k, i) => supplier.get(i));
     expect(clamped).toEqual([-360, 10, 360, 90, -210]);
   });
 
@@ -90,7 +90,7 @@ describe('scalar dimensions', () => {
       mode: ScalarDimensionMode.Mod,
     });
 
-    const remainder = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    const remainder = frame.fields[0].values.map((k, i) => supplier.get(i));
     expect(remainder).toEqual([-1, 10, 180, 30, -210]);
   });
 });

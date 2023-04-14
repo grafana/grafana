@@ -597,7 +597,7 @@ function errorAndDurationQuery(
   let serviceGraphViewMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
-  const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
+  const spanNames = rateResponse.data[0][0]?.fields[1]?.values ?? [];
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
@@ -797,8 +797,8 @@ function getServiceGraphView(
   }
 
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
-    const errorRateNames = errorRate[0].fields[1]?.values.toArray() ?? [];
-    const errorRateValues = errorRate[0].fields[2]?.values.toArray() ?? [];
+    const errorRateNames = errorRate[0].fields[1]?.values ?? [];
+    const errorRateValues = errorRate[0].fields[2]?.values ?? [];
     let errorRateObj: any = {};
     errorRateNames.map((name: string, index: number) => {
       errorRateObj[name] = { value: errorRateValues[index] };
@@ -848,7 +848,7 @@ function getServiceGraphView(
     duration.map((d) => {
       const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
       const name = d.refId?.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { value: d.fields[1].values.toArray()[0] };
+      durationObj[name] = { value: d.fields[1].values[0] };
     });
 
     df.fields.push({
@@ -918,7 +918,7 @@ export function getRateAlignedValues(
   rateResp: DataQueryResponseData[],
   objToAlign: { [x: string]: { value: string } }
 ) {
-  const rateNames = rateResp[0]?.fields[1]?.values.toArray() ?? [];
+  const rateNames = rateResp[0]?.fields[1]?.values ?? [];
   let values: string[] = [];
 
   for (let i = 0; i < rateNames.length; i++) {

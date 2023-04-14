@@ -64,7 +64,7 @@ describe('scale dimensions', () => {
       field: 'hello',
       fixed: 0,
     });
-    const scaled = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    const scaled = frame.fields[0].values.map((k, i) => supplier.get(i));
     expect(scaled).toEqual([-1, -1, -0.5, 0, 0.5, 1, 1]);
   });
 });

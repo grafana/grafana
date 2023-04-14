@@ -199,7 +199,7 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
     throw new Error('id field is required for edges data frame.');
   }
 
-  return edgeFields.id.values.toArray().map((id, index) => {
+  return edgeFields.id.values.map((id, index) => {
     const target = edgeFields.target?.values.get(index);
     const source = edgeFields.source?.values.get(index);
 

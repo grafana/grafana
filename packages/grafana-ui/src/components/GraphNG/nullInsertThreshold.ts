@@ -60,9 +60,9 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
       return frame;
     }
 
-    const refValues = refField.values.toArray();
+    const refValues = refField.values;
 
-    const frameValues = frame.fields.map((field) => field.values.toArray());
+    const frameValues = frame.fields.map((field) => field.values);
 
     const filledFieldValues = nullInsertThreshold(
       refValues,

@@ -98,7 +98,7 @@ export function partitionByValues(
   options?: PartitionByValuesTransformerOptions
 ): DataFrame[] {
   const keyFields = frame.fields.filter((f) => matcher(f, frame, [frame]))!;
-  const keyFieldsVals = keyFields.map((f) => f.values.toArray());
+  const keyFieldsVals = keyFields.map((f) => f.values);
   const names = keyFields.map((f) => f.name);
 
   const frameNameOpts = {
@@ -141,7 +141,7 @@ export function partitionByValues(
       meta: frame.meta,
       length: idxs.length,
       fields: filteredFields.map((f) => {
-        const vals = f.values.toArray();
+        const vals = f.values;
         const vals2 = Array(idxs.length);
 
         for (let i = 0; i < idxs.length; i++) {

@@ -16,7 +16,7 @@ export enum SortDirection {
 // - the first row will become the second
 // - the second row will become the third
 function makeIndex(field: Field<string>, dir: SortDirection): number[] {
-  const fieldValues: string[] = field.values.toArray();
+  const fieldValues: string[] = field.values;
 
   // we first build an array which is [0,1,2,3....]
   const index = Array(fieldValues.length);

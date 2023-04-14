@@ -65,7 +65,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
           found.set(key, item);
         }
         const name = field.labels[options.value];
-        const vals = field.values.toArray();
+        const vals = field.values;
         const old = item.values[name];
         if (old) {
           item.values[name] = old.concat(vals);

@@ -370,7 +370,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     textToColor.set(items[i].label, items[i].color!);
   }
 
-  let input = field.values.toArray();
+  let input = field.values;
   const vals = new Array<String | undefined>(field.values.length);
   if (thresholds.mode === ThresholdsMode.Percentage) {
     const { min, max } = getFieldConfigWithMinMax(field);
@@ -570,7 +570,7 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   let stateColors: Map<string, string | undefined> = new Map();
 
   fields.forEach((field) => {
-    field.values.toArray().forEach((v) => {
+    field.values.forEach((v) => {
       let state = field.display!(v);
       if (state.color) {
         stateColors.set(state.text, state.color!);

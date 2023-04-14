@@ -80,9 +80,8 @@ const falsyComparer = (a: unknown, b: unknown): number => {
 };
 
 const timestampIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
-  let vals = values.toArray();
   let mult = reverse ? -1 : 1;
-  return (a: number, b: number): number => mult * (vals[a] - vals[b]);
+  return (a: number, b: number): number => mult * (values[a] - values[b]);
 };
 
 const timeIndexComparer = (values: Vector<unknown>, reverse: boolean): IndexComparer => {

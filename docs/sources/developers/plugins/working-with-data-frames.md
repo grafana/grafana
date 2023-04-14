@@ -100,7 +100,7 @@ const valueField = frame.fields.find((field) => field.type === FieldType.number)
 return (
   <div>
     {valueField
-      ? valueField.values.toArray().map((value) => {
+      ? valueField.values.map((value) => {
           const displayValue = valueField.display!(value);
           return (
             <p style={{ color: displayValue.color }}>

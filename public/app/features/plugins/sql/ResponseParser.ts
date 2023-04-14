@@ -15,7 +15,7 @@ export class ResponseParser implements ResponseParserType {
       }
     } else {
       for (const field of frame.fields) {
-        for (const value of field.values.toArray()) {
+        for (const value of field.values) {
           values.push({ text: value });
         }
       }

@@ -123,7 +123,7 @@ function getScatterSeries(
         const index = dims.pointColorIndex;
         pointColor = (frame: DataFrame) => {
           // Yes we can improve this later
-          return frame.fields[index].values.toArray().map((v) => disp(v).color!);
+          return frame.fields[index].values.map((v) => disp(v).color!);
         };
       } else {
         seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values.get(0), 1);
@@ -675,8 +675,8 @@ const prepConfig = (
       let { fields } = frames[i];
 
       return f.y.map((yIndex, frameSeriesIndex) => {
-        let xValues = fields[f.x[frameSeriesIndex]].values.toArray();
-        let yValues = fields[f.y[frameSeriesIndex]].values.toArray();
+        let xValues = fields[f.x[frameSeriesIndex]].values;
+        let yValues = fields[f.y[frameSeriesIndex]].values;
         let sizeValues = f.size![frameSeriesIndex](frames[i]);
 
         if (!Array.isArray(sizeValues)) {
@@ -719,8 +719,8 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
         colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
       }
       return [
-        s.x(frame).values.toArray(), // X
-        s.y(frame).values.toArray(), // Y
+        s.x(frame).values, // X
+        s.y(frame).values, // Y
         asArray(frame, s.pointSize),
         colorValues,
         colorAlphaValues,

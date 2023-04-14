@@ -252,7 +252,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'All values',
     description: 'Returns an array with all values',
     standard: false,
-    reduce: (field: Field) => ({ allValues: field.values.toArray() }),
+    reduce: (field: Field) => ({ allValues: field.values }),
   },
   {
     id: ReducerID.uniqueValues,
@@ -260,7 +260,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Returns an array with all unique values',
     standard: false,
     reduce: (field: Field) => ({
-      uniqueValues: [...new Set(field.values.toArray())],
+      uniqueValues: [...new Set(field.values)],
     }),
   },
 ]);
@@ -291,7 +291,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   };
 
   const data = field.values;
-  calcs.count = ignoreNulls ? data.length : data.toArray().filter((val) => val != null).length;
+  calcs.count = ignoreNulls ? data.length : data.filter((val) => val != null).length;
 
   const isNumberField = field.type === FieldType.number || FieldType.time;
 

@@ -235,8 +235,8 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     dataFramesByRefId[refId].forEach((df) => {
       const timeFields = df.fields[0]?.values ?? [];
       const dataFields = df.fields[1]?.values ?? [];
-      timeFields.toArray().forEach((value) => timeField.values.add(value));
-      dataFields.toArray().forEach((value) => {
+      timeFields.forEach((value) => timeField.values.add(value));
+      dataFields.forEach((value) => {
         valueField.values.add(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
         labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
@@ -661,7 +661,7 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
 
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values.get(j) || [0];
-      topSeries.values.toArray()[j] -= bottomPoint;
+      topSeries.values[j] -= bottomPoint;
     }
   }
 

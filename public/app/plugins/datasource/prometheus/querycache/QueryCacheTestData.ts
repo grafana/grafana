@@ -29,9 +29,9 @@ const timeFrameWithMissingValuesAtStart = getMockTimeFrameArray(721, 16752625500
 const timeFrameWithMissingValuesAtEnd = getMockTimeFrameArray(721, 1675262550000, 30000);
 
 // Deleting some out the middle
-timeFrameWithMissingValuesInMiddle.toArray().splice(360, 721 - 684);
-timeFrameWithMissingValuesAtStart.toArray().splice(0, 721 - 684);
-timeFrameWithMissingValuesAtEnd.toArray().splice(721 - 684, 721 - 684);
+timeFrameWithMissingValuesInMiddle.splice(360, 721 - 684);
+timeFrameWithMissingValuesAtStart.splice(0, 721 - 684);
+timeFrameWithMissingValuesAtEnd.splice(721 - 684, 721 - 684);
 
 const mockLabels = {
   __name__: 'cortex_request_duration_seconds_bucket',

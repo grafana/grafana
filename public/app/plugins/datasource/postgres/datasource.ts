@@ -24,7 +24,7 @@ export class PostgresDatasource extends SqlDatasource {
 
   async getVersion(): Promise<string> {
     const value = await this.runSql<{ version: number }>(getVersion());
-    const results = value.fields.version?.values.toArray();
+    const results = value.fields.version?.values;
 
     if (!results) {
       return '';
@@ -35,7 +35,7 @@ export class PostgresDatasource extends SqlDatasource {
 
   async getTimescaleDBVersion(): Promise<string | undefined> {
     const value = await this.runSql<{ extversion: string }>(getTimescaleDBVersion());
-    const results = value.fields.extversion?.values.toArray();
+    const results = value.fields.extversion?.values;
 
     if (!results) {
       return undefined;
@@ -46,7 +46,7 @@ export class PostgresDatasource extends SqlDatasource {
 
   async fetchTables(): Promise<string[]> {
     const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
-    return tables.fields.table?.values.toArray().flat() ?? [];
+    return tables.fields.table?.values.flat() ?? [];
   }
 
   getSqlLanguageDefinition(db: DB): LanguageDefinition {

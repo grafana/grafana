@@ -267,9 +267,9 @@ describe('decorateWithTableResult', () => {
     expect(tableResult?.fields[0].name).toBe('Time');
     expect(tableResult?.fields[1].name).toBe('A-series');
     expect(tableResult?.fields[2].name).toBe('B-series');
-    expect(tableResult?.fields[0].values.toArray()).toEqual([100, 200, 300]);
-    expect(tableResult?.fields[1].values.toArray()).toEqual([4, 5, 6]);
-    expect(tableResult?.fields[2].values.toArray()).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[0].values).toEqual([100, 200, 300]);
+    expect(tableResult?.fields[1].values).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[2].values).toEqual([4, 5, 6]);
   });
 
   it('should not override fields display property when filled', async () => {

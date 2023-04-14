@@ -22,7 +22,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
     throw new Error('invalid logs-dataframe, string-field missing');
   }
 
-  lineField.values.toArray().forEach((line) => {
+  lineField.values.forEach((line) => {
     for (const field of newFields) {
       const logMatch = line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
       field.values.add(logMatch && logMatch[1]);

@@ -33,9 +33,7 @@ const formatLabels = (labels: Labels): string => {
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
-  const isEmpty = series.every((serie) =>
-    serie.fields.every((field) => field.values.toArray().every((value) => value == null))
-  );
+  const isEmpty = series.every((serie) => serie.fields.every((field) => field.values.every((value) => value == null)));
 
   return isEmpty;
 };

@@ -199,9 +199,9 @@ export class QueryCache {
 
             // amend & re-cache
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            let prevTable: Table = cachedFrame.fields.map((field) => field.values.toArray()) as Table;
+            let prevTable: Table = cachedFrame.fields.map((field) => field.values) as Table;
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
+            let nextTable: Table = respFrame.fields.map((field) => field.values) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
 

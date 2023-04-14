@@ -137,7 +137,7 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
   const lookup = new Map<string, number>();
   keys.forEach((f) => {
-    f.values.toArray().forEach((k, idx) => {
+    f.values.forEach((k, idx) => {
       const str = `${k}`;
       lookup.set(str.toUpperCase(), idx);
       lookup.set(str, idx);
