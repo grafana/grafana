@@ -248,7 +248,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   get(idx: number): T {
     const v: any = {};
     for (const field of this.fields) {
-      v[field.name] = field.values.get(idx);
+      v[field.name] = field.values[idx];
     }
     return v as T;
   }

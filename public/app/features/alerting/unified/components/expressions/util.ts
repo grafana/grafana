@@ -17,7 +17,7 @@ const getSeriesName = (frame: DataFrame): string => {
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  const value = frame.fields[0]?.values.get(0);
+  const value = frame.fields[0]?.values[0];
 
   if (Number.isFinite(value)) {
     return roundDecimals(value, 5);

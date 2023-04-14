@@ -229,7 +229,7 @@ function fieldToComplexField(field: Field): Field {
  * @public
  */
 export function ensureTimeField(field: Field, dateFormat?: string): Field {
-  const firstValueTypeIsNumber = typeof field.values.get(0) === 'number';
+  const firstValueTypeIsNumber = typeof field.values[0] === 'number';
   if (field.type === FieldType.time && firstValueTypeIsNumber) {
     return field; //already time
   }

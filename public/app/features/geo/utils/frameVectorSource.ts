@@ -26,7 +26,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
         new Feature({
           frame,
           rowIndex: i,
-          geometry: info.field.values.get(i) as T,
+          geometry: info.field.values[i] as T,
         })
       );
     }

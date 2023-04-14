@@ -38,7 +38,7 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): in
       if (label !== 'Time') {
         // Initialize the objects
         if (typeof field?.display === 'function') {
-          const stringValue = formattedValueToString(field?.display(field.values.get(i)));
+          const stringValue = formattedValueToString(field?.display(field.values[i]));
           if (stringValue) {
             formattedMetric[label] = stringValue;
           } else if (label.includes('Value #')) {

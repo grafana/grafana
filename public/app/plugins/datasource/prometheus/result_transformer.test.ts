@@ -758,9 +758,9 @@ describe('Prometheus Result Transformer', () => {
       expect(tableDf.fields.length).toBe(4);
       expect(tableDf.fields[0].name).toBe('Time');
       expect(tableDf.fields[1].name).toBe('label1');
-      expect(tableDf.fields[1].values.get(0)).toBe('value1');
+      expect(tableDf.fields[1].values[0]).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
-      expect(tableDf.fields[2].values.get(0)).toBe('value2');
+      expect(tableDf.fields[2].values[0]).toBe('value2');
       expect(tableDf.fields[3].name).toBe('Value');
     });
 
@@ -782,9 +782,9 @@ describe('Prometheus Result Transformer', () => {
       expect(tableDf.fields.length).toBe(4);
       expect(tableDf.fields[0].name).toBe('Time');
       expect(tableDf.fields[1].name).toBe('label1');
-      expect(tableDf.fields[1].values.get(0)).toBe('value1');
+      expect(tableDf.fields[1].values[0]).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
-      expect(tableDf.fields[2].values.get(0)).toBe('value2');
+      expect(tableDf.fields[2].values[0]).toBe('value2');
       expect(tableDf.fields[3].name).toBe('Value');
     });
 
@@ -817,9 +817,9 @@ describe('Prometheus Result Transformer', () => {
       expect(transformedTableDataFrames[0].fields.length).toBe(4);
       expect(transformedTableDataFrames[0].fields[0].name).toBe('Time');
       expect(transformedTableDataFrames[0].fields[1].name).toBe('label1');
-      expect(transformedTableDataFrames[0].fields[1].values.get(0)).toBe(value1);
+      expect(transformedTableDataFrames[0].fields[1].values[0]).toBe(value1);
       expect(transformedTableDataFrames[0].fields[2].name).toBe('label2');
-      expect(transformedTableDataFrames[0].fields[2].values.get(0)).toBe(value2);
+      expect(transformedTableDataFrames[0].fields[2].values[0]).toBe(value2);
       expect(transformedTableDataFrames[0].fields[3].name).toBe('Value #A');
 
       // Expect the invalid/empty results not to throw an error and to return empty arrays

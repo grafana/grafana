@@ -660,7 +660,7 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     }
 
     for (let j = 0; j < topSeries.values.length; j++) {
-      const bottomPoint = bottomSeries.values.get(j) || [0];
+      const bottomPoint = bottomSeries.values[j] || [0];
       topSeries.values[j] -= bottomPoint;
     }
   }

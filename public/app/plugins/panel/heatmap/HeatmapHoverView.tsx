@@ -122,7 +122,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   for (const field of visibleFields ?? []) {
     // TODO: Currently always undefined? (getLinks)
     if (field.getLinks) {
-      const v = field.values.get(index);
+      const v = field.values[index];
       const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
 
       field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {

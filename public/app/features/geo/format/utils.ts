@@ -26,8 +26,8 @@ export function pointFieldFromGeohash(geohash: Field<string>): Field<Geometry | 
 export function pointFieldFromLonLat(lon: Field, lat: Field): Field<Geometry | undefined> {
   const buffer = new Array<Point>(lon.values.length);
   for (let i = 0; i < lon.values.length; i++) {
-    const longitude = lon.values.get(i);
-    const latitude = lat.values.get(i);
+    const longitude = lon.values[i];
+    const latitude = lat.values[i];
 
     // TODO: Add unit tests to thoroughly test out edge cases
     // If longitude or latitude are null, don't add them to buffer
@@ -50,7 +50,7 @@ export function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): 
   const count = field.values.length;
   const geo = new Array<Geometry | undefined>(count);
   for (let i = 0; i < count; i++) {
-    geo[i] = gaz.find(field.values.get(i))?.geometry();
+    geo[i] = gaz.find(field.values[i])?.geometry();
   }
   return {
     name: 'Geometry',

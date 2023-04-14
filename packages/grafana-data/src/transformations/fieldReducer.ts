@@ -296,7 +296,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   const isNumberField = field.type === FieldType.number || FieldType.time;
 
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    let currentValue = data[i];
 
     if (i === 0) {
       calcs.first = currentValue;
@@ -404,13 +404,13 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 }
 
 function calculateFirst(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { first: field.values.get(0) };
+  return { first: field.values[0] };
 }
 
 function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
-    const v = data.get(idx);
+    const v = data[idx];
     if (v != null && v !== undefined) {
       return { firstNotNull: v };
     }
@@ -420,14 +420,14 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
 
 function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
-  return { last: data.get(data.length - 1) };
+  return { last: data[data.length - 1] };
 }
 
 function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
   let idx = data.length - 1;
   while (idx >= 0) {
-    const v = data.get(idx--);
+    const v = data[idx--];
     if (v != null && v !== undefined) {
       return { lastNotNull: v };
     }
@@ -447,7 +447,7 @@ function calculateStdDev(field: Field, ignoreNulls: boolean, nullAsZero: boolean
   let runningNonNullCount = 0;
   const data = field.values;
   for (let i = 0; i < data.length; i++) {
-    const currentValue = data.get(i);
+    const currentValue = data[i];
     if (currentValue != null) {
       runningNonNullCount++;
       let _oldMean = runningMean;
@@ -468,7 +468,7 @@ function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let first = true;
   let last = null;
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    let currentValue = data[i];
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;
@@ -491,7 +491,7 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
   const data = field.values;
   const distinct = new Set();
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    let currentValue = data[i];
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;

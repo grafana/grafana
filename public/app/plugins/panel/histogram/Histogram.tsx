@@ -47,7 +47,7 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  return frame.fields[1].values[0] - frame.fields[0].values[0];
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {

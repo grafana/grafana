@@ -60,7 +60,7 @@ export class AppendedVectors<T = any> extends FunctionalVector<T> {
     for (let i = 0; i < this.source.length; i++) {
       const src = this.source[i];
       if (index >= src.start && index < src.end) {
-        return src.values.get(index - src.start);
+        return src.values[index - src.start];
       }
     }
     return undefined as unknown as T;

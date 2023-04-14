@@ -42,8 +42,8 @@ export class MssqlDatasource extends SqlDatasource {
     });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
-      const column = schema.fields.column.values.get(i);
-      const type = schema.fields.type.values.get(i);
+      const column = schema.fields.column.values[i];
+      const type = schema.fields.type.values[i];
       result.push({ label: column, value: column, type, icon: getIcon(type), raqbFieldType: getRAQBType(type) });
     }
     return result;

@@ -132,7 +132,7 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
       isPoint = true;
     }
   } else {
-    isPoint = geo.values.get(0)?.getType() === 'Point';
+    isPoint = geo.values[0]?.getType() === 'Point';
   }
 
   const lookup = new Map<string, number>();
@@ -149,7 +149,7 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
     find: (k) => {
       const index = lookup.get(k);
       if (index != null) {
-        const g = geo?.values.get(index);
+        const g = geo?.values[index];
         return {
           frame,
           index,

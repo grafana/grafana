@@ -126,7 +126,7 @@ function getScatterSeries(
           return frame.fields[index].values.map((v) => disp(v).color!);
         };
       } else {
-        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values.get(0), 1);
+        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);
         pointColor = () => seriesColor;
       }
     }

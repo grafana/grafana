@@ -70,8 +70,8 @@ export class PostgresDatasource extends SqlDatasource {
     const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
-      const column = schema.fields.column.values.get(i);
-      const type = schema.fields.type.values.get(i);
+      const column = schema.fields.column.values[i];
+      const type = schema.fields.type.values[i];
       result.push({ label: column, value: column, type, ...getFieldConfig(type) });
     }
     return result;

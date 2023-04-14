@@ -85,7 +85,7 @@ describe('transformDataFrame', () => {
       const processed = received[0];
       expect(processed[0].length).toEqual(1);
       expect(processed[0].fields.length).toEqual(1);
-      expect(processed[0].fields[0].values.get(0)).toEqual(3);
+      expect(processed[0].fields[0].values[0]).toEqual(3);
     });
   });
 
@@ -112,7 +112,7 @@ describe('transformDataFrame', () => {
       const processed = received[0];
       expect(processed[0].length).toEqual(1);
       expect(processed[0].fields.length).toEqual(2);
-      expect(processed[0].fields[0].values.get(0)).toEqual('temperature');
+      expect(processed[0].fields[0].values[0]).toEqual('temperature');
     });
   });
 
@@ -181,7 +181,7 @@ describe('transformDataFrame', () => {
         const processed = received[0];
         expect(processed[0].length).toEqual(1);
         expect(processed[0].fields.length).toEqual(1);
-        expect(processed[0].fields[0].values.get(0)).toEqual(0.03);
+        expect(processed[0].fields[0].values[0]).toEqual(0.03);
       });
     });
     it('supports trailing custom transformation', async () => {
@@ -208,7 +208,7 @@ describe('transformDataFrame', () => {
         const processed = received[0];
         expect(processed[0].length).toEqual(1);
         expect(processed[0].fields.length).toEqual(1);
-        expect(processed[0].fields[0].values.get(0)).toEqual(0.03);
+        expect(processed[0].fields[0].values[0]).toEqual(0.03);
       });
     });
 
@@ -237,7 +237,7 @@ describe('transformDataFrame', () => {
         const processed = received[0];
         expect(processed[0].length).toEqual(1);
         expect(processed[0].fields.length).toEqual(1);
-        expect(processed[0].fields[0].values.get(0)).toEqual(0.06);
+        expect(processed[0].fields[0].values[0]).toEqual(0.06);
       });
     });
   });

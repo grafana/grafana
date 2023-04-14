@@ -11,7 +11,7 @@ export class ResponseParser implements ResponseParserType {
 
     if (textField && valueField) {
       for (let i = 0; i < textField.values.length; i++) {
-        values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
+        values.push({ text: '' + textField.values[i], value: '' + valueField.values[i] });
       }
     } else {
       for (const field of frame.fields) {

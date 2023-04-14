@@ -85,27 +85,27 @@ export class FlameGraphDataContainer {
   }
 
   getLabel(index: number) {
-    return this.labelDisplayProcessor(this.labelField.values.get(index)).text;
+    return this.labelDisplayProcessor(this.labelField.values[index]).text;
   }
 
   getLevel(index: number) {
-    return this.levelField.values.get(index);
+    return this.levelField.values[index];
   }
 
   getValue(index: number) {
-    return this.valueField.values.get(index);
+    return this.valueField.values[index];
   }
 
   getValueDisplay(index: number) {
-    return this.valueDisplayProcessor(this.valueField.values.get(index));
+    return this.valueDisplayProcessor(this.valueField.values[index]);
   }
 
   getSelf(index: number) {
-    return this.selfField.values.get(index);
+    return this.selfField.values[index];
   }
 
   getSelfDisplay(index: number) {
-    return this.valueDisplayProcessor(this.selfField.values.get(index));
+    return this.valueDisplayProcessor(this.selfField.values[index]);
   }
 
   getUniqueLabels() {

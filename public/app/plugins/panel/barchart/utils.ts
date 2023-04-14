@@ -317,7 +317,7 @@ function getRotationPadding(
   const fontSize = UPLOT_AXIS_FONT_SIZE;
   const displayProcessor = frame.fields[0].display;
   const getProcessedValue = (i: number) => {
-    return displayProcessor ? displayProcessor(values.get(i)) : values.get(i);
+    return displayProcessor ? displayProcessor(values[i]) : values[i];
   };
   let maxLength = 0;
   for (let i = 0; i < values.length; i++) {

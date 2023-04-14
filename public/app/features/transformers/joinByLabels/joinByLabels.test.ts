@@ -143,7 +143,7 @@ describe('Join by labels', () => {
 function toRowsSnapshow(frame: DataFrame) {
   const columns = frame.fields.map((f) => f.name);
   const rows = frame.fields[0].values.map((v, idx) => {
-    return frame.fields.map((f) => f.values.get(idx));
+    return frame.fields.map((f) => f.values[idx]);
   });
   return {
     columns,

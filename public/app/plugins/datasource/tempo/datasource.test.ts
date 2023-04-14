@@ -195,7 +195,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values.get(0)).toBe('60ba2abb44f13eae');
+    expect(field.values[0]).toBe('60ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
