@@ -1,6 +1,7 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 
 import { GrafanaPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
 import {
@@ -36,6 +37,11 @@ async function getPluginCode(path: string) {
   return await response.text();
 }
 
+async function getPluginSourceMap(path: string) {
+  const response = await fetch('public/' + path + '.js.map');
+  return await response.text();
+}
+
 /**
  * Do the actual import of the plugin inside a sandbox
  */
@@ -45,7 +51,6 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
     const pluginId = path.split('/')[1];
 
     console.log('[sandbox] Importing plugin inside sandbox: ', pluginId, ' from path: ', path, '');
-    const pluginCode = await getPluginCode(path);
 
     const sandboxDocument = createSandboxDocument();
     const generalDistortionMap = getGeneralSandboxDistortionMap();
@@ -107,7 +112,8 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
               if (!data) {
                 return;
               }
-              const newError = new Error(data.toString());
+              const newError = new Error(data.message);
+              newError.name = data.name;
               if (data.stack) {
                 // Parse the error stack trace
                 const stackFrames = data.stack.split('\n').map((frame) => frame.trim());
@@ -139,6 +145,22 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
     });
 
     try {
+      let pluginCode = await getPluginCode(path);
+      const isDevMode = config.buildInfo.env === 'development';
+      if (pluginCode.includes('//# sourceMappingURL=module.js.map') && isDevMode) {
+        // this is a production build and we are in dev mode
+        // we need to load the source map and add it to the plugin code
+        try {
+          const sourceMap = await getPluginSourceMap(path);
+          const sourceMapUrl = `data:application/json;charset=utf-8;base64,${window.btoa(sourceMap)}`;
+          pluginCode = pluginCode.replace(
+            '//# sourceMappingURL=module.js.map',
+            `//# sourceURL=[module.js]\n//# sourceMappingURL=${sourceMapUrl}`
+          );
+        } catch (e) {
+          console.error(`[sandbox] Error loading source map for plugin ${pluginId}`, e);
+        }
+      }
       env.evaluate(pluginCode);
     } catch (e) {
       console.error(`[sandbox] Error loading plugin ${pluginId}`, e);
