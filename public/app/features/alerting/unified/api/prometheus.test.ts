@@ -1,5 +1,10 @@
 import { paramsWithMatcherAndState } from './prometheus';
 
+const matcher = [{ name: 'severity', isRegex: false, isEqual: true, value: 'critical' }];
+const matcherToJson = matcher.map((m) => encodeURIComponent(JSON.stringify(m)));
+const matchers = [...matcher, { name: 'label1', isRegex: false, isEqual: true, value: 'hello there' }];
+const matchersToJson = matchers.map((m) => encodeURIComponent(JSON.stringify(m)));
+
 describe('paramsWithMatcherAndState method', () => {
   it('Should return same params object with no changes if there are no states nor matchers', () => {
     const params: Record<string, string | string[]> = { hello: 'there', bye: 'bye' };
@@ -12,23 +17,22 @@ describe('paramsWithMatcherAndState method', () => {
   });
   it('Should return params object with state if there are matchers and no states', () => {
     const params: Record<string, string | string[]> = { hello: 'there', bye: 'bye' };
-    expect(paramsWithMatcherAndState(params, undefined, ['severity=critical'])).toStrictEqual({
+    expect(paramsWithMatcherAndState(params, undefined, matcher)).toStrictEqual({
       ...params,
-      matcher: ['severity=critical'],
+      matcher: matcherToJson,
     });
-    expect(paramsWithMatcherAndState(params, undefined, ['severity=critical', 'label1=hello there'])).toStrictEqual({
+    expect(paramsWithMatcherAndState(params, undefined, matchers)).toStrictEqual({
       ...params,
-      matcher: ['severity=critical', 'label1=hello there'],
+      matcher: matchersToJson,
     });
   });
   it('Should return params object with stateand matchers if there are states and matchers', () => {
     const params: Record<string, string | string[]> = { hello: 'there', bye: 'bye' };
     const state: string[] = ['firing', 'pending'];
-    const matchers = ['severity=critical', 'label1=hello there'];
     expect(paramsWithMatcherAndState(params, state, matchers)).toStrictEqual({
       ...params,
       state: state,
-      matcher: ['severity=critical', 'label1=hello there'],
+      matcher: matchersToJson,
     });
   });
 });

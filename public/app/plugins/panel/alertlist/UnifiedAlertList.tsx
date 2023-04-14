@@ -22,6 +22,7 @@ import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/component
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
+import { parseMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
@@ -32,6 +33,7 @@ import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/re
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { replaceVariables } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -53,17 +55,6 @@ function getStateList(state: StateFilter) {
   };
   return Object.entries(state).reduce(reducer, []);
 }
-function getMatcherList(matcher: string) {
-  //we need to remove curly braces and change the separated-coma format to an array of strings
-  //otherwise the API throws 400
-  if (matcher?.length === 0) {
-    return [];
-  }
-  return matcher
-    ?.replace(/[{}]/g, '')
-    .split(',')
-    .map((value) => value.trim());
-}
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -84,8 +75,25 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   });
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
+
+  function getMatcherListFromString(matcher: string) {
+    //we need to remove curly braces and change the separated-coma format to an array of strings
+    //otherwise the API throws 400
+    if (matcher?.length === 0) {
+      return [];
+    }
+    return matcher
+      ?.replace(/[{}]/g, '')
+      .split(',')
+      .map((value) => value.trim())
+      .map((matcherStr) => {
+        const replacedLabelFilter = replaceVariables(matcherStr);
+        return parseMatcher(replacedLabelFilter);
+      });
+  }
+
   const matcherList = useMemo(
-    () => getMatcherList(props.options.alertInstanceLabelFilter),
+    () => getMatcherListFromString(props.options.alertInstanceLabelFilter),
     [props.options.alertInstanceLabelFilter]
   );
 

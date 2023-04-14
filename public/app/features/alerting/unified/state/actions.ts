@@ -8,6 +8,7 @@ import {
   AlertmanagerGroup,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
+  Matcher,
   Receiver,
   Silence,
   SilenceCreatePayload,
@@ -111,7 +112,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       rulesSourceName: string;
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
-      matcher?: string[];
+      matcher?: Matcher[];
       state?: string[];
     },
     thunkAPI
@@ -354,7 +355,7 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 interface FetchPromRulesRulesActionProps {
   filter?: FetchPromRulesFilter;
   limitAlerts?: number;
-  matcher?: string[];
+  matcher?: Matcher[];
   state?: string[];
 }
 

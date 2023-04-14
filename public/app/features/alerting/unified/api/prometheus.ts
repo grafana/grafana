@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 
@@ -56,7 +57,7 @@ export function prepareRulesFilterQueryParams(
 export function paramsWithMatcherAndState(
   params: Record<string, string | string[]>,
   state?: string[],
-  matcher?: string[]
+  matchers?: Matcher[]
 ) {
   let paramsResult = { ...params };
 
@@ -64,10 +65,11 @@ export function paramsWithMatcherAndState(
     paramsResult = { ...paramsResult, state };
   }
 
-  if (matcher?.length) {
+  if (matchers?.length) {
+    const matcherToJsonString: string[] = matchers.map((m) => `${encodeURIComponent(JSON.stringify(m))}`);
     paramsResult = {
       ...paramsResult,
-      matcher,
+      matcher: matcherToJsonString,
     };
   }
 
@@ -78,7 +80,7 @@ export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
   limitAlerts?: number,
-  matcher?: string[],
+  matcher?: Matcher[],
   state?: string[]
 ): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
