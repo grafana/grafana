@@ -23,7 +23,11 @@ export class ArrayVector<T = any> extends Array<T> {
     }
   }
 
-  constructor(buffer?: T[]) {
+  /**
+   * This any type is here to make the change type changes in v10 non breaking for plugins.
+   * Before you could technically assign field.values any typed ArrayVector no matter what the Field<T> T type was.
+   */
+  constructor(buffer?: any[]) {
     super();
     this.buffer = buffer ?? [];
   }
