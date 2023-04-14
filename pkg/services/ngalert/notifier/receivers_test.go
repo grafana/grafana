@@ -14,11 +14,12 @@ func TestInvalidReceiverError_Error(t *testing.T) {
 	e := alertingNotify.IntegrationValidationError{
 		Integration: &alertingNotify.GrafanaIntegrationConfig{
 			Name: "test",
+			Type: "test-type",
 			UID:  "uid",
 		},
 		Err: errors.New("this is an error"),
 	}
-	require.Equal(t, "the receiver is invalid: this is an error", e.Error())
+	require.Equal(t, `failed to validate integration "test" (UID uid) of type "test-type": this is an error`, e.Error())
 }
 
 func TestReceiverTimeoutError_Error(t *testing.T) {
