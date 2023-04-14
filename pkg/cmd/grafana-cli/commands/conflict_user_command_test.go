@@ -12,6 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -872,7 +873,7 @@ func setupTestUserService(t *testing.T, sqlStore *sqlstore.SQLStore) user.Servic
 	t.Helper()
 	orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, &quotatest.FakeQuotaService{})
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	return usrSvc

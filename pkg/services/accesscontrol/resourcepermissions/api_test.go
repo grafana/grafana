@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -411,7 +412,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			// seed user
 			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
@@ -518,7 +519,7 @@ func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, se
 	// seed user 1 with "View" permission on dashboard 1
 	orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 	require.NoError(t, err)

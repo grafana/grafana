@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -2567,7 +2568,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	u, err := usrSvc.Create(context.Background(), &cmd)

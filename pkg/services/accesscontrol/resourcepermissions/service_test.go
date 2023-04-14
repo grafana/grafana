@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -51,7 +52,7 @@ func TestService_SetUserPermission(t *testing.T) {
 			// seed user
 			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 			user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
@@ -212,7 +213,7 @@ func TestService_SetPermissions(t *testing.T) {
 			// seed user
 			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
@@ -236,7 +237,7 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sql, cfg)
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, quotatest.New(false, nil), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()

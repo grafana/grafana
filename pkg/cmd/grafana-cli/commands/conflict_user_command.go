@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -62,7 +63,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
 	quotaService := quotaimpl.ProvideService(s, cfg)
-	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}

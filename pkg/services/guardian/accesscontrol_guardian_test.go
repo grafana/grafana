@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -625,7 +626,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string,
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -78,7 +79,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
-	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 
 	correlationsSvc := correlationstest.New(sqlStore)
 

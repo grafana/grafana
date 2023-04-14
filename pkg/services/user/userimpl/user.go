@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -39,6 +40,7 @@ func ProvideService(
 	teamService team.Service,
 	cacheService *localcache.CacheService,
 	quotaService quota.Service,
+	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
@@ -64,6 +66,7 @@ func ProvideService(
 	}
 
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
 	return s, nil
 }
 
@@ -79,6 +82,17 @@ func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.M
 		u.Set(tag, used)
 	}
 	return u, nil
+}
+
+func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	stats := map[string]interface{}{}
+	caseInsensitiveLoginVal := 0
+	if s.cfg.CaseInsensitiveLogin {
+		caseInsensitiveLoginVal = 1
+	}
+
+	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	return stats, nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {

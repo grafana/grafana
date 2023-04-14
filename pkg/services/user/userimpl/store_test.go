@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -29,9 +30,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	ss := db.InitTestDB(t)
 	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
 	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	usageStatsMockService := &usagestats.UsageStatsMock{}
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, usageStatsMockService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -498,7 +500,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		ss := db.InitTestDB(t)
 		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -943,7 +945,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	return orgService, usrSvc

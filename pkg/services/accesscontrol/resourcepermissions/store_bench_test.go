@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -144,7 +145,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 	qs := quotatest.New(false, nil)
 	orgSvc, err := orgimpl.ProvideService(db, db.Cfg, qs)
 	require.NoError(b, err)
-	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, qs, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -491,7 +492,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
 	var orgModel *org.Org
-	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	for i := 0; i < numUsers; i++ {

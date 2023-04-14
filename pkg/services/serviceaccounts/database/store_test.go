@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -118,7 +119,7 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	kvStore := kvstore.ProvideService(db)
 	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	return db, ProvideServiceAccountsStore(db.Cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }

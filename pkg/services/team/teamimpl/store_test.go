@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -44,6 +45,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService,
+			&usagestats.UsageStatsMock{},
 			supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
@@ -387,7 +389,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 				require.NoError(t, err)
-				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 				require.NoError(t, err)
 				setup()
 				userCmd = user.CreateUserCommand{
@@ -516,7 +518,9 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		quotaService := quotaimpl.ProvideService(store, store.Cfg)
 		orgSvc, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService,
+			&usagestats.UsageStatsMock{},
+			supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {

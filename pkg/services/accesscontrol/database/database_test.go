@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -306,7 +307,9 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	require.Equal(t, int64(1), orgID)
 	require.NoError(t, err)
 
-	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil),
+		&usagestats.UsageStatsMock{},
+		supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService
 }

@@ -35,7 +35,7 @@ func TestUserAuth(t *testing.T) {
 		qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
 		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		for i := 0; i < 5; i++ {
@@ -216,7 +216,7 @@ func TestUserAuth(t *testing.T) {
 			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 
 			for i := 0; i < 5; i++ {
@@ -289,7 +289,7 @@ func TestUserAuth(t *testing.T) {
 			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 
 			for i := 0; i < 5; i++ {
@@ -428,7 +428,7 @@ func TestUserAuth(t *testing.T) {
 			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
@@ -451,7 +451,7 @@ func TestUserAuth(t *testing.T) {
 			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 
 			for i := 0; i < 5; i++ {

@@ -68,7 +68,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 		hs.userService = userSvc
 
@@ -136,7 +136,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 		_, err = userSvc.Create(context.Background(), &createUserCmd)
 		require.Nil(t, err)
