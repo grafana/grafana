@@ -29,7 +29,7 @@ var logger = log.New("ngalert.eval")
 type EvaluatorFactory interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx EvaluationContext, condition models.Condition) error
-	// BuildRuleEvaluator build an evaluator pipeline ready to evaluate a rule's query
+	// Create builds an evaluator pipeline ready to evaluate a rule's query
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
 }
 

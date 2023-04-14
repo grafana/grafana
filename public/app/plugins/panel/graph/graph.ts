@@ -11,7 +11,7 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import { clone, find, flatten, isUndefined, map, max as _max, min as _min, sortBy as _sortBy, toNumber } from 'lodash';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot, Root } from 'react-dom/client';
 
 import {
   DataFrame,
@@ -76,6 +76,7 @@ class GraphElement {
   thresholdManager: ThresholdManager;
   timeRegionManager: TimeRegionManager;
   declare legendElem: HTMLElement;
+  declare legendElemRoot: Root;
 
   constructor(
     private scope: any,
@@ -118,6 +119,7 @@ class GraphElement {
     // get graph legend element
     if (this.elem && this.elem.parent) {
       this.legendElem = this.elem.parent().find('.graph-legend')[0];
+      this.legendElemRoot = createRoot(this.legendElem);
     }
   }
 
@@ -134,7 +136,7 @@ class GraphElement {
 
     if (!this.panel.legend.show) {
       if (this.legendElem.hasChildNodes()) {
-        ReactDOM.unmountComponentAtNode(this.legendElem);
+        this.legendElemRoot.unmount();
       }
       this.renderPanel();
       return;
@@ -156,7 +158,10 @@ class GraphElement {
     };
 
     const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
-    ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
+
+    // render callback isn't supported in react 18+, see: https://github.com/reactwg/react-18/discussions/5
+    this.legendElemRoot.render(legendReactElem);
+    requestIdleCallback(() => this.renderPanel());
   }
 
   onGraphHover(evt: LegacyGraphHoverEventPayload | DataHoverPayload) {
@@ -192,7 +197,7 @@ class GraphElement {
     this.elem.off();
     this.elem.remove();
 
-    ReactDOM.unmountComponentAtNode(this.legendElem);
+    this.legendElemRoot.unmount();
   }
 
   onGraphHoverClear(handler: LegacyEventHandler<any>) {

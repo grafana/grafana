@@ -56,6 +56,21 @@ func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *clou
 	}, nil
 }
 
+type mockLogsSyncClient struct {
+	cloudwatchlogsiface.CloudWatchLogsAPI
+
+	mock.Mock
+}
+
+func (m *mockLogsSyncClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	args := m.Called(ctx, input, option)
+	return args.Get(0).(*cloudwatchlogs.GetQueryResultsOutput), args.Error(1)
+}
+func (m *mockLogsSyncClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+	args := m.Called(ctx, input, option)
+	return args.Get(0).(*cloudwatchlogs.StartQueryOutput), args.Error(1)
+}
+
 func (m *fakeCWLogsClient) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	m.calls.describeLogGroups = append(m.calls.describeLogGroups, input)
 	output := &m.logGroups[m.logGroupsIndex]
@@ -104,6 +119,20 @@ func (c *fakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlar
 	c.calls.describeAlarms = append(c.calls.describeAlarms, params)
 
 	return c.describeAlarmsOutput, nil
+}
+
+type mockEC2Client struct {
+	mock.Mock
+}
+
+func (c *mockEC2Client) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+	args := c.Called(in)
+	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
+}
+
+func (c *mockEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+	args := c.Called(in, fn)
+	return args.Error(0)
 }
 
 type fakeEC2Client struct {
