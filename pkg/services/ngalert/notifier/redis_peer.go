@@ -63,6 +63,7 @@ type redisPeer struct {
 	messagesSent         *prometheus.CounterVec
 	messagesSentSize     *prometheus.CounterVec
 	nodePingDuration     *prometheus.HistogramVec
+	nodePingFailures     prometheus.Counter
 
 	// List of active members of the cluster. Should be accessed through the Members function.
 	members    []string
@@ -153,6 +154,10 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5},
 	}, []string{"peer"},
 	)
+	nodePingFailures := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "alertmanager_cluster_pings_failures_total",
+		Help: "Total number of failed pings.",
+	})
 
 	messagesReceived.WithLabelValues(fullState)
 	messagesReceivedSize.WithLabelValues(fullState)
@@ -172,6 +177,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	p.messagesSent = messagesSent
 	p.messagesSentSize = messagesSentSize
 	p.nodePingDuration = nodePingDuration
+	p.nodePingFailures = nodePingFailures
 
 	p.subs[fullStateChannel] = p.redis.Subscribe(context.Background(), p.withPrefix(fullStateChannel))
 	p.subs[fullStateChannelReq] = p.redis.Subscribe(context.Background(), p.withPrefix(fullStateChannelReq))
@@ -198,6 +204,7 @@ func (p *redisPeer) heartbeatLoop() {
 			cmd := p.redis.Set(context.Background(), p.withPrefix(p.name), time.Now().Unix(), time.Minute*5)
 			reqDur := time.Since(startTime)
 			if cmd.Err() != nil {
+				p.nodePingFailures.Inc()
 				p.logger.Error("error setting the heartbeat key", "err", cmd.Err(), "peer", p.withPrefix(p.name))
 				continue
 			}
