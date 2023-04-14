@@ -112,7 +112,7 @@ To learn more, check out our public dashboards [documentation](https://grafana.c
 
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
-The public dashboards insights provide valuable information about your dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
+The public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
 
 To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
@@ -120,9 +120,9 @@ To try it out, you'll need to enable the `publicDashboards` feature toggle. If y
 
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
-Our email sharing feature allows you to easily share your public dashboards with specific individuals. By adding their email addresses, they will receive a one-time valid link to access the dashboard for 30 days. This provides you with greater control over who can visualize your data.
+Our email sharing feature allows you to easily share your public dashboards with specific individuals. By adding their email addresses, they will receive a one-time valid link to access the dashboard. This provides you with greater control over who can visualize your data.
 
-To try it out, you'll need to enable the `publicDashboardsEmailSharing` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ## Scenes
 
