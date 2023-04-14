@@ -28,12 +28,13 @@ func setupTestEnv(t testing.TB) *Service {
 	cfg.RBACEnabled = true
 
 	ac := &Service{
-		cfg:           cfg,
-		log:           log.New("accesscontrol"),
-		registrations: accesscontrol.RegistrationList{},
-		store:         database.ProvideService(db.InitTestDB(t)),
-		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		features:      featuremgmt.WithFeatures(),
+		cfg:                 cfg,
+		log:                 log.New("accesscontrol"),
+		registrations:       accesscontrol.RegistrationList{},
+		store:               database.ProvideService(db.InitTestDB(t)),
+		roles:               accesscontrol.BuildBasicRoleDefinitions(),
+		features:            featuremgmt.WithFeatures(),
+		overridesCfgSection: actest.FakeSection{},
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -157,6 +158,78 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 			})
 			assert.Equal(t, len(tt.registrations), registrationCnt,
 				"expected service registration list to contain all test registrations")
+		})
+	}
+}
+
+func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
+	tests := []struct {
+		name         string
+		registration accesscontrol.RoleRegistration
+		cfgOverride  actest.FakeSection
+		wantGrants   []string
+		wantErr      bool
+	}{
+		{
+			name: "no grant override",
+			registration: accesscontrol.RoleRegistration{
+				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
+				Grants:              []string{"Admin"},
+				AllowGrantsOverride: true,
+			},
+			cfgOverride: actest.FakeSection{},
+			wantGrants:  []string{"Admin"},
+			wantErr:     false,
+		},
+		{
+			name: "should account for grant overrides",
+			registration: accesscontrol.RoleRegistration{
+				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
+				Grants:              []string{"Admin"},
+				AllowGrantsOverride: true,
+			},
+			cfgOverride: actest.FakeSection{"fixed_test_test": "Viewer, Grafana Admin"},
+			wantGrants:  []string{"Viewer", "Grafana Admin"},
+			wantErr:     false,
+		},
+		{
+			name: "should not account for grant overrides",
+			registration: accesscontrol.RoleRegistration{
+				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
+				Grants:              []string{"Admin"},
+				AllowGrantsOverride: false,
+			},
+			cfgOverride: actest.FakeSection{"fixed_test_test": "Viewer, Grafana Admin"},
+			wantGrants:  []string{"Admin"},
+			wantErr:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t)
+
+			// Reset the registations
+			ac.registrations = accesscontrol.RegistrationList{}
+			ac.overridesCfgSection = tt.cfgOverride
+
+			// Test
+			err := ac.DeclareFixedRoles(tt.registration)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			registrationCnt := 0
+			grants := []string{}
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				grants = registration.Grants
+				return true
+			})
+			require.Equal(t, 1, registrationCnt,
+				"expected service registration list to contain the registration")
+			require.ElementsMatch(t, tt.wantGrants, grants)
 		})
 	}
 }

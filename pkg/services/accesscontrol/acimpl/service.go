@@ -169,7 +169,9 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 	}
 
 	for _, r := range registrations {
-		s.handleGrantOverrides(&r)
+		if r.AllowGrantsOverride {
+			s.handleGrantOverrides(&r)
+		}
 
 		err := accesscontrol.ValidateFixedRole(r.Role)
 		if err != nil {
@@ -181,20 +183,23 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 			return err
 		}
 
-		if r.AllowGrantsOverride {
-			s.registrations.Append(r)
-		}
+		s.registrations.Append(r)
 	}
 
 	return nil
 }
 
 func (s *Service) handleGrantOverrides(r *accesscontrol.RoleRegistration) {
-	key := strings.ReplaceAll(r.Role.Name, ":", "_")
-	kv := s.overridesCfgSection.KeyValue(key)
+	kv := s.overridesCfgSection.KeyValue(strings.ReplaceAll(r.Role.Name, ":", "_"))
+	if kv == nil {
+		return
+	}
 	overrides := kv.Value()
 	if len(overrides) > 0 {
 		newGrants := strings.Split(overrides, ",")
+		for i := range newGrants {
+			newGrants[i] = strings.TrimSpace(newGrants[i])
+		}
 		r.Grants = newGrants
 		s.log.Info("Overriding grants for role", "role", r.Role.Name, "overrides", newGrants)
 	}
