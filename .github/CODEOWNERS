@@ -284,9 +284,6 @@
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
-# Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/grafana-app-platform-squad
-
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
 
@@ -304,7 +301,6 @@
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Logs/ @grafana/observability-logs
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
@@ -346,6 +342,7 @@ lerna.json @grafana/frontend-ops
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/grafana-authnz-team
+/public/app/features/auth-config/ @grafana/grafana-authnz-team
 /public/app/features/annotations/ @grafana/grafana-frontend-platform
 /public/app/features/api-keys/ @grafana/grafana-frontend-platform
 /public/app/features/canvas/ @grafana/dataviz-squad
@@ -377,6 +374,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/sandbox/ @grafana/grafana-frontend-platform
 /public/app/features/scenes/ @grafana/dashboards-squad
+/public/app/features/browse-dashboards/ @grafana/grafana-frontend-platform
 /public/app/features/search/ @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
@@ -541,6 +539,7 @@ lerna.json @grafana/frontend-ops
 # Grafana Operator Experience Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
+/pkg/services/caching/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
