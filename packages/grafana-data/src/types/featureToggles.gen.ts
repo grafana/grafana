@@ -21,7 +21,6 @@ export interface FeatureToggles {
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
-  dashboardPreviews?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -29,7 +28,6 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
-  lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
@@ -86,6 +84,7 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
+  lokiMetricDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
@@ -97,4 +96,5 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   useCachingService?: boolean;
   disableElasticsearchBackendQuerying?: boolean;
+  authenticationConfigUI?: boolean;
 }

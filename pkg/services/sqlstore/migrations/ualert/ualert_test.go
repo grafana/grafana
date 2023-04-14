@@ -65,14 +65,14 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			name: "when a slack receiver does not have a valid URL - it should error",
 			receivers: []*PostableGrafanaReceiver{
 				{
-					UID:            util.GenerateShortUID(),
+					UID:            "test-uid",
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
 					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
 					SecureSettings: map[string]string{"url": invalidUri},
 				},
 			},
-			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": invalid URL %q", invalidUri),
+			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": failed to parse notifier SlackWithBadURL (UID: test-uid): invalid URL %q", invalidUri),
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",
@@ -103,11 +103,10 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			mg := newTestMigration(t)
-			orgID := int64(1)
 
 			config := configFromReceivers(t, tt.receivers)
 			require.NoError(t, config.EncryptSecureSettings()) // make sure we encrypt the settings
-			err := mg.validateAlertmanagerConfig(orgID, config)
+			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
