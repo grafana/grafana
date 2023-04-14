@@ -1,7 +1,6 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 
 import { GrafanaPlugin } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
 import {
@@ -146,8 +145,7 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
 
     try {
       let pluginCode = await getPluginCode(path);
-      const isDevMode = config.buildInfo.env === 'development';
-      if (pluginCode.includes('//# sourceMappingURL=module.js.map') && isDevMode) {
+      if (pluginCode.includes('//# sourceMappingURL=module.js.map')) {
         let replaceWith = '';
         // make sure we don't add the sourceURL twice
         if (!pluginCode.includes('//# sourceURL') || !pluginCode.includes('//@ sourceUrl')) {
