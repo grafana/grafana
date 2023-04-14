@@ -1,0 +1,79 @@
+name: "publish-kinds"
+
+# Temporary - for tests
+on:
+  push:
+    branches:
+      - "agnestoulet/schema-registry"
+    paths:
+      - "pkg/schemaregistry/**"
+# on:
+#   push:
+#     branches:
+#       - v[0-9]+.[0-9]+.x
+#     tags:
+#       - v[0-9]+.[0-9]+.[0-9]+
+#     paths:
+#       - "docs/sources/**"
+#   workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout Grafana repo"
+        uses: "actions/checkout@v3"
+        with:
+          fetch-depth: 0
+
+      - name: "Setup Go"
+        uses: "actions/setup-go@v4"
+        with:
+          go-version: '1.19.2'
+
+      - name: "Verify kinds"
+        run: go run ./github/workflows/scripts/verify-kinds.go
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Install Actions from library"
+        run: "npm install --production --prefix ./actions"
+
+      # - name: "Determine if there is a matching release tag"
+      #   id: "has-matching-release-tag"
+      #   uses: "./actions/has-matching-release-tag"
+      #   with:
+      #     ref_name: "${{ github.ref_name }}"
+      #     release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+      #     release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
+
+      # - name: "Determine technical documentation version"
+      #   if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+      #   uses: "./actions/docs-target"
+      #   id: "target"
+      #   with:
+      #     ref_name: "${{ github.ref_name }}"
+
+      - name: "Clone website-sync Action"
+        # if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+        # GitHub administrator to update the organization secret.
+        # The IT helpdesk can update the organization secret.
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+
+      - name: "Publish to kind registry"
+        # if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        uses: "./.github/actions/website-sync"
+        # id: "publish-release"
+        with:
+          repository: "grafana/kind-registry"
+          branch: "main"
+          host: "github.com"
+          # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+          # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+          # GitHub administrator to update the organization secret.
+          # The IT helpdesk can update the organization secret.
+          github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
+          source_folder: "pkg/schemaregistry"
+          target_folder: "grafana/${{ steps.target.outputs.target }}"
