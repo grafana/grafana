@@ -99,7 +99,7 @@ export class DataSourceList extends PureComponent<DataSourceListProps, DataSourc
   }
 
   render() {
-    const { className } = this.props;
+    const { className, current } = this.props;
     // QUESTION: Should we use data from the Redux store as admin DS view does?
     const options = this.getDataSourceOptions();
 
@@ -110,7 +110,7 @@ export class DataSourceList extends PureComponent<DataSourceListProps, DataSourc
             key={ds.uid}
             ds={ds}
             onClick={this.onChange.bind(this, ds)}
-            selected={!!isDataSourceMatch(ds, this.props.current)}
+            selected={!!isDataSourceMatch(ds, current)}
           />
         ))}
       </div>

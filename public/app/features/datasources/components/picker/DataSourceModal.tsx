@@ -59,7 +59,7 @@ export function DataSourceModal({
             placeholder="Search data source"
             onChange={(e) => setSearch(e.currentTarget.value)}
           />
-          <CustomScrollbar className={styles.scrolledList}>
+          <CustomScrollbar>
             <DataSourceList
               filter={(ds) => !ds.meta.builtIn && ds.name.includes(search)}
               onChange={onChange}
@@ -124,7 +124,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     rightColumn: css`
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
       width: 50%;
+      height: 100%;
       padding: ${theme.spacing(1)};
     `,
     dsCTAs: css`
@@ -136,9 +138,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     searchInput: css`
       width: 100%;
       margin-bottom: ${theme.spacing(1)};
-    `,
-    scrolledList: css`
-      overflow: scroll;
     `,
   };
 }
