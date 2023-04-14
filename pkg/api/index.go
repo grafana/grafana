@@ -166,8 +166,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	// This will remove empty cfg or admin sections and move sections around if topnav is enabled
-	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture(hs.Features.IsEnabled(featuremgmt.FlagTopnav))
+	// This will remove empty cfg or admin sections and move sections around
+	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture()
 	data.NavTree.Sort()
 
 	return &data, nil

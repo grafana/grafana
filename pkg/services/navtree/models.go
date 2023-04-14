@@ -17,11 +17,11 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
-	WeightDataConnections
 	WeightPlugin
 	WeightConfig
 	WeightAlertsAndIncidents
 	WeightMonitoring
+	WeightDataConnections
 	WeightApps
 	WeightAdmin
 	WeightProfile
@@ -100,7 +100,7 @@ func (root *NavTreeRoot) FindById(id string) *NavLink {
 	return FindById(root.Children, id)
 }
 
-func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(topNavEnabled bool) {
+func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture() {
 	// Remove server admin node if it has no children or set the url to first child
 	if node := root.FindById(NavIDAdmin); node != nil {
 		if len(node.Children) == 0 {
@@ -110,31 +110,26 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		}
 	}
 
-	if topNavEnabled {
-		ApplyAdminIA(root)
+	ApplyAdminIA(root)
 
-		// Move reports into dashboards
-		if reports := root.FindById(NavIDReporting); reports != nil {
-			if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
-				reports.SortWeight = 0
-				dashboards.Children = append(dashboards.Children, reports)
-				root.RemoveSection(reports)
-			}
-		}
-
-		// Change id of dashboards
+	// Move reports into dashboards
+	if reports := root.FindById(NavIDReporting); reports != nil {
 		if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
-			dashboards.Id = "dashboards/browse"
+			reports.SortWeight = 0
+			dashboards.Children = append(dashboards.Children, reports)
+			root.RemoveSection(reports)
 		}
 	}
 
-	// Remove top level cfg / administration node if it has no children (needs to be after topnav new info archicture logic above that moves server admin into it)
-	// Remove server admin node if it has no children or set the url to first child
+	// Change id of dashboards
+	if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
+		dashboards.Id = "dashboards/browse"
+	}
+
+	// Remove top level cfg / administration node if it has no children
 	if node := root.FindById(NavIDCfg); node != nil {
 		if len(node.Children) == 0 {
 			root.RemoveSection(node)
-		} else if !topNavEnabled {
-			node.Url = node.Children[0].Url
 		}
 	}
 
@@ -192,6 +187,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 			orgSettings.Text = "Default preferences"
 			adminNodeLinks = append(adminNodeLinks, orgSettings)
 		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("authentication"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
 

@@ -92,10 +92,6 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-Page.OldNavOnly = function OldNavOnly() {
-  return null;
-};
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({

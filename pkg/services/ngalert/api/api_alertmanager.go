@@ -406,7 +406,7 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 		for _, next := range receiver.Configs {
 			if next.Error != nil {
 				var (
-					invalidReceiverErr notifier.InvalidReceiverError
+					invalidReceiverErr alertingNotify.InvalidReceiverError
 					receiverTimeoutErr alertingNotify.ReceiverTimeoutError
 				)
 				if errors.As(next.Error, &invalidReceiverErr) {

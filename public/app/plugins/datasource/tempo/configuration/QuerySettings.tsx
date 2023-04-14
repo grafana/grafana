@@ -3,6 +3,7 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, useStyles2 } from '@grafana/ui';
+import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
 
 import { TempoJsonData } from '../types';
 
@@ -16,7 +17,8 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
       <h3 className="page-heading">TraceID query</h3>
 
       <div className={styles.infoText}>
-        Modify how TraceID queries are run. These settings do not apply to TraceQL queries.
+        Modify how TraceID queries are run
+        <DocsLinkButton hrefSuffix="tempo/#traceid-query" />
       </div>
 
       <InlineField
@@ -83,18 +85,15 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
-    label: infoText;
     padding-bottom: ${theme.spacing(2)};
     color: ${theme.colors.text.secondary};
   `,
   container: css`
-    label: container;
     width: 100%;
   `,
   row: css`
-    label: row;
     align-items: baseline;
   `,
 });

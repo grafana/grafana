@@ -90,7 +90,7 @@ const mockCleanUpDashboardAndVariables = jest.fn();
 
 function setup(propOverrides?: Partial<Props>) {
   config.bootData.navTree = [
-    { text: 'Dashboards', id: 'dashboards' },
+    { text: 'Dashboards', id: 'dashboards/browse' },
     { text: 'Home', id: HOME_NAV_ID },
   ];
 
@@ -101,7 +101,11 @@ function setup(propOverrides?: Partial<Props>) {
       route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
     }),
     navIndex: {
-      dashboards: { text: 'Dashboards', id: 'dashboards', parentItem: { text: 'Home', id: HOME_NAV_ID } },
+      'dashboards/browse': {
+        text: 'Dashboards',
+        id: 'dashboards/browse',
+        parentItem: { text: 'Home', id: HOME_NAV_ID },
+      },
       [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
     },
     initPhase: DashboardInitPhase.NotStarted,
@@ -224,27 +228,6 @@ describe('DashboardPage', () => {
       });
       await waitFor(() => {
         expect(dashboard.panelInEdit).toBeDefined();
-      });
-    });
-
-    it('Should render panel editor', async () => {
-      const dashboard = getTestDashboard();
-      setup({
-        dashboard,
-        queryParams: { editPanel: '1' },
-      });
-      expect(await screen.findByTitle('Apply changes and go back to dashboard')).toBeInTheDocument();
-    });
-
-    it('Should reset state when leaving', async () => {
-      const dashboard = getTestDashboard();
-      const { rerender } = setup({
-        dashboard,
-        queryParams: { editPanel: '1' },
-      });
-      rerender({ queryParams: {} });
-      await waitFor(() => {
-        expect(screen.queryByTitle('Apply changes and go back to dashboard')).not.toBeInTheDocument();
       });
     });
   });
