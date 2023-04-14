@@ -108,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}, {
 			Name: "test2",
@@ -116,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}}))
 	})
@@ -128,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -136,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}}))
 	})
@@ -148,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}, {
 			Name: "test2",
@@ -156,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}}))
 	})

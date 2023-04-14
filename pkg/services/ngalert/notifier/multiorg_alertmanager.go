@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -49,14 +48,14 @@ type MultiOrgAlertmanager struct {
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
-	decryptFn receivers.GetDecryptedValueFn
+	decryptFn alertingNotify.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn receivers.GetDecryptedValueFn,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn alertingNotify.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{

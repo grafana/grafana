@@ -54,7 +54,7 @@ type Alertmanager struct {
 	fileStore           *FileStore
 	NotificationService notifications.Service
 
-	decryptFn receivers.GetDecryptedValueFn
+	decryptFn alertingNotify.GetDecryptedValueFn
 	orgID     int64
 }
 
@@ -84,7 +84,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
-	peer alertingNotify.ClusterPeer, decryptFn receivers.GetDecryptedValueFn, ns notifications.Service,
+	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager) (*Alertmanager, error) {
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
 	fileStore := NewFileStore(orgID, kvStore, workingPath)
@@ -317,7 +317,7 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error) {
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error) {
 	integrationsMap := make(map[string][]*alertingNotify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
@@ -331,9 +331,10 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alertingNotify.Template) ([]*alertingNotify.Integration, error) {
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
 	integrations := make([]*alertingNotify.Integration, 0, len(receiver.GrafanaManagedReceivers))
-	for i, r := range receiver.GrafanaManagedReceivers {
+	for _, r := range receiver.GrafanaManagedReceivers {
+		// TODO do not use buildReceiverIntegration because it does not honor index
 		n, err := am.buildReceiverIntegration(PostableGrafanaReceiverToGrafanaReceiver(r), tmpl)
 		if err != nil {
 			return nil, err
