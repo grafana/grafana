@@ -70,7 +70,7 @@ N1c5v9v/4h6qeA==
 
 // getPublicKey loads public keys from:
 //   - The hard-coded value if the feature flag is not enabled.
-//   - (TODO) The database if it has been already retrieved.
+//   - A cached value from memory if it has been already retrieved.
 //   - The Grafana.com API if the database is empty.
 func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
 	pmv.lock.Lock()
