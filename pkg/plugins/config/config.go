@@ -43,7 +43,7 @@ type Cfg struct {
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
-	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing) *Cfg {
+	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing, features plugins.FeatureToggles) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -59,5 +59,6 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
 		Tracing:                 tracing,
 		GrafanaComURL:           "https://grafana.com",
+		Features:                features,
 	}
 }

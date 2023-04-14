@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*pCfg.Cfg, error) {
+func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features *featuremgmt.FeatureManager) (*pCfg.Cfg, error) {
 	plugins := settingProvider.Section("plugins")
 	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
@@ -25,6 +26,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*
 	if err != nil {
 		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
 	}
+
 	return pCfg.NewCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
 		grafanaCfg.PluginsPath,
@@ -38,6 +40,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) (*
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		tracingCfg,
+		featuremgmt.ProvidePluginsToggles(features),
 	), nil
 }
 
