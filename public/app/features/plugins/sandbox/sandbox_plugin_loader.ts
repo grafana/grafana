@@ -108,15 +108,15 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
         startActivity() {
           return {
             stop: () => {},
-            async error(data?: Error) {
-              if (!data) {
+            async error(proxyError?: Error) {
+              if (!proxyError) {
                 return;
               }
-              const newError = new Error(data.message);
-              newError.name = data.name;
-              if (data.stack) {
+              const newError = new Error(proxyError.message);
+              newError.name = proxyError.name;
+              if (proxyError.stack) {
                 // Parse the error stack trace
-                const stackFrames = data.stack.split('\n').map((frame) => frame.trim());
+                const stackFrames = proxyError.stack.split('\n').map((frame) => frame.trim());
 
                 // remove not useful stack frames
                 const filterOut = ['sandbox', 'proxyhandler', 'trap', 'redconnector'];
@@ -155,7 +155,7 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
           const sourceMapUrl = `data:application/json;charset=utf-8;base64,${window.btoa(sourceMap)}`;
           pluginCode = pluginCode.replace(
             '//# sourceMappingURL=module.js.map',
-            `//# sourceURL=[module.js]\n//# sourceMappingURL=${sourceMapUrl}`
+            `//# sourceURL=module.js\n//# sourceMappingURL=${sourceMapUrl}`
           );
         } catch (e) {
           console.error(`[sandbox] Error loading source map for plugin ${pluginId}`, e);
@@ -168,3 +168,11 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
     }
   });
 }
+
+window.addEventListener('error', (e) => {
+  // prevent sandbox errors from being logged twice
+  // we log these errors property inside the sandbox itself
+  if (e.message.includes('Uncaught') && e.error && e.error.stack && e.error.stack.includes('createRedConnector')) {
+    e.preventDefault();
+  }
+});
