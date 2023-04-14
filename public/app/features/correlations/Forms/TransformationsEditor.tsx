@@ -130,7 +130,7 @@ export const TransformationsEditor = (props: Props) => {
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label aria-labelledby={`config.transformations.${index}.field`}>Field</Label>
+                              <Label>Field</Label>
                               <Tooltip
                                 content={
                                   <div>
@@ -240,6 +240,7 @@ export const TransformationsEditor = (props: Props) => {
                                 keptValsCopy[index] = undefined;
                                 setKeptVals(compact(keptValsCopy));
                               }}
+                              ariaLabel="Remove transformation"
                             >
                               Remove
                             </IconButton>
@@ -256,6 +257,7 @@ export const TransformationsEditor = (props: Props) => {
                   onClick={() => append({ type: undefined }, { shouldFocus: false })}
                   variant="secondary"
                   type="button"
+                  aria-label="add transformation"
                 >
                   Add transformation
                 </Button>
