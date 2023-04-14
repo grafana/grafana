@@ -1096,19 +1096,21 @@ Disabled by default, needs to be explicitly enabled.
 
 ### user_identity_token_url
 
-AAD token URL for given Azure Directory.
+Override token URL for given Azure Active Directory.
 
-Normally should be same as token URL in AAD authentication configuration.
+By default is the same as token URL configured for AAD authentication settings.
 
 ### user_identity_client_id
 
-ADD application ID which would be used to exchange user's token to an access token to the datasource.
+Override ADD application ID which would be used to exchange user's token to an access token to the datasource.
 
-Can be same application as used in AAD authentication or another application (for OBO flow).
+By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
 ### user_identity_client_secret
 
-The AAD application client secret.
+Override the AAD application client secret.
+
+By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
 ## [auth.jwt]
 
