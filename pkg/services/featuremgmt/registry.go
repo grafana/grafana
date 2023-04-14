@@ -533,5 +533,12 @@ var (
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},
+		{
+			Name:         "faroDatasourceSelector",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
+		},
 	}
 )

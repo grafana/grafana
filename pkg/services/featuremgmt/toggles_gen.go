@@ -326,4 +326,8 @@ const (
 	// FlagOpensearchDetectVersion
 	// Enable version detection in OpenSearch
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 )

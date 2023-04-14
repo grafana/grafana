@@ -79,3 +79,4 @@ enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
 advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
 opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
+faroDatasourceSelector,beta,@grafana/app-o11y,false,false,false,true

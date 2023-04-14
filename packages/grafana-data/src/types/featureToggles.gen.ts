@@ -98,4 +98,5 @@ export interface FeatureToggles {
   authenticationConfigUI?: boolean;
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
+  faroDatasourceSelector?: boolean;
 }
