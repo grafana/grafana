@@ -937,6 +937,9 @@ describe('reducer', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
+            queryResponse: {
+              state: LoadingState.Streaming,
+            },
             logsResult: {
               hasUniqueLabels: false,
               rows: logRows,
@@ -963,6 +966,9 @@ describe('reducer', () => {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
             isLive: true,
+            queryResponse: {
+              state: LoadingState.Streaming,
+            },
             logsResult: {
               hasUniqueLabels: false,
               rows: oldLogRows,
