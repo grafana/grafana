@@ -239,3 +239,15 @@ Use the improved State history view to get insight into how your alert instances
 ### Improved templating experience
 
 Text tbd.
+
+## Security
+
+### Trusted Types support
+_In development, available behind the trustedTypes feature toggle in all editions of Grafana._
+
+Use [trusted types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types) to reduce the risk of XSS vulnerabilities. This is an experimental web technology with limited browser support. One aspect of it is sanitization of third party libraries or plugins that have not explicitly done sanitization.
+
+To use it:
+- Enable the feature toggle `trustedTypes`.
+- Enable either `content_security_policy` or `content_security_policy_report_only`.
+- Add `require-trusted-types-for 'script';` to the CSP template.
