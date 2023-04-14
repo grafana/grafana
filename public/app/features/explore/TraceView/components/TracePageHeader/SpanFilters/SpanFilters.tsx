@@ -237,6 +237,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 onOpenMenu={getServiceNames}
                 options={serviceNames}
                 placeholder="All service names"
+                value={search.serviceName}
               />
             </HorizontalGroup>
           </InlineField>
@@ -257,6 +258,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 onOpenMenu={getSpanNames}
                 options={spanNames}
                 placeholder="All span names"
+                value={search.spanName}
               />
             </HorizontalGroup>
           </InlineField>
