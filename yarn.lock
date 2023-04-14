@@ -8942,6 +8942,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/chance@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "@types/chance@npm:1.1.3"
+  checksum: df2be43fab359e5fa734fb91aa1c4c15108310be0e4990d00203805a63f9b2182da74eaabc8859b742e150d970decf27a773fcc6cbf28fb5b372c9b1bd7e9b89
+  languageName: node
+  linkType: hard
+
 "@types/chrome-remote-interface@npm:0.31.9":
   version: 0.31.9
   resolution: "@types/chrome-remote-interface@npm:0.31.9"
@@ -20182,6 +20189,7 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
+    "@types/chance": ^1.1.3
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/d3-force": ^3.0.0
