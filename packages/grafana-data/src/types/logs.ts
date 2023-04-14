@@ -163,12 +163,21 @@ export enum SupplementaryQueryType {
   LogsSample = 'LogsSample',
 }
 
+/**
+ * @internal
+ */
 export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
 
+/**
+ * @internal
+ */
 export type LogsVolumeOption = {
   type: SupplementaryQueryType.LogsVolume;
 };
 
+/**
+ * @internal
+ */
 export type LogsSampleOptions = {
   type: SupplementaryQueryType.LogsSample;
   limit?: number;
