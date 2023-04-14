@@ -18,7 +18,7 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PrometheusCacheLevel, PromOptions } from '../types';
 
-import { docsTip, overhaulStyles } from './ConfigEditor';
+import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH } from './ConfigEditor';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
@@ -49,8 +49,6 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
-
-const LABEL_WIDTH = 26;
 
 export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
 /**
@@ -175,7 +173,7 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form">
             <InlineField
               label="Scrape interval"
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
                   This interval is how frequently Prometheus scrapes targets. Set this to the typical scrape and
@@ -206,7 +204,7 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form">
             <InlineField
               label="Query timeout"
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
               interactive={true}
             >
@@ -232,7 +230,7 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <InlineField
             label="Default editor"
-            labelWidth={26}
+            labelWidth={PROM_CONFIG_LABEL_WIDTH}
             tooltip={<>Set default editor option for all users of this data source. {docsTip()}</>}
             interactive={true}
           >
@@ -251,7 +249,7 @@ export const PromSettings = (props: Props) => {
         </div>
         <div className="gf-form">
           <InlineField
-            labelWidth={LABEL_WIDTH}
+            labelWidth={PROM_CONFIG_LABEL_WIDTH}
             label="Disable metrics lookup"
             tooltip={
               <>
@@ -290,7 +288,7 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form">
             <InlineField
               label="Prometheus type"
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
                   Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
@@ -333,7 +331,7 @@ export const PromSettings = (props: Props) => {
             <div className="gf-form">
               <InlineField
                 label={`${options.jsonData.prometheusType} version`}
-                labelWidth={26}
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
                     Use this to set the version of your {options.jsonData.prometheusType} instance if it is not
@@ -361,7 +359,7 @@ export const PromSettings = (props: Props) => {
             <div className="gf-form max-width-30">
               <InlineField
                 label="Cache level"
-                labelWidth={26}
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
                     Sets the browser caching level for editor queries. Higher cache settings are recommended for high
@@ -385,7 +383,7 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form max-width-30">
             <InlineField
               label="Incremental querying (beta)"
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
                   This feature will change the default behavior of relative queries to always request fresh data from
@@ -409,7 +407,7 @@ export const PromSettings = (props: Props) => {
           {options.jsonData.incrementalQuerying && (
             <InlineField
               label="Query overlap window"
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
                   Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the
@@ -446,7 +444,7 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form max-width-30">
             <InlineField
               label="Custom query parameters"
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
                   Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or
@@ -470,7 +468,7 @@ export const PromSettings = (props: Props) => {
           {/* HTTP Method */}
           <div className="gf-form">
             <InlineField
-              labelWidth={26}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
                   You can use either POST or GET HTTP method to query your Prometheus data source. POST is the

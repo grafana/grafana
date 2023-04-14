@@ -22,6 +22,8 @@ import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { PromSettings } from './PromSettings';
 
+export const PROM_CONFIG_LABEL_WIDTH = 30;
+
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -106,7 +108,12 @@ export const ConfigEditor = (props: Props) => {
         </p>
         <div className="gf-form-group">
           <div className="gf-form">
-            <InlineField interactive={true} label="Prometheus Server URL" labelWidth={26} tooltip={urlTooltip}>
+            <InlineField
+              interactive={true}
+              label="Prometheus Server URL"
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              tooltip={urlTooltip}
+            >
               {urlInput}
             </InlineField>
           </div>
