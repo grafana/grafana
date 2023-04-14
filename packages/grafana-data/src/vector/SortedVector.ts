@@ -5,6 +5,8 @@ import { vectorToArray } from './vectorToArray';
 
 /**
  * Values are returned in the order defined by the input parameter
+ *
+ * @deprecated use a simple Arrays
  */
 export class SortedVector<T = any> extends FunctionalVector<T> {
   constructor(private source: Vector<T>, private order: number[]) {
