@@ -16,7 +16,6 @@ type Folder struct {
 	CanEdit       bool                   `json:"canEdit"`
 	CanAdmin      bool                   `json:"canAdmin"`
 	CanDelete     bool                   `json:"canDelete"`
-	CanCreate     bool                   `json:"canCreate"`
 	CreatedBy     string                 `json:"createdBy"`
 	Created       time.Time              `json:"created"`
 	UpdatedBy     string                 `json:"updatedBy"`

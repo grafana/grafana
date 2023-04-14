@@ -137,7 +137,6 @@ describe('SearchView', () => {
           canEdit: true,
           canAdmin: true,
           canDelete: true,
-          canCreate: true,
         },
       },
       undefined

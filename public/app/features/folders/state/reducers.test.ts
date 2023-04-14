@@ -21,7 +21,6 @@ function getTestFolder(): FolderDTO {
     canEdit: true,
     canAdmin: true,
     canDelete: true,
-    canCreate: true,
     version: 0,
   };
 }
