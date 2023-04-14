@@ -99,13 +99,30 @@ Public dashboards allow you to share your Grafana dashboard with anyone without 
 
 These are some of the improvements you will find in this version:
 
-<!--
-- TODO:Improvements
--->
+- The time picker and annotations can be toggled on or off from the configuration modal
+- You can see all the public dashboards from the Dashboards menu
+- Improved UI: new modal design, paused, and not found pages
+- Bug fixes! E.g collapsed rows, hidden queries, and zoom into panels
 
 To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 To learn more, check out our public dashboards [documentation](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/?pg=blog&plcmt=body-txt).
+
+## Public dashboards insights
+
+_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+
+The public dashboards insights provide valuable information about your dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
+
+To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+## Email sharing for public dashboards
+
+_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+
+Our email sharing feature allows you to easily share your public dashboards with specific individuals. By adding their email addresses, they will receive a one-time valid link to access the dashboard for 30 days. This provides you with greater control over who can visualize your data.
+
+To try it out, you'll need to enable the `publicDashboardsEmailSharing` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ## Scenes
 
