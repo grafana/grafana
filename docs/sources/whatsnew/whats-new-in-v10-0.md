@@ -186,3 +186,11 @@ As of now the data is being stored on the dashboard json and has a 1MB size limi
 To learn more about drag & drop, please refer to the official documentation.
 
 The list of requests is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the the drag & drop datasource.
+
+## Datasources
+
+### Azure Monitor data source
+
+The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
+
+This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insigts resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
