@@ -39,6 +39,7 @@ async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
   const datasource: InfluxDatasource = {
+    retentionPolicies: [],
     metricFindQuery: () => Promise.resolve([]),
   } as unknown as InfluxDatasource;
   await act(async () => {
