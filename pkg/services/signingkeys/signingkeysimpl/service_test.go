@@ -71,9 +71,7 @@ D3U+YcnG00aa3FnNN5EjOnY4FeIUJwpqzB8mDc0ztHdwOoJhDETWroDq
 func getPrivateKey(t *testing.T) *rsa.PrivateKey {
 	pemBlock, _ := pem.Decode([]byte(privateKeyPem))
 	privateKey, err := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return privateKey
 }
 
