@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { VerticalGroup } from '@grafana/ui';
 
 import { DataSourceCard } from './DataSourceCard';
+import { isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -106,33 +105,15 @@ export class DataSourceList extends PureComponent<DataSourceListProps, DataSourc
 
     return (
       <div className={className}>
-        <VerticalGroup spacing="xs">
-          {options.map((ds) => (
-            <DataSourceCard
-              key={ds.uid}
-              ds={ds}
-              onClick={this.onChange.bind(this, ds)}
-              selected={!!isDataSourceMatch(ds, this.props.current)}
-            />
-          ))}
-        </VerticalGroup>
+        {options.map((ds) => (
+          <DataSourceCard
+            key={ds.uid}
+            ds={ds}
+            onClick={this.onChange.bind(this, ds)}
+            selected={!!isDataSourceMatch(ds, this.props.current)}
+          />
+        ))}
       </div>
     );
   }
-}
-
-export function isDataSourceMatch(
-  ds: DataSourceInstanceSettings | undefined,
-  current: string | DataSourceInstanceSettings | DataSourceRef | null | undefined
-): boolean | undefined {
-  if (!ds) {
-    return false;
-  }
-  if (!current) {
-    return false;
-  }
-  if (typeof current === 'string') {
-    return ds.uid === current;
-  }
-  return ds.uid === current.uid;
 }

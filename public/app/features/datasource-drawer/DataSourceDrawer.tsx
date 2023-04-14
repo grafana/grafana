@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, useStyles2 } from '@grafana/ui';
 
 import { DataSourceModal } from '../datasources/components/picker/DataSourceModal';
