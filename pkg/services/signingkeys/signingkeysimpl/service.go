@@ -27,8 +27,7 @@ func ProvideEmbeddedSigningKeysService() *Service {
 		s.log.Error("Error generating private key", "err", err)
 	}
 
-	s.keys = map[string]crypto.Signer{}
-	s.keys[serverPrivateKeyID] = privateKey
+  s.keys = map[string]crypto.Signer{serverPrivateKeyID: privateKey}
 
 	return s
 }
