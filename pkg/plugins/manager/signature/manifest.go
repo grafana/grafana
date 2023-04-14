@@ -18,6 +18,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/manifestverifier"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,7 +53,7 @@ func (m *PluginManifest) isV2() bool {
 
 // ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func ReadPluginManifest(body []byte, features plugins.FeatureToggles, grafanaURL string) (*PluginManifest, error) {
+func ReadPluginManifest(cfg *config.Cfg, body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -65,7 +66,7 @@ func ReadPluginManifest(body []byte, features plugins.FeatureToggles, grafanaURL
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	if err = validateManifest(manifest, block, features, grafanaURL); err != nil {
+	if err = validateManifest(cfg, manifest, block); err != nil {
 		return nil, err
 	}
 
@@ -73,7 +74,7 @@ func ReadPluginManifest(body []byte, features plugins.FeatureToggles, grafanaURL
 }
 
 func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin,
-	features plugins.FeatureToggles, grafanaURL string) (plugins.Signature, error) {
+	cfg *config.Cfg) (plugins.Signature, error) {
 	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
@@ -116,7 +117,7 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 		}, nil
 	}
 
-	manifest, err := ReadPluginManifest(byteValue, features, grafanaURL)
+	manifest, err := ReadPluginManifest(cfg, byteValue)
 	if err != nil {
 		mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
@@ -271,7 +272,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func validateManifest(m PluginManifest, block *clearsign.Block, features plugins.FeatureToggles, grafanaURL string) error {
+func validateManifest(cfg *config.Cfg, m PluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}
@@ -299,5 +300,5 @@ func validateManifest(m PluginManifest, block *clearsign.Block, features plugins
 		}
 	}
 
-	return manifestverifier.New(features, grafanaURL).Verify(m.KeyID, block)
+	return manifestverifier.New(cfg).Verify(m.KeyID, block)
 }

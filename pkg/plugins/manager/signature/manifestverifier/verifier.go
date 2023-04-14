@@ -6,12 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 // ManifestKeys is the database representation of public keys
@@ -25,27 +26,17 @@ type ManifestKeys struct {
 type ManifestVerifier struct {
 	lock       sync.Mutex
 	publicKeys map[string]ManifestKeys
-	features   plugins.FeatureToggles
-	grafanaURL string
+	cfg        *config.Cfg
 }
 
-func New(features plugins.FeatureToggles, grafanaURL string) *ManifestVerifier {
+func New(cfg *config.Cfg) *ManifestVerifier {
 	return &ManifestVerifier{
-		features:   features,
-		grafanaURL: grafanaURL,
+		cfg:        cfg,
 		publicKeys: map[string]ManifestKeys{},
 	}
 }
 
-// getPublicKey loads public keys from:
-//   - The hard-coded value if the feature flag is not enabled.
-//   - (TODO) The database if it has been already retrieved.
-//   - The Grafana.com API if the database is empty.
-func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
-	pmv.lock.Lock()
-	defer pmv.lock.Unlock()
-
-	const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 	
@@ -68,7 +59,16 @@ N1c5v9v/4h6qeA==
 =DNbR
 -----END PGP PUBLIC KEY BLOCK-----
 `
-	if !pmv.features.IsEnabled("pluginsAPIManifestKey") {
+
+// getPublicKey loads public keys from:
+//   - The hard-coded value if the feature flag is not enabled.
+//   - (TODO) The database if it has been already retrieved.
+//   - The Grafana.com API if the database is empty.
+func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
+	pmv.lock.Lock()
+	defer pmv.lock.Unlock()
+
+	if pmv.cfg == nil || pmv.cfg.Features == nil || !pmv.cfg.Features.IsEnabled("pluginsAPIManifestKey") {
 		return publicKeyText, nil
 	}
 
@@ -82,7 +82,12 @@ N1c5v9v/4h6qeA==
 		Items []ManifestKeys
 	}
 
-	resp, err := http.Get(pmv.grafanaURL + "/api/plugins/ci/keys")
+	url, err := url.JoinPath(pmv.cfg.GrafanaComURL, "/api/plugins/ci/keys")
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}

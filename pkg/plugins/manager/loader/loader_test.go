@@ -1186,11 +1186,12 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		apiCalled := false
+		cfg := &config.Cfg{Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...)}
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/api/plugins/ci/keys" {
 				w.WriteHeader(http.StatusOK)
 				// Use the hardcoded key
-				k, err := manifestverifier.New(featuremgmt.WithFeatures(), "").GetPublicKey("7e4d0c6a708866e7")
+				k, err := manifestverifier.New(&config.Cfg{}).GetPublicKey("7e4d0c6a708866e7")
 				require.NoError(t, err)
 				data := struct {
 					Items []manifestverifier.ManifestKeys `json:"items"`
@@ -1205,12 +1206,12 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 			}
 			w.WriteHeader(http.StatusNotFound)
 		}))
-		l := newLoader(&config.Cfg{GrafanaComURL: s.URL}, func(l *Loader) {
+		cfg.GrafanaComURL = s.URL
+		l := newLoader(cfg, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.pluginStorage = storage
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
-			l.features = featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...)
+			l.pluginInitializer = initializer.New(cfg, procPrvdr, fakes.NewFakeLicensingService())
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1549,7 +1550,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(), featuremgmt.WithFeatures())
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder())
 
 	for _, cb := range cbs {
 		cb(l)

@@ -36,21 +36,20 @@ type Loader struct {
 	log                log.Logger
 	cfg                *config.Cfg
 	errs               map[string]*plugins.SignatureError
-	features           plugins.FeatureToggles
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, features plugins.FeatureToggles) *Loader {
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, assetPath,
-		pluginFinder, features)
+		pluginFinder)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder, features plugins.FeatureToggles) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder) *Loader {
 	return &Loader{
 		pluginFinder:       pluginFinder,
 		pluginRegistry:     pluginRegistry,
@@ -63,7 +62,6 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		roleRegistry:       roleRegistry,
 		cfg:                cfg,
 		assetPath:          assetPath,
-		features:           features,
 	}
 }
 
@@ -85,7 +83,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			continue
 		}
 
-		sig, err := signature.Calculate(ctx, l.log, src, p.Primary, l.features, l.cfg.GrafanaComURL)
+		sig, err := signature.Calculate(ctx, l.log, src, p.Primary, l.cfg)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue

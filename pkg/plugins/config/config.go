@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,6 +37,8 @@ type Cfg struct {
 	Tracing Tracing
 
 	GrafanaComURL string
+
+	Features plugins.FeatureToggles
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,

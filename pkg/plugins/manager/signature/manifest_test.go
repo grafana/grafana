@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,7 +50,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest([]byte(txt), featuremgmt.WithFeatures(), "")
+		manifest, err := ReadPluginManifest(&config.Cfg{}, []byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -66,7 +66,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		_, err := ReadPluginManifest([]byte(modified), featuremgmt.WithFeatures(), "")
+		_, err := ReadPluginManifest(&config.Cfg{}, []byte(modified))
 		require.Error(t, err)
 	})
 }
@@ -103,7 +103,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest([]byte(txt), featuremgmt.WithFeatures(), "")
+		manifest, err := ReadPluginManifest(&config.Cfg{}, []byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -171,7 +171,7 @@ func TestCalculate(t *testing.T) {
 					filepath.Join(basePath, "MANIFEST.txt"): {},
 					filepath.Join(basePath, "plugin.json"):  {},
 				}, basePath),
-			}, featuremgmt.WithFeatures(), "")
+			}, &config.Cfg{})
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
 		}
@@ -203,7 +203,7 @@ func TestCalculate(t *testing.T) {
 				filepath.Join(basePath, "plugin.json"):          {},
 				filepath.Join(basePath, "chrome-win/debug.log"): {},
 			}, basePath),
-		}, featuremgmt.WithFeatures(), "")
+		}, &config.Cfg{})
 		require.NoError(t, err)
 		require.Equal(t, plugins.Signature{
 			Status:     plugins.SignatureValid,
@@ -251,7 +251,7 @@ func TestCalculate(t *testing.T) {
 						filepath.Join(basePath, "plugin.json"):       {},
 						filepath.Join(basePath, "child/plugin.json"): {},
 					}, basePath),
-				}, featuremgmt.WithFeatures(), "")
+				}, &config.Cfg{})
 				require.NoError(t, err)
 				require.Equal(t, plugins.Signature{
 					Status:     plugins.SignatureValid,
@@ -678,7 +678,7 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateManifest(*tc.manifest, nil, featuremgmt.WithFeatures(), "")
+			err := validateManifest(&config.Cfg{}, *tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})
 	}
