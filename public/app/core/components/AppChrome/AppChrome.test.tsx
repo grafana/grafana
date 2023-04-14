@@ -82,49 +82,27 @@ describe('AppChrome', () => {
     jest.clearAllMocks();
   });
 
-  describe('when topnav is enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.topnav = true;
-    });
+  it('should render section nav model based on navId', async () => {
+    setup(<Page navId="child1">Children</Page>);
+    expect(await screen.findByTestId('page-children')).toBeInTheDocument();
 
-    it('should render section nav model based on navId', async () => {
-      setup(<Page navId="child1">Children</Page>);
-      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-      expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-      expect(screen.getAllByRole('tab').length).toBe(3);
-    });
-
-    it('should render section nav model based on navId and item page nav', async () => {
-      setup(
-        <Page navId="child1" pageNav={pageNav}>
-          Children
-        </Page>
-      );
-      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-      expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
-    });
+    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').length).toBe(3);
   });
 
-  describe('when topnav is disabled', () => {
-    beforeEach(() => {
-      config.featureToggles.topnav = false;
-    });
+  it('should render section nav model based on navId and item page nav', async () => {
+    setup(
+      <Page navId="child1" pageNav={pageNav}>
+        Children
+      </Page>
+    );
+    expect(await screen.findByTestId('page-children')).toBeInTheDocument();
 
-    it('should not render section nav', async () => {
-      setup(<Page navId="child1">Children</Page>);
-      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-      expect(screen.queryByRole('tab', { name: 'Tab Section name' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Tab Child1' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Tab Child1' })).not.toBeInTheDocument();
-      expect(screen.queryAllByRole('tab').length).toBe(0);
-    });
+    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
   });
 });
