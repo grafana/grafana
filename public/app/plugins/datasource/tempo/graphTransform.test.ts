@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -74,19 +74,19 @@ describe('mapPromMetricsToServiceMap', () => {
     );
 
     expect(nodes.fields).toMatchObject([
-      { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'mainstat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33, NaN]) },
-      { name: 'arc__success', values: new ArrayVector([0.8, 0.25, 1]) },
-      { name: 'arc__failed', values: new ArrayVector([0.2, 0.75, 0]) },
+      { name: 'id', values: ['db', 'app', 'lb'] },
+      { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'mainstat', values: [1000, 2000, NaN] },
+      { name: 'secondarystat', values: [0.17, 0.33, NaN] },
+      { name: 'arc__success', values: [0.8, 0.25, 1] },
+      { name: 'arc__failed', values: [0.2, 0.75, 0] },
     ]);
     expect(edges.fields).toMatchObject([
-      { name: 'id', values: new ArrayVector(['app_db', 'lb_app']) },
-      { name: 'source', values: new ArrayVector(['app', 'lb']) },
-      { name: 'target', values: new ArrayVector(['db', 'app']) },
-      { name: 'mainstat', values: new ArrayVector([1000, 2000]) },
-      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33]) },
+      { name: 'id', values: ['app_db', 'lb_app'] },
+      { name: 'source', values: ['app', 'lb'] },
+      { name: 'target', values: ['db', 'app'] },
+      { name: 'mainstat', values: [1000, 2000] },
+      { name: 'secondarystat', values: [0.17, 0.33] },
     ]);
   });
 
@@ -106,12 +106,12 @@ describe('mapPromMetricsToServiceMap', () => {
     );
 
     expect(nodes.fields).toMatchObject([
-      { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'mainstat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33, NaN]) },
-      { name: 'arc__success', values: new ArrayVector([0, 0, 1]) },
-      { name: 'arc__failed', values: new ArrayVector([1, 1, 0]) },
+      { name: 'id', values: ['db', 'app', 'lb'] },
+      { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'mainstat', values: [1000, 2000, NaN] },
+      { name: 'secondarystat', values: [0.17, 0.33, NaN] },
+      { name: 'arc__success', values: [0, 0, 1] },
+      { name: 'arc__failed', values: [1, 1, 0] },
     ]);
   });
 });

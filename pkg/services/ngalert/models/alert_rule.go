@@ -398,6 +398,7 @@ type CountAlertRulesQuery struct {
 
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
+	RuleGroups      []string
 
 	ResultRules         []*AlertRule
 	ResultFoldersTitles map[string]string

@@ -173,12 +173,16 @@ const mocks = {
   reportInteraction: jest.fn(),
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
-    mocks.reportInteraction(...args);
-  },
-}));
+jest.mock('@grafana/runtime', () => {
+  const runtime = jest.requireActual('@grafana/runtime');
+
+  return {
+    ...runtime,
+    reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
+      mocks.reportInteraction(...args);
+    },
+  };
+});
 
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);

@@ -1,17 +1,17 @@
 import { createTheme } from '../themes';
 import { Field, FieldColorModeId, FieldType } from '../types';
-import { ArrayVector } from '../vector/ArrayVector';
 
 import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 
-function getTestField(mode: string): Field {
+function getTestField(mode: string, fixedColor?: string): Field {
   return {
     name: 'name',
     type: FieldType.number,
-    values: new ArrayVector(),
+    values: [],
     config: {
       color: {
         mode: mode,
+        fixedColor: fixedColor,
       },
     },
     state: {},
@@ -21,10 +21,11 @@ function getTestField(mode: string): Field {
 interface GetCalcOptions {
   mode: string;
   seriesIndex?: number;
+  fixedColor?: string;
 }
 
 function getCalculator(options: GetCalcOptions): FieldValueColorCalculator {
-  const field = getTestField(options.mode);
+  const field = getTestField(options.mode, options.fixedColor);
   const mode = fieldColorModeRegistry.get(options.mode);
   field.state!.seriesIndex = options.seriesIndex;
   return mode.getCalculator(field, createTheme());
@@ -52,18 +53,30 @@ describe('fieldColorModeRegistry', () => {
     field.config.color!.seriesBy = 'last';
     // min = -10, max = 10, last = 5
     // last percent 75%
-    field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
+    field.values = [0, -10, 5, 10, 2, 5];
 
     const color = getFieldSeriesColor(field, createTheme());
     const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
 
     expect(color.color).toEqual(calcFn(4, 0.75));
   });
+
+  it('Shades should return selected color for index 0', () => {
+    const color = '#123456';
+    const calcFn = getCalculator({ mode: FieldColorModeId.Shades, seriesIndex: 0, fixedColor: color });
+    expect(calcFn(70, 0, undefined)).toEqual(color);
+  });
+
+  it('Shades should return different than selected color for index 1', () => {
+    const color = '#123456';
+    const calcFn = getCalculator({ mode: FieldColorModeId.Shades, seriesIndex: 1, fixedColor: color });
+    expect(calcFn(70, 0, undefined)).not.toEqual(color);
+  });
 });
 
 describe('getFieldSeriesColor', () => {
   const field = getTestField('continuous-GrYlRd');
-  field.values = new ArrayVector([0, -10, 5, 10, 2, 5]);
+  field.values = [0, -10, 5, 10, 2, 5];
 
   it('When color.seriesBy is last use that to calc series color', () => {
     field.config.color!.seriesBy = 'last';
