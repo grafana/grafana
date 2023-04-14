@@ -17,11 +17,11 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
-	WeightDataConnections
 	WeightPlugin
 	WeightConfig
 	WeightAlertsAndIncidents
 	WeightMonitoring
+	WeightDataConnections
 	WeightApps
 	WeightAdmin
 	WeightProfile
