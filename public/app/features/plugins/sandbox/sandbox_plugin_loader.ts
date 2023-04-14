@@ -36,11 +36,6 @@ async function getPluginCode(path: string) {
   return await response.text();
 }
 
-async function getPluginSourceMap(path: string) {
-  const response = await fetch('public/' + path + '.js.map');
-  return await response.text();
-}
-
 /**
  * Do the actual import of the plugin inside a sandbox
  */
