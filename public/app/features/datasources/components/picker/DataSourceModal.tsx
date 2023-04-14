@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { DropEvent, FileRejection } from 'react-dropzone';
+import { DropEvent, FileRejection, DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import {
@@ -19,14 +19,24 @@ import * as DFImport from 'app/features/dataframe-import';
 import { DataSourceList } from './DataSourceList';
 
 interface DataSourceModalProps {
-  onFileDrop: (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => void;
+  onFileDrop?: (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => void;
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: DataSourceRef | string | null;
-  isOpen: boolean;
+  current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
+  datasources: DataSourceInstanceSettings[];
+  recentlyUsed?: string[];
+  enableFileUpload?: boolean;
+  fileUploadOptions?: DropzoneOptions;
 }
 
-export function DataSourceModal({ isOpen, onChange, onFileDrop, current, onDismiss }: DataSourceModalProps) {
+export function DataSourceModal({
+  enableFileUpload,
+  fileUploadOptions,
+  onChange,
+  onFileDrop,
+  current,
+  onDismiss,
+}: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
 
@@ -35,7 +45,7 @@ export function DataSourceModal({ isOpen, onChange, onFileDrop, current, onDismi
       title="Select data source"
       closeOnEscape={true}
       closeOnBackdropClick={true}
-      isOpen={isOpen}
+      isOpen={true}
       className={styles.modal}
       onClickBackdrop={onDismiss}
       onDismiss={onDismiss}
@@ -59,21 +69,24 @@ export function DataSourceModal({ isOpen, onChange, onFileDrop, current, onDismi
         </div>
         <div className={styles.rightColumn}>
           <DataSourceList filter={(ds) => !!ds.meta.builtIn} onChange={onChange} current={current} />
-          <FileDropzone
-            readAs="readAsArrayBuffer"
-            fileListRenderer={() => undefined}
-            options={{
-              maxSize: DFImport.maxFileSize,
-              multiple: false,
-              accept: DFImport.acceptedFiles,
-              onDrop: (...args) => {
-                onFileDrop(...args);
-                onDismiss();
-              },
-            }}
-          >
-            <FileDropzoneDefaultChildren primaryText={'Upload file'} />
-          </FileDropzone>
+          {enableFileUpload && (
+            <FileDropzone
+              readAs="readAsArrayBuffer"
+              fileListRenderer={() => undefined}
+              options={{
+                maxSize: DFImport.maxFileSize,
+                multiple: false,
+                accept: DFImport.acceptedFiles,
+                ...fileUploadOptions,
+                onDrop: (...args) => {
+                  onFileDrop?.(...args);
+                  onDismiss();
+                },
+              }}
+            >
+              <FileDropzoneDefaultChildren primaryText={'Upload file'} />
+            </FileDropzone>
+          )}
           <div className={styles.dsCTAs}>
             <Button variant="secondary" fill="text" onClick={() => {}}>
               Can&apos;t find your data?

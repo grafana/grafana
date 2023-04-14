@@ -112,11 +112,27 @@ export class DataSourceList extends PureComponent<DataSourceListProps, DataSourc
               key={ds.uid}
               ds={ds}
               onClick={this.onChange.bind(this, ds)}
-              selected={ds.uid === this.props.current}
+              selected={!!isDataSourceMatch(ds, this.props.current)}
             />
           ))}
         </VerticalGroup>
       </div>
     );
   }
+}
+
+export function isDataSourceMatch(
+  ds: DataSourceInstanceSettings | undefined,
+  current: string | DataSourceInstanceSettings | DataSourceRef | null | undefined
+): boolean | undefined {
+  if (!ds) {
+    return false;
+  }
+  if (!current) {
+    return false;
+  }
+  if (typeof current === 'string') {
+    return ds.uid === current;
+  }
+  return ds.uid === current.uid;
 }
