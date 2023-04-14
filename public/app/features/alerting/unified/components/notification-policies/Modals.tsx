@@ -21,6 +21,7 @@ import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 import { Matchers } from './Matchers';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
+type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
 
 const useAddPolicyModal = (
   receivers: Receiver[] = [],
@@ -81,7 +82,7 @@ const useEditPolicyModal = (
   receivers: Receiver[],
   handleSave: (route: Partial<FormAmRoute>) => void,
   loading: boolean
-): ModalHook<RouteWithID> => {
+): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
@@ -217,9 +218,11 @@ const useAlertGroupsModal = (): [
     setMatchers([]);
   }, []);
 
-  const handleShow = useCallback((alertGroups, matchers) => {
+  const handleShow = useCallback((alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => {
     setAlertGroups(alertGroups);
-    setMatchers(matchers);
+    if (matchers) {
+      setMatchers(matchers);
+    }
     setShowModal(true);
   }, []);
 

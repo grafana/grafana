@@ -20,10 +20,13 @@ export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
   return isDivider ? (
     <li className="divider" />
   ) : (
-    <li className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined} ref={setRef}>
-      <a onClick={props.onClick} href={props.href}>
+    <li
+      className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined}
+      ref={setRef}
+      data-testid={selectors.components.Panels.Panel.menuItems(props.text)}
+    >
+      <a onClick={props.onClick} href={props.href} role="menuitem">
         {icon && <Icon name={icon} className={styles.menuIconClassName} />}
-
         <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
           {props.text}
           {isSubMenu && <Icon name="angle-right" className={styles.shortcutIconClassName} />}

@@ -87,10 +87,10 @@ var config *Config
 // the config or it reads it and caches it first.
 func GetConfig(cfg *setting.Cfg) (*Config, error) {
 	if cfg != nil {
-		if !cfg.LDAPEnabled {
+		if !cfg.LDAPAuthEnabled {
 			return nil, nil
 		}
-	} else if !cfg.LDAPEnabled {
+	} else if !cfg.LDAPAuthEnabled {
 		return nil, nil
 	}
 

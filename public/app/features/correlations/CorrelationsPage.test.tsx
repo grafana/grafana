@@ -2,57 +2,27 @@ import { render, waitFor, screen, fireEvent, within, Matcher, getByRole } from '
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
-import { DeepPartial } from 'react-hook-form';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourcePluginMeta } from '@grafana/data';
-import {
-  BackendSrv,
-  FetchError,
-  FetchResponse,
-  setDataSourceSrv,
-  BackendSrvRequest,
-  reportInteraction,
-} from '@grafana/runtime';
+import { BackendSrv, setDataSourceSrv, BackendSrvRequest, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
 
 import CorrelationsPage from './CorrelationsPage';
+import {
+  createCreateCorrelationResponse,
+  createFetchCorrelationsError,
+  createFetchCorrelationsResponse,
+  createRemoveCorrelationResponse,
+  createUpdateCorrelationResponse,
+} from './__mocks__/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams } from './types';
-
-function createFetchResponse<T>(overrides?: DeepPartial<FetchResponse>): FetchResponse<T> {
-  return merge(
-    {
-      data: undefined,
-      status: 200,
-      url: '',
-      config: { url: '' },
-      type: 'basic',
-      statusText: 'Ok',
-      redirected: false,
-      headers: {} as unknown as Headers,
-      ok: true,
-    },
-    overrides
-  );
-}
-
-function createFetchError(overrides?: DeepPartial<FetchError>): FetchError {
-  return merge(
-    createFetchResponse(),
-    {
-      status: 500,
-      statusText: 'Internal Server Error',
-      ok: false,
-    },
-    overrides
-  );
-}
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -67,19 +37,10 @@ const renderWithContext = async (
       if (matches?.groups) {
         const { dsUid, correlationUid } = matches.groups;
         correlations = correlations.filter((c) => c.uid !== correlationUid || c.sourceUID !== dsUid);
-        return createFetchResponse({
-          data: {
-            message: 'Correlation deleted',
-          },
-        });
+        return createRemoveCorrelationResponse();
       }
 
-      throw createFetchError({
-        data: {
-          message: 'Correlation not found',
-        },
-        status: 404,
-      });
+      throw createFetchCorrelationsError();
     },
     post: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
@@ -87,15 +48,10 @@ const renderWithContext = async (
         const { sourceUID } = matches.groups;
         const correlation = { sourceUID, ...data, uid: uniqueId() };
         correlations.push(correlation);
-        return correlation;
+        return createCreateCorrelationResponse(correlation);
       }
 
-      throw createFetchError({
-        status: 404,
-        data: {
-          message: 'Source datasource not found',
-        },
-      });
+      throw createFetchCorrelationsError();
     },
     patch: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(
@@ -109,20 +65,14 @@ const renderWithContext = async (
           }
           return c;
         });
-        return createFetchResponse({
-          data: { sourceUID, ...data },
-        });
+        return createUpdateCorrelationResponse({ sourceUID, ...data, uid: uniqueId() });
       }
 
-      throw createFetchError({
-        data: { message: 'either correlation uid or source id not found' },
-        status: 404,
-      });
+      throw createFetchCorrelationsError();
     },
     fetch: (options: BackendSrvRequest) => {
       return new Observable((s) => {
-        s.next(merge(createFetchResponse({ url: options.url, data: correlations })));
-
+        s.next(merge(createFetchCorrelationsResponse({ url: options.url, data: correlations })));
         s.complete();
       });
     },
@@ -223,12 +173,16 @@ const mocks = {
   reportInteraction: jest.fn(),
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
-    mocks.reportInteraction(...args);
-  },
-}));
+jest.mock('@grafana/runtime', () => {
+  const runtime = jest.requireActual('@grafana/runtime');
+
+  return {
+    ...runtime,
+    reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
+      mocks.reportInteraction(...args);
+    },
+  };
+});
 
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
@@ -271,12 +225,12 @@ describe('CorrelationsPage', () => {
       mocks.reportInteraction.mockClear();
     });
 
-    it('shows CTA', async () => {
+    it('shows the first page of the wizard', async () => {
       const CTAButton = await screen.findByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
       // insert form should not be present
-      expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /next$/i })).not.toBeInTheDocument();
 
       // "add new" button is the button on the top of the page, not visible when the CTA is rendered
       expect(screen.queryByRole('button', { name: /add new$/i })).not.toBeInTheDocument();
@@ -286,8 +240,8 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(CTAButton);
 
-      // form's submit button
-      expect(await screen.findByRole('button', { name: /add$/i })).toBeInTheDocument();
+      // form's next button
+      expect(await screen.findByRole('button', { name: /next$/i })).toBeInTheDocument();
     });
 
     it('correctly adds first correlation', async () => {
@@ -299,22 +253,27 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(CTAButton);
 
+      // step 1: label and description
       await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'A Label');
       await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'A Description');
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
 
-      // set source datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^source$/i), { keyCode: 40 });
-      await userEvent.click(screen.getByText('loki'));
-
+      // step 2:
       // set target datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
+      fireEvent.keyDown(screen.getByLabelText(/^target/i), { keyCode: 40 });
       await userEvent.click(screen.getByText('prometheus'));
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
 
-      await userEvent.clear(screen.getByRole('textbox', { name: /target field/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /target field/i }), 'Line');
+      // step 3:
+      // set source datasource picker value
+      fireEvent.keyDown(screen.getByLabelText(/^source/i), { keyCode: 40 });
+      await userEvent.click(screen.getByText('loki'));
+      await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
+      await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
@@ -432,21 +391,26 @@ describe('CorrelationsPage', () => {
       expect(addNewButton).toBeInTheDocument();
       await userEvent.click(addNewButton);
 
+      // step 1:
       await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'A Label');
       await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'A Description');
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
 
+      // step 2:
+      // set target datasource picker value
+      fireEvent.keyDown(screen.getByLabelText(/^target/i), { keyCode: 40 });
+      await userEvent.click(screen.getByText('elastic'));
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+
+      // step 3:
       // set source datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^source$/i), { keyCode: 40 });
+      fireEvent.keyDown(screen.getByLabelText(/^source/i), { keyCode: 40 });
       await userEvent.click(within(screen.getByLabelText('Select options menu')).getByText('prometheus'));
 
-      // set target datasource picker value
-      fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
-      await userEvent.click(screen.getByText('elastic'));
-
-      await userEvent.clear(screen.getByRole('textbox', { name: /target field/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /target field/i }), 'Line');
+      await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
 
       await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
@@ -506,6 +470,8 @@ describe('CorrelationsPage', () => {
 
       expect(screen.queryByRole('cell', { name: /edited label$/i })).not.toBeInTheDocument();
 
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
       expect(await screen.findByRole('cell', { name: /edited label$/i })).toBeInTheDocument();

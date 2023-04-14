@@ -76,6 +76,7 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 }
 
 type UserInfoJson struct {
+	Sub         string              `json:"sub"`
 	Name        string              `json:"name"`
 	DisplayName string              `json:"display_name"`
 	Login       string              `json:"login"`
@@ -108,31 +109,16 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
+		if userInfo.Id == "" {
+			userInfo.Id = data.Sub
+		}
+
 		if userInfo.Name == "" {
 			userInfo.Name = s.extractUserName(data)
 		}
 
 		if userInfo.Login == "" {
-			if data.Login != "" {
-				s.log.Debug("Setting user info login from login field", "login", data.Login)
-				userInfo.Login = data.Login
-			} else {
-				if s.loginAttributePath != "" {
-					s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
-					login, err := s.searchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
-					if err != nil {
-						s.log.Error("Failed to search JSON for login attribute", "error", err)
-					} else if login != "" {
-						userInfo.Login = login
-						s.log.Debug("Setting user info login from login field", "login", login)
-					}
-				}
-
-				if userInfo.Login == "" && data.Username != "" {
-					s.log.Debug("Setting user info login from username field", "username", data.Username)
-					userInfo.Login = data.Username
-				}
-			}
+			userInfo.Login = s.extractLogin(data)
 		}
 
 		if userInfo.Email == "" {
@@ -333,6 +319,32 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 			return emailAddr.Address
 		}
 		s.log.Debug("Failed to parse e-mail address", "error", emailErr.Error())
+	}
+
+	return ""
+}
+
+func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
+	if data.Login != "" {
+		s.log.Debug("Setting user info login from login field", "login", data.Login)
+		return data.Login
+	}
+
+	if s.loginAttributePath != "" {
+		s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
+		login, err := s.searchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("Failed to search JSON for login attribute", "error", err)
+		}
+
+		if login != "" {
+			return login
+		}
+	}
+
+	if data.Username != "" {
+		s.log.Debug("Setting user info login from username field", "username", data.Username)
+		return data.Username
 	}
 
 	return ""

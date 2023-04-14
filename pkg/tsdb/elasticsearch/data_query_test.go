@@ -561,7 +561,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 						"id": "3",
 						"type": "histogram",
 						"field": "bytes",
-						"settings": { "interval": 10, "min_doc_count": 2, "missing": 5 }
+						"settings": { "interval": "10", "min_doc_count": 2, "missing": 5 }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -587,7 +587,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 						"id": "3",
 						"type": "histogram",
 						"field": "bytes",
-						"settings": { "interval": 10, "min_doc_count": 2 }
+						"settings": { "interval": "10", "min_doc_count": 2 }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -1354,6 +1354,25 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			})
 		})
 
+		t.Run("With log context query with sortDirection and searchAfter should return correct query", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+			"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": "1000", "sortDirection": "asc", "searchAfter": [1, "2"] }}]
+		}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "asc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "asc"})
+
+			searchAfter := sr.CustomProps["search_after"].([]interface{})
+			firstSearchAfter, err := searchAfter[0].(json.Number).Int64()
+			require.NoError(t, err)
+			require.Equal(t, firstSearchAfter, int64(1))
+			secondSearchAfter := searchAfter[1].(string)
+			require.NoError(t, err)
+			require.Equal(t, secondSearchAfter, "2")
+		})
+
 		t.Run("With invalid query should return error", (func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeElasticsearchDataQuery(c, `{
@@ -1710,10 +1729,6 @@ func newFakeClient() *fakeClient {
 
 func (c *fakeClient) GetConfiguredFields() es.ConfiguredFields {
 	return c.configuredFields
-}
-
-func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error) {
-	return 15 * time.Second, nil
 }
 
 func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {

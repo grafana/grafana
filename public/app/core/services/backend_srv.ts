@@ -50,6 +50,8 @@ export interface FolderRequestOptions {
   withAccessControl?: boolean;
 }
 
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
@@ -64,7 +66,6 @@ export class BackendSrv implements BackendService {
     contextSrv: contextSrv,
     logout: () => {
       contextSrv.setLoggedOut();
-      window.location.reload();
     },
   };
 
@@ -224,6 +225,7 @@ export class BackendSrv implements BackendService {
           type,
           redirected,
           config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
         };
         return fetchResponse;
       }),
@@ -239,7 +241,13 @@ export class BackendSrv implements BackendService {
         filter((response) => response.ok === false),
         mergeMap((response) => {
           const { status, statusText, data } = response;
-          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
+          const fetchErrorResponse: FetchError = {
+            status,
+            statusText,
+            data,
+            config: options,
+            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+          };
           return throwError(fetchErrorResponse);
         }),
         retryWhen((attempts: Observable<any>) =>
@@ -261,7 +269,12 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                return from(this.loginPing()).pipe(
+                let authChecker = () => this.loginPing();
+                if (config.featureToggles.clientTokenRotation) {
+                  authChecker = () => this.rotateToken();
+                }
+
+                return from(authChecker()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -443,6 +456,10 @@ export class BackendSrv implements BackendService {
     return callback().finally(() => {
       this.noBackendCache = false;
     });
+  }
+
+  rotateToken() {
+    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 });
   }
 
   loginPing() {
