@@ -165,6 +165,12 @@ func Test_newMux(t *testing.T) {
 			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
+		{
+			name:        "creates an Azure Traces executor",
+			queryType:   azureTraces,
+			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			Err:         require.NoError,
+		},
 	}
 
 	for _, tt := range tests {
