@@ -32,11 +32,11 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
     postResource.mockResolvedValueOnce(res);
   });
   resourcePickerData.postResource = postResource;
-  const logLocationsMap = mockGetValidLocations();
-  const getLogsLocations = jest.spyOn(resourcePickerData, 'getLogsLocations').mockResolvedValue(logLocationsMap);
-  resourcePickerData.locationsMap = logLocationsMap;
-  resourcePickerData.locations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
-  return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLogsLocations };
+  const locationsMap = mockGetValidLocations();
+  const getLocations = jest.spyOn(resourcePickerData, 'getLocations').mockResolvedValue(locationsMap);
+  resourcePickerData.locationsMap = locationsMap;
+  resourcePickerData.locations = Array.from(locationsMap.values()).map((location) => `"${location.name}"`);
+  return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLocations };
 };
 
 describe('AzureMonitor resourcePickerData', () => {
@@ -397,7 +397,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const { resourcePickerData, getValidLocations } = createResourcePickerData([createMockARGSubscriptionResponse()]);
       getValidLocations.mockRestore();
       const subscriptions = await resourcePickerData.getSubscriptions();
-      const locations = await resourcePickerData.getLogsLocations(subscriptions);
+      const locations = await resourcePickerData.getLocations(subscriptions);
 
       expect(locations.size).toBe(1);
       expect(locations.has('northeurope')).toBe(true);
@@ -412,7 +412,7 @@ describe('AzureMonitor resourcePickerData', () => {
       getValidLocations.mockRestore();
       mockDatasource.azureMonitorDatasource.getProvider = jest.fn().mockResolvedValue(undefined);
       const subscriptions = await resourcePickerData.getSubscriptions();
-      const locations = await resourcePickerData.getLogsLocations(subscriptions);
+      const locations = await resourcePickerData.getLocations(subscriptions);
 
       expect(locations.size).toBe(1);
       expect(locations.has('northeurope')).toBe(true);

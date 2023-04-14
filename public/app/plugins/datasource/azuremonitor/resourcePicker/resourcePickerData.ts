@@ -58,7 +58,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const subscriptions = await this.getSubscriptions();
 
     if (this.locationsMap.size === 0) {
-      this.locationsMap = await this.getLogsLocations(subscriptions);
+      this.locationsMap = await this.getLocations(subscriptions);
       this.locations = Array.from(this.locationsMap.values()).map((location) => `"${location.name}"`);
     }
 
@@ -392,12 +392,11 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
   }
 
-  async getLogsLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
+  async getLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
     const subscriptionIds = subscriptions.map((sub) => sub.id);
     const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
-    const locationsMap = new Map<string, AzureMonitorLocations>(locations);
 
-    return locationsMap;
+    return locations;
   }
 
   parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {
