@@ -158,13 +158,21 @@ curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-accoun
 # create the service account token with the service account id 1 - /serviceaccounts/{id} returned from the previous step
 curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/1/tokens
 
-# response with the created SAT id,name and key
+# response with the created SAT id,name and key.
 {"id":2,"name":"my-service-account-token","key":"glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939"}%
+
+# now you can authenticate the same way as you did with the API key
+curl --request GET --url http://localhost:3000/api/folders --header 'Authorization: Bearer glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939'
+
+# response
+[{"id":1,"uid":"a5261a84-eebc-4733-83a9-61f4713561d1","title":"gdev dashboards"}]%
 ```
 
 ### Migrate API keys to Grafana service accounts in Terraform
 
 This section shows you how to migrate your terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
+
+For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources see [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
 
 #### Steps
 
@@ -241,5 +249,101 @@ resource "grafana_service_account_token" "sat-foo" {
   name           = "sat-foo"
   service_account_id = grafana_service_account.sa-admin.id
   seconds_to_live    = 30
+}
+```
+
+### Migrate Cloud **Stack** API keys to Grafana cloud stack service accounts in Terraform
+
+This section shows you how to migrate your Terraform configuration for Grafana cloud stack API keys to Grafana cloud stack service accounts. For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources see [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
+
+> **Note:** This is only relevant for Grafana Cloud **Stack** API keys `grafana_cloud_stack_api_key`. Grafana Cloud API keys resource `grafana_cloud_api_key` are not deprecated and should be used for authentication for managing your Grafana cloud.
+
+#### Steps
+
+Complete the following steps to migrate from cloud stack API keys to cloud stack service accounts using Terraform:
+
+1. Generate `grafana_cloud_stack_service_account` and `grafana_cloud_stack_service_account_token` resources.
+1. Specify the desired scopes and expiration date when creating the service account.
+1. Use the token returned from `grafana_cloud_stack_service_account_token` to authenticate the API requests.
+1. Remove the Terraform configuration for creating your `grafana_cloud_stack_api_key` resources.
+
+**Example: Your current Terraform configuration**
+
+```tf
+terraform {
+  required_providers {
+    grafana = {
+      source = "grafana/grafana"
+    }
+  }
+}
+
+# Declaring the first provider to be only used for creating the cloud-stack
+provider "grafana" {
+  alias = "cloud"
+
+  cloud_api_key = "<API-Key>"
+}
+
+resource "grafana_cloud_stack" "my_stack" {
+  provider = grafana.cloud
+
+  name        = "my_stack"
+  slug        = "my_stack"
+  region_slug = "eu" # Example “us”,”eu” etc
+}
+
+# Creating a Grafana API key to be used as auth
+resource "grafana_cloud_stack_api_key" "management" {
+  provider = grafana.cloud
+
+  stack_slug = grafana_cloud_stack.my_stack.slug
+  name       = "management-key"
+  role       = "Admin"
+}
+```
+
+**Your new Terraform configuration**
+
+```tf
+terraform {
+  required_providers {
+    grafana = {
+      source = "grafana/grafana"
+    }
+  }
+}
+
+# Declaring the first provider to be only used for creating the cloud-stack
+provider "grafana" {
+  alias = "cloud"
+
+  cloud_api_key = "<API-Key>"
+}
+
+resource "grafana_cloud_stack" "my_stack" {
+  provider = grafana.cloud
+
+  name        = "my_stack"
+  slug        = "my_stack"
+  region_slug = "eu" # Example “us”,”eu” etc
+}
+
+# Creating a grafana cloud stack service account
+resource "grafana_cloud_stack_service_account" "mystack_cloud-stack_service_account" {
+  provider   = grafana.cloud
+  stack_slug = grafana_cloud_stack.my_stack.slug
+
+  name = "mystack-cloud-stack-sa"
+  role = "Admin"
+}
+
+# Creating a grafana cloud stack service account token
+resource "grafana_cloud_stack_service_account_token" "mystack_cloud-stack_service-account_token" {
+  provider   = grafana.cloud
+  stack_slug = grafana_cloud_stack.my_stack.slug
+
+  name               = "mystack-cloud-stack-sa-token"
+  service_account_id = grafana_cloud_stack_service_account.mystack_cloud-stack_service_account.id
 }
 ```
