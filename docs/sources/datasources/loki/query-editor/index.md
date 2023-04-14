@@ -111,7 +111,7 @@ Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../.
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
 
-To get started select the **Live** button in the top right corner of the Explore view.
+To start tailing logs click the **Live** button in the top right corner of the Explore view.
 {{< figure src="/static/img/docs/v95/loki_tailing.png" class="docs-image--no-shadow" max-width="80px" >}}
 
 #### Proxying examples
