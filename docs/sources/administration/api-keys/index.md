@@ -108,7 +108,7 @@ To migrate a single API key to a service account, complete the following steps:
 
 ### Migrate API keys to Grafana service accounts for API calls
 
-This section shows you how to migrate API keys to Grafana service accounts specifically for the Grafana API. For references see: [Grafana Service Accounts for the Grafana API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
+This section shows you how to migrate API keys to Grafana service accounts for Grafana API workflows. For references see: [Grafana Service Accounts for the Grafana API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
 
 #### Before you begin
 
@@ -170,7 +170,7 @@ curl --request GET --url http://localhost:3000/api/folders --header 'Authorizati
 
 ### Migrate API keys to Grafana service accounts in Terraform
 
-This section shows you how to migrate your terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
+This section shows you how to migrate your Terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
 
 For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources see [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
 
@@ -183,7 +183,7 @@ Complete the following steps to migrate from API keys to service accounts using 
 1. Use the token returned from `grafana_service_account_token` to authenticate the API requests.
 1. Remove the terraform configuration for creating your `grafana_api_key` resources.
 
-**Example: your current terraform configuration**
+**Example: your current Terraform configuration**
 
 ```tf
 terraform {
@@ -212,9 +212,9 @@ resource "grafana_api_key" "bar" {
 }
 ```
 
-**Your new terraform configuration**
+**Your new Terraform configuration**
 
-_Note:_ that we can create multiple tokens using one service account.
+_Note:_ you can create multiple tokens using one service account.
 
 ```tf
 terraform {
