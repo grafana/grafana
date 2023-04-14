@@ -200,3 +200,17 @@ Second, we've implemented an eye icon that lets users display only the selected 
 {{< figure src="/media/docs/grafana/log-context-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
 
 These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
+
+## Alerting
+
+### Guided set up of alert rules
+
+Simplifies the alert rule creation process by introducing a wizard to guide you step-by-step through creating your alert rules as well as providing in-app guidance along the way.
+
+### State history view
+
+Use the improved State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
+
+### Improved templating experience
+
+Text tbd.
