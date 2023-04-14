@@ -20375,7 +20375,6 @@ __metadata:
     react-redux: 7.2.6
     react-refresh: 0.14.0
     react-resizable: 3.0.4
-    react-reverse-portal: 2.1.1
     react-router-dom: 5.3.3
     react-select: 5.7.0
     react-select-event: 5.5.1
@@ -31179,16 +31178,6 @@ __metadata:
   peerDependencies:
     react: ">= 16.3"
   checksum: cbf86ad04be0f073102489ad25a2ba101779f0f00e580d48e1be73c4057c36a4e8ee8308b020ad3dd91555bb24082ceeef674d5035a38d33a2d43aed192db7fa
-  languageName: node
-  linkType: hard
-
-"react-reverse-portal@npm:2.1.1":
-  version: 2.1.1
-  resolution: "react-reverse-portal@npm:2.1.1"
-  peerDependencies:
-    react: ^16.0.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 2daccae3ac089606acee3a13fa5cde07ef90668de775bcc49edceb3f472f82e133f0673bb3b82dc53687c3ebd781c578f81eb4368c6028acd9c4625e71964394
   languageName: node
   linkType: hard
 
