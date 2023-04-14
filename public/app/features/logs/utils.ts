@@ -1,6 +1,19 @@
 import { countBy, chain } from 'lodash';
 
-import { LogLevel, LogRowModel, LogLabelStatsModel, LogsModel, LogsSortOrder } from '@grafana/data';
+import {
+  LogLevel,
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsModel,
+  LogsSortOrder,
+  DataFrame,
+  FieldConfig,
+  FieldCache,
+  FieldType,
+  MutableDataFrame,
+  QueryResultMeta,
+  LogsVolumeType,
+} from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
 
@@ -135,7 +148,8 @@ export const escapeUnescapedString = (string: string) =>
 export function logRowsToReadableJson(logs: LogRowModel[]) {
   return logs.map((log) => {
     const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
-      acc[field.key] = field.value;
+      const key = field.keys[0];
+      acc[key] = field.values[0];
       return acc;
     }, {});
 
@@ -149,3 +163,112 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
     };
   });
 }
+
+export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
+  let widestRange = { from: Infinity, to: -Infinity };
+
+  dataFrames.forEach((dataFrame: DataFrame) => {
+    const meta = dataFrame.meta?.custom || {};
+    if (meta.absoluteRange?.from && meta.absoluteRange?.to) {
+      widestRange = {
+        from: Math.min(widestRange.from, meta.absoluteRange.from),
+        to: Math.max(widestRange.to, meta.absoluteRange.to),
+      };
+    }
+  });
+
+  return widestRange;
+};
+
+/**
+ * Merge data frames by level and calculate maximum total value for all levels together
+ */
+export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames: DataFrame[]; maximum: number } => {
+  if (dataFrames.length === 0) {
+    throw new Error('Cannot aggregate data frames: there must be at least one data frame to aggregate');
+  }
+
+  // aggregate by level (to produce data frames)
+  const aggregated: Record<string, Record<number, number>> = {};
+
+  // aggregate totals to align Y axis when multiple log volumes are shown
+  const totals: Record<number, number> = {};
+  let maximumValue = -Infinity;
+
+  const configs: Record<
+    string,
+    { meta?: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
+  > = {};
+  let results: DataFrame[] = [];
+
+  // collect and aggregate into aggregated object
+  dataFrames.forEach((dataFrame) => {
+    const fieldCache = new FieldCache(dataFrame);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+
+    if (!timeField) {
+      throw new Error('Missing time field');
+    }
+    if (!valueField) {
+      throw new Error('Missing value field');
+    }
+
+    const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
+    const length = valueField.values.length;
+    configs[level] = {
+      meta: dataFrame.meta,
+      valueFieldConfig: valueField.config,
+      timeFieldConfig: timeField.config,
+    };
+
+    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+      const time: number = timeField.values.get(pointIndex);
+      const value: number = valueField.values.get(pointIndex);
+      aggregated[level] ??= {};
+      aggregated[level][time] = (aggregated[level][time] || 0) + value;
+
+      totals[time] = (totals[time] || 0) + value;
+      maximumValue = Math.max(totals[time], maximumValue);
+    }
+  });
+
+  // convert aggregated into data frames
+  Object.keys(aggregated).forEach((level) => {
+    const levelDataFrame = new MutableDataFrame();
+    const { meta, timeFieldConfig, valueFieldConfig } = configs[level];
+    // Log Volume visualization uses the name when toggling the legend
+    levelDataFrame.name = level;
+    levelDataFrame.meta = meta;
+    levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
+    levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
+
+    for (const time in aggregated[level]) {
+      const value = aggregated[level][time];
+      levelDataFrame.add({
+        Time: Number(time),
+        Value: value,
+      });
+    }
+
+    results.push(levelDataFrame);
+  });
+
+  return { dataFrames: results, maximum: maximumValue };
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName) {
+    return {
+      name: customMeta.datasourceName,
+    };
+  }
+
+  return null;
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+};

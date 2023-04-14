@@ -13,6 +13,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsMetaKind,
+  LogsVolumeCustomMetaData,
   LogsVolumeType,
   MutableDataFrame,
   sortDataFrame,
@@ -1207,6 +1208,16 @@ describe('logs volume', () => {
   it('applies correct meta data', async () => {
     setup(setupMultipleResults);
 
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
     await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
       expect(received).toContainEqual({
@@ -1216,15 +1227,7 @@ describe('logs volume', () => {
           expect.objectContaining({
             fields: expect.anything(),
             meta: {
-              custom: {
-                sourceQuery: { refId: 'A', target: 'volume query 1' },
-                datasourceName: 'loki',
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: {
-                  from: FROM.valueOf(),
-                  to: TO.valueOf(),
-                },
-              },
+              custom: logVolumeCustomMeta,
             },
           }),
           expect.anything(),
@@ -1236,6 +1239,16 @@ describe('logs volume', () => {
   it('applies correct meta data when streaming', async () => {
     setup(setupMultipleResultsStreaming);
 
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
     await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
       expect(received).toContainEqual({
@@ -1245,15 +1258,7 @@ describe('logs volume', () => {
           expect.objectContaining({
             fields: expect.anything(),
             meta: {
-              custom: {
-                sourceQuery: { refId: 'A', target: 'volume query 1' },
-                datasourceName: 'loki',
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: {
-                  from: FROM.valueOf(),
-                  to: TO.valueOf(),
-                },
-              },
+              custom: logVolumeCustomMeta,
             },
           }),
           expect.anything(),

@@ -20,16 +20,16 @@ import { checkLogsError, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
+import { LogRowMessage } from './LogRowMessage';
+import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
+import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 import {
   LogRowContextRows,
   LogRowContextQueryErrors,
   HasMoreContextRows,
   LogRowContextProvider,
-  RowContextOptions,
-} from './LogRowContextProvider';
-import { LogRowMessage } from './LogRowMessage';
-import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+} from './log-context/LogRowContextProvider';
+import { RowContextOptions } from './log-context/types';
 
 interface Props extends Themeable2 {
   row: LogRowModel;

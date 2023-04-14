@@ -123,7 +123,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   withCredentials: any;
   access: 'direct' | 'proxy';
   interval: any;
-  responseParser: any;
+  responseParser: ResponseParser;
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
@@ -539,7 +539,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    const interpolated = this.templateSrv.replace(query, undefined, 'regex');
+    const interpolated = new InfluxQueryModel(
+      {
+        refId: 'metricFindQuery',
+        query,
+        rawQuery: true,
+      },
+      this.templateSrv,
+      options.scopedVars
+    ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
@@ -604,6 +612,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = options.database;
     } else if (this.database) {
       params.db = this.database;
+    }
+
+    if (options?.policy) {
+      params.rp = options.policy;
     }
 
     const { q } = data;
