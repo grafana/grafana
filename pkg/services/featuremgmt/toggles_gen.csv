@@ -76,5 +76,5 @@ pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,fals
 externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
 dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false,true
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
-enableElasticsearchBackendQuerying,stable,@grafana/observability-logs,false,false,false,false
+enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
