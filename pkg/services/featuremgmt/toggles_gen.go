@@ -19,10 +19,6 @@ const (
 	// Add Prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
 
-	// FlagDashboardPreviews
-	// Create and show thumbnails for dashboard search results
-	FlagDashboardPreviews = "dashboardPreviews"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -322,4 +318,8 @@ const (
 	// FlagDisableElasticsearchBackendQuerying
 	// Disable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
 )
