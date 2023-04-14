@@ -16,7 +16,8 @@ const (
 )
 
 var (
-	_ Service = (*service)(nil)
+	_ Service        = (*service)(nil)
+	_ CADataProvider = (*service)(nil)
 )
 
 type Service interface {
@@ -28,6 +29,10 @@ type service struct {
 	cfg      *setting.Cfg
 	certUtil *CertUtil
 	Log      log.Logger
+}
+
+type CADataProvider interface {
+	GetCAData() []byte
 }
 
 func ProvideService(cfg *setting.Cfg) (*service, error) {
@@ -45,6 +50,12 @@ func ProvideService(cfg *setting.Cfg) (*service, error) {
 
 	return s, nil
 }
+
+func (s *service) GetCAData() []byte {
+	_ = s.AwaitRunning(context.Background())
+	return s.certUtil.CACertPem()
+}
+
 func (s *service) up(ctx context.Context) error {
 	err := s.certUtil.InitializeCACertPKI()
 	if err != nil {

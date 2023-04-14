@@ -7,12 +7,13 @@ const (
 
 	HTTPServer string = "http-server"
 
-	Kine                string = "kine"
-	KubernetesCRDs      string = "kubernetes-crds"
-	KubernetesAPIServer string = "kubernetes-apiserver"
-	KubernetesInformers string = "kubernetes-informers"
-	KubernetesClientset string = "kubernetes-clientset"
-	Kubernetes          string = "kubernetes"
+	Kine                   string = "kine"
+	KubernetesCRDs         string = "kubernetes-crds"
+	KubernetesAPIServer    string = "kubernetes-apiserver"
+	KubernetesInformers    string = "kubernetes-informers"
+	KubernetesClientset    string = "kubernetes-clientset"
+	Kubernetes             string = "kubernetes"
+	KubernetesSATokensCtrl string = "kubernetes-sa-tokens-controller"
 
 	Provisioning string = "provisioning"
 
@@ -24,12 +25,13 @@ var DependencyMap = map[string][]string{
 
 	HTTPServer: {CertGenerator},
 
-	Kine:                {},
-	KubernetesAPIServer: {CertGenerator, Kine},
-	KubernetesClientset: {KubernetesAPIServer},
-	KubernetesCRDs:      {KubernetesClientset},
-	KubernetesInformers: {KubernetesCRDs},
-	Kubernetes:          {KubernetesInformers},
+	Kine:                   {},
+	KubernetesAPIServer:    {CertGenerator, Kine},
+	KubernetesClientset:    {KubernetesAPIServer},
+	KubernetesCRDs:         {KubernetesClientset},
+	KubernetesInformers:    {KubernetesCRDs},
+	Kubernetes:             {KubernetesInformers, KubernetesSATokensCtrl},
+	KubernetesSATokensCtrl: {KubernetesAPIServer},
 
 	Provisioning: {KubernetesCRDs},
 

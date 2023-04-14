@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"path"
 
@@ -15,6 +16,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/client-go/util/keyutil"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
@@ -41,19 +44,21 @@ type RestConfigProvider interface {
 type service struct {
 	*services.BasicService
 
-	etcdProvider kine.EtcdProvider
-	restConfig   *rest.Config
+	etcdProvider   kine.EtcdProvider
+	restConfig     *rest.Config
+	caDataProvider certgenerator.CADataProvider
 
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service, error) {
+func ProvideService(etcdProvider kine.EtcdProvider, caDataProvider certgenerator.CADataProvider, cfg *setting.Cfg) (*service, error) {
 	s := &service{
-		dataPath:     path.Join(cfg.DataPath, "k8s"),
-		etcdProvider: etcdProvider,
-		stopCh:       make(chan struct{}),
+		caDataProvider: caDataProvider,
+		dataPath:       path.Join(cfg.DataPath, "k8s"),
+		etcdProvider:   etcdProvider,
+		stopCh:         make(chan struct{}),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
@@ -62,7 +67,31 @@ func ProvideService(etcdProvider kine.EtcdProvider, cfg *setting.Cfg) (*service,
 }
 
 func (s *service) GetRestConfig() *rest.Config {
+	_ = s.AwaitRunning(context.Background())
 	return s.restConfig
+}
+
+func (s *service) enableServiceAccountsAuthn(serverRunOptions *options.ServerRunOptions) error {
+	tokenSigningCertFile := s.dataPath + "/token-signing.apiserver.crt"
+	tokenSigningKeyFile := s.dataPath + "/token-signing.apiserver.key"
+	tokenSigningCertExists, _ := certutil.CanReadCertAndKey(tokenSigningCertFile, tokenSigningKeyFile)
+	if tokenSigningCertExists == false {
+		cert, key, err := certutil.GenerateSelfSignedCertKey(DefaultAPIServerHost, []net.IP{}, []string{})
+		if err != nil {
+			fmt.Println("Error generating token signing cert")
+			return err
+		} else {
+			certutil.WriteCert(tokenSigningCertFile, cert)
+			keyutil.WriteKey(tokenSigningKeyFile, key)
+		}
+	}
+
+	serverRunOptions.ServiceAccountSigningKeyFile = tokenSigningKeyFile
+	serverRunOptions.Authentication.ServiceAccounts.KeyFiles = []string{tokenSigningKeyFile}
+	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
+	serverRunOptions.Authentication.ServiceAccounts.JWKSURI = DefaultAPIServerHost + "/.well-known/openid-configuration"
+
+	return nil
 }
 
 func (s *service) start(ctx context.Context) error {
@@ -79,7 +108,11 @@ func (s *service) start(ctx context.Context) error {
 		KeyFile:  certUtil.APIServerKeyFile(),
 	}
 
-	serverRunOptions.Authentication.ServiceAccounts.Issuers = []string{DefaultAPIServerHost}
+	err := s.enableServiceAccountsAuthn(serverRunOptions)
+	if err != nil {
+		return err
+	}
+
 	serverRunOptions.Authentication.WebHook.ConfigFile = "conf/k8s-authn-webhook-config"
 	serverRunOptions.Authentication.WebHook.Version = "v1"
 
@@ -99,7 +132,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	logger := logr.New(newLogAdapter())
-	logger.V(1)
+	logger.V(6)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	server, err := app.CreateServerChain(completedOptions)
@@ -115,6 +148,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	prepared, err := server.PrepareRun()
+
 	if err != nil {
 		return err
 	}
@@ -141,8 +175,12 @@ func (s *service) running(ctx context.Context) error {
 func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                   restConfig.Host,
-		CertificateAuthorityData: restConfig.CAData,
+		Server: restConfig.Host,
+		// LoopbackConfig CAData from restConfig doesn't get rid of the TLS error with kubectl even when specifying
+		// CA data in kubeconfig, likely cuz the certificate that SecureServingWithLoopback default options logic
+		// in kube-apiserver creates is just a self-signed one, not originating from a CA
+		// Here, we utilize the CADataProvider exposed by certgenerator from which APIServer's PKI is also issued.
+		CertificateAuthorityData: s.caDataProvider.GetCAData(),
 	}
 
 	contexts := make(map[string]*clientcmdapi.Context)

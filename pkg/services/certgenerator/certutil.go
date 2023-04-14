@@ -39,6 +39,7 @@ type CertUtil struct {
 	K8sDataPath string
 	caKey       *rsa.PrivateKey
 	caCert      *x509.Certificate
+	caCertPem   []byte
 }
 
 func (cu *CertUtil) CACertFile() string {
@@ -117,37 +118,42 @@ func getServiceIPAndRanges(serviceClusterIPRanges string) (net.IP, net.IPNet, ne
 	return apiServerServiceIP, primaryServiceIPRange, secondaryServiceIPRange, nil
 }
 
-func loadExistingCertPKI(certPath string, keyPath string) (*x509.Certificate, *rsa.PrivateKey, error) {
-	caCertPemBlocks, err := os.ReadFile(filepath.Clean(certPath))
+func loadExistingCertPKI(certPath string, keyPath string) (caCert *x509.Certificate, caKey *rsa.PrivateKey, caCertPemBytes []byte, err error) {
+	caCertPemBytes, err = os.ReadFile(filepath.Clean(certPath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("error reading existing Cert: %s", err.Error())
+		err = fmt.Errorf("error reading existing Cert: %s", err.Error())
+		return
 	}
 
 	caKeyPemBytes, err := os.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("error reading existing Key: %s", err.Error())
+		err = fmt.Errorf("error reading existing Key: %s", err.Error())
+		return
 	}
 
-	certBlock, _ := pem.Decode(caCertPemBlocks)
+	certBlock, _ := pem.Decode(caCertPemBytes)
 
-	caCert, err := x509.ParseCertificate(certBlock.Bytes)
+	caCert, err = x509.ParseCertificate(certBlock.Bytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing existing Cert: %s", err.Error())
+		err = fmt.Errorf("error parsing existing Cert: %s", err.Error())
+		return
 	}
 
 	keyBlock, _ := pem.Decode(caKeyPemBytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing existing Key into pem: %s", err.Error())
+		err = fmt.Errorf("error parsing existing Key into pem: %s", err.Error())
+		return
 	}
 
-	caKey, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	caKey, err = x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing existing Key from pem: %s", err.Error())
+		err = fmt.Errorf("error parsing existing Key from pem: %s", err.Error())
+		return
 	}
 
 	caKey.PublicKey = *(caCert.PublicKey.(*rsa.PublicKey))
 
-	return caCert, caKey, nil
+	return
 }
 
 func createNewCACertPKI() (*x509.Certificate, *rsa.PrivateKey, error) {
@@ -215,7 +221,7 @@ func (cu *CertUtil) InitializeCACertPKI() error {
 	}
 
 	if exists {
-		cu.caCert, cu.caKey, err = loadExistingCertPKI(cu.CACertFile(), cu.CAKeyFile())
+		cu.caCert, cu.caKey, cu.caCertPem, err = loadExistingCertPKI(cu.CACertFile(), cu.CAKeyFile())
 		return err
 	} else {
 		cu.caCert, cu.caKey, err = createNewCACertPKI()
@@ -225,6 +231,14 @@ func (cu *CertUtil) InitializeCACertPKI() error {
 
 		return persistCertKeyPairToDisk(cu.caCert, cu.CACertFile(), cu.caKey, cu.CAKeyFile())
 	}
+}
+
+func (cu *CertUtil) CACertPem() []byte {
+	// callers must ensure that CertUtil is initialized before calling on this helper
+	if cu.caCertPem == nil {
+		return nil
+	}
+	return cu.caCertPem
 }
 
 // NOTE: default KeyUsage to check against is x509.ExtKeyUsageServerAuth, for verifying client certificates, override
@@ -261,7 +275,7 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 
 	if exists {
 		// Let's verify that the existing cert in fact verifies against existing CA chain
-		cert, _, err := loadExistingCertPKI(cu.APIServerCertFile(), cu.APIServerKeyFile())
+		cert, _, _, err := loadExistingCertPKI(cu.APIServerCertFile(), cu.APIServerKeyFile())
 		if err != nil {
 			return err
 		}
@@ -358,7 +372,7 @@ func (cu *CertUtil) EnsureAuthzClientPKI() error {
 
 	if exists {
 		// Let's verify that the existing cert in fact verifies against existing CA chain
-		cert, _, err := loadExistingCertPKI(cu.K8sAuthzClientCertFile(), cu.K8sAuthzClientKeyFile())
+		cert, _, _, err := loadExistingCertPKI(cu.K8sAuthzClientCertFile(), cu.K8sAuthzClientKeyFile())
 		if err != nil {
 			return err
 		}
@@ -383,7 +397,7 @@ func (cu *CertUtil) EnsureAuthnClientPKI() error {
 
 	if exists {
 		// Let's verify that the existing cert in fact verifies against existing CA chain
-		cert, _, err := loadExistingCertPKI(cu.K8sAuthnClientCertFile(), cu.K8sAuthnClientKeyFile())
+		cert, _, _, err := loadExistingCertPKI(cu.K8sAuthnClientCertFile(), cu.K8sAuthnClientKeyFile())
 		if err != nil {
 			return err
 		}

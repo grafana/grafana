@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	publicdashboardWebhooks "github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard/webhooks"
+	"github.com/grafana/grafana/pkg/services/k8s/satokenscontroller"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 )
 
@@ -32,6 +33,7 @@ func ProvideRegistry(
 	httpServer *api.HTTPServer,
 	pdWebhooks *publicdashboardWebhooks.WebhooksAPI,
 	provisioning *provisioning.ProvisioningServiceImpl,
+	saTokenService satokenscontroller.Service,
 ) *registry {
 	return NewRegistry(
 		moduleManager,
@@ -44,6 +46,7 @@ func ProvideRegistry(
 		httpServer,
 		pdWebhooks,
 		provisioning,
+		saTokenService,
 	)
 }
 
