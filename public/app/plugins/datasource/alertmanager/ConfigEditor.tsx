@@ -81,6 +81,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+        secureSocksDSProxyEnabled={false}
       />
     </>
   );

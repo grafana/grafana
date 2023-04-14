@@ -83,7 +83,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           dataSourceConfig={options}
           onChange={onOptionsChange}
         />
-        {config.featureToggles.secureSocksDatasourceProxy && (
+        {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
         <h3 className="page-heading">Graphite details</h3>

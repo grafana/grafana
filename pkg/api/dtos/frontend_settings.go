@@ -197,6 +197,7 @@ type FrontendSettingsDTO struct {
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
+	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
