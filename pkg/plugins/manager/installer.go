@@ -79,7 +79,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		if dlOpts.PluginZipURL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, compatOpts)
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL)
 			if err != nil {
 				return err
 			}

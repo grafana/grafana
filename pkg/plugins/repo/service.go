@@ -48,12 +48,12 @@ func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string
 		return nil, err
 	}
 
-	return m.client.download(ctx, dlOpts.PluginZipURL, dlOpts.Checksum, compatOpts)
+	return m.client.download(ctx, dlOpts.PluginZipURL, dlOpts.Checksum)
 }
 
 // GetPluginArchiveByURL fetches the requested plugin archive from the provided `pluginZipURL`
-func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string, compatOpts CompatOpts) (*PluginArchive, error) {
-	return m.client.download(ctx, pluginZipURL, "", compatOpts)
+func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string) (*PluginArchive, error) {
+	return m.client.download(ctx, pluginZipURL, "")
 }
 
 // GetPluginDownloadOptions returns the options for downloading the requested plugin (with optional `version`)
@@ -259,7 +259,7 @@ func (m *Manager) repoInfo(pluginID string, compatOpts CompatOpts) (PluginRepo, 
 
 	u.Path = path.Join(u.Path, "repo", pluginID)
 
-	body, err := m.client.sendReq(u, opts{compatOpts})
+	body, err := m.client.sendReq(u, compatOpts)
 	if err != nil {
 		return PluginRepo{}, err
 	}

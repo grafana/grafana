@@ -201,7 +201,7 @@ func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
 
 type FakePluginRepo struct {
 	GetPluginArchiveFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginArchiveByURLFunc    func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveByURLFunc    func(_ context.Context, archiveURL string) (*repo.PluginArchive, error)
 	GetPluginDownloadOptionsFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
 }
 
@@ -215,9 +215,9 @@ func (r *FakePluginRepo) GetPluginArchive(ctx context.Context, pluginID, version
 }
 
 // GetPluginArchiveByURL fetches the requested plugin from the specified URL.
-func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
+func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL string) (*repo.PluginArchive, error) {
 	if r.GetPluginArchiveByURLFunc != nil {
-		return r.GetPluginArchiveByURLFunc(ctx, archiveURL, opts)
+		return r.GetPluginArchiveByURLFunc(ctx, archiveURL)
 	}
 
 	return &repo.PluginArchive{}, nil

@@ -76,7 +76,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	var err error
 	pluginZipURL := c.PluginURL()
 	if pluginZipURL != "" {
-		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
+		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL); err != nil {
 			return err
 		}
 	} else {
