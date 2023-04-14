@@ -1,9 +1,9 @@
 import { paramsWithMatcherAndState } from './prometheus';
 
 const matcher = [{ name: 'severity', isRegex: false, isEqual: true, value: 'critical' }];
-const matcherToJson = matcher.map((m) => encodeURIComponent(JSON.stringify(m)));
+const matcherToJson = matcher.map((m) => JSON.stringify(m));
 const matchers = [...matcher, { name: 'label1', isRegex: false, isEqual: true, value: 'hello there' }];
-const matchersToJson = matchers.map((m) => encodeURIComponent(JSON.stringify(m)));
+const matchersToJson = matchers.map((m) => JSON.stringify(m));
 
 describe('paramsWithMatcherAndState method', () => {
   it('Should return same params object with no changes if there are no states nor matchers', () => {
