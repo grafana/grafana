@@ -311,6 +311,6 @@ export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
     return false;
   }
 
-  const isLokiQuery = query as LokiQuery;
-  return isLokiQuery.expr !== undefined;
+  const lokiQuery = query as LokiQuery;
+  return lokiQuery.expr !== undefined;
 };
