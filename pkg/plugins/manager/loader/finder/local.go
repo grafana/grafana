@@ -24,12 +24,14 @@ var (
 )
 
 type Local struct {
-	log log.Logger
+	log     log.Logger
+	devMode bool
 }
 
-func NewLocalFinder() *Local {
+func NewLocalFinder(devMode bool) *Local {
 	return &Local{
-		log: log.New("local.finder"),
+		devMode: devMode,
+		log:     log.New("local.finder"),
 	}
 }
 
@@ -86,8 +88,10 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			return nil, err
 		}
 		var opts []plugins.LocalFSOption
-		// TODO: only if dev mode...
-		opts = append(opts, plugins.LocalFSOptionAllowAll)
+		if l.devMode {
+			// Allow accessing all files (added after Grafana starts) in dev mode
+			opts = append(opts, plugins.LocalFSOptionAllowAll)
+		}
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
 				JSONData: data,
