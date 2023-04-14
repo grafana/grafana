@@ -1,6 +1,6 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
@@ -38,7 +38,9 @@ export const Page: PageType = ({
 
   const pageHeaderNav = pageNav ?? navModel?.node;
 
-  useEffect(() => {
+  // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
+  // This prevents flickering sectionNav when going from dashbaord to settings for example
+  useLayoutEffect(() => {
     if (navModel) {
       chrome.update({
         sectionNav: navModel,

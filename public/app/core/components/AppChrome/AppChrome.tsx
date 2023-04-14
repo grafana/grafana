@@ -49,14 +49,10 @@ export function AppChrome({ children }: Props) {
         </div>
       )}
       <div className={contentClass}>
-        {state.layout === PageLayoutType.Standard && (
-          <div className={styles.panes}>
-            {state.sectionNav && <SectionNav model={state.sectionNav} />}
-            <div className={styles.pageContainer}>{children}</div>
-          </div>
-        )}
-        {state.layout === PageLayoutType.Canvas && children}
-        {state.layout === PageLayoutType.Custom && children}
+        <div className={styles.panes}>
+          {state.layout === PageLayoutType.Standard && state.sectionNav && <SectionNav model={state.sectionNav} />}
+          <div className={styles.pageContainer}>{children}</div>
+        </div>
       </div>
       {!state.chromeless && (
         <>
