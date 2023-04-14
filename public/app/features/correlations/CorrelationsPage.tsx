@@ -8,7 +8,6 @@ import {
   Badge,
   Button,
   DeleteButton,
-  HorizontalGroup,
   LoadingPlaceholder,
   useStyles2,
   Alert,
@@ -158,15 +157,6 @@ export default function CorrelationsPage() {
       actions={addButton}
     >
       <Page.Contents>
-        <div>
-          <HorizontalGroup justify="space-between">
-            <Page.OldNavOnly>
-              <p>Define how data living in different data sources relates to each other.</p>
-            </Page.OldNavOnly>
-            <Page.OldNavOnly>{addButton}</Page.OldNavOnly>
-          </HorizontalGroup>
-        </div>
-
         <div>
           {!data && get.loading && (
             <div className={loaderWrapper}>

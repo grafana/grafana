@@ -42,12 +42,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
-  config: {
-    buildInfo: {},
-    featureToggles: {
-      disableElasticsearchBackendQuerying: true,
-    },
-  },
 }));
 
 const TIMESRV_START = [2022, 8, 21, 6, 10, 10];
