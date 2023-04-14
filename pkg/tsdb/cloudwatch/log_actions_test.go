@@ -15,13 +15,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuery_GetLogEvents(t *testing.T) {
+func TestQuery_handleGetLogEvents_passes_nil_start_and_end_times_to_GetLogEvents(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
 		NewCWLogsClient = origNewCWLogsClient
@@ -105,6 +108,58 @@ func TestQuery_GetLogEvents(t *testing.T) {
 			assert.Equal(t, test.expectedInput, cli.calls.getEventsWithContext)
 		})
 	}
+}
+
+func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_field(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+	var cli *mocks.MockLogEvents
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return cli
+	}
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+	})
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+	cli = &mocks.MockLogEvents{}
+	cli.On("GetLogEventsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetLogEventsOutput{
+		Events: []*cloudwatchlogs.OutputLogEvent{{
+			Message:   utils.Pointer("some message"),
+			Timestamp: utils.Pointer(int64(15)),
+		}}}, nil)
+
+	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+		Queries: []backend.DataQuery{
+			{
+				RefID:     "A",
+				TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+				JSON: json.RawMessage(`{
+							"type":         "logAction",
+							"subtype":       "GetLogEvents",
+							"logGroupName":  "foo",
+							"logStreamName": "bar",
+							"endTime":       1,
+							"startFromHead": false
+						}`),
+			},
+		},
+	})
+
+	require.NoError(t, err)
+
+	respA, ok := resp.Responses["A"]
+	assert.True(t, ok)
+
+	expectedTsField := data.NewField("ts", nil, []time.Time{time.UnixMilli(15).UTC()})
+	expectedMessageField := data.NewField("line", nil, []*string{utils.Pointer("some message")})
+	expectedTsField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+	assert.Equal(t, []*data.Field{expectedTsField, expectedMessageField}, respA.Frames[0].Fields)
 }
 
 func TestQuery_StartQuery(t *testing.T) {

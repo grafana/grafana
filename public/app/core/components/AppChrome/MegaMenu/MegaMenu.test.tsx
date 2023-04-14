@@ -6,7 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { NavModelItem, NavSection } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { TestProvider } from '../../../../test/helpers/TestProvider';
+import { TestProvider } from '../../../../../test/helpers/TestProvider';
 
 import { MegaMenu } from './MegaMenu';
 

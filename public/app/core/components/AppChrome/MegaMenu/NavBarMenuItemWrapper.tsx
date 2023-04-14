@@ -4,10 +4,9 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { toIconName, useStyles2 } from '@grafana/ui';
 
-import { isMatchOrChildMatch } from '../NavBar/utils';
-
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarMenuSection } from './NavBarMenuSection';
+import { isMatchOrChildMatch } from './utils';
 
 export function NavBarMenuItemWrapper({
   link,

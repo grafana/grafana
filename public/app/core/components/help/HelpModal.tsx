@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { getModKey } from 'app/core/utils/browser';
 
 const getShortcuts = (modKey: string) => {
@@ -12,14 +11,7 @@ const getShortcuts = (modKey: string) => {
       { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
       { keys: ['g', 'e'], description: 'Go to Explore' },
       { keys: ['g', 'p'], description: 'Go to Profile' },
-
-      ...(config.featureToggles.topnav
-        ? [{ keys: [`${modKey} + k`], description: 'Open search' }]
-        : [
-            { keys: ['s', 'o'], description: 'Open search' },
-            { keys: [`${modKey} + k`], description: 'Open command palette' },
-          ]),
-
+      { keys: [`${modKey} + k`], description: 'Open search' },
       { keys: ['esc'], description: 'Exit edit/setting views' },
       { keys: ['h'], description: 'Show all keyboard shortcuts' },
       { keys: ['c', 't'], description: 'Change theme' },

@@ -491,6 +491,25 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
 	})
+
+	t.Run("Can delete dashboards in folder", func(t *testing.T) {
+		setup()
+		folder := insertTestDashboard(t, dashboardStore, "dash folder", 1, 0, true, "prod", "webapp")
+		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, false, "delete this 1")
+		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, false, "delete this 2")
+
+		err := dashboardStore.DeleteDashboardsInFolder(
+			context.Background(),
+			&dashboards.DeleteDashboardsInFolderRequest{
+				FolderUID: folder.UID,
+				OrgID:     1,
+			})
+		require.NoError(t, err)
+
+		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, count, int64(0))
+	})
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
