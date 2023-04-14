@@ -168,7 +168,8 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 		return nil
 	}
 
-	for _, r := range registrations {
+	for i := range registrations {
+		r := registrations[i]
 		if r.AllowGrantsOverride {
 			s.handleGrantOverrides(&r)
 		}
