@@ -208,7 +208,7 @@ export class LokiDatasource
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
-          maxLines: 100,
+          maxLines: this.maxLines,
         };
 
       default:

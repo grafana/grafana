@@ -970,7 +970,7 @@ describe('LokiDatasource', () => {
           expr: '{label=value}',
           queryType: 'range',
           refId: 'log-sample-A',
-          maxLines: 100,
+          maxLines: 20,
         });
       });
 
@@ -985,7 +985,7 @@ describe('LokiDatasource', () => {
           expr: '{label=value}',
           queryType: 'instant',
           refId: 'log-sample-A',
-          maxLines: 100,
+          maxLines: 20,
         });
       });
 
