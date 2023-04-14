@@ -49,14 +49,11 @@ export class DashboardSrv {
     return new DashboardModel(dashboard, meta);
   }
 
-  setCurrent(dashboard: DashboardModel) {
+  setCurrent(dashboard: DashboardModel | undefined) {
     this.dashboard = dashboard;
   }
 
   getCurrent(): DashboardModel | undefined {
-    if (!this.dashboard) {
-      console.warn('Calling getDashboardSrv().getCurrent() without calling getDashboardSrv().setCurrent() first.');
-    }
     return this.dashboard;
   }
 
