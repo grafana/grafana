@@ -97,7 +97,7 @@ type AlertingConfiguration struct {
 
 	AlertmanagerTemplates *alertingTemplates.Template
 
-	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error)
+	IntegrationsFunc         func(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error)
 	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (*alertingNotify.Integration, error)
 }
 
@@ -120,7 +120,7 @@ func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInte
 }
 
 func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
-	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
+	return a.IntegrationsFunc(PostableApiAlertingConfigToApiReceivers(a.AlertmanagerConfig), a.AlertmanagerTemplates)
 }
 
 func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {

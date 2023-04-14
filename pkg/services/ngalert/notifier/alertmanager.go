@@ -3,9 +3,7 @@ package notifier
 import (
 	"context"
 	"crypto/md5"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -317,7 +315,7 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error) {
+func (am *Alertmanager) buildIntegrationsMap(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error) {
 	integrationsMap := make(map[string][]*alertingNotify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
@@ -331,67 +329,48 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-	integrations := make([]*alertingNotify.Integration, 0, len(receiver.GrafanaManagedReceivers))
-	for _, r := range receiver.GrafanaManagedReceivers {
-		// TODO do not use buildReceiverIntegration because it does not honor index
-		n, err := am.buildReceiverIntegration(PostableGrafanaReceiverToGrafanaReceiver(r), tmpl)
-		if err != nil {
-			return nil, err
-		}
-		integrations = append(integrations, alertingNotify.NewIntegration(n, n, r.Type, i))
+func (am *Alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, am.decryptFn)
+	if err != nil {
+		return nil, err
+	}
+	s := &sender{am.NotificationService}
+	img := newImageStore(am.Store)
+	integrations, err := alertingNotify.BuildReceiverIntegrations(
+		receiverCfg,
+		tmpl,
+		img,
+		LoggerFactory,
+		func(n receivers.Metadata) (receivers.WebhookSender, error) {
+			return s, nil
+		},
+		func(n receivers.Metadata) (receivers.EmailSender, error) {
+			return s, nil
+		},
+		am.orgID,
+		setting.BuildVersion,
+	)
+	if err != nil {
+		return nil, err
 	}
 	return integrations, nil
 }
 
-func (am *Alertmanager) buildReceiverIntegration(r *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error) {
-	// secure settings are already encrypted at this point
-	secureSettings := make(map[string][]byte, len(r.SecureSettings))
-
-	for k, v := range r.SecureSettings {
-		d, err := base64.StdEncoding.DecodeString(v)
-		if err != nil {
-			return nil, alertingNotify.InvalidReceiverError{
-				Receiver: r,
-				Err:      errors.New("failed to decode secure setting"),
-			}
-		}
-		secureSettings[k] = d
+func (am *Alertmanager) buildReceiverIntegration(r *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (*alertingNotify.Integration, error) {
+	apiReceiver := &alertingNotify.APIReceiver{
+		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+			Integrations: []*alertingNotify.GrafanaIntegrationConfig{r},
+		},
 	}
-
-	var (
-		cfg = &receivers.NotificationChannelConfig{
-			UID:                   r.UID,
-			OrgID:                 am.orgID,
-			Name:                  r.Name,
-			Type:                  r.Type,
-			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              r.Settings,
-			SecureSettings:        secureSettings,
-		}
-	)
-	factoryConfig, err := receivers.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
+	integrations, err := am.buildReceiverIntegrations(apiReceiver, tmpl)
 	if err != nil {
-		return nil, alertingNotify.InvalidReceiverError{
-			Receiver: r,
-			Err:      err,
-		}
+		return nil, err
 	}
-	receiverFactory, exists := alertingNotify.Factory(r.Type)
-	if !exists {
-		return nil, alertingNotify.InvalidReceiverError{
-			Receiver: r,
-			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
-		}
+	if len(integrations) == 0 {
+		// this should not happen but it is better return some error than panic
+		return nil, fmt.Errorf("failed to build integration")
 	}
-	n, err := receiverFactory(factoryConfig)
-	if err != nil {
-		return nil, alertingNotify.InvalidReceiverError{
-			Receiver: r,
-			Err:      err,
-		}
-	}
-	return n, nil
+	return integrations[0], nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
