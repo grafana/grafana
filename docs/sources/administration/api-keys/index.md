@@ -108,7 +108,7 @@ To migrate a single API key to a service account, complete the following steps:
 
 ### Migrate API keys to Grafana service accounts for API calls
 
-This section shows you how to migrate API keys to Grafana service accounts specifically for the Grafana API. For references see: [Grafana Service Accounts for the Grafana API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
+This section shows you how to migrate API keys to Grafana service accounts for Grafana API workflows. For references see: [Grafana Service Accounts for the Grafana API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
 
 #### Before you begin
 
