@@ -175,7 +175,7 @@ Complete the following steps to migrate from API keys to service accounts using 
 1. Use the token returned from `grafana_service_account_token` to authenticate the API requests.
 1. Remove the terraform configuration for creating your `grafana_api_key` resources.
 
-**Example: your current terraform configuration**
+**Example: your current Terraform configuration**
 
 ```tf
 terraform {
