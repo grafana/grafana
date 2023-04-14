@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"reflect"
+	"io"
 	"testing"
 
 	"github.com/go-jose/go-jose/v3"
@@ -78,28 +78,12 @@ func getPrivateKey(t *testing.T) *rsa.PrivateKey {
 func setupTestService(t *testing.T) *Service {
 	svc := &Service{
 		log:  log.NewNopLogger(),
-		keys: map[string]crypto.Signer{"default": getPrivateKey(t)},
+		keys: map[string]crypto.Signer{serverPrivateKeyID: getPrivateKey(t)},
 	}
 	return svc
 }
 
-func TestEmbeddedKeyService_GetJWKS(t *testing.T) {
-	svc := &Service{
-		log: log.NewNopLogger(),
-		keys: map[string]crypto.Signer{
-			"default": getPrivateKey(t),
-			"other":   getPrivateKey(t),
-		},
-	}
-	jwk := svc.GetJWKS()
-
-	require.Equal(t, 2, len(jwk.Keys))
-}
-
 func TestEmbeddedKeyService_GetJWK(t *testing.T) {
-	type args struct {
-		keyID string
-	}
 	tests := []struct {
 		name    string
 		keyID   string
@@ -107,7 +91,7 @@ func TestEmbeddedKeyService_GetJWK(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "creates a JSON Web Key successfully",
-			args: args{"default"},
+			keyID: "default",
 			want: jose.JSONWebKey{
 				Key: getPrivateKey(t).Public(),
 				Use: "sig",
@@ -115,7 +99,7 @@ func TestEmbeddedKeyService_GetJWK(t *testing.T) {
 			wantErr: false,
 		},
 		{name: "returns error when the specified key was not found",
-			args:    args{"not-existing-key-id"},
+			keyID:   "not-existing-key-id",
 			want:    jose.JSONWebKey{},
 			wantErr: true,
 		},
@@ -123,7 +107,7 @@ func TestEmbeddedKeyService_GetJWK(t *testing.T) {
 	svc := setupTestService(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetJWK(tt.args.keyID)
+			got, err := svc.GetJWK(tt.keyID)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -153,25 +137,58 @@ func TestEmbeddedKeyService_GetJWK_OnlyPublicKeyShared(t *testing.T) {
 	require.NotContains(t, kvs, "q")
 }
 
-func TestEmbeddedKeyService_GetPublicKey(t *testing.T) {
-	type args struct {
-		keyID string
+func TestEmbeddedKeyService_GetJWKS(t *testing.T) {
+	svc := &Service{
+		log: log.NewNopLogger(),
+		keys: map[string]crypto.Signer{
+			serverPrivateKeyID: getPrivateKey(t),
+			"other":            getPrivateKey(t),
+		},
 	}
+	jwk := svc.GetJWKS()
+
+	require.Equal(t, 2, len(jwk.Keys))
+}
+
+func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
+	svc := setupTestService(t)
+	jwks := svc.GetJWKS()
+
+	jwksJson, err := json.Marshal(jwks)
+	require.NoError(t, err)
+
+	type keys struct {
+		Keys []map[string]interface{} `json:"keys"`
+	}
+
+	var kvs keys
+	err = json.Unmarshal(jwksJson, &kvs)
+	require.NoError(t, err)
+
+	for _, kv := range kvs.Keys {
+		// check that the private key is not shared
+		require.NotContains(t, kv, "d")
+		require.NotContains(t, kv, "p")
+		require.NotContains(t, kv, "q")
+	}
+}
+
+func TestEmbeddedKeyService_GetPublicKey(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    args
+		keyID   string
 		want    crypto.PublicKey
 		wantErr bool
 	}{
 		{
 			name:    "returns the public key successfully",
-			args:    args{"default"},
+			keyID:   "default",
 			want:    getPrivateKey(t).Public(),
 			wantErr: false,
 		},
 		{
 			name:    "returns error when the specified key was not found",
-			args:    args{"not-existent-key-id"},
+			keyID:   "not-existent-key-id",
 			want:    nil,
 			wantErr: true,
 		},
@@ -179,37 +196,33 @@ func TestEmbeddedKeyService_GetPublicKey(t *testing.T) {
 	svc := setupTestService(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetPublicKey(tt.args.keyID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EmbeddedKeyService.GetPublicKey() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := svc.GetPublicKey(tt.keyID)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EmbeddedKeyService.GetPublicKey() = %v, want %v", got, tt.want)
-			}
+			require.NoError(t, err)
+			require.Equal(t, got, tt.want)
 		})
 	}
 }
 
 func TestEmbeddedKeyService_GetPrivateKey(t *testing.T) {
-	type args struct {
-		keyID string
-	}
 	tests := []struct {
 		name    string
-		args    args
+		keyID   string
 		want    crypto.PrivateKey
 		wantErr bool
 	}{
 		{
 			name:    "returns the private key successfully",
-			args:    args{"default"},
+			keyID:   "default",
 			want:    getPrivateKey(t),
 			wantErr: false,
 		},
 		{
 			name:    "returns error when the specified key was not found",
-			args:    args{"not-existent-key-id"},
+			keyID:   "not-existent-key-id",
 			want:    nil,
 			wantErr: true,
 		},
@@ -217,14 +230,54 @@ func TestEmbeddedKeyService_GetPrivateKey(t *testing.T) {
 	svc := setupTestService(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetPrivateKey(tt.args.keyID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EmbeddedKeyService.GetPrivateKey() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := svc.GetPrivateKey(tt.keyID)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EmbeddedKeyService.GetPrivateKey() = %v, want %v", got, tt.want)
-			}
+			require.NoError(t, err)
+			require.Equal(t, got, tt.want)
 		})
 	}
+}
+
+func TestEmbeddedKeyService_AddPrivateKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		keyID   string
+		wantErr bool
+	}{
+		{
+			name:    "adds the private key successfully",
+			keyID:   "new-key-id",
+			wantErr: false,
+		},
+		{
+			name:    "returns error when the specified key is already in the store",
+			keyID:   serverPrivateKeyID,
+			wantErr: true,
+		},
+	}
+	svc := setupTestService(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := svc.AddPrivateKey(tt.keyID, &dummyPrivateKey{})
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+type dummyPrivateKey struct {
+}
+
+func (d dummyPrivateKey) Public() crypto.PublicKey {
+	return ""
+}
+
+func (d dummyPrivateKey) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) ([]byte, error) {
+	return nil, nil
 }

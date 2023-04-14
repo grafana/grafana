@@ -8,6 +8,7 @@ import (
 	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
@@ -17,26 +18,35 @@ const (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService() *Service {
+func ProvideEmbeddedSigningKeysService(features *featuremgmt.FeatureManager) (*Service, error) {
 	s := &Service{
-		log: log.New("auth.key_service"),
+		log:  log.New("auth.key_service"),
+		keys: map[string]crypto.Signer{},
 	}
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		s.log.Error("Error generating private key", "err", err)
+		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
 	}
 
-  s.keys = map[string]crypto.Signer{serverPrivateKeyID: privateKey}
+	if err := s.AddPrivateKey(serverPrivateKeyID, privateKey); err != nil {
+		return nil, err
+	}
 
-	return s
+	return s, nil
 }
 
+// Service provides functionality for managing signing keys used to sign and verify JWT tokens for
+// the OSS version of Grafana.
+//
+// The service is under active development and is not yet ready for production use.
 type Service struct {
 	log  log.Logger
 	keys map[string]crypto.Signer
 }
 
+// GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
 func (s *Service) GetJWKS() jose.JSONWebKeySet {
 	result := jose.JSONWebKeySet{}
 
@@ -49,6 +59,7 @@ func (s *Service) GetJWKS() jose.JSONWebKeySet {
 	return result
 }
 
+// GetJWK returns the JSON Web Key (JWK) with the specified key ID which can be used to verify tokens (public key)
 func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
@@ -64,6 +75,7 @@ func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	return result, nil
 }
 
+// GetPublicKey returns the public key with the specified key ID
 func (s *Service) GetPublicKey(keyID string) (crypto.PublicKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
@@ -74,6 +86,7 @@ func (s *Service) GetPublicKey(keyID string) (crypto.PublicKey, error) {
 	return privateKey.Public(), nil
 }
 
+// GetPrivateKey returns the private key with the specified key ID
 func (s *Service) GetPrivateKey(keyID string) (crypto.PrivateKey, error) {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
@@ -84,6 +97,17 @@ func (s *Service) GetPrivateKey(keyID string) (crypto.PrivateKey, error) {
 	return privateKey, nil
 }
 
+// AddPrivateKey adds a private key to the service
+func (s *Service) AddPrivateKey(keyID string, privateKey crypto.PrivateKey) error {
+	if _, ok := s.keys[keyID]; ok {
+		s.log.Error("The specified key ID is already in use", "keyID", keyID)
+		return signingkeys.ErrSigningKeyAlreadyExists.Errorf("The specified key ID is already in use: %s", keyID)
+	}
+	s.keys[keyID] = privateKey.(crypto.Signer)
+	return nil
+}
+
+// GetServerPrivateKey returns the private key used to sign tokens
 func (s *Service) GetServerPrivateKey() (crypto.PrivateKey, error) {
 	return s.GetPrivateKey(serverPrivateKeyID)
 }
