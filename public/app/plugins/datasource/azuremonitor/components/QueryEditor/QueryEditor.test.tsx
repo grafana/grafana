@@ -100,7 +100,9 @@ describe('Azure Monitor QueryEditor', () => {
       <QueryEditor query={createMockQuery()} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />
     );
     await waitFor(() =>
-      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument()
+      expect(
+        screen.getByTestId(selectors.components.queryEditor.metricsQueryEditor.container.input)
+      ).toBeInTheDocument()
     );
     expect(screen.getByText('An error occurred while requesting metadata from Azure Monitor')).toBeInTheDocument();
   });
