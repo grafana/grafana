@@ -1,4 +1,4 @@
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 
@@ -40,7 +40,7 @@ function genFrame() {
         config: {
           interval: i === 0 ? step : null,
         },
-        values: new ArrayVector(values),
+        values: values,
       };
     }),
   };

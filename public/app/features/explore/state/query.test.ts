@@ -4,7 +4,6 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
-  ArrayVector,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
@@ -107,7 +106,7 @@ function setupQueryResponse(state: StoreState) {
       error: { message: 'test error' },
       data: [
         new MutableDataFrame({
-          fields: [{ name: 'test', values: new ArrayVector() }],
+          fields: [{ name: 'test', values: [] }],
           meta: {
             preferredVisualisationType: 'graph',
           },

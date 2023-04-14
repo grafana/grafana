@@ -1,7 +1,6 @@
 import { map } from 'rxjs';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   SynchronousDataTransformerInfo,
@@ -157,7 +156,7 @@ export function partitionByValues(
             ...f.labels,
             ...fieldLabels,
           },
-          values: new ArrayVector(vals2),
+          values: vals2,
         };
       }),
     };

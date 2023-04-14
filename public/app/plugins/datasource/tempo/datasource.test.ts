@@ -2,7 +2,6 @@ import { lastValueFrom, Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
-  ArrayVector,
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
@@ -678,7 +677,7 @@ describe('Tempo service graph view', () => {
               filterable: true,
             },
             type: 'string',
-            values: new ArrayVector(['HTTP Client', 'HTTP GET', 'HTTP GET - root', 'HTTP POST', 'HTTP POST - post']),
+            values: ['HTTP Client', 'HTTP GET', 'HTTP GET - root', 'HTTP POST', 'HTTP POST - post'],
           },
         ],
       },

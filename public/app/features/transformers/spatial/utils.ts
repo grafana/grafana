@@ -3,7 +3,7 @@ import { Geometry, LineString, Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
 
-import { ArrayVector, Field, FieldType } from '@grafana/data';
+import { Field, FieldType } from '@grafana/data';
 
 import { SpatialCalculation, SpatialCalculationOption } from './models.gen';
 
@@ -74,7 +74,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         config: {
           unit: 'areaM2',
         },
-        values: new ArrayVector(buffer),
+        values: buffer,
       };
     }
     case SpatialCalculation.Distance: {
@@ -90,7 +90,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         config: {
           unit: 'lengthm',
         },
-        values: new ArrayVector(buffer),
+        values: buffer,
       };
     }
 
@@ -103,7 +103,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         config: {
           unit: 'degree',
         },
-        values: new ArrayVector(calculateBearings(values)),
+        values: calculateBearings(values),
       };
     }
   }

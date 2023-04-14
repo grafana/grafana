@@ -14,7 +14,6 @@ import {
   getDisplayProcessor,
   reduceField,
   GrafanaTheme2,
-  ArrayVector,
   isDataFrame,
   isTimeSeriesFrame,
 } from '@grafana/data';
@@ -359,7 +358,7 @@ export function getFooterItems(
     }
 
     let newField = clone(data.field);
-    newField.values = new ArrayVector(values[data.id]);
+    newField.values = values[data.id];
     newField.state = undefined;
 
     data.field = newField;

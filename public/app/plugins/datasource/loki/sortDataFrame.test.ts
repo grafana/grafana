@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 
@@ -9,19 +9,19 @@ const inputFrame: DataFrame = {
       name: 'time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1005, 1001, 1004, 1002, 1003]),
+      values: [1005, 1001, 1004, 1002, 1003],
     },
     {
       name: 'value',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['line5', 'line1', 'line4', 'line2', 'line3']),
+      values: ['line5', 'line1', 'line4', 'line2', 'line3'],
     },
     {
       name: 'tsNs',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([`1005000000`, `1001000000`, `1004000000`, `1002000000`, `1003000000`]),
+      values: [`1005000000`, `1001000000`, `1004000000`, `1002000000`, `1003000000`],
     },
   ],
   length: 5,

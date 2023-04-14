@@ -1,6 +1,6 @@
 import { groupBy } from 'lodash';
 
-import { FieldType, DataFrame, ArrayVector, DataLink, Field } from '@grafana/data';
+import { FieldType, DataFrame, DataLink, Field } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { DerivedFieldConfig } from './types';
@@ -35,7 +35,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
 /**
  * Transform derivedField config into dataframe field with config that contains link.
  */
-function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field {
   const dataSourceSrv = getDataSourceSrv();
 
   const dataLinks = derivedFieldConfigs.reduce<DataLink[]>((acc, derivedFieldConfig) => {
@@ -72,6 +72,6 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
       links: dataLinks,
     },
     // We are adding values later on
-    values: new ArrayVector<string>([]),
+    values: [],
   };
 }

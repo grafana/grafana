@@ -1,7 +1,6 @@
 import { map } from 'rxjs/operators';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   DataTransformerInfo,
@@ -51,7 +50,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     const fieldName = getFieldDisplayName(field, configFrame);
     const fieldMapping = mappingResult.index[fieldName];
     const result = reduceField({ field, reducers: [fieldMapping.reducerId] });
-    newField.values = new ArrayVector([result[fieldMapping.reducerId]]);
+    newField.values = [result[fieldMapping.reducerId]];
     reducedConfigFrame.fields.push(newField);
   }
 

@@ -1,7 +1,6 @@
 import { map } from 'rxjs/operators';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   DataTransformerInfo,
@@ -61,7 +60,7 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
     const field: Field = {
       name: `${name}`,
       type: valueField.type,
-      values: new ArrayVector([value]),
+      values: [value],
       config: config,
       labels,
     };

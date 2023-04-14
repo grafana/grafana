@@ -1,20 +1,18 @@
 import { clone } from 'lodash';
 
-import { ArrayVector } from '@grafana/data/src';
-
 /**
  *
  * @param length - Number of values to add
  * @param start - First timestamp (ms)
  * @param step - step duration (ms)
  */
-export const getMockTimeFrameArray = (length: number, start: number, step: number): ArrayVector => {
-  let timeValues = [];
+export const getMockTimeFrameArray = (length: number, start: number, step: number) => {
+  let timeValues: number[] = [];
   for (let i = 0; i < length; i++) {
     timeValues.push(start + i * step);
   }
 
-  return new ArrayVector(timeValues);
+  return timeValues;
 };
 
 /**
@@ -22,8 +20,8 @@ export const getMockTimeFrameArray = (length: number, start: number, step: numbe
  * @param values
  * @param high
  */
-export const getMockValueFrameArray = (length: number, values = 0): ArrayVector => {
-  return new ArrayVector(Array(length).fill(values));
+export const getMockValueFrameArray = (length: number, values = 0): number[] => {
+  return Array(length).fill(values);
 };
 
 const timeFrameWithMissingValuesInMiddle = getMockTimeFrameArray(721, 1675262550000, 30000);

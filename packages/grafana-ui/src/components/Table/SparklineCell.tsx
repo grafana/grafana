@@ -1,8 +1,6 @@
-import { isArray } from 'lodash';
 import React from 'react';
 
 import {
-  ArrayVector,
   FieldType,
   FieldConfig,
   getMinMaxAndDelta,
@@ -79,12 +77,12 @@ export const SparklineCell = (props: TableCellProps) => {
 };
 
 function getSparkline(value: unknown): FieldSparkline | undefined {
-  if (isArray(value)) {
+  if (Array.isArray(value)) {
     return {
       y: {
         name: 'test',
         type: FieldType.number,
-        values: new ArrayVector(value),
+        values: value,
         config: {},
       },
     };

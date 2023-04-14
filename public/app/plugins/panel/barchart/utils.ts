@@ -2,7 +2,6 @@ import { orderBy } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -432,14 +431,12 @@ export function prepareBarChartDisplayValues(
               },
             },
           },
-          values: new ArrayVector(
-            field.values.toArray().map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            })
-          ),
+          values: field.values.map((v) => {
+            if (!(Number.isFinite(v) || v == null)) {
+              return null;
+            }
+            return v;
+          }),
         };
 
         if (options.stacking === StackingMode.Percent) {

@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   FieldColorModeId,
   FieldDTO,
   FieldType,
@@ -51,9 +50,9 @@ export function generateRandomNodes(count = 10) {
     nodes[sourceIndex].edges.push(nodes[targetIndex].id);
   }
 
-  const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: ArrayVector }> = {
+  const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: any[] }> = {
     [NodeGraphDataFrameFieldNames.id]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
       config: {
         links: [
@@ -70,35 +69,35 @@ export function generateRandomNodes(count = 10) {
       },
     },
     [NodeGraphDataFrameFieldNames.title]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.subTitle]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.mainStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { displayName: 'Transactions per second' },
     },
     [NodeGraphDataFrameFieldNames.secondaryStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { displayName: 'Average duration' },
     },
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { fixedColor: 'green', mode: FieldColorModeId.Fixed }, displayName: 'Success' },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { fixedColor: 'red', mode: FieldColorModeId.Fixed }, displayName: 'Errors' },
     },
     [NodeGraphDataFrameFieldNames.icon]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
   };
@@ -115,10 +114,10 @@ export function generateRandomNodes(count = 10) {
   const edgesFrame = new MutableDataFrame({
     name: 'edges',
     fields: [
-      { name: NodeGraphDataFrameFieldNames.id, values: new ArrayVector(), type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.source, values: new ArrayVector(), type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.target, values: new ArrayVector(), type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.mainStat, values: new ArrayVector(), type: FieldType.number },
+      { name: NodeGraphDataFrameFieldNames.id, values: [], type: FieldType.string },
+      { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string },
+      { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string },
+      { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
   });

@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { ScaleDimensionConfig } from '@grafana/schema';
 
 import { getScaledDimension, validateScaleConfig } from './scale';
@@ -45,11 +45,11 @@ describe('scale dimensions', () => {
       name: 'a',
       length: values.length,
       fields: [
-        { name: 'time', type: FieldType.number, values: new ArrayVector(values), config: {} },
+        { name: 'time', type: FieldType.number, values: values, config: {} },
         {
           name: 'hello',
           type: FieldType.number,
-          values: new ArrayVector(values),
+          values: values,
           config: {
             min: -10,
             max: 10,

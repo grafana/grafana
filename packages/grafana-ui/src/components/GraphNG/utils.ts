@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import { DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -34,7 +34,7 @@ function applySpanNullsThresholds(frame: DataFrame) {
 
     if (typeof spanNulls === 'number') {
       if (spanNulls !== -1) {
-        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+        field.values = nullToUndefThreshold(refValues, field.values, spanNulls);
       }
     }
   }

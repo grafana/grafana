@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -157,7 +156,7 @@ export function prepareCandlestickFields(
     values.push(values[values.length - 1]); // duplicate last value
     data.close = {
       ...data.open,
-      values: new ArrayVector(values),
+      values: values,
       name: 'Next open',
       state: undefined,
     };
@@ -173,7 +172,7 @@ export function prepareCandlestickFields(
     values.length = frame.length;
     data.open = {
       ...data.close,
-      values: new ArrayVector(values),
+      values: values,
       name: 'Previous close',
       state: undefined,
     };

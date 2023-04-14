@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 
 import { getScalarDimension } from './scalar';
 
@@ -14,7 +14,7 @@ describe('scalar dimensions', () => {
         {
           name: 'test',
           type: FieldType.number,
-          values: new ArrayVector(values),
+          values: values,
           config: {
             min: -720,
             max: 540,
@@ -43,7 +43,7 @@ describe('scalar dimensions', () => {
         {
           name: 'test',
           type: FieldType.number,
-          values: new ArrayVector(values),
+          values: values,
           config: {
             min: -720,
             max: 540,
@@ -73,7 +73,7 @@ describe('scalar dimensions', () => {
         {
           name: 'test',
           type: FieldType.number,
-          values: new ArrayVector(values),
+          values: values,
           config: {
             min: -721,
             max: 540,

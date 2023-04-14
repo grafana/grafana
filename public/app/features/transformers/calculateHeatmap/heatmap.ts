@@ -1,7 +1,6 @@
 import { map } from 'rxjs';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   FieldType,
@@ -197,13 +196,13 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       {
         name: xField.type === FieldType.time ? 'xMax' : 'x',
         type: xField.type,
-        values: new ArrayVector(xs),
+        values: xs,
         config: xField.config,
       },
       {
         name: ordinalFieldName,
         type: FieldType.number,
-        values: new ArrayVector(ys),
+        values: ys,
         config: {
           unit: 'short', // ordinal lookup
         },
@@ -211,7 +210,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       {
         name: opts.value?.length ? opts.value : 'Value',
         type: FieldType.number,
-        values: new ArrayVector(counts2),
+        values: counts2,
         config: valueCfg,
         display: yFields[0].display,
       },
@@ -248,7 +247,7 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
       frame.fields[0],
       {
         ...frame.fields[1],
-        values: new ArrayVector(counts[i]),
+        values: counts[i],
       },
     ],
   }));
@@ -350,13 +349,13 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
       {
         name: 'xMin',
         type: xField.type,
-        values: new ArrayVector(heat2d.x),
+        values: heat2d.x,
         config: xField.config,
       },
       {
         name: 'yMin',
         type: FieldType.number,
-        values: new ArrayVector(heat2d.y),
+        values: heat2d.y,
         config: {
           ...yField.config, // keep units from the original source
           custom: {
@@ -367,7 +366,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
       {
         name: 'Count',
         type: FieldType.number,
-        values: new ArrayVector(heat2d.count),
+        values: heat2d.count,
         config: {
           unit: 'short', // always integer
         },
