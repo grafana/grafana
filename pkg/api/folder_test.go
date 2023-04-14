@@ -271,6 +271,7 @@ func testDescription(description string, expectedErr error) string {
 func TestHTTPServer_FolderMetadata(t *testing.T) {
 	setUpRBACGuardian(t)
 	folderService := &foldertest.FakeService{}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = &setting.Cfg{
 			RBACEnabled: true,
@@ -280,6 +281,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		hs.SearchService = &mockSearchService{
 			ExpectedResult: model.HitList{},
 		}
+		hs.Features = features
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
@@ -305,7 +307,37 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		assert.True(t, body.AccessControl[dashboards.ActionFoldersWrite])
 	})
 
-	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
+	t.Run("Should attach access control metadata to folder response with permissions cascading from nested folders", func(t *testing.T) {
+		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
+		folderService.ExpectedFolders = []*folder.Folder{{UID: "parent_uid"}}
+		features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+		defer func() {
+			features = featuremgmt.WithFeatures()
+			folderService.ExpectedFolders = nil
+		}()
+
+		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent_uid")},
+				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
+			}),
+		}})
+
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+
+		body := dtos.Folder{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+		assert.True(t, body.AccessControl[dashboards.ActionFoldersRead])
+		assert.True(t, body.AccessControl[dashboards.ActionFoldersWrite])
+	})
+
+	t.Run("Should not attach access control metadata to folder response", func(t *testing.T) {
 		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
 
 		req := server.NewGetRequest("/api/folders/folderUid")
