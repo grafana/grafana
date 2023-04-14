@@ -38,6 +38,8 @@ type Props = {
 };
 
 export const newAnnotationName = 'New annotation';
+export const FILTER_TYPE_ID = 'annotations-type-input';
+export const CHOOSE_PANELS_ID = 'choose-panels-input';
 
 export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const styles = useStyles2(getStyles);
@@ -131,6 +133,14 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
 
   const isNewAnnotation = annotation.name === newAnnotationName;
 
+  const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
+    if (a.label && b.label) {
+      return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+    }
+
+    return -1;
+  };
+
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
       dashboard?.panels
@@ -140,7 +150,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           description: panel.description,
           imgUrl: config.panels[panel.type].info.logos.small,
         }))
-        .sort((a, b) => (a.label > b.label ? 1 : -1)) ?? [],
+        .sort(sortFn) ?? [],
     [dashboard]
   );
 
@@ -174,19 +184,20 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
         </Field>
-        <Field label="Show in">
+        <Field label="Show in" aria-label={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
           <>
-            <Select options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} />
+            <Select options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} inputId={FILTER_TYPE_ID} />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
                 options={panels}
                 value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
                 onChange={onAddFilterPanelID}
                 isClearable={true}
-                placeholder="Choose panel"
+                placeholder="Choose panels"
                 width={100}
                 closeMenuOnSelect={false}
                 className={styles.select}
+                inputId={CHOOSE_PANELS_ID}
               />
             )}
           </>
@@ -210,7 +221,11 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             Delete
           </Button>
         )}
-        <Button variant="secondary" onClick={onPreview}>
+        <Button
+          variant="secondary"
+          onClick={onPreview}
+          data-testId={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard}
+        >
           Preview in dashboard
         </Button>
         <Button variant="primary" onClick={onApply}>
@@ -251,7 +266,7 @@ const panelFilters = [
     description: 'Send the annotation data to all panels that support annotations',
   },
   {
-    label: 'Only panels',
+    label: 'Selected panels',
     value: PanelFilterType.IncludePanels,
     description: 'Send the annotations to the explicitly listed panels',
   },
