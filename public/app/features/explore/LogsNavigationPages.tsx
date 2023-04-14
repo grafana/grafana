@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { dateTimeFormat, systemDateFormats, TimeZone, AbsoluteTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { dateTimeFormat, systemDateFormats, TimeZone, GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, Spinner, useTheme2, clearButtonStyles } from '@grafana/ui';
 
 import { LogsPage } from './LogsNavigation';
@@ -13,17 +12,10 @@ type Props = {
   oldestLogsFirst: boolean;
   timeZone: TimeZone;
   loading: boolean;
-  changeTime: (range: AbsoluteTimeRange) => void;
+  onClick: (page: LogsPage, pageNumber: number) => void;
 };
 
-export function LogsNavigationPages({
-  pages,
-  currentPageIndex,
-  oldestLogsFirst,
-  timeZone,
-  loading,
-  changeTime,
-}: Props) {
+export function LogsNavigationPages({ pages, currentPageIndex, oldestLogsFirst, timeZone, loading, onClick }: Props) {
   const formatTime = (time: number) => {
     return `${dateTimeFormat(time, {
       format: systemDateFormats.interval.second,
@@ -54,11 +46,7 @@ export function LogsNavigationPages({
               className={cx(clearButtonStyles(theme), styles.page)}
               key={page.queryRange.to}
               onClick={() => {
-                reportInteraction('grafana_explore_logs_pagination_clicked', {
-                  pageType: 'page',
-                  pageNumber: index + 1,
-                });
-                !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to });
+                onClick(page, index + 1);
               }}
             >
               <div className={cx(styles.line, { selectedBg: currentPageIndex === index })} />

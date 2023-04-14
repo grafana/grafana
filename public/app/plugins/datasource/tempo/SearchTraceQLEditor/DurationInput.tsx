@@ -13,7 +13,7 @@ interface Props {
   operators: string[];
 }
 
-const validationRegex = /^\d+(?:\.\d)?\d*(?:ms|s|ns)$/;
+const validationRegex = /^\d+(?:\.\d)?\d*(?:us|µs|ns|ms|s|m|h)$/;
 
 const DurationInput = ({ filter, operators, updateFilter }: Props) => {
   let invalid = false;

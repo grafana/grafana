@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -12,9 +13,12 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
-  VariableMap,
+  DataLinkConfigOrigin,
+  CoreApp,
+  SplitOpenOptions,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
@@ -40,8 +44,10 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
  * for internal links and undefined for non-internal links
  */
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables?: VariableMap;
+  variables?: VariableInterpolation[];
 }
+
+const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -49,6 +55,9 @@ export interface ExploreFieldLinkModel extends LinkModel<Field> {
  * that we just supply datasource name and field value and Explore split window will know how to render that
  * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
  * trace.
+ *
+ * Note: accessing a field via ${__data.fields.variable} will stay consistent with dashboards and return as existing but with an empty string
+ * Accessing a field with ${variable} will return undefined as this is unique to explore.
  */
 export const getFieldLinksForExplore = (options: {
   field: Field;
@@ -113,6 +122,30 @@ export const getFieldLinksForExplore = (options: {
         if (!linkModel.title) {
           linkModel.title = getTitleFromHref(linkModel.href);
         }
+
+        // Take over the onClick to report the click, then either call the original onClick or navigate to the URL
+        // Note: it is likely that an external link that opens in the same tab will not be reported, as the browser redirect might cancel reporting the interaction
+        const origOnClick = linkModel.onClick;
+
+        linkModel.onClick = (...args) => {
+          reportInteraction(DATA_LINK_USAGE_KEY, {
+            origin: link.origin || DataLinkConfigOrigin.Datasource,
+            app: CoreApp.Explore,
+            internal: false,
+          });
+
+          if (origOnClick) {
+            origOnClick?.apply(...args);
+          } else {
+            // for external links without an onClick, we want to duplicate default href behavior since onClick stops it
+            if (linkModel.target === '_blank') {
+              window.open(linkModel.href);
+            } else {
+              window.location.href = linkModel.href;
+            }
+          }
+        };
+
         return linkModel;
       } else {
         let internalLinkSpecificVars: ScopedVars = {};
@@ -134,15 +167,26 @@ export const getFieldLinksForExplore = (options: {
         }
 
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-        const varMapFn = getTemplateSrv().getAllVariablesInTarget.bind(getTemplateSrv());
-        const variableData = getVariableUsageInfo(link, allVars, varMapFn);
-        let variables: VariableMap = {};
-        if (Object.keys(variableData.variables).length === 0) {
+        const variableData = getVariableUsageInfo(link, allVars);
+        let variables: VariableInterpolation[] = [];
+
+        // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
+        if (variableData.variables.length === 0) {
           const fieldName = field.name.toString();
-          variables[fieldName] = '';
+          variables.push({ variableName: fieldName, value: '', match: '' });
         } else {
           variables = variableData.variables;
         }
+
+        const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
+          reportInteraction(DATA_LINK_USAGE_KEY, {
+            origin: link.origin || DataLinkConfigOrigin.Datasource,
+            app: CoreApp.Explore,
+            internal: true,
+          });
+
+          splitOpenFn?.(options);
+        };
 
         if (variableData.allVariablesDefined) {
           const internalLink = mapInternalLinkToExplore({
@@ -151,7 +195,7 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: splitOpenFn,
+            onClickFn: (options) => splitFnWithTracking(options),
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };
@@ -212,18 +256,18 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
  * Use variable map from templateSrv to determine if all variables have values
  * @param query
  * @param scopedVars
- * @param getVarMap
  */
 export function getVariableUsageInfo<T extends DataLink>(
   query: T,
-  scopedVars: ScopedVars,
-  getVarMap: Function
-): { variables: VariableMap; allVariablesDefined: boolean } {
-  const vars = getVarMap(getStringsFromObject(query), scopedVars);
-  // the string processor will convert null to '' but is not ran in all scenarios
+  scopedVars: ScopedVars
+): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
+  let variables: VariableInterpolation[] = [];
+  const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
+  replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
+  variables = uniqBy(variables, 'variableName');
   return {
-    variables: vars,
-    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null && val !== ''),
+    variables: variables,
+    allVariablesDefined: variables.every((variable) => variable.found),
   };
 }
 

@@ -84,17 +84,17 @@ describe('extractLevelLikeLabelFromDataFrame', () => {
 describe('extractLogParserFromDataFrame', () => {
   it('returns false by default', () => {
     const input = cloneDeep(frame);
-    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: false });
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: false, hasPack: false });
   });
   it('identifies JSON', () => {
     const input = cloneDeep(frame);
     input.fields[2].values = new ArrayVector(['{"a":"b"}']);
-    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: true, hasLogfmt: false });
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: true, hasLogfmt: false, hasPack: false });
   });
   it('identifies logfmt', () => {
     const input = cloneDeep(frame);
     input.fields[2].values = new ArrayVector(['a=b']);
-    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: true });
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: true, hasPack: false });
   });
 });
 

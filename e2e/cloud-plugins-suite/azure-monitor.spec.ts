@@ -96,7 +96,7 @@ const addAzureMonitorVariable = (
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-  e2e.components.PageToolbar.item('Go Back').click();
+  e2e.pages.Dashboard.Settings.Actions.close().click();
 };
 
 e2e.scenario({

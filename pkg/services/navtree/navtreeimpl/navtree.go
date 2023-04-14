@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -35,6 +36,7 @@ type ServiceImpl struct {
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
+	license              licensing.Licensing
 
 	// Navigation
 	navigationAppConfig     map[string]NavigationAppConfig
@@ -48,7 +50,7 @@ type NavigationAppConfig struct {
 	Icon       string
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -61,6 +63,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
+		license:              license,
 	}
 
 	service.readNavigationSettings()
@@ -191,9 +194,6 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Icon:       "home-alt",
 		Section:    navtree.NavSectionCore,
 		SortWeight: navtree.WeightHome,
-	}
-	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		homeNode.HideFromMenu = true
 	}
 	return homeNode
 }
@@ -342,12 +342,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Browse", Id: navtree.NavIDDashboardsBrowse, Url: s.cfg.AppSubURL + "/dashboards", Icon: "sitemap",
-		})
-	}
-
 	dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 		Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
@@ -390,32 +384,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 		})
 	}
 
-	if hasEditPerm && !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-		})
-	}
-
 	if hasEditPerm {
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
 			})
-		}
-	}
 
-	if hasEditPerm && !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
-				Icon: "plus", Url: s.cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
-			})
-		}
-
-		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
-				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
+				Text: "Import dashboard", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
+				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
 			})
 		}
 	}
@@ -444,12 +421,7 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navt
 		Children:   alertChildNavs,
 		Section:    navtree.NavSectionCore,
 		SortWeight: navtree.WeightAlerting,
-	}
-
-	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		alertNav.Url = s.cfg.AppSubURL + "/alerting"
-	} else {
-		alertNav.Url = s.cfg.AppSubURL + "/alerting/list"
+		Url:        s.cfg.AppSubURL + "/alerting",
 	}
 
 	return &alertNav
@@ -458,15 +430,6 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navt
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext, hasEditPerm bool) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
-
-	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Home",
-			Id:   "alert-home",
-			Url:  s.cfg.AppSubURL + "/alerting/home",
-			Icon: "home",
-		})
-	}
 
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
@@ -497,12 +460,6 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext, hasEditPerm
 	fallbackHasEditPerm := func(*contextmodel.ReqContext) bool { return hasEditPerm }
 
 	if hasAccess(fallbackHasEditPerm, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
-		if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-			})
-		}
-
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Create alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
@@ -518,12 +475,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext, hasEditPerm
 			Children:   alertChildNavs,
 			Section:    navtree.NavSectionCore,
 			SortWeight: navtree.WeightAlerting,
-		}
-
-		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-			alertNav.Url = s.cfg.AppSubURL + "/alerting"
-		} else {
-			alertNav.Url = s.cfg.AppSubURL + "/alerting/home"
+			Url:        s.cfg.AppSubURL + "/alerting",
 		}
 
 		return &alertNav

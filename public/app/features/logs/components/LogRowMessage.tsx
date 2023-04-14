@@ -13,9 +13,9 @@ import {
 import { IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
-import { LogRowContext } from './LogRowContext';
-import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { LogRowStyles } from './getLogRowStyles';
+import { LogRowContext } from './log-context/LogRowContext';
+import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './log-context/LogRowContextProvider';
 
 export const MAX_CHARACTERS = 100000;
 
@@ -109,7 +109,6 @@ export class LogRowMessage extends PureComponent<Props> {
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
-      app,
       logsSortOrder,
       showContextToggle,
       getLogRowContextUi,
@@ -118,7 +117,6 @@ export class LogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const inExplore = app === CoreApp.Explore;
 
     return (
       <>
@@ -161,13 +159,7 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         {showRowMenu && (
-          <td
-            className={cx('log-row-menu-cell', styles.logRowMenuCell, {
-              [styles.logRowMenuCellDefaultPosition]: !inExplore,
-              [styles.logRowMenuCellExplore]: inExplore && !shouldShowContextToggle,
-              [styles.logRowMenuCellExploreWithContextButton]: inExplore && shouldShowContextToggle,
-            })}
-          >
+          <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
             <span
               className={cx('log-row-menu', styles.rowMenu, {
                 [styles.rowMenuWithContextButton]: shouldShowContextToggle,

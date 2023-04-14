@@ -1,7 +1,9 @@
 import {
   ArrayVector,
+  CoreApp,
   DataFrame,
   DataLink,
+  DataLinkConfigOrigin,
   dateTime,
   Field,
   FieldType,
@@ -10,13 +12,18 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
+import { setTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
 import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 import { getFieldLinksForExplore, getVariableUsageInfo } from './links';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 describe('explore links utils', () => {
   describe('getFieldLinksForExplore', () => {
@@ -28,6 +35,12 @@ describe('explore links utils', () => {
           { type: 'custom', name: 'test', current: { value: 'foo' } },
         ])
       );
+
+      jest.spyOn(window, 'open').mockImplementation();
+    });
+
+    afterEach(() => {
+      jest.resetAllMocks();
     });
 
     it('returns correct link model for external link', () => {
@@ -44,6 +57,15 @@ describe('explore links utils', () => {
 
       expect(links[0].href).toBe('http://regionalhost');
       expect(links[0].title).toBe('external');
+      expect(links[0].onClick).toBeDefined();
+
+      links[0].onClick!({});
+
+      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
+        app: CoreApp.Explore,
+        internal: false,
+        origin: DataLinkConfigOrigin.Datasource,
+      });
     });
 
     it('returns generates title for external link', () => {
@@ -105,6 +127,12 @@ describe('explore links utils', () => {
             spanId: 'abcdef',
           },
         },
+      });
+
+      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
+        app: CoreApp.Explore,
+        internal: true,
+        origin: DataLinkConfigOrigin.Datasource,
       });
     });
 
@@ -251,6 +279,7 @@ describe('explore links utils', () => {
       const transformationLink: DataLink = {
         title: '',
         url: '',
+        origin: DataLinkConfigOrigin.Correlations,
         internal: {
           query: { query: 'http_requests{app=${application} env=${environment}}' },
           datasourceUid: 'uid_1',
@@ -281,6 +310,17 @@ describe('explore links utils', () => {
           '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo env=dev}"}]}'
         )}`
       );
+
+      if (links[0][0].onClick) {
+        links[0][0].onClick({});
+      }
+
+      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
+        app: CoreApp.Explore,
+        internal: true,
+        origin: DataLinkConfigOrigin.Correlations,
+      });
+
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
@@ -474,12 +514,26 @@ describe('explore links utils', () => {
       );
     });
 
-    it('returns no internal links when target contains empty template variables', () => {
+    it('returns internal links for non-existing fields accessed with __data.fields', () => {
       const { field, range, dataFrame } = setup({
         title: '',
         url: '',
         internal: {
           query: { query: 'query_1-${__data.fields.flux-dimensions}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+        },
+      });
+      const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_NULL_VALUE.index, range, dataFrame });
+      expect(links).toHaveLength(1);
+    });
+
+    it('returns no internal links when target contains empty template variables', () => {
+      const { field, range, dataFrame } = setup({
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query_1-${mementoMori}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
         },
@@ -512,6 +566,39 @@ describe('explore links utils', () => {
       const links = [getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame })];
       expect(links[0]).toHaveLength(0);
     });
+
+    it('does return internal link when there are no variables (static link)', () => {
+      const transformationLink: DataLink = {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'http_requests{app=test}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+        },
+      };
+
+      const { field, range, dataFrame } = setup(transformationLink, true, {
+        name: 'msg',
+        type: FieldType.string,
+        values: new ArrayVector(['application=foo host=dev-001']),
+        config: {
+          links: [transformationLink],
+        },
+      });
+
+      const links = getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame });
+      expect(links).toHaveLength(1);
+      expect(links[0].variables?.length).toBe(1);
+      expect(links[0].variables![0].variableName).toBe('msg');
+      expect(links[0].variables![0].value).toBe('');
+      expect(links[0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=test}"}]}'
+        )}`
+      );
+    });
   });
 
   describe('getVariableUsageInfo', () => {
@@ -528,8 +615,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({ testVal: scopedVars.testVal.value });
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(true);
     });
@@ -547,8 +633,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({ diffVar: null });
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(false);
     });
@@ -566,8 +651,7 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({ testVal: 'val1', diffVar: null });
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(false);
     });
 
@@ -584,9 +668,25 @@ describe('explore links utils', () => {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const varMapMock = jest.fn().mockReturnValue({});
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(true);
+    });
+
+    it('returns deduplicated list of variables', () => {
+      const dataLink = {
+        url: '',
+        title: '',
+        internal: {
+          datasourceUid: 'uid',
+          datasourceName: 'dsName',
+          query: { query: 'test ${test} ${foo} ${test:raw} $test' },
+        },
+      };
+      const scopedVars = {
+        testVal: { text: '', value: 'val1' },
+      };
+      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
+      expect(variables).toHaveLength(2);
     });
   });
 });

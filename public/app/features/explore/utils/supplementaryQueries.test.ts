@@ -133,7 +133,6 @@ const datasources: DataSourceApi[] = [
   ),
   new MockDataSourceApi('no-data-providers'),
   new MockDataSourceApi('no-data-providers-2'),
-  new MockDataSourceApi('mixed').setupMixed(true),
 ];
 
 jest.mock('@grafana/runtime', () => ({
@@ -145,17 +144,23 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const setup = async (rootDataSource: string, type: SupplementaryQueryType, targetSources?: string[]) => {
-  const rootDataSourceApiMock = await getDataSourceSrv().get({ uid: rootDataSource });
-
-  targetSources = targetSources || [rootDataSource];
-
+const setup = async (targetSources: string[], type: SupplementaryQueryType) => {
   const requestMock = new MockDataQueryRequest({
     targets: targetSources.map((source, i) => new MockQuery(`${i}`, 'a', { uid: source })),
   });
   const explorePanelDataMock: Observable<ExplorePanelData> = mockExploreDataWithLogs();
 
-  return getSupplementaryQueryProvider(rootDataSourceApiMock, type, requestMock, explorePanelDataMock);
+  const datasources = await Promise.all(
+    targetSources.map(async (source, i) => {
+      const datasource = await getDataSourceSrv().get({ uid: source });
+      return {
+        datasource,
+        targets: [new MockQuery(`${i}`, 'a', { uid: source })],
+      };
+    })
+  );
+
+  return getSupplementaryQueryProvider(datasources, type, requestMock, explorePanelDataMock);
 };
 
 const assertDataFrom = (type: SupplementaryQueryType, ...datasources: string[]) => {
@@ -173,7 +178,7 @@ const assertDataFromLogsResults = () => {
 describe('SupplementaryQueries utils', function () {
   describe('Non-mixed data source', function () {
     it('Returns result from the provider', async () => {
-      const testProvider = await setup('logs-volume-a', SupplementaryQueryType.LogsVolume);
+      const testProvider = await setup(['logs-volume-a'], SupplementaryQueryType.LogsVolume);
 
       await expect(testProvider).toEmitValuesWith((received) => {
         expect(received).toMatchObject([
@@ -186,7 +191,7 @@ describe('SupplementaryQueries utils', function () {
       });
     });
     it('Uses fallback for logs volume', async () => {
-      const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsVolume);
+      const testProvider = await setup(['no-data-providers'], SupplementaryQueryType.LogsVolume);
 
       await expect(testProvider).toEmitValuesWith((received) => {
         expect(received).toMatchObject([
@@ -197,12 +202,22 @@ describe('SupplementaryQueries utils', function () {
         ]);
       });
     });
-    it('Does not use a fallback for logs sample', async () => {
-      const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsSample);
+    it('Returns undefined for logs sample', async () => {
+      const testProvider = await setup(['no-data-providers'], SupplementaryQueryType.LogsSample);
+      await expect(testProvider).toBe(undefined);
+    });
+    it('Creates single fallback result', async () => {
+      const testProvider = await setup(['no-data-providers', 'no-data-providers-2'], SupplementaryQueryType.LogsVolume);
+
       await expect(testProvider).toEmitValuesWith((received) => {
         expect(received).toMatchObject([
           {
-            state: LoadingState.NotStarted,
+            data: assertDataFromLogsResults(),
+            state: LoadingState.Done,
+          },
+          {
+            data: [...assertDataFromLogsResults(), ...assertDataFromLogsResults()],
+            state: LoadingState.Done,
           },
         ]);
       });
@@ -213,10 +228,7 @@ describe('SupplementaryQueries utils', function () {
     describe('Logs volume', function () {
       describe('All data sources support full range logs volume', function () {
         it('Merges all data frames into a single response', async () => {
-          const testProvider = await setup('mixed', SupplementaryQueryType.LogsVolume, [
-            'logs-volume-a',
-            'logs-volume-b',
-          ]);
+          const testProvider = await setup(['logs-volume-a', 'logs-volume-b'], SupplementaryQueryType.LogsVolume);
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
               { data: [], state: LoadingState.Loading },
@@ -235,10 +247,10 @@ describe('SupplementaryQueries utils', function () {
 
       describe('All data sources do not support full range logs volume', function () {
         it('Creates single fallback result', async () => {
-          const testProvider = await setup('mixed', SupplementaryQueryType.LogsVolume, [
-            'no-data-providers',
-            'no-data-providers-2',
-          ]);
+          const testProvider = await setup(
+            ['no-data-providers', 'no-data-providers-2'],
+            SupplementaryQueryType.LogsVolume
+          );
 
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
@@ -257,12 +269,10 @@ describe('SupplementaryQueries utils', function () {
 
       describe('Some data sources support full range logs volume, while others do not', function () {
         it('Creates merged result containing full range and limited logs volume', async () => {
-          const testProvider = await setup('mixed', SupplementaryQueryType.LogsVolume, [
-            'logs-volume-a',
-            'no-data-providers',
-            'logs-volume-b',
-            'no-data-providers-2',
-          ]);
+          const testProvider = await setup(
+            ['logs-volume-a', 'no-data-providers', 'logs-volume-b', 'no-data-providers-2'],
+            SupplementaryQueryType.LogsVolume
+          );
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
               {
@@ -297,10 +307,7 @@ describe('SupplementaryQueries utils', function () {
     describe('Logs sample', function () {
       describe('All data sources support logs sample', function () {
         it('Merges all responses into single result', async () => {
-          const testProvider = await setup('mixed', SupplementaryQueryType.LogsSample, [
-            'logs-sample-a',
-            'logs-sample-b',
-          ]);
+          const testProvider = await setup(['logs-sample-a', 'logs-sample-b'], SupplementaryQueryType.LogsSample);
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
               { data: [], state: LoadingState.Loading },
@@ -319,24 +326,20 @@ describe('SupplementaryQueries utils', function () {
 
       describe('All data sources do not support full range logs volume', function () {
         it('Does not provide fallback result', async () => {
-          const testProvider = await setup('mixed', SupplementaryQueryType.LogsSample, [
-            'no-data-providers',
-            'no-data-providers-2',
-          ]);
-          await expect(testProvider).toEmitValuesWith((received) => {
-            expect(received).toMatchObject([{ state: LoadingState.NotStarted, data: [] }]);
-          });
+          const testProvider = await setup(
+            ['no-data-providers', 'no-data-providers-2'],
+            SupplementaryQueryType.LogsSample
+          );
+          await expect(testProvider).toBeUndefined();
         });
       });
 
       describe('Some data sources support full range logs volume, while others do not', function () {
         it('Returns results only for data sources supporting logs sample', async () => {
-          const testProvider = await setup('mixed', SupplementaryQueryType.LogsSample, [
-            'logs-sample-a',
-            'no-data-providers',
-            'logs-sample-b',
-            'no-data-providers-2',
-          ]);
+          const testProvider = await setup(
+            ['logs-sample-a', 'no-data-providers', 'logs-sample-b', 'no-data-providers-2'],
+            SupplementaryQueryType.LogsSample
+          );
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
               { data: [], state: LoadingState.Loading },

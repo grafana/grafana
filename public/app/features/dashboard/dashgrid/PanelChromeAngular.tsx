@@ -197,7 +197,11 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
+      <div
+        className={containerClassNames}
+        data-testid={selectors.components.Panels.Panel.title(panel.title)}
+        aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
+      >
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
