@@ -718,7 +718,6 @@ func getAlertmanagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *ualert.Po
 	return &config
 }
 
-// getAlertmanagerConfig retreives the Alertmanager Config from the database for a given orgId.
 func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertRule {
 	rules := make([]*ngModels.AlertRule, 0)
 	err := x.Table("alert_rule").Where("org_id = ?", orgId).Find(&rules)
