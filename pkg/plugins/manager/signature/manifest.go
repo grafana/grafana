@@ -300,5 +300,5 @@ func validateManifest(cfg *config.Cfg, m PluginManifest, block *clearsign.Block)
 		}
 	}
 
-	return manifestverifier.New(cfg).Verify(m.KeyID, block)
+	return manifestverifier.New(cfg, log.New("test")).Verify(m.KeyID, block)
 }

@@ -1191,7 +1191,7 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 			if r.URL.Path == "/api/plugins/ci/keys" {
 				w.WriteHeader(http.StatusOK)
 				// Use the hardcoded key
-				k, err := manifestverifier.New(&config.Cfg{}).GetPublicKey("7e4d0c6a708866e7")
+				k, err := manifestverifier.New(&config.Cfg{}, log.New("test")).GetPublicKey("7e4d0c6a708866e7")
 				require.NoError(t, err)
 				data := struct {
 					Items []manifestverifier.ManifestKeys `json:"items"`
@@ -1200,7 +1200,8 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 				}
 				b, err := json.Marshal(data)
 				require.NoError(t, err)
-				w.Write(b)
+				_, err = w.Write(b)
+				require.NoError(t, err)
 				apiCalled = true
 				return
 			}

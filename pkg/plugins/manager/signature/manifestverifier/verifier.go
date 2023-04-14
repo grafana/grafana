@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 // ManifestKeys is the database representation of public keys
@@ -24,15 +27,20 @@ type ManifestKeys struct {
 }
 
 type ManifestVerifier struct {
+	cfg  *config.Cfg
+	mlog log.Logger
+
 	lock       sync.Mutex
+	cli        http.Client
 	publicKeys map[string]ManifestKeys
-	cfg        *config.Cfg
 }
 
-func New(cfg *config.Cfg) *ManifestVerifier {
+func New(cfg *config.Cfg, mlog log.Logger) *ManifestVerifier {
 	return &ManifestVerifier{
 		cfg:        cfg,
 		publicKeys: map[string]ManifestKeys{},
+		mlog:       mlog,
+		cli:        makeHttpClient(),
 	}
 }
 
@@ -82,16 +90,25 @@ func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
 		Items []ManifestKeys
 	}
 
-	url, err := url.JoinPath(pmv.cfg.GrafanaComURL, "/api/plugins/ci/keys")
+	url, err := url.JoinPath(pmv.cfg.GrafanaComURL, "/api/plugins/ci/keys") // nolint:gosec URL is provided by config
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
 	}
 
-	resp, err := http.Get(url)
+	resp, err := pmv.cli.Do(req)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			pmv.mlog.Warn("error closing response body", "error", err)
+		}
+	}()
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return "", err
@@ -131,4 +148,24 @@ func (pmv *ManifestVerifier) Verify(keyID string, block *clearsign.Block) error 
 	}
 
 	return nil
+}
+
+// Same configuration as pkg/plugins/repo/client.go
+func makeHttpClient() http.Client {
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	return http.Client{
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
 }

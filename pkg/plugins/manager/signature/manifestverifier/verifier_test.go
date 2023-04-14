@@ -9,13 +9,14 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_Verify(t *testing.T) {
 	t.Run("it should verify a manifest with the default key", func(t *testing.T) {
-		v := New(&config.Cfg{})
+		v := New(&config.Cfg{}, log.New("test"))
 
 		body, err := os.ReadFile("../../testdata/test-app/MANIFEST.txt")
 		if err != nil {
@@ -35,7 +36,7 @@ func Test_Verify(t *testing.T) {
 		cfg := &config.Cfg{
 			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
 		}
-		v := New(cfg)
+		v := New(cfg, log.New("test"))
 		apiCalled := false
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/api/plugins/ci/keys" {
@@ -47,7 +48,8 @@ func Test_Verify(t *testing.T) {
 				}
 				b, err := json.Marshal(data)
 				require.NoError(t, err)
-				w.Write(b)
+				_, err = w.Write(b)
+				require.NoError(t, err)
 				apiCalled = true
 				return
 			}
