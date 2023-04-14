@@ -8,16 +8,16 @@ import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
-import { Branding } from '../Branding/Branding';
+import { Branding } from '../../Branding/Branding';
+import { NewsContainer } from '../News/NewsContainer';
+import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
+import { QuickAdd } from '../QuickAdd/QuickAdd';
+import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
-import { NewsContainer } from './News/NewsContainer';
-import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
-import { QuickAdd } from './QuickAdd/QuickAdd';
-import { SignInLink } from './TopBar/SignInLink';
-import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
-import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
+import { SignInLink } from './SignInLink';
+import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
+import { TopSearchBarSection } from './TopSearchBarSection';
 
 export const TopSearchBar = React.memo(function TopSearchBar() {
   const styles = useStyles2(getStyles);

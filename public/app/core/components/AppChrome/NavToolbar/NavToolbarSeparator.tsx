@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -17,11 +16,7 @@ export function NavToolbarSeparator({ className, leftActionsSeparator }: Props) 
     return <div className={cx(className, styles.leftActionsSeparator)} />;
   }
 
-  if (config.featureToggles.topnav) {
-    return <div className={cx(className, styles.line)} />;
-  }
-
-  return null;
+  return <div className={cx(className, styles.line)} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

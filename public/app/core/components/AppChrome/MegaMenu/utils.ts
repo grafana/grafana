@@ -1,51 +1,18 @@
 import { Location } from 'history';
 
-import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
+import { locationUtil, NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
-import { contextSrv } from 'app/core/services/context_srv';
 
-import { ShowModalReactEvent } from '../../../types/events';
-import appEvents from '../../app_events';
-import { getFooterLinks } from '../Footer/Footer';
-import { OrgSwitcher } from '../OrgSwitcher';
-import { HelpModal } from '../help/HelpModal';
-
-export const SEARCH_ITEM_ID = 'search';
-export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
-
-export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
+import { ShowModalReactEvent } from '../../../../types/events';
+import appEvents from '../../../app_events';
+import { getFooterLinks } from '../../Footer/Footer';
+import { HelpModal } from '../../help/HelpModal';
 
 export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
-  const { isSignedIn, user } = contextSrv;
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   };
-
-  const onOpenOrgSwitcher = () => {
-    appEvents.publish(new ShowModalReactEvent({ component: OrgSwitcher }));
-  };
-
-  if (!config.featureToggles.topnav && user && user.orgCount > 1) {
-    const profileNode = items.find((bottomNavItem) => bottomNavItem.id === 'profile');
-    if (profileNode) {
-      profileNode.showOrgSwitcher = true;
-      profileNode.subTitle = `Organization: ${user?.orgName}`;
-    }
-  }
-
-  if (!isSignedIn && !config.featureToggles.topnav) {
-    const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
-
-    items.unshift({
-      icon: 'signout',
-      id: 'sign-in',
-      section: NavSection.Config,
-      target: '_self',
-      text: t('nav.sign-in', 'Sign in'),
-      url: loginUrl,
-    });
-  }
 
   items.forEach((link) => {
     let menuItems = link.children || [];
@@ -60,18 +27,6 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
           text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
           icon: 'keyboard',
           onClick: onOpenShortcuts,
-        },
-      ];
-    }
-
-    if (!config.featureToggles.topnav && link.showOrgSwitcher) {
-      link.children = [
-        ...menuItems,
-        {
-          id: 'switch-organization',
-          text: t('nav.profile/switch-org', 'Switch organization'),
-          icon: 'arrow-random',
-          onClick: onOpenOrgSwitcher,
         },
       ];
     }
@@ -162,15 +117,6 @@ export const getActiveItem = (
   }
   return currentBestMatch;
 };
-
-export const isSearchActive = (location: Location<unknown>) => {
-  const query = new URLSearchParams(location.search);
-  return query.get('search') === 'open';
-};
-
-export function getNavModelItemKey(item: NavModelItem) {
-  return item.id ?? item.text;
-}
 
 export function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;

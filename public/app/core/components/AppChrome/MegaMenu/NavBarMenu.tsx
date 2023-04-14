@@ -9,7 +9,7 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
+import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
 
