@@ -186,3 +186,17 @@ As of now the data is being stored on the dashboard json and has a 1MB size limi
 To learn more about drag & drop, please refer to the official documentation.
 
 The list of requests is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the the drag & drop datasource.
+
+## Redesigned and improved Log Context
+
+Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
+
+Notably, we've added two new features that streamline the log context experience:
+
+First, we've included a "copy" button that allows users to easily copy lines without having to navigate away from the log context panel.
+
+Second, we've implemented an "eyeball" button that lets users display only the selected labels, making it easier to focus on specific information.
+
+{{< figure src="/media/docs/grafana/log-context-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
+
+These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
