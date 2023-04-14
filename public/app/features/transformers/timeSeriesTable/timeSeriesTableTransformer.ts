@@ -68,7 +68,11 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         values: new ArrayVector(),
       };
       refId2frameField[refId] = frameField;
-      const table = new MutableDataFrame();
+
+      // NOTE: MutableDataFrame.addField() makes copies, including any .values buffers
+      // since we do .values.add() later on the *originals*, we pass a custom MutableVectorCreator
+      // which will re-use the existing empty .values buffer by reference
+      const table = new MutableDataFrame(undefined, (buffer) => buffer ?? []);
       for (const label of Object.values(labelFields)) {
         table.addField(label);
       }
