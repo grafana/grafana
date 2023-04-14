@@ -139,3 +139,46 @@ Currently, you can add one or more of the following filters:
 - Tags (which include tags, process tags, and log fields).
 
 To try it out, you'll need to enable the `newTraceView` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+## Datagrid
+
+We introduced a new panel, which allows users to edit their data within a Grafana dashboard: The Datagrid
+The Datagrid is a new beta panel that allows users to edit their data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a datasource or create your own dataset from scratch and use it within your dashboard to update your panels in real time.
+
+In combination with other panels using the Datagrid as a datasource, you can enhance the experience even more.
+
+By default, the Datagrid panel will not allow a user to edit data, but only show data like a standard visualization. To make full use of this new panel editing functionality you will need to enable the “enableDatagridEditing” feature toggle.
+But for now the Datagrid Panel will support the following features in G10:
+
+- Creating and deleting rows and columns
+- Data and column header edit or delete
+- Search functionality
+- Column freezing
+- Grid selection actions (copy/paste/delete)
+- Draggable columns and rows
+- Series select when pulling data from a datasource
+
+To learn more about the Datagrid panel, please refer to the official documentation.
+
+The list of features is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the datagrid.
+
+## Drag and Drop
+
+Finally connecting your local data is made easier! Welcome drag & drop in Grafana!
+The drag & drop functionality allows users to connect their csv, excel or numbers files by simply dragging and dropping them on a dashboard, or even into the editor directly.
+
+Once dropped a table will be created by default containing the data that is living in the file itself.
+
+By default, the drag & drop feature is not available out of the box. In order to utilize this functionality panel you will need to enable the `featuretogglename` feature toggle.
+
+As of now drag & drop supports the following scenarios in G10:
+
+- Drag & drop files on an empty dashboard
+- Drag & drop files into the panel editor
+- Replace files in the panel editor
+- Default table panel creation
+
+As of now the data is being stored on the dashboard json and has a 1MB size limit. Obviously it’s our mission to increase the limit without decreasing the performance in the near future.
+To learn more about drag & drop, please refer to the official documentation.
+
+The list of requests is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the the drag & drop datasource.
