@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -33,6 +34,10 @@ func NewLocalFinder(devMode bool) *Local {
 		devMode: devMode,
 		log:     log.New("local.finder"),
 	}
+}
+
+func ProvideLocalFinder(cfg *config.Cfg) *Local {
+	return NewLocalFinder(cfg.DevMode)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
