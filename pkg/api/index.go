@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -140,6 +141,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
 		CSPEnabled:                          hs.Cfg.CSPEnabled,
+		CSPContent:                          middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce),
 		TestModeEnabled:                     hs.Cfg.Env == setting.Test,
 		TrustedTypesEnabled:                 hs.Features.IsEnabled(featuremgmt.FlagTrustedTypes),
 	}

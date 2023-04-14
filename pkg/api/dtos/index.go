@@ -30,6 +30,7 @@ type IndexViewData struct {
 	Sentry                              *setting.Sentry
 	ContentDeliveryURL                  string
 	LoadingLogo                         template.URL
+	CSPContent                          string
 	CSPEnabled                          bool
 	TestModeEnabled                     bool
 	TrustedTypesEnabled                 bool

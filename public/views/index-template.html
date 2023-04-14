@@ -3,7 +3,7 @@
   <head>
     [[ if and .CSPEnabled .TrustedTypesEnabled .TestModeEnabled]]
     <!-- Cypress overwrite CSP headers in HTTP requests, so this is required for e2e tests-->
-    <meta  http-equiv="Content-Security-Policy" content="require-trusted-types-for 'script';"/>
+    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
     [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
