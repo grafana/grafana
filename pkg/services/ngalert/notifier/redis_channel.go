@@ -39,6 +39,7 @@ func (c *RedisChannel) handleMessages() {
 			// An error here might not be as critical as one might think on first sight.
 			// The state will eventually be propagted to other members by the full sync.
 			if pub.Err() != nil {
+				c.p.messagesPublishFailures.WithLabelValues(c.msgType).Inc()
 				c.p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
 				continue
 			}
@@ -58,6 +59,7 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	case c.msgc <- b:
 	default:
 		// This is not the end of the world, we will catch up when we do a full state sync.
+		c.p.messagesPublishFailures.WithLabelValues(c.msgType).Inc()
 		c.p.logger.Warn("buffer full, droping message", "channel", c.channel)
 	}
 }

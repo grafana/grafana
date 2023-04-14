@@ -58,12 +58,13 @@ type redisPeer struct {
 
 	pushPullInterval time.Duration
 
-	messagesReceived     *prometheus.CounterVec
-	messagesReceivedSize *prometheus.CounterVec
-	messagesSent         *prometheus.CounterVec
-	messagesSentSize     *prometheus.CounterVec
-	nodePingDuration     *prometheus.HistogramVec
-	nodePingFailures     prometheus.Counter
+	messagesReceived        *prometheus.CounterVec
+	messagesReceivedSize    *prometheus.CounterVec
+	messagesSent            *prometheus.CounterVec
+	messagesSentSize        *prometheus.CounterVec
+	messagesPublishFailures *prometheus.CounterVec
+	nodePingDuration        *prometheus.HistogramVec
+	nodePingFailures        prometheus.Counter
 
 	// List of active members of the cluster. Should be accessed through the Members function.
 	members    []string
@@ -130,6 +131,10 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		Name: "alertmanager_cluster_messages_sent_size_total",
 		Help: "Total size of cluster messages sent.",
 	}, []string{"msg_type"})
+	messagesPublishFailures := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "alertmanager_cluster_messages_publish_failures_total",
+		Help: "Total number of messages that failed to be published.",
+	}, []string{"msg_type"})
 	gossipClusterMembers := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "alertmanager_cluster_members",
 		Help: "Number indicating current number of members in cluster.",
@@ -167,15 +172,19 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	messagesSentSize.WithLabelValues(fullState)
 	messagesSent.WithLabelValues(update)
 	messagesSentSize.WithLabelValues(update)
+	messagesPublishFailures.WithLabelValues(fullState)
+	messagesPublishFailures.WithLabelValues(update)
 
 	reg.MustRegister(messagesReceived, messagesReceivedSize, messagesSent, messagesSentSize,
-		gossipClusterMembers, peerPosition, healthScore, nodePingDuration,
+		gossipClusterMembers, peerPosition, healthScore, nodePingDuration, nodePingFailures,
+		messagesPublishFailures,
 	)
 
 	p.messagesReceived = messagesReceived
 	p.messagesReceivedSize = messagesReceivedSize
 	p.messagesSent = messagesSent
 	p.messagesSentSize = messagesSentSize
+	p.messagesPublishFailures = messagesPublishFailures
 	p.nodePingDuration = nodePingDuration
 	p.nodePingFailures = nodePingFailures
 
@@ -478,6 +487,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 func (p *redisPeer) fullStateSyncPublish() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannel), p.LocalState())
 	if pub.Err() != nil {
+		p.messagesPublishFailures.WithLabelValues(fullState).Inc()
 		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
 	}
 }
@@ -498,6 +508,7 @@ func (p *redisPeer) fullStateSyncPublishLoop() {
 func (p *redisPeer) requestFullState() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannelReq), p.name)
 	if pub.Err() != nil {
+		p.messagesPublishFailures.WithLabelValues(fullState).Inc()
 		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannelReq))
 	}
 }
