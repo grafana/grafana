@@ -229,6 +229,8 @@ function isLine(value: unknown): value is Line {
   return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
 }
 
+// Each alert instance is represented by a data frame
+// Each frame consists of two fields: timestamp and state change
 function logRecordsToDataFrame(
   instanceLabels: string,
   records: LogRecord[],

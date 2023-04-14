@@ -31,28 +31,26 @@ export const LogRecordViewerByTimestamp = React.memo(
         {Object.entries(groupedLines).map(([key, records]) => {
           return (
             <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
-              <div>
-                <Timestamp time={parseInt(key, 10)} />
-                <div className={styles.logsContainer}>
-                  {records.map(({ line }) => (
-                    <React.Fragment key={uniqueId()}>
-                      <AlertStateTag state={line.previous} size="sm" muted />
-                      <Icon name="arrow-right" size="sm" />
-                      <AlertStateTag state={line.current} />
-                      <Stack direction="row">{line.values && <AlertInstanceValues record={line.values} />}</Stack>
-                      <div>
-                        {line.labels && (
-                          <TagList
-                            tags={omitLabels(Object.entries(line.labels), commonLabels).map(
-                              ([key, value]) => `${key}=${value}`
-                            )}
-                            onClick={onLabelClick}
-                          />
-                        )}
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
+              <Timestamp time={parseInt(key, 10)} />
+              <div className={styles.logsContainer}>
+                {records.map(({ line }) => (
+                  <React.Fragment key={uniqueId()}>
+                    <AlertStateTag state={line.previous} size="sm" muted />
+                    <Icon name="arrow-right" size="sm" />
+                    <AlertStateTag state={line.current} />
+                    <Stack direction="row">{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                    <div>
+                      {line.labels && (
+                        <TagList
+                          tags={omitLabels(Object.entries(line.labels), commonLabels).map(
+                            ([key, value]) => `${key}=${value}`
+                          )}
+                          onClick={onLabelClick}
+                        />
+                      )}
+                    </div>
+                  </React.Fragment>
+                ))}
               </div>
             </div>
           );
