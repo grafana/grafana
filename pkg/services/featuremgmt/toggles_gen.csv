@@ -13,7 +13,7 @@ featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
-exploreMixedDatasource,alpha,@grafana/explore-squad,false,false,false,true
+exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
 newTraceView,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
 cloudWatchDynamicLabels,stable,@grafana/aws-plugins,false,false,false,false
