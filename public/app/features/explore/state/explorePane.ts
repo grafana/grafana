@@ -11,7 +11,6 @@ import {
   PreferredVisualisationType,
   RawTimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { DEFAULT_RANGE, getQueryKeys } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -103,7 +102,7 @@ export function changeSize(
 
 interface InitializeExploreOptions {
   exploreId: ExploreId;
-  datasource: DataSourceRef | string;
+  datasource: DataSourceRef | string | undefined;
   queries: DataQuery[];
   range: RawTimeRange;
   panelsState?: ExplorePanelsState;
@@ -118,12 +117,14 @@ interface InitializeExploreOptions {
  */
 export const initializeExplore = createAsyncThunk(
   'explore/initializeExplore',
-  async ({ exploreId, datasource, queries, range, panelsState }: InitializeExploreOptions, { dispatch, getState }) => {
-    const exploreDatasources = getDataSourceSrv().getList();
+  async (
+    { exploreId, datasource, queries, range, panelsState }: InitializeExploreOptions,
+    { dispatch, getState, fulfillWithValue }
+  ) => {
     let instance = undefined;
     let history: HistoryItem[] = [];
 
-    if (exploreDatasources.length >= 1) {
+    if (datasource) {
       const orgId = getState().user.orgId;
       const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
@@ -150,6 +151,8 @@ export const initializeExplore = createAsyncThunk(
       // user to go back to previous url.
       dispatch(runQueries(exploreId));
     }
+
+    return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
   }
 );
 
@@ -205,7 +208,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
-      datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
     };

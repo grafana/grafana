@@ -239,8 +239,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   render() {
-    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef, refreshInterval, loading } =
-      this.props;
+    const { exploreId, splitted, containerWidth, topOfViewRef, refreshInterval, loading } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const isTopnav = config.featureToggles.topnav;
@@ -255,17 +254,16 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       />
     );
 
-    const getDataSourcePicker = () =>
-      !datasourceMissing && (
-        <DataSourcePicker
-          key={`${exploreId}-ds-picker`}
-          mixed={config.featureToggles.exploreMixedDatasource === true}
-          onChange={this.onChangeDatasource}
-          current={this.props.datasourceRef}
-          hideTextValue={showSmallDataSourcePicker}
-          width={showSmallDataSourcePicker ? 8 : undefined}
-        />
-      );
+    const getDataSourcePicker = () => (
+      <DataSourcePicker
+        key={`${exploreId}-ds-picker`}
+        mixed={config.featureToggles.exploreMixedDatasource === true}
+        onChange={this.onChangeDatasource}
+        current={this.props.datasourceRef}
+        hideTextValue={showSmallDataSourcePicker}
+        width={showSmallDataSourcePicker ? 8 : undefined}
+      />
+    );
 
     const toolbarLeftItems = [
       // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
@@ -298,13 +296,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const { syncedTimes, largerExploreId } = state.explore;
   const exploreItem = state.explore.panes[exploreId]!;
-  const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
-    exploreItem;
+  const { datasourceInstance, range, refreshInterval, loading, isLive, isPaused, containerWidth } = exploreItem;
 
   const hasLiveOption = !!datasourceInstance?.meta?.streaming;
 
   return {
-    datasourceMissing,
     datasourceRef: datasourceInstance?.getRef(),
     datasourceType: datasourceInstance?.type,
     loading,

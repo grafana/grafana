@@ -1,3 +1,5 @@
+import { DataSourceRef } from '@grafana/schema';
+
 import { PreferredVisualisationType } from './data';
 import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
@@ -6,7 +8,7 @@ type AnyQuery = DataQuery & Record<string, any>;
 
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
-  datasource: string;
+  datasource: string | DataSourceRef;
   queries: T[];
   range: RawTimeRange;
   context?: string;

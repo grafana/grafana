@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { serializeStateToUrlParam } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { addListener, useDispatch } from 'app/types';
 
 import { getUrlStateFromPaneState } from './utils';
@@ -12,6 +12,7 @@ import { getUrlStateFromPaneState } from './utils';
  */
 export function useURLSync() {
   const dispatch = useDispatch();
+  const { location } = useGrafana();
 
   // @ts-expect-error the return type of addListener is actually callable, but dispatch is not middleware-aware
   useEffect(() => {
@@ -37,19 +38,19 @@ export function useURLSync() {
           }
 
           if (
-            locationService.getSearch().get('right') !== urlStates.right ||
-            locationService.getSearch().get('left') !== urlStates.left
+            location.getSearch().get('right') !== urlStates.right ||
+            location.getSearch().get('left') !== urlStates.left
           ) {
             // If there's no state in the URL it means we are mounting explore for the first time.
             // In that case we want to replace the URL instead of pushing a new entry to the history.
-            const replace = !locationService.getSearch().has('right') && !locationService.getSearch().has('left');
+            const replace = !location.getSearch().has('right') && !location.getSearch().has('left');
 
-            locationService.partial({ ...urlStates }, replace);
+            location.partial({ ...urlStates }, replace);
           }
         },
       })
     );
 
     return unsubscribe;
-  }, [dispatch]);
+  }, [dispatch, location]);
 }

@@ -60,7 +60,6 @@ const dummyProps: Props = {
       QueryEditorHelp: {},
     },
   } as DataSourceApi,
-  datasourceMissing: false,
   exploreId: ExploreId.left,
   loading: false,
   modifyQueries: jest.fn(),

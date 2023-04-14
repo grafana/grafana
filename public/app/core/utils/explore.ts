@@ -219,7 +219,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   }
 
   if (!Array.isArray(parsed)) {
-    return parsed;
+    return { ...parsed, queries: parsed.queries ?? [] };
   }
 
   if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {

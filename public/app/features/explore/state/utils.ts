@@ -39,7 +39,6 @@ export const storeGraphStyle = (graphStyle: string): void => {
 export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  datasourceMissing: false,
   history: [],
   queries: [],
   initialized: false,

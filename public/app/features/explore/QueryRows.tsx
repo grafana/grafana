@@ -39,9 +39,9 @@ export const QueryRows = ({ exploreId }: Props) => {
     [exploreId]
   );
 
-  const queries = useSelector(getQueries)!;
-  const dsSettings = useSelector(getDatasourceInstanceSettings)!;
-  const queryResponse = useSelector(getQueryResponse)!;
+  const queries = useSelector(getQueries);
+  const dsSettings = useSelector(getDatasourceInstanceSettings);
+  const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
 

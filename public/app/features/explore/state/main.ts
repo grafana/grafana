@@ -83,7 +83,7 @@ export const splitOpen = createAsyncThunk(
         // TODO: fix this
         datasource: options?.datasourceUid || leftState.datasourceInstance?.uid!,
         queries: options?.queries ?? (options?.query ? [options?.query] : leftState.queries),
-        range: options?.range || leftState.range,
+        range: options?.range || leftState.range.raw,
         panelsState: options?.panelsState || leftState.panelsState,
       })
     );
