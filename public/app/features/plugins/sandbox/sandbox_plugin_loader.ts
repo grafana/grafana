@@ -107,26 +107,17 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
         startActivity() {
           return {
             stop: () => {},
-            async error(proxyError?: Error) {
+            async error(proxyError?: Error & { sandboxError?: boolean }) {
               if (!proxyError) {
                 return;
               }
-              const newError = new Error(proxyError.message);
-              newError.name = proxyError.name;
-              if (proxyError.stack) {
-                // Parse the error stack trace
-                const stackFrames = proxyError.stack.split('\n').map((frame) => frame.trim());
+              // flag this error as a sandbox error
+              proxyError.sandboxError = true;
 
-                // remove not useful stack frames
-                const filterOut = ['sandbox', 'proxyhandler', 'trap', 'redconnector'];
-                const filteredStackFrames = stackFrames.filter((frame) => {
-                  return !filterOut.some((filter) => frame.toLowerCase().includes(filter));
-                });
-
-                // Join the filtered stack frames back into a string
-                const modifiedStack = filteredStackFrames.join('\n');
-                newError.stack = modifiedStack;
-              }
+              //  create a new error to unwrap it from the proxy
+              const newError = new Error(proxyError.message.toString());
+              newError.name = proxyError.name.toString();
+              newError.stack = proxyError.stack || '';
 
               // If you are seeing this is because
               // the plugin is throwing an error
@@ -165,10 +156,10 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
   });
 }
 
-window.addEventListener('error', (e) => {
+window.addEventListener('error', (e: ErrorEvent) => {
   // prevent sandbox errors from being logged twice
   // we log these errors property inside the sandbox itself
-  if (e.message.includes('Uncaught') && e.error && e.error.stack && e.error.stack.includes('createRedConnector')) {
+  if (e.error?.sandboxError) {
     e.preventDefault();
   }
 });
