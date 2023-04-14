@@ -31,6 +31,8 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  LogRowContextOptions,
+  LogRowContextQueryDirection,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -40,7 +42,6 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
@@ -646,10 +647,10 @@ export class LokiDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    options?: RowContextOptions,
+    options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    const direction = (options && options.direction) || 'BACKWARD';
+    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const limit = (options && options.limit) || 10;
     const { query, range } = await this.logContextProvider.prepareLogRowContextQueryTarget(
       row,
@@ -734,11 +735,11 @@ export class LokiDatasource
     return this.metadataRequest('labels', params).then(
       (values) => {
         return values.length > 0
-          ? { status: 'success', message: 'Data source connected and labels found.' }
+          ? { status: 'success', message: 'Data source successfully connected.' }
           : {
               status: 'error',
               message:
-                'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+                'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
             };
       },
       (err) => {
@@ -749,7 +750,7 @@ export class LokiDatasource
         // because those will only describe how the request between browser<>server failed
         const info: string = err?.data?.message ?? '';
         const infoInParentheses = info !== '' ? ` (${info})` : '';
-        const message = `Unable to fetch labels from Loki${infoInParentheses}, please check the server logs for more details`;
+        const message = `Unable to connect with Loki${infoInParentheses}. Please check the server logs for more details.`;
         return { status: 'error', message: message };
       }
     );
