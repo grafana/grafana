@@ -116,6 +116,8 @@ describe('InfluxDataSource', () => {
         } as FetchResponse);
       });
 
+      ctx.ds.retentionPolicies = [''];
+
       try {
         await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
