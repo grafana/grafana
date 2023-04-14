@@ -479,12 +479,6 @@ func (hs *HTTPServer) registerRoutes() {
 				})
 			})
 
-			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
-				if hs.ThumbService != nil {
-					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
-				}
-			})
-
 			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/validate", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.ValidateDashboard))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))

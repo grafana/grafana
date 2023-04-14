@@ -487,8 +487,6 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
-	DashboardPreviews DashboardPreviewsSettings
-
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -1119,7 +1117,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.readDataSourcesSettings()
 
-	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 
