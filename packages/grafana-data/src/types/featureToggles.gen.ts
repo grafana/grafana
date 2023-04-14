@@ -21,7 +21,6 @@ export interface FeatureToggles {
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
-  dashboardPreviews?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -96,6 +95,6 @@ export interface FeatureToggles {
   externalServiceAuth?: boolean;
   dataplaneFrontendFallback?: boolean;
   useCachingService?: boolean;
-  disableElasticsearchBackendQuerying?: boolean;
+  enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
 }

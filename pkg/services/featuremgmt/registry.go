@@ -28,12 +28,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:        "dashboardPreviews",
-			Description: "Create and show thumbnails for dashboard search results",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -106,7 +100,7 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
 		},
@@ -521,9 +515,9 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "disableElasticsearchBackendQuerying",
-			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
-			State:       FeatureStateStable,
+			Name:        "enableElasticsearchBackendQuerying",
+			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{

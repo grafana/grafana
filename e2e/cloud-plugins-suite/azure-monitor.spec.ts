@@ -2,7 +2,6 @@ import { load } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 
 import { e2e } from '@grafana/e2e';
-import { GrafanaBootConfig } from '@grafana/runtime';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
@@ -97,15 +96,7 @@ const addAzureMonitorVariable = (
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-  e2e()
-    .window()
-    .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
-      if (win.grafanaBootData.settings.featureToggles.topnav) {
-        e2e.pages.Dashboard.Settings.Actions.close().click();
-      } else {
-        e2e.components.PageToolbar.item('Go Back').click();
-      }
-    });
+  e2e.pages.Dashboard.Settings.Actions.close().click();
 };
 
 e2e.scenario({

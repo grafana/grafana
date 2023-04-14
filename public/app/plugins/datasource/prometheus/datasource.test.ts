@@ -94,6 +94,16 @@ describe('PrometheusDatasource', () => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
   });
 
+  // Some functions are required by the parent datasource class to provide functionality such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues functions
+  describe('Datasource contract', () => {
+    it('has function called getTagKeys', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagKeys');
+    });
+    it('has function called getTagValues', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagValues');
+    });
+  });
+
   describe('Query', () => {
     it('returns empty array when no queries', async () => {
       await expect(ds.query(createDataRequest([]))).toEmitValuesWith((response) => {
@@ -167,7 +177,7 @@ describe('PrometheusDatasource', () => {
       ).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
-      await expect(directDs.getLabelNames()).rejects.toMatchObject({
+      await expect(directDs.getTagKeys()).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
       await expect(directDs.getTagValues()).rejects.toMatchObject({

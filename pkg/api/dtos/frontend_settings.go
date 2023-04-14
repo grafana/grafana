@@ -64,16 +64,6 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval string `json:"minInterval"`
 }
 
-type DashboardPreviewsSystemRequirements struct {
-	Met                                bool   `json:"met"`
-	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
-}
-
-type DashboardPreviewsSetupConfig struct {
-	SystemRequirements DashboardPreviewsSystemRequirements `json:"systemRequirements"`
-	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
-}
-
 // Enterprise-only
 type FrontendSettingsLicensingDTO struct {
 	Slug                   *string `json:"slug,omitempty"`
@@ -209,8 +199,6 @@ type FrontendSettingsDTO struct {
 	SamlEnabled             bool                               `json:"samlEnabled"`
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
-
-	DashboardPreviews DashboardPreviewsSetupConfig `json:"dashboardPreviews,omitempty"`
 
 	GeomapDefaultBaseLayerConfig *map[string]interface{} `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool                    `json:"geomapDisableCustomBaseLayer"`

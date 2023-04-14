@@ -5,11 +5,10 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Button, Icon, useStyles2 } from '@grafana/ui';
 
-import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
-import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
-import { hasChildMatch } from '../NavBar/utils';
-
+import { NavBarItemIcon } from './NavBarItemIcon';
 import { NavBarMenuItem } from './NavBarMenuItem';
+import { NavFeatureHighlight } from './NavFeatureHighlight';
+import { hasChildMatch } from './utils';
 
 export function NavBarMenuSection({
   link,
