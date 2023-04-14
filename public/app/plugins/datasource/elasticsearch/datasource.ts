@@ -499,8 +499,8 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const { disableElasticsearchBackendQuerying } = config.featureToggles;
-    if (!disableElasticsearchBackendQuerying) {
+    const { enableElasticsearchBackendQuerying } = config.featureToggles;
+    if (enableElasticsearchBackendQuerying) {
       const contextRequest = this.makeLogContextDataRequest(row, options);
 
       return lastValueFrom(
@@ -674,8 +674,8 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-    const { disableElasticsearchBackendQuerying } = config.featureToggles;
-    if (!disableElasticsearchBackendQuerying) {
+    const { enableElasticsearchBackendQuerying } = config.featureToggles;
+    if (enableElasticsearchBackendQuerying) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }

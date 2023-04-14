@@ -8,7 +8,6 @@ import {
   Badge,
   Button,
   DeleteButton,
-  HorizontalGroup,
   LoadingPlaceholder,
   useStyles2,
   Alert,
@@ -144,25 +143,20 @@ export default function CorrelationsPage() {
   );
 
   const data = useMemo(() => get.value, [get.value]);
-
   const showEmptyListCTA = data?.length === 0 && !isAdding && !get.error;
+  const addButton = canWriteCorrelations && data?.length !== 0 && data !== undefined && !isAdding && (
+    <Button icon="plus" onClick={() => setIsAdding(true)}>
+      Add new
+    </Button>
+  );
 
   return (
-    <Page navModel={navModel}>
+    <Page
+      navModel={navModel}
+      subTitle="Define how data living in different data sources relates to each other."
+      actions={addButton}
+    >
       <Page.Contents>
-        <div>
-          <HorizontalGroup justify="space-between">
-            <div>
-              <p>Define how data living in different data sources relates to each other.</p>
-            </div>
-            {canWriteCorrelations && data?.length !== 0 && data !== undefined && !isAdding && (
-              <Button icon="plus" onClick={() => setIsAdding(true)}>
-                Add new
-              </Button>
-            )}
-          </HorizontalGroup>
-        </div>
-
         <div>
           {!data && get.loading && (
             <div className={loaderWrapper}>
