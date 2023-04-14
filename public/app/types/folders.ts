@@ -1,8 +1,6 @@
-import { WithAccessControlMetadata } from '@grafana/data';
-
 import { DashboardAcl } from './acl';
 
-export interface FolderDTO extends WithAccessControlMetadata {
+export interface FolderDTO {
   id: number;
   uid: string;
   title: string;
