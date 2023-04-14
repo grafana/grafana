@@ -146,9 +146,11 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
       <>
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
-          <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
-          </div>
+          {defaultUrl && (
+            <div className="gf-form">
+              <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
+            </div>
+          )}
 
           {showAccessOptions && (
             <>

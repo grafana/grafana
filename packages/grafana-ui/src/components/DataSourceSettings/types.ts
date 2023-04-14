@@ -30,7 +30,7 @@ export interface HttpSettingsBaseProps<JSONData extends DataSourceJsonData = any
 
 export interface HttpSettingsProps extends HttpSettingsBaseProps {
   /** The default url for the data source */
-  defaultUrl: string;
+  defaultUrl?: string;
   /** Show the http access help box */
   showAccessOptions?: boolean;
   /** Show the SigV4 auth toggle option */
