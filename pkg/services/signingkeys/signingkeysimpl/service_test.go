@@ -126,13 +126,12 @@ func TestEmbeddedKeyService_GetJWK(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := svc.GetJWK(tt.args.keyID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EmbeddedKeyService.GetJWK() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EmbeddedKeyService.GetJWK() = %v, want %v", got, tt.want)
-			}
+			require.NoError(t, err)
+			require.Equal(t, got, tt.want)
 		})
 	}
 }
