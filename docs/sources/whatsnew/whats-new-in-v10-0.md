@@ -84,9 +84,9 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 _Available in preview in all editions of Grafana._
 Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data.
 
-The new panel creation flow greatly simplifies the data source selection step. It provides a clear overview of your available data sources and a direct link to connecting a new one, the first time you add a panel to your dashboard.
+With the new flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing users to quickly connect to a new one when needed. Additionally, the flow now enables quick uploading of CSV files and access to built-in data sources.
 
-To try it out, you'll need to enable the `datasourceOnboarding` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ## Public dashboards
 
