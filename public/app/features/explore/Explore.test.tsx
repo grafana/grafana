@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
-import { configureStore } from 'app/store/configureStore';
 import { ExploreId } from 'app/types/explore';
 
 import { Explore, Props } from './Explore';
@@ -119,13 +118,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 
 const setup = (overrideProps?: Partial<Props>) => {
-  const store = configureStore();
   const exploreProps = { ...dummyProps, ...overrideProps };
 
   return render(
-    <Provider store={store}>
+    <TestProvider>
       <Explore {...exploreProps} />
-    </Provider>
+    </TestProvider>
   );
 };
 
@@ -134,7 +132,7 @@ describe('Explore', () => {
     setup();
 
     // Wait for the Explore component to render
-    await screen.findByText('Explore');
+    await screen.findByLabelText('Data source picker select container');
 
     expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
@@ -144,7 +142,7 @@ describe('Explore', () => {
     setup({ queryResponse: queryResp });
 
     // Wait for the Explore component to render
-    await screen.findByText('Explore');
+    await screen.findByLabelText('Data source picker select container');
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
