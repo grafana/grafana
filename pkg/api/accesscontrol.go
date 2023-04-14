@@ -64,8 +64,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants:              []string{string(org.RoleEditor)},
-		AllowGrantsOverride: true,
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	if hs.Cfg.ViewersCanEdit {
