@@ -46,12 +46,22 @@ func (j *psrJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		oldKind, err = loadComposableKind(name, oldKindString, "composable")
 		if err != nil {
 			return nil, err
-		}	
+		}
 	}
 
 	// File is new - no need to compare with old lineage
-	if oldKind != nil && !thema.IsAppendOnly(oldKind.Lineage(), decl.Lineage) {
-		return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
+	if oldKind != nil {
+		maturity := decl.KindDecl.Properties.Maturity
+
+		// Check that maturity isn't downgraded
+		if maturity.Less(oldKind.Maturity()) {
+			return nil, fmt.Errorf("kind maturity can't be downgraded once a kind is published")
+		}
+
+		// Check that old schemas do not contain updates if maturity is greater than experimental
+		if kindsys.MaturityExperimental.Less(maturity) && !thema.IsAppendOnly(oldKind.Lineage(), decl.Lineage) {
+			return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
+		}
 	}
 
 	newKindBytes, err := corecodegen.KindToBytes(decl.KindDecl.V)
@@ -71,7 +81,7 @@ func loadComposableKind(name string, kind string, category string) (kindsys.Kind
 
 	fs := fstest.MapFS{
 		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
-			Data: []byte("package grafanaplugin\n"+kind),
+			Data: []byte("package grafanaplugin\n" + kind),
 		},
 	}
 

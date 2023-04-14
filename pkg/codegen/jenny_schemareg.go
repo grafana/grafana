@@ -43,8 +43,16 @@ func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	}
 
 	// File is new - no need to compare with old lineage
-	if oldKind != nil && !thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage()) {
-		return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
+	if oldKind != nil {
+		// Check that maturity isn't downgraded
+		if kind.Maturity().Less(oldKind.Maturity()) {
+			return nil, fmt.Errorf("kind maturity can't be downgraded once a kind is published")
+		}
+
+		// Check that old schemas do not contain updates if maturity is greater than experimental
+		if kindsys.MaturityExperimental.Less(kind.Maturity()) && !thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage()) {
+			return nil, fmt.Errorf("existing schemas in lineage %s cannot be modified", name)
+		}
 	}
 
 	core, ok := kind.(kindsys.Core)

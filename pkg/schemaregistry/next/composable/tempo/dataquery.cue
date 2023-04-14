@@ -43,13 +43,10 @@ kindsys.Composable & kindsys.Composable & {
 				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
 
 				// static fields are pre-set in the UI, dynamic fields are added by the user
-				#TraceqlSearchFilterType: "static" | "dynamic"             @cuetsy(kind="type")
-				#TraceqlSearchScope:      "unscoped" | "resource" | "span" @cuetsy(kind="enum")
+				#TraceqlSearchScope: "unscoped" | "resource" | "span" @cuetsy(kind="enum")
 				#TraceqlFilter: {
 					// Uniquely identify the filter, will not be used in the query generation
 					id: string
-					// The type of the filter, can either be static (pre defined in the UI) or dynamic
-					type: #TraceqlSearchFilterType
 					// The tag for the search filter, for example: .http.status_code, .service.name, status
 					tag?: string
 					// The operator that connects the tag to the value, for example: =, >, !=, =~
