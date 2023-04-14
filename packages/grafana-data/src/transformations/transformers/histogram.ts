@@ -5,7 +5,6 @@ import { createTheme, GrafanaTheme2 } from '../../themes';
 import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { roundDecimals } from '../../utils';
-import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
@@ -158,7 +157,7 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
     xMax = {
       ...xMin,
       name: histogramFrameBucketMaxFieldName,
-      values: new ArrayVector(vals.map((v) => v + bucketSize)),
+      values: vals.map((v) => v + bucketSize),
     };
   }
 
@@ -169,7 +168,7 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
     xMin = {
       ...xMax,
       name: histogramFrameBucketMinFieldName,
-      values: new ArrayVector(vals.map((v) => v - bucketSize)),
+      values: vals.map((v) => v - bucketSize),
     };
   }
 
@@ -291,7 +290,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   const xMin: Field = {
     name: histogramFrameBucketMinFieldName,
-    values: new ArrayVector(joinedHists[0]),
+    values: joinedHists[0],
     type: FieldType.number,
     state: undefined,
     config:
@@ -305,7 +304,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   const xMax = {
     ...xMin,
     name: histogramFrameBucketMaxFieldName,
-    values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
+    values: joinedHists[0].map((v) => v + bucketSize!),
   };
 
   if (options?.combine) {
@@ -319,14 +318,14 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       {
         ...counts[0],
         name: 'count',
-        values: new ArrayVector(vals),
+        values: vals,
         type: FieldType.number,
         state: undefined,
       },
     ];
   } else {
     counts.forEach((field, i) => {
-      field.values = new ArrayVector(joinedHists[i + 1]);
+      field.values = joinedHists[i + 1];
     });
   }
 
