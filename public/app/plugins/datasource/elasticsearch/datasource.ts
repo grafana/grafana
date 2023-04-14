@@ -25,6 +25,7 @@ import {
   QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
+  SupplementaryQueryOptions,
   DataQueryError,
   FieldCache,
   FieldType,
@@ -603,14 +604,14 @@ export class ElasticDatasource
     return [SupplementaryQueryType.LogsVolume];
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
       return undefined;
     }
 
     let isQuerySuitable = false;
 
-    switch (type) {
+    switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
@@ -661,7 +662,7 @@ export class ElasticDatasource
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((target) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, target))
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
       .filter((query): query is ElasticsearchQuery => !!query);
 
     if (!targets.length) {

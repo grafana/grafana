@@ -163,6 +163,17 @@ export enum SupplementaryQueryType {
   LogsSample = 'LogsSample',
 }
 
+export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
+
+export type LogsVolumeOption = {
+  type: SupplementaryQueryType.LogsVolume;
+};
+
+export type LogsSampleOptions = {
+  type: SupplementaryQueryType.LogsSample;
+  limit?: number;
+};
+
 /**
  * Types of logs volume responses. A data source may return full range histogram (based on selected range)
  * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
@@ -206,7 +217,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If provided query is not suitable for provided supplementary query type, undefined should be returned.
    */
-  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+  getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
