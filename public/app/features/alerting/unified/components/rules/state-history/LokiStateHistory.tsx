@@ -177,7 +177,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
             <div className={styles.moreInstancesWarning}>
               <Stack direction="row" alignItems="center" gap={1}>
                 <Icon name="exclamation-triangle" size="sm" />
-                <small>{`Only showing ${frameSubset.length} out of ${dataFrames.length} instances`}</small>
+                <small>{`Only showing ${frameSubset.length} out of ${dataFrames.length} instances. Click on the labels to narrow down the results`}</small>
               </Stack>
             </div>
           )}
