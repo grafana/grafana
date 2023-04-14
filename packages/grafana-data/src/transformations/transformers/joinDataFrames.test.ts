@@ -332,7 +332,7 @@ describe('align frames', () => {
       const v = new ArrayVector([null, null, null, 4, null]);
       expect(isLikelyAscendingVector(v)).toBeTruthy();
       expect(isLikelyAscendingVector(new ArrayVector([4]))).toBeTruthy();
-      expect(isLikelyAscendingVector(new ArrayVector([]))).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([] as any[]))).toBeTruthy();
     });
 
     it('middle values', () => {

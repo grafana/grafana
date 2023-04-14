@@ -2,20 +2,20 @@ import { isString } from 'lodash';
 
 import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
-import { MutableVector, Vector } from '../types/vector';
+import { Vector } from '../types/vector';
 import { makeFieldParser } from '../utils/fieldParser';
 import { ArrayVector } from '../vector/ArrayVector';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
-export type MutableField<T = any> = Field<T, MutableVector<T>>;
+export type MutableField<T = any> = Field<T>;
 
-type MutableVectorCreator = (buffer?: any[]) => MutableVector;
+type MutableVectorCreator = (buffer?: any[]) => Vector;
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
-export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
+export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
@@ -148,15 +148,6 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
-  /**
-   * Reverse all values
-   */
-  reverse() {
-    for (const f of this.fields) {
-      f.values.reverse();
-    }
-  }
-
   private parsers: Map<Field, (v: string) => any> | undefined = undefined;
 
   /**
@@ -210,10 +201,25 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
+  /** support standard array push syntax */
+  push(...vals: T[]): number {
+    for (const v of vals) {
+      this.add(v);
+    }
+    return this.length;
+  }
+
+  reverse() {
+    for (const field of this.fields) {
+      field.values.reverse();
+    }
+    return this;
+  }
+
   /**
    * Add values from an object to corresponding fields. Similar to appendRow but does not create new fields.
    */
-  add(value: T) {
+  add(value: T): void {
     // Will add one value for every field
     const obj = value as any;
     for (const field of this.fields) {

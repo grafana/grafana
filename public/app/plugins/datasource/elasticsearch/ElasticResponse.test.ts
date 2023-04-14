@@ -371,7 +371,7 @@ describe('ElasticResponse', () => {
       expect(getTimeField(frame1).values.get(0)).toBe(1000);
 
       expect(frame2.name).toBe('Average value');
-      expect(getValueField(frame2).values.toArray()).toStrictEqual([88, 99]);
+      expect(getValueField(frame2).values.toArray()).toEqual([88, 99]);
     });
   });
 
@@ -688,20 +688,20 @@ describe('ElasticResponse', () => {
       const firstSeries = result.data[0];
       expect(firstSeries.name).toBe('Top Metrics @value');
       expect(firstSeries.length).toBe(2);
-      expect(getTimeField(firstSeries).values.toArray()).toStrictEqual([
+      expect(getTimeField(firstSeries).values.toArray()).toEqual([
         new Date('2021-01-01T00:00:00.000Z').valueOf(),
         new Date('2021-01-01T00:00:10.000Z').valueOf(),
       ]);
-      expect(getValueField(firstSeries).values.toArray()).toStrictEqual([1, 1]);
+      expect(getValueField(firstSeries).values.toArray()).toEqual([1, 1]);
 
       const secondSeries = result.data[1];
       expect(secondSeries.name).toBe('Top Metrics @anotherValue');
       expect(secondSeries.length).toBe(2);
-      expect(getTimeField(secondSeries).values.toArray()).toStrictEqual([
+      expect(getTimeField(secondSeries).values.toArray()).toEqual([
         new Date('2021-01-01T00:00:00.000Z').valueOf(),
         new Date('2021-01-01T00:00:10.000Z').valueOf(),
       ]);
-      expect(getValueField(secondSeries).values.toArray()).toStrictEqual([2, 2]);
+      expect(getValueField(secondSeries).values.toArray()).toEqual([2, 2]);
     });
   });
 
@@ -814,9 +814,9 @@ describe('ElasticResponse', () => {
       const { fields } = result.data[0];
       expect(fields.length).toBe(2);
       expect(fields[0].name).toBe('bytes');
-      expect(fields[0].config).toStrictEqual({ filterable: true });
+      expect(fields[0].config).toEqual({ filterable: true });
       expect(fields[1].name).toBe('Count');
-      expect(fields[1].config).toStrictEqual({});
+      expect(fields[1].config).toEqual({});
     });
   });
 
@@ -989,9 +989,9 @@ describe('ElasticResponse', () => {
       const field2 = result.data[0].fields[1];
       const field3 = result.data[0].fields[2];
 
-      expect(field1.values.toArray()).toStrictEqual(['server-1', 'server-2']);
-      expect(field2.values.toArray()).toStrictEqual([1000, 2000]);
-      expect(field3.values.toArray()).toStrictEqual([369, 200]);
+      expect(field1.values).toEqual(['server-1', 'server-2']);
+      expect(field2.values).toEqual([1000, 2000]);
+      expect(field3.values).toEqual([369, 200]);
     });
   });
 
@@ -1044,9 +1044,9 @@ describe('ElasticResponse', () => {
       expect(field2.name).toBe('p75 value');
       expect(field3.name).toBe('p90 value');
 
-      expect(field1.values.toArray()).toStrictEqual(['id1', 'id2']);
-      expect(field2.values.toArray()).toStrictEqual([3.3, 2.3]);
-      expect(field3.values.toArray()).toStrictEqual([5.5, 4.5]);
+      expect(field1.values.toArray()).toEqual(['id1', 'id2']);
+      expect(field2.values.toArray()).toEqual([3.3, 2.3]);
+      expect(field3.values.toArray()).toEqual([5.5, 4.5]);
     });
   });
 
@@ -1088,9 +1088,9 @@ describe('ElasticResponse', () => {
     it('should include field in metric name', () => {
       expect(result.data[0].length).toBe(1);
       expect(result.data[0].fields.length).toBe(3);
-      expect(result.data[0].fields[0].values.toArray()).toStrictEqual(['server-1']);
-      expect(result.data[0].fields[1].values.toArray()).toStrictEqual([1000]);
-      expect(result.data[0].fields[2].values.toArray()).toStrictEqual([3000]);
+      expect(result.data[0].fields[0].values.toArray()).toEqual(['server-1']);
+      expect(result.data[0].fields[1].values.toArray()).toEqual([1000]);
+      expect(result.data[0].fields[2].values.toArray()).toEqual([3000]);
     });
   });
 
@@ -1286,11 +1286,11 @@ describe('ElasticResponse', () => {
       expect(frame.length).toBe(2);
       const { fields } = frame;
       expect(fields.length).toBe(5);
-      expect(fields[0].values.toArray()).toStrictEqual([1000, 2000]);
-      expect(fields[1].values.toArray()).toStrictEqual([2, 3]);
-      expect(fields[2].values.toArray()).toStrictEqual([3, 4]);
-      expect(fields[3].values.toArray()).toStrictEqual([6, 12]);
-      expect(fields[4].values.toArray()).toStrictEqual([24, 48]);
+      expect(fields[0].values.toArray()).toEqual([1000, 2000]);
+      expect(fields[1].values.toArray()).toEqual([2, 3]);
+      expect(fields[2].values.toArray()).toEqual([3, 4]);
+      expect(fields[3].values.toArray()).toEqual([6, 12]);
+      expect(fields[4].values.toArray()).toEqual([24, 48]);
     });
   });
 
