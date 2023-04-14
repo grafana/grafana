@@ -20,12 +20,13 @@ import {
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { Stack } from '@grafana/experimental';
 import { LegendDisplayMode, MappingType, ThresholdsMode, VisibilityMode } from '@grafana/schema';
-import { Alert, Button, Field, Icon, Input, TagList, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, TagList, useStyles2, useTheme2 } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { HoverCard } from '../../HoverCard';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
 import { extractCommonLabels, Line, LogRecord, omitLabels } from './common';
@@ -56,7 +57,10 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     error,
   } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from: timeRange.from.unix(), to: timeRange.to.unix() });
 
-  const { dataFrames, historyRecords, commonLabels } = useInstanceHistoryRecords(stateHistory, instancesFilter);
+  const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useInstanceHistoryRecords(
+    stateHistory,
+    instancesFilter
+  );
 
   const frameSubset = useMemo(() => take(dataFrames, 20), [dataFrames]);
 
@@ -106,13 +110,36 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   frameSubsetRef.current = frameSubset;
 
   const hasMoreInstances = frameSubset.length < dataFrames.length;
+  const emptyStateMessage =
+    totalRecordsCount > 0
+      ? `No matches were found for the given filters among the ${totalRecordsCount} instances`
+      : 'No state transitions have occurred in the last 60 minutes';
 
   return (
     <div className={styles.fullSize}>
       <form onSubmit={handleSubmit((data) => setInstancesFilter(data.query))}>
-        <Field label="Filter instances">
+        <Field
+          label={
+            <Label htmlFor="instancesSearchInput">
+              <Stack gap={0.5}>
+                <span>Filter instances</span>
+                <HoverCard
+                  content={
+                    <>
+                      Use label matcher expression (like <code>{'{foo=bar}'}</code>) or click on an instance label to
+                      filter instances
+                    </>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </HoverCard>
+              </Stack>
+            </Label>
+          }
+        >
           <Input
             {...register('query')}
+            id="instancesSearchInput"
             prefix={<Icon name="search" />}
             suffix={
               <Button fill="text" icon="times" size="sm" onClick={onFilterCleared}>
@@ -131,7 +158,16 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         </Stack>
       )}
       {isEmpty(frameSubset) ? (
-        <div className={styles.emptyState}>No state transitions have occurred in the last 60 minutes.</div>
+        <>
+          <div className={styles.emptyState}>
+            {emptyStateMessage}
+            {totalRecordsCount > 0 && (
+              <Button variant="secondary" type="button" onClick={onFilterCleared}>
+                Clear filters
+              </Button>
+            )}
+          </div>
+        </>
       ) : (
         <>
           <div className={styles.graphWrapper}>
@@ -201,6 +237,7 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
       ),
       dataFrames,
       commonLabels,
+      totalRecordsCount: linesWithTimestamp.length,
     };
   }, [stateHistory, filter, theme]);
 }
@@ -375,6 +412,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.secondary};
 
     display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(2)};
     align-items: center;
     margin: auto auto;
   `,

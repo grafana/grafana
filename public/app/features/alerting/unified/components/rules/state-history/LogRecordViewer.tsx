@@ -24,6 +24,7 @@ export const LogRecordViewerByTimestamp = React.memo(
     const styles = useStyles2(getStyles);
 
     const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
+    logsRef.current = [];
 
     return (
       <div className={styles.logsScrollable}>
