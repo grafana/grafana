@@ -6,7 +6,7 @@ import { Button, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
-import { overhaulStyles } from './DataSourceHttpSettingsOverhaul';
+import { overhaulStyles } from './ConfigEditor';
 import ExemplarSetting from './ExemplarSetting';
 
 type Props = {

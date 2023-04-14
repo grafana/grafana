@@ -7,7 +7,7 @@ import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
-import { docsTip } from './DataSourceHttpSettingsOverhaul';
+import { docsTip } from './ConfigEditor';
 
 type Props = {
   value: ExemplarTraceIdDestination;

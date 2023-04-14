@@ -18,7 +18,7 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PrometheusCacheLevel, PromOptions } from '../types';
 
-import { docsTip, overhaulStyles } from './DataSourceHttpSettingsOverhaul';
+import { docsTip, overhaulStyles } from './ConfigEditor';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 

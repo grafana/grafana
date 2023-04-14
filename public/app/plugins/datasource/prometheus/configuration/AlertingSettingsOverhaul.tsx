@@ -3,7 +3,7 @@ import React from 'react';
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
-import { overhaulStyles } from './DataSourceHttpSettingsOverhaul';
+import { overhaulStyles } from './ConfigEditor';
 
 export interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
