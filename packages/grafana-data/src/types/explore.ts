@@ -11,7 +11,6 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   range: RawTimeRange;
   context?: string;
   panelsState?: ExplorePanelsState;
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {

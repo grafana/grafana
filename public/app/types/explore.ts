@@ -210,8 +210,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {

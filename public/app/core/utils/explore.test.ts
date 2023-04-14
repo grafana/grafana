@@ -139,7 +139,6 @@ describe('state functions', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
         datasource: 'foo',
-        isFromCompactUrl: false,
         queries: [
           {
             expr: 'metric{test="a/b"}',
@@ -164,7 +163,6 @@ describe('state functions', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
         datasource: 'foo',
-        isFromCompactUrl: false,
         queries: [
           {
             expr: 'metric{test="a/b"}',

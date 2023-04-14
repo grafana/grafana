@@ -1,7 +1,14 @@
 import { isEqual } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { parseUrlState } from 'app/core/utils/explore';
+import { CoreApp } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import store from 'app/core/store';
+import { lastUsedDatasourceKeyForOrgId, parseUrlState } from 'app/core/utils/explore';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreId, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
 import { changeDatasource } from '../state/datasource';
@@ -16,10 +23,16 @@ import { getUrlStateFromPaneState } from './utils';
  * Syncs URL changes with Explore's panes state by reacting to URL changes and updating the state.
  */
 export function useStateSync(params: ExploreQueryParams) {
+  const {
+    config: {
+      featureToggles: { exploreMixedDatasource },
+    },
+  } = useGrafana();
   const dispatch = useDispatch();
   const statePanes = useSelector((state) => state.explore.panes);
+  const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef<ExploreQueryParams>(params);
-  const initialized = useRef(false);
+  const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
 
   useEffect(() => {
     const shouldSync = prevParams.current?.left !== params.left || prevParams.current?.right !== params.right;
@@ -29,7 +42,8 @@ export function useStateSync(params: ExploreQueryParams) {
       ...(params.right && { right: parseUrlState(params.right) }),
     };
 
-    if (!shouldSync && !initialized.current) {
+    if (!shouldSync && initState.current === 'notstarted') {
+      initState.current = 'pending';
       // This happens when the user first navigates to explore.
       // Here we want to initialize each pane initial data, wether it comes
       // from the url or as a result of migrations.
@@ -37,23 +51,49 @@ export function useStateSync(params: ExploreQueryParams) {
       // Clear all the panes in the store first to avoid stale data.
       dispatch(clearPanes());
 
-      for (const [id, urlPane] of Object.entries(urlPanes)) {
+      const initPromises = [];
+
+      for (const [id, { datasource, queries, range, panelsState }] of Object.entries(urlPanes)) {
         // TODO: perform the migration here
         const exploreId = id as ExploreId;
-        const { datasource, queries, range, panelsState } = urlPane;
 
-        dispatch(
-          initializeExplore({
-            exploreId,
-            datasource,
-            queries,
-            range,
-            panelsState,
+        const paneDatasource =
+          exploreMixedDatasource && datasource === MIXED_DATASOURCE_NAME
+            ? MIXED_DATASOURCE_NAME
+            : queries[0]?.datasource || store.get(lastUsedDatasourceKeyForOrgId(orgId));
+
+        // if there are no queries, we get a default query from the datasource.
+        // if the datasource is mixed, we get the last used datasource from the store.
+        initPromises.push(
+          Promise.resolve(
+            queries.length
+              ? withUniqueRefIds(queries)
+              : getDatasourceSrv()
+                  // TODO: instead of undefined, we should use the last used top-level datasource,
+                  // if that happens to be mixed, its query should be the last selected datasource from the query rows:
+                  // 1. keep saving the last used top level ds
+                  // 2. start saving rows datasources when they change.
+                  // 3. if top-level is mixed, use the last used row datasource
+                  // 4. if not, use the top-level one.
+                  .get(paneDatasource === MIXED_DATASOURCE_NAME ? undefined : paneDatasource)
+                  // if for some reason the aboive fails (ie. datasource removed or whatnot), we fallback to the default one.
+                  .catch(() => getDatasourceSrv().get())
+                  .then((ds) => [{ refId: 'A', datasource: ds.getRef(), ...ds.getDefaultQuery?.(CoreApp.Explore) }])
+          ).then((queries) => {
+            dispatch(
+              initializeExplore({
+                exploreId,
+                datasource: paneDatasource,
+                queries,
+                range,
+                panelsState,
+              })
+            );
           })
         );
       }
 
-      initialized.current = true;
+      Promise.all(initPromises).then(() => (initState.current = 'done'));
     }
 
     async function sync() {
@@ -74,7 +114,6 @@ export function useStateSync(params: ExploreQueryParams) {
 
       for (const [id, urlPane] of Object.entries(urlPanes)) {
         const exploreId = id as ExploreId;
-
         const { datasource, queries, range, panelsState } = urlPane;
 
         if (statePanes[exploreId] === undefined) {
@@ -96,6 +135,7 @@ export function useStateSync(params: ExploreQueryParams) {
           const update = urlDiff(urlPane, getUrlStateFromPaneState(statePanes[exploreId]!));
 
           if (update.datasource) {
+            // FIXME: yikes! a wild await inside a loop!
             await dispatch(changeDatasource(exploreId, datasource));
           }
 
@@ -125,6 +165,36 @@ export function useStateSync(params: ExploreQueryParams) {
       right: params.right,
     };
 
-    shouldSync && sync();
-  }, [params.left, params.right, dispatch, statePanes]);
+    shouldSync && initState.current === 'done' && sync();
+  }, [params.left, params.right, dispatch, statePanes, exploreMixedDatasource, orgId]);
+}
+
+/**
+ * Makes sure all the queries have unique (and valid) refIds
+ */
+function withUniqueRefIds(queries: DataQuery[]): DataQuery[] {
+  const refIds = new Set<string>(queries.map((query) => query.refId).filter(Boolean));
+
+  if (refIds.size === queries.length) {
+    return queries;
+  }
+
+  refIds.clear();
+
+  return queries.map((query) => {
+    if (query.refId && !refIds.has(query.refId)) {
+      refIds.add(query.refId);
+      return query;
+    }
+
+    const refId = getNextRefIdChar(queries);
+    refIds.add(refId);
+
+    const newQuery = {
+      ...query,
+      refId,
+    };
+
+    return newQuery;
+  });
 }

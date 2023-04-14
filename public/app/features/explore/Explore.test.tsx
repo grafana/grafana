@@ -90,7 +90,6 @@ const dummyProps: Props = {
   showFlameGraph: true,
   splitOpen: jest.fn(),
   splitted: false,
-  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
   showRawPrometheus: false,
   showLogsSample: false,
