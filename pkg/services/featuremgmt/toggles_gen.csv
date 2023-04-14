@@ -2,7 +2,6 @@ Name,State,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
 trimDefaults,beta,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,stable,@grafana/grafana-as-code,false,false,false,false
 database_metrics,stable,@grafana/hosted-grafana-team,false,false,false,false
-dashboardPreviews,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 live-service-web-worker,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 panelTitleSearch,beta,@grafana/grafana-app-platform-squad,false,false,false,false

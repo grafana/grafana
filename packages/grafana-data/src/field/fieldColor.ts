@@ -1,4 +1,5 @@
 import { interpolateRgbBasis } from 'd3-interpolate';
+import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
@@ -28,6 +29,12 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Single color',
       description: 'Set a specific color',
       getCalculator: getFixedColor,
+    },
+    {
+      id: FieldColorModeId.Shades,
+      name: 'Shades of a color',
+      description: 'Select shades of a specific color',
+      getCalculator: getShadedColor,
     },
     {
       id: FieldColorModeId.Thresholds,
@@ -234,5 +241,41 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
     return theme.visualization.getColorByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
+  };
+}
+
+function getShadedColor(field: Field, theme: GrafanaTheme2) {
+  return () => {
+    const baseColorString: string = theme.visualization.getColorByName(
+      field.config.color?.fixedColor ?? FALLBACK_COLOR
+    );
+
+    const colors: string[] = [
+      baseColorString, // start with base color
+    ];
+
+    const shadesCount = 6;
+    const maxHueSpin = 10; // hue spin, max is 360
+    const maxDarken = 35; // max 100%
+    const maxBrighten = 35; // max 100%
+
+    for (let i = 1; i < shadesCount; i++) {
+      // push alternating darker and brighter shades
+      colors.push(
+        tinycolor(baseColorString)
+          .spin((i / shadesCount) * maxHueSpin)
+          .brighten((i / shadesCount) * maxDarken)
+          .toHexString()
+      );
+      colors.push(
+        tinycolor(baseColorString)
+          .spin(-(i / shadesCount) * maxHueSpin)
+          .darken((i / shadesCount) * maxBrighten)
+          .toHexString()
+      );
+    }
+
+    const seriesIndex = field.state?.seriesIndex ?? 0;
+    return colors[seriesIndex % colors.length];
   };
 }
