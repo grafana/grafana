@@ -170,7 +170,4 @@ type GetFolderChildrenCountsQuery struct {
 }
 
 // #TODO: figure out where to put this
-type FolderChildrenCounts struct {
-	Kind  string `json:"kind"`
-	Count int64  `json:"count"`
-}
+type FolderChildrenCounts map[string]int64
