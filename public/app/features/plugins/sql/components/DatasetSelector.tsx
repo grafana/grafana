@@ -9,7 +9,7 @@ import { DB, ResourceSelectorProps, toOption } from '../types';
 
 export interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
-  dataset: string | null;
+  dataset: string | undefined;
   preconfiguredDataset: string;
   disableDatasetSelector: boolean | undefined;
   onChange: (v: SelectableValue) => void;

@@ -8,7 +8,7 @@ import { DB, ResourceSelectorProps } from '../types';
 
 interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
-  table: string | null;
+  table: string | undefined;
   dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
 }

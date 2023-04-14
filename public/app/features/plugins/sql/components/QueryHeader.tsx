@@ -224,7 +224,7 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  dataset={query.dataset === undefined ? null : query.dataset}
+                  dataset={preconfiguredDataset ? preconfiguredDataset : query.dataset}
                   disableDatasetSelector={disableDatasetSelector}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
@@ -234,8 +234,8 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                dataset={query.dataset}
-                table={query.table === undefined ? null : query.table}
+                dataset={preconfiguredDataset ? preconfiguredDataset : query.dataset}
+                table={query.table}
                 onChange={onTableChange}
                 applyDefault
               />
