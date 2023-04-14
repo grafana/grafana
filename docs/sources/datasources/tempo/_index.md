@@ -361,14 +361,14 @@ To open a query in Tempo with the span name of that row automatically set in the
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
-Allows you to filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
 
 You can add one or more of the following filters:
 
-- Service name,
-- Span name,
-- Duration,
-- Tags (which include tags, process tags, and log fields).
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
 
 ## Link to a trace ID from logs
 
