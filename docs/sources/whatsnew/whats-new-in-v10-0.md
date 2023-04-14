@@ -195,7 +195,7 @@ Notably, we've added two new features that streamline the log context experience
 
 First, we've included a "copy" button that allows users to easily copy lines without having to navigate away from the log context panel.
 
-Second, we've implemented an "eyeball" button that lets users display only the selected labels, making it easier to focus on specific information.
+Second, we've implemented an eye icon that lets users display only the selected labels, making it easier to focus on specific information.
 
 {{< figure src="/media/docs/grafana/log-context-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
 
