@@ -1045,6 +1045,8 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       };
     }
 
+    // When in loading state, clear logs and set clearedAtIndex as null.
+    // Initially loaded logs will be fully replaced by incoming streamed logs, which may have a different length.
     if (state.queryResponse.state === LoadingState.Loading) {
       return {
         ...state,
