@@ -189,10 +189,9 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 }
 
 func (s *Service) handleGrantOverrides(r *accesscontrol.RoleRegistration) {
-	key := strings.ReplaceAll(r.Role.Name, ":", "_")
-	key = strings.ReplaceAll(key, ".", "_")
-	overrides := s.cfg.RBACGrantOverrides[key]
-	if len(overrides) > 0 {
+	// Replace ":" and "." with "_" to match the key in the config
+	key := strings.ReplaceAll(strings.ReplaceAll(r.Role.Name, ":", "_"), ".", "_")
+	if overrides, ok := s.cfg.RBACGrantOverrides[key]; ok {
 		r.Grants = overrides
 		s.log.Info("Overriding grants for role", "role", r.Role.Name, "overrides", overrides)
 	}
