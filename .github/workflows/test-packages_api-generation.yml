@@ -1,0 +1,25 @@
+on:
+  push:
+    branches: jdb/2023-04-fix-ci-for-8.5.x
+jobs:
+  test:
+    steps:
+      - name: "Generate packages_api docs"
+        uses: "actions/setup-node@v3.2.0"
+        id: "generate-packages_api-docs"
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: "Get yarn cache directory path"
+        id: "yarn-cache-dir-path"
+        run: "echo ::set-output name=dir::$(yarn config get cacheFolder)"
+      - uses: "actions/cache@v2.1.7"
+        with:
+          path: "${{ steps.yarn-cache-dir-path.outputs.dir }}"
+          key: "yarn-${{ hashFiles('**/yarn.lock') }}"
+          restore-keys: |
+              yarn-
+
+      - run: "yarn install --immutable"
+
+      - run: "./scripts/ci-reference-docs-build.sh"
