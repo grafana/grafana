@@ -481,8 +481,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Warn("failed to look up session from cookie", "error", err)
-		if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
-			// Burn the cookie in case of invalid, expired or missing token
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			// Burn the cookie in case of invalid or revoked token
 			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		}
 

@@ -234,7 +234,7 @@ describe('DataFrame JSON', () => {
         },
       };
 
-      expect(dataFrameToJSON(inputFrame)).toStrictEqual(expectedJSON);
+      expect(dataFrameToJSON(inputFrame)).toEqual(expectedJSON);
     });
   });
 });

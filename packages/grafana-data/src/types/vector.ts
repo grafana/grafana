@@ -56,22 +56,30 @@ export interface Vector<T = any> extends Array<T> {
 
   /**
    * Access the value by index (Like an array)
+   *
+   * @deprecated use a simple Array<T>
    */
   get(index: number): T;
 
   /**
    * Set a value
+   *
+   * @deprecated use a simple Array<T>
    */
   set: (index: number, value: T) => void;
 
   /**
    * Adds the value to the vector
    * Same as Array.push()
+   *
+   * @deprecated use a simple Array<T>
    */
   add: (value: T) => void;
 
   /**
    * Get the results as an array.
+   *
+   * @deprecated use a simple Array<T>
    */
   toArray(): T[];
 }

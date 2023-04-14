@@ -62,13 +62,11 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                                         |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                                             |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                                                    |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                                               |
 | `publicDashboards`                 | Enables public access to dashboards                                                                                                                                                                 |
 | `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                            |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                                              |
-| `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                                                 |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                                                     |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                                                  |
 | `newTraceView`                     | Shows the new trace view design                                                                                                                                                                     |
@@ -102,6 +100,7 @@ Alpha features might be changed or removed without prior notice.
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                                           |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                            |
 | `prometheusDataplane`              | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. |
+| `lokiMetricDataplane`              | Changes responses from Loki to be compliant with the dataplane specification.                                                                                                                       |
 | `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                                        |
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                                                                                                        |
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                                          |
@@ -109,6 +108,7 @@ Alpha features might be changed or removed without prior notice.
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                                                                                                             |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                                                                                                                |
 | `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
+| `authenticationConfigUI`           | Enables authentication configuration UI                                                                                                                                                             |
 
 ## Development feature toggles
 

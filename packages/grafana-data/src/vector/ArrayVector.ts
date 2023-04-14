@@ -4,44 +4,31 @@
  * @deprecated use a simple Array<T>
  */
 export class ArrayVector<T = any> extends Array<T> {
-  buffer: T[];
+  get buffer() {
+    return this;
+  }
 
-  // This constructor needs to accept any otherwise the value takes over the definition
-  constructor(buffer?: any[]) {
+  set buffer(values: any[]) {
+    this.length = 0;
+
+    const len = values?.length;
+
+    if (len) {
+      let chonkSize = 65e3;
+      let numChonks = Math.ceil(len / chonkSize);
+
+      for (let chonkIdx = 0; chonkIdx < numChonks; chonkIdx++) {
+        this.push.apply(this, values.slice(chonkIdx * chonkSize, (chonkIdx + 1) * chonkSize));
+      }
+    }
+  }
+
+  constructor(buffer?: T[]) {
     super();
-    this.buffer = buffer ? buffer : [];
-  }
-
-  get length() {
-    return this.buffer.length;
-  }
-
-  add(value: T): void {
-    this.buffer.push(value);
-  }
-
-  get(index: number): T {
-    return this.buffer[index];
-  }
-
-  set(index: number, value: T) {
-    this.buffer[index] = value;
-  }
-
-  /** support standard array push syntax */
-  push(...vals: T[]): number {
-    return this.buffer.push(...vals);
-  }
-
-  reverse() {
-    return this.buffer.reverse();
-  }
-
-  toArray(): T[] {
-    return this.buffer;
+    this.buffer = buffer ?? [];
   }
 
   toJSON(): T[] {
-    return this.buffer;
+    return [...this]; // copy to avoid circular reference (only for jest)
   }
 }
