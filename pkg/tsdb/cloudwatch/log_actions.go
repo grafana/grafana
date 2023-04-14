@@ -8,6 +8,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -164,7 +165,7 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	messages := make([]*string, 0)
-	timestamps := make([]*int64, 0)
+	timestamps := make([]time.Time, 0)
 
 	sort.Slice(logEvents.Events, func(i, j int) bool {
 		return *(logEvents.Events[i].Timestamp) > *(logEvents.Events[j].Timestamp)
@@ -172,7 +173,7 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	for _, event := range logEvents.Events {
 		messages = append(messages, event.Message)
-		timestamps = append(timestamps, event.Timestamp)
+		timestamps = append(timestamps, time.UnixMilli(*event.Timestamp).UTC())
 	}
 
 	timestampField := data.NewField("ts", nil, timestamps)
