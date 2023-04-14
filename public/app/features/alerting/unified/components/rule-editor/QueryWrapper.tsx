@@ -139,42 +139,42 @@ export const QueryWrapper = ({
   }
 
   return (
-    <div className={styles.wrapper}>
-      <QueryEditorRow<DataQuery>
-        alerting
-        dataSource={dsSettings}
-        onChangeDataSource={(settings) => {
-          getDataSourceSrv()
-            .get({ type: settings.type, uid: settings.uid })
-            .then((instance) => {
-              onChangeDataSource(instance, settings, index);
-            });
-        }}
-        id={query.refId}
-        index={index}
-        key={query.refId}
-        data={data}
-        query={cloneDeep(query.model)}
-        onChange={(query) => onChangeQuery(query, index)}
-        onRemoveQuery={onRemoveQuery}
-        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
-        onRunQuery={onRunQueries}
-        queries={queries}
-        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
-        app={CoreApp.UnifiedAlerting}
-        visualization={
-          data.state !== LoadingState.NotStarted ? (
-            <VizWrapper
-              data={data}
-              thresholds={thresholds}
-              thresholdsType={thresholdsType}
-              onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-            />
-          ) : null
-        }
-        hideDisableQuery={true}
-      />
-    </div>
+    <Stack direction="column" gap={0.5}>
+      <div className={styles.wrapper}>
+        <QueryEditorRow<DataQuery>
+          alerting
+          dataSource={dsSettings}
+          onChangeDataSource={(settings) => {
+            getDataSourceSrv()
+              .get({ type: settings.type, uid: settings.uid })
+              .then((instance) => {
+                onChangeDataSource(instance, settings, index);
+              });
+          }}
+          id={query.refId}
+          index={index}
+          key={query.refId}
+          data={data}
+          query={cloneDeep(query.model)}
+          onChange={(query) => onChangeQuery(query, index)}
+          onRemoveQuery={onRemoveQuery}
+          onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
+          onRunQuery={onRunQueries}
+          queries={queries}
+          renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+          app={CoreApp.UnifiedAlerting}
+          hideDisableQuery={true}
+        />
+      </div>
+      {data.state !== LoadingState.NotStarted && (
+        <VizWrapper
+          data={data}
+          thresholds={thresholds}
+          thresholdsType={thresholdsType}
+          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
+        />
+      )}
+    </Stack>
   );
 };
 

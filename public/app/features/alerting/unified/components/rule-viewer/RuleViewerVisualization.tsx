@@ -20,7 +20,6 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { Authorize } from '../Authorize';
-import { PanelPluginsButtonGroup, SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
 interface RuleViewerVisualizationProps
   extends Pick<AlertQuery, 'refId' | 'datasourceUid' | 'model' | 'relativeTimeRange'> {
@@ -42,8 +41,7 @@ export function RuleViewerVisualization({
 }: RuleViewerVisualizationProps): JSX.Element | null {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const defaultPanel = isExpressionQuery(model) ? TABLE : TIMESERIES;
-  const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
+  const panel = isExpressionQuery(model) ? TABLE : TIMESERIES;
   const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceUid);
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
@@ -102,7 +100,6 @@ export function RuleViewerVisualization({
                       maxDate={new Date()}
                     />
                   ) : null}
-                  <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
                     {!isExpressionQuery(model) && (
                       <>
@@ -144,10 +141,10 @@ function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDat
 
   /**
     In my testing I've found some alerts that don't have a data source embedded inside the model.
-   
+
     At this moment in time it is unclear to me why some alert definitions not have a data source embedded in the model.
     Ideally we'd resolve the datasource name to the proper datasource Ref "{ type: string, uid: string }" and pass that in to the model.
-   
+
     I don't think that should happen here, the fact that the datasource ref is sometimes missing here is a symptom of another cause. (Gilles)
    */
   return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {

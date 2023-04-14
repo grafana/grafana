@@ -15,6 +15,7 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
+  ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
 } from '@grafana/data';
@@ -55,6 +56,7 @@ interface Props {
   graphStyle: ExploreGraphStyle;
   anchorToZero?: boolean;
   yAxisMaximum?: number;
+  thresholdsConfig?: ThresholdsConfig;
   eventBus: EventBus;
 }
 
@@ -73,6 +75,7 @@ export function ExploreGraph({
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero = false,
   yAxisMaximum,
+  thresholdsConfig,
   eventBus,
 }: Props) {
   const theme = useTheme2();
@@ -105,6 +108,7 @@ export function ExploreGraph({
         fillOpacity: 0,
         pointSize: 5,
       },
+      thresholds: thresholdsConfig,
     },
     overrides: [],
   });
