@@ -109,6 +109,7 @@ Alpha features might be changed or removed without prior notice.
 | `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                                                                                                             |
 | `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode                                                                                      |
+| `sqlDatasourceDatabaseSelection`   | Disables dataset dropdown in the QueryEditor if previous dataset has already been configured                                                                                                        |
 
 ## Development feature toggles
 

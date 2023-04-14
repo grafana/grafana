@@ -526,5 +526,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Disables dataset dropdown in the QueryEditor if previous dataset has already been configured",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

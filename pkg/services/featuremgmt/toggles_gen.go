@@ -322,4 +322,8 @@ const (
 	// FlagAdvancedDataSourcePicker
 	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
+
+	// FlagSqlDatasourceDatabaseSelection
+	// Disables dataset dropdown in the QueryEditor if previous dataset has already been configured
+	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 )
