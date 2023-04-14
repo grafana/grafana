@@ -1,4 +1,6 @@
-import { CorrelationConfig, TransformationType } from '../types';
+import { SupportedTransformationType } from '@grafana/data';
+
+import { CorrelationConfig } from '../types';
 
 export interface FormDTO {
   sourceUID: string;
@@ -11,7 +13,7 @@ export interface FormDTO {
 export type EditFormDTO = Omit<FormDTO, 'targetUID' | 'sourceUID'>;
 
 export type TransformationDTO = {
-  type: TransformationType;
+  type: SupportedTransformationType;
   expression?: string;
   mapValue?: string;
 };
