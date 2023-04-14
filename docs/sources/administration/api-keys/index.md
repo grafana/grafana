@@ -164,7 +164,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-accoun
 
 ### Migrate API keys to Grafana service accounts in Terraform
 
-This section shows you how to migrate your terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
+This section shows you how to migrate your Terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
 
 #### Steps
 
