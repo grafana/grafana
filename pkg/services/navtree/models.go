@@ -17,9 +17,9 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
-	WeightDataConnections
 	WeightAlertsAndIncidents
 	WeightMonitoring
+	WeightDataConnections
 	WeightApps
 	WeightPlugin
 	WeightConfig

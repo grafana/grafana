@@ -44,16 +44,10 @@ export const ConfigEditor = (props: Props) => {
 
       <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <MaxLinesField
-              value={options.jsonData.maxLines || ''}
-              onChange={(value) => onOptionsChange(setMaxLines(options, value))}
-            />
-          </div>
-        </div>
-      </div>
+      <MaxLinesField
+        value={options.jsonData.maxLines || ''}
+        onChange={(value) => onOptionsChange(setMaxLines(options, value))}
+      />
 
       <DerivedFields
         value={options.jsonData.derivedFields}
