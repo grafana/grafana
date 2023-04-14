@@ -159,9 +159,11 @@ export function PanelChrome({
 
       {hoverHeader && !isTouchDevice && (
         <>
-          <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
-            {headerContent}
-          </HoverWidget>
+          {menu && (
+            <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
+              {headerContent}
+            </HoverWidget>
+          )}
 
           {statusMessage && (
             <div className={styles.errorContainerFloating}>

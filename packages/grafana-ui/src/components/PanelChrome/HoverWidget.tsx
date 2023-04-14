@@ -10,7 +10,7 @@ import { PanelMenu } from './PanelMenu';
 
 interface Props {
   children?: React.ReactNode;
-  menu?: ReactElement | (() => ReactElement);
+  menu: ReactElement | (() => ReactElement);
   title?: string;
   offset?: number;
   dragClass?: string;
@@ -53,15 +53,13 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
       )}
       {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
-      {menu && (
-        <PanelMenu
-          menu={menu}
-          title={title}
-          placement="bottom"
-          menuButtonClass={styles.menuButton}
-          onVisibleChange={setMenuOpen}
-        />
-      )}
+      <PanelMenu
+        menu={menu}
+        title={title}
+        placement="bottom"
+        menuButtonClass={styles.menuButton}
+        onVisibleChange={setMenuOpen}
+      />
     </div>
   );
 }
