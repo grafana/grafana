@@ -204,7 +204,7 @@ resource "grafana_api_key" "bar" {
 }
 ```
 
-**Your new terraform configuration**
+**Your new Terraform configuration**
 
 _Note:_ you can create multiple tokens using one service account.
 
