@@ -195,7 +195,7 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: (options) => splitFnWithTracking(options),
+            onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };
