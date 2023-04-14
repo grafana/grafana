@@ -127,6 +127,7 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
+		sb.Write(`(SELECT MIN(timestamp) FROM `+dialect.Quote("migration_log")+`) AS database_created_time,`)
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -138,19 +139,11 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 
 		result = &stats
 
+		result.DatabaseDriver = dialect.DriverName()
+
 		return nil
 	})
 
-	if err == nil {
-		result.DatabaseDriver = dialect.DriverName()
-		ts := time.Time{}
-		err = ss.db.GetSqlxSession().Get(ctx,
-			&ts,
-			`SELECT timestamp as database_created_time from `+dialect.Quote("migration_log")+` ORDER BY timestamp asc LIMIT 1`)
-		if err == nil {
-			result.DatabaseCreatedTime = ts.Unix()
-		}
-	}
 	return result, err
 }
 
