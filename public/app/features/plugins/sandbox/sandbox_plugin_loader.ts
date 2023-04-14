@@ -148,18 +148,16 @@ export async function doImportPluginInsideSandbox(path: string): Promise<{ plugi
       let pluginCode = await getPluginCode(path);
       const isDevMode = config.buildInfo.env === 'development';
       if (pluginCode.includes('//# sourceMappingURL=module.js.map') && isDevMode) {
-        // this is a production build and we are in dev mode
-        // we need to load the source map and add it to the plugin code
-        try {
-          const sourceMap = await getPluginSourceMap(path);
-          const sourceMapUrl = `data:application/json;charset=utf-8;base64,${window.btoa(sourceMap)}`;
-          pluginCode = pluginCode.replace(
-            '//# sourceMappingURL=module.js.map',
-            `//# sourceURL=module.js\n//# sourceMappingURL=${sourceMapUrl}`
-          );
-        } catch (e) {
-          console.error(`[sandbox] Error loading source map for plugin ${pluginId}`, e);
+        let replaceWith = '';
+        // make sure we don't add the sourceURL twice
+        if (!pluginCode.includes('//# sourceURL') || !pluginCode.includes('//@ sourceUrl')) {
+          replaceWith += `//# sourceURL=module.js\n`;
         }
+        // modify the source map url to point to the correct location
+        const sourceCodeMapUrl = `/public/${path}.js.map`;
+        replaceWith += `//# sourceURL=module.js\n//# sourceMappingURL=${sourceCodeMapUrl}`;
+
+        pluginCode = pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
       }
       env.evaluate(pluginCode);
     } catch (e) {
