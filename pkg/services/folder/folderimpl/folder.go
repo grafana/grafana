@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -621,6 +622,12 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return result, err
 	}
 	return result, nil
+}
+
+// GetFolderChildrenCounts
+func (s *Service) GetFolderChildrenCounts(ctx context.Context, cmd *folder.GetFolderChildrenCountsQuery) (folder.FolderChildrenCounts, error) {
+	// #TODO: replace with actual functionality
+	return folder.FolderChildrenCounts{Kind: entity.StandardKindDashboard, Count: 1}, nil
 }
 
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin

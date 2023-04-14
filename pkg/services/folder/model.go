@@ -160,3 +160,17 @@ type HasEditPermissionInFoldersQuery struct {
 type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *user.SignedInUser
 }
+
+// GetFolderChildrenCountsQuery
+type GetFolderChildrenCountsQuery struct {
+	UID   *string
+	OrgID int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
+}
+
+// #TODO: figure out where to put this
+type FolderChildrenCounts struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}

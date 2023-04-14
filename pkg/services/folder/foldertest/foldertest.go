@@ -49,3 +49,8 @@ func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (
 func (s *FakeService) RegisterService(service folder.RegistryService) error {
 	return s.ExpectedError
 }
+
+func (s *FakeService) GetFolderChildrenCounts(ctx context.Context, cmd *folder.GetFolderChildrenCountsQuery) (folder.FolderChildrenCounts, error) {
+	// #TODO
+	return folder.FolderChildrenCounts{}, nil
+}
