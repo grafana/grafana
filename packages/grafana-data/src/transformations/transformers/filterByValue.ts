@@ -3,7 +3,6 @@ import { map } from 'rxjs/operators';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
-import { ArrayVector } from '../../vector/ArrayVector';
 import { getValueMatcher } from '../matchers';
 
 import { DataTransformerID } from './ids';
@@ -114,7 +113,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             // We keep field config, but clean the state as it's being recalculated when the field overrides are applied
             fields.push({
               ...field,
-              values: new ArrayVector(buffer),
+              values: buffer,
               state: {},
             });
           }

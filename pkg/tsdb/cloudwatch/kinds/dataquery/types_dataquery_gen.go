@@ -355,10 +355,8 @@ type CloudWatchMetricsQuery struct {
 		From    *CloudWatchMetricsQuerySqlFrom `json:"from,omitempty"`
 		GroupBy *struct {
 			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-			Expressions interface{} `json:"expressions"`
-
-			// TODO this doesn't work; temporarily extended in veneer
-			Type CloudWatchMetricsQuerySqlGroupByType `json:"type"`
+			Expressions interface{}                          `json:"expressions"`
+			Type        CloudWatchMetricsQuerySqlGroupByType `json:"type"`
 		} `json:"groupBy,omitempty"`
 		Limit   *int64 `json:"limit,omitempty"`
 		OrderBy *struct {
@@ -380,10 +378,8 @@ type CloudWatchMetricsQuery struct {
 		} `json:"select,omitempty"`
 		Where *struct {
 			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-			Expressions interface{} `json:"expressions"`
-
-			// TODO this doesn't work; temporarily extended in veneer
-			Type CloudWatchMetricsQuerySqlWhereType `json:"type"`
+			Expressions interface{}                        `json:"expressions"`
+			Type        CloudWatchMetricsQuerySqlWhereType `json:"type"`
 		} `json:"where,omitempty"`
 	} `json:"sql,omitempty"`
 	SqlExpression *string `json:"sqlExpression,omitempty"`
@@ -423,7 +419,7 @@ type CloudWatchMetricsQuerySqlFrom struct {
 	union json.RawMessage
 }
 
-// TODO this doesn't work; temporarily extended in veneer
+// CloudWatchMetricsQuerySqlGroupByType defines model for CloudWatchMetricsQuery.Sql.GroupBy.Type.
 type CloudWatchMetricsQuerySqlGroupByType string
 
 // CloudWatchMetricsQuerySqlOrderByParametersType defines model for CloudWatchMetricsQuery.Sql.OrderBy.Parameters.Type.
@@ -438,7 +434,7 @@ type CloudWatchMetricsQuerySqlSelectParametersType string
 // CloudWatchMetricsQuerySqlSelectType defines model for CloudWatchMetricsQuery.Sql.Select.Type.
 type CloudWatchMetricsQuerySqlSelectType string
 
-// TODO this doesn't work; temporarily extended in veneer
+// CloudWatchMetricsQuerySqlWhereType defines model for CloudWatchMetricsQuery.Sql.Where.Type.
 type CloudWatchMetricsQuerySqlWhereType string
 
 // CloudWatchQueryMode defines model for CloudWatchQueryMode.
@@ -479,13 +475,11 @@ type MetricStat struct {
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
 	// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-	Expressions interface{} `json:"expressions"`
-
-	// TODO this doesn't work; temporarily extended in veneer
-	Type QueryEditorArrayExpressionType `json:"type"`
+	Expressions interface{}                    `json:"expressions"`
+	Type        QueryEditorArrayExpressionType `json:"type"`
 }
 
-// TODO this doesn't work; temporarily extended in veneer
+// QueryEditorArrayExpressionType defines model for QueryEditorArrayExpression.Type.
 type QueryEditorArrayExpressionType string
 
 // QueryEditorArrayExpression is added in veneer
@@ -613,10 +607,8 @@ type SQLExpression struct {
 	From    *SQLExpressionFrom `json:"from,omitempty"`
 	GroupBy *struct {
 		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-		Expressions interface{} `json:"expressions"`
-
-		// TODO this doesn't work; temporarily extended in veneer
-		Type SQLExpressionGroupByType `json:"type"`
+		Expressions interface{}              `json:"expressions"`
+		Type        SQLExpressionGroupByType `json:"type"`
 	} `json:"groupBy,omitempty"`
 	Limit   *int64 `json:"limit,omitempty"`
 	OrderBy *struct {
@@ -638,10 +630,8 @@ type SQLExpression struct {
 	} `json:"select,omitempty"`
 	Where *struct {
 		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-		Expressions interface{} `json:"expressions"`
-
-		// TODO this doesn't work; temporarily extended in veneer
-		Type SQLExpressionWhereType `json:"type"`
+		Expressions interface{}            `json:"expressions"`
+		Type        SQLExpressionWhereType `json:"type"`
 	} `json:"where,omitempty"`
 }
 
@@ -666,7 +656,7 @@ type SQLExpressionFrom struct {
 	union json.RawMessage
 }
 
-// TODO this doesn't work; temporarily extended in veneer
+// SQLExpressionGroupByType defines model for SQLExpression.GroupBy.Type.
 type SQLExpressionGroupByType string
 
 // SQLExpressionOrderByParametersType defines model for SQLExpression.OrderBy.Parameters.Type.
@@ -681,5 +671,5 @@ type SQLExpressionSelectParametersType string
 // SQLExpressionSelectType defines model for SQLExpression.Select.Type.
 type SQLExpressionSelectType string
 
-// TODO this doesn't work; temporarily extended in veneer
+// SQLExpressionWhereType defines model for SQLExpression.Where.Type.
 type SQLExpressionWhereType string

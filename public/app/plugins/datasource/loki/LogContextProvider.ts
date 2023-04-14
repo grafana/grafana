@@ -1,33 +1,99 @@
-import { FieldCache, FieldType, LogRowModel, TimeRange, toUtc } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
-import LokiLanguageProvider from './LanguageProvider';
+import {
+  CoreApp,
+  DataFrame,
+  DataQueryError,
+  DataQueryResponse,
+  FieldCache,
+  FieldType,
+  LogRowModel,
+  TimeRange,
+  toUtc,
+  LogRowContextQueryDirection,
+  LogRowContextOptions,
+} from '@grafana/data';
+import { DataQuery, Labels } from '@grafana/schema';
+
 import { LokiContextUi } from './components/LokiContextUi';
-import { REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
+import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
-import { getParserFromQuery } from './queryUtils';
+import { getParserFromQuery, isLokiQuery, isQueryWithParser } from './queryUtils';
+import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export class LogContextProvider {
-  languageProvider: LokiLanguageProvider;
+  datasource: LokiDatasource;
+  appliedContextFilters: ContextFilter[];
   onContextClose: (() => void) | undefined;
 
-  constructor(languageProvider: LokiLanguageProvider) {
-    this.languageProvider = languageProvider;
+  constructor(datasource: LokiDatasource) {
+    this.datasource = datasource;
+    this.appliedContextFilters = [];
   }
+
+  getLogRowContext = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<{ data: DataFrame[] }> => {
+    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
+    const limit = (options && options.limit) || 10;
+
+    // This happens only on initial load, when user haven't applied any filters yet
+    // We need to get the initial filters from the row labels
+    if (this.appliedContextFilters.length === 0) {
+      const filters = (await this.getInitContextFiltersFromLabels(row.labels)).filter((filter) => filter.enabled);
+      this.appliedContextFilters = filters;
+    }
+
+    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+
+    const processResults = (result: DataQueryResponse): DataQueryResponse => {
+      const frames: DataFrame[] = result.data;
+      const processedFrames = frames.map((frame) => sortDataFrameByTime(frame, SortDirection.Descending));
+
+      return {
+        ...result,
+        data: processedFrames,
+      };
+    };
+
+    // this can only be called from explore currently
+    const app = CoreApp.Explore;
+
+    return lastValueFrom(
+      this.datasource.query(makeRequest(query, range, app, `${REF_ID_STARTER_LOG_ROW_CONTEXT}${direction}`)).pipe(
+        catchError((err) => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: err.status,
+            statusText: err.statusText,
+          };
+          throw error;
+        }),
+        switchMap((res) => of(processResults(res)))
+      )
+    );
+  };
 
   async prepareLogRowContextQueryTarget(
     row: LogRowModel,
     limit: number,
-    direction: 'BACKWARD' | 'FORWARD',
+    direction: LogRowContextQueryDirection,
     origQuery?: DataQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    let expr = await this.prepareContextExpr(row, origQuery);
-
+    let originalLokiQuery: LokiQuery | undefined = undefined;
+    // Type guard for LokiQuery
+    if (origQuery && isLokiQuery(origQuery)) {
+      originalLokiQuery = origQuery;
+    }
+    const expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, originalLokiQuery);
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
-    const queryDirection = direction === 'FORWARD' ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+    const queryDirection =
+      direction === LogRowContextQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
 
     const query: LokiQuery = {
       expr,
@@ -73,42 +139,8 @@ export class LogContextProvider {
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
-      this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-        await this.languageProvider.start();
-        const labels = this.languageProvider.getLabelKeys();
+      this.appliedContextFilters = contextFilters;
 
-        let expr = contextFilters
-          .map((filter) => {
-            const label = filter.value;
-            if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-              // escape backslashes in label as users can't escape them by themselves
-              return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-            }
-            return '';
-          })
-          // Filter empty strings
-          .filter((label) => !!label)
-          .join(',');
-
-        expr = `{${expr}}`;
-
-        const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-        if (parserContextFilters.length) {
-          // we should also filter for labels from parsers, let's find the right parser
-          if (origQuery) {
-            const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-            if (parser) {
-              expr = addParserToQuery(expr, parser);
-            }
-          }
-          for (const filter of parserContextFilters) {
-            if (filter.enabled) {
-              expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-            }
-          }
-        }
-        return expr;
-      };
       if (runContextQuery) {
         runContextQuery();
       }
@@ -118,35 +150,66 @@ export class LogContextProvider {
     this.onContextClose =
       this.onContextClose ??
       (() => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
+        this.appliedContextFilters = [];
       });
 
     return LokiContextUi({
       row,
       updateFilter,
-      languageProvider: this.languageProvider,
       onClose: this.onContextClose,
+      logContextProvider: this,
     });
   }
 
-  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    return await this.prepareContextExprWithoutParsedLabels(row, origQuery);
-  }
-
-  private async prepareContextExprWithoutParsedLabels(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    await this.languageProvider.start();
-    const labels = this.languageProvider.getLabelKeys();
-    const expr = Object.keys(row.labels)
-      .map((label: string) => {
-        if (labels.includes(label)) {
+  processContextFiltersToExpr = (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) => {
+    const labelFilters = contextFilters
+      .map((filter) => {
+        const label = filter.value;
+        if (!filter.fromParser && filter.enabled) {
           // escape backslashes in label as users can't escape them by themselves
           return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
         }
         return '';
       })
+      // Filter empty strings
       .filter((label) => !!label)
       .join(',');
 
-    return `{${expr}}`;
-  }
+    let expr = `{${labelFilters}}`;
+
+    // We need to have original query to get parser and include parsed labels
+    // We only add parser and parsed labels if there is only one parser in query
+    if (query && isQueryWithParser(query.expr).parserCount === 1) {
+      const parser = getParserFromQuery(query.expr);
+      if (parser) {
+        expr = addParserToQuery(expr, parser);
+        const parsedLabels = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+        for (const parsedLabel of parsedLabels) {
+          if (parsedLabel.enabled) {
+            expr = addLabelToQuery(expr, parsedLabel.label, '=', row.labels[parsedLabel.label]);
+          }
+        }
+      }
+    }
+
+    return expr;
+  };
+
+  getInitContextFiltersFromLabels = async (labels: Labels) => {
+    await this.datasource.languageProvider.start();
+    const allLabels = this.datasource.languageProvider.getLabelKeys();
+    const contextFilters: ContextFilter[] = [];
+    Object.entries(labels).forEach(([label, value]) => {
+      const filter: ContextFilter = {
+        label,
+        value: label, // this looks weird in the first place, but we need to set the label as value here
+        enabled: allLabels.includes(label),
+        fromParser: !allLabels.includes(label),
+        description: value,
+      };
+      contextFilters.push(filter);
+    });
+
+    return contextFilters;
+  };
 }

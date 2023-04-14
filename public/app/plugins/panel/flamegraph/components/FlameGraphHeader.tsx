@@ -39,6 +39,7 @@ const FlameGraphHeader = ({
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
   ];
+
   if (containerWidth >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH) {
     viewOptions.push({
       value: SelectedView.Both,
@@ -46,6 +47,14 @@ const FlameGraphHeader = ({
       description: 'Show both the top table and flame graph',
     });
   }
+
+  const onResetView = () => {
+    setTopLevelIndex(0);
+    setSelectedBarIndex(0);
+    setRangeMin(0);
+    setRangeMax(1);
+    setSearch('');
+  };
 
   return (
     <div className={styles.header}>
@@ -57,22 +66,11 @@ const FlameGraphHeader = ({
               setSearch(v.currentTarget.value);
             }}
             placeholder={'Search..'}
-            width={24}
+            width={44}
           />
         </div>
-        <Button
-          type={'button'}
-          variant={'secondary'}
-          size={'md'}
-          onClick={() => {
-            setTopLevelIndex(0);
-            setSelectedBarIndex(0);
-            setRangeMin(0);
-            setRangeMax(1);
-            setSearch('');
-          }}
-        >
-          Reset View
+        <Button type={'button'} variant="secondary" onClick={onResetView}>
+          Reset view
         </Button>
       </div>
 
