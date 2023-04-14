@@ -22,7 +22,7 @@ import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import * as DFImport from 'app/features/dataframe-import';
-import { DataSourcePicker } from 'app/features/datasources/components/DataSourcePicker/DataSourcePicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
