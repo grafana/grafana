@@ -502,18 +502,6 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID s
 	return nil
 }
 
-func (s *Service) countChildrenInFolder(ctx context.Context, orgID int64, UID string) (int64, error) {
-	var count int64
-	for _, v := range s.registry {
-		c, err := v.CountInFolder(ctx, orgID, UID)
-		if err != nil {
-			return 0, err
-		}
-		count += c
-	}
-	return count, nil
-}
-
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
 	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
