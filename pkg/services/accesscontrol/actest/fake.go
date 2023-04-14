@@ -2,11 +2,9 @@ package actest
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ accesscontrol.Service = new(FakeService)
@@ -128,31 +126,4 @@ func (f *FakePermissionsService) SetPermissions(ctx context.Context, orgID int64
 
 func (f *FakePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
 	return f.ExpectedMappedAction
-}
-
-type kv string
-
-func (k kv) Key() string {
-	return "unused"
-}
-func (k kv) Value() string {
-	return string(k)
-}
-func (k kv) MustString(defaultVal string) string {
-	return string(k)
-}
-func (k kv) MustBool(defaultVal bool) bool {
-	return string(k) == "true"
-}
-func (k kv) MustDuration(defaultVal time.Duration) time.Duration {
-	return defaultVal
-}
-
-type FakeSection map[string]string
-
-func (s FakeSection) KeyValue(key string) setting.KeyValue {
-	if v, ok := s[key]; ok {
-		return kv(v)
-	}
-	return nil
 }

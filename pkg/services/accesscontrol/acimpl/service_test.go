@@ -28,13 +28,12 @@ func setupTestEnv(t testing.TB) *Service {
 	cfg.RBACEnabled = true
 
 	ac := &Service{
-		cfg:                 cfg,
-		log:                 log.New("accesscontrol"),
-		registrations:       accesscontrol.RegistrationList{},
-		store:               database.ProvideService(db.InitTestDB(t)),
-		roles:               accesscontrol.BuildBasicRoleDefinitions(),
-		features:            featuremgmt.WithFeatures(),
-		overridesCfgSection: actest.FakeSection{},
+		cfg:           cfg,
+		log:           log.New("accesscontrol"),
+		registrations: accesscontrol.RegistrationList{},
+		store:         database.ProvideService(db.InitTestDB(t)),
+		roles:         accesscontrol.BuildBasicRoleDefinitions(),
+		features:      featuremgmt.WithFeatures(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -166,7 +165,7 @@ func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
 	tests := []struct {
 		name         string
 		registration accesscontrol.RoleRegistration
-		cfgOverride  actest.FakeSection
+		overrides    map[string][]string
 		wantGrants   []string
 		wantErr      bool
 	}{
@@ -177,9 +176,8 @@ func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
 				Grants:              []string{"Admin"},
 				AllowGrantsOverride: true,
 			},
-			cfgOverride: actest.FakeSection{},
-			wantGrants:  []string{"Admin"},
-			wantErr:     false,
+			wantGrants: []string{"Admin"},
+			wantErr:    false,
 		},
 		{
 			name: "should account for grant overrides",
@@ -188,9 +186,9 @@ func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
 				Grants:              []string{"Admin"},
 				AllowGrantsOverride: true,
 			},
-			cfgOverride: actest.FakeSection{"fixed_test_test": "Viewer, Grafana Admin"},
-			wantGrants:  []string{"Viewer", "Grafana Admin"},
-			wantErr:     false,
+			overrides:  map[string][]string{"fixed_test_test": {"Viewer", "Grafana Admin"}},
+			wantGrants: []string{"Viewer", "Grafana Admin"},
+			wantErr:    false,
 		},
 		{
 			name: "should not account for grant overrides",
@@ -199,9 +197,9 @@ func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
 				Grants:              []string{"Admin"},
 				AllowGrantsOverride: false,
 			},
-			cfgOverride: actest.FakeSection{"fixed_test_test": "Viewer, Grafana Admin"},
-			wantGrants:  []string{"Admin"},
-			wantErr:     false,
+			overrides:  map[string][]string{"fixed_test_test": {"Viewer", "Grafana Admin"}},
+			wantGrants: []string{"Admin"},
+			wantErr:    false,
 		},
 	}
 	for _, tt := range tests {
@@ -210,7 +208,7 @@ func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
 
 			// Reset the registations
 			ac.registrations = accesscontrol.RegistrationList{}
-			ac.overridesCfgSection = tt.cfgOverride
+			ac.cfg.RBACGrantOverrides = tt.overrides
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registration)

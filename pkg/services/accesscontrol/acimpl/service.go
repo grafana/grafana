@@ -46,13 +46,12 @@ func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRe
 
 func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager) *Service {
 	s := &Service{
-		cfg:                 cfg,
-		store:               store,
-		log:                 log.New("accesscontrol.service"),
-		cache:               cache,
-		roles:               accesscontrol.BuildBasicRoleDefinitions(),
-		features:            features,
-		overridesCfgSection: (&setting.OSSImpl{Cfg: cfg}).Section("rbac.overrides"),
+		cfg:      cfg,
+		store:    store,
+		log:      log.New("accesscontrol.service"),
+		cache:    cache,
+		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		features: features,
 	}
 
 	return s
@@ -67,14 +66,13 @@ type store interface {
 
 // Service is the service implementing role based access control.
 type Service struct {
-	log                 log.Logger
-	cfg                 *setting.Cfg
-	store               store
-	cache               *localcache.CacheService
-	registrations       accesscontrol.RegistrationList
-	roles               map[string]*accesscontrol.RoleDTO
-	features            *featuremgmt.FeatureManager
-	overridesCfgSection setting.Section
+	log           log.Logger
+	cfg           *setting.Cfg
+	store         store
+	cache         *localcache.CacheService
+	registrations accesscontrol.RegistrationList
+	roles         map[string]*accesscontrol.RoleDTO
+	features      *featuremgmt.FeatureManager
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
@@ -191,18 +189,12 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 }
 
 func (s *Service) handleGrantOverrides(r *accesscontrol.RoleRegistration) {
-	kv := s.overridesCfgSection.KeyValue(strings.ReplaceAll(r.Role.Name, ":", "_"))
-	if kv == nil {
-		return
-	}
-	overrides := kv.Value()
+	key := strings.ReplaceAll(r.Role.Name, ":", "_")
+	key = strings.ReplaceAll(key, ".", "_")
+	overrides := s.cfg.RBACGrantOverrides[key]
 	if len(overrides) > 0 {
-		newGrants := strings.Split(overrides, ",")
-		for i := range newGrants {
-			newGrants[i] = strings.TrimSpace(newGrants[i])
-		}
-		r.Grants = newGrants
-		s.log.Info("Overriding grants for role", "role", r.Role.Name, "overrides", newGrants)
+		r.Grants = overrides
+		s.log.Info("Overriding grants for role", "role", r.Role.Name, "overrides", overrides)
 	}
 }
 
