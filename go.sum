@@ -1265,8 +1265,8 @@ github.com/grafana/alerting v0.0.0-20230315185333-d1e3c68ac064 h1:MtsWzSTav7NGKo
 github.com/grafana/alerting v0.0.0-20230315185333-d1e3c68ac064/go.mod h1:nHfrSTdV7/l74N5/ezqlQ+JwSvIChhN3G5+PjCfwG/E=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
-github.com/grafana/cuetsy v0.1.7 h1:SqBxHxtiUquknsAcG3BZd80TaRboYBAipKHPW0lunwY=
-github.com/grafana/cuetsy v0.1.7/go.mod h1:Ys+bAz8md+qnrgIVwZhyguMOKadiDONt3qiEerYi1LA=
+github.com/grafana/cuetsy v0.1.8 h1:l0AKXfHr0clu6qPirirDzNC/W5mqq5gG7iruOVolG34=
+github.com/grafana/cuetsy v0.1.8/go.mod h1:KCOoGIutYLt/5EY9M7jXdbfjSbZ/CNhRkl+yVeG6BFc=
 github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad h1:bROIOQEkRlxAt+Epn9Pos8ytkVqoIAvnaUZOAb7EgEU=
 github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.6 h1:Ejlj8d1Hvy/uDLeI4sOvL34Y8WLlVDd9iN270F+8aTw=
@@ -2070,7 +2070,6 @@ github.com/rogpeppe/go-internal v1.2.2/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFR
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.8.0/go.mod h1:WmiCO8CzOY8rg0OYDC4/i/2WRWAB6poM+XZ2dLUbcbE=
-github.com/rogpeppe/go-internal v1.8.1/go.mod h1:JeRgkft04UBgHMgCIwADu4Pn6Mtm5d4nPKWu0nJ5d+o=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
 github.com/rs/cors v1.8.0/go.mod h1:EBwu+T5AvHOcXwvZIkQFjUN6s8Czyqw12GL/Y0tUyRM=

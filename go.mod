@@ -32,7 +32,7 @@ require (
 
 require (
 	cloud.google.com/go/storage v1.28.1
-	cuelang.org/go v0.5.0-beta.2
+	cuelang.org/go v0.5.0
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/BurntSushi/toml v1.2.1
@@ -64,7 +64,6 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20230315185333-d1e3c68ac064
-	github.com/grafana/cuetsy v0.1.7
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.159.0
@@ -127,7 +126,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -268,6 +267,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/dave/dst v0.27.2
 	github.com/go-jose/go-jose/v3 v3.0.0
+	github.com/grafana/cuetsy v0.1.8
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
