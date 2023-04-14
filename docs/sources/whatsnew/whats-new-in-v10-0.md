@@ -194,3 +194,31 @@ The list of requests is already growing and of course we will look into those. S
 The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
 This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insigts resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
+
+## Redesigned and improved Log Context
+
+Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
+
+Notably, we've added two new features that streamline the log context experience:
+
+First, we've included a "copy" button that allows users to easily copy lines without having to navigate away from the log context panel.
+
+Second, we've implemented an eye icon that lets users display only the selected labels, making it easier to focus on specific information.
+
+{{< figure src="/media/docs/grafana/log-context-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
+
+These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
+
+## Alerting
+
+### Guided set up of alert rules
+
+Simplifies the alert rule creation process by introducing a wizard to guide you step-by-step through creating your alert rules as well as providing in-app guidance along the way.
+
+### State history view
+
+Use the improved State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
+
+### Improved templating experience
+
+Text tbd.
