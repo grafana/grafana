@@ -1,7 +1,13 @@
 package migrations
 
+import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
 // This migration was run behind the `dashboardPreviews` flag.
 // The feature flag and the whole dashboard previews feature was removed in https://github.com/grafana/grafana/pull/66176
+
+func addDashboardPreviewsCleanupMigration(mg *migrator.Migrator) {
+	mg.AddMigration("remove dashboard previews table", migrator.NewDropTableMigration("dashboard_thumbnail"))
+}
 
 //func addDashboardThumbsMigrations(mg *migrator.Migrator) {
 //	dashThumbs := migrator.Table{
