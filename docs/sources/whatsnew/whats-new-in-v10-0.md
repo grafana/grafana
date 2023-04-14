@@ -79,12 +79,16 @@ To try out Correlations, you'll need to enable the `correlations` feature toggle
 
 In subsequent releases, we’ll be refining and enhancing the user interface for Correlations, to provide a more streamlined user experience.
 
-## First panel creation flow
+## Enhanced Data Source Selection Experience: Simplifying Querying for Users
 
 _Available in preview in all editions of Grafana._
-Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data.
+Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
 
-With the new flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing users to quickly connect to a new one when needed. Additionally, the flow now enables quick uploading of CSV files and access to built-in data sources.
+With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing users to quickly connect to a new one when needed. Additionally, the flow now enables quick uploading of CSV files and access to built-in data sources.
+
+<!--
+- TODO:Add screenshots
+-->
 
 To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
