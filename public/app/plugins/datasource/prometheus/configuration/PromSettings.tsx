@@ -184,6 +184,7 @@ export const PromSettings = (props: Props) => {
                   you will see less data points. Defaults to 15s. {docsTip()}
                 </>
               }
+              interactive={true}
             >
               <>
                 <Input
@@ -207,6 +208,7 @@ export const PromSettings = (props: Props) => {
               label="Query timeout"
               labelWidth={26}
               tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
+              interactive={true}
             >
               <>
                 <Input
@@ -231,7 +233,8 @@ export const PromSettings = (props: Props) => {
           <InlineField
             label="Default editor"
             labelWidth={26}
-            tooltip={<>Set default editor option for all users of this data source.</>}
+            tooltip={<>Set default editor option for all users of this data source. {docsTip()}</>}
+            interactive={true}
           >
             <Select
               aria-label={`Default Editor (Code or Builder)`}
@@ -256,6 +259,7 @@ export const PromSettings = (props: Props) => {
                 autocomplete. This helps if you have performance issues with bigger Prometheus instances. {docsTip()}
               </>
             }
+            interactive={true}
             disabled={options.readOnly}
             className={styles.switchField}
           >
@@ -297,6 +301,7 @@ export const PromSettings = (props: Props) => {
                   documentation to ensure you enter the correct type. {docsTip()}
                 </>
               }
+              interactive={true}
             >
               <Select
                 aria-label="Prometheus type"
@@ -335,6 +340,7 @@ export const PromSettings = (props: Props) => {
                     automatically configured. {docsTip()}
                   </>
                 }
+                interactive={true}
               >
                 <Select
                   aria-label={`${options.jsonData.prometheusType} type`}
@@ -356,7 +362,13 @@ export const PromSettings = (props: Props) => {
               <InlineField
                 label="Cache level"
                 labelWidth={26}
-                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
+                tooltip={
+                  <>
+                    Sets the browser caching level for editor queries. Higher cache settings are recommended for high
+                    cardinality data sources.
+                  </>
+                }
+                interactive={true}
               >
                 <Select
                   width={40}
@@ -374,7 +386,14 @@ export const PromSettings = (props: Props) => {
             <InlineField
               label="Incremental querying (beta)"
               labelWidth={26}
-              tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
+              tooltip={
+                <>
+                  This feature will change the default behavior of relative queries to always request fresh data from
+                  the prometheus instance, instead query results will be cached, and only new records are requested.
+                  Turn this on to decrease database and network load.
+                </>
+              }
+              interactive={true}
               className={styles.switchField}
             >
               <Switch
@@ -391,7 +410,13 @@ export const PromSettings = (props: Props) => {
             <InlineField
               label="Query overlap window"
               labelWidth={26}
-              tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
+              tooltip={
+                <>
+                  Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the
+                  duration of each incremental request.
+                </>
+              }
+              interactive={true}
             >
               <>
                 <Input
@@ -428,6 +453,7 @@ export const PromSettings = (props: Props) => {
                   max_source_resolution. Multiple parameters should be concatenated together with an ‘&’. {docsTip()}
                 </>
               }
+              interactive={true}
             >
               <Input
                 className="width-20"
@@ -452,6 +478,7 @@ export const PromSettings = (props: Props) => {
                   older than 2.1 or if POST requests are restricted in your network. {docsTip()}
                 </>
               }
+              interactive={true}
               label="HTTP method"
             >
               <Select

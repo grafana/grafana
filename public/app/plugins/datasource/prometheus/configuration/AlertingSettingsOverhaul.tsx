@@ -3,7 +3,7 @@ import React from 'react';
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
-import { overhaulStyles } from './ConfigEditor';
+import { docsTip, overhaulStyles } from './ConfigEditor';
 
 export interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
@@ -29,7 +29,13 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
               labelWidth={30}
               label="Manage alerts via Alerting UI"
               disabled={options.readOnly}
-              tooltip="Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source."
+              tooltip={
+                <>
+                  Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data
+                  source. {docsTip()}
+                </>
+              }
+              interactive={true}
               className={styles.switchField}
             >
               <Switch

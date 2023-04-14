@@ -25,7 +25,13 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
         label="Internal link"
         labelWidth={24}
         disabled={disabled}
-        tooltip="Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data."
+        tooltip={
+          <>
+            Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select
+            the backend tracing data store for your exemplar data. {docsTip()}
+          </>
+        }
+        interactive={true}
       >
         <>
           <InlineSwitch
@@ -56,6 +62,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
           labelWidth={24}
           tooltip={<>The data source the exemplar is going to navigate to. {docsTip()}</>}
           disabled={disabled}
+          interactive={true}
         >
           <DataSourcePicker
             tracing={true}
@@ -77,6 +84,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
           labelWidth={24}
           tooltip={<>The URL of the trace backend the user would go to see its trace. {docsTip()}</>}
           disabled={disabled}
+          interactive={true}
         >
           <Input
             placeholder="https://example.com/${__value.raw}"
@@ -99,6 +107,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
         labelWidth={24}
         tooltip={<>Use to override the button label on the exemplar traceID field. {docsTip()}</>}
         disabled={disabled}
+        interactive={true}
       >
         <Input
           placeholder="Go to example.com"
@@ -118,6 +127,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
         labelWidth={24}
         tooltip={<>The name of the field in the labels object that should be used to get the traceID. {docsTip()}</>}
         disabled={disabled}
+        interactive={true}
       >
         <Input
           placeholder="traceID"
