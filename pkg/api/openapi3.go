@@ -13,9 +13,10 @@ func openapi3(c *contextmodel.ReqContext) {
 	}
 
 	// Add CSP for unpkg.com to allow loading of Swagger UI assets
-	existingCSP := c.Resp.Header().Get("Content-Security-Policy")
-	newCSP := strings.Replace(existingCSP, "style-src", "style-src https://unpkg.com/", 1)
-	c.Resp.Header().Set("Content-Security-Policy", newCSP)
+	if existingCSP := c.Resp.Header().Get("Content-Security-Policy"); existingCSP != "" {
+		newCSP := strings.Replace(existingCSP, "style-src", "style-src https://unpkg.com/", 1)
+		c.Resp.Header().Set("Content-Security-Policy", newCSP)
+	}
 
 	c.HTML(http.StatusOK, "openapi3", data)
 }
