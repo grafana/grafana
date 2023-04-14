@@ -8,11 +8,11 @@ import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
 
-import { Breadcrumbs } from '../Breadcrumbs/Breadcrumbs';
-import { buildBreadcrumbs } from '../Breadcrumbs/utils';
+import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
+import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { NavToolbarSeparator } from './NavToolbarSeparator';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props {
   onToggleSearchBar(): void;
