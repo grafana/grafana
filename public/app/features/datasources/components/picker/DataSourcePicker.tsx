@@ -5,8 +5,9 @@ import {
   DataSourcePickerProps as DeprecatedDataSourcePickerProps,
 } from '@grafana/runtime';
 import { config } from 'app/core/config';
-import { DataSourcePickerWithHistory } from 'app/features/datasource-drawer/DataSourcePickerWithHistory';
-import { DataSourcePickerWithHistoryProps } from 'app/features/datasource-drawer/types';
+
+import { DataSourcePickerWithHistory } from './DataSourcePickerWithHistory';
+import { DataSourcePickerWithHistoryProps } from './types';
 
 type DataSourcePickerProps = DeprecatedDataSourcePickerProps | DataSourcePickerWithHistoryProps;
 

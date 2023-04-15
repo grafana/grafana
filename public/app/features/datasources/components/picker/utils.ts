@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -14,4 +14,26 @@ export function isDataSourceMatch(
     return ds.uid === current;
   }
   return ds.uid === current.uid;
+}
+
+export function dataSourceName(
+  dataSource: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined
+) {
+  if (!dataSource) {
+    return 'Unknown';
+  }
+
+  if (typeof dataSource === 'string') {
+    return `${dataSource} - not found`;
+  }
+
+  if ('name' in dataSource) {
+    return dataSource.name;
+  }
+
+  if (dataSource.uid) {
+    return `${dataSource.uid} - not found`;
+  }
+
+  return 'Unknown';
 }

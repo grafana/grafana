@@ -1,3 +1,4 @@
+import React from 'react';
 import { DropzoneOptions, FileRejection, DropEvent } from 'react-dropzone';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -6,7 +7,7 @@ import { DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 export interface DataSourceDrawerProps {
   datasources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   onFileDrop?: (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => void;
-  onChange: (ds: string) => void;
+  onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>) => void;
   current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
@@ -14,6 +15,9 @@ export interface DataSourceDrawerProps {
 }
 
 export interface PickerContentProps extends DataSourceDrawerProps {
+  style: React.CSSProperties;
+  filterTerm?: string;
+  onClose: () => void;
   onDismiss: () => void;
 }
 
