@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type PrometheusSrv struct {
@@ -105,6 +107,44 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 	return 0, nil
 }
 
+func getMatchersFromRequest(r *http.Request) (labels.Matchers, error) {
+	var matchers labels.Matchers
+	for _, s := range r.URL.Query()["matcher"] {
+		var m labels.Matcher
+		if err := json.Unmarshal([]byte(s), &m); err != nil {
+			return nil, err
+		}
+		if len(m.Name) == 0 {
+			return nil, errors.New("bad matcher: the name cannot be blank")
+		}
+		matchers = append(matchers, &m)
+	}
+	return matchers, nil
+}
+
+func getStatesFromRequest(r *http.Request) ([]eval.State, error) {
+	var states []eval.State
+	for _, s := range r.URL.Query()["state"] {
+		s = strings.ToLower(s)
+		switch s {
+		case "normal", "inactive":
+			states = append(states, eval.Normal)
+		case "alerting", "firing":
+			states = append(states, eval.Alerting)
+		case "pending":
+			states = append(states, eval.Pending)
+		case "nodata":
+			states = append(states, eval.NoData)
+		// nolint:goconst
+		case "error":
+			states = append(states, eval.Error)
+		default:
+			return states, fmt.Errorf("unknown state '%s'", s)
+		}
+	}
+	return states, nil
+}
+
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	dashboardUID := c.Query("dashboard_uid")
 	panelID, err := getPanelIDFromRequest(c.Req)
@@ -118,6 +158,18 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	limitGroups := c.QueryInt64WithDefault("limit", -1)
 	limitRulesPerGroup := c.QueryInt64WithDefault("limit_rules", -1)
 	limitAlertsPerRule := c.QueryInt64WithDefault("limit_alerts", -1)
+	matchers, err := getMatchersFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	withStates, err := getStatesFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	withStatesFast := make(map[eval.State]struct{})
+	for _, state := range withStates {
+		withStatesFast[state] = struct{}{}
+	}
 
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -190,14 +242,40 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, labelOptions)
-		if limitRulesPerGroup > -1 && int64(len(rules)) > limitRulesPerGroup {
-			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
-		}
+		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
+
+		if len(withStates) > 0 {
+			// Filtering is weird but firing, pending, and normal filters also need to be
+			// applied to the rule. Others such as nodata and error should have no effect.
+			// This is to match the current behavior in the UI.
+			filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+			for _, rule := range ruleGroup.Rules {
+				var state *eval.State
+				switch rule.State {
+				case "normal", "inactive":
+					state = util.Pointer(eval.Normal)
+				case "alerting", "firing":
+					state = util.Pointer(eval.Alerting)
+				case "pending":
+					state = util.Pointer(eval.Pending)
+				}
+				if state != nil {
+					if _, ok := withStatesFast[*state]; ok {
+						filteredRules = append(filteredRules, rule)
+					}
+				}
+			}
+			ruleGroup.Rules = filteredRules
+		}
+
+		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+		}
+
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 	}
 
@@ -212,7 +290,17 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 
-func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+// This is the same as matchers.Matches but avoids the need to create a LabelSet
+func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
+	for _, m := range matchers {
+		if !m.Matches(labels[m.Name]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -289,6 +377,16 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 			if alertState.Error != nil {
 				newRule.LastError = alertState.Error.Error()
 				newRule.Health = "error"
+			}
+
+			if len(withStates) > 0 {
+				if _, ok := withStates[alertState.State]; !ok {
+					continue
+				}
+			}
+
+			if !matchersMatch(matchers, alertState.Labels) {
+				continue
 			}
 
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
