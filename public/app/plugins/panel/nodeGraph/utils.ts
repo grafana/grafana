@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldCache,
@@ -230,8 +229,8 @@ function computableField(field?: Field) {
  * @param edgeFields
  */
 function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, edgeFields: EdgeFields): NodeDatum[] {
-  const secondaryStatValues = new ArrayVector();
-  const mainStatValues = new ArrayVector();
+  const secondaryStatValues: any[] = [];
+  const mainStatValues: any[] = [];
   const secondaryStatField = computableField(edgeFields.secondaryStat)
     ? {
         ...edgeFields.secondaryStat!,
@@ -347,42 +346,42 @@ function makeNode(index: number) {
 function nodesFrame() {
   const fields: any = {
     [NodeGraphDataFrameFieldNames.id]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.title]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.subTitle]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.mainStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
     },
     [NodeGraphDataFrameFieldNames.secondaryStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
     },
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { fixedColor: 'green' } },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { fixedColor: 'red' } },
     },
     [NodeGraphDataFrameFieldNames.color]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { mode: 'continuous-GrYlRd' } },
     },
     [NodeGraphDataFrameFieldNames.icon]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
   };
@@ -413,23 +412,23 @@ export function makeEdgesDataFrame(
 function edgesFrame() {
   const fields: any = {
     [NodeGraphDataFrameFieldNames.id]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.source]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.target]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.mainStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
     },
     [NodeGraphDataFrameFieldNames.secondaryStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
     },
   };

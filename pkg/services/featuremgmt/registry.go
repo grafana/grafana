@@ -28,12 +28,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:        "dashboardPreviews",
-			Description: "Create and show thumbnails for dashboard search results",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -79,12 +73,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "lokiDataframeApi",
-			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
@@ -112,7 +100,7 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
 		},
@@ -404,13 +392,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:         "drawerDataSourcePicker",
-			Description:  "Changes the user experience for data source selection to a drawer.",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
-		},
-		{
 			Name:         "traceqlSearch",
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
@@ -456,6 +437,12 @@ var (
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "lokiMetricDataplane",
+			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "alertStateHistoryLokiSecondary",
@@ -521,10 +508,30 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "disableElasticsearchBackendQuerying",
-			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
-			State:       FeatureStateStable,
+			Name:        "enableElasticsearchBackendQuerying",
+			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "authenticationConfigUI",
+			Description: "Enables authentication configuration UI",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:         "advancedDataSourcePicker",
+			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "opensearchDetectVersion",
+			Description:  "Enable version detection in OpenSearch",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 	}
 )

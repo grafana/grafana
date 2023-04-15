@@ -3,7 +3,6 @@ import { map } from 'rxjs/operators';
 import { dateTimeParse } from '../../datetime';
 import { SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -136,7 +135,7 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
   return {
     ...field,
     type: FieldType.time,
-    values: new ArrayVector(timeValues),
+    values: timeValues,
   };
 }
 
@@ -162,7 +161,7 @@ function fieldToNumberField(field: Field): Field {
   return {
     ...field,
     type: FieldType.number,
-    values: new ArrayVector(numValues),
+    values: numValues,
   };
 }
 
@@ -176,7 +175,7 @@ function fieldToBooleanField(field: Field): Field {
   return {
     ...field,
     type: FieldType.boolean,
-    values: new ArrayVector(booleanValues),
+    values: booleanValues,
   };
 }
 
@@ -199,7 +198,7 @@ function fieldToStringField(field: Field, dateFormat?: string): Field {
   return {
     ...field,
     type: FieldType.string,
-    values: new ArrayVector(values),
+    values: values,
   };
 }
 
@@ -217,7 +216,7 @@ function fieldToComplexField(field: Field): Field {
   return {
     ...field,
     type: FieldType.other,
-    values: new ArrayVector(complexValues),
+    values: complexValues,
   };
 }
 
@@ -273,6 +272,6 @@ function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
       },
     },
     type: FieldType.enum,
-    values: new ArrayVector(enumValues),
+    values: enumValues,
   };
 }

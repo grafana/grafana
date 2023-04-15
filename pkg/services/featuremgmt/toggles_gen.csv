@@ -2,7 +2,6 @@ Name,State,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
 trimDefaults,beta,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,stable,@grafana/grafana-as-code,false,false,false,false
 database_metrics,stable,@grafana/hosted-grafana-team,false,false,false,false
-dashboardPreviews,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 live-service-web-worker,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 panelTitleSearch,beta,@grafana/grafana-app-platform-squad,false,false,false,false
@@ -10,12 +9,11 @@ prometheusAzureOverrideAudience,beta,@grafana/observability-metrics,false,false,
 publicDashboards,alpha,@grafana/dashboards-squad,false,false,false,false
 publicDashboardsEmailSharing,alpha,@grafana/dashboards-squad,false,true,false,false
 lokiLive,alpha,@grafana/observability-logs,false,false,false,false
-lokiDataframeApi,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
-exploreMixedDatasource,alpha,@grafana/explore-squad,false,false,false,true
+exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
 newTraceView,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
 cloudWatchDynamicLabels,stable,@grafana/aws-plugins,false,false,false,false
@@ -59,7 +57,6 @@ lokiQuerySplitting,alpha,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,alpha,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,alpha,@grafana/backend-platform,false,false,false,false
 onlyExternalOrgRoleSync,alpha,@grafana/grafana-authnz-team,false,false,false,false
-drawerDataSourcePicker,alpha,@grafana/grafana-bi-squad,false,false,false,true
 traceqlSearch,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 prometheusMetricEncyclopedia,alpha,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
@@ -67,6 +64,7 @@ prometheusResourceBrowserCache,alpha,@grafana/observability-metrics,false,false,
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 prometheusDataplane,alpha,@grafana/observability-metrics,false,false,false,false
+lokiMetricDataplane,alpha,@grafana/observability-logs,false,false,false,false
 alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiPrimary,alpha,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiOnly,alpha,@grafana/alerting-squad,false,false,false,false
@@ -77,4 +75,7 @@ pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,fals
 externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
 dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false,true
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
-disableElasticsearchBackendQuerying,stable,@grafana/observability-logs,false,false,false,false
+enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
+authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
+advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
+opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
