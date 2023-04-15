@@ -49,7 +49,8 @@ export function getAnnotationsByPanelId(annotations: AnnotationEvent[], panelId?
   }
 
   return annotations.filter((item) => {
-    const source = item.source as AnnotationQuery;
+    let source: AnnotationQuery;
+    source = item.source;
     if (!source) {
       return true; // should not happen
     }

@@ -382,7 +382,7 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       dashboard = createDashboardModelFixture({
         annotations: {
-          list: [createAnnotationJSONFixture({ hide: true }) as any],
+          list: [createAnnotationJSONFixture({ hide: true })],
         },
       });
     });
