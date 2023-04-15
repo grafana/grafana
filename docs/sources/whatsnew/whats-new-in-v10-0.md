@@ -204,6 +204,26 @@ To learn more about drag & drop, please refer to the official documentation.
 
 The list of requests is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the the drag & drop datasource.
 
+## Canvas GA
+
+We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to add data links, and a myriad of UX improvements. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+
+## New Trend Panel
+
+_Available in **beta** in all editions of Grafana_
+
+We are excited to introduce a new panel that allows you to display trends where the x axis is not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels.
+
+## Time series time region support
+
+We have implemented support for adding time regions to the time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday-Friday to display work weeks right alongside your data. Time regions are a useful way to highlight specific parts of a day like night, work hours, or whatever you define for each day. They allow the viewer to quickly orient themselves in parts of the day and/or ignore highlighted parts of the time series.
+
+## Annotation filtering
+
+We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
+
 ## Datasources
 
 ### Azure Monitor data source
@@ -243,11 +263,13 @@ Text tbd.
 ## Security
 
 ### Trusted Types support
+
 _In development, available behind the trustedTypes feature toggle in all editions of Grafana._
 
 Use [trusted types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types) to reduce the risk of XSS vulnerabilities. This is an experimental web technology with limited browser support. One aspect of it is sanitization of third party libraries or plugins that have not explicitly done sanitization.
 
 To use it:
+
 - Enable the feature toggle `trustedTypes`.
 - Enable either `content_security_policy` or `content_security_policy_report_only`.
 - Add `require-trusted-types-for 'script';` to the CSP template.
