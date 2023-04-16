@@ -3,13 +3,10 @@ import React, { useCallback, useRef, useState } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import {
   Alert,
   DataSourceHttpSettings,
   FieldValidationMessage,
-  InlineField,
-  Input,
   SecureSocksProxySettings,
   useTheme2,
 } from '@grafana/ui';
@@ -20,6 +17,7 @@ import { PromOptions } from '../types';
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { Connection } from './Connection';
 import { PromSettings } from './PromSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
@@ -28,7 +26,6 @@ export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 
-  const [validPromUrl, updateValidPromUrl] = useState<string>('');
   // use ref so this is evaluated only first time it renders and the select does not disappear suddenly.
   const showAccessOptions = useRef(props.options.access === 'direct');
 
@@ -43,55 +40,6 @@ export const ConfigEditor = (props: Props) => {
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
 
-  const onSettingsChange = useCallback(
-    // eslint-disable-next-line
-    (change: Partial<DataSourceSettings<any, any>>) => {
-      onOptionsChange({
-        ...options,
-        ...change,
-      });
-    },
-    [options, onOptionsChange]
-  );
-
-  let urlTooltip;
-
-  switch (options.access) {
-    case 'direct':
-      urlTooltip = (
-        <>
-          Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
-          {docsTip()}
-        </>
-      );
-      break;
-    case 'proxy':
-      urlTooltip = <>This URL must be accessible from the Grafana server. {docsTip()}</>;
-      break;
-    default:
-      urlTooltip = 'Specify a complete HTTP URL (for example http://your_server:8080)';
-  }
-
-  const validUrlRegex = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
-
-  const defaultUrl = 'http://localhost:9090';
-
-  const urlInput = (
-    <>
-      <Input
-        className="width-20"
-        placeholder={defaultUrl}
-        value={options.url}
-        // eslint-disable-next-line
-        aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
-        onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
-        disabled={options.readOnly}
-        onBlur={(e) => updateValidPromUrl(e.currentTarget.value)}
-      />
-      {validateDurationInput(validPromUrl, validUrlRegex)}
-    </>
-  );
-
   return (
     <>
       {options.access === 'direct' && (
@@ -99,38 +47,7 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
         </Alert>
       )}
-
-      <>
-        <hr />
-        <h3 className={styles.sectionHeaderPadding}>Connection</h3>
-        <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
-          Provide information to connect to this data source.
-        </p>
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <InlineField
-              interactive={true}
-              label="Prometheus Server URL"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={urlTooltip}
-            >
-              {urlInput}
-            </InlineField>
-          </div>
-        </div>
-        <div className={`${styles.sectionBottomPadding} ${styles.secondaryGrey}`}>
-          For more information on configuring the Grafana Prometheus data source see the{' '}
-          <a
-            style={{ textDecoration: 'underline' }}
-            href="https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            documentation
-          </a>
-          .
-        </div>
-      </>
+      <Connection dataSourceConfig={options} onChange={onOptionsChange} />
       <hr className={styles.hrBottomSpace} />
       <DataSourceHttpSettings
         dataSourceConfig={options}
