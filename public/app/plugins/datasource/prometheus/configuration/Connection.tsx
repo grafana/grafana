@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, Input, useTheme2 } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH, validateDurationInput } from './ConfigEditor';
+import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH, validateInput } from './ConfigEditor';
 
 export interface ConnectionProps extends HttpSettingsBaseProps {
   /** The default url for the data source */
@@ -51,8 +51,6 @@ export const Connection = (props: ConnectionProps) => {
 
   const validUrlRegex = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
 
-  // const defaultUrl = 'http://localhost:9090';
-
   const urlInput = (
     <>
       <Input
@@ -65,7 +63,7 @@ export const Connection = (props: ConnectionProps) => {
         disabled={dataSourceConfig.readOnly}
         onBlur={(e) => updateValidPromUrl(e.currentTarget.value)}
       />
-      {validateDurationInput(validPromUrl, validUrlRegex)}
+      {validateInput(validPromUrl, validUrlRegex, 'Invalid Prometheus URL')}
     </>
   );
 

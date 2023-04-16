@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -47,7 +47,7 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
         </Alert>
       )}
-      <Connection dataSourceConfig={options} onChange={onOptionsChange} />
+      <Connection defaultUrl="http://localhost:9090" dataSourceConfig={options} onChange={onOptionsChange} />
       <hr className={styles.hrBottomSpace} />
       <DataSourceHttpSettings
         dataSourceConfig={options}
@@ -86,7 +86,7 @@ export function docsTip(url?: string) {
   );
 }
 
-export const validateDurationInput = (
+export const validateInput = (
   input: string,
   pattern: string | RegExp,
   errorMessage?: string
@@ -118,13 +118,13 @@ export function overhaulStyles(theme: GrafanaTheme2) {
       padding-top: 32px;
     `,
     sectionBottomPadding: css`
-      padding-bottom: 32px;
+      padding-bottom: 28px;
     `,
     subsectionText: css`
       font-size: 12px;
     `,
     hrBottomSpace: css`
-      margin-bottom: 60px;
+      margin-bottom: 56px;
     `,
     hrTopSpace: css`
       margin-top: 50px;

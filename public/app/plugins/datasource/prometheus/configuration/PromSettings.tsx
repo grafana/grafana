@@ -18,7 +18,7 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PrometheusCacheLevel, PromOptions } from '../types';
 
-import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH } from './ConfigEditor';
+import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH, validateInput } from './ConfigEditor';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
@@ -51,6 +51,7 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
+const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
@@ -194,7 +195,7 @@ export const PromSettings = (props: Props) => {
                   onBlur={(e) => updateValidDuration({ ...validDuration, timeInterval: e.currentTarget.value })}
                   disabled={options.readOnly}
                 />
-                {validateDurationInput(validDuration.timeInterval, DURATION_REGEX)}
+                {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
               </>
             </InlineField>
           </div>
@@ -218,7 +219,7 @@ export const PromSettings = (props: Props) => {
                   onBlur={(e) => updateValidDuration({ ...validDuration, queryTimeout: e.currentTarget.value })}
                   disabled={options.readOnly}
                 />
-                {validateDurationInput(validDuration.queryTimeout, DURATION_REGEX)}
+                {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
               </>
             </InlineField>
           </div>
@@ -427,11 +428,7 @@ export const PromSettings = (props: Props) => {
                   spellCheck={false}
                   disabled={options.readOnly}
                 />
-                {validateDurationInput(
-                  validDuration.incrementalQueryOverlapWindow,
-                  DURATION_REGEX,
-                  'Invalid duration. Example values: 100s, 10m'
-                )}
+                {validateInput(validDuration.incrementalQueryOverlapWindow, DURATION_REGEX, durationError)}
               </>
             </InlineField>
           )}
@@ -504,19 +501,6 @@ export const PromSettings = (props: Props) => {
       />
     </>
   );
-};
-
-export const validateDurationInput = (
-  input: string,
-  pattern: string | RegExp,
-  errorMessage?: string
-): boolean | JSX.Element => {
-  const defaultErrorMessage = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
-  if (input && !input.match(pattern)) {
-    return <FieldValidationMessage>{errorMessage ? errorMessage : defaultErrorMessage}</FieldValidationMessage>;
-  } else {
-    return true;
-  }
 };
 
 export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
