@@ -290,7 +290,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     previousDeltaUp: true,
   };
 
-  const data = field.values;
+  const data = field.values.toArray(); // toArray() ensures we handle all vector types
   calcs.count = ignoreNulls ? data.length : data.filter((val) => val != null).length;
 
   const isNumberField = field.type === FieldType.number || FieldType.time;
