@@ -9,7 +9,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime/src';
-import { FieldValidationMessage, InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
+import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
