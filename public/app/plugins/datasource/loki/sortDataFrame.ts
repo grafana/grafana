@@ -65,7 +65,7 @@ export function sortDataFrameByTime(frame: DataFrame, dir: SortDirection): DataF
     ...rest,
     fields: fields.map((field) => ({
       ...field,
-      values: new SortedVector(field.values, index),
+      values: new SortedVector(field.values, index).toArray(),
     })),
   };
 
