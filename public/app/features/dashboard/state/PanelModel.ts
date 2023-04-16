@@ -308,6 +308,26 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       model[property] = cloneDeep(this[property]);
     }
 
+    // clean libraryPanel from collapsed rows
+    if (this.type === 'row' && this.panels && this.panels.length > 0) {
+      model.panels = this.panels.map((panel) => {
+        if (panel.libraryPanel) {
+          const { id, title, libraryPanel, gridPos } = panel;
+          return {
+            id,
+            title,
+            gridPos,
+            libraryPanel: {
+              uid: libraryPanel.uid,
+              name: libraryPanel.name,
+            },
+          };
+        }
+
+        return panel;
+      });
+    }
+
     return model;
   }
 
