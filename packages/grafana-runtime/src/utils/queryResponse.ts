@@ -33,6 +33,7 @@ export interface DataResponse {
   error?: string;
   refId?: string;
   frames?: DataFrameJSON[];
+  status?: number;
 
   // Legacy TSDB format...
   series?: TimeSeries[];
@@ -64,6 +65,13 @@ export function toDataQueryResponse(
   queries?: DataQuery[]
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
+
+  const traceId = 'traceId' in res ? res.traceId : undefined;
+
+  if (traceId != null) {
+    rsp.traceIds = [traceId];
+  }
+
   // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
   if ((res as FetchResponse).data?.results) {
     const results = (res as FetchResponse).data.results;
@@ -82,13 +90,23 @@ export function toDataQueryResponse(
 
     for (const dr of data) {
       if (dr.error) {
-        if (!rsp.error) {
-          rsp.error = {
-            refId: dr.refId,
-            message: dr.error,
-          };
-          rsp.state = LoadingState.Error;
+        const errorObj: DataQueryError = {
+          refId: dr.refId,
+          message: dr.error,
+          status: dr.status,
+        };
+        if (traceId != null) {
+          errorObj.traceId = traceId;
         }
+        if (!rsp.error) {
+          rsp.error = { ...errorObj };
+        }
+        if (rsp.errors) {
+          rsp.errors.push({ ...errorObj });
+        } else {
+          rsp.errors = [{ ...errorObj }];
+        }
+        rsp.state = LoadingState.Error;
       }
 
       if (dr.frames?.length) {

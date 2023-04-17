@@ -8,7 +8,7 @@ import { AzureMonitorQuery, AzureQueryType } from './types';
 import { VariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;

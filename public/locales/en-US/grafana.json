@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
-      "light-theme": "Light",
-      "search": "Search"
+      "light-theme": "Light"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -18,6 +17,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards"
@@ -31,7 +31,6 @@
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
@@ -84,7 +83,6 @@
     },
     "toolbar": {
       "add-panel": "Add panel",
-      "comments-show": "Show dashboard comments",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -109,6 +107,13 @@
   },
   "folder-picker": {
     "loading": "Loading folders..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "Failed to load options",
+      "loading": "Loading options...",
+      "no-options": "No options found"
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -169,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
-      "title": "Alerts & incidents"
+      "title": "Alerts & IRM"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
@@ -200,7 +205,7 @@
       "title": "Folder"
     },
     "create-import": {
-      "title": "Import"
+      "title": "Import dashboard"
     },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
@@ -236,20 +241,11 @@
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
     },
-    "live": {
-      "title": "Event streaming"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Status"
-    },
     "manage-dashboards": {
       "title": "Browse"
+    },
+    "manage-folder": {
+      "subtitle": "Manage folder dashboards and permissions"
     },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
@@ -294,7 +290,6 @@
       "title": "Scenes"
     },
     "search": {
-      "placeholder": "Search Grafana",
       "placeholderCommandPalette": "Search or jump to..."
     },
     "search-dashboards": {
@@ -345,6 +340,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
+    },
+    "toolbar": {
+      "enable-kiosk": "Enable kiosk mode",
+      "toggle-menu": "Toggle menu",
+      "toggle-search-bar": "Toggle top search bar"
     }
   },
   "news": {
@@ -393,11 +393,42 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "Include panels",
+      "remove-datasource-filter": "Datasource: {{datasource}}",
+      "sort-placeholder": "Sort",
+      "starred": "Starred",
+      "view-as-folders": "View by folders",
+      "view-as-grid": "Grid view",
+      "view-as-list": "View as list"
+    },
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
       "new-dashboard": "New Dashboard",
       "new-folder": "New Folder"
+    },
+    "folder-view": {
+      "go-to-folder": "Go to folder",
+      "select-folder": "Select folder"
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
+    },
+    "results-table": {
+      "datasource-header": "Data source",
+      "location-header": "Location",
+      "name-header": "Name",
+      "tags-header": "Tags",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Folder",
+      "type-header": "Type"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Search for dashboards and panels",
+      "placeholder": "Search for dashboards"
     }
   },
   "share-modal": {
@@ -497,6 +528,11 @@
     },
     "title": "Preferences"
   },
+  "tag-filter": {
+    "loading": "Loading...",
+    "no-tags": "No tags found",
+    "placeholder": "Filter by tag"
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -572,12 +608,20 @@
     "loading": "Loading sessions..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": "Select value"
+    },
+    "dropdown": {
+      "placeholder": "Enter variable value"
+    },
     "picker": {
-      "input": "Enter variable value",
       "link-all": "All",
       "option-all": "All",
       "option-selected-values": "Selected",
       "option-tooltip": "Clear selections"
+    },
+    "textbox": {
+      "placeholder": "Enter variable value"
     }
   }
 }

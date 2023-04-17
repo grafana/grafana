@@ -41,7 +41,7 @@ const datasourceSrv = new DatasourceSrvMock(defaultDs, {
 
 const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => getDataSourceSrvMock(),
 }));
 
@@ -197,7 +197,10 @@ describe('getExploreUrl', () => {
   const args = {
     panel: {
       getSavedId: () => 1,
-      targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
+      targets: [
+        { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
+        { refId: 'B', expr: 'query2', datasource: { type: '__expr__', uid: '__expr__' } },
+      ],
     },
     datasourceSrv: {
       get() {
@@ -214,6 +217,9 @@ describe('getExploreUrl', () => {
 
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
+  });
+  it('should omit expression target in explore url', () => {
+    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/__expr__/g)));
   });
 });
 
@@ -291,10 +297,11 @@ describe('hasRefId', () => {
 
   describe('when called with an object that has refId somewhere in the object tree', () => {
     it('then it should return the object', () => {
-      const input: any = { data: [123, null, {}, { series: [123, null, {}, { refId: 'A' }] }] };
+      const mockObject = { refId: 'A' };
+      const input = { data: [123, null, {}, { series: [123, null, {}, mockObject] }] };
       const result = getValueWithRefId(input);
 
-      expect(result).toBe(input.data[3].series[3]);
+      expect(result).toBe(mockObject);
     });
   });
 });

@@ -1,7 +1,7 @@
-import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
+import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService, config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -33,7 +33,7 @@ import {
 
 import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging, trackNewAlerRuleFormSaved } from '../Analytics';
+import { logInfo, LogMessages, trackNewAlerRuleFormSaved, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -61,7 +61,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo, safeParseDurationstr, getGroupFromRuler } from '../components/rules/EditRuleGroupModal';
+import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -162,6 +162,8 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
                 alertmanager_config: status.config,
                 template_files: {},
                 template_file_provenances: result.template_file_provenances,
+                last_applied: result.last_applied,
+                id: result.id,
               }));
             }
             return result;
@@ -547,12 +549,13 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     withAppEvents(
       withSerializedError(
         (async () => {
+          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
           const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
 
-          if (
-            !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
-            JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
-          ) {
+          const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
+          const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
+
+          if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
             throw new Error(
               'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
             );
@@ -770,20 +773,12 @@ interface UpdateNamespaceAndGroupOptions {
   groupInterval?: string;
 }
 
-export const rulesInSameGroupHaveInvalidFor = (
-  rulerRules: RulerRulesConfigDTO | null | undefined,
-  groupName: string,
-  folderName: string,
-  everyDuration: string
-) => {
-  const group = getGroupFromRuler(rulerRules, groupName, folderName);
-
-  const rulesSameGroup: RulerRuleDTO[] = group?.rules ?? [];
-
-  return rulesSameGroup.filter((rule: RulerRuleDTO) => {
+export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
+  return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
     const forNumber = safeParseDurationstr(forDuration);
     const everyNumber = safeParseDurationstr(everyDuration);
+
     return forNumber !== 0 && forNumber < everyNumber;
   });
 };
@@ -809,16 +804,20 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
           if (!existingNamespace) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }
+
           const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
           if (!existingGroup) {
             throw new Error(`Group "${groupName}" not found.`);
           }
+
           const newGroupAlreadyExists = Boolean(
             rulesResult[namespaceName].find((group) => group.name === newGroupName)
           );
+
           if (newGroupName !== groupName && newGroupAlreadyExists) {
             throw new Error(`Group "${newGroupName}" already exists in namespace "${namespaceName}".`);
           }
+
           const newNamespaceAlreadyExists = Boolean(rulesResult[newNamespaceName]);
           if (newNamespaceName !== namespaceName && newNamespaceAlreadyExists) {
             throw new Error(`Namespace "${newNamespaceName}" already exists.`);
@@ -830,16 +829,10 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
           ) {
             throw new Error('Nothing changed.');
           }
+
           // validation for new groupInterval
           if (groupInterval !== existingGroup.interval) {
-            const storeState = thunkAPI.getState();
-            const groupfoldersForSource = storeState?.unifiedAlerting.rulerRules[rulesSourceName];
-            const notValidRules = rulesInSameGroupHaveInvalidFor(
-              groupfoldersForSource?.result,
-              groupName,
-              namespaceName,
-              groupInterval ?? '1m'
-            );
+            const notValidRules = rulesInSameGroupHaveInvalidFor(existingGroup.rules, groupInterval ?? '1m');
             if (notValidRules.length > 0) {
               throw new Error(
                 `These alerts belonging to this group will have an invalid 'For' value: ${notValidRules

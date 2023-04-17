@@ -5,13 +5,13 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import { LogContextProvider } from '../LogContextProvider';
 import { ContextFilter } from '../types';
 
 export interface LokiContextUiProps {
-  languageProvider: LokiLanguageProvider;
+  logContextProvider: LogContextProvider;
   row: LogRowModel;
   updateFilter: (value: ContextFilter[]) => void;
   onClose: () => void;
@@ -35,6 +35,19 @@ function getStyles(theme: GrafanaTheme2) {
         overscroll-behavior: contain;
       }
     `,
+    loadingPlaceholder: css`
+      margin-bottom: 0px;
+      float: right;
+      display: inline;
+      margin-left: auto;
+    `,
+    textWrapper: css`
+      display: flex;
+      align-items: center;
+    `,
+    hidden: css`
+      visibility: hidden;
+    `,
   };
 }
 
@@ -45,13 +58,16 @@ const formatOptionLabel = memoizeOne(({ label, description }: SelectableValue<st
 ));
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, languageProvider, updateFilter, onClose } = props;
+  const { row, logContextProvider, updateFilter, onClose } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+
   const [initialized, setInitialized] = useState(false);
+  const [loading, setLoading] = useState(false);
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
+  const previousContextFilters = React.useRef<ContextFilter[]>([]);
   useEffect(() => {
     if (!initialized) {
       return;
@@ -63,11 +79,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
+    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+      setContextFilters(previousContextFilters.current);
+      return;
+    }
+
+    previousContextFilters.current = structuredClone(contextFilters);
+
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
     }
+    setLoading(true);
     timerHandle.current = window.setTimeout(() => {
-      updateFilter(contextFilters);
+      updateFilter(contextFilters.filter(({ enabled }) => enabled));
+      setLoading(false);
     }, 1500);
 
     return () => {
@@ -84,23 +109,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
   }, [onClose]);
 
   useAsync(async () => {
-    await languageProvider.start();
-    const allLabels = languageProvider.getLabelKeys();
-    const contextFilters: ContextFilter[] = [];
-
-    Object.entries(row.labels).forEach(([label, value]) => {
-      const filter: ContextFilter = {
-        label,
-        value: label, // this looks weird in the first place, but we need to set the label as value here
-        enabled: allLabels.includes(label),
-        fromParser: !allLabels.includes(label),
-        description: value,
-      };
-      contextFilters.push(filter);
-    });
-
+    setLoading(true);
+    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels);
     setContextFilters(contextFilters);
     setInitialized(true);
+    setLoading(false);
   });
 
   useEffect(() => {
@@ -125,7 +138,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.multiSelectWrapper}>
-      <div>
+      <div className={styles.textWrapper}>
         {' '}
         <Tooltip
           content={
@@ -143,7 +156,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
             colorIndex={1}
           />
         </Tooltip>{' '}
-        Select labels to include in the context query:
+        Select labels to be included in the context query:
+        <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
       </div>
       <div>
         <MultiSelect

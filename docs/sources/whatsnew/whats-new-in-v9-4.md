@@ -20,7 +20,7 @@ We've made the following changes to search and navigation.
 
 ### Command palette enhancements
 
-_Generally available on Grafana Cloud, and available to preview using the `topNavCommandPalette` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) in all editions of Grafana._
+_Generally available in all editions of Grafana._
 
 The command palette has been updated to provide a more efficient way to navigate Grafana. You can now search and access all pages and recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
 
@@ -39,6 +39,8 @@ The navigation in Grafana has been updated with a new design and an improved str
 The new navigation is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the `topnav` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}).
 
 > **Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
+
+> **Note:** Plugin developers should refer to [the migration guide]({{< relref "../developers/plugins/migration-guide/v9.3.x-9.4.x/_index.md#supporting-new-navigation-layout" >}}) to upgrade their plugins to work seamlessly with the new navigation layout.
 
 {{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
 
@@ -124,7 +126,7 @@ Learn more about service accounts in our [Service account documentation]({{< rel
 
 ### OAuth providers setting for skip org role sync
 
-While Grafana integrates with many different auth providers, we have received requests for a feature that enables you to bypass organization role synchronization for individual provides rather than for all configured providers. This option is now available for users who want to be able to use Grafana to manage their org roles.
+While Grafana integrates with many different auth providers, we have received requests for a feature that enables you to bypass organization role synchronization for individual providers rather than for all configured providers. This option is now available for users who want to be able to use Grafana to manage their org roles.
 
 This option enables you to skip synchronization from your configured OAuth provider specifically in the auth provider section under `skip_org_role_sync`. Previously users could only do this for certain providers using the `oauth_skip_org_role_sync_update` option, but this would include all of the configured providers.
 
@@ -252,12 +254,6 @@ We've added Discord as a contact point receiver for Grafana Cloud alert rules.
 
 We've made the following changes to alert administration.
 
-#### Better guidance to configure your Alertmanagers
-
-Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
-
-{{< figure src="/media/docs/alerting/alertmanager-config.png" max-width="750px" caption="Better guidance to configure your Alertmanager" >}}
-
 #### Alerting landing page
 
 Introduces a new landing page that helps you get started quickly with Alerting. It also provides you with at a glance information on how Alerting works and a video to introduce you to key concepts.
@@ -299,6 +295,10 @@ We've added support for JWT authentication.
 ### Snowflake Datasource
 
 We've added support for custom session parameters.
+
+## Postgres, MySQL, and MSSQL data sources
+
+The `database` property is now under the `jsonData` key in the data source configuration. This change is backward compatible, and existing configurations will continue to work.
 
 ## Before you upgrade
 

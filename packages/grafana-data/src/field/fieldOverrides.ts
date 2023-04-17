@@ -2,14 +2,16 @@ import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
+import { VariableFormatID } from '@grafana/schema';
+
 import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
-import { getTimeField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';
 import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import {
   ApplyFieldOverrideOptions,
+  DataContextScopedVar,
   DataFrame,
   DataLink,
   DecimalCount,
@@ -32,16 +34,12 @@ import {
   ValueLinkConfig,
 } from '../types';
 import { FieldMatcher } from '../types/transformations';
-import { DataLinkBuiltInVars, locationUtil } from '../utils';
+import { locationUtil } from '../utils';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
-import { formattedValueToString } from '../valueFormats';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { getFrameDisplayName } from './fieldState';
-import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { getTemplateProxyForField } from './templateProxies';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -121,18 +119,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       };
     });
 
-    const scopedVars: ScopedVars = {
-      __series: { text: 'Series', value: { name: getFrameDisplayName(newFrame, index) } }, // might be missing
-    };
-
     for (const field of newFrame.fields) {
       const config = field.config;
 
       field.state!.scopedVars = {
-        ...scopedVars,
-        __field: {
-          text: 'Field',
-          value: getTemplateProxyForField(field, newFrame, options.data),
+        __dataContext: {
+          value: {
+            data: options.data!,
+            frame: newFrame,
+            frameIndex: index,
+            field: field,
+          },
         },
       };
 
@@ -292,6 +289,11 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+  // For cases where we have links on the datasource config and the panel config, we need to merge them
+  if (config.links && defaults.links) {
+    // Combine the data source links and the panel default config links
+    config.links = [...config.links, ...defaults.links];
+  }
   for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
     if (fieldConfigProperty.isCustom && !config.custom) {
       config.custom = {};
@@ -368,76 +370,31 @@ export const getLinksSupplier =
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
-    const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
-    const { timeField } = getTimeField(frame);
 
     return field.config.links.map((link: DataLink) => {
-      const variablesQuery = locationUtil.getVariablesUrlParams();
-      let dataFrameVars = {};
-      let valueVars = {};
+      const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+      const dataLinkScopedVars = {
+        ...fieldScopedVars,
+        __dataContext: dataContext,
+      };
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-        const fieldsProxy = getFieldDisplayValuesProxy({
-          frame,
-          rowIndex: config.valueRowIndex,
-          timeZone: timeZone,
-        });
-
-        valueVars = {
-          raw: field.values.get(config.valueRowIndex),
-          numeric: fieldsProxy[field.name].numeric,
-          text: fieldsProxy[field.name].text,
-          time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
-        };
-
-        dataFrameVars = {
-          __data: {
-            value: {
-              name: frame.name,
-              refId: frame.refId,
-              fields: fieldsProxy,
-            },
-            text: 'Data',
-          },
-        };
+        dataContext.value.rowIndex = config.valueRowIndex;
       } else {
-        if (config.calculatedValue) {
-          valueVars = {
-            raw: config.calculatedValue.numeric,
-            numeric: config.calculatedValue.numeric,
-            text: formattedValueToString(config.calculatedValue),
-          };
-        }
+        dataContext.value.calculatedValue = config.calculatedValue;
       }
-
-      const variables = {
-        ...fieldScopedVars,
-        __value: {
-          text: 'Value',
-          value: valueVars,
-        },
-        ...dataFrameVars,
-        [DataLinkBuiltInVars.keepTime]: {
-          text: timeRangeUrl,
-          value: timeRangeUrl,
-        },
-        [DataLinkBuiltInVars.includeVars]: {
-          text: variablesQuery,
-          value: variablesQuery,
-        },
-      };
 
       if (link.onClick) {
         return {
           href: link.url,
-          title: replaceVariables(link.title || '', variables),
+          title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           onClick: (evt, origin) => {
             link.onClick!({
               origin: origin ?? field,
               e: evt,
-              replaceVariables: (v) => replaceVariables(v, variables),
+              replaceVariables: (v) => replaceVariables(v, dataLinkScopedVars),
             });
           },
           origin: field,
@@ -449,13 +406,12 @@ export const getLinksSupplier =
         return mapInternalLinkToExplore({
           link,
           internalLink: link.internal,
-          scopedVars: variables,
+          scopedVars: dataLinkScopedVars,
           field,
-          range: {} as any,
+          range: link.internal.range ?? ({} as any),
           replaceVariables,
         });
       }
-
       let href = link.onBuildUrl
         ? link.onBuildUrl({
             origin: field,
@@ -464,14 +420,14 @@ export const getLinksSupplier =
         : link.url;
 
       if (href) {
-        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables);
+        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.PercentEncode);
         href = locationUtil.processUrl(href);
       }
 
       const info: LinkModel<Field> = {
         href,
-        title: replaceVariables(link.title || '', variables),
+        title: replaceVariables(link.title || '', dataLinkScopedVars),
         target: link.targetBlank ? '_blank' : undefined,
         origin: field,
       };
@@ -554,4 +510,19 @@ export function useFieldOverrides(
       }),
     };
   }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace]);
+}
+
+/**
+ * Clones the existing dataContext or creates a new one
+ */
+function getFieldDataContextClone(frame: DataFrame, field: Field, fieldScopedVars: ScopedVars) {
+  if (fieldScopedVars?.__dataContext) {
+    return {
+      value: {
+        ...fieldScopedVars.__dataContext.value,
+      },
+    };
+  }
+
+  return { value: { frame, field, data: [frame] } };
 }

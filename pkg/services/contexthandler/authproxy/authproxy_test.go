@@ -2,7 +2,6 @@ package authproxy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,8 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/ldap"
-	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,7 +48,7 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, confi
 		},
 	}
 
-	return ProvideAuthProxy(cfg, remoteCache, loginService, nil, nil), ctx
+	return ProvideAuthProxy(cfg, remoteCache, loginService, nil, nil, service.NewLDAPFakeService()), ctx
 }
 
 func TestMiddlewareContext(t *testing.T) {
@@ -62,7 +61,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
 		userIdPayload := []byte(strconv.FormatInt(id, 10))
-		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
+		err = cache.Set(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 		// Set up the middleware
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
@@ -85,7 +84,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
 		userIdPayload := []byte(strconv.FormatInt(id, 10))
-		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
+		err = cache.Set(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 
 		auth, reqCtx := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
@@ -105,85 +104,41 @@ func TestMiddlewareContext(t *testing.T) {
 
 func TestMiddlewareContext_ldap(t *testing.T) {
 	t.Run("Logs in via LDAP", func(t *testing.T) {
-		origIsLDAPEnabled := isLDAPEnabled
-		origGetLDAPConfig := getLDAPConfig
-		origNewLDAP := newLDAP
-		t.Cleanup(func() {
-			newLDAP = origNewLDAP
-			isLDAPEnabled = origIsLDAPEnabled
-			getLDAPConfig = origGetLDAPConfig
-		})
-
-		isLDAPEnabled = func(*setting.Cfg) bool {
-			return true
-		}
-
-		stub := &multildap.MultiLDAPmock{
-			ID: id,
-		}
-
-		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
-			config := &ldap.Config{
-				Servers: []*ldap.ServerConfig{
-					{
-						SearchBaseDNs: []string{"BaseDNHere"},
-					},
-				},
-			}
-			return config, nil
-		}
-
-		newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
-			return stub
-		}
-
 		cache := remotecache.NewFakeStore(t)
 
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
+		auth.cfg.LDAPAuthEnabled = true
+		ldapFake := &service.LDAPFakeService{
+			ExpectedUser: &login.ExternalUserInfo{UserId: id},
+		}
+
+		auth.ldapService = ldapFake
 
 		gotID, err := auth.Login(reqCtx, false)
 		require.NoError(t, err)
 
 		assert.Equal(t, id, gotID)
-		assert.True(t, stub.UserCalled)
+		assert.True(t, ldapFake.UserCalled)
 	})
 
 	t.Run("Gets nice error if LDAP is enabled, but not configured", func(t *testing.T) {
 		const id int64 = 42
-		origIsLDAPEnabled := isLDAPEnabled
-		origNewLDAP := newLDAP
-		origGetLDAPConfig := getLDAPConfig
-		t.Cleanup(func() {
-			isLDAPEnabled = origIsLDAPEnabled
-			newLDAP = origNewLDAP
-			getLDAPConfig = origGetLDAPConfig
-		})
-
-		isLDAPEnabled = func(*setting.Cfg) bool {
-			return true
-		}
-
-		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
-			return nil, errors.New("something went wrong")
-		}
-
 		cache := remotecache.NewFakeStore(t)
 
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
-
-		stub := &multildap.MultiLDAPmock{
-			ID: id,
+		auth.cfg.LDAPAuthEnabled = true
+		ldapFake := &service.LDAPFakeService{
+			ExpectedUser:  nil,
+			ExpectedError: service.ErrUnableToCreateLDAPClient,
 		}
 
-		newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
-			return stub
-		}
+		auth.ldapService = ldapFake
 
 		gotID, err := auth.Login(reqCtx, false)
 		require.EqualError(t, err, "failed to get the user")
 
 		assert.NotEqual(t, id, gotID)
-		assert.False(t, stub.LoginCalled)
+		assert.True(t, ldapFake.UserCalled)
 	})
 }
 

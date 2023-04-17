@@ -17,7 +17,7 @@ The easiest way to start developing Grafana plugins is to use the Grafana [creat
 Open the terminal, and run the following command in your [plugin directory]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}):
 
 ```bash
-npx @grafana/create-plugin
+npx @grafana/create-plugin@latest
 ```
 
 Follow the questions and you will have a starter plugin ready to develop.
@@ -52,6 +52,7 @@ Improve an existing plugin with one of our guides:
 - [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
 - [Add a query editor help component]({{< relref "add-query-editor-help.md" >}})
+- [Add distributed tracing for backend plugins]({{< relref "add-distributed-tracing-for-backend-plugins.md" >}})
 - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}}/)
 - [Error handling]({{< relref "error-handling.md" >}})

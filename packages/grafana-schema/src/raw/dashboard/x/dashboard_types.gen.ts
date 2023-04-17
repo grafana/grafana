@@ -27,7 +27,7 @@ export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
  */
 export interface AnnotationQuery {
-  builtIn: number;
+  builtIn: number; // TODO should this be persisted at all?
   /**
    * Datasource to use for annotation.
    */
@@ -193,7 +193,7 @@ export interface FieldColor {
   /**
    * The main color scheme mode
    */
-  mode: FieldColorModeId;
+  mode: (FieldColorModeId | string);
   /**
    * Some visualizations need to know how to assign a series color from by value color schemes
    */
@@ -238,6 +238,10 @@ export interface Threshold {
    * TODO docs
    */
   color: string;
+  /**
+   * Threshold index, an old property that is not needed an should only appear in older dashboards
+   */
+  index?: number;
   /**
    * TODO docs
    * TODO are the values here enumerable into a disjunction?
@@ -673,6 +677,9 @@ export interface Dashboard {
    * The month that the fiscal year starts on.  0 = January, 11 = December
    */
   fiscalYearStartMonth?: number;
+  /**
+   * For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+   */
   gnetId?: string;
   /**
    * Configuration of dashboard cursor sync behavior.
@@ -688,7 +695,9 @@ export interface Dashboard {
    */
   links?: Array<DashboardLink>;
   /**
-   * TODO docs
+   * When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+   * This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+   * avoid dashboards presenting stale live data
    */
   liveNow?: boolean;
   panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
@@ -697,9 +706,11 @@ export interface Dashboard {
    */
   refresh?: (string | false);
   /**
-   * Version of the current dashboard data
+   * This property should only be used in dashboards defined by plugins.  It is a quick check
+   * to see if the version has changed since the last time.  Unclear why using the version property
+   * is insufficient.
    */
-  revision: number;
+  revision?: number;
   /**
    * Version of the JSON schema, incremented each time a Grafana update brings
    * changes to said schema.
@@ -827,7 +838,6 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  revision: -1,
   schemaVersion: 36,
   style: 'dark',
   tags: [],

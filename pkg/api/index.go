@@ -48,6 +48,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+		if !prefs.Cookies("analytics") {
+			settings.GoogleAnalytics4Id = ""
+			settings.GoogleAnalyticsId = ""
+		}
+	}
+
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
@@ -105,15 +112,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
+			Analytics: dtos.AnalyticsSettings{
+				Identifier:         c.SignedInUser.Analytics.Identifier,
+				IntercomIdentifier: c.SignedInUser.Analytics.IntercomIdentifier,
+			},
 		},
 		Settings:                            settings,
 		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
-		GoogleTagManagerId:                  setting.GoogleTagManagerId,
+		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerID,
 		BuildVersion:                        setting.BuildVersion,
 		BuildCommit:                         setting.BuildCommit,
 		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),
@@ -155,8 +166,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	// This will remove empty cfg or admin sections and move sections around if topnav is enabled
-	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture(hs.Features.IsEnabled(featuremgmt.FlagTopnav))
+	// This will remove empty cfg or admin sections and move sections around
+	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture()
 	data.NavTree.Sort()
 
 	return &data, nil

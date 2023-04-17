@@ -4,7 +4,7 @@ import React from 'react';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginType } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginMetaInfo, PluginType } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { JaegerDatasource, JaegerJsonData } from '../datasource';
@@ -32,10 +32,11 @@ describe('SearchForm', () => {
       refId: '121314',
     };
     const ds = {
-      async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
+      async metadataRequest(url) {
         if (url === '/api/services') {
           return Promise.resolve(['jaeger-query', 'service2', 'service3']);
         }
+        return undefined;
       },
     } as JaegerDatasource;
     setupFetchMock({ data: [testResponse] });
@@ -160,7 +161,7 @@ describe('SearchForm', () => {
   });
 });
 
-function setupFetchMock(response: any, mock?: any) {
+function setupFetchMock(response: unknown, mock?: ReturnType<typeof backendSrv.fetch>) {
   const defaultMock = () => mock ?? of(createFetchResponse(response));
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
@@ -179,7 +180,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
     id: 'jaeger',
     name: 'jaeger',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },
@@ -193,7 +194,6 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {
   requestId: '1',
-  dashboardId: 0,
   interval: '0',
   intervalMs: 10,
   panelId: 0,

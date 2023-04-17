@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Service Account should not create an org on its own
@@ -118,7 +116,7 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
@@ -308,104 +306,6 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 					require.NoError(t, err)
 					require.Len(t, tokens, 1)
 				}
-			}
-		})
-	}
-}
-
-func TestStore_RevertApiKey(t *testing.T) {
-	cases := []struct {
-		desc                        string
-		key                         tests.TestApiKey
-		forceMismatchServiceAccount bool
-		expectedErr                 error
-	}{
-		{
-			desc:        "service account token should be reverted to api key",
-			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
-			expectedErr: nil,
-		},
-		{
-			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
-			key:                         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
-			forceMismatchServiceAccount: true,
-			expectedErr:                 ErrServiceAccountAndTokenMismatch,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.desc, func(t *testing.T) {
-			db, store := setupTestDatabase(t)
-			store.cfg.AutoAssignOrg = true
-			store.cfg.AutoAssignOrgId = 1
-			store.cfg.AutoAssignOrgRole = "Viewer"
-			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
-			require.NoError(t, err)
-
-			key := tests.SetupApiKey(t, db, c.key)
-			err = store.CreateServiceAccountFromApikey(context.Background(), key)
-			require.NoError(t, err)
-
-			var saId int64
-			if c.forceMismatchServiceAccount {
-				saId = rand.Int63()
-			} else {
-				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgID,
-					Query: "",
-					Page:  1,
-					Limit: 50,
-					SignedInUser: &user.SignedInUser{
-						UserID: 1,
-						OrgID:  1,
-						Permissions: map[int64]map[string][]string{
-							key.OrgID: {
-								"serviceaccounts:read": {"serviceaccounts:id:*"},
-							},
-						},
-					},
-				}
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
-				require.NoError(t, err)
-				saId = serviceAccounts.ServiceAccounts[0].Id
-			}
-
-			err = store.RevertApiKey(context.Background(), saId, key.ID)
-
-			if c.expectedErr != nil {
-				require.ErrorIs(t, err, c.expectedErr)
-			} else {
-				require.NoError(t, err)
-				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgID,
-					Query: "",
-					Page:  1,
-					Limit: 50,
-					SignedInUser: &user.SignedInUser{
-						UserID: 1,
-						OrgID:  1,
-						Permissions: map[int64]map[string][]string{
-							key.OrgID: {
-								"serviceaccounts:read": {"serviceaccounts:id:*"},
-							},
-						},
-					},
-				}
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
-				require.NoError(t, err)
-				// Service account should be deleted
-				require.Equal(t, int64(0), serviceAccounts.TotalCount)
-
-				apiKeys, err := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
-				require.NoError(t, err)
-				require.Len(t, apiKeys, 1)
-				apiKey := apiKeys[0]
-				require.Equal(t, c.key.Name, apiKey.Name)
-				require.Equal(t, c.key.OrgId, apiKey.OrgID)
-				require.Equal(t, c.key.Role, apiKey.Role)
-				require.Equal(t, key.Key, apiKey.Key)
-				// Api key should not be linked to service account
-				require.Nil(t, apiKey.ServiceAccountId)
 			}
 		})
 	}

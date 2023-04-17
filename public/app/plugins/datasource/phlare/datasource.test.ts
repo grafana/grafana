@@ -1,5 +1,7 @@
 import { AbstractLabelOperator, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { defaultPhlareQueryType } from './dataquery.gen';
 import { PhlareDataSource } from './datasource';
 
 describe('Phlare data source', () => {
@@ -45,7 +47,47 @@ describe('Phlare data source', () => {
       ]);
     });
   });
+
+  describe('applyTemplateVariables', () => {
+    const interpolationVar = '$interpolationVar';
+    const interpolationText = 'interpolationText';
+    const noInterpolation = 'noInterpolation';
+
+    it('should not update labelSelector if there are no template variables', () => {
+      const templateSrv = new TemplateSrv();
+      templateSrv.replace = jest.fn((query: string): string => {
+        return query.replace(/\$interpolationVar/g, interpolationText);
+      });
+      ds = new PhlareDataSource(defaultSettings, templateSrv);
+      const query = ds.applyTemplateVariables(defaultQuery(`{${noInterpolation}}`), {});
+      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(query.labelSelector).toBe(`{${noInterpolation}}`);
+    });
+
+    it('should update labelSelector if there are template variables', () => {
+      const templateSrv = new TemplateSrv();
+      templateSrv.replace = jest.fn((query: string): string => {
+        return query.replace(/\$interpolationVar/g, interpolationText);
+      });
+      ds = new PhlareDataSource(defaultSettings, templateSrv);
+      const query = ds.applyTemplateVariables(defaultQuery(`{${interpolationVar}="${interpolationVar}"}`), {
+        interpolationVar: { text: interpolationText, value: interpolationText },
+      });
+      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(query.labelSelector).toBe(`{${interpolationText}="${interpolationText}"}`);
+    });
+  });
 });
+
+const defaultQuery = (query: string) => {
+  return {
+    refId: 'x',
+    groupBy: [],
+    labelSelector: query,
+    profileTypeId: '',
+    queryType: defaultPhlareQueryType,
+  };
+};
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,

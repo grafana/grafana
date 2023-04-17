@@ -2,8 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { dateTimeParse } from '../../datetime';
 import { SynchronousDataTransformerInfo } from '../../types';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector';
+import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -26,6 +25,9 @@ export interface ConvertFieldTypeOptions {
    * Date format to parse a string datetime
    */
   dateFormat?: string;
+
+  /** When converting to an enumeration, this is the target config */
+  enumConfig?: EnumFieldConfig;
 }
 
 export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<ConvertFieldTypeTransformerOptions> = {
@@ -44,11 +46,7 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
     if (!Array.isArray(data) || data.length === 0) {
       return data;
     }
-    const timeParsed = convertFieldTypes(options, data);
-    if (!timeParsed) {
-      return [];
-    }
-    return timeParsed;
+    return convertFieldTypes(options, data) ?? [];
   },
 };
 
@@ -98,9 +96,11 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
-      return fieldToStringField(field);
+      return fieldToStringField(field, opts.dateFormat);
     case FieldType.boolean:
       return fieldToBooleanField(field);
+    case FieldType.enum:
+      return fieldToEnumField(field, opts.enumConfig);
     case FieldType.other:
       return fieldToComplexField(field);
     default:
@@ -108,8 +108,8 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
   }
 }
 
-// matches ISO 8601, e.g. 2021-11-11T19:45:00.000Z (float portion optional)
-const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+// matches common ISO 8601 (see tests)
+const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2})$/;
 
 /**
  * @internal
@@ -135,7 +135,7 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
   return {
     ...field,
     type: FieldType.time,
-    values: new ArrayVector(timeValues),
+    values: timeValues,
   };
 }
 
@@ -161,7 +161,7 @@ function fieldToNumberField(field: Field): Field {
   return {
     ...field,
     type: FieldType.number,
-    values: new ArrayVector(numValues),
+    values: numValues,
   };
 }
 
@@ -175,21 +175,30 @@ function fieldToBooleanField(field: Field): Field {
   return {
     ...field,
     type: FieldType.boolean,
-    values: new ArrayVector(booleanValues),
+    values: booleanValues,
   };
 }
 
-function fieldToStringField(field: Field): Field {
-  const stringValues = field.values.toArray().slice();
+function fieldToStringField(field: Field, dateFormat?: string): Field {
+  let values = field.values.toArray();
 
-  for (let s = 0; s < stringValues.length; s++) {
-    stringValues[s] = `${stringValues[s]}`;
+  switch (field.type) {
+    case FieldType.time:
+      values = values.map((v) => dateTimeParse(v).format(dateFormat));
+      break;
+
+    case FieldType.other:
+      values = values.map((v) => JSON.stringify(v));
+      break;
+
+    default:
+      values = values.map((v) => `${v}`);
   }
 
   return {
     ...field,
     type: FieldType.string,
-    values: new ArrayVector(stringValues),
+    values: values,
   };
 }
 
@@ -207,7 +216,7 @@ function fieldToComplexField(field: Field): Field {
   return {
     ...field,
     type: FieldType.other,
-    values: new ArrayVector(complexValues),
+    values: complexValues,
   };
 }
 
@@ -231,4 +240,38 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
     };
   }
   return fieldToTimeField(field, dateFormat);
+}
+
+function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
+  const enumConfig = { ...cfg };
+  const enumValues = field.values.toArray().slice();
+  const lookup = new Map<unknown, number>();
+  if (enumConfig.text) {
+    for (let i = 0; i < enumConfig.text.length; i++) {
+      lookup.set(enumConfig.text[i], i);
+    }
+  } else {
+    enumConfig.text = [];
+  }
+
+  for (let i = 0; i < enumValues.length; i++) {
+    const v = enumValues[i];
+    if (!lookup.has(v)) {
+      enumConfig.text[lookup.size] = v;
+      lookup.set(v, lookup.size);
+    }
+    enumValues[i] = lookup.get(v);
+  }
+
+  return {
+    ...field,
+    config: {
+      ...field.config,
+      type: {
+        enum: enumConfig,
+      },
+    },
+    type: FieldType.enum,
+    values: enumValues,
+  };
 }

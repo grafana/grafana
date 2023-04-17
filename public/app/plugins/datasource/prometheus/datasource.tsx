@@ -17,8 +17,6 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
-  dateMath,
-  DateTime,
   dateTime,
   LoadingState,
   QueryFixAction,
@@ -43,20 +41,29 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
+import config from '../../../core/config';
+
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
-import { expandRecordingRules } from './language_utils';
+import {
+  expandRecordingRules,
+  getClientCacheDurationInMinutes,
+  getPrometheusTime,
+  getRangeSnapInterval,
+} from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
+import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
   PromDataSuccessResponse,
+  PrometheusCacheLevel,
   PromExemplarData,
   PromMatrixData,
   PromOptions,
@@ -77,8 +84,8 @@ export class PrometheusDatasource
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
-  editorSrc: string;
   ruleMappings: { [index: string]: string };
+  hasIncrementalQuery: boolean;
   url: string;
   id: number;
   directUrl: string;
@@ -99,6 +106,8 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
+  cacheLevel: PrometheusCacheLevel;
+  cache: QueryCache;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -111,7 +120,6 @@ export class PrometheusDatasource
     this.type = 'prometheus';
     this.subType = PromApplication.Prometheus;
     this.rulerEnabled = false;
-    this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.id = instanceSettings.id;
     this.url = instanceSettings.url!;
     this.access = instanceSettings.access;
@@ -124,6 +132,7 @@ export class PrometheusDatasource
     // here we "fall back" to this.url to make typescript happy, but it should never happen
     this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
+    this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -133,6 +142,10 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.cache = new QueryCache(
+      instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
+    );
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -182,7 +195,6 @@ export class PrometheusDatasource
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
     if (this.access === 'proxy') {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
@@ -322,7 +334,6 @@ export class PrometheusDatasource
         continue;
       }
 
-      target.requestId = options.panelId + target.refId;
       const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
 
       // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
@@ -334,7 +345,6 @@ export class PrometheusDatasource
         instantTarget.range = false;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
-        instantTarget.requestId += '_instant';
 
         // Create range target
         const rangeTarget: any = cloneDeep(target);
@@ -351,7 +361,6 @@ export class PrometheusDatasource
           ) {
             const exemplarTarget = cloneDeep(target);
             exemplarTarget.instant = false;
-            exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
           }
@@ -379,7 +388,6 @@ export class PrometheusDatasource
             (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
           ) {
             const exemplarTarget = cloneDeep(target);
-            exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
           }
@@ -445,20 +453,35 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      const targets = request.targets.map((target) => this.processTargetV2(target, request));
+      let fullOrPartialRequest: DataQueryRequest<PromQuery>;
+      let requestInfo: CacheRequestInfo | undefined = undefined;
+      if (this.hasIncrementalQuery) {
+        requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+        fullOrPartialRequest = requestInfo.requests[0];
+      } else {
+        fullOrPartialRequest = request;
+      }
+
+      const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
       const startTime = new Date();
-      return super.query({ ...request, targets: targets.flat() }).pipe(
-        map((response) =>
-          transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-        ),
+      return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
+        map((response) => {
+          const amendedResponse = {
+            ...response,
+            data: this.cache.procFrames(request, requestInfo, response.data),
+          };
+          return transformV2(amendedResponse, request, {
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
+        }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
         })
       );
       // Run queries trough browser/proxy
     } else {
-      const start = this.getPrometheusTime(request.range.from, false);
-      const end = this.getPrometheusTime(request.range.to, true);
+      const start = getPrometheusTime(request.range.from, false);
+      const end = getPrometheusTime(request.range.to, true);
       const { queries, activeTargets } = this.prepareTargets(request, start, end);
 
       // No valid targets, return the empty result to save a round trip.
@@ -577,7 +600,6 @@ export class PrometheusDatasource
       exemplar: target.exemplar,
       step: 0,
       expr: '',
-      requestId: target.requestId,
       refId: target.refId,
       start: 0,
       end: 0,
@@ -801,8 +823,8 @@ export class PrometheusDatasource
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
-            from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
-            to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
+            from: (getPrometheusTime(options.range.from, false) * 1000).toString(),
+            to: (getPrometheusTime(options.range.to, true) * 1000).toString(),
             queries: [this.applyTemplateVariables(queryModel, {})],
           },
           requestId: `prom-query-${annotation.name}`,
@@ -830,6 +852,9 @@ export class PrometheusDatasource
     const eventList: AnnotationEvent[] = [];
 
     for (const frame of frames) {
+      if (frame.fields.length === 0) {
+        continue;
+      }
       const timeField = frame.fields[0];
       const valueField = frame.fields[1];
       const labels = valueField?.labels || {};
@@ -908,10 +933,11 @@ export class PrometheusDatasource
     );
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getLabelNames(options?: any) {
+  async getTagKeys(options?: any) {
     if (options?.series) {
       // Get tags for the provided series only
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
@@ -930,6 +956,7 @@ export class PrometheusDatasource
     }
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: { key?: string } = {}) {
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
@@ -1030,7 +1057,6 @@ export class PrometheusDatasource
       targets: [{ refId: 'test', expr: '1+1', instant: true }],
       requestId: `${this.id}-health`,
       scopedVars: {},
-      dashboardId: 0,
       panelId: 0,
       interval: '1m',
       intervalMs: 60000,
@@ -1168,19 +1194,32 @@ export class PrometheusDatasource
     return { ...query, expr: expression };
   }
 
-  getPrometheusTime(date: string | DateTime, roundUp: boolean) {
-    if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp)!;
+  /**
+   * Returns the adjusted "snapped" interval parameters
+   */
+  getAdjustedInterval(): { start: string; end: string } {
+    if (!config.featureToggles.prometheusResourceBrowserCache) {
+      return this.getTimeRangeParams();
     }
-
-    return Math.ceil(date.valueOf() / 1000);
+    const range = this.timeSrv.timeRange();
+    return getRangeSnapInterval(this.cacheLevel, range);
   }
+
+  /**
+   * This will return a time range that always includes the users current time range,
+   * and then a little extra padding to round up/down to the nearest nth minute,
+   * defined by the result of the getCacheDurationInMinutes.
+   *
+   * For longer cache durations, and shorter query durations, the window we're calculating might be much bigger then the user's current window,
+   * resulting in us returning labels/values that might not be applicable for the given window, this is a necessary trade off if we want to cache larger durations
+   *
+   */
 
   getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
     return {
-      start: this.getPrometheusTime(range.from, false).toString(),
-      end: this.getPrometheusTime(range.to, true).toString(),
+      start: getPrometheusTime(range.from, false).toString(),
+      end: getPrometheusTime(range.to, true).toString(),
     };
   }
 
@@ -1235,6 +1274,32 @@ export class PrometheusDatasource
 
   interpolateString(string: string) {
     return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getDebounceTimeInMilliseconds(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.Medium:
+        return 600;
+      case PrometheusCacheLevel.High:
+        return 1200;
+      default:
+        return 350;
+    }
+  }
+
+  getDaysToCacheMetadata(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.Medium:
+        return 7;
+      case PrometheusCacheLevel.High:
+        return 30;
+      default:
+        return 1;
+    }
+  }
+
+  getCacheDurationInMinutes(): number {
+    return getClientCacheDurationInMinutes(this.cacheLevel);
   }
 }
 

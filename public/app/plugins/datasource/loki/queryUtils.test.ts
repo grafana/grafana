@@ -1,8 +1,3 @@
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-
-import { ArrayVector, DataQueryResponse, FieldType } from '@grafana/data';
-
-import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -13,8 +8,7 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  resultLimitReached,
-  combineResponses,
+  requestSupportsSplitting,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -300,156 +294,46 @@ describe('getParserFromQuery', () => {
   });
 });
 
-describe('resultLimitReached', () => {
-  const result = {
-    data: [
+describe('requestSupportsSplitting', () => {
+  it('hidden requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
       {
-        name: 'test',
-        fields: [
-          {
-            name: 'Time',
-            type: FieldType.time,
-            config: {},
-            values: new ArrayVector([1, 2]),
-          },
-          {
-            name: 'Line',
-            type: FieldType.string,
-            config: {},
-            values: new ArrayVector(['line1', 'line2']),
-          },
-        ],
-        length: 2,
+        expr: '{a="b"}',
+        refId: 'A',
+        hide: true,
       },
-    ],
-  };
-  it('returns false for non-logs queries', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', maxLines: 0 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(false);
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
-  it('returns false when the limit is not reached', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 3 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(false);
+  it('special requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'do-not-chunk',
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
-  it('returns true when the limit is reached', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 2 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(true);
+  it('empty requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '',
+        refId: 'A',
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
-});
-
-describe('combineResponses', () => {
-  it('combines logs frames', () => {
-    const responseA: DataQueryResponse = {
-      data: [logFrameA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [logFrameB],
-    };
-    expect(combineResponses(responseA, responseB)).toEqual({
-      data: [
-        {
-          fields: [
-            {
-              config: {},
-              name: 'Time',
-              type: 'time',
-              values: new ArrayVector([1, 2, 3, 4]),
-            },
-            {
-              config: {},
-              name: 'Line',
-              type: 'string',
-              values: new ArrayVector(['line3', 'line4', 'line1', 'line2']),
-            },
-            {
-              config: {},
-              name: 'labels',
-              type: 'other',
-              values: new ArrayVector([
-                {
-                  otherLabel: 'other value',
-                },
-                {
-                  label: 'value',
-                },
-                {
-                  otherLabel: 'other value',
-                },
-              ]),
-            },
-            {
-              config: {},
-              name: 'tsNs',
-              type: 'string',
-              values: new ArrayVector(['1000000', '2000000', '3000000', '4000000']),
-            },
-            {
-              config: {},
-              name: 'id',
-              type: 'string',
-              values: new ArrayVector(['id3', 'id4', 'id1', 'id2']),
-            },
-          ],
-          length: 4,
-          meta: {
-            stats: [
-              {
-                displayName: 'Ingester: total reached',
-                value: 1,
-              },
-            ],
-          },
-          refId: 'A',
-        },
-      ],
-    });
-  });
-
-  it('combines metric frames', () => {
-    const responseA: DataQueryResponse = {
-      data: [metricFrameA],
-    };
-    const responseB: DataQueryResponse = {
-      data: [metricFrameB],
-    };
-    expect(combineResponses(responseA, responseB)).toEqual({
-      data: [
-        {
-          fields: [
-            {
-              config: {},
-              name: 'Time',
-              type: 'time',
-              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
-            },
-            {
-              config: {},
-              name: 'Value',
-              type: 'number',
-              values: new ArrayVector([6, 7, 5, 4]),
-            },
-          ],
-          length: 4,
-          meta: {
-            stats: [
-              {
-                displayName: 'Ingester: total reached',
-                value: 3,
-              },
-            ],
-          },
-          refId: 'A',
-        },
-      ],
-    });
+  it('all other requests are partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+      },
+      {
+        expr: 'count_over_time({a="b"}[1h])',
+        refId: 'B',
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(true);
   });
 });

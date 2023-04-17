@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: '#fff',
       borderWidth: '1px',
       borderStyle: 'solid',
-      borderRadius: '3px',
+      borderRadius: theme.shape.radius.default,
       padding: `0 ${theme.spacing(0.5)}`,
       whiteSpace: 'nowrap',
       textShadow: 'none',

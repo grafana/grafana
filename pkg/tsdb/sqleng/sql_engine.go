@@ -23,6 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+// XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
+var XormDriverMu sync.RWMutex
+
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
@@ -51,23 +54,24 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 }
 
 type JsonData struct {
-	MaxOpenConns            int    `json:"maxOpenConns"`
-	MaxIdleConns            int    `json:"maxIdleConns"`
-	ConnMaxLifetime         int    `json:"connMaxLifetime"`
-	ConnectionTimeout       int    `json:"connectionTimeout"`
-	Timescaledb             bool   `json:"timescaledb"`
-	Mode                    string `json:"sslmode"`
-	ConfigurationMethod     string `json:"tlsConfigurationMethod"`
-	TlsSkipVerify           bool   `json:"tlsSkipVerify"`
-	RootCertFile            string `json:"sslRootCertFile"`
-	CertFile                string `json:"sslCertFile"`
-	CertKeyFile             string `json:"sslKeyFile"`
-	Timezone                string `json:"timezone"`
-	Encrypt                 string `json:"encrypt"`
-	Servername              string `json:"servername"`
-	TimeInterval            string `json:"timeInterval"`
-	Database                string `json:"database"`
-	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
+	MaxOpenConns        int    `json:"maxOpenConns"`
+	MaxIdleConns        int    `json:"maxIdleConns"`
+	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	ConnectionTimeout   int    `json:"connectionTimeout"`
+	Timescaledb         bool   `json:"timescaledb"`
+	Mode                string `json:"sslmode"`
+	ConfigurationMethod string `json:"tlsConfigurationMethod"`
+	TlsSkipVerify       bool   `json:"tlsSkipVerify"`
+	RootCertFile        string `json:"sslRootCertFile"`
+	CertFile            string `json:"sslCertFile"`
+	CertKeyFile         string `json:"sslKeyFile"`
+	Timezone            string `json:"timezone"`
+	Encrypt             string `json:"encrypt"`
+	Servername          string `json:"servername"`
+	TimeInterval        string `json:"timeInterval"`
+	Database            string `json:"database"`
+	SecureDSProxy       bool   `json:"enableSecureSocksProxy"`
+  AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
 }
 
 type DataSourceInfo struct {
@@ -79,6 +83,13 @@ type DataSourceInfo struct {
 	Updated                 time.Time
 	UID                     string
 	DecryptedSecureJSONData map[string]string
+}
+
+// Defaults for the xorm connection pool
+type DefaultConnectionInfo struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime int
 }
 
 type DataPluginConfiguration struct {
@@ -99,6 +110,7 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 }
+
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
 	Fill         bool    `json:"fill"`

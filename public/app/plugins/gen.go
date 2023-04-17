@@ -14,19 +14,17 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/kindsys"
+
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 var skipPlugins = map[string]bool{
 	"canvas":      true,
-	"heatmap":     true,
 	"candlestick": true,
-	"table":       true,
-	"timeseries":  true,
 	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
 	"mixed":       true, // plugin.json fails validation (mixed)
 	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)

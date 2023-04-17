@@ -43,6 +43,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   initStateFromUrl(folderUid?: string) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
+    // Force list view when conditions are specified from the URL
+    if (stateFromUrl.query || stateFromUrl.datasource || stateFromUrl.panel_type) {
+      stateFromUrl.layout = SearchLayout.List;
+    }
+
     stateManager.setState({
       ...stateFromUrl,
       folderUid: folderUid,
@@ -63,6 +68,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       query: this.state.query.length === 0 ? null : this.state.query,
       tag: this.state.tag,
       datasource: this.state.datasource,
+      panel_type: this.state.panel_type,
       starred: this.state.starred ? this.state.starred : null,
       sort: this.state.sort,
     });
@@ -76,6 +82,16 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       search: null,
       folder: null,
       ...defaultQueryParams,
+    });
+  };
+
+  onClearSearchAndFilters = () => {
+    this.setStateAndDoSearch({
+      query: '',
+      datasource: undefined,
+      tag: [],
+      panel_type: undefined,
+      starred: undefined,
     });
   };
 
@@ -101,6 +117,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   onDatasourceChange = (datasource: string | undefined) => {
     this.setStateAndDoSearch({ datasource });
+  };
+
+  onPanelTypeChange = (panel_type?: string) => {
+    this.setStateAndDoSearch({ panel_type });
   };
 
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
@@ -142,14 +162,15 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred;
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type;
   }
 
   getSearchQuery() {
     const q: SearchQuery = {
       query: this.state.query,
-      tags: this.state.tag as string[],
-      ds_uid: this.state.datasource as string,
+      tags: this.state.tag,
+      ds_uid: this.state.datasource,
+      panel_type: this.state.panel_type,
       location: this.state.folderUid, // This will scope all results to the prefix
       sort: this.state.sort,
       explain: this.state.explain,
@@ -171,6 +192,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     if (!this.state.includePanels && !q.kind) {
       q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
+    if (q.panel_type?.length) {
+      q.kind = ['panel'];
     }
 
     return q;

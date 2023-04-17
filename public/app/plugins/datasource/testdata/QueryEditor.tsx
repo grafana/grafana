@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import React, { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -138,8 +138,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, [name]: newValue });
   };
 
-  const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.currentTarget;
+  const onFieldChange = (field: string) => (e: { target: { name: string; value: string; type: string } }) => {
+    const { name, value, type } = e.target;
     let newValue: any = value;
 
     if (type === 'number') {

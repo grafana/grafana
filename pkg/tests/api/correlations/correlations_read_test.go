@@ -23,24 +23,17 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	}
 	ctx := NewTestEnv(t)
 
-	adminUser := User{
-		username: "admin",
-		password: "admin",
-	}
-	viewerUser := User{
-		username: "viewer",
-		password: "viewer",
-	}
-
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleViewer),
-		Password:       viewerUser.password,
-		Login:          viewerUser.username,
-	})
-	ctx.createUser(user.CreateUserCommand{
+	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       adminUser.password,
-		Login:          adminUser.username,
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	viewerUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "viewer",
+		Login:          "viewer",
+		OrgID:          adminUser.User.OrgID,
 	})
 
 	t.Run("Get all correlations", func(t *testing.T) {
@@ -79,6 +72,9 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			Type:   correlations.ConfigTypeQuery,
 			Field:  "foo",
 			Target: map[string]interface{}{},
+			Transformations: []correlations.Transformation{
+				{Type: "logfmt"},
+			},
 		},
 	})
 

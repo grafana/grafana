@@ -13,6 +13,7 @@ import {
   SplitOpen,
   DataFrame,
   SupplementaryQueryType,
+  DataQueryResponse,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -34,7 +35,6 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
-  scrollElement?: HTMLDivElement;
   onClickFilterLabel: (key: string, value: string) => void;
   onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -49,7 +49,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
+  getLogRowContext = async (row: LogRowModel, options?: any): Promise<DataQueryResponse | []> => {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
@@ -114,7 +114,6 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
-      scrollElement,
       logsVolume,
     } = this.props;
 
@@ -174,7 +173,6 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
-            scrollElement={scrollElement}
             eventBus={this.props.eventBus}
           />
         </LogsCrossFadeTransition>

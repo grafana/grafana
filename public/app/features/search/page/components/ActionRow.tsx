@@ -1,21 +1,20 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from '@grafana/ui';
+import { Button, Checkbox, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { t, Trans } from 'app/core/internationalization';
 
 import { SearchLayout, SearchState } from '../../types';
 
-export const layoutOptions = [
-  { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
-  { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
-];
-
-if (config.featureToggles.dashboardPreviews) {
-  layoutOptions.push({ value: SearchLayout.Grid, icon: 'apps', ariaLabel: 'Grid view' });
+function getLayoutOptions() {
+  return [
+    { value: SearchLayout.Folders, icon: 'folder', ariaLabel: t('search.actions.view-as-folders', 'View by folders') },
+    { value: SearchLayout.List, icon: 'list-ul', ariaLabel: t('search.actions.view-as-list', 'View as list') },
+  ];
 }
 
 interface Props {
@@ -27,6 +26,7 @@ interface Props {
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
+  onPanelTypeChange: (pt?: string) => void;
   includePanels: boolean;
   onSetIncludePanels: (v: boolean) => void;
   state: SearchState;
@@ -44,13 +44,10 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
     }
   }
 
-  if (layout === SearchLayout.Grid && !config.featureToggles.dashboardPreviews) {
-    return SearchLayout.List;
-  }
   return layout;
 }
 
-export const ActionRow: FC<Props> = ({
+export const ActionRow = ({
   onLayoutChange,
   onSortChange,
   onStarredFilterChange = () => {},
@@ -59,16 +56,17 @@ export const ActionRow: FC<Props> = ({
   getSortOptions,
   sortPlaceholder,
   onDatasourceChange,
+  onPanelTypeChange,
   onSetIncludePanels,
   state,
   showStarredFilter,
   hideLayout,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = state.query ? [SearchLayout.Folders] : [];
+  const disabledOptions = state.query || state.datasource || state.panel_type ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
@@ -80,26 +78,38 @@ export const ActionRow: FC<Props> = ({
             disabled={layout === SearchLayout.Folders}
             value={state.includePanels}
             onChange={() => onSetIncludePanels(!state.includePanels)}
-            label="Include panels"
+            label={t('search.actions.include-panels', 'Include panels')}
           />
         )}
 
         {showStarredFilter && (
           <div className={styles.checkboxWrapper}>
-            <Checkbox label="Starred" onChange={onStarredFilterChange} value={state.starred} />
+            <Checkbox
+              label={t('search.actions.starred', 'Starred')}
+              onChange={onStarredFilterChange}
+              value={state.starred}
+            />
           </div>
         )}
         {state.datasource && (
           <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
-            Datasource: {state.datasource}
+            <Trans i18nKey="search.actions.remove-datasource-filter">
+              Datasource: {{ datasource: state.datasource }}
+            </Trans>
+          </Button>
+        )}
+        {state.panel_type && (
+          <Button icon="times" variant="secondary" onClick={() => onPanelTypeChange(undefined)}>
+            Panel: {state.panel_type}
           </Button>
         )}
       </HorizontalGroup>
+
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
           {!hideLayout && (
             <RadioButtonGroup
-              options={layoutOptions}
+              options={getLayoutOptions()}
               disabledOptions={disabledOptions}
               onChange={onLayoutChange}
               value={layout}
@@ -109,7 +119,7 @@ export const ActionRow: FC<Props> = ({
             onChange={(change) => onSortChange(change?.value)}
             value={state.sort}
             getSortOptions={getSortOptions}
-            placeholder={sortPlaceholder || 'Sort'}
+            placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
             isClearable
           />
         </HorizontalGroup>

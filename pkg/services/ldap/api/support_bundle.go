@@ -9,19 +9,17 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (s *Service) supportBundleCollector(context.Context) (*supportbundles.SupportItem, error) {
 	bWriter := bytes.NewBuffer(nil)
 	bWriter.WriteString("# LDAP information\n\n")
 
-	ldapConfig, err := getLDAPConfig(s.cfg)
-
+	ldapConfig := s.ldapService.Config()
 	if ldapConfig != nil {
 		bWriter.WriteString("## LDAP Status\n")
 
-		ldapClient := newLDAP(ldapConfig.Servers)
+		ldapClient := s.ldapService.Client()
 
 		ldapStatus, err := ldapClient.Ping()
 		if err != nil {
@@ -66,7 +64,7 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 	errM := toml.NewEncoder(bWriter).Encode(ldapConfig)
 	if errM != nil {
 		bWriter.WriteString(
-			fmt.Sprintf("Unable to encode LDAP configuration  \n Err: %s", err))
+			fmt.Sprintf("Unable to encode LDAP configuration  \n Err: %s", errM))
 	}
 	bWriter.WriteString("```\n\n")
 
@@ -74,12 +72,12 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 
 	bWriter.WriteString("```ini\n")
 
-	bWriter.WriteString(fmt.Sprintf("enabled = %v\n", s.cfg.LDAPEnabled))
+	bWriter.WriteString(fmt.Sprintf("enabled = %v\n", s.cfg.LDAPAuthEnabled))
 	bWriter.WriteString(fmt.Sprintf("config_file = %s\n", s.cfg.LDAPConfigFilePath))
 	bWriter.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.cfg.LDAPAllowSignup))
-	bWriter.WriteString(fmt.Sprintf("sync_cron = %s\n", setting.LDAPSyncCron))
-	bWriter.WriteString(fmt.Sprintf("active_sync_enabled = %v\n", setting.LDAPActiveSyncEnabled))
-	bWriter.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", setting.LDAPSkipOrgRoleSync))
+	bWriter.WriteString(fmt.Sprintf("sync_cron = %s\n", s.cfg.LDAPSyncCron))
+	bWriter.WriteString(fmt.Sprintf("active_sync_enabled = %v\n", s.cfg.LDAPActiveSyncEnabled))
+	bWriter.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.cfg.LDAPSkipOrgRoleSync))
 
 	bWriter.WriteString("```\n\n")
 

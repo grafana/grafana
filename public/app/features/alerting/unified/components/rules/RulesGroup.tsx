@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -14,8 +14,8 @@ import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { makeFolderLink } from '../../utils/misc';
+import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
@@ -35,7 +35,7 @@ interface Props {
   viewMode: ViewMode;
 }
 
-export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, viewMode }) => {
+export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
@@ -209,9 +209,12 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
             />
           </Tooltip>
         )}
-        <h6 className={styles.heading}>
-          {isFederated && <Badge color="purple" text="Federated" />} {groupName}
-        </h6>
+        {
+          // eslint-disable-next-line
+          <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
+            {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+          </div>
+        }
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
           <RuleStats group={group} />
@@ -234,14 +237,20 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
         )}
       </div>
       {!isCollapsed && (
-        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+        <RulesTable
+          showSummaryColumn={true}
+          className={styles.rulesTable}
+          showGuidelines={true}
+          showNextEvaluationColumn={Boolean(group.interval)}
+          rules={group.rules}
+        />
       )}
       {isEditingGroup && (
         <EditCloudGroupModal
-          groupInterval={group.interval ?? ''}
-          nameSpaceAndGroup={{ group: group, namespace: namespace }}
-          sourceName={getRulesSourceName(namespace.rulesSource)}
+          namespace={namespace}
+          group={group}
           onClose={() => closeEditModal()}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
         />
       )}
       {isReorderingGroup && (
@@ -269,68 +278,70 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
 
 RulesGroup.displayName = 'RulesGroup';
 
-export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    & + & {
-      margin-top: ${theme.spacing(2)};
-    }
-  `,
-  header: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
-    background-color: ${theme.colors.background.secondary};
-    flex-wrap: wrap;
-  `,
-  headerStats: css`
-    span {
-      vertical-align: middle;
-    }
+export const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css``,
+    header: css`
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid ${theme.colors.border.weak};
+      &:hover {
+        background-color: ${theme.components.table.rowHoverBackground};
+      }
+    `,
+    headerStats: css`
+      span {
+        vertical-align: middle;
+      }
 
-    ${theme.breakpoints.down('sm')} {
-      order: 2;
-      width: 100%;
-      padding-left: ${theme.spacing(1)};
-    }
-  `,
-  heading: css`
-    margin-left: ${theme.spacing(1)};
-    margin-bottom: 0;
-  `,
-  spacer: css`
-    flex: 1;
-  `,
-  collapseToggle: css`
-    background: none;
-    border: none;
-    margin-top: -${theme.spacing(1)};
-    margin-bottom: -${theme.spacing(1)};
-
-    svg {
+      ${theme.breakpoints.down('sm')} {
+        order: 2;
+        width: 100%;
+        padding-left: ${theme.spacing(1)};
+      }
+    `,
+    groupName: css`
+      margin-left: ${theme.spacing(1)};
       margin-bottom: 0;
-    }
-  `,
-  dataSourceIcon: css`
-    width: ${theme.spacing(2)};
-    height: ${theme.spacing(2)};
-    margin-left: ${theme.spacing(2)};
-  `,
-  dataSourceOrigin: css`
-    margin-right: 1em;
-    color: ${theme.colors.text.disabled};
-  `,
-  actionsSeparator: css`
-    margin: 0 ${theme.spacing(2)};
-  `,
-  actionIcons: css`
-    width: 80px;
-    align-items: center;
-  `,
-  rulesTable: css`
-    margin-top: ${theme.spacing(3)};
-  `,
-  rotate90: css`
-    transform: rotate(90deg);
-  `,
-});
+      cursor: pointer;
+    `,
+    spacer: css`
+      flex: 1;
+    `,
+    collapseToggle: css`
+      background: none;
+      border: none;
+      margin-top: -${theme.spacing(1)};
+      margin-bottom: -${theme.spacing(1)};
+
+      svg {
+        margin-bottom: 0;
+      }
+    `,
+    dataSourceIcon: css`
+      width: ${theme.spacing(2)};
+      height: ${theme.spacing(2)};
+      margin-left: ${theme.spacing(2)};
+    `,
+    dataSourceOrigin: css`
+      margin-right: 1em;
+      color: ${theme.colors.text.disabled};
+    `,
+    actionsSeparator: css`
+      margin: 0 ${theme.spacing(2)};
+    `,
+    actionIcons: css`
+      width: 80px;
+      align-items: center;
+    `,
+    rulesTable: css`
+      margin: ${theme.spacing(2, 0)};
+    `,
+    rotate90: css`
+      transform: rotate(90deg);
+    `,
+  };
+};

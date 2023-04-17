@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
+import { CoreApp, MutableDataFrame } from '@grafana/data';
 
-import { Item, nestedSetToLevels } from '../FlameGraph/dataTransform';
+import { FlameGraphDataContainer, nestedSetToLevels } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { SelectedView } from '../types';
 
@@ -15,12 +15,12 @@ describe('FlameGraphTopTableContainer', () => {
     const [selectedView, _] = useState(SelectedView.Both);
 
     const flameGraphData = new MutableDataFrame(data);
-    const dataView = new DataFrameView<Item>(flameGraphData);
-    const levels = nestedSetToLevels(dataView);
+    const container = new FlameGraphDataContainer(flameGraphData);
+    const levels = nestedSetToLevels(container);
 
     return (
       <FlameGraphTopTableContainer
-        data={flameGraphData}
+        data={container}
         app={CoreApp.Explore}
         totalLevels={levels.length}
         selectedView={selectedView}
@@ -45,7 +45,7 @@ describe('FlameGraphTopTableContainer', () => {
 
     render(<FlameGraphTopTableContainerWithProps />);
     const rows = screen.getAllByRole('row');
-    expect(rows).toHaveLength(17); // + 1 for the columnHeaders
+    expect(rows).toHaveLength(16);
 
     const columnHeaders = screen.getAllByRole('columnheader');
     expect(columnHeaders).toHaveLength(3);
@@ -54,7 +54,7 @@ describe('FlameGraphTopTableContainer', () => {
     expect(columnHeaders[2].textContent).toEqual('Total');
 
     const cells = screen.getAllByRole('cell');
-    expect(cells).toHaveLength(48); // 16 rows
+    expect(cells).toHaveLength(45); // 16 rows
     expect(cells[0].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
     expect(cells[1].textContent).toEqual('31.7 K');
     expect(cells[2].textContent).toEqual('31.7 Bil');

@@ -24,7 +24,7 @@ const data = [
   { key: 'jsonkey', value: JSON.stringify({ hello: 'world' }) },
 ];
 
-const setup = (propOverrides?: KeyValuesTableProps) => {
+const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
   const props = {
     data: data,
     ...propOverrides,
@@ -88,5 +88,29 @@ describe('KeyValuesTable tests', () => {
     setup();
 
     expect(screen.getAllByRole('button')).toHaveLength(4);
+  });
+
+  it('renders a link in json and properly escapes it', () => {
+    setup({
+      data: [
+        { key: 'jsonkey', value: JSON.stringify({ hello: 'https://example.com"id=x tabindex=1 onfocus=alert(1)' }) },
+      ],
+    });
+    const link = screen.getByText(/https:\/\/example.com/);
+    expect(link.tagName).toBe('A');
+    expect(link.attributes.getNamedItem('href')?.value).toBe(
+      'https://example.com%22id=x%20tabindex=1%20onfocus=alert(1)'
+    );
+  });
+
+  it('properly escapes json values', () => {
+    setup({
+      data: [
+        { key: 'jsonkey', value: JSON.stringify({ '<img src=x onerror=alert(1)>': '<img src=x onerror=alert(1)>' }) },
+      ],
+    });
+    const values = screen.getAllByText(/onerror=alert/);
+    expect(values[0].innerHTML).toBe('"&lt;img src=x onerror=alert(1)&gt;":');
+    expect(values[1].innerHTML).toBe('"&lt;img src=x onerror=alert(1)&gt;"');
   });
 });

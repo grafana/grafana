@@ -14,7 +14,7 @@ import {
 import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
 import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -141,12 +141,19 @@ export function RuleViewerVisualization({
 function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDataQuery): string {
   const { name } = settings;
   const { refId, ...rest } = model;
-  const queryParams = { ...rest, datasource: name };
 
+  /**
+    In my testing I've found some alerts that don't have a data source embedded inside the model.
+   
+    At this moment in time it is unclear to me why some alert definitions not have a data source embedded in the model.
+    Ideally we'd resolve the datasource name to the proper datasource Ref "{ type: string, uid: string }" and pass that in to the model.
+   
+    I don't think that should happen here, the fact that the datasource ref is sometimes missing here is a symptom of another cause. (Gilles)
+   */
   return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
     left: JSON.stringify({
       datasource: name,
-      queries: [{ refId: 'A', ...queryParams }],
+      queries: [{ refId: 'A', ...rest }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });

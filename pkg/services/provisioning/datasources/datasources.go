@@ -152,6 +152,10 @@ func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID 
 		createCommand.TargetUID = &targetUID
 	}
 
+	if correlation["transformations"] != nil {
+		return correlations.CreateCorrelationCommand{}, correlations.ErrTransformationNotNested
+	}
+
 	if correlation["config"] != nil {
 		jsonbody, err := json.Marshal(correlation["config"])
 		if err != nil {

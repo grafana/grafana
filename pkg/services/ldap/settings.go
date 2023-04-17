@@ -1,8 +1,10 @@
 package ldap
 
 import (
+	"crypto/tls"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -21,18 +23,24 @@ type Config struct {
 
 // ServerConfig holds connection data to LDAP
 type ServerConfig struct {
-	Host          string       `toml:"host"`
-	Port          int          `toml:"port"`
-	UseSSL        bool         `toml:"use_ssl"`
-	StartTLS      bool         `toml:"start_tls"`
-	SkipVerifySSL bool         `toml:"ssl_skip_verify"`
-	RootCACert    string       `toml:"root_ca_cert"`
-	ClientCert    string       `toml:"client_cert"`
-	ClientKey     string       `toml:"client_key"`
-	BindDN        string       `toml:"bind_dn"`
-	BindPassword  string       `toml:"bind_password"`
-	Timeout       int          `toml:"timeout"`
-	Attr          AttributeMap `toml:"attributes"`
+	Host string `toml:"host"`
+	Port int    `toml:"port"`
+
+	UseSSL        bool     `toml:"use_ssl"`
+	StartTLS      bool     `toml:"start_tls"`
+	SkipVerifySSL bool     `toml:"ssl_skip_verify"`
+	MinTLSVersion string   `toml:"min_tls_version"`
+	minTLSVersion uint16   `toml:"-"`
+	TLSCiphers    []string `toml:"tls_ciphers"`
+	tlsCiphers    []uint16 `toml:"-"`
+
+	RootCACert   string       `toml:"root_ca_cert"`
+	ClientCert   string       `toml:"client_cert"`
+	ClientKey    string       `toml:"client_key"`
+	BindDN       string       `toml:"bind_dn"`
+	BindPassword string       `toml:"bind_password"`
+	Timeout      int          `toml:"timeout"`
+	Attr         AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
@@ -71,29 +79,6 @@ var logger = log.New("ldap")
 // loadingMutex locks the reading of the config so multiple requests for reloading are sequential.
 var loadingMutex = &sync.Mutex{}
 
-// IsEnabled checks if ldap is enabled
-func IsEnabled() bool {
-	return setting.LDAPEnabled
-}
-
-func SkipOrgRoleSync() bool {
-	return setting.LDAPSkipOrgRoleSync
-}
-
-// ReloadConfig reads the config from the disk and caches it.
-func ReloadConfig(ldapConfigFilePath string) error {
-	if !IsEnabled() {
-		return nil
-	}
-
-	loadingMutex.Lock()
-	defer loadingMutex.Unlock()
-
-	var err error
-	config, err = readConfig(ldapConfigFilePath)
-	return err
-}
-
 // We need to define in this space so `GetConfig` fn
 // could be defined as singleton
 var config *Config
@@ -102,10 +87,10 @@ var config *Config
 // the config or it reads it and caches it first.
 func GetConfig(cfg *setting.Cfg) (*Config, error) {
 	if cfg != nil {
-		if !cfg.LDAPEnabled {
+		if !cfg.LDAPAuthEnabled {
 			return nil, nil
 		}
-	} else if !IsEnabled() {
+	} else if !cfg.LDAPAuthEnabled {
 		return nil, nil
 	}
 
@@ -158,6 +143,20 @@ func readConfig(configFile string) (*Config, error) {
 			return nil, fmt.Errorf("%v: %w", "Failed to validate SearchBaseDNs section", err)
 		}
 
+		if server.MinTLSVersion != "" {
+			server.minTLSVersion, err = tlsNameToVersion(server.MinTLSVersion)
+			if err != nil {
+				logger.Error("Failed to set min TLS version. Ignoring", "err", err)
+			}
+		}
+
+		if len(server.TLSCiphers) > 0 {
+			server.tlsCiphers, err = tlsCiphersToIDs(server.TLSCiphers)
+			if err != nil {
+				logger.Error("Unrecognized TLS Cipher(s). Ignoring", "err", err)
+			}
+		}
+
 		for _, groupMap := range server.Groups {
 			if groupMap.OrgRole == "" && groupMap.IsGrafanaAdmin == nil {
 				return nil, fmt.Errorf("LDAP group mapping: organization role or grafana admin status is required")
@@ -191,4 +190,54 @@ func assertNotEmptyCfg(val interface{}, propName string) error {
 		fmt.Println("unknown")
 	}
 	return nil
+}
+
+// tlsNameToVersion converts a string to a tls version
+func tlsNameToVersion(name string) (uint16, error) {
+	name = strings.ToUpper(name)
+	switch name {
+	case "TLS1.0":
+		return tls.VersionTLS10, nil
+	case "TLS1.1":
+		return tls.VersionTLS11, nil
+	case "TLS1.2":
+		return tls.VersionTLS12, nil
+	case "TLS1.3":
+		return tls.VersionTLS13, nil
+	}
+
+	return 0, fmt.Errorf("unknown tls version: %q", name)
+}
+
+// Cipher strings https://go.dev/src/crypto/tls/cipher_suites.go
+// Ex: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256" or "TLS_RSA_WITH_AES_128_CBC_SHA"
+func tlsCiphersToIDs(names []string) ([]uint16, error) {
+	if len(names) == 0 || names == nil {
+		// no ciphers specified, use defaults
+		return nil, nil
+	}
+	var ids []uint16
+	var missing []string
+
+	ciphers := tls.CipherSuites()
+	var cipherMap = make(map[string]uint16, len(ciphers))
+	for _, cipher := range ciphers {
+		cipherMap[cipher.Name] = cipher.ID
+	}
+
+	for _, name := range names {
+		name = strings.ToUpper(name)
+		id, ok := cipherMap[name]
+		if !ok {
+			missing = append(missing, name)
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	if len(missing) > 0 {
+		return ids, fmt.Errorf("unknown ciphers: %v", missing)
+	}
+
+	return ids, nil
 }

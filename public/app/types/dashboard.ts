@@ -23,7 +23,6 @@ export interface DashboardMeta {
   folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;
-  submenuEnabled?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   isStarred?: boolean;

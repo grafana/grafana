@@ -1,20 +1,22 @@
-import { AnnotationEvent, getDefaultTimeRange } from '@grafana/data';
+import { AnnotationEvent, AnnotationQuery, getDefaultTimeRange } from '@grafana/data';
+import { Dashboard } from '@grafana/schema';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { SnapshotWorker } from './SnapshotWorker';
 import { DashboardQueryRunnerOptions } from './types';
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = {};
+  const dashboard = new DashboardModel({} as Dashboard);
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
 }
 
-function getSnapshotData(annotation: any, timeEnd: number | undefined = undefined): AnnotationEvent[] {
+function getSnapshotData(annotation: AnnotationQuery, timeEnd: number | undefined = undefined): AnnotationEvent[] {
   return [{ annotation, source: {}, timeEnd, time: 1 }];
 }
 
-function getAnnotation(timeEnd: number | undefined = undefined) {
+function getAnnotation(timeEnd: number | undefined = undefined): AnnotationQuery {
   const annotation = {
     enable: true,
     hide: false,
@@ -33,7 +35,7 @@ describe('SnapshotWorker', () => {
 
   describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
-      const dashboard: any = { annotations: { list: [getAnnotation(), {}] } };
+      const dashboard = { annotations: { list: [getAnnotation(), {}] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       expect(worker.canWork(options)).toBe(true);
@@ -42,7 +44,7 @@ describe('SnapshotWorker', () => {
 
   describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
-      const dashboard: any = { annotations: { list: [{}] } };
+      const dashboard = { annotations: { list: [{}] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       expect(worker.canWork(options)).toBe(false);
@@ -51,7 +53,7 @@ describe('SnapshotWorker', () => {
 
   describe('when run is called with incorrect props', () => {
     it('then it should return the correct results', async () => {
-      const dashboard: any = { annotations: { list: [{}] } };
+      const dashboard = { annotations: { list: [{}] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [] }]);
@@ -64,7 +66,9 @@ describe('SnapshotWorker', () => {
       const noRegionEqualTime = getAnnotation(1);
       const region = getAnnotation(2);
       const noSnapshotData = { ...getAnnotation(), snapshotData: undefined };
-      const dashboard: any = { annotations: { list: [noRegionUndefined, region, noSnapshotData, noRegionEqualTime] } };
+      const dashboard = {
+        annotations: { list: [noRegionUndefined, region, noSnapshotData, noRegionEqualTime] },
+      } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       await expect(worker.work(options)).toEmitValuesWith((received) => {

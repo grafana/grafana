@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -17,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
+func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
 		desc     string
 		identity *authn.Identity
@@ -117,13 +118,14 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 				},
 			}
 
-			sync := &OauthTokenSync{
+			sync := &OAuthTokenSync{
 				log:            log.NewNopLogger(),
+				cache:          localcache.New(0, 0),
 				service:        service,
 				sessionService: sessionService,
 			}
 
-			err := sync.SyncOauthToken(context.Background(), tt.identity, nil)
+			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.Equal(t, tt.expectHasEntryCalled, hasEntryCalled)
 			assert.Equal(t, tt.expectTryRefreshTokenCalled, tryRefreshCalled)

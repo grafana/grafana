@@ -5,7 +5,6 @@ import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector/ArrayVector';
 import { reduceField, ReducerID } from '../fieldReducer';
 
 import { DataTransformerID } from './ids';
@@ -81,7 +80,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
                   name: fieldName,
                   type: field.type,
                   config: { ...field.config },
-                  values: new ArrayVector(),
+                  values: [],
                 };
               }
 
@@ -92,7 +91,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           const fields: Field[] = [];
 
           for (const field of groupByFields) {
-            const values = new ArrayVector();
+            const values: any[] = [];
             const fieldName = getFieldDisplayName(field);
 
             valuesByGroupKey.forEach((value) => {
@@ -137,7 +136,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             for (const aggregation of aggregations) {
               const aggregationField: Field = {
                 name: `${fieldName} (${aggregation})`,
-                values: new ArrayVector(valuesByAggregation[aggregation]),
+                values: valuesByAggregation[aggregation],
                 type: FieldType.other,
                 config: {},
               };

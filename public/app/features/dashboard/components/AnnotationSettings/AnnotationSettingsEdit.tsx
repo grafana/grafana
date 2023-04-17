@@ -58,10 +58,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     });
   };
 
-  const onColorChange = (color: string) => {
+  const onColorChange = (color?: string) => {
     onUpdate({
       ...annotation,
-      iconColor: color,
+      iconColor: color!,
     });
   };
 

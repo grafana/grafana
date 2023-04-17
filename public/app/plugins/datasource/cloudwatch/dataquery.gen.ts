@@ -33,7 +33,7 @@ export const defaultMetricStat: Partial<MetricStat> = {
 
 export type Dimensions = Record<string, (string | Array<string>)>;
 
-export interface CloudWatchMetricsQuery extends MetricStat {
+export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   alias?: string;
   /**
    * Math expression query
@@ -110,14 +110,19 @@ export interface QueryEditorGroupByExpression {
 
 export interface QueryEditorOperatorExpression {
   /**
-   * TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
+   * TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
    */
-  operator: {
-    name?: string;
-    value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
-  };
+  operator: QueryEditorOperator;
   property: QueryEditorProperty;
   type: QueryEditorExpressionType.Operator;
+}
+
+/**
+ * TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
+ */
+export interface QueryEditorOperator {
+  name?: string;
+  value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
 }
 
 export type QueryEditorOperatorValueType = (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
@@ -131,19 +136,20 @@ export interface QueryEditorProperty {
 
 export enum QueryEditorPropertyType {
   String = 'string',
-  Test = 'test',
 }
 
 export interface QueryEditorArrayExpression {
   /**
-   * TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+   * TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
    */
   expressions: unknown;
-  /**
-   * TODO this doesn't work
-   */
-  type: QueryEditorExpressionType;
+  type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
 }
+
+/**
+ * QueryEditorArrayExpression is added in veneer
+ */
+export type QueryEditorExpression = (QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
 export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;
@@ -171,7 +177,7 @@ export interface LogGroup {
   name: string;
 }
 
-export interface CloudWatchAnnotationQuery extends MetricStat {
+export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
   actionPrefix?: string;
   alarmNamePrefix?: string;
   prefixMatching?: boolean;

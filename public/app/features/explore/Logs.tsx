@@ -26,6 +26,7 @@ import {
   DataHoverClearEvent,
   EventBus,
   DataSourceWithLogsContextSupport,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -43,12 +44,12 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
 
-import { RowContextOptions } from '../logs/components/LogRowContextProvider';
 import { LogRows } from '../logs/components/LogRows';
+import { LogRowContextModal } from '../logs/components/log-context/LogRowContextModal';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsVolumePanel } from './LogsVolumePanel';
+import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -70,7 +71,6 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
-  scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -79,7 +79,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<any>;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
@@ -98,6 +98,8 @@ interface State {
   isFlipping: boolean;
   displayedFields: string[];
   forceEscape: boolean;
+  contextOpen: boolean;
+  contextRow?: LogRowModel;
 }
 
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
@@ -109,6 +111,14 @@ const styleOverridesForStickyNavigation = css`
     }
   }
 `;
+
+// we need to define the order of these explicitly
+const DEDUP_OPTIONS = [
+  LogsDedupStrategy.none,
+  LogsDedupStrategy.exact,
+  LogsDedupStrategy.numbers,
+  LogsDedupStrategy.signature,
+];
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -127,6 +137,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     isFlipping: false,
     displayedFields: [],
     forceEscape: false,
+    contextOpen: false,
+    contextRow: undefined,
   };
 
   constructor(props: Props) {
@@ -288,6 +300,28 @@ class UnthemedLogs extends PureComponent<Props, State> {
     });
   };
 
+  onCloseContext = () => {
+    this.setState({
+      contextOpen: false,
+      contextRow: undefined,
+    });
+  };
+
+  onOpenContext = (row: LogRowModel, onClose: () => void) => {
+    // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
+    this.setState({
+      contextOpen: true,
+      contextRow: row,
+    });
+    this.onCloseContext = () => {
+      this.setState({
+        contextOpen: false,
+        contextRow: undefined,
+      });
+      onClose();
+    };
+  };
+
   checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
     return !!logRows.some((r) => r.hasUnescapedContent);
   });
@@ -324,13 +358,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       splitOpen,
       logRows,
       logsMeta,
-      logsSeries,
-      visibleRange,
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
       loading = false,
-      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -345,7 +376,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       exploreId,
-      scrollElement,
       getRowContext,
       getLogRowContextUi,
     } = this.props;
@@ -361,6 +391,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       isFlipping,
       displayedFields,
       forceEscape,
+      contextOpen,
+      contextRow,
     } = this.state;
 
     const styles = getStyles(theme, wrapLogMessage);
@@ -375,32 +407,35 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
+        {getRowContext && contextRow && (
+          <LogRowContextModal
+            open={contextOpen}
+            row={contextRow}
+            onClose={this.onCloseContext}
+            getRowContext={getRowContext}
+            getLogRowContextUi={getLogRowContextUi}
+            logsSortOrder={logsSortOrder}
+            timeZone={timeZone}
+          />
+        )}
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
-            <LogsVolumePanel
+            <LogsVolumePanelList
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
-              logLinesBasedData={
-                logsSeries
-                  ? {
-                      data: logsSeries,
-                      state: loadingState,
-                    }
-                  : undefined
-              }
-              logLinesBasedDataVisibleRange={visibleRange}
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}
               onLoadLogsVolume={loadLogsVolumeData}
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
+              onClose={() => this.onToggleLogsVolumeCollapse(false)}
             />
           )}
         </Collapse>
         <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions} ref={this.topLogsRef}>
+          <div className={styles.logOptions}>
             <InlineFieldRow>
               <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
                 <InlineSwitch
@@ -440,7 +475,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </InlineField>
               <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
                 <RadioButtonGroup
-                  options={Object.values(LogsDedupStrategy).map((dedupType) => ({
+                  options={DEDUP_OPTIONS.map((dedupType) => ({
                     label: capitalize(dedupType),
                     value: dedupType,
                     description: LogsDedupDescription[dedupType],
@@ -474,6 +509,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </InlineField>
             </div>
           </div>
+          <div ref={this.topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
             meta={logsMeta || []}
@@ -509,8 +545,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onClickShowField={this.showField}
                 onClickHideField={this.hideField}
                 app={CoreApp.Explore}
-                scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
+                onOpenContext={this.onOpenContext}
               />
               {!loading && !hasData && !scanning && (
                 <div className={styles.noData}>

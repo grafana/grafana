@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -23,14 +23,16 @@ interface ExemplarsPluginProps {
   visibleSeries?: VisibleExemplarLabels;
 }
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
+export const ExemplarsPlugin = ({
   exemplars,
   timeZone,
   getFieldLinks,
   config,
   visibleSeries,
-}) => {
+}: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot>();
+
+  const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -83,6 +85,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
       return (
         <ExemplarMarker
+          setClickedExemplarFieldIndex={setLockedExemplarFieldIndex}
+          clickedExemplarFieldIndex={lockedExemplarFieldIndex}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
           dataFrame={dataFrame}
@@ -92,7 +96,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
         />
       );
     },
-    [config, timeZone, getFieldLinks, visibleSeries]
+    [config, timeZone, getFieldLinks, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
   );
 
   return (
@@ -138,6 +142,7 @@ interface LabelWithExemplarUIData {
   labels: Labels;
   color?: string;
 }
+
 /**
  * Get color of active series in legend
  */
