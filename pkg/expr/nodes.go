@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 	"gonum.org/v1/gonum/graph/simple"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -216,6 +217,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		PluginID:                   dn.datasource.Type,
 		User:                       dn.request.User,
 	}
+	span.SetAttributes("datasource.type", dn.datasource.Type, attribute.Key("datasource.type").String(dn.datasource.Type))
 
 	req := &backend.QueryDataRequest{
 		PluginContext: pc,
@@ -264,7 +266,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	if dt, use, _ := shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane)); use {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
-		return handleDataplaneFrames(dt.Kind(), response.Frames)
+		return handleDataplaneFrames(ctx, s.tracer, dt, response.Frames)
 	}
 
 	dataSource := dn.datasource.Type
