@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -50,7 +49,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+		s := ProvideService(&config.Cfg{})
 		manifest, err := s.readPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
@@ -67,7 +66,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+		s := ProvideService(&config.Cfg{})
 		_, err := s.readPluginManifest([]byte(modified))
 		require.Error(t, err)
 	})
@@ -105,7 +104,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+		s := ProvideService(&config.Cfg{})
 		manifest, err := s.readPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
@@ -159,12 +158,12 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			s := New(log.NewTestLogger(), &fakes.FakePluginSource{
+			s := ProvideService(&config.Cfg{})
+			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.External
 				},
-			}, &config.Cfg{})
-			sig, err := s.Calculate(context.Background(), plugins.FoundPlugin{
+			}, plugins.FoundPlugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
@@ -190,12 +189,12 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		s := New(log.NewTestLogger(), &fakes.FakePluginSource{
+		s := ProvideService(&config.Cfg{})
+		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.External
 			},
-		}, &config.Cfg{})
-		sig, err := s.Calculate(context.Background(), plugins.FoundPlugin{
+		}, plugins.FoundPlugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
 				Type: plugins.Renderer,
@@ -239,12 +238,12 @@ func TestCalculate(t *testing.T) {
 
 				basePath := "../testdata/app-with-child/dist"
 
-				s := New(log.NewTestLogger(), &fakes.FakePluginSource{
+				s := ProvideService(&config.Cfg{})
+				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.External
 					},
-				}, &config.Cfg{})
-				sig, err := s.Calculate(context.Background(), plugins.FoundPlugin{
+				}, plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "myorgid-simple-app",
 						Type: plugins.App,
@@ -684,7 +683,7 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+			s := ProvideService(&config.Cfg{})
 			err := s.validateManifest(*tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})

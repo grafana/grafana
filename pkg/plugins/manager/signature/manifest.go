@@ -76,19 +76,20 @@ func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
 type Signature struct {
 	verifier *manifestverifier.ManifestVerifier
 	mlog     log.Logger
-	src      plugins.PluginSource
 }
 
-func New(mlog log.Logger, src plugins.PluginSource, cfg *config.Cfg) *Signature {
+var _ plugins.SignatureCalculator = &Signature{}
+
+func ProvideService(cfg *config.Cfg) *Signature {
+	log := log.New("plugin.signature")
 	return &Signature{
-		verifier: manifestverifier.New(cfg, mlog),
-		mlog:     mlog,
-		src:      src,
+		verifier: manifestverifier.New(cfg, log),
+		mlog:     log,
 	}
 }
 
-func (s *Signature) Calculate(ctx context.Context, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if defaultSignature, exists := s.src.DefaultSignature(ctx); exists {
+func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
 
