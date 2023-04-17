@@ -31,13 +31,13 @@ composableKinds: PanelCfg: {
 						// Controls various color options
 						HeatmapColorOptions: {
 							// Sets the color mode
-							mode?: HeatmapColorMode // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+							mode?: HeatmapColorMode
 							// Controls the color scheme used
 							scheme: string
 							// Controls the color fill when in opacity mode
 							fill: string
 							// Controls the color scale
-							scale?: HeatmapColorScale // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+							scale?: HeatmapColorScale
 							// Controls the exponent when scale is set to exponential
 							exponent: float32
 							// Controls the number of color steps
@@ -127,7 +127,7 @@ composableKinds: PanelCfg: {
 							// 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 							// }
 							// Controls the display of the value in the cell
-							showValue: ui.VisibilityMode | *"auto"
+							showValue: ui.VisibilityMode & (*"auto" | _)
 							// Controls gap between cells
 							cellGap?: uint8 & >=0 & <=25 | *1
 							// Controls cell radius

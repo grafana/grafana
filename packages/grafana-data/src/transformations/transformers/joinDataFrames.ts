@@ -2,7 +2,6 @@ import intersect from 'fast_array_intersect';
 
 import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
-import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -227,7 +226,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     length: joined[0].length,
     fields: originalFields.map((f, index) => ({
       ...f,
-      values: new ArrayVector(joined[index]),
+      values: joined[index],
     })),
   };
 }
@@ -352,7 +351,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector, samples = 50) {
+export function isLikelyAscendingVector(data: Vector | [], samples = 50) {
   const len = data.length;
 
   // empty or single value
@@ -364,11 +363,11 @@ export function isLikelyAscendingVector(data: Vector, samples = 50) {
   let firstIdx = 0;
   let lastIdx = len - 1;
 
-  while (firstIdx <= lastIdx && data.get(firstIdx) == null) {
+  while (firstIdx <= lastIdx && data[firstIdx] == null) {
     firstIdx++;
   }
 
-  while (lastIdx >= firstIdx && data.get(lastIdx) == null) {
+  while (lastIdx >= firstIdx && data[lastIdx] == null) {
     lastIdx--;
   }
 
@@ -379,8 +378,8 @@ export function isLikelyAscendingVector(data: Vector, samples = 50) {
 
   const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
 
-  for (let prevVal = data.get(firstIdx), i = firstIdx + stride; i <= lastIdx; i += stride) {
-    const v = data.get(i);
+  for (let prevVal = data[firstIdx], i = firstIdx + stride; i <= lastIdx; i += stride) {
+    const v = data[i];
 
     if (v != null) {
       if (v <= prevVal) {

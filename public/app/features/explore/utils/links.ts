@@ -195,7 +195,9 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: (options) => splitFnWithTracking(options),
+            // Don't track internal links without split view as they are used only in Dashboards
+            // TODO: It should be revisited in #66570
+            onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };

@@ -2008,7 +2008,7 @@ describe('PrometheusDatasource for POST', () => {
   });
 
   describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
-    const options = { dashboardId: 1, panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
+    const options = { panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     } as PromQueryRequest;
@@ -2032,7 +2032,6 @@ describe('PrometheusDatasource for POST', () => {
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions, options);
-      expect(httpOptions.headers['X-Dashboard-Id']).toBe(options.dashboardId);
       expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
       expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
     });

@@ -79,7 +79,7 @@ TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGau
 TableFieldOptions: {
 	width?:      number
 	minWidth?:   number
-	align: FieldTextAlignment | *"auto"
+	align: FieldTextAlignment & (*"auto" | _)
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
