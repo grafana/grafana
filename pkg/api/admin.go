@@ -99,6 +99,55 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *user.Sign
 	return authorizedBag, nil
 }
 
+func (hs *HTTPServer) getAuthorizedVerboseSettings(ctx context.Context, user *user.SignedInUser, bag setting.VerboseSettingsBag) (setting.VerboseSettingsBag, error) {
+	if hs.AccessControl.IsDisabled() {
+		return bag, nil
+	}
+
+	eval := func(scope string) (bool, error) {
+		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
+	}
+
+	ok, err := eval(ac.ScopeSettingsAll)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return bag, nil
+	}
+
+	authorizedBag := make(setting.VerboseSettingsBag)
+
+	for section, keys := range bag {
+		ok, err := eval(ac.Scope("settings", section, "*"))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			authorizedBag[section] = keys
+			continue
+		}
+
+		for key := range keys {
+			ok, err := eval(ac.Scope("settings", section, key))
+			if err != nil {
+				return nil, err
+			}
+
+			if !ok {
+				continue
+			}
+
+			if _, exists := authorizedBag[section]; !exists {
+				authorizedBag[section] = make(map[string]map[string]string)
+			}
+			authorizedBag[section][key] = bag[section][key]
+		}
+	}
+
+	return authorizedBag, nil
+}
+
 // swagger:response adminGetSettingsResponse
 type GetSettingsResponse struct {
 	// in:body
