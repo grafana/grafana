@@ -522,6 +522,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/anonymous/ @grafana/grafana-authnz-team
 /pkg/services/auth/ @grafana/grafana-authnz-team
 /pkg/services/authn/ @grafana/grafana-authnz-team
+/pkg/services/signingkeys/ @grafana/grafana-authnz-team
 /pkg/services/dashboards/accesscontrol.go @grafana/grafana-authnz-team
 /pkg/services/datasources/permissions/ @grafana/grafana-authnz-team
 /pkg/services/guardian/ @grafana/grafana-authnz-team
