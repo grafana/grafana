@@ -14,7 +14,6 @@ import {
   getDisplayProcessor,
   reduceField,
   GrafanaTheme2,
-  ArrayVector,
   isDataFrame,
   isTimeSeriesFrame,
 } from '@grafana/data';
@@ -85,6 +84,8 @@ export function getColumns(
       // Make an expander cell
       Header: () => null, // No header
       id: 'expander', // It needs an ID
+      // @ts-expect-error
+      // TODO fix type error here
       Cell: RowExpander,
       width: EXPANDER_WIDTH,
       minWidth: EXPANDER_WIDTH,
@@ -124,12 +125,14 @@ export function getColumns(
 
     const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
+      // @ts-expect-error
+      // TODO fix type error here
       Cell,
       id: fieldIndex.toString(),
       field: field,
       Header: getFieldDisplayName(field, data),
       accessor: (_row: any, i: number) => {
-        return field.values.get(i);
+        return field.values[i];
       },
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
@@ -184,7 +187,7 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
   }
 
   if (field.type === FieldType.frame) {
-    const firstValue = field.values.get(0);
+    const firstValue = field.values[0];
     if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
       return SparklineCell;
     }
@@ -244,7 +247,7 @@ export function rowToFieldValue(row: any, field?: Field): string {
     return '';
   }
 
-  const fieldValue = field.values.get(row.index);
+  const fieldValue = field.values[row.index];
   const displayValue = field.display ? field.display(fieldValue) : fieldValue;
   const value = field.display ? formattedValueToString(displayValue) : displayValue;
 
@@ -355,7 +358,7 @@ export function getFooterItems(
     }
 
     let newField = clone(data.field);
-    newField.values = new ArrayVector(values[data.id]);
+    newField.values = values[data.id];
     newField.state = undefined;
 
     data.field = newField;

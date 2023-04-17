@@ -154,6 +154,21 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	return configs, nil
 }
 
+func (f *fakeConfigStore) GetHistoricalConfiguration(_ context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+	configsByOrg, ok := f.historicConfigs[orgID]
+	if !ok {
+		return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
+	}
+
+	for _, conf := range configsByOrg {
+		if conf.ID == id && conf.OrgID == orgID {
+			return conf, nil
+		}
+	}
+
+	return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
+}
+
 type FakeOrgStore struct {
 	orgs []int64
 }

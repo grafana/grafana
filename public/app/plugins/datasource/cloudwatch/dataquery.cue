@@ -121,7 +121,6 @@ composableKinds: DataQuery: {
 						#QueryEditorPropertyType: "string" @cuetsy(kind="enum")
 
 						#QueryEditorArrayExpression: {
-							// TODO this doesn't work; temporarily extended in veneer
 							type: (#QueryEditorExpressionType & "and") | (#QueryEditorExpressionType & "or")
 							// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 							expressions: _

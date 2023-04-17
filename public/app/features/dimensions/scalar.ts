@@ -45,7 +45,7 @@ export function getScalarDimensionForField(
   }
 
   const get = (i: number) => {
-    const v = field.values.get(i);
+    const v = field.values[i];
     if (v === null || typeof v !== 'number') {
       return 0;
     }

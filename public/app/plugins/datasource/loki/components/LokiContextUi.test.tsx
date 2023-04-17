@@ -4,7 +4,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { LogRowModel } from '@grafana/data';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import { LogContextProvider } from '../LogContextProvider';
 
 import { LokiContextUi, LokiContextUiProps } from './LokiContextUi';
 
@@ -30,37 +30,17 @@ describe('LokiContextUi', () => {
     global = savedGlobal;
   });
   const setupProps = (): LokiContextUiProps => {
-    const mockLanguageProvider = {
-      start: jest.fn().mockImplementation(() => Promise.resolve()),
-      getLabelValues: (name: string) => {
-        switch (name) {
-          case 'label1':
-            return ['value1-1', 'value1-2'];
-          case 'label2':
-            return ['value2-1', 'value2-2'];
-          case 'label3':
-            return ['value3-1', 'value3-2'];
-        }
-        return [];
-      },
-      fetchSeriesLabels: (selector: string) => {
-        switch (selector) {
-          case '{label1="value1-1"}':
-            return { label1: ['value1-1'], label2: ['value2-1'], label3: ['value3-1'] };
-          case '{label1=~"value1-1|value1-2"}':
-            return { label1: ['value1-1', 'value1-2'], label2: ['value2-1'], label3: ['value3-1', 'value3-2'] };
-        }
-        // Allow full set by default
-        return {
-          label1: ['value1-1', 'value1-2'],
-          label2: ['value2-1', 'value2-2'],
-        };
-      },
-      getLabelKeys: () => ['label1', 'label2'],
+    const mockLogContextProvider = {
+      getInitContextFiltersFromLabels: jest.fn().mockImplementation(() =>
+        Promise.resolve([
+          { value: 'label1', enabled: true, fromParser: false, label: 'label1' },
+          { value: 'label3', enabled: false, fromParser: true, label: 'label3' },
+        ])
+      ),
     };
 
     const defaults: LokiContextUiProps = {
-      languageProvider: mockLanguageProvider as unknown as LokiLanguageProvider,
+      logContextProvider: mockLogContextProvider as unknown as LogContextProvider,
       updateFilter: jest.fn(),
       row: {
         entry: 'WARN test 1.23 on [xxx]',
@@ -83,12 +63,12 @@ describe('LokiContextUi', () => {
     expect(await screen.findByText(/Select labels to be included in the context query/)).toBeInTheDocument();
   });
 
-  it('starts the languageProvider', async () => {
+  it('initialize context filters', async () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
     });
   });
 
@@ -96,7 +76,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[0], 'label1');
@@ -106,7 +86,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[1], 'label3');
@@ -117,15 +97,14 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3');
+    await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3');
     act(() => {
       jest.runAllTimers();
     });
     expect(props.updateFilter).toHaveBeenCalled();
-
     jest.useRealTimers();
   });
 

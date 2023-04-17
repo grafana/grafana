@@ -17,7 +17,6 @@ import {
 } from '../types';
 import { locationUtil, Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
-import { ArrayVector } from '../vector';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor } from './displayProcessor';
@@ -412,6 +411,124 @@ describe('setFieldConfigDefaults', () => {
           "property1": 10,
           "property2": 10,
         },
+      }
+    `);
+  });
+
+  it('applies field config defaults correctly when links property exist in field config and no links are defined in panel', () => {
+    const dsFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const panelFieldConfig: FieldConfig = {};
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    // @ts-ignore
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+        ],
+      }
+    `);
+  });
+
+  it('applies field config defaults correctly when links property exist in panel config and no links are defined in ds field config', () => {
+    const dsFieldConfig: FieldConfig = {};
+
+    const panelFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    // @ts-ignore
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+        ],
+      }
+    `);
+  });
+
+  it('applies a merge strategy for links when they exist in ds config and panel', () => {
+    const dsFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const panelFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Grafana',
+          url: 'https://grafana.com',
+        },
+      ],
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+          {
+            "title": "Grafana",
+            "url": "https://grafana.com",
+          },
+        ],
       }
     `);
   });
@@ -818,7 +935,7 @@ describe('applyRawFieldOverrides', () => {
 
   const getDisplayValue = (frames: DataFrame[], frameIndex: number, fieldIndex: number) => {
     const field = frames[frameIndex].fields[fieldIndex];
-    const value = field.values.get(0);
+    const value = field.values[0];
     return field.display!(value);
   };
 
@@ -892,14 +1009,14 @@ describe('applyRawFieldOverrides', () => {
       const numberAsEpoc: Field = {
         name: 'numberAsEpoc',
         type: FieldType.number,
-        values: new ArrayVector([1599045551050]),
+        values: [1599045551050],
         config: getNumberFieldConfig(),
       };
 
       const numberWithDecimals: Field = {
         name: 'numberWithDecimals',
         type: FieldType.number,
-        values: new ArrayVector([3.14159265359]),
+        values: [3.14159265359],
         config: {
           ...getNumberFieldConfig(),
           decimals: 3,
@@ -909,28 +1026,28 @@ describe('applyRawFieldOverrides', () => {
       const numberAsBoolean: Field = {
         name: 'numberAsBoolean',
         type: FieldType.number,
-        values: new ArrayVector([0]),
+        values: [0],
         config: getNumberFieldConfig(),
       };
 
       const boolean: Field = {
         name: 'boolean',
         type: FieldType.boolean,
-        values: new ArrayVector([0]),
+        values: [0],
         config: getEmptyConfig(),
       };
 
       const string: Field = {
         name: 'string',
         type: FieldType.boolean,
-        values: new ArrayVector(['A - string']),
+        values: ['A - string'],
         config: getEmptyConfig(),
       };
 
       const datetime: Field = {
         name: 'datetime',
         type: FieldType.time,
-        values: new ArrayVector([1599045551050]),
+        values: [1599045551050],
         config: {
           unit: 'dateTimeAsIso',
         },

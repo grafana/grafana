@@ -289,6 +289,11 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
 // config -> from DS
 // defaults -> from Panel config
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
+  // For cases where we have links on the datasource config and the panel config, we need to merge them
+  if (config.links && defaults.links) {
+    // Combine the data source links and the panel default config links
+    config.links = [...config.links, ...defaults.links];
+  }
   for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
     if (fieldConfigProperty.isCustom && !config.custom) {
       config.custom = {};
