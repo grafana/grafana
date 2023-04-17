@@ -1050,6 +1050,49 @@ export class PrometheusDatasource
     );
   }
 
+  async testBrowserAccess() {
+    const now = new Date().getTime();
+    // eslint-disable-next-line
+    const request: DataQueryRequest<PromQuery> = {
+      targets: [{ refId: 'test', expr: '1+1', instant: true }],
+      requestId: `${this.id}-health`,
+      scopedVars: {},
+      dashboardId: 0,
+      panelId: 0,
+      interval: '1m',
+      intervalMs: 60000,
+      maxDataPoints: 1,
+      range: {
+        from: dateTime(now - 1000),
+        to: dateTime(now),
+      },
+    } as DataQueryRequest<PromQuery>;
+
+    const buildInfo = await this.getBuildInfo();
+
+    return (
+      lastValueFrom(this.query(request))
+        .then((res: DataQueryResponse) => {
+          if (!res || !res.data || res.state !== LoadingState.Done) {
+            return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
+          } else {
+            return {
+              status: 'success',
+              message: 'Data source is working',
+              details: buildInfo && {
+                verboseMessage: this.getBuildInfoMessage(buildInfo),
+              },
+            };
+          }
+        })
+        // eslint-disable-next-line
+        .catch((err: any) => {
+          console.error('Prometheus Error', err);
+          return { status: 'error', message: err.message };
+        })
+    );
+  }
+
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
