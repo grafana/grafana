@@ -477,8 +477,8 @@ lerna.json @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
-.betterer.results @joshhunt
-.betterer.ts @joshhunt
+.betterer.results @grafanabot
+.betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation
 *.mdx @grafana/plugins-platform-frontend
@@ -601,6 +601,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
 
+# Generated files not requiring owner approval
+/packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
+/pkg/services/featuremgmt/toggles_gen.csv @grafanabot
+/pkg/services/featuremgmt/toggles_gen.go @grafanabot
 
 # Conf
 /conf/defaults.ini @torkelo
