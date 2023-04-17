@@ -295,11 +295,12 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	service := dashboardservice.ProvideDashboardServiceImpl(
+	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 	)
+	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
@@ -441,11 +442,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+		dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 			sqlStore.Cfg, dashboardStore, folderStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(),
 		)
+		require.NoError(t, err)
 		guardian.InitLegacyGuardian(sqlStore.Cfg, sqlStore, dashboardService, &teamtest.FakeService{})
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,

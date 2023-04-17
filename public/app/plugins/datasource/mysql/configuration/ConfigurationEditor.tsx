@@ -21,7 +21,7 @@ import {
 import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
-import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
+import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { MySQLOptions } from '../types';
 
@@ -29,7 +29,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
 
-  useMigrateDatabaseField(props);
+  useMigrateDatabaseFields(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -166,13 +166,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </FieldSet>
       ) : null}
 
-      <ConnectionLimits
-        labelWidth={WIDTH_SHORT}
-        jsonData={jsonData}
-        onPropertyChanged={(property, value) => {
-          updateDatasourcePluginJsonDataOption(props, property, value);
-        }}
-      ></ConnectionLimits>
+      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MySQL details">
         <InlineField

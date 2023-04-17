@@ -22,7 +22,7 @@ import {
 import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
-import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
+import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
 
@@ -49,7 +49,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
 
   useAutoDetectFeatures({ props, setVersionOptions });
 
-  useMigrateDatabaseField(props);
+  useMigrateDatabaseFields(props);
 
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
@@ -246,13 +246,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         </FieldSet>
       ) : null}
 
-      <ConnectionLimits
-        labelWidth={labelWidthShort}
-        jsonData={jsonData}
-        onPropertyChanged={(property, value) => {
-          updateDatasourcePluginJsonDataOption(props, property, value);
-        }}
-      ></ConnectionLimits>
+      <ConnectionLimits labelWidth={labelWidthShort} options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="PostgreSQL details">
         <InlineField

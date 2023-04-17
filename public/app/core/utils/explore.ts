@@ -142,7 +142,6 @@ export function buildQueryTransaction(
 
   const request: DataQueryRequest = {
     app: CoreApp.Explore,
-    dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: timeZone || DefaultTimeZone,
     startTime: Date.now(),
