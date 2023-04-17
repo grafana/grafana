@@ -134,7 +134,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
           next: (rsp) => {
             if (rsp.data.length) {
               const names = (rsp.data[0] as DataFrame).fields[0];
-              const folders = names.values.toArray().map((v) => ({
+              const folders = names.values.map((v) => ({
                 value: v,
                 label: v,
               }));
