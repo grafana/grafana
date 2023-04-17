@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -25,6 +26,7 @@ import (
 )
 
 type Service struct {
+	registry.ProvidesUsageStats
 	store        store
 	orgService   org.Service
 	teamService  team.Service
@@ -65,6 +67,17 @@ func ProvideService(
 
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 	return s, nil
+}
+
+func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
+	stats := map[string]interface{}{}
+	caseInsensitiveLoginVal := 0
+	if s.cfg.CaseInsensitiveLogin {
+		caseInsensitiveLoginVal = 1
+	}
+
+	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	return stats
 }
 
 func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
