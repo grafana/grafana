@@ -166,10 +166,10 @@ func TestCalculate(t *testing.T) {
 						Version: "1.0.0",
 					},
 				},
-				FS: plugins.NewLocalFS(map[string]struct{}{
+				FS: plugins.NewAllowListLocalFS(map[string]struct{}{
 					filepath.Join(basePath, "MANIFEST.txt"): {},
 					filepath.Join(basePath, "plugin.json"):  {},
-				}, basePath),
+				}, basePath, nil),
 			})
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
@@ -197,11 +197,11 @@ func TestCalculate(t *testing.T) {
 					Version: "1.0.0",
 				},
 			},
-			FS: plugins.NewLocalFS(map[string]struct{}{
+			FS: plugins.NewAllowListLocalFS(map[string]struct{}{
 				filepath.Join(basePath, "MANIFEST.txt"):         {},
 				filepath.Join(basePath, "plugin.json"):          {},
 				filepath.Join(basePath, "chrome-win/debug.log"): {},
-			}, basePath),
+			}, basePath, nil),
 		})
 		require.NoError(t, err)
 		require.Equal(t, plugins.Signature{
@@ -293,7 +293,7 @@ func TestNewToSlash(t *testing.T) {
 // fsPathSeparatorFiles embeds plugins.LocalFS and overrides the Files() behaviour so all the returned elements
 // have the specified path separator. This can be used to test Files() behaviour cross-platform.
 type fsPathSeparatorFiles struct {
-	plugins.LocalFS
+	plugins.FS
 
 	separator string
 }
@@ -303,19 +303,22 @@ type fsPathSeparatorFiles struct {
 // if Open() is required to work for the test case.
 func newPathSeparatorOverrideFS(sep string, files map[string]struct{}, basePath string) fsPathSeparatorFiles {
 	return fsPathSeparatorFiles{
-		LocalFS:   plugins.NewLocalFS(files, basePath),
+		FS:        plugins.NewAllowListLocalFS(files, basePath, nil),
 		separator: sep,
 	}
 }
 
 // Files returns LocalFS.Files(), but all path separators (filepath.Separator) are replaced with f.separator.
-func (f fsPathSeparatorFiles) Files() []string {
-	files := f.LocalFS.Files()
+func (f fsPathSeparatorFiles) Files() ([]string, error) {
+	files, err := f.FS.Files()
+	if err != nil {
+		return nil, err
+	}
 	const osSepStr = string(filepath.Separator)
 	for i := 0; i < len(files); i++ {
 		files[i] = strings.ReplaceAll(files[i], osSepStr, f.separator)
 	}
-	return files
+	return files, nil
 }
 
 func TestFSPathSeparatorFiles(t *testing.T) {
@@ -331,7 +334,8 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 				"a": {},
 				strings.Join([]string{"a", "b", "c"}, tc.sep): {},
 			}, ".")
-			files := fs.Files()
+			files, err := fs.Files()
+			require.NoError(t, err)
 			filesMap := make(map[string]struct{}, len(files))
 			// Re-convert to map as the key order is not stable
 			for _, f := range files {

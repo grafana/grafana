@@ -55,7 +55,7 @@ type FS interface {
 	fs.FS
 
 	Base() string
-	Files() []string
+	Files() ([]string, error)
 }
 
 type FoundBundle struct {

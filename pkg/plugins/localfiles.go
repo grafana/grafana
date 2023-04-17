@@ -2,98 +2,163 @@ package plugins
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ FS = (*LocalFS)(nil)
 
+// CollectFilesWalkFuncProvider is a function that returns a filepath.WalkFunc, which will accumulate its results into acc.
+type CollectFilesWalkFuncProvider func(acc map[string]struct{}) filepath.WalkFunc
+
 // LocalFS is a plugins.FS that allows accessing files on the local file system.
 type LocalFS struct {
-	// allowList is a map of relative file paths that can be accessed on the local filesystem.
-	// The path separator must be os-specific.
-	allowList map[string]struct{}
-
 	// basePath is the basePath that will be prepended to all the files (in allowList map) before accessing them.
 	basePath string
 
-	// allowAll is a flag that allows to bypass the allow-list checks when calling Open().
-	// If true, Open() will also allow accessing files that aren't in allowList (as long as it exists on the filesystem).
-	// If false, Open() will return ErrFileNotExist if the specified file is not explicitly allowed,
-	// even if the file exists on the underlying file system.
-	allowAll bool
+	// walkFuncProvider returns a filepath.WalkFunc that creates a list of files in this LocalFS for Files()
+	walkFuncProvider CollectFilesWalkFuncProvider
 }
 
-// LocalFSOption mutates a LocalFS allowing to specify some options.
-type LocalFSOption func(*LocalFS)
-
-// LocalFSOptionAllowAll sets allowAll to true, disabling the allow-list on the LocalFS.
-func LocalFSOptionAllowAll(f *LocalFS) {
-	f.allowAll = true
+// NewLocalFS returns a new LocalFS that can access any file in the specified base path on the filesystem.
+// basePath must use os-specific path separator for Open() to work properly.
+func NewLocalFS(basePath string, walkFuncProvider CollectFilesWalkFuncProvider) LocalFS {
+	return LocalFS{basePath: basePath, walkFuncProvider: walkFuncProvider}
 }
 
-// NewLocalFS returns a new LocalFS that can access the specified files in the specified base path.
-// Both the map keys and basePath should use the os-specific path separator for Open() to work properly.
-func NewLocalFS(allowList map[string]struct{}, basePath string, opts ...LocalFSOption) LocalFS {
-	// Copy the allowList to make it read-only.
-	pfs := make(map[string]struct{}, len(allowList))
-	for k := range allowList {
-		pfs[k] = struct{}{}
-	}
-	r := LocalFS{
-		allowList: pfs,
-		basePath:  basePath,
-	}
-	// Apply additional options.
-	for _, opt := range opts {
-		opt(&r)
-	}
-	return r
-}
-
-// Open opens the specified file on the local filesystem, and returns the corresponding fs.File.
+// Open opens the specified file on the local filesystem.
+// The provided name must use os-specific path separators.
+// It returns the corresponding fs.File.
 // If a nil error is returned, the caller should take care of closing the returned file.
 func (f LocalFS) Open(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: path traversal check
 	fn := filepath.Join(f.basePath, cleanPath)
-	if _, exists := f.allowList[fn]; !exists {
-		if !f.allowAll {
-			return nil, ErrFileNotExist
-		}
-		// TODO: path traversal check
-		// Bypass allow-list
-		if _, err := os.Stat(fn); err != nil {
-			return nil, ErrFileNotExist
-		}
+	if _, err := os.Stat(fn); err != nil {
+		return nil, ErrFileNotExist
 	}
 	return &LocalFile{path: fn}, nil
 }
 
 // Base returns the base path for the LocalFS.
+// The returned string uses os-specific path separator.
 func (f LocalFS) Base() string {
 	return f.basePath
 }
 
-// Files returns a slice of all the file paths in the LocalFS relative to the base path.
-// The returned strings use the same path separator as the
-func (f LocalFS) Files() []string {
-	var files []string
+// Files returns a slice of all the file paths on the LocalFS relative to the base path.
+// The returned strings use os-specific path separator.
+func (f LocalFS) Files() ([]string, error) {
+	if f.walkFuncProvider == nil {
+		return nil, nil
+	}
+	filesMap := make(map[string]struct{})
+	if err := filepath.Walk(f.basePath, f.walkFuncProvider(filesMap)); err != nil {
+		return nil, fmt.Errorf("walk: %w", err)
+	}
+	files := make([]string, 0, len(filesMap))
+	for fn := range filesMap {
+		files = append(files, fn)
+	}
+	/* var files []string
 	for p := range f.allowList {
 		r, err := filepath.Rel(f.basePath, p)
 		if strings.Contains(r, "..") || err != nil {
 			continue
 		}
 		files = append(files, r)
+	} */
+	return files, nil
+}
+
+type fsAllowList map[string]struct{}
+
+func newFSAllowList(files map[string]struct{}) fsAllowList {
+	// Copy map so it cannot be modified from outside
+	allowListCopy := make(map[string]struct{}, len(files))
+	for k := range files {
+		allowListCopy[k] = struct{}{}
+	}
+	return allowListCopy
+}
+
+// key returns the corresponding internal map key for the provided path.
+func (a fsAllowList) key(path string) string {
+	cleanPath, err := util.CleanRelativePath(path)
+	if err != nil {
+		return ""
+	}
+	return cleanPath
+}
+
+func (a fsAllowList) isAllowed(path string) bool {
+	_, ok := a[a.key(path)]
+	return ok
+}
+
+var _ FS = (*AllowListLocalFS)(nil)
+
+// AllowListLocalFS wraps a LocalFS and allows accessing only the files in the allowList.
+// This is a more secure implementation of LocalFS suitable for production environments.
+type AllowListLocalFS struct {
+	LocalFS
+
+	// allowList is a map of relative file paths that can be accessed on the local filesystem.
+	// The path separator must be os-specific.
+	allowList fsAllowList
+}
+
+// NewAllowListLocalFS returns a new AllowListLocalFS that can access the files in the specified base path on
+// the filesystem, but ONLY if they are also specified in the provided allowList.
+// All paths in the allowList and basePath must use os-specific path separator for Open() to work properly.
+func NewAllowListLocalFS(allowList map[string]struct{}, basePath string, walkFuncProvider CollectFilesWalkFuncProvider) AllowListLocalFS {
+	return AllowListLocalFS{
+		LocalFS:   NewLocalFS(basePath, walkFuncProvider),
+		allowList: newFSAllowList(allowList),
+	}
+}
+
+// Open checks that name is an allowed file and returns a fs.File to access it.
+func (f AllowListLocalFS) Open(name string) (fs.File, error) {
+	// Ensure access to the file is allowed
+	if !f.allowList.isAllowed(name) {
+		return nil, ErrFileNotExist
+	}
+	// Use the wrapped LocalFS to access the file
+	return f.LocalFS.Open(name)
+}
+
+// Files returns a slice of all the file paths in the LocalFS relative to the base path.
+func (f AllowListLocalFS) Files() ([]string, error) {
+	// Get files on the filesystem (walk)
+	filesystemFiles, err := f.LocalFS.Files()
+	if err != nil {
+		return filesystemFiles, err
 	}
 
-	return files
+	// Intersect with allow list
+	files := make([]string, 0, len(filesystemFiles))
+	for _, fn := range filesystemFiles {
+		/* r, err := filepath.Rel(f.basePath, fn)
+		if strings.Contains(r, "..") || err != nil {
+			continue
+		}
+		if _, ok := f.allowList[fn]; !ok {
+			continue
+		} */
+		if !f.allowList.isAllowed(fn) {
+			continue
+		}
+		files = append(files, fn)
+	}
+	return files, nil
 }
 
 var _ fs.File = (*LocalFile)(nil)

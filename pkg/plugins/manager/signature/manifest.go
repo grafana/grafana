@@ -105,8 +105,11 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
-
-	if len(plugin.FS.Files()) == 0 {
+	fsFiles, err := plugin.FS.Files()
+	if err != nil {
+		return plugins.Signature{}, fmt.Errorf("files: %w", err)
+	}
+	if len(fsFiles) == 0 {
 		mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
@@ -195,7 +198,7 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 
 	// Track files missing from the manifest
 	var unsignedFiles []string
-	for _, f := range plugin.FS.Files() {
+	for _, f := range fsFiles {
 		// Ensure slashes are used, because MANIFEST.txt always uses slashes regardless of the filesystem
 		f = toSlash(f)
 
