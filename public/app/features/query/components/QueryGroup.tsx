@@ -214,7 +214,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             Data source
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
-            {config.featureToggles.drawerDataSourcePicker ? (
+            {config.featureToggles.advancedDataSourcePicker ? (
               <DataSourcePickerWithHistory
                 onChange={this.onChangeDataSource}
                 current={options.dataSource}

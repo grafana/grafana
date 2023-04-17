@@ -3,7 +3,6 @@ import { map } from 'rxjs';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { CustomTransformOperator, FieldType } from '../types';
 import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../vector/ArrayVector';
 
 import { ReducerID } from './fieldReducer';
 import { FrameMatcherID } from './matchers/ids';
@@ -31,7 +30,7 @@ const customTransform1: CustomTransformOperator = () => (source) => {
           fields: frame.fields.map((field) => {
             return {
               ...field,
-              values: new ArrayVector(field.values.toArray().map((v) => v / 100)),
+              values: field.values.map((v) => v / 100),
             };
           }),
         };
@@ -50,7 +49,7 @@ const customTransform2: CustomTransformOperator = () => (source) => {
           fields: frame.fields.map((field) => {
             return {
               ...field,
-              values: new ArrayVector(field.values.toArray().map((v) => v * 2)),
+              values: field.values.map((v) => v * 2),
             };
           }),
         };

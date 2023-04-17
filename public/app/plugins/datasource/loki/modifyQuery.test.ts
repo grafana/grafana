@@ -52,6 +52,8 @@ describe('addLabelToQuery()', () => {
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with an other escaped value'}                             | ${'bar'} | ${'='}   | ${'baz\\\\'}   | ${'{foo="bar"} | logfmt | bar=`baz\\`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
+    ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, > operator and number value'}                            | ${'bar'} | ${'>'}   | ${'5'}         | ${'{foo="bar"} | logfmt | bar>5'}
+    ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, < operator and non-number value'}                        | ${'bar'} | ${'<'}   | ${'5KiB'}      | ${'{foo="bar"} | logfmt | bar<`5KiB`'}
   `(
     'should add label to query:  $query, description: $description',
     ({ query, description, label, operator, value, expectedResult }) => {
