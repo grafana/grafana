@@ -32,9 +32,10 @@ jobs:
           go-version: '1.19.2'
 
       - name: "Verify kinds"
-        run: go run .github/workflows/scripts/verify-kinds.go
+        run: make gen-cue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODEGEN_VERIFY: 1
 
       - name: "Install Actions from library"
         run: "npm install --production --prefix ./actions"
