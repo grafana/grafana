@@ -80,5 +80,6 @@ jobs:
           # GitHub administrator to update the organization secret.
           # The IT helpdesk can update the organization secret.
           github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
-          source_folder: "pkg/schemaregistry"
-          target_folder: "grafana/${{ steps.target.outputs.target }}"
+          source_folder: "pkg/schemaregistry/next"
+          target_folder: "grafana/next"
+          # target_folder: "grafana/${{ steps.target.outputs.target }}"
