@@ -51,9 +51,9 @@ func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
-// ReadPluginManifest attempts to read and verify the plugin manifest
+// readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func ReadPluginManifest(cfg *config.Cfg, body []byte) (*PluginManifest, error) {
+func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -66,21 +66,34 @@ func ReadPluginManifest(cfg *config.Cfg, body []byte) (*PluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	if err = validateManifest(cfg, manifest, block); err != nil {
+	if err = s.validateManifest(manifest, block); err != nil {
 		return nil, err
 	}
 
 	return &manifest, nil
 }
 
-func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, plugin plugins.FoundPlugin,
-	cfg *config.Cfg) (plugins.Signature, error) {
-	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
+type Signature struct {
+	verifier *manifestverifier.ManifestVerifier
+	mlog     log.Logger
+	src      plugins.PluginSource
+}
+
+func New(mlog log.Logger, src plugins.PluginSource, cfg *config.Cfg) *Signature {
+	return &Signature{
+		verifier: manifestverifier.New(cfg, mlog),
+		mlog:     mlog,
+		src:      src,
+	}
+}
+
+func (s *Signature) Calculate(ctx context.Context, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	if defaultSignature, exists := s.src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
 
 	if len(plugin.FS.Files()) == 0 {
-		mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
+		s.mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -89,13 +102,13 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 	f, err := plugin.FS.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
-			mlog.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+			s.mlog.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
 			return plugins.Signature{
 				Status: plugins.SignatureUnsigned,
 			}, nil
 		}
 
-		mlog.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		s.mlog.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -105,21 +118,21 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 			return
 		}
 		if err = f.Close(); err != nil {
-			mlog.Warn("Failed to close plugin MANIFEST file", "err", err)
+			s.mlog.Warn("Failed to close plugin MANIFEST file", "err", err)
 		}
 	}()
 
 	byteValue, err := io.ReadAll(f)
 	if err != nil || len(byteValue) < 10 {
-		mlog.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
+		s.mlog.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureUnsigned,
 		}, nil
 	}
 
-	manifest, err := ReadPluginManifest(cfg, byteValue)
+	manifest, err := s.readPluginManifest(byteValue)
 	if err != nil {
-		mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
+		s.mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -141,10 +154,10 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 	// Validate that plugin is running within defined root URLs
 	if len(manifest.RootURLs) > 0 {
 		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
-			mlog.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
+			s.mlog.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
-			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
+			s.mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
 				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureInvalid,
@@ -156,7 +169,7 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
-		err = verifyHash(mlog, plugin, p, hash)
+		err = verifyHash(s.mlog, plugin, p, hash)
 		if err != nil {
 			return plugins.Signature{
 				Status: plugins.SignatureModified,
@@ -186,13 +199,13 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 	}
 
 	if len(unsignedFiles) > 0 {
-		mlog.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
+		s.mlog.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
 		return plugins.Signature{
 			Status: plugins.SignatureModified,
 		}, nil
 	}
 
-	mlog.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
+	s.mlog.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
 	return plugins.Signature{
 		Status:     plugins.SignatureValid,
 		Type:       manifest.SignatureType,
@@ -272,7 +285,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func validateManifest(cfg *config.Cfg, m PluginManifest, block *clearsign.Block) error {
+func (s *Signature) validateManifest(m PluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}
@@ -300,5 +313,5 @@ func validateManifest(cfg *config.Cfg, m PluginManifest, block *clearsign.Block)
 		}
 	}
 
-	return manifestverifier.New(cfg, log.New("test")).Verify(m.KeyID, block)
+	return s.verifier.Verify(m.KeyID, block)
 }

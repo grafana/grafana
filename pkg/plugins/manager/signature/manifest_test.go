@@ -50,7 +50,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest(&config.Cfg{}, []byte(txt))
+		s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+		manifest, err := s.readPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -66,7 +67,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		_, err := ReadPluginManifest(&config.Cfg{}, []byte(modified))
+		s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+		_, err := s.readPluginManifest([]byte(modified))
 		require.Error(t, err)
 	})
 }
@@ -103,7 +105,8 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest(&config.Cfg{}, []byte(txt))
+		s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+		manifest, err := s.readPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -156,11 +159,12 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+			s := New(log.NewTestLogger(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.External
 				},
-			}, plugins.FoundPlugin{
+			}, &config.Cfg{})
+			sig, err := s.Calculate(context.Background(), plugins.FoundPlugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
@@ -171,7 +175,7 @@ func TestCalculate(t *testing.T) {
 					filepath.Join(basePath, "MANIFEST.txt"): {},
 					filepath.Join(basePath, "plugin.json"):  {},
 				}, basePath),
-			}, &config.Cfg{})
+			})
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
 		}
@@ -186,11 +190,12 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+		s := New(log.NewTestLogger(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.External
 			},
-		}, plugins.FoundPlugin{
+		}, &config.Cfg{})
+		sig, err := s.Calculate(context.Background(), plugins.FoundPlugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
 				Type: plugins.Renderer,
@@ -203,7 +208,7 @@ func TestCalculate(t *testing.T) {
 				filepath.Join(basePath, "plugin.json"):          {},
 				filepath.Join(basePath, "chrome-win/debug.log"): {},
 			}, basePath),
-		}, &config.Cfg{})
+		})
 		require.NoError(t, err)
 		require.Equal(t, plugins.Signature{
 			Status:     plugins.SignatureValid,
@@ -234,11 +239,12 @@ func TestCalculate(t *testing.T) {
 
 				basePath := "../testdata/app-with-child/dist"
 
-				sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+				s := New(log.NewTestLogger(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.External
 					},
-				}, plugins.FoundPlugin{
+				}, &config.Cfg{})
+				sig, err := s.Calculate(context.Background(), plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "myorgid-simple-app",
 						Type: plugins.App,
@@ -251,7 +257,7 @@ func TestCalculate(t *testing.T) {
 						filepath.Join(basePath, "plugin.json"):       {},
 						filepath.Join(basePath, "child/plugin.json"): {},
 					}, basePath),
-				}, &config.Cfg{})
+				})
 				require.NoError(t, err)
 				require.Equal(t, plugins.Signature{
 					Status:     plugins.SignatureValid,
@@ -678,7 +684,8 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateManifest(&config.Cfg{}, *tc.manifest, nil)
+			s := New(log.NewTestLogger(), &fakes.FakePluginSource{}, &config.Cfg{})
+			err := s.validateManifest(*tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})
 	}

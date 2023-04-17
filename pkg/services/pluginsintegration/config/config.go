@@ -40,7 +40,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		tracingCfg,
-		featuremgmt.ProvidePluginsToggles(features),
+		featuremgmt.ProvideToggles(features),
 	), nil
 }
 

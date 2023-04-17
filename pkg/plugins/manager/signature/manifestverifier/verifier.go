@@ -73,12 +73,12 @@ N1c5v9v/4h6qeA==
 //   - A cached value from memory if it has been already retrieved.
 //   - The Grafana.com API if the database is empty.
 func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
-	pmv.lock.Lock()
-	defer pmv.lock.Unlock()
-
 	if pmv.cfg == nil || pmv.cfg.Features == nil || !pmv.cfg.Features.IsEnabled("pluginsAPIManifestKey") {
 		return publicKeyText, nil
 	}
+
+	pmv.lock.Lock()
+	defer pmv.lock.Unlock()
 
 	key, exist := pmv.publicKeys[keyID]
 	if exist {

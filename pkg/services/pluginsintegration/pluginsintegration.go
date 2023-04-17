@@ -66,7 +66,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	filestore.ProvideService,
 	wire.Bind(new(plugins.FileStore), new(*filestore.Service)),
-	featuremgmt.ProvidePluginsToggles,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
