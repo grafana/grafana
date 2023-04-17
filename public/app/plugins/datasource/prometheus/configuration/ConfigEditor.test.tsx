@@ -41,7 +41,7 @@ describe('promSettings validateInput', () => {
 
   it('should display a custom validation message', () => {
     const invalidDuration = 'invalid';
-    const customMessage = 'This is invalid input';
+    const customMessage = 'This is invalid';
     const errorWithCustomMessage = <FieldValidationMessage>{customMessage}</FieldValidationMessage>;
     expect(validateInput(invalidDuration, DURATION_REGEX, customMessage)).toStrictEqual(errorWithCustomMessage);
   });
