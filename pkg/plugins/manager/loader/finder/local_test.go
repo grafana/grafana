@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,6 +25,11 @@ func TestFinder_Find(t *testing.T) {
 	if err != nil {
 		require.NoError(t, err)
 	}
+
+	cfg := setting.NewCfg()
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name            string
 		pluginDirs      []string
@@ -278,7 +285,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder(false)
+			f := NewLocalFinder(pCfg)
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return tc.pluginDirs
@@ -302,6 +309,10 @@ func TestFinder_Find(t *testing.T) {
 }
 
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
+	cfg := setting.NewCfg()
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	require.NoError(t, err)
+
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
 		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
@@ -311,7 +322,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(pCfg)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -326,7 +337,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(pCfg)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -341,7 +352,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(pCfg)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)

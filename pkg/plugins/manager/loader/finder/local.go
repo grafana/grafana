@@ -29,15 +29,15 @@ type Local struct {
 	devMode bool
 }
 
-func NewLocalFinder(devMode bool) *Local {
+func NewLocalFinder(cfg *config.Cfg) *Local {
 	return &Local{
-		devMode: devMode,
+		devMode: cfg.DevMode,
 		log:     log.New("local.finder"),
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg.DevMode)
+	return NewLocalFinder(cfg)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {

@@ -32,7 +32,6 @@ var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS
 	fs1Files := fs1.Files()
 	fs2Files := fs2.Files()
 
-	finder.NewLocalFinder(false)
 	sort.SliceStable(fs1Files, func(i, j int) bool {
 		return fs1Files[i] < fs1Files[j]
 	})
@@ -1435,7 +1434,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(false))
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg))
 
 	for _, cb := range cbs {
 		cb(l)
