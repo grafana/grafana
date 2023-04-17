@@ -231,7 +231,7 @@ function isLine(value: unknown): value is Line {
 
 // Each alert instance is represented by a data frame
 // Each frame consists of two fields: timestamp and state change
-function logRecordsToDataFrame(
+export function logRecordsToDataFrame(
   instanceLabels: string,
   records: LogRecord[],
   commonLabels: Array<[string, string]>,
@@ -239,7 +239,8 @@ function logRecordsToDataFrame(
 ): DataFrame {
   const parsedInstanceLabels = Object.entries<string>(JSON.parse(instanceLabels));
 
-  const timeIndex = records.map((_, index) => index);
+  // There is an artificial element at the end meaning Date.now()
+  // It exist to draw the state change from when it happened to the current time
   const timeField: DataFrameField = {
     name: 'time',
     type: FieldType.time,
@@ -247,6 +248,7 @@ function logRecordsToDataFrame(
     config: { displayName: 'Time', custom: { fillOpacity: 100 } },
   };
 
+  const timeIndex = timeField.values.map((_, index) => index);
   timeIndex.sort(fieldIndexComparer(timeField));
 
   const stateValues = new ArrayVector([...records.map((record) => record.line.current), last(records)?.line.current]);
@@ -293,7 +295,7 @@ function logRecordsToDataFrame(
         },
       },
     ],
-    length: records.length,
+    length: timeField.values.length,
     name: instanceLabels,
   };
 
