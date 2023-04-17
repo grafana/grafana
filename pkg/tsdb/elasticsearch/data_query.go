@@ -317,11 +317,23 @@ func isRawDocumentQuery(query *Query) bool {
 
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	metric := q.Metrics[0]
-	b.SortDesc(defaultTimeField, "boolean")
-	b.SortDesc("_doc", "")
+	sort := es.SortOrderDesc
+	if metric.Settings.Get("sortDirection").MustString() == "asc" {
+		// This is currently used only for log context query
+		sort = es.SortOrderAsc
+	}
+	b.Sort(sort, defaultTimeField, "boolean")
+	b.Sort(sort, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("limit").MustString(), defaultSize))
 	b.AddHighlight()
+
+	// This is currently used only for log context query to get
+	// log lines before and after the selected log line
+	searchAfter := metric.Settings.Get("searchAfter").MustArray()
+	for _, value := range searchAfter {
+		b.AddSearchAfter(value)
+	}
 
 	// For log query, we add a date histogram aggregation
 	aggBuilder := b.Agg()
@@ -342,8 +354,8 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 
 func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	metric := q.Metrics[0]
-	b.SortDesc(defaultTimeField, "boolean")
-	b.SortDesc("_doc", "")
+	b.Sort(es.SortOrderDesc, defaultTimeField, "boolean")
+	b.Sort(es.SortOrderDesc, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("size").MustString(), defaultSize))
 }

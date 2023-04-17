@@ -18,6 +18,8 @@ Grafana allows you to create alerting rules that query one or more data sources,
 
 Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
+_Video shows Alerting in Grafana v9.0. Refer to [Add Grafana managed rule]({{< relref "#add-grafana-managed-rule" >}}) (following) for current instructions._
+
 ## Add Grafana managed rule
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
@@ -77,18 +79,24 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 For more information, see [expressions documentation]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
 
-### No data and error handling
+### Configure no data and error handling
 
-Configure alerting behavior in the absence of data using information in the following tables.
+Configure alerting behavior when your alert rule evaluation returns no data or an error.
 
-| No Data Option | Description                                                                                                                               |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| No Data        | Create a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting       | Set alert rule state to `Alerting`. This option will respect the configured **Evaluate for** pending period.                              |
-| Ok             | Set alert rule state to `Normal`.                                                                                                         |
+**Note:** Alert rules that are configured to fire when an evaluation returns no data or error only fire when the entire duration of the evaluation period has finished. This means that rather than immediately firing when the alert rule condition is breached, the alert rule waits until the time set as the **For** field has finished and then fires, reducing alert noise and allowing for temporary data availability issues.
 
-| Error or timeout option | Description                                                                                                                              |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Error                   | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting                | Set alert rule state to `Alerting`. This option will respect the configured **Evaluate for** pending period.                             |
-| OK                      | Set alert rule state to `Normal`                                                                                                         |
+If your alert rule evaluation returns no data, you can set the state on your alert rule to appear as follows:
+
+| No Data  | Description                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| No Data  | Creates a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.              |
+| Ok       | Sets alert rule state to `Normal`.                                                                                                         |
+
+If your evaluation returns an error, you can set the state on your alert rule to appear as follows:
+
+| Error    | Description                                                                                                                                     |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error    | Creates an alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
+| Ok       | Sets alert rule state to `Normal`.                                                                                                              |

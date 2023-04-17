@@ -154,7 +154,15 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   // some grafana parts do not behave well.
   // we just choose the old error, if it exists,
   // otherwise the new error, if it exists.
-  currentResult.error = currentResult.error ?? newResult.error;
+  const mergedError = currentResult.error ?? newResult.error;
+  if (mergedError != null) {
+    currentResult.error = mergedError;
+  }
+
+  const mergedTraceIds = [...(currentResult.traceIds ?? []), ...(newResult.traceIds ?? [])];
+  if (mergedTraceIds.length > 0) {
+    currentResult.traceIds = mergedTraceIds;
+  }
 
   return currentResult;
 }
@@ -212,7 +220,7 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
     ...frame,
     fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
       ...field,
-      values: new ArrayVector(field.values.buffer),
+      values: new ArrayVector(field.values.toArray()),
     })),
   };
 }

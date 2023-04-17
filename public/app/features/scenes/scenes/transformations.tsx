@@ -4,6 +4,7 @@ import {
   VizPanel,
   SceneDataTransformer,
   SceneTimeRange,
+  SceneRefreshPicker,
   SceneFlexItem,
 } from '@grafana/scenes';
 
@@ -75,6 +76,6 @@ export function getTransformationsDemo(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

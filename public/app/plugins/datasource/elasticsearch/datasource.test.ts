@@ -2,7 +2,6 @@ import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 
 import {
-  ArrayVector,
   CoreApp,
   DataLink,
   DataQueryRequest,
@@ -236,13 +235,13 @@ describe('ElasticDatasource', () => {
                   name: 'Time',
                   type: FieldType.time,
                   config: {},
-                  values: new ArrayVector([1000]),
+                  values: [1000],
                 },
                 {
                   name: 'Value',
                   type: FieldType.number,
                   config: {},
-                  values: new ArrayVector([10]),
+                  values: [10],
                 },
               ],
               length: 1,
@@ -997,11 +996,11 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'urlField',
-          values: new ArrayVector([]),
+          values: [],
         },
         {
           name: 'traceField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
@@ -1065,7 +1064,7 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'someField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
@@ -1205,7 +1204,6 @@ describe('addAdhocFilters', () => {
 const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
   return {
     requestId: '',
-    dashboardId: 0,
     interval: '',
     panelId: 0,
     intervalMs: 1,

@@ -23,6 +23,7 @@ export const DashboardListPage = memo(({ match, location }: Props) => {
   const { loading, value } = useAsync<() => Promise<{ folder?: FolderDTO; pageNav?: NavModelItem }>>(() => {
     const uid = match.params.uid;
     const url = location.pathname;
+
     if (!uid || !url.startsWith('/dashboards')) {
       return Promise.resolve({});
     }
