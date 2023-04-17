@@ -55,7 +55,7 @@ const ui = {
   expiredCaret: byText(/expired/i),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
-  addSilenceButton: byRole('button', { name: /add silence/i }),
+  addSilenceButton: byRole('link', { name: /add silence/i }),
   queryBar: byPlaceholderText('Search'),
   editor: {
     timeRange: byLabelText('Timepicker', { exact: false }),
