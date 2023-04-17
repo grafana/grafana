@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { logDebug } from '@grafana/runtime';
+import { logDebug, getBackendSrv } from '@grafana/runtime';
 
-import { SQLConnectionDefaults } from '../../constants';
 import { SQLOptions } from '../../types';
 
 /**
@@ -19,45 +18,66 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
     let newOptions = { ...options };
     let optionsUpdated = false;
 
-    // Migrate the database field from the column into the jsonData object
-    if (options.database) {
-      logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
-      newOptions.database = '';
-      newOptions.jsonData = { ...jsonData, database: options.database };
-      optionsUpdated = true;
-    }
+    const updateData = async () => {
+      const settings = await getBackendSrv().get('/api/frontend/settings');
+      const { sqlConnectionLimits } = settings;
+      console.log(jsonData);
 
-    // Set default values for max open connections, max idle connection,
-    // and auto idle if they're all undefined
-    if (
-      jsonData.maxOpenConns === undefined &&
-      jsonData.maxIdleConns === undefined &&
-      jsonData.maxIdleConnsAuto === undefined
-    ) {
-      // It's expected that the default will be greater than 4
-      const maxOpenConns = SQLConnectionDefaults.MAX_CONNS;
-      const maxIdleConns = maxOpenConns;
+      // Migrate the database field from the column into the jsonData object
+      if (options.database) {
+        logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
+        newOptions.database = '';
+        newOptions.jsonData = { ...jsonData, database: options.database };
+        optionsUpdated = true;
+      }
 
-      logDebug(
-        `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
-      );
+      // Set default values for max open connections, max idle connection,
+      // and auto idle if they're all undefined
+      if (
+        jsonData.maxOpenConns === undefined &&
+        jsonData.maxIdleConns === undefined &&
+        jsonData.maxIdleConnsAuto === undefined
+      ) {
+        const { maxOpenConns, maxIdleConns } = sqlConnectionLimits;
 
-      // Spread from the jsonData in new options in case
-      // the database field was migrated as well
-      newOptions.jsonData = {
-        ...newOptions.jsonData,
-        maxOpenConns: maxOpenConns,
-        maxIdleConns: maxIdleConns,
-        maxIdleConnsAuto: true,
-      };
+        logDebug(
+          `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
+        );
 
-      // Make sure we issue an update if options changed
-      optionsUpdated = true;
-    }
+        // Spread from the jsonData in new options in case
+        // the database field was migrated as well
+        newOptions.jsonData = {
+          ...newOptions.jsonData,
+          maxOpenConns: maxOpenConns,
+          maxIdleConns: maxIdleConns,
+          maxIdleConnsAuto: true,
+        };
 
-    // Only issue an update if we changed options
-    if (optionsUpdated) {
-      onOptionsChange(newOptions);
-    }
+        // Make sure we issue an update if options changed
+        optionsUpdated = true;
+      }
+
+      // If the maximum connection lifetime hasn't been
+      // otherwise set fill in with the default from configuration
+      if (jsonData.connMaxLifetime === undefined) {
+        const { connMaxLifetime } = sqlConnectionLimits;
+
+        // Spread new options and add our value
+        newOptions.jsonData = {
+          ...newOptions.jsonData,
+          connMaxLifetime: connMaxLifetime,
+        };
+
+        // Note that we've updated the options
+        optionsUpdated = true;
+      }
+
+      // Only issue an update if we changed options
+      if (optionsUpdated) {
+        onOptionsChange(newOptions);
+      }
+    };
+
+    updateData();
   }, [onOptionsChange, options]);
 }

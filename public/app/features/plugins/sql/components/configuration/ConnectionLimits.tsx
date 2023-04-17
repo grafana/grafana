@@ -47,7 +47,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         maxOpenConns: number,
         maxIdleConns: number,
       });
-    } else if (number !== undefined) {
+    } else {
       updateJsonData({
         maxOpenConns: number,
       });
@@ -68,10 +68,10 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
       if (jsonData.maxOpenConns !== undefined) {
         maxConns = jsonData.maxOpenConns;
         idleConns = jsonData.maxOpenConns;
-      } else {
-        maxConns = SQLConnectionDefaults.MAX_CONNS;
-        idleConns = SQLConnectionDefaults.MAX_CONNS;
       }
+    } else {
+      maxConns = jsonData.maxOpenConns;
+      idleConns = jsonData.maxIdleConns;
     }
 
     updateJsonData({

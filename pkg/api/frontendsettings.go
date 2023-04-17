@@ -215,6 +215,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
 
 		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
+
+		SqlConnectionLimits: dtos.FrontendSettingsSqlConnectionLimitsDTO{
+			MaxOpenConns:    hs.Cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
+		},
 	}
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
