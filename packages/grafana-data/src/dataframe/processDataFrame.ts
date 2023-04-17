@@ -261,7 +261,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
+    const v = field.values[i];
     if (v != null) {
       return guessFieldTypeFromValue(v);
     }
@@ -362,8 +362,8 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       // Make sure it is [value,time]
       for (let i = 0; i < rowCount; i++) {
         rows.push([
-          valueField.values.get(i), // value
-          timeField.values.get(i), // time
+          valueField.values[i], // value
+          timeField.values[i], // time
         ]);
       }
 
@@ -381,7 +381,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   for (let i = 0; i < rowCount; i++) {
     const row: any[] = [];
     for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values.get(i));
+      row.push(fields[j].values[i]);
     }
     rows.push(row);
   }
@@ -463,7 +463,7 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
 export function getDataFrameRow(data: DataFrame, row: number): any[] {
   const values: any[] = [];
   for (const field of data.fields) {
-    values.push(field.values.get(row));
+    values.push(field.values[row]);
   }
   return values;
 }
