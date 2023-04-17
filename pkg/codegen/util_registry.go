@@ -46,11 +46,11 @@ func GetPublishedKind(name string, category string) (string, error) {
 		if resp.StatusCode == http.StatusNotFound {
 			return "", nil
 		}
-		return "", err
+		return "", fmt.Errorf("error retrieving published kind from GH, %d: %w", resp.StatusCode, err)
 	}
 	content, err := file.GetContent()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error decoding published kind content: %w", err)
 	}
 
 	return content, nil
