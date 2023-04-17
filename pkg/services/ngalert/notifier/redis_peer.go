@@ -398,12 +398,7 @@ func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Regis
 	go p.receiveLoop(key, sub)
 	p.subs[key] = sub
 	p.statesMtx.Unlock()
-	return &RedisChannel{
-		p:       p,
-		key:     key,
-		channel: p.withPrefix(key),
-		msgType: update,
-	}
+	return newRedisChannel(p, key, p.withPrefix(key), update)
 }
 
 func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
@@ -597,27 +592,4 @@ func (p *redisPeer) Shutdown() {
 	if del.Err() != nil {
 		p.logger.Error("error deleting the redis key on shutdown", "err", del.Err(), "key", p.withPrefix(p.name))
 	}
-}
-
-type RedisChannel struct {
-	p       *redisPeer
-	key     string
-	channel string
-	msgType string
-}
-
-func (c *RedisChannel) Broadcast(b []byte) {
-	b, err := proto.Marshal(&clusterpb.Part{Key: c.key, Data: b})
-	if err != nil {
-		return
-	}
-	pub := c.p.redis.Publish(context.Background(), c.channel, string(b))
-	// An error here might not be as critical as one might think on first sight.
-	// The state will eventually be propagted to other members by the full sync.
-	if pub.Err() != nil {
-		c.p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
-		return
-	}
-	c.p.messagesSent.WithLabelValues(c.msgType).Inc()
-	c.p.messagesSentSize.WithLabelValues(c.msgType).Add(float64(len(b)))
 }
