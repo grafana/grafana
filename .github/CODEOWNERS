@@ -603,6 +603,7 @@ embed.go @grafana/grafana-as-code
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot
 
