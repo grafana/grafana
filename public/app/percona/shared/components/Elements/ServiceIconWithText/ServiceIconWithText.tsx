@@ -11,10 +11,10 @@ export const ServiceIconWithText: FC<ServiceIconWithTextProps> = ({ dbType, text
   const icon: IconName = DATABASE_ICONS[dbType];
   const styles = useStyles2(getStyles);
 
-  return icon ? (
+  return (
     <div className={styles.wrapper}>
-      <Icon name={icon} />
+      {!!icon && <Icon name={icon} data-testid="service-icon" />}
       <span>{text}</span>
     </div>
-  ) : null;
+  );
 };
