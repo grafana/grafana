@@ -6,6 +6,7 @@ import { vectorToArray } from './vectorToArray';
 /**
  * RowVector makes the row values look like a vector
  * @internal
+ * @deprecated use a simple Arrays
  */
 export class RowVector extends FunctionalVector<number> {
   constructor(private columns: Vector[]) {
