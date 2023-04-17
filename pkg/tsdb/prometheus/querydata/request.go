@@ -2,6 +2,7 @@ package querydata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -173,6 +174,16 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
+
+	// return errors speciically for healthcheck
+	if q.RefId == "__healthcheck__" {
+		if res.Status != "200 OK" {
+			return backend.DataResponse{
+				Error: errors.New(res.Status),
+			}
+		}
+	}
+
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,

@@ -147,7 +147,7 @@ describe('PrometheusDatasource', () => {
       // await expect(directDs.metricFindQuery('label_names(foo)')).rejects.toBeDefined();
 
       jest.spyOn(console, 'error').mockImplementation(() => {});
-      await expect(directDs.testDatasource()).resolves.toMatchObject({
+      await expect(directDs.testBrowserAccess()).resolves.toMatchObject({
         message: expect.stringMatching('Browser access'),
         status: 'error',
       });

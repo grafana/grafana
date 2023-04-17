@@ -1050,8 +1050,9 @@ export class PrometheusDatasource
     );
   }
 
-  async testDatasource() {
+  async testBrowserAccess() {
     const now = new Date().getTime();
+    // eslint-disable-next-line
     const request: DataQueryRequest<PromQuery> = {
       targets: [{ refId: 'test', expr: '1+1', instant: true }],
       requestId: `${this.id}-health`,
@@ -1069,24 +1070,27 @@ export class PrometheusDatasource
 
     const buildInfo = await this.getBuildInfo();
 
-    return lastValueFrom(this.query(request))
-      .then((res: DataQueryResponse) => {
-        if (!res || !res.data || res.state !== LoadingState.Done) {
-          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
-        } else {
-          return {
-            status: 'success',
-            message: 'Data source is working',
-            details: buildInfo && {
-              verboseMessage: this.getBuildInfoMessage(buildInfo),
-            },
-          };
-        }
-      })
-      .catch((err: any) => {
-        console.error('Prometheus Error', err);
-        return { status: 'error', message: err.message };
-      });
+    return (
+      lastValueFrom(this.query(request))
+        .then((res: DataQueryResponse) => {
+          if (!res || !res.data || res.state !== LoadingState.Done) {
+            return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
+          } else {
+            return {
+              status: 'success',
+              message: 'Data source is working',
+              details: buildInfo && {
+                verboseMessage: this.getBuildInfoMessage(buildInfo),
+              },
+            };
+          }
+        })
+        // eslint-disable-next-line
+        .catch((err: any) => {
+          console.error('Prometheus Error', err);
+          return { status: 'error', message: err.message };
+        })
+    );
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
