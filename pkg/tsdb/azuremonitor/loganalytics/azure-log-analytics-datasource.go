@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -141,10 +142,15 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 			resources = azureTracesTarget.Resources
 			resourceOrWorkspace = azureTracesTarget.Resources[0]
 
-			queryString = buildTracesQuery(queryJSONModel.AzureTraces.OperationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
+			operationId := ""
+			if queryJSONModel.AzureTraces.OperationId != nil {
+				operationId = *queryJSONModel.AzureTraces.OperationId
+			}
+
+			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
 			traceIdVariable := "${__data.fields.traceID}"
-			if queryJSONModel.AzureTraces.OperationId == nil {
-				traceExploreQuery = buildTracesQuery(&traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
+			if operationId == "" {
+				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
 			} else {
 				traceExploreQuery = queryString
 			}
@@ -206,7 +212,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponse
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && *queryJSONModel.AzureTraces.OperationId != "" {
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
 		query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
 		if err != nil {
 			dataResponse.Error = err
@@ -613,21 +619,31 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId *string, traceTypes []string, filters []types.TracesFilters) string {
+func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
 	}
+	sort.Strings(types)
 
+	tagsMap := make(map[string]bool)
 	var tags []string
 	for _, t := range types {
-		tags = append(tags, getTagsForTable(t)...)
+		tableTags := getTagsForTable(t)
+		for _, i := range tableTags {
+			if tagsMap[i] {
+				continue
+			}
+			tags = append(tags, i)
+			tagsMap[i] = true
+		}
 	}
+	sort.Strings(tags)
 
 	whereClause := ""
 
-	if *operationId != "" {
-		whereClause = fmt.Sprintf("| where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", *operationId, *operationId)
+	if operationId != "" {
+		whereClause = fmt.Sprintf("| where (operation_Id != '' and operation_Id == '%s') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '%s')", operationId, operationId)
 	}
 
 	filtersClause := ""
@@ -645,7 +661,7 @@ func buildTracesQuery(operationId *string, traceTypes []string, filters []types.
 			for _, val := range filter.Filters {
 				filterValues = append(filterValues, fmt.Sprintf(`"%s"`, val))
 			}
-			filtersClause += fmt.Sprintf("| where %s %s (%s) \n", filter.Property, operation, strings.Join(filterValues, ","))
+			filtersClause += fmt.Sprintf("| where %s %s (%s)\n", filter.Property, operation, strings.Join(filterValues, ","))
 		}
 	}
 
