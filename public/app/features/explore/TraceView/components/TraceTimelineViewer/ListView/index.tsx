@@ -266,7 +266,10 @@ export default class ListView extends React.Component<TListViewProps> {
     const listViewOffset = listViewTop - scrollElementTop;
 
     const itemOffset = this.getRowPosition(index).y;
-    this.props.scrollElement?.scrollTo({ top: itemOffset + listViewOffset - headerHeight });
+
+    // hard code a small offset to leave a little bit of space above the focused span, so it is visually clear
+    // that there is content above
+    this.props.scrollElement?.scrollTo({ top: itemOffset + listViewOffset - headerHeight - 80 });
   };
 
   /**

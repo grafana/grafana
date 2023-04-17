@@ -64,6 +64,7 @@ type Props = {
   splitOpenFn?: SplitOpen;
   exploreId?: ExploreId;
   scrollElement?: Element;
+  scrollElementClass?: string;
   traceProp: Trace;
   spanFindMatches?: Set<string>;
   search: string;
@@ -143,6 +144,9 @@ export function TraceView(props: Props) {
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const scrollElement = props.scrollElement
+    ? props.scrollElement
+    : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
   return (
     <>
@@ -213,7 +217,7 @@ export function TraceView(props: Props) {
             linksGetter={() => []}
             uiFind={props.search}
             createSpanLink={createSpanLink}
-            scrollElement={props.scrollElement}
+            scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
             focusedSpanIdForSearch={
               config.featureToggles.newTraceView ? newTraceViewFocusedSpanIdForSearch : props.focusedSpanIdForSearch!
