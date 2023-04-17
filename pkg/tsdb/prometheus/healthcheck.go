@@ -43,6 +43,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		Method:        http.MethodGet,
 	})
 
+	// all errors from the health check + incorrect url strings longer than 1 character
 	if err != nil {
 		return getHealthCheckMessage(logger, "Prometheus healthcheck error.", err)
 	}
@@ -54,11 +55,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return healthcheckFallback(ctx, req, i)
 		}
 
+		// sometimes it will time out and not return an error, but the body will be some network redirect
+		if string(resp.Body) != "Prometheus Server is Healthy.\n" {
+			return getHealthCheckMessage(logger, string(req.PluginContext.DataSourceInstanceSettings.URL), errors.New("error accessing url"))
+		}
+
+		// the healthcheck works
 		return getHealthCheckMessage(logger, string(resp.Body), nil)
 	}
 
 	// for everything else
-	return getHealthCheckMessage(logger, "", errors.New("unknown prometheus issue"))
+	return getHealthCheckMessage(logger, "please check your configuration", errors.New("unknown prometheus issue"))
 }
 
 func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
@@ -113,5 +120,6 @@ func healthcheckFallback(ctx context.Context, req *backend.CheckHealthRequest, i
 		return getHealthCheckMessage(logger, "Prometheus datasource configuration error", errors.New(resp.Responses[refID].Error.Error()))
 	}
 
+	// the health check fallback works
 	return getHealthCheckMessage(logger, "A successful query has been made.", nil)
 }
