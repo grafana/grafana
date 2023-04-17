@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, CollapsableSection, Icon, Link, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Link, LinkButton, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
@@ -75,15 +75,13 @@ const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }:
   return (
     <div data-testid="silences-table">
       {!!silences.length && (
-        <>
+        <Stack direction="column">
           <SilencesFilter />
           <Authorize actions={[permissions.create]} fallback={contextSrv.isEditor}>
             <div className={styles.topButtonContainer}>
-              <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
-                <Button className={styles.addNewSilence} icon="plus">
-                  Add Silence
-                </Button>
-              </Link>
+              <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
+                Add Silence
+              </LinkButton>
             </div>
           </Authorize>
           <SilenceList
@@ -91,18 +89,20 @@ const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }:
             alertManagerSourceName={alertManagerSourceName}
             dataTestId="not-expired-table"
           />
-          <CollapsableSection label="Expired" isOpen={showExpiredFromUrl} className={styles.wrapper}>
-            <div className={styles.callout}>
-              <Icon className={styles.calloutIcon} name="info-circle" />
-              <span>Expired silences are automatically deleted after 5 days.</span>
-            </div>
-            <SilenceList
-              items={itemsExpired}
-              alertManagerSourceName={alertManagerSourceName}
-              dataTestId="expired-table"
-            />
-          </CollapsableSection>
-        </>
+          {itemsExpired.length > 0 && (
+            <CollapsableSection label={`Expired silences (${itemsExpired.length})`} isOpen={showExpiredFromUrl}>
+              <div className={styles.callout}>
+                <Icon className={styles.calloutIcon} name="info-circle" />
+                <span>Expired silences are automatically deleted after 5 days.</span>
+              </div>
+              <SilenceList
+                items={itemsExpired}
+                alertManagerSourceName={alertManagerSourceName}
+                dataTestId="expired-table"
+              />
+            </CollapsableSection>
+          )}
+        </Stack>
       )}
       {!silences.length && <NoSilencesSplash alertManagerSourceName={alertManagerSourceName} />}
     </div>
@@ -187,7 +187,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin-top: ${theme.spacing(2)};
 
     & > * {
       margin-left: ${theme.spacing(1)};
@@ -198,9 +197,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   editButton: css`
     margin-left: ${theme.spacing(0.5)};
-  `,
-  wrapper: css`
-    width: fit-content;
   `,
 });
 

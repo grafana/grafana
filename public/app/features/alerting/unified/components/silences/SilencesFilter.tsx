@@ -87,8 +87,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     align-items: flex-end;
-    padding-bottom: ${theme.spacing(2)};
-    border-bottom: 1px solid ${theme.colors.border.strong};
+    padding-bottom: ${theme.spacing(3)};
+    border-bottom: 1px solid ${theme.colors.border.medium};
   `,
   rowChild: css`
     margin-right: ${theme.spacing(1)};
