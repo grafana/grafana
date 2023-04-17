@@ -5,8 +5,7 @@ on:
   push:
     branches:
       - "agnestoulet/schema-registry"
-    paths:
-      - "pkg/schemaregistry/**"
+
 # on:
 #   push:
 #     branches:
@@ -14,7 +13,7 @@ on:
 #     tags:
 #       - v[0-9]+.[0-9]+.[0-9]+
 #     paths:
-#       - "docs/sources/**"
+#       - "pkg/schemaregistry/**"
 #   workflow_dispatch:
 
 jobs:
