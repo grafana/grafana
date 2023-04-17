@@ -262,7 +262,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
-	
+
 	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
 		f, ok := folderCache[GENERAL_FOLDER]
 		if !ok {
