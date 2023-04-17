@@ -1,5 +1,3 @@
-import { Location } from 'history';
-
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
@@ -9,29 +7,27 @@ import appEvents from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
 
-export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
+export const enrichHelpItem = (helpItem: NavModelItem) => {
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   };
 
-  items.forEach((link) => {
-    let menuItems = link.children || [];
+  let menuItems = helpItem.children || [];
 
-    if (link.id === 'help') {
-      link.children = [
-        ...menuItems,
-        ...getFooterLinks(),
-        ...getEditionAndUpdateLinks(),
-        {
-          id: 'keyboard-shortcuts',
-          text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
-          icon: 'keyboard',
-          onClick: onOpenShortcuts,
-        },
-      ];
-    }
-  });
-  return items;
+  if (helpItem.id === 'help') {
+    helpItem.children = [
+      ...menuItems,
+      ...getFooterLinks(),
+      ...getEditionAndUpdateLinks(),
+      {
+        id: 'keyboard-shortcuts',
+        text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
+        icon: 'keyboard',
+        onClick: onOpenShortcuts,
+      },
+    ];
+  }
+  return helpItem;
 };
 
 export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {

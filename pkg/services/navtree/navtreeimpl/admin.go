@@ -96,7 +96,6 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 		Text:       "Configuration",
 		SubTitle:   "Organization: " + c.OrgName,
 		Icon:       "cog",
-		Section:    navtree.NavSectionConfig,
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
 	}
@@ -161,7 +160,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		Id:         navtree.NavIDAdmin,
 		Icon:       "shield",
 		SortWeight: navtree.WeightAdmin,
-		Section:    navtree.NavSectionConfig,
 		Children:   adminNavLinks,
 	}
 
