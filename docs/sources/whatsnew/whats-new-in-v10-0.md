@@ -256,9 +256,9 @@ Simplifies the alert rule creation process by introducing a wizard to guide you 
 
 Use the improved State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
 
-### Improved templating experience
+### Test notification templates from within Grafana
 
-Text tbd.
+Create notification templates for custom alert rules or existing active alert rules to preview how they will look before using them in your contact points.
 
 ## Security
 
