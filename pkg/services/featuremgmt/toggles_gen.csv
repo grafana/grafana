@@ -78,3 +78,4 @@ useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,
 enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
 advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
+opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true

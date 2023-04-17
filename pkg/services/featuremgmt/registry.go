@@ -526,5 +526,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "opensearchDetectVersion",
+			Description:  "Enable version detection in OpenSearch",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
+		},
 	}
 )
