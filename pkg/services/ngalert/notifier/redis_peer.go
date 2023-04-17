@@ -39,6 +39,8 @@ const (
 	networkRetryIntervalMax = time.Second * 10
 	membersSyncInterval     = time.Second * 5
 	waitForMsgIdle          = time.Millisecond * 100
+	reasonBufferOverflow    = "buffer_overflow"
+	reasonRedisIssue        = "redis_issue"
 )
 
 type redisPeer struct {
@@ -134,7 +136,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	messagesPublishFailures := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "alertmanager_cluster_messages_publish_failures_total",
 		Help: "Total number of messages that failed to be published.",
-	}, []string{"msg_type"})
+	}, []string{"msg_type", "reason"})
 	gossipClusterMembers := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "alertmanager_cluster_members",
 		Help: "Number indicating current number of members in cluster.",
@@ -172,8 +174,9 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	messagesSentSize.WithLabelValues(fullState)
 	messagesSent.WithLabelValues(update)
 	messagesSentSize.WithLabelValues(update)
-	messagesPublishFailures.WithLabelValues(fullState)
-	messagesPublishFailures.WithLabelValues(update)
+	messagesPublishFailures.WithLabelValues(fullState, reasonRedisIssue)
+	messagesPublishFailures.WithLabelValues(update, reasonRedisIssue)
+	messagesPublishFailures.WithLabelValues(update, reasonBufferOverflow)
 
 	reg.MustRegister(messagesReceived, messagesReceivedSize, messagesSent, messagesSentSize,
 		gossipClusterMembers, peerPosition, healthScore, nodePingDuration, nodePingFailures,
@@ -487,7 +490,7 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 func (p *redisPeer) fullStateSyncPublish() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannel), p.LocalState())
 	if pub.Err() != nil {
-		p.messagesPublishFailures.WithLabelValues(fullState).Inc()
+		p.messagesPublishFailures.WithLabelValues(fullState, reasonRedisIssue).Inc()
 		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
 	}
 }
@@ -508,7 +511,7 @@ func (p *redisPeer) fullStateSyncPublishLoop() {
 func (p *redisPeer) requestFullState() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannelReq), p.name)
 	if pub.Err() != nil {
-		p.messagesPublishFailures.WithLabelValues(fullState).Inc()
+		p.messagesPublishFailures.WithLabelValues(fullState, reasonRedisIssue).Inc()
 		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannelReq))
 	}
 }
