@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -459,6 +460,49 @@ func TestDashAlertMigration(t *testing.T) {
 	}
 }
 
+// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of models.
+func TestDashAlertMigrationFolders(t *testing.T) {
+	// Run initial migration to have a working DB.
+	x := setupTestDB(t)
+
+	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
+		o := createOrg(t, 1)
+		folder1 := createDashboard(t, 1, o.Id, "folder-1")
+		folder1.IsFolder = true
+		dash1 := createDashboard(t, 3, o.Id, "dash1")
+		dash1.FolderId = folder1.Id
+		dash2 := createDashboard(t, 4, o.Id, "dash2")
+		dash2.FolderId = 22 // missing folder
+
+		a1 := createAlert(t, o.Id, dash1.Id, int64(1), "alert-1", []string{})
+		a2 := createAlert(t, o.Id, dash2.Id, int64(1), "alert-2", []string{})
+
+		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
+		require.NoError(t, err)
+
+		runDashAlertMigrationTestRun(t, x)
+
+		rules := getAlertRules(t, x, o.Id)
+		require.Len(t, rules, 2)
+
+		var generalFolder models.Dashboard
+		_, err = x.Table(&models.Dashboard{}).Where("title = ? AND org_id = ?", ualert.GENERAL_FOLDER, o.Id).Get(&generalFolder)
+		require.NoError(t, err)
+
+		require.NotNil(t, generalFolder)
+
+		for _, rule := range rules {
+			var expectedFolder models.Dashboard
+			if rule.Title == a1.Name {
+				expectedFolder = *folder1
+			} else {
+				expectedFolder = generalFolder
+			}
+			require.Equal(t, expectedFolder.Uid, rule.NamespaceUID)
+		}
+	})
+}
+
 // setupTestDB prepares the sqlite database and runs OSS migrations to initialize the schemas.
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
@@ -593,6 +637,18 @@ func teardown(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, err)
 }
 
+func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
+	_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
+	require.NoError(t, errDeleteMig)
+
+	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
+	alertMigrator.AddMigration(ualert.RmMigTitle, &ualert.RmMigration{})
+	ualert.AddDashAlertMigration(alertMigrator)
+
+	errRunningMig := alertMigrator.Start(false, 0)
+	require.NoError(t, errRunningMig)
+}
+
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
@@ -635,6 +691,14 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 		_, alertErr := x.Insert(alerts)
 		require.NoError(t, alertErr)
 	}
+}
+
+func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertRule {
+	rules := make([]*ngModels.AlertRule, 0)
+	err := x.Table("alert_rule").Where("org_id = ?", orgId).Find(&rules)
+	require.NoError(t, err)
+
+	return rules
 }
 
 // getAlertmanagerConfig retreives the Alertmanager Config from the database for a given orgId.
