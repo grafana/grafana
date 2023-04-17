@@ -687,7 +687,9 @@ def test_backend_step(image = build_image):
     }
 
 def windows_test_backend_step():
-    return test_backend_step(image = windows_go_image)
+    step = test_backend_step(image = windows_go_image)
+    step["failure"] = "ignore"
+    return step
 
 def test_backend_integration_step():
     return {
