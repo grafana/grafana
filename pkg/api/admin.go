@@ -33,6 +33,27 @@ func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, settings)
 }
 
+// swagger:route GET /admin/verbise-settings admin adminGetVerboseSettings
+//
+// Fetch verbise settings.
+//
+// This endpoint will render the same as `GET /admin/settings`, but this endpoint will render all sources for every setting.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: adminGetSettingsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+func (hs *HTTPServer) AdminGetVerboseSettings(c *contextmodel.ReqContext) response.Response {
+	verboseSettings, err := hs.getAuthorizedVerboseSettings(c.Req.Context(), c.SignedInUser, hs.SettingsProvider.CurrentVerbose())
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
+	}
+	return response.JSON(http.StatusOK, verboseSettings)
+}
+
 // swagger:route GET /admin/stats admin adminGetStats
 //
 // Fetch Grafana Stats.
