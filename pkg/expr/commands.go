@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -69,6 +70,7 @@ func (gm *MathCommand) NeedsVars() []string {
 // failed to execute.
 func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteMath")
+	span.SetAttributes("expression", gm.RawExpression, attribute.Key("expression").String(gm.RawExpression))
 	defer span.End()
 	return gm.Expression.Execute(gm.refID, vars, tracer)
 }
@@ -160,6 +162,9 @@ func (gr *ReduceCommand) NeedsVars() []string {
 func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
 	defer span.End()
+
+	span.SetAttributes("reducer", gr.Reducer, attribute.Key("reducer").String(gr.Reducer))
+
 	newRes := mathexp.Results{}
 	for _, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
