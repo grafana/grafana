@@ -242,18 +242,12 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	result := make([]*CloudWatchQuery, 0, len(metricDataQueries))
 
 	for refId, mdq := range metricDataQueries {
-		metricQueryType := MetricQueryTypeSearch
-		if mdq.MetricQueryType != nil {
-			metricQueryType = *mdq.MetricQueryType
-		}
-
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
 			RefId:             refId,
 			Id:                mdq.Id,
 			Region:            mdq.Region,
 			Namespace:         mdq.Namespace,
-			MetricQueryType:   metricQueryType,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
 
@@ -263,6 +257,10 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 
 		if mdq.MetricName != nil {
 			cwQuery.MetricName = *mdq.MetricName
+		}
+
+		if mdq.MetricQueryType != nil {
+			cwQuery.MetricQueryType = *mdq.MetricQueryType
 		}
 
 		if mdq.SqlExpression != nil {
