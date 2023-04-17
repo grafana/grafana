@@ -100,7 +100,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
   const getTagKeys = () => {
     if (!tagKeys) {
-      const keys: string[] = [];
+      let keys: string[] = [];
+      let logKeys: string[] = [];
 
       trace.spans.forEach((span) => {
         span.tags.forEach((tag) => {
@@ -112,18 +113,18 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         if (span.logs !== null) {
           span.logs.forEach((log) => {
             log.fields.forEach((field) => {
-              keys.push(field.key);
+              logKeys.push(field.key);
             });
           });
         }
       });
+      keys = uniq(keys).sort();
+      logKeys = uniq(logKeys).sort();
 
       setTagKeys(
-        uniq(keys)
-          .sort()
-          .map((name) => {
-            return toOption(name);
-          })
+        [...keys, ...logKeys].map((name) => {
+          return toOption(name);
+        })
       );
     }
   };
