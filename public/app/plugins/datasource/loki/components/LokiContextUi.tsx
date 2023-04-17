@@ -206,7 +206,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 if (filter.fromParser) {
                   return filter;
                 }
-                filter.enabled = keys.some((key) => key.value === filter.value);
+                filter.enabled = keys.some((key) => key.label === filter.label);
                 return filter;
               })
             );
@@ -248,7 +248,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                     if (!filter.fromParser) {
                       return filter;
                     }
-                    filter.enabled = keys.some((key) => key.value === filter.value);
+                    filter.enabled = keys.some((key) => key.label === filter.label);
                     return filter;
                   })
                 );
