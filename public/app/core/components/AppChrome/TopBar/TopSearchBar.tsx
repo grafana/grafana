@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
+import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -24,7 +26,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
 
-  const helpNode = navIndex['help'];
+  const helpNode = enrichHelpItem(cloneDeep(navIndex['help']));
   const profileNode = navIndex['profile'];
 
   let homeUrl = config.appSubUrl || '/';
