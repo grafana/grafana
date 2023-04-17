@@ -16,14 +16,16 @@ import (
 
 // PluginSchemaRegistryJenny checks if published schemas are not updated and generates
 // ready to be published kind files into the "next" folder of the local schema registry.
-func PluginSchemaRegistryJenny(path string) codejen.OneToOne[*pfs.PluginDecl] {
+func PluginSchemaRegistryJenny(path string, latestRegistryDir string) codejen.OneToOne[*pfs.PluginDecl] {
 	return &psrJenny{
-		path: path,
+		path:              path,
+		latestRegistryDir: latestRegistryDir,
 	}
 }
 
 type psrJenny struct {
-	path string
+	path              string
+	latestRegistryDir string
 }
 
 func (j *psrJenny) JennyName() string {
@@ -36,7 +38,7 @@ func (j *psrJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	}
 
 	name := strings.ToLower(fmt.Sprintf("%s/%s", decl.PluginMeta.PascalName, decl.SchemaInterface.Name()))
-	oldKindString, err := corecodegen.GetPublishedKind(name, "composable")
+	oldKindString, err := corecodegen.GetPublishedKind(name, "composable", j.latestRegistryDir)
 	if err != nil {
 		return nil, err
 	}

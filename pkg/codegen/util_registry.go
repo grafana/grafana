@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 
@@ -20,28 +19,16 @@ const (
 )
 
 // GetPublishedKind retrieve the latest published kind from the schema registry
-func GetPublishedKind(name string, category string) (string, error) {
-	token, ok := os.LookupEnv("GITHUB_TOKEN")
-	if !ok {
-		panic(fmt.Errorf("GITHUB_TOKEN environment variable is missing"))
-	}
+func GetPublishedKind(name string, category string, latestRegistryDir string) (string, error) {
 	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
+	tc := oauth2.NewClient(ctx, nil)
 	client := github.NewClient(tc)
 
-	latestDir, err := findLatestDir(ctx, client)
-	if err != nil {
-		return "", err
-	}
-
-	if latestDir == "" {
+	if latestRegistryDir == "" {
 		return "", nil
 	}
 
-	file, _, resp, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, fmt.Sprintf("grafana/%s/%s/%s.cue", latestDir, category, name), nil)
+	file, _, resp, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, fmt.Sprintf("grafana/%s/%s/%s.cue", latestRegistryDir, category, name), nil)
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
 			return "", nil
@@ -56,7 +43,7 @@ func GetPublishedKind(name string, category string) (string, error) {
 	return content, nil
 }
 
-func findLatestDir(ctx context.Context, client *github.Client) (string, error) {
+func FindLatestDir(ctx context.Context, client *github.Client) (string, error) {
 	re := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)`)
 	latestVersion := []uint64{0, 0, 0}
 	latestDir := ""

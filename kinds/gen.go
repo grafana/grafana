@@ -16,9 +16,11 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue/errors"
+	"github.com/google/go-github/github"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/kindsys"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -36,6 +38,10 @@ func main() {
 		return def.Props().Common().MachineName
 	})
 
+	tc := oauth2.NewClient(context.Background(), nil)
+	client := github.NewClient(tc)
+	latestRegistryDir, err := codegen.FindLatestDir(context.Background(), client)
+
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		codegen.LatestJenny(cuectx.GoCoreKindParentPath, codegen.GoTypesJenny{}),
@@ -47,7 +53,7 @@ func main() {
 		codegen.YamlCRDJenny(cuectx.GoCoreKindParentPath),
 		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
-		codegen.SchemaRegistryJenny(filepath.Join("pkg", "schemaregistry")),
+		codegen.SchemaRegistryJenny(filepath.Join("pkg", "schemaregistry"), latestRegistryDir),
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/gen.go")

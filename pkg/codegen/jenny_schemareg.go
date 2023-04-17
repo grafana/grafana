@@ -13,14 +13,16 @@ import (
 
 // SchemaRegistryJenny generates lineage files into the "next" folder
 // of the local schema registry.
-func SchemaRegistryJenny(path string) OneToOne {
+func SchemaRegistryJenny(path string, latestRegistryDir string) OneToOne {
 	return &schemaregjenny{
-		path: path,
+		path:              path,
+		latestRegistryDir: latestRegistryDir,
 	}
 }
 
 type schemaregjenny struct {
-	path string
+	path              string
+	latestRegistryDir string
 }
 
 func (j *schemaregjenny) JennyName() string {
@@ -29,7 +31,7 @@ func (j *schemaregjenny) JennyName() string {
 
 func (j *schemaregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	name := kind.Props().Common().MachineName
-	oldKindString, err := GetPublishedKind(name, "core")
+	oldKindString, err := GetPublishedKind(name, "core", j.latestRegistryDir)
 	if err != nil {
 		return nil, err
 	}

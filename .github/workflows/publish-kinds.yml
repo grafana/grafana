@@ -33,7 +33,6 @@ jobs:
       - name: "Verify kinds"
         run: make gen-cue
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODEGEN_VERIFY: 1
 
       - name: "Install Actions from library"
