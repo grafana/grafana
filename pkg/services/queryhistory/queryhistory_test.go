@@ -89,9 +89,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 				SignedInUser: &usr,
 			},
 		}
-		// now := time.Now()
 		fn(t, sc)
-		// fmt.Println("TEST:", time.Now().Sub(now))
 	})
 }
 
@@ -134,7 +132,6 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.reqContext.Req.Body = mockRequestBody(cmd)
 		sc.service.patchCommentHandler(sc.reqContext)
 
-		// time.Sleep(1 * time.Second)
 		sc.service.now = func() time.Time { return start.Add(time.Second) }
 		command2 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
@@ -149,7 +146,6 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.service.starHandler(sc.reqContext)
 
 		sc.service.now = func() time.Time { return start.Add(2 * time.Second) }
-		// time.Sleep(1 * time.Second)
 		command3 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID2,
 			Queries: simplejson.NewFromAny(map[string]interface{}{
