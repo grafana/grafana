@@ -1,6 +1,5 @@
 ---
 description: Configure integrations
-draft: true
 keywords:
   - Grafana
   - alerting
