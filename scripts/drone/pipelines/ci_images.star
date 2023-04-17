@@ -1,3 +1,7 @@
+"""
+This module contains steps and pipelines relating to creating CI Docker images.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "wix_image",
@@ -52,7 +56,7 @@ def publish_ci_windows_test_image_pipeline():
                         "path": "//./pipe/docker_engine/",
                     },
                 ],
-            }
+            },
         ],
     )
 
