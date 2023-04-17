@@ -51,7 +51,8 @@ const dataSources = {
 
 const ui = {
   notExpiredTable: byTestId('not-expired-table'),
-  expiredTable: byTestId('not-expired-table'),
+  expiredTable: byTestId('expired-table'),
+  expiredCaret: byText(/expired/i),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
   addSilenceButton: byRole('button', { name: /add silence/i }),
@@ -131,13 +132,23 @@ describe('Silences', () => {
       renderSilences();
       await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
       await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
-      expect(ui.notExpiredTable.query()).not.toBeNull();
 
-      const silences = ui.silenceRow.queryAll();
+      await userEvent.click(ui.expiredCaret.get());
+      expect(ui.notExpiredTable.get()).not.toBeNull();
+      expect(ui.expiredTable.get()).not.toBeNull();
+      let silences = ui.silenceRow.queryAll();
       expect(silences).toHaveLength(3);
       expect(silences[0]).toHaveTextContent('foo=bar');
       expect(silences[1]).toHaveTextContent('foo!=bar');
       expect(silences[2]).toHaveTextContent('foo=bar');
+
+      await userEvent.click(ui.expiredCaret.getAll()[0]);
+      expect(ui.notExpiredTable.get()).not.toBeNull();
+      expect(ui.expiredTable.query()).toBeNull();
+      silences = ui.silenceRow.queryAll();
+      expect(silences).toHaveLength(2);
+      expect(silences[0]).toHaveTextContent('foo=bar');
+      expect(silences[1]).toHaveTextContent('foo!=bar');
     },
     TEST_TIMEOUT
   );
