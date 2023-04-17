@@ -9,4 +9,3 @@ if (config.bootData.settings.featureToggles.trustedTypes && window.trustedTypes 
     createScriptURL: (string) => textUtil.sanitizeUrl(string),
   });
 }
-
