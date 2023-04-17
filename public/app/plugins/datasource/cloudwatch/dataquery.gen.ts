@@ -143,10 +143,7 @@ export interface QueryEditorArrayExpression {
    * TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
    */
   expressions: unknown;
-  /**
-   * TODO this doesn't work; temporarily extended in veneer
-   */
-  type: QueryEditorExpressionType;
+  type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
 }
 
 /**

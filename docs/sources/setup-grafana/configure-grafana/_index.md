@@ -2020,6 +2020,20 @@ ha_engine_address = 127.0.0.1:6379
 
 <hr>
 
+## [plugin.plugin_id]
+
+This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
+
+Properties described in this section are available for all plugins, but you must set them individually for each plugin.
+
+### tracing
+
+> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+
+If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
+
+<hr>
+
 ## [plugin.grafana-image-renderer]
 
 For more information, refer to [Image rendering]({{< relref "../image-rendering/" >}}).

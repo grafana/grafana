@@ -11,7 +11,6 @@ import {
   FieldMatcherID,
   Field,
   MutableDataFrame,
-  ArrayVector,
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
 
@@ -115,11 +114,11 @@ export function toTimeSeriesMulti(data: DataFrame[]): DataFrame[] {
             fields: [
               {
                 ...timeField,
-                values: new ArrayVector(b.time),
+                values: b.time,
               },
               {
                 ...field,
-                values: new ArrayVector(b.value),
+                values: b.value,
                 labels: b.labels,
               },
             ],

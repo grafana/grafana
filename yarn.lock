@@ -3049,6 +3049,7 @@ __metadata:
     "@types/react": 18.0.28
     "@types/react-dom": 18.0.11
     "@types/sinon": 10.0.13
+    "@types/string-hash": 1.1.1
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 3.0.1
@@ -3076,6 +3077,7 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     rxjs: 7.8.0
     sinon: 15.0.1
+    string-hash: ^1.1.3
     tinycolor2: 1.6.0
     tslib: 2.5.0
     typescript: 4.8.4
@@ -3262,12 +3264,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.2":
-  version: 0.1.2
-  resolution: "@grafana/lezer-logql@npm:0.1.2"
+"@grafana/lezer-logql@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@grafana/lezer-logql@npm:0.1.3"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: 4b62fda9c2c7e29c48f7485df19573b96bfd34539529283980f24e9931f81b44c86b1e655bae5f50730d9d7b37bae87e6f7f7773dafaf4f6acef90b2c2cb776f
+  checksum: 160e4039ce7dd0cd304d37608c0764c24d61030a84636161161bb7cd5cd2d6f064cd3156e8814ed4cb5b8ddebeb4dbae77120f9a3eaea6afe889d99f6dd23543
   languageName: node
   linkType: hard
 
@@ -8942,6 +8944,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/chance@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "@types/chance@npm:1.1.3"
+  checksum: df2be43fab359e5fa734fb91aa1c4c15108310be0e4990d00203805a63f9b2182da74eaabc8859b742e150d970decf27a773fcc6cbf28fb5b372c9b1bd7e9b89
+  languageName: node
+  linkType: hard
+
 "@types/chrome-remote-interface@npm:0.31.9":
   version: 0.31.9
   resolution: "@types/chrome-remote-interface@npm:0.31.9"
@@ -10388,6 +10397,13 @@ __metadata:
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
   checksum: 205fdbe3326b7046d7eaf5e494d8084f2659086a266f3f9cf00bccc549c8e36e407f88168ad4383c8b07099957ad669f75f2532ed4bc70be2b037330f7bae019
+  languageName: node
+  linkType: hard
+
+"@types/string-hash@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@types/string-hash@npm:1.1.1"
+  checksum: e7cdba66dc1cfd88033d66a0fd301abd1434f8e3fc22826443073e5c33a26e5c53a26ef4e062d0ebf3f8590f506dec2351c4b952df1d04ba188bc0a48f411f17
   languageName: node
   linkType: hard
 
@@ -20134,7 +20150,7 @@ __metadata:
     "@grafana/faro-core": 1.0.2
     "@grafana/faro-web-sdk": 1.0.2
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.2
+    "@grafana/lezer-logql": 0.1.3
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": ^0.3.0
@@ -20182,6 +20198,7 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
+    "@types/chance": ^1.1.3
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/d3-force": ^3.0.0
@@ -20375,7 +20392,6 @@ __metadata:
     react-redux: 7.2.6
     react-refresh: 0.14.0
     react-resizable: 3.0.4
-    react-reverse-portal: 2.1.1
     react-router-dom: 5.3.3
     react-select: 5.7.0
     react-select-event: 5.5.1
@@ -31179,16 +31195,6 @@ __metadata:
   peerDependencies:
     react: ">= 16.3"
   checksum: cbf86ad04be0f073102489ad25a2ba101779f0f00e580d48e1be73c4057c36a4e8ee8308b020ad3dd91555bb24082ceeef674d5035a38d33a2d43aed192db7fa
-  languageName: node
-  linkType: hard
-
-"react-reverse-portal@npm:2.1.1":
-  version: 2.1.1
-  resolution: "react-reverse-portal@npm:2.1.1"
-  peerDependencies:
-    react: ^16.0.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 2daccae3ac089606acee3a13fa5cde07ef90668de775bcc49edceb3f472f82e133f0673bb3b82dc53687c3ebd781c578f81eb4368c6028acd9c4625e71964394
   languageName: node
   linkType: hard
 
