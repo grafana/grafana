@@ -202,7 +202,12 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
 
     // CommonLabels should not be affected by the filter
     // find common labels so we can extract those from the instances
-    const commonLabels = extractCommonLabels(groupedLines);
+    const groupLabels = Object.keys(groupedLines);
+    const groupLabelsArray: Array<Array<[string, string]>> = groupLabels.map((label) => {
+      return Object.entries(JSON.parse(label));
+    });
+
+    const commonLabels = extractCommonLabels(groupLabelsArray);
 
     const filterMatchers = filter ? parseMatchers(filter) : [];
     const filteredGroupedLines = Object.entries(groupedLines).filter(([key]) => {
