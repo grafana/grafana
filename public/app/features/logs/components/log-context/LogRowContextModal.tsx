@@ -120,6 +120,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 }) => {
   const scrollElement = React.createRef<HTMLDivElement>();
   const entryElement = React.createRef<HTMLTableRowElement>();
+  // We can not use `entryElement` to scroll to the right element because it's
+  // sticky. That's why we add another row and use this ref to scroll to that
+  // first.
+  const preEntryElement = React.createRef<HTMLTableRowElement>();
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -198,10 +202,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   };
 
   useLayoutEffect(() => {
-    if (entryElement.current) {
+    if (!loading && entryElement.current && preEntryElement.current) {
+      preEntryElement.current.scrollIntoView({ block: 'center' });
       entryElement.current.scrollIntoView({ block: 'center' });
     }
-  }, [entryElement, context]);
+  }, [entryElement, preEntryElement, context, loading]);
 
   useLayoutEffect(() => {
     const width = scrollElement?.current?.parentElement?.clientWidth;
@@ -252,6 +257,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 />
               </td>
             </tr>
+            <tr ref={preEntryElement}></tr>
             <tr ref={entryElement} className={styles.entry}>
               <td className={styles.noMarginBottom}>
                 <LogRows
