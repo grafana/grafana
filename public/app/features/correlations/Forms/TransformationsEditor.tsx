@@ -58,7 +58,7 @@ export const TransformationsEditor = (props: Props) => {
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label htmlFor={`config.transformations.${index}.type`}>Type</Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}-${index}.type`}>Type</Label>
                               <Tooltip
                                 content={
                                   <div>
@@ -118,7 +118,7 @@ export const TransformationsEditor = (props: Props) => {
                                   }}
                                   options={transformOptions}
                                   width={25}
-                                  aria-label="Type"
+                                  inputId={`config.transformations.${fieldVal.id}-${index}.type`}
                                 />
                               );
                             }}
@@ -130,7 +130,7 @@ export const TransformationsEditor = (props: Props) => {
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label>Field</Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}.field`}>Field</Label>
                               <Tooltip
                                 content={
                                   <div>
@@ -151,13 +151,13 @@ export const TransformationsEditor = (props: Props) => {
                             readOnly={readOnly}
                             defaultValue={fieldVal.field}
                             label="field"
-                            aria-label="field"
+                            id={`config.transformations.${fieldVal.id}.field`}
                           />
                         </Field>
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}.expression`}>
                                 Expression
                                 {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
                                   .requireExpression
@@ -194,13 +194,13 @@ export const TransformationsEditor = (props: Props) => {
                               !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
                                 .showExpression
                             }
-                            aria-label="expression"
+                            id={`config.transformations.${fieldVal.id}.expression`}
                           />
                         </Field>
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label>Map value</Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}.mapValue`}>Map value</Label>
                               <Tooltip
                                 content={
                                   <div>
@@ -223,7 +223,7 @@ export const TransformationsEditor = (props: Props) => {
                             disabled={
                               !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue
                             }
-                            aria-label="map value"
+                            id={`config.transformations.${fieldVal.id}.mapValue`}
                           />
                         </Field>
                         {!readOnly && (
@@ -257,7 +257,6 @@ export const TransformationsEditor = (props: Props) => {
                   onClick={() => append({ type: undefined }, { shouldFocus: false })}
                   variant="secondary"
                   type="button"
-                  aria-label="add transformation"
                 >
                   Add transformation
                 </Button>
@@ -305,10 +304,8 @@ function getSupportedTransTypeDetails(transType: SupportedTransformationType): S
 }
 
 const getTransformOptions = () => {
-  return Object.keys(SupportedTransformationType).map((key) => {
-    const transType = getSupportedTransTypeDetails(
-      SupportedTransformationType[key as keyof typeof SupportedTransformationType]
-    );
+  return Object.values(SupportedTransformationType).map((transformationType) => {
+    const transType = getSupportedTransTypeDetails(transformationType);
     return {
       label: transType.label,
       value: transType.value,

@@ -511,14 +511,15 @@ describe('CorrelationsPage', () => {
       let typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Logfmt'));
-      let expressionInput = screen.queryByRole('textbox', { name: 'expression' });
+
+      let expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeDisabled();
 
       // select Regex, be sure expression field is not disabled and contains the former expression
       openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Regular expression', { selector: 'span' }));
-      expressionInput = screen.getByRole('textbox', { name: 'expression' });
+      expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
       expect(expressionInput).toHaveAttribute('value', 'url=http[s]?://(S*)');
@@ -527,20 +528,20 @@ describe('CorrelationsPage', () => {
       openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Logfmt'));
       await userEvent.click(screen.getByRole('button', { name: /remove transformation/i }));
-      expressionInput = screen.queryByRole('textbox', { name: 'expression' });
+      expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
       await userEvent.click(screen.getByText('Regular expression'));
-      expressionInput = screen.queryByRole('textbox', { name: 'expression' });
+      expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
       expect(expressionInput).not.toHaveValue('url=http[s]?://(S*)');
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       expect(screen.getByText('Please define an expression')).toBeInTheDocument();
-      await userEvent.type(screen.getByRole('textbox', { name: 'expression' }), 'test expression');
+      await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
     });
@@ -607,7 +608,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
 
       // expect the transformation to exist but be read only
-      const expressionInput = screen.queryByRole('textbox', { name: 'expression' });
+      const expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toHaveAttribute('readonly');
       expect(screen.queryByRole('button', { name: 'add transformation' })).not.toBeInTheDocument();
