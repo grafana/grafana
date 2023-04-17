@@ -1,4 +1,4 @@
-import { Vector, QueryResultMeta } from '../types';
+import { QueryResultMeta } from '../types';
 import { Field, FieldType, DataFrame } from '../types/dataFrame';
 import { FunctionalVector } from '../vector/FunctionalVector';
 import { vectorToArray } from '../vector/vectorToArray';
@@ -10,10 +10,12 @@ export type ValueConverter<T = any> = (val: unknown) => T;
 
 const NOOP: ValueConverter = (v) => v;
 
-class ArrayPropertyVector<T = any> implements Vector<T> {
+class ArrayPropertyVector<T = any> extends FunctionalVector<T> {
   converter = NOOP;
 
-  constructor(private source: any[], private prop: string) {}
+  constructor(private source: any[], private prop: string) {
+    super();
+  }
 
   get length(): number {
     return this.source.length;

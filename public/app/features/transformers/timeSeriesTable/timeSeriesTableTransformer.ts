@@ -68,6 +68,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         values: new ArrayVector(),
       };
       refId2frameField[refId] = frameField;
+
       const table = new MutableDataFrame();
       for (const label of Object.values(labelFields)) {
         table.addField(label);
@@ -81,7 +82,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     const labels = frame.fields[1].labels;
     for (const labelKey of Object.keys(labelFields)) {
       const labelValue = labels?.[labelKey] ?? null;
-      labelFields[labelKey].values.add(labelValue);
+      labelFields[labelKey].values.add(labelValue!);
     }
 
     frameField.values.add(frame);
