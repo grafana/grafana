@@ -17,7 +17,3 @@ export type ResultInfo = {
   data: DataFrame[];
   error?: DataQueryError;
 };
-
-export function isDashboardQuery(q?: DataQuery): q is DashboardQuery {
-  return q?.datasource?.uid === SHARED_DASHBOARD_QUERY;
-}
