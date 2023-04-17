@@ -4,11 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   ArrayVector,
+  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   dateTime,
   durationToMilliseconds,
   Field,
+  FieldColorModeId,
   FieldType,
   parseDuration,
   TimeRange,
@@ -87,7 +89,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
-  let mergedResponse: DataQueryResponse = getLoadingResponse(requests);
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
   let shouldStop = false;
@@ -100,7 +102,6 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
     const done = () => {
       mergedResponse.state = LoadingState.Done;
-      console.log(mergedResponse);
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
@@ -132,6 +133,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse);
+        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, group.partition.slice(0, requestN - 1));
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -159,37 +161,51 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   return response;
 }
 
-function getLoadingResponse(requests: LokiGroupedRequest): DataQueryResponse {
-  const response: DataQueryResponse = { data: [], state: LoadingState.Streaming };
+function updateLoadingFrame(
+  response: DataQueryResponse,
+  request: DataQueryRequest<LokiQuery>,
+  remainingPartition: TimeRange[]
+): DataQueryResponse {
+  if (isLogsQuery(request.targets[0].expr)) {
+    return response;
+  }
+  response.data = response.data.filter(
+    (frame) => !request.targets.some((target) => frame.name === `Loading ${target.refId}`)
+  );
 
-  for (const group of requests) {
-    if (isLogsQuery(group.request.targets[0].expr)) {
-      continue;
-    }
-    for (const target of group.request.targets) {
-      response.data.push({
-        refId: target.refId,
-        length: 0,
-        fields: getLoadingFields(target, group.partition),
-      });
-    }
+  if (!remainingPartition.length) {
+    return response;
+  }
+
+  for (const target of request.targets) {
+    const loadingFrame: DataFrame = {
+      refId: target.refId,
+      name: `Loading ${target.refId}`,
+      length: 2,
+      fields: getLoadingFrameFields(target, remainingPartition),
+    };
+    response.data.push(loadingFrame);
   }
 
   return response;
 }
 
-function getLoadingFields(target: LokiQuery, partitions: TimeRange[]): Field[] {
+function getLoadingFrameFields(target: LokiQuery, partitions: TimeRange[]): Field[] {
   const timeField: Field = {
     name: 'Time',
     type: FieldType.time,
     config: {},
-    values: new ArrayVector([partitions[0].from, partitions[0].to]),
+    values: new ArrayVector([partitions[0].from.valueOf(), partitions[partitions.length - 1].to.valueOf()]),
   };
   const valuesField: Field = {
     name: 'Value',
     type: FieldType.number,
     config: {
-      displayNameFromDS: target.expr,
+      displayNameFromDS: `Loading ${target.refId}`,
+      color: {
+        mode: FieldColorModeId.Fixed,
+        fixedColor: '#999',
+      },
     },
     values: new ArrayVector([0, 0]),
   };
