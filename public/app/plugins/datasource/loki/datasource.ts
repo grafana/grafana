@@ -651,8 +651,8 @@ export class LokiDatasource
     return await this.logContextProvider.getLogRowContext(row, options, origQuery);
   };
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery);
+  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, origQuery);
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {

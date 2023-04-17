@@ -5,35 +5,32 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Label, LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { LogContextProvider } from '../LogContextProvider';
-import { ContextFilter } from '../types';
+import { lokiGrammar } from '../syntax';
+import { ContextFilter, LokiQuery } from '../types';
 
 export interface LokiContextUiProps {
   logContextProvider: LogContextProvider;
   row: LogRowModel;
   updateFilter: (value: ContextFilter[]) => void;
   onClose: () => void;
+  origQuery?: LokiQuery;
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     labels: css`
       display: flex;
-      gap: 2px;
+      gap: ${theme.spacing(0.5)};
     `,
-    multiSelectWrapper: css`
+    wrapper: css`
       display: flex;
       flex-direction: column;
       flex: 1;
-      margin-top: ${theme.spacing(1)};
       gap: ${theme.spacing(0.5)};
-    `,
-    multiSelect: css`
-      & .scrollbar-view {
-        overscroll-behavior: contain;
-      }
     `,
     loadingPlaceholder: css`
       margin-bottom: 0px;
@@ -48,23 +45,34 @@ function getStyles(theme: GrafanaTheme2) {
     hidden: css`
       visibility: hidden;
     `,
+    tag: css`
+      padding: ${theme.spacing(0.25)} ${theme.spacing(0.75)};
+    `,
+    label: css`
+      max-width: 100%;
+      margin: ${theme.spacing(2)} 0;
+    `,
+    query: css`
+      text-align: start;
+      line-break: anywhere;
+    `,
   };
 }
 
-const formatOptionLabel = memoizeOne(({ label, description }: SelectableValue<string>) => (
-  <Tooltip content={`${label}="${description}"`} placement="top" interactive={true}>
-    <span>{label}</span>
-  </Tooltip>
+const formatOptionLabel = memoizeOne(({ label, value }: SelectableValue<string>) => (
+  <span>{`${label}="${value}"`}</span>
 ));
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, logContextProvider, updateFilter, onClose } = props;
+  const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
 
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
@@ -137,38 +145,46 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const parsedLabelsEnabled = parsedLabels.filter(({ enabled }) => enabled);
 
   return (
-    <div className={styles.multiSelectWrapper}>
-      <div className={styles.textWrapper}>
-        {' '}
+    <div className={styles.wrapper}>
+      <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
+      <Collapse
+        collapsible={true}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+        label={
+          <div>
+            <RawQuery
+              className={styles.query}
+              lang={{ grammar: lokiGrammar, name: 'loki' }}
+              query={logContextProvider.processContextFiltersToExpr(
+                row,
+                contextFilters.filter(({ enabled }) => enabled),
+                origQuery
+              )}
+            />
+          </div>
+        }
+      >
         <Tooltip
           content={
             'This feature is experimental and only works on log queries containing no more than 1 parser (logfmt, json).'
           }
           placement="top"
         >
-          <Tag
-            className={css({
-              fontSize: 10,
-              padding: '1px 5px',
-              verticalAlign: 'text-bottom',
-            })}
-            name={'Experimental'}
-            colorIndex={1}
-          />
+          <Tag className={styles.tag} name={'Experimental feature'} colorIndex={1} />
         </Tooltip>{' '}
-        Select labels to be included in the context query:
-        <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
-      </div>
-      <div>
+        <Label
+          className={styles.label}
+          description="Context query is created from all labels defining the stream for the selected log line. Select labels to be included in log context query."
+        >
+          1. Select labels
+        </Label>
         <MultiSelect
-          className={styles.multiSelect}
-          prefix="Labels"
           options={realLabels}
           value={realLabelsEnabled}
           formatOptionLabel={formatOptionLabel}
           closeMenuOnSelect={true}
           maxMenuHeight={200}
-          menuShouldPortal={false}
           noOptionsMessage="No further labels available"
           onChange={(keys, actionMeta) => {
             if (actionMeta.action === 'select-option') {
@@ -196,48 +212,51 @@ export function LokiContextUi(props: LokiContextUiProps) {
             );
           }}
         />
-      </div>
-      {parsedLabels.length > 0 && (
-        <div>
-          <MultiSelect
-            className={styles.multiSelect}
-            prefix="Parsed Labels"
-            options={parsedLabels}
-            value={parsedLabelsEnabled}
-            formatOptionLabel={formatOptionLabel}
-            closeMenuOnSelect={true}
-            menuShouldPortal={false}
-            maxMenuHeight={200}
-            noOptionsMessage="No further labels available"
-            isClearable={true}
-            onChange={(keys, actionMeta) => {
-              if (actionMeta.action === 'select-option') {
-                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
-                  logRowUid: row.uid,
-                  type: 'parsed_label',
-                  action: 'select',
-                });
-              }
-              if (actionMeta.action === 'remove-value') {
-                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
-                  logRowUid: row.uid,
-                  type: 'parsed_label',
-                  action: 'remove',
-                });
-              }
-              setContextFilters(
-                contextFilters.map((filter) => {
-                  if (!filter.fromParser) {
+        {parsedLabels.length > 0 && (
+          <>
+            <Label
+              className={styles.label}
+              description="By using logfmt parser, you are able to filter for extracted labels. Select extracted labels to be included in log context query."
+            >
+              2. Add extracted label filters
+            </Label>
+            <MultiSelect
+              options={parsedLabels}
+              value={parsedLabelsEnabled}
+              formatOptionLabel={formatOptionLabel}
+              closeMenuOnSelect={true}
+              maxMenuHeight={200}
+              noOptionsMessage="No further labels available"
+              isClearable={true}
+              onChange={(keys, actionMeta) => {
+                if (actionMeta.action === 'select-option') {
+                  reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                    logRowUid: row.uid,
+                    type: 'parsed_label',
+                    action: 'select',
+                  });
+                }
+                if (actionMeta.action === 'remove-value') {
+                  reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                    logRowUid: row.uid,
+                    type: 'parsed_label',
+                    action: 'remove',
+                  });
+                }
+                setContextFilters(
+                  contextFilters.map((filter) => {
+                    if (!filter.fromParser) {
+                      return filter;
+                    }
+                    filter.enabled = keys.some((key) => key.value === filter.value);
                     return filter;
-                  }
-                  filter.enabled = keys.some((key) => key.value === filter.value);
-                  return filter;
-                })
-              );
-            }}
-          />
-        </div>
-      )}
+                  })
+                );
+              }}
+            />
+          </>
+        )}
+      </Collapse>
     </div>
   );
 }
