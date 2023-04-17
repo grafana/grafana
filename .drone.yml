@@ -873,7 +873,8 @@ steps:
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -890,7 +891,8 @@ steps:
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -1879,7 +1881,8 @@ steps:
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -1896,7 +1899,8 @@ steps:
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -5096,7 +5100,8 @@ steps:
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -5113,7 +5118,8 @@ steps:
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -5811,7 +5817,8 @@ steps:
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -5828,7 +5835,8 @@ steps:
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -6278,7 +6286,8 @@ steps:
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -6295,7 +6304,8 @@ steps:
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -6449,7 +6459,8 @@ steps:
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -6466,7 +6477,8 @@ steps:
   - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
-  - go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find
+  - go clean -testcache
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
@@ -6798,6 +6810,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 42e93963321a6fdb6ff7ff2ab0ffb9556db2dfcce3cb66ce0a487ccf84b41231
+hmac: e53822750e0418df8683dd2bc90b1c71d7415d698df64d5c0e6c13dc3b15f5e6
 
 ...
