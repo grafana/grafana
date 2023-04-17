@@ -114,7 +114,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const styles = useStyles2(getStyles);
 
   return (
-    <div style={props.style} ref={ref} className={styles.drawerContent}>
+    <div style={props.style} ref={ref} className={styles.container}>
       <div className={styles.dataSourceList}>
         <CustomScrollbar>
           <DataSourceList
@@ -124,11 +124,16 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
         </CustomScrollbar>
       </div>
 
-      <div>
-        <Button variant="secondary">Add csv or spreadsheet</Button>
+      <div className={styles.footer}>
+        <Button variant="secondary" size="sm">
+          Add csv or spreadsheet
+        </Button>
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
+              size="sm"
+              variant="secondary"
+              fill="text"
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
@@ -146,7 +151,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 });
               }}
             >
-              Open advanced
+              Open advanced data source picker
+              <Icon name="arrow-right"></Icon>
             </Button>
           )}
         </ModalsController>
@@ -158,12 +164,12 @@ PickerContent.displayName = 'PickerContent';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    drawerContent: css`
+    container: css`
       display: flex;
       flex-direction: column;
-      height: 500px;
+      height: 480px;
       box-shadow: ${theme.shadows.z3};
-      width: 500px;
+      width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
@@ -171,7 +177,15 @@ function getStyles(theme: GrafanaTheme2) {
       background: ${theme.colors.background.secondary};
     `,
     dataSourceList: css`
-      height: 450px;
+      height: 423px;
+      padding: 0 ${theme.spacing(2)};
+    `,
+    footer: css`
+      display: flex;
+      justify-content: space-between;
+      padding: ${theme.spacing(2)};
+      border-top: 1px solid ${theme.colors.border.weak};
+      height: 57px;
     `,
   };
 }
