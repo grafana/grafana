@@ -3,7 +3,7 @@
 ARG BASE_IMAGE=alpine:3.17
 ARG JS_IMAGE=node:18-alpine3.17
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.1-alpine3.17
+ARG GO_IMAGE=golang:1.20.3-alpine3.17
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -37,7 +37,7 @@ ARG BINGO="true"
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make; \
+      apk add --no-cache gcc g++ make git; \
     fi
 
 WORKDIR /tmp/grafana
@@ -62,6 +62,7 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
+COPY .git .git
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
@@ -100,7 +101,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache ca-certificates bash tzdata musl-utils && \
+      apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
       apk info -vv | sort; \
     elif grep -i -q ubuntu /etc/issue; then \
       DEBIAN_FRONTEND=noninteractive && \

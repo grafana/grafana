@@ -92,10 +92,6 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-Page.OldNavOnly = function OldNavOnly() {
-  return null;
-};
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
@@ -131,17 +127,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       borderRadius: theme.shape.borderRadius(1),
       border: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: 'none',
       background: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
       margin: theme.spacing(0, 0, 0, 0),
 
-      [theme.breakpoints.up('sm')]: {
-        margin: theme.spacing(0, 1, 1, 1),
-      },
       [theme.breakpoints.up('md')]: {
-        margin: theme.spacing(2, 2, 2, 1),
+        margin: theme.spacing(2, 2, 0, 1),
         padding: theme.spacing(3),
       },
     }),

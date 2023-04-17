@@ -29,6 +29,7 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -95,6 +96,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -113,6 +115,8 @@ import (
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
@@ -134,8 +138,6 @@ import (
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
-	"github.com/grafana/grafana/pkg/services/thumbs"
-	"github.com/grafana/grafana/pkg/services/thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -174,7 +176,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(query.Service), new(*query.ServiceImpl)),
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	thumbs.ProvideService,
 	rendering.ProvideService,
 	wire.Bind(new(rendering.Service), new(*rendering.RenderingService)),
 	routing.ProvideRegister,
@@ -184,7 +185,6 @@ var wireBasicSet = wire.NewSet(
 	localcache.ProvideService,
 	bundleregistry.ProvideService,
 	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
-	dashboardthumbsimpl.ProvideService,
 	updatechecker.ProvideGrafanaService,
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
@@ -326,6 +326,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
+	publicdashboardsmetric.ProvideService,
 	publicdashboardsApi.ProvideApi,
 	starApi.ProvideApi,
 	userimpl.ProvideService,
@@ -358,7 +359,10 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	supportbundlesimpl.ProvideService,
+	loggermw.Provide,
 	modules.WireSet,
+	signingkeysimpl.ProvideEmbeddedSigningKeysService,
+	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 )
 
 var wireSet = wire.NewSet(

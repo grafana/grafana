@@ -102,7 +102,6 @@ export type OnToggleChecked = (item: DashboardViewItem) => void;
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
-  Grid = 'grid', // preview
 }
 
 export interface SearchQueryParams {

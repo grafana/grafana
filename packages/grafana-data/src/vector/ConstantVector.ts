@@ -1,10 +1,13 @@
-import { Vector } from '../types/vector';
+import { FunctionalVector } from './FunctionalVector';
 
 /**
  * @public
+ * @deprecated use a simple Arrays
  */
-export class ConstantVector<T = any> implements Vector<T> {
-  constructor(private value: T, private len: number) {}
+export class ConstantVector<T = any> extends FunctionalVector<T> {
+  constructor(private value: T, private len: number) {
+    super();
+  }
 
   get length() {
     return this.len;

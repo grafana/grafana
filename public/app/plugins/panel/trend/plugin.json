@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Trend",
+  "id": "trend",
+
+  "state": "alpha",
+
+  "info": {
+    "description": "Like timeseries, but when x != time",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/trend.svg",
+      "large": "img/trend.svg"
+    }
+  }
+}

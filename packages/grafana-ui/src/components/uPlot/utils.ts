@@ -114,9 +114,8 @@ export function getStackingGroups(frame: DataFrame) {
     }
 
     // will this be stacked up or down after any transforms applied
-    let vals = values.toArray();
     let transform = custom.transform;
-    let stackDir = getStackDirection(transform, vals);
+    let stackDir = getStackDirection(transform, values);
 
     let drawStyle = custom.drawStyle as GraphDrawStyle;
     let drawStyle2 =
@@ -174,7 +173,7 @@ export function preparePlotData2(
         return;
       }
 
-      let vals = field.values.toArray();
+      let vals = field.values;
 
       for (let i = 0; i < dataLen; i++) {
         if (vals[i] != null) {
@@ -185,11 +184,11 @@ export function preparePlotData2(
   });
 
   frame.fields.forEach((field, i) => {
-    let vals = field.values.toArray();
+    let vals = field.values;
 
     if (i === 0) {
       if (field.type === FieldType.time) {
-        data[i] = ensureTimeField(field).values.toArray();
+        data[i] = ensureTimeField(field).values;
       } else {
         data[i] = vals;
       }
@@ -350,7 +349,7 @@ function getStackDirection(transform: GraphTransform, data: unknown[]) {
 }
 
 // similar to isLikelyAscendingVector()
-function hasNegSample(data: unknown[], samples = 50) {
+function hasNegSample(data: unknown[], samples = 100) {
   const len = data.length;
 
   if (len === 0) {
@@ -369,15 +368,26 @@ function hasNegSample(data: unknown[], samples = 50) {
     lastIdx--;
   }
 
+  let negCount = 0;
+  let posCount = 0;
+
   if (lastIdx >= firstIdx) {
     const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
 
     for (let i = firstIdx; i <= lastIdx; i += stride) {
       const v = data[i];
 
-      if (v != null && (v < 0 || Object.is(v, -0))) {
-        return true;
+      if (v != null) {
+        if (v < 0 || Object.is(v, -0)) {
+          negCount++;
+        } else if (v > 0) {
+          posCount++;
+        }
       }
+    }
+
+    if (negCount > posCount) {
+      return true;
     }
   }
 

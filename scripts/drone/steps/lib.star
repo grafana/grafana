@@ -9,14 +9,14 @@ load(
 )
 
 grabpl_version = "v3.0.30"
-build_image = "grafana/build-container:1.7.2"
+build_image = "grafana/build-container:1.7.3"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
 alpine_image = "alpine:3.17.1"
 curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.20.1"
+go_image = "golang:1.20.3"
 
 trigger_oss = {
     "repo": [
@@ -171,6 +171,7 @@ def init_enterprise_step(ver_mode):
         "image": build_image,
         "depends_on": [
             "clone-enterprise",
+            "grabpl",
         ],
         "environment": environment,
         "commands": [
@@ -622,7 +623,7 @@ def test_backend_integration_step():
             "wire-install",
         ],
         "commands": [
-            "go test -run Integration -covermode=atomic -timeout=5m ./pkg/...",
+            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
         ],
     }
 
@@ -1095,9 +1096,8 @@ def postgres_integration_tests_step():
         "dockerize -wait tcp://postgres:5432 -timeout 120s",
         "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
         "devenv/docker/blocks/postgres_tests/setup.sql",
-        # Make sure that we don't use cached results for another database
         "go clean -testcache",
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
         "name": "postgres-integration-tests",
@@ -1117,9 +1117,8 @@ def mysql_integration_tests_step():
         "apt-get install -yq default-mysql-client",
         "dockerize -wait tcp://mysql:3306 -timeout 120s",
         "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass",
-        # Make sure that we don't use cached results for another database
         "go clean -testcache",
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
         "name": "mysql-integration-tests",
@@ -1143,7 +1142,7 @@ def redis_integration_tests_step():
         "commands": [
             "dockerize -wait tcp://redis:6379/0 -timeout 120s",
             "go clean -testcache",
-            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+            "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
         ],
     }
 
@@ -1158,7 +1157,7 @@ def memcached_integration_tests_step():
         "commands": [
             "dockerize -wait tcp://memcached:11211 -timeout 120s",
             "go clean -testcache",
-            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+            "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
         ],
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/input-datasource",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "description": "Input Datasource",
   "private": true,
   "repository": {
@@ -15,20 +15,20 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
-    "@grafana/toolkit": "9.5.0-pre",
+    "@grafana/toolkit": "10.0.0-pre",
     "@types/jest": "26.0.15",
     "@types/lodash": "4.14.149",
-    "@types/react": "17.0.30",
+    "@types/react": "18.0.28",
     "lodash": "4.17.21"
   },
   "dependencies": {
-    "@grafana/data": "9.5.0-pre",
-    "@grafana/ui": "9.5.0-pre",
+    "@grafana/data": "10.0.0-pre",
+    "@grafana/ui": "10.0.0-pre",
     "jquery": "3.5.1",
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-hook-form": "7.5.3",
-    "react-router-dom": "^5.2.0",
+    "react-router-dom": "5.3.3",
     "tslib": "2.4.0"
   }
 }

@@ -116,8 +116,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.h5.fontSize,
       marginTop: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
-      // To make room for section toggle button when section is active
-      marginRight: theme.spacing(4),
     }),
     noRootMargin: css({
       marginBottom: 0,

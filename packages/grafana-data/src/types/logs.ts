@@ -1,9 +1,10 @@
 import { Observable } from 'rxjs';
 
+import { DataQuery } from '@grafana/schema';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
-import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -103,40 +104,21 @@ export interface LogLabelStatsModel {
   value: string;
 }
 
-/** @deprecated will be removed in the next major version */
-export interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
 export enum LogsDedupDescription {
   none = 'No de-duplication',
   exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
+}
+
+export interface LogRowContextOptions {
+  direction?: LogRowContextQueryDirection;
+  limit?: number;
+}
+
+export enum LogRowContextQueryDirection {
+  Backward = 'BACKWARD',
+  Forward = 'FORWARD',
 }
 
 /**
@@ -147,11 +129,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions,
-    query?: TQuery
-  ) => Promise<DataQueryResponse>;
+  getLogRowContext: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<DataQueryResponse>;
 
   /**
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
@@ -203,30 +181,6 @@ export type LogsVolumeCustomMetaData = {
   logsVolumeType: LogsVolumeType;
   datasourceName: string;
   sourceQuery: DataQuery;
-};
-
-export const getLogsVolumeAbsoluteRange = (
-  dataFrames: DataFrame[],
-  defaultRange: AbsoluteTimeRange
-): AbsoluteTimeRange => {
-  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
-};
-
-export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {
-  const customMeta = dataFrames[0]?.meta?.custom;
-
-  if (customMeta && customMeta.datasourceName && customMeta.sourceQuery?.refId) {
-    return {
-      name: customMeta.datasourceName,
-      refId: customMeta.sourceQuery.refId,
-    };
-  }
-
-  return null;
-};
-
-export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
-  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
 /**

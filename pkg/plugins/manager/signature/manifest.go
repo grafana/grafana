@@ -12,17 +12,14 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/gobwas/glob"
-
-	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
-	// nolint:staticcheck
-	"golang.org/x/crypto/openpgp"
-	// nolint:staticcheck
-	"golang.org/x/crypto/openpgp/clearsign"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -55,7 +52,12 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-var runningWindows = runtime.GOOS == "windows"
+var (
+	runningWindows = runtime.GOOS == "windows"
+
+	// toSlash is filepath.ToSlash, but can be overwritten in tests path separators cross-platform
+	toSlash = filepath.ToSlash
+)
 
 // PluginManifest holds details for the file manifest
 type PluginManifest struct {
@@ -194,6 +196,9 @@ func Calculate(ctx context.Context, mlog log.Logger, src plugins.PluginSource, p
 	// Track files missing from the manifest
 	var unsignedFiles []string
 	for _, f := range plugin.FS.Files() {
+		// Ensure slashes are used, because MANIFEST.txt always uses slashes regardless of the filesystem
+		f = toSlash(f)
+
 		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
 		if runningWindows && plugin.JSONData.Type == plugins.Renderer && f == "chrome-win/debug.log" {
 			continue
@@ -328,7 +333,7 @@ func validateManifest(m PluginManifest, block *clearsign.Block) error {
 
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
+		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
 		return fmt.Errorf("%v: %w", "failed to check signature", err)
 	}
 

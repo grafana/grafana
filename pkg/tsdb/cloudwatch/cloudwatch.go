@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -118,10 +119,11 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im       instancemgmt.InstanceManager
-	cfg      *setting.Cfg
-	sessions SessionCache
-	features featuremgmt.FeatureToggles
+	im          instancemgmt.InstanceManager
+	cfg         *setting.Cfg
+	sessions    SessionCache
+	features    featuremgmt.FeatureToggles
+	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
 }
@@ -160,7 +162,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
 		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
 		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
-		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
+		frontend, but because alerts and expressions are executed on the backend the logic needs to be reimplemented here.
 	*/
 	q := req.Queries[0]
 	var model DataQueryJson
@@ -168,11 +170,12 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	if err != nil {
 		return nil, err
 	}
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	isLogAlertQuery := fromAlert && model.QueryMode == logsQueryMode
 
-	if isLogAlertQuery {
-		return e.executeLogAlertQuery(ctx, req)
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
+	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
+	if isSyncLogQuery {
+		return executeSyncLogQuery(ctx, e, req)
 	}
 
 	var result *backend.QueryDataResponse
@@ -308,7 +311,7 @@ func (e *cloudWatchExecutor) getCWLogsClient(pluginCtx backend.PluginContext, re
 	return logsClient, nil
 }
 
-func (e *cloudWatchExecutor) getEC2Client(pluginCtx backend.PluginContext, region string) (ec2iface.EC2API, error) {
+func (e *cloudWatchExecutor) getEC2Client(pluginCtx backend.PluginContext, region string) (models.EC2APIProvider, error) {
 	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err

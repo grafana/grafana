@@ -1,5 +1,4 @@
-import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta } from '../types';
-import { ArrayVector } from '../vector';
+import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta, Field } from '../types';
 
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 
@@ -56,6 +55,13 @@ export interface DataFrameData {
    * NOTE: currently only decoding is implemented
    */
   enums?: Array<string[] | null>;
+
+  /**
+   * Holds integers between 0 and 999999, used by time-fields
+   * to store the nanosecond-precision that cannot be represented
+   * by the millisecond-based base value.
+   */
+  nanos?: Array<number[] | null>;
 }
 
 /**
@@ -188,16 +194,24 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
       type = FieldType.string;
     }
 
+    const nanos = data?.nanos?.[index];
+
     // TODO: expand arrays further using bases,factors
 
-    return {
+    const dataFrameField: Field & { entities: FieldValueEntityLookup } = {
       ...f,
       type: type ?? guessFieldType(f.name, buffer),
       config: f.config ?? {},
-      values: new ArrayVector(buffer),
+      values: buffer,
       // the presence of this prop is an optimization signal & lookup for consumers
       entities: entities ?? {},
     };
+
+    if (nanos != null) {
+      dataFrameField.nanos = nanos;
+    }
+
+    return dataFrameField;
   });
 
   return {
@@ -216,17 +230,33 @@ export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
   const data: DataFrameData = {
     values: [],
   };
+
+  const allNanos: Array<number[] | null> = [];
+  let hasNanos = false;
+
   const schema: DataFrameSchema = {
     refId: frame.refId,
     meta: frame.meta,
     name: frame.name,
     fields: frame.fields.map((f) => {
-      const { values, state, display, ...sfield } = f;
+      const { values, nanos, state, display, ...sfield } = f;
       delete (sfield as any).entities;
-      data.values.push(values.toArray());
+      data.values.push(values);
+
+      if (nanos != null) {
+        allNanos.push(nanos);
+        hasNanos = true;
+      } else {
+        allNanos.push(null);
+      }
+
       return sfield;
     }),
   };
+
+  if (hasNanos) {
+    data.nanos = allNanos;
+  }
 
   return {
     schema,

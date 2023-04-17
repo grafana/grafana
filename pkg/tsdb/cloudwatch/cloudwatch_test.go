@@ -2,16 +2,13 @@ package cloudwatch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -19,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -190,69 +186,6 @@ func Test_CheckHealth(t *testing.T) {
 			Status:  backend.HealthStatusError,
 			Message: "1. CloudWatch metrics query failed: some sessions error\n2. CloudWatch logs query failed: some sessions error",
 		}, resp)
-	})
-}
-func Test_executeLogAlertQuery(t *testing.T) {
-	origNewCWClient := NewCWClient
-	t.Cleanup(func() {
-		NewCWClient = origNewCWClient
-	})
-
-	var cli fakeCWLogsClient
-	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-		return &cli
-	}
-
-	t.Run("getCWLogsClient is called with region from input JSON", func(t *testing.T) {
-		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
-		sess := fakeSessionCache{}
-		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
-
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
-					JSON: json.RawMessage(`{
-						"queryMode":    "Logs",
-						"region": "some region"
-					}`),
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-		assert.Equal(t, []string{"some region"}, sess.calledRegions)
-	})
-
-	t.Run("getCWLogsClient is called with region from instance manager when region is default", func(t *testing.T) {
-		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
-		})
-		sess := fakeSessionCache{}
-
-		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
-					JSON: json.RawMessage(`{
-						"queryMode":    "Logs",
-						"region": "default"
-					}`),
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-		assert.Equal(t, []string{"instance manager's region"}, sess.calledRegions)
 	})
 }
 

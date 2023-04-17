@@ -4,6 +4,7 @@ import semver from 'semver/preload';
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings as DataSourceSettingsType,
+  isValidDuration,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -19,10 +20,12 @@ import {
   Select,
 } from '@grafana/ui';
 
+import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
-import { PromOptions } from '../types';
+import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
+import { PrometheusCacheLevel, PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
@@ -37,6 +40,13 @@ const httpOptions = [
 const editorOptions = [
   { value: QueryEditorMode.Builder, label: 'Builder' },
   { value: QueryEditorMode.Code, label: 'Code' },
+];
+
+const cacheValueOptions = [
+  { value: PrometheusCacheLevel.Low, label: 'Low' },
+  { value: PrometheusCacheLevel.Medium, label: 'Medium' },
+  { value: PrometheusCacheLevel.High, label: 'High' },
+  { value: PrometheusCacheLevel.None, label: 'None' },
 ];
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
@@ -301,7 +311,7 @@ export const PromSettings = (props: Props) => {
         </div>
         <div className="gf-form">
           <FormField
-            label="Default Editor"
+            label="Default editor"
             labelWidth={14}
             inputEl={
               <Select
@@ -334,6 +344,69 @@ export const PromSettings = (props: Props) => {
               }
             />
           </div>
+        </div>
+        {config.featureToggles.prometheusResourceBrowserCache && (
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <FormField
+                label="Cache level"
+                labelWidth={14}
+                tooltip="Sets the browser caching level for editor queries. Higher cache settings are recommended for high cardinality data sources."
+                inputEl={
+                  <Select
+                    className={`width-25`}
+                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                    options={cacheValueOptions}
+                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                  />
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <FormField
+              label="Incremental querying (beta)"
+              labelWidth={14}
+              tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
+              inputEl={
+                <InlineSwitch
+                  value={options.jsonData.incrementalQuerying ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          </div>
+        </div>
+
+        <div className="gf-form-inline">
+          {options.jsonData.incrementalQuerying && (
+            <FormField
+              label="Query overlap window"
+              labelWidth={14}
+              tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
+              inputEl={
+                <Input
+                  validationEvents={{
+                    onBlur: [
+                      {
+                        rule: (value) => isValidDuration(value),
+                        errorMessage: 'Invalid duration. Example values: 100s, 10m',
+                      },
+                    ],
+                  }}
+                  className="width-25"
+                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                  spellCheck={false}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          )}
         </div>
       </div>
       <ExemplarsSettings

@@ -79,6 +79,9 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
       width: 100%;
+      .monaco-editor .suggest-widget {
+        min-width: 50%;
+      }
     `,
     placeholder: css`
       ::after {
