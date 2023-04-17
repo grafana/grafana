@@ -282,6 +282,14 @@ describe('CorrelationsPage', () => {
 
       await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
+
+      // add transformation
+      await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
+      const typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Regular expression'));
+      await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
+
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
