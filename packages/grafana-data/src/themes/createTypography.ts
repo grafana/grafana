@@ -124,6 +124,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h6: buildVariant(fontWeightMedium, 14, 22, 0.15),
     body: buildVariant(fontWeightRegular, fontSize, 22, 0.15),
     bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
+    bodySmallBold: buildVariant(fontWeightMedium, 12, 18, 0.15),
   };
 
   const size = {
