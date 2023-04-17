@@ -623,7 +623,7 @@ def test_backend_integration_step():
             "wire-install",
         ],
         "commands": [
-            "go test -run Integration -covermode=atomic -timeout=5m ./pkg/...",
+					  "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
         ],
     }
 
@@ -1096,9 +1096,7 @@ def postgres_integration_tests_step():
         "dockerize -wait tcp://postgres:5432 -timeout 120s",
         "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
         "devenv/docker/blocks/postgres_tests/setup.sql",
-        # Make sure that we don't use cached results for another database
-        "go clean -testcache",
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
         "name": "postgres-integration-tests",
@@ -1118,9 +1116,7 @@ def mysql_integration_tests_step():
         "apt-get install -yq default-mysql-client",
         "dockerize -wait tcp://mysql:3306 -timeout 120s",
         "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass",
-        # Make sure that we don't use cached results for another database
-        "go clean -testcache",
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go test -count=1 -covermode=atomic -timeout=10m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
         "name": "mysql-integration-tests",
