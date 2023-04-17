@@ -2,6 +2,7 @@ package querydata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -100,6 +101,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, err
 		}
 		r := s.fetch(ctx, s.client, query, req.Headers)
+
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 			continue
@@ -113,7 +115,6 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) *backend.DataResponse {
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
-
 	logger := s.log.FromContext(traceCtx)
 	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
@@ -124,6 +125,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 
 	if q.InstantQuery {
 		res := s.instantQuery(traceCtx, client, q, headers)
+
 		dr.Error = res.Error
 		dr.Frames = res.Frames
 	}
@@ -173,6 +175,15 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
+
+	// return errors speciically for healthcheck
+	if q.RefId == "__healthcheck__" {
+		if res.Status != "200 OK" {
+			return backend.DataResponse{
+				Error: errors.New(res.Status),
+			}
+		}
+	}
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,
