@@ -5,7 +5,7 @@ import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
-import { ArrayVector, BinaryOperationVector, ConstantVector, IndexVector } from '../../vector';
+import { BinaryOperationVector, ConstantVector, IndexVector } from '../../vector';
 import { AsNumberVector } from '../../vector/AsNumberVector';
 import { RowVector } from '../../vector/RowVector';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
@@ -207,7 +207,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
       vals.push(val);
     }
 
-    return new ArrayVector(vals);
+    return vals;
   };
 }
 

@@ -1,4 +1,3 @@
-import { ArrayVector } from '..';
 import { DataFrame, FieldType } from '../types/dataFrame';
 
 import { DataFrameJSON, dataFrameFromJSON, dataFrameToJSON } from './DataFrameJSON';
@@ -203,13 +202,13 @@ describe('DataFrame JSON', () => {
             name: 'time1',
             type: FieldType.time,
             config: {},
-            values: new ArrayVector([11, 12, 13]),
+            values: [11, 12, 13],
           },
           {
             name: 'time2',
             type: FieldType.time,
             config: {},
-            values: new ArrayVector([14, 15, 16]),
+            values: [14, 15, 16],
             nanos: [17, 18, 19],
           },
         ],

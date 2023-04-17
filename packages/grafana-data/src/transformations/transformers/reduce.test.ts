@@ -2,7 +2,6 @@ import { DataFrameView } from '../../dataframe';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { ReducerID } from '../fieldReducer';
 import { notTimeFieldMatcher } from '../matchers/predicates';
 import { transformDataFrame } from '../transformDataFrame';
@@ -64,31 +63,31 @@ describe('Reducer Transformer', () => {
           {
             name: 'Field',
             type: FieldType.string,
-            values: new ArrayVector(['A temperature', 'A humidity', 'B temperature', 'B humidity']),
+            values: ['A temperature', 'A humidity', 'B temperature', 'B humidity'],
             config: {},
           },
           {
             name: 'First',
             type: FieldType.number,
-            values: new ArrayVector([3, 10000.3, 1, 11000.1]),
+            values: [3, 10000.3, 1, 11000.1],
             config: {},
           },
           {
             name: 'Min',
             type: FieldType.number,
-            values: new ArrayVector([3, 10000.3, 1, 11000.1]),
+            values: [3, 10000.3, 1, 11000.1],
             config: {},
           },
           {
             name: 'Max',
             type: FieldType.number,
-            values: new ArrayVector([6, 10000.6, 7, 11000.7]),
+            values: [6, 10000.6, 7, 11000.7],
             config: {},
           },
           {
             name: 'Last',
             type: FieldType.number,
-            values: new ArrayVector([6, 10000.6, 7, 11000.7]),
+            values: [6, 10000.6, 7, 11000.7],
             config: {},
           },
         ];
@@ -115,31 +114,31 @@ describe('Reducer Transformer', () => {
           {
             name: 'Field',
             type: FieldType.string,
-            values: new ArrayVector(['A temperature', 'B temperature']),
+            values: ['A temperature', 'B temperature'],
             config: {},
           },
           {
             name: 'First',
             type: FieldType.number,
-            values: new ArrayVector([3, 1]),
+            values: [3, 1],
             config: {},
           },
           {
             name: 'Min',
             type: FieldType.number,
-            values: new ArrayVector([3, 1]),
+            values: [3, 1],
             config: {},
           },
           {
             name: 'Max',
             type: FieldType.number,
-            values: new ArrayVector([6, 7]),
+            values: [6, 7],
             config: {},
           },
           {
             name: 'Last',
             type: FieldType.number,
-            values: new ArrayVector([6, 7]),
+            values: [6, 7],
             config: {},
           },
         ];
@@ -165,31 +164,31 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['temperature', 'humidity']),
+          values: ['temperature', 'humidity'],
           config: {},
         },
         {
           name: 'First',
           type: FieldType.number,
-          values: new ArrayVector([3, 10000.3]),
+          values: [3, 10000.3],
           config: {},
         },
         {
           name: 'Min',
           type: FieldType.number,
-          values: new ArrayVector([3, 10000.3]),
+          values: [3, 10000.3],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6, 10000.6]),
+          values: [6, 10000.6],
           config: {},
         },
         {
           name: 'Last',
           type: FieldType.number,
-          values: new ArrayVector([6, 10000.6]),
+          values: [6, 10000.6],
           config: {},
         },
       ];
@@ -214,31 +213,31 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['temperature']),
+          values: ['temperature'],
           config: {},
         },
         {
           name: 'First',
           type: FieldType.number,
-          values: new ArrayVector([3]),
+          values: [3],
           config: {},
         },
         {
           name: 'Min',
           type: FieldType.number,
-          values: new ArrayVector([3]),
+          values: [3],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6]),
+          values: [6],
           config: {},
         },
         {
           name: 'Last',
           type: FieldType.number,
-          values: new ArrayVector([6]),
+          values: [6],
           config: {},
         },
       ];
@@ -306,13 +305,13 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['a', '2021']),
+          values: ['a', '2021'],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6, 10]),
+          values: [6, 10],
           config: {},
         },
       ];
@@ -351,13 +350,13 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['a', '2021']),
+          values: ['a', '2021'],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6, 10]),
+          values: [6, 10],
           config: {},
         },
       ];
@@ -418,7 +417,7 @@ describe('Reducer Transformer', () => {
               "CA",
               "NY",
               "CA",
-              undefined,
+              ,
             ],
           },
           {
@@ -426,8 +425,8 @@ describe('Reducer Transformer', () => {
             "name": "country",
             "type": "string",
             "values": [
-              undefined,
-              undefined,
+              ,
+              ,
               "USA",
               "USA",
             ],

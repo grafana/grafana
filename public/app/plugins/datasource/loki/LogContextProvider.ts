@@ -50,42 +50,9 @@ export class LogContextProvider {
 
     const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
 
-    const processDataFrame = (frame: DataFrame): DataFrame => {
-      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-      const cache = new FieldCache(frame);
-      const timestampField = cache.getFirstFieldOfType(FieldType.time);
-      const lineField = cache.getFirstFieldOfType(FieldType.string);
-      const idField = cache.getFieldByName('id');
-
-      if (timestampField === undefined || lineField === undefined || idField === undefined) {
-        // this should never really happen, but i want to keep typescript happy
-        return { ...frame, fields: [] };
-      }
-
-      return {
-        ...frame,
-        fields: [
-          {
-            ...timestampField,
-            name: 'ts',
-          },
-          {
-            ...lineField,
-            name: 'line',
-          },
-          {
-            ...idField,
-            name: 'id',
-          },
-        ],
-      };
-    };
-
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
-      const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, SortDirection.Descending))
-        .map((frame) => processDataFrame(frame)); // rename fields if needed
+      const processedFrames = frames.map((frame) => sortDataFrameByTime(frame, SortDirection.Descending));
 
       return {
         ...result,
