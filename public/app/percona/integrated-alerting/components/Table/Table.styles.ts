@@ -55,9 +55,6 @@ export const getStyles = (theme: GrafanaTheme) => {
           border-bottom: 1px solid ${borderColor};
           border-right: 1px solid ${borderColor};
           max-width: 200px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
 
           :last-child {
             border-right: 0;
@@ -72,6 +69,17 @@ export const getStyles = (theme: GrafanaTheme) => {
       .pagination {
         padding: 0.5rem;
       }
+    `,
+    tableHeader: (width?: string | number) => css`
+      width: ${width};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `,
+    tableCell: (noHiddenOverflow: boolean) => css`
+      overflow: ${noHiddenOverflow ? 'visible' : 'hidden'};
+      text-overflow: ${noHiddenOverflow ? 'clip' : 'ellipsis'};
+      white-space: ${noHiddenOverflow ? 'normal' : 'nowrap'};
     `,
   };
 };

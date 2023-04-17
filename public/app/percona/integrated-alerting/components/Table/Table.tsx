@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   useTable,
@@ -173,9 +173,7 @@ export const Table: FC<TableProps> = ({
                       {headerGroup.headers.map((column) => (
                         /* eslint-disable-next-line react/jsx-key */
                         <th
-                          className={css`
-                            width: ${column.width};
-                          `}
+                          className={style.tableHeader(column.width)}
                           {...column.getHeaderProps([
                             {
                               className: column.className,
@@ -203,9 +201,17 @@ export const Table: FC<TableProps> = ({
                               {row.cells.map((cell) => {
                                 return (
                                   <td
+                                    title={
+                                      typeof cell.value === 'string' || typeof cell.value === 'number'
+                                        ? cell.value.toString()
+                                        : undefined
+                                    }
                                     {...cell.getCellProps([
                                       {
-                                        className: cell.column.className,
+                                        className: cx(
+                                          cell.column.className,
+                                          style.tableCell(!!cell.column.noHiddenOverflow)
+                                        ),
                                         style: cell.column.style,
                                       },
                                       getCellProps(cell),

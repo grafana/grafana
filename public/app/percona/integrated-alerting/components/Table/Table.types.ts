@@ -31,6 +31,7 @@ export type ExtendedColumn<D extends object = {}> = Column<D> & {
   type?: FilterFieldTypes;
   options?: Array<SelectableValue<any>>;
   label?: string;
+  noHiddenOverflow?: boolean;
 };
 
 export enum FilterFieldTypes {

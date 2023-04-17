@@ -106,6 +106,9 @@ declare module 'react-table' {
       UseSortByColumnProps<D> {
     className?: string;
     style?: CSSProperties;
+    // @PERCONA
+    // By default, cells with too much text get their content hidden using ellipsis. This allows to override that config.
+    noHiddenOverflow?: boolean;
   }
 
   export interface Cell<D extends Record<string, unknown> = Record<string, unknown>, V = any>

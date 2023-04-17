@@ -110,6 +110,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
         Header: Messages.table.columns.description,
         accessor: 'description',
         type: FilterFieldTypes.TEXT,
+        noHiddenOverflow: true,
       },
       {
         Header: Messages.table.columns.status,

@@ -1,13 +1,13 @@
 /* eslint-disable react/display-name */
 import { Chip, logger } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Cell, Column, Row } from 'react-table';
+import { Cell, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Severity } from 'app/percona/integrated-alerting/components/Severity';
-import { Table } from 'app/percona/integrated-alerting/components/Table';
+import { ExtendedColumn, Table } from 'app/percona/integrated-alerting/components/Table';
 import { useStoredTablePageSize } from 'app/percona/integrated-alerting/components/Table/Pagination';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
@@ -71,7 +71,7 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
   );
 
   const columns = useMemo(
-    (): Array<Column<ServiceFailedCheck>> => [
+    (): Array<ExtendedColumn<ServiceFailedCheck>> => [
       {
         Header: 'Check Name',
         accessor: 'checkName',
@@ -80,10 +80,12 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
       {
         Header: 'Summary',
         accessor: 'summary',
+        noHiddenOverflow: true,
       },
       {
         Header: 'Description',
         accessor: 'description',
+        noHiddenOverflow: true,
       },
       {
         Header: 'Severity',
