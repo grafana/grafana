@@ -93,7 +93,7 @@ type ReloadHandler interface {
 }
 
 type SettingsBag map[string]map[string]string
-type VerboseSettingsBag map[string]map[string]map[string]string
+type VerboseSettingsBag map[string]SettingsBag
 type SettingsRemovals map[string][]string
 
 const (
