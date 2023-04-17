@@ -92,7 +92,9 @@ With this flow, selecting a data source has been greatly simplified, providing a
 
 To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
-## Public dashboards
+## Dashboards and visualizations
+
+### Public dashboards
 
 _Available in preview in all editions of Grafana._
 Public dashboards allow you to share your Grafana dashboard with anyone without them having to log into Grafana. This is useful when you want to expose your dashboard to the world.
@@ -108,7 +110,7 @@ To try it out, you'll need to enable the `publicDashboards` feature toggle. If y
 
 To learn more, check out our public dashboards [documentation](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/?pg=blog&plcmt=body-txt).
 
-## Public dashboards insights
+### Public dashboards insights
 
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
@@ -116,7 +118,7 @@ The public dashboards insights provide valuable information about your public da
 
 To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
-## Email sharing for public dashboards
+### Email sharing for public dashboards
 
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
