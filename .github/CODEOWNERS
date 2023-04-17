@@ -284,9 +284,6 @@
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
-# Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/grafana-app-platform-squad
-
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
 
@@ -480,8 +477,8 @@ lerna.json @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
-.betterer.results @joshhunt
-.betterer.ts @joshhunt
+.betterer.results @grafanabot
+.betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation
 *.mdx @grafana/plugins-platform-frontend
@@ -525,6 +522,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/anonymous/ @grafana/grafana-authnz-team
 /pkg/services/auth/ @grafana/grafana-authnz-team
 /pkg/services/authn/ @grafana/grafana-authnz-team
+/pkg/services/signingkeys/ @grafana/grafana-authnz-team
 /pkg/services/dashboards/accesscontrol.go @grafana/grafana-authnz-team
 /pkg/services/datasources/permissions/ @grafana/grafana-authnz-team
 /pkg/services/guardian/ @grafana/grafana-authnz-team
@@ -604,6 +602,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
 
+# Generated files not requiring owner approval
+/packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
+/pkg/services/featuremgmt/toggles_gen.csv @grafanabot
+/pkg/services/featuremgmt/toggles_gen.go @grafanabot
 
 # Conf
 /conf/defaults.ini @torkelo

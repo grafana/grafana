@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, Collapse, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 
@@ -66,13 +66,7 @@ export function LogsSamplePanel(props: Props) {
     };
 
     return (
-      <Button
-        size="sm"
-        className={styles.logSamplesButton}
-        // TODO: support multiple queries (#62107)
-        // This currently works only for the first query as splitOpen supports only 1 query
-        onClick={onSplitOpen}
-      >
+      <Button size="sm" className={styles.logSamplesButton} onClick={onSplitOpen}>
         Open logs in split view
       </Button>
     );
@@ -112,7 +106,19 @@ export function LogsSamplePanel(props: Props) {
   }
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
-    <Collapse label="Logs sample" isOpen={enabled} collapsible={true} onToggle={onToggleLogsSampleCollapse}>
+    <Collapse
+      label={
+        <div>
+          Logs sample
+          <Tooltip content="Show log lines that contributed to visualized metrics">
+            <Icon name="info-circle" className={styles.infoTooltip} />
+          </Tooltip>
+        </div>
+      }
+      isOpen={enabled}
+      collapsible={true}
+      onToggle={onToggleLogsSampleCollapse}
+    >
       {LogsSamplePanelContent}
     </Collapse>
   ) : null;
@@ -126,5 +132,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   logContainer: css`
     overflow-x: scroll;
+  `,
+  infoTooltip: css`
+    margin-left: ${theme.spacing(1)};
   `,
 });

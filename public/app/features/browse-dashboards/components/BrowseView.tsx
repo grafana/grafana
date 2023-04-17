@@ -1,101 +1,80 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Icon, IconButton, Link } from '@grafana/ui';
 import { getFolderChildren } from 'app/features/search/service/folders';
 import { DashboardViewItem } from 'app/features/search/types';
 
-type NestedData = Record<string, DashboardViewItem[] | undefined>;
+import { DashboardsTreeItem } from '../types';
+
+import { DashboardsTree } from './DashboardsTree';
 
 interface BrowseViewProps {
+  height: number;
+  width: number;
   folderUID: string | undefined;
 }
 
-export function BrowseView({ folderUID }: BrowseViewProps) {
-  const [nestedData, setNestedData] = useState<NestedData>({});
+export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({ [folderUID ?? '$$root']: true });
 
-  // Note: entire implementation of this component must be replaced.
-  // This is just to show proof of concept for fetching and showing the data
+  // Rather than storing an actual tree structure (requiring traversing the tree to update children), instead
+  // we keep track of children for each UID and then later combine them in the format required to display them
+  const [childrenByUID, setChildrenByUID] = useState<Record<string, DashboardViewItem[] | undefined>>({});
+
+  async function loadChildrenForUID(uid: string | undefined) {
+    const folderKey = uid ?? '$$root';
+
+    const childItems = await getFolderChildren(uid, undefined, true);
+    setChildrenByUID((v) => ({ ...v, [folderKey]: childItems }));
+  }
 
   useEffect(() => {
-    const folderKey = folderUID ?? '$$root';
-
-    getFolderChildren(folderUID, undefined, true).then((children) => {
-      setNestedData((v) => ({ ...v, [folderKey]: children }));
-    });
+    loadChildrenForUID(folderUID);
   }, [folderUID]);
 
-  const items = nestedData[folderUID ?? '$$root'] ?? [];
-
-  const handleNodeClick = useCallback(
-    (uid: string) => {
-      if (nestedData[uid]) {
-        setNestedData((v) => ({ ...v, [uid]: undefined }));
-        return;
-      }
-
-      getFolderChildren(uid).then((children) => {
-        setNestedData((v) => ({ ...v, [uid]: children }));
-      });
-    },
-    [nestedData]
+  const flatTree = useMemo(
+    () => createFlatTree(folderUID, childrenByUID, openFolders),
+    [folderUID, childrenByUID, openFolders]
   );
 
-  return (
-    <div>
-      <p>Browse view</p>
+  const handleFolderClick = useCallback((uid: string, folderIsOpen: boolean) => {
+    if (folderIsOpen) {
+      loadChildrenForUID(uid);
+    }
 
-      <ul style={{ marginLeft: 16 }}>
-        {items.map((item) => {
-          return (
-            <li key={item.uid}>
-              <BrowseItem item={item} nestedData={nestedData} onFolderClick={handleNodeClick} />
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
+    setOpenFolders((v) => ({ ...v, [uid]: folderIsOpen }));
+  }, []);
+
+  return <DashboardsTree items={flatTree} width={width} height={height} onFolderClick={handleFolderClick} />;
 }
 
-function BrowseItem({
-  item,
-  nestedData,
-  onFolderClick,
-}: {
-  item: DashboardViewItem;
-  nestedData: NestedData;
-  onFolderClick: (uid: string) => void;
-}) {
-  const childItems = nestedData[item.uid];
+// Creates a flat list of items, with nested children indicated by its increasing level
+function createFlatTree(
+  rootFolderUID: string | undefined,
+  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  openFolders: Record<string, boolean>,
+  level = 0
+): DashboardsTreeItem[] {
+  function mapItem(item: DashboardViewItem, level: number): DashboardsTreeItem[] {
+    const mappedChildren = createFlatTree(item.uid, childrenByUID, openFolders, level + 1);
 
-  return (
-    <>
-      <div>
-        {item.kind === 'folder' ? (
-          <IconButton onClick={() => onFolderClick(item.uid)} name={childItems ? 'angle-down' : 'angle-right'} />
-        ) : (
-          <span style={{ paddingRight: 20 }} />
-        )}
-        <Icon name={item.kind === 'folder' ? (childItems ? 'folder-open' : 'folder') : 'apps'} />{' '}
-        <Link href={item.kind === 'folder' ? `/nested-dashboards/f/${item.uid}` : `/d/${item.uid}`}>{item.title}</Link>
-      </div>
+    const isOpen = Boolean(openFolders[item.uid]);
+    const emptyFolder = childrenByUID[item.uid]?.length === 0;
+    if (isOpen && emptyFolder) {
+      mappedChildren.push({ isOpen: false, level: level + 1, item: { kind: 'ui-empty-folder' } });
+    }
 
-      {childItems && (
-        <ul style={{ marginLeft: 16 }}>
-          {childItems.length === 0 && (
-            <li>
-              <em>Empty folder</em>
-            </li>
-          )}
-          {childItems.map((childItem) => {
-            return (
-              <li key={childItem.uid}>
-                <BrowseItem item={childItem} nestedData={nestedData} onFolderClick={onFolderClick} />{' '}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </>
-  );
+    const thisItem = {
+      item,
+      level,
+      isOpen,
+    };
+
+    return [thisItem, ...mappedChildren];
+  }
+
+  const folderKey = rootFolderUID ?? '$$root';
+  const isOpen = Boolean(openFolders[folderKey]);
+  const items = (isOpen && childrenByUID[folderKey]) || [];
+
+  return items.flatMap((item) => mapItem(item, level));
 }

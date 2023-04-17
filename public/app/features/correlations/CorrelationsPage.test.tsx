@@ -179,13 +179,6 @@ jest.mock('@grafana/runtime', () => {
 
   return {
     ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        topnav: true,
-      },
-    },
     reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
       mocks.reportInteraction(...args);
     },

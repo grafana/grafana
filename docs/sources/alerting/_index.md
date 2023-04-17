@@ -19,6 +19,8 @@ Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cl
 
 Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
+_Video shows Alerting in Grafana v9.0. Refer to [Manage your alert rules]({{< relref "../alerting/alerting-rules/" >}}) for current instructions._
+
 ## Overview
 
 The following diagram gives you an overview of how Grafana Alerting works and introduces you to some of the key concepts that work together and form the core of our flexible and powerful alerting engine.
