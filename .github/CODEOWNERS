@@ -284,9 +284,6 @@
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
-# Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/grafana-app-platform-squad
-
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
 

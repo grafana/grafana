@@ -315,11 +315,7 @@ describe('explore links utils', () => {
         links[0][0].onClick({});
       }
 
-      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: CoreApp.Explore,
-        internal: true,
-        origin: DataLinkConfigOrigin.Correlations,
-      });
+      expect(reportInteraction).not.toBeCalled();
 
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
