@@ -205,7 +205,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
-	
+
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
