@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -153,6 +154,9 @@ var tagsConverter = data.FieldConverter{
 
 			parsedTags = append(parsedTags, &KeyValue{Key: k, Value: v})
 		}
+		sort.Slice(parsedTags, func(i, j int) bool {
+			return parsedTags[i].Key < parsedTags[j].Key
+		})
 
 		marshalledTags, err := json.Marshal(parsedTags)
 		if err != nil {
