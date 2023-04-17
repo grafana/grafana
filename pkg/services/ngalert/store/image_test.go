@@ -64,6 +64,16 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	result1, err = dbstore.GetImage(ctx, image1.URL)
 	assert.EqualError(t, err, "image not found")
 	assert.Nil(t, result1)
+
+	// Save an image with an already saved URL.
+	dupeURLImage := models.Image{URL: image2.URL}
+	require.NoError(t, dbstore.SaveImage(ctx, &dupeURLImage))
+
+	// Only the first image with a given URL should be returned.
+	result3, err := dbstore.GetImage(ctx, dupeURLImage.URL)
+	require.NoError(t, err)
+	assert.Equal(t, image2, *result3)
+	assert.NotEqual(t, dupeURLImage, *result3)
 }
 
 func TestIntegrationGetImages(t *testing.T) {

@@ -38,7 +38,7 @@ type ImageAdminStore interface {
 func (st DBstore) GetImage(ctx context.Context, url string) (*models.Image, error) {
 	var image models.Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("url = ? AND expires_at > ?", url, TimeNow().UTC()).Get(&image)
+		exists, err := sess.Where("url = ? AND expires_at > ?", url, TimeNow().UTC()).Limit(1).Get(&image)
 		if err != nil {
 			return fmt.Errorf("failed to get image: %w", err)
 		} else if !exists {
