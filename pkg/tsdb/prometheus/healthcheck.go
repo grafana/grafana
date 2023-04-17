@@ -57,7 +57,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 		// sometimes it will time out and not return an error, but the body will be some network redirect
 		if string(resp.Body) != "Prometheus Server is Healthy.\n" {
-			return getHealthCheckMessage(logger, string(req.PluginContext.DataSourceInstanceSettings.URL), errors.New("error accessing url"))
+			return getHealthCheckMessage(logger, req.PluginContext.DataSourceInstanceSettings.URL, errors.New("error accessing url"))
 		}
 
 		// the healthcheck works
