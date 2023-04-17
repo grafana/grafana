@@ -26,7 +26,6 @@ export const TracesPanel = ({ data }: PanelProps) => {
   const dataSource = useAsync(async () => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
-  const scrollElement = document.getElementsByClassName(styles.wrapper)[0];
   const datasourceType = dataSource && dataSource.value ? dataSource.value.type : 'unknown';
 
   if (!data || !data.series.length || !traceProp) {
@@ -56,7 +55,7 @@ export const TracesPanel = ({ data }: PanelProps) => {
 
       <TraceView
         dataFrames={data.series}
-        scrollElement={scrollElement}
+        scrollElementClass={styles.wrapper}
         traceProp={traceProp}
         spanFindMatches={spanFindMatches}
         search={search}

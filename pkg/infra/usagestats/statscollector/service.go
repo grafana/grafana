@@ -115,6 +115,8 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	}
 
 	m["stats.dashboards.count"] = statsResult.Dashboards
+	m["stats.dashboard_bytes.total"] = statsResult.DashboardBytesTotal
+	m["stats.dashboard_bytes.max"] = statsResult.DashboardBytesMax
 	m["stats.users.count"] = statsResult.Users
 	m["stats.admins.count"] = statsResult.Admins
 	m["stats.editors.count"] = statsResult.Editors
@@ -158,6 +160,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.data_keys.count"] = statsResult.DataKeys
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
 	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
+	m["stats.correlations.count"] = statsResult.Correlations
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -313,6 +316,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
 
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
+
+	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
 
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {

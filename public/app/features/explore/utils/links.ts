@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -194,7 +195,9 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: (options) => splitFnWithTracking(options),
+            // Don't track internal links without split view as they are used only in Dashboards
+            // TODO: It should be revisited in #66570
+            onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };
@@ -260,9 +263,10 @@ export function getVariableUsageInfo<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
-  const variables: VariableInterpolation[] = [];
+  let variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
+  variables = uniqBy(variables, 'variableName');
   return {
     variables: variables,
     allVariablesDefined: variables.every((variable) => variable.found),

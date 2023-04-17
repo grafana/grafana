@@ -188,7 +188,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
       ) : (
         <>
           {results && Boolean(results.length) && (
-            <Field label="Available queries from panel">
+            <Field label="Queries from panel">
               <VerticalGroup spacing="sm">
                 {results.map((target, i) => (
                   <Card key={`DashboardQueryRow-${i}`}>
