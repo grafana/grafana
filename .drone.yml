@@ -877,6 +877,11 @@ steps:
   - echo go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/cmd/grafana-cli/commands
+  - sleep 10
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
@@ -1885,6 +1890,11 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - echo go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/cmd/grafana-cli/commands
+  - sleep 10
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
@@ -5108,6 +5118,11 @@ steps:
   - echo go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/cmd/grafana-cli/commands
+  - sleep 10
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
@@ -5827,6 +5842,11 @@ steps:
   - echo go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/cmd/grafana-cli/commands
+  - sleep 10
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
@@ -6298,6 +6318,11 @@ steps:
   - echo go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/cmd/grafana-cli/commands
+  - sleep 10
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
@@ -6471,6 +6496,11 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - echo go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/cmd/grafana-cli/commands
+  - sleep 10
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
@@ -6822,6 +6852,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 223538b3edacddfff08ca901bfe20b25cc2a9e2f04646be8c6078e8fd18295ba
+hmac: 7a62a2220fa0bc854d3c48d9dfa13f5cb8f447e89bf9ca4791a9b3a44ceb7549
 
 ...
