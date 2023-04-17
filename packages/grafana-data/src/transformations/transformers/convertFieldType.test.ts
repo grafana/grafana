@@ -116,7 +116,6 @@ it('can convert strings with commas to numbers', () => {
     name: 'stringy nums',
     type: FieldType.number,
     values: [1000, 1000000, 0, null, 0, 1],
-    values: [1000, 1000000],
     config: {},
   });
 });
