@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -45,9 +46,10 @@ func TestAnonymous_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			c := Anonymous{
-				cfg:        tt.cfg,
-				log:        log.NewNopLogger(),
-				orgService: &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.err},
+				cfg:                tt.cfg,
+				log:                log.NewNopLogger(),
+				orgService:         &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.err},
+				anonSessionService: &anontest.FakeAnonymousSessionService{},
 			}
 
 			identity, err := c.Authenticate(context.Background(), &authn.Request{})

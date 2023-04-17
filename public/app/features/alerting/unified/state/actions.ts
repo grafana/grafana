@@ -1,7 +1,7 @@
-import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
+import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService, config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -33,7 +33,7 @@ import {
 
 import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging, trackNewAlerRuleFormSaved } from '../Analytics';
+import { logInfo, LogMessages, trackNewAlerRuleFormSaved, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -162,6 +162,8 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
                 alertmanager_config: status.config,
                 template_files: {},
                 template_file_provenances: result.template_file_provenances,
+                last_applied: result.last_applied,
+                id: result.id,
               }));
             }
             return result;
@@ -547,12 +549,13 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     withAppEvents(
       withSerializedError(
         (async () => {
+          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
           const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
 
-          if (
-            !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
-            JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
-          ) {
+          const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
+          const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
+
+          if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
             throw new Error(
               'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
             );

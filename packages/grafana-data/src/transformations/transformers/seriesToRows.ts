@@ -2,7 +2,7 @@ import { omit } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { MutableDataFrame, sortDataFrame } from '../../dataframe';
-import { isTimeSeries } from '../../dataframe/utils';
+import { isTimeSeriesFrames } from '../../dataframe/utils';
 import { getFrameDisplayName } from '../../field/fieldState';
 import {
   Field,
@@ -12,7 +12,6 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
 
@@ -30,7 +29,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
           return data;
         }
 
-        if (!isTimeSeries(data)) {
+        if (!isTimeSeriesFrames(data)) {
           return data;
         }
 
@@ -39,7 +38,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         const dataFrame = new MutableDataFrame();
         const metricField: Field = {
           name: TIME_SERIES_METRIC_FIELD_NAME,
-          values: new ArrayVector(),
+          values: [],
           config: {},
           type: FieldType.string,
         };
@@ -92,7 +91,7 @@ const copyFieldStructure = (field: Field, name: string): Field => {
   return {
     ...omit(field, ['values', 'state', 'labels', 'config', 'name']),
     name: name,
-    values: new ArrayVector(),
+    values: [],
     config: {
       ...omit(field.config, ['displayName', 'displayNameFromDS']),
     },

@@ -37,6 +37,19 @@ export function createExploreLink(dataSourceName: string, query: string) {
   });
 }
 
+export function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
+  return createUrl(`/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit`, {
+    alertmanager: alertManagerSourceName,
+  });
+}
+
+export function createMuteTimingLink(muteTimingName: string, alertManagerSourceName = ''): string {
+  return createUrl('/alerting/routes/mute-timing/edit', {
+    muteName: muteTimingName,
+    alertmanager: alertManagerSourceName,
+  });
+}
+
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
   return items.reduce<Record<string, string>>((rec, { key, value }) => {
     rec[key] = value;
@@ -108,6 +121,14 @@ export function makeFolderLink(folderUID: string): string {
 
 export function makeFolderSettingsLink(folder: FolderDTO): string {
   return createUrl(`/dashboards/f/${folder.uid}/${folder.title}/settings`);
+}
+
+export function makeDashboardLink(dashboardUID: string): string {
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
+}
+
+export function makePanelLink(dashboardUID: string, panelId: string): string {
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, { viewPanel: panelId });
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet

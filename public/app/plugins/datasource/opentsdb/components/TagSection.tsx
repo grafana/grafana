@@ -1,8 +1,9 @@
+import debounce from 'debounce-promise';
 import { has, size } from 'lodash';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Select, InlineFormLabel, Icon, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { Select, InlineFormLabel, Icon, clearButtonStyles, useStyles2, AsyncSelect } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -11,7 +12,7 @@ export interface TagSectionProps {
   onChange: (query: OpenTsdbQuery) => void;
   onRunQuery: () => void;
   suggestTagKeys: (query: OpenTsdbQuery) => Promise<string[]>;
-  suggestTagValues: () => Promise<SelectableValue[]>;
+  suggestTagValues: (value: string) => Promise<SelectableValue[]>;
   tsdbVersion: number;
 }
 
@@ -27,9 +28,6 @@ export function TagSection({
 
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
-
-  const [tagValues, updTagValues] = useState<Array<SelectableValue<string>>>();
-  const [valueIsLoading, updValueIsLoading] = useState<boolean>();
 
   const [addTagMode, updAddTagMode] = useState<boolean>(false);
 
@@ -96,14 +94,7 @@ export function TagSection({
     addTag();
   }
 
-  // We are matching words split with space
-  const splitSeparator = ' ';
-  const customTagOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
-    const label = option.value ?? '';
-
-    const searchWords = searchQuery.split(splitSeparator);
-    return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
-  }, []);
+  const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
 
   return (
     <div className="gf-form-inline" data-testid={testIds.section}>
@@ -167,23 +158,14 @@ export function TagSection({
           </div>
 
           <div className="gf-form">
-            <Select
+            <AsyncSelect
               inputId="opentsdb-suggested-tagv-select"
               className="gf-form-input"
               value={curTagValue ? toOption(curTagValue) : undefined}
               placeholder="value"
               allowCustomValue
-              filterOption={customTagOption}
-              onOpenMenu={async () => {
-                if (!tagValues) {
-                  updValueIsLoading(true);
-                  const tVs = await suggestTagValues();
-                  updTagValues(tVs);
-                  updValueIsLoading(false);
-                }
-              }}
-              isLoading={valueIsLoading}
-              options={tagValues}
+              loadOptions={tagValueSearch}
+              defaultOptions={[]}
               onChange={({ value }) => {
                 if (value) {
                   updCurTagValue(value);

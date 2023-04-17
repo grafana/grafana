@@ -27,7 +27,7 @@ export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
  */
 export interface AnnotationQuery {
-  builtIn: number;
+  builtIn: number; // TODO should this be persisted at all?
   /**
    * Datasource to use for annotation.
    */
@@ -193,7 +193,7 @@ export interface FieldColor {
   /**
    * The main color scheme mode
    */
-  mode: FieldColorModeId;
+  mode: (FieldColorModeId | string);
   /**
    * Some visualizations need to know how to assign a series color from by value color schemes
    */
@@ -238,6 +238,10 @@ export interface Threshold {
    * TODO docs
    */
   color: string;
+  /**
+   * Threshold index, an old property that is not needed an should only appear in older dashboards
+   */
+  index?: number;
   /**
    * TODO docs
    * TODO are the values here enumerable into a disjunction?

@@ -24,7 +24,7 @@ const (
 
 // TempUser holds data for org invites and unconfirmed sign ups
 type TempUser struct {
-	ID              int64 `xorm:"id"`
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Version         int
 	Email           string

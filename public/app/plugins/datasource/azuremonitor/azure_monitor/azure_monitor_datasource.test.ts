@@ -418,7 +418,7 @@ describe('AzureMonitorDatasource', () => {
       const templateVariables = createTemplateVariables(templateableProps);
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
-      const azureMonitorQuery: { [index: string]: any } = {};
+      const azureMonitorQuery = {};
       for (const [path, templateVariable] of templateVariables.entries()) {
         set(azureMonitorQuery, path, `$${templateVariable.variableName}`);
       }
@@ -989,7 +989,7 @@ describe('AzureMonitorDatasource', () => {
             resourceName: 'resource1',
             metricName: 'Transactions',
           })
-          .then((results: any) => {
+          .then((results) => {
             expect(results.dimensions).toMatchInlineSnapshot(`
               [
                 {
@@ -1048,7 +1048,7 @@ describe('AzureMonitorDatasource', () => {
             resourceName: 'resource1',
             metricName: 'FreeCapacity',
           })
-          .then((results: any) => {
+          .then((results) => {
             expect(results.dimensions.length).toEqual(0);
           });
       });

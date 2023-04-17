@@ -14,6 +14,7 @@ export const LogMessages = {
   clickingAlertStateFilters: 'clicking alert state filters',
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
+  unknownMessageFromError: 'unknown messageFromError',
 };
 
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
@@ -44,9 +45,9 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
   };
 }
 
-export async function isNewUser(userId: number) {
+export async function isNewUser() {
   try {
-    const { createdAt } = await getBackendSrv().get(`/api/users/${userId}`);
+    const { createdAt } = await getBackendSrv().get(`/api/user`);
 
     const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
     const userCreationDate = dateTime(createdAt);
@@ -60,7 +61,7 @@ export async function isNewUser(userId: number) {
 }
 
 export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) => {
-  const isNew = await isNewUser(props.user_id);
+  const isNew = await isNewUser();
   if (isNew) {
     return;
   }
@@ -68,7 +69,7 @@ export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) =
 };
 
 export const trackNewAlerRuleFormCancelled = async (props: AlertRuleTrackingProps) => {
-  const isNew = await isNewUser(props.user_id);
+  const isNew = await isNewUser();
   if (isNew) {
     return;
   }
@@ -76,7 +77,7 @@ export const trackNewAlerRuleFormCancelled = async (props: AlertRuleTrackingProp
 };
 
 export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & { error: string }) => {
-  const isNew = await isNewUser(props.user_id);
+  const isNew = await isNewUser();
   if (isNew) {
     return;
   }

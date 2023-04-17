@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
@@ -8,8 +8,9 @@ import {
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { Input, InlineField, FieldProps } from '@grafana/ui';
+import { Input, InlineField, FieldProps, SecureSocksProxySettings } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
@@ -25,7 +26,7 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 type LogGroupFieldState = Pick<FieldProps, 'invalid'> & { error?: string | null };
 
-export const ConfigEditor: FC<Props> = (props: Props) => {
+export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
   const { defaultLogGroups, logsTimeout, defaultRegion, logGroups } = options.jsonData;
   const datasource = useDatasource(props);
@@ -65,6 +66,10 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           />
         </InlineField>
       </ConnectionConfig>
+
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <h3 className="page-heading">CloudWatch Logs</h3>
       <div className="gf-form-group">
@@ -124,7 +129,6 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           />
         </InlineField>
       </div>
-
       <XrayLinkConfig
         onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
         datasourceUid={options.jsonData.tracingDatasourceUid}

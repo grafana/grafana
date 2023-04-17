@@ -49,6 +49,9 @@ describe('Render', () => {
     expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
+
+    // Should not show button in page header when the list is empty
+    expect(await screen.queryByRole('link', { name: 'Add new data source' })).toBeNull();
   });
 
   describe('when user has no permissions', () => {
@@ -112,6 +115,9 @@ describe('Render', () => {
     expect(await screen.findByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
     expect(await screen.findAllByRole('img')).toHaveLength(5);
+
+    // Should show button in page header when the list is not empty
+    expect(await screen.findByRole('link', { name: 'Add new data source' })).toBeInTheDocument();
   });
 
   describe('should render elements in sort order', () => {

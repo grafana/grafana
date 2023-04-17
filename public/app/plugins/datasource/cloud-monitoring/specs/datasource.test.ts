@@ -1,7 +1,7 @@
 import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -9,14 +9,14 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../../features/variables/types';
 import CloudMonitoringDataSource from '../datasource';
-import { CloudMonitoringOptions } from '../types';
+import { CloudMonitoringOptions, CloudMonitoringQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
-type Args = { response?: any; throws?: boolean; templateSrv?: TemplateSrv };
+type Args = { response?: unknown; throws?: boolean; templateSrv?: TemplateSrv };
 
 const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
@@ -63,9 +63,9 @@ describe('CloudMonitoringDataSource', () => {
               refId: 'A',
             },
           ],
-        };
+        } as DataQueryRequest<CloudMonitoringQuery>;
 
-        const response: any = {
+        const response = {
           results: {
             A: {
               refId: 'A',
@@ -80,7 +80,7 @@ describe('CloudMonitoringDataSource', () => {
 
         const { ds } = getTestcontext({ response });
 
-        await expect(ds.query(options as any)).toEmitValuesWith((received) => {
+        await expect(ds.query(options)).toEmitValuesWith((received) => {
           const results = received[0];
           expect(results.data.length).toBe(0);
         });
@@ -199,7 +199,7 @@ describe('CloudMonitoringDataSource', () => {
   });
 });
 
-function initTemplateSrv(values: any, multi = false) {
+function initTemplateSrv(values: string | string[], multi = false) {
   const templateSrv = new TemplateSrv();
   const test: CustomVariableModel = {
     ...initialCustomVariableModelState,

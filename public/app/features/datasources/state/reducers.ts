@@ -17,13 +17,14 @@ export const initialState: DataSourcesState = {
   searchQuery: '',
   dataSourcesCount: 0,
   dataSourceTypeSearchQuery: '',
-  hasFetched: false,
   isLoadingDataSources: false,
+  isLoadingDataSourcePlugins: false,
   dataSourceMeta: {} as DataSourcePluginMeta,
   isSortAscending: true,
 };
 
 export const dataSourceLoaded = createAction<DataSourceSettings>('dataSources/dataSourceLoaded');
+export const dataSourcesLoad = createAction<void>('dataSources/dataSourcesLoad');
 export const dataSourcesLoaded = createAction<DataSourceSettings[]>('dataSources/dataSourcesLoaded');
 export const dataSourceMetaLoaded = createAction<DataSourcePluginMeta>('dataSources/dataSourceMetaLoaded');
 export const dataSourcePluginsLoad = createAction('dataSources/dataSourcePluginsLoad');
@@ -43,10 +44,14 @@ export const setIsSortAscending = createAction<boolean>('dataSources/setIsSortAs
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const dataSourcesReducer = (state: DataSourcesState = initialState, action: AnyAction): DataSourcesState => {
+  if (dataSourcesLoad.match(action)) {
+    return { ...state, isLoadingDataSources: true };
+  }
+
   if (dataSourcesLoaded.match(action)) {
     return {
       ...state,
-      hasFetched: true,
+      isLoadingDataSources: false,
       dataSources: action.payload,
       dataSourcesCount: action.payload.length,
     };
@@ -65,7 +70,7 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
   }
 
   if (dataSourcePluginsLoad.match(action)) {
-    return { ...state, plugins: [], isLoadingDataSources: true };
+    return { ...state, plugins: [], isLoadingDataSourcePlugins: true };
   }
 
   if (dataSourcePluginsLoaded.match(action)) {
@@ -73,7 +78,7 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
       ...state,
       plugins: action.payload.plugins,
       categories: action.payload.categories,
-      isLoadingDataSources: false,
+      isLoadingDataSourcePlugins: false,
     };
   }
 

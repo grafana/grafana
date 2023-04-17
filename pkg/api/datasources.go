@@ -17,10 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -653,7 +653,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "id is invalid", nil)
 		return
 	}
-	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(403, "Access denied to datasource", err)
@@ -690,7 +690,7 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) 
 		return
 	}
 
-	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
@@ -760,7 +760,7 @@ func (hs *HTTPServer) CheckDatasourceHealthWithUID(c *contextmodel.ReqContext) r
 		return response.Error(http.StatusBadRequest, "UID is invalid", nil)
 	}
 
-	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
@@ -790,7 +790,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "id is invalid", nil)
 	}
 
-	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return response.Error(http.StatusForbidden, "Access denied to datasource", err)

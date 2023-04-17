@@ -21,6 +21,7 @@ func logf(format string, a ...interface{}) {
 type Options struct {
 	MatrixWideSeries bool
 	VectorWideSeries bool
+	Dataplane        bool
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -115,15 +116,15 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 			switch resultType {
 			case "matrix":
 				if opt.MatrixWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
+					rsp = readMatrixOrVectorWide(iter, resultType, opt)
 				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
+					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 				}
 			case "vector":
 				if opt.VectorWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
+					rsp = readMatrixOrVectorWide(iter, resultType, opt)
 				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
+					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 				}
 			case "streams":
 				rsp = readStream(iter)
@@ -227,8 +228,8 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 }
 
 // For consistent ordering read values to an array not a map
-func readLabelsAsPairs(iter *jsoniter.Iterator, pairs [][2]string) [][2]string {
-	pairs = pairs[:0]
+func readLabelsAsPairs(iter *jsoniter.Iterator) [][2]string {
+	pairs := make([][2]string, 0, 10)
 	for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
 		pairs = append(pairs, [2]string{k, iter.ReadString()})
 	}
@@ -269,7 +270,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 
 					case "labels":
 						max := 0
-						for _, pair := range readLabelsAsPairs(iter, pairs) {
+						for _, pair := range readLabelsAsPairs(iter) {
 							k := pair[0]
 							v := pair[1]
 							f, ok := lookup[k]
@@ -304,7 +305,6 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 			}
 		default:
 			v := fmt.Sprintf("%v", iter.Read())
-			pairs = pairs[:0]
 			pairs = append(pairs, [2]string{l1Field, v})
 		}
 	}
@@ -355,7 +355,7 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMulti,
+		Type:   data.FrameTypeNumericMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
 	}
 
@@ -364,16 +364,25 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) backend.DataResponse {
+func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rowIdx := 0
 	timeMap := map[int64]int{}
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	frame := data.NewFrame("", timeField)
-	frame.Meta = &data.FrameMeta{
+
+	frame.Meta = &data.FrameMeta{ // Overwritten if histogram
 		Type:   data.FrameTypeTimeSeriesWide,
 		Custom: resultTypeToCustomMeta(resultType),
 	}
+
+	if opt.Dataplane && resultType == "vector" {
+		frame.Meta.Type = data.FrameTypeNumericWide
+	}
+	if opt.Dataplane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
+	}
+
 	rsp := backend.DataResponse{
 		Frames: []*data.Frame{},
 	}
@@ -472,7 +481,7 @@ func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, i
 	return timeMap, rowIdx
 }
 
-func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend.DataResponse {
+func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	for iter.ReadArray() {
@@ -547,6 +556,12 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend
 			frame.Meta = &data.FrameMeta{
 				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
+			}
+			if opt.Dataplane && resultType == "vector" {
+				frame.Meta.Type = data.FrameTypeNumericMulti
+			}
+			if opt.Dataplane {
+				frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 		}

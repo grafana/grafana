@@ -11,7 +11,7 @@ import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import {
   locationUtil,
@@ -33,7 +33,9 @@ import {
   setQueryRunnerFactory,
   setRunRequest,
   setPluginImportUtils,
-  setPluginsExtensionRegistry,
+  setPluginExtensionGetter,
+  setAppEvents,
+  type GetPluginExtensions,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -46,6 +48,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
+import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/PageNew/PluginPage';
@@ -70,7 +73,8 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionsRegistry } from './features/plugins/extensions/registry';
+import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
+import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -124,6 +128,9 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
 
+      // Expose the app-wide eventbus
+      setAppEvents(appEvents);
+
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;
 
@@ -174,15 +181,17 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      const pluginExtensionRegistry = createPluginExtensionsRegistry(config.apps);
-      setPluginsExtensionRegistry(pluginExtensionRegistry);
-
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
 
       // Preload selected app plugins
-      await preloadPlugins(config.apps);
+      const preloadResults = await preloadPlugins(config.apps);
+
+      // Create extension registry out of the preloaded plugins
+      const pluginExtensionGetter: GetPluginExtensions = (options) =>
+        getPluginExtensions({ ...options, registry: createPluginExtensionRegistry(preloadResults) });
+      setPluginExtensionGetter(pluginExtensionGetter);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -200,11 +209,11 @@ export class GrafanaApp {
         config,
       };
 
-      ReactDOM.render(
+      const root = createRoot(document.getElementById('reactRoot')!);
+      root.render(
         React.createElement(AppWrapper, {
           app: this,
-        }),
-        document.getElementById('reactRoot')
+        })
       );
     } catch (error) {
       console.error('Failed to start Grafana', error);

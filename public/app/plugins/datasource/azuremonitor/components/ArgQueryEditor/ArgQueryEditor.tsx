@@ -33,7 +33,9 @@ function selectSubscriptions(
   if (querySubscriptions.length === 0 && fetchedSubscriptions.length) {
     querySubscriptions = [fetchedSubscriptions[0]];
   }
-  const commonSubscriptions = intersection(querySubscriptions, fetchedSubscriptions);
+
+  const templateVars = querySubscriptions.filter((sub) => sub.includes('$'));
+  const commonSubscriptions = intersection(querySubscriptions, fetchedSubscriptions).concat(templateVars);
   if (fetchedSubscriptions.length && querySubscriptions.length > commonSubscriptions.length) {
     // If not all of the query subscriptions are in the list of fetched subscriptions, then
     // select only the ones present (or the first one if none is present)
@@ -42,14 +44,14 @@ function selectSubscriptions(
   return querySubscriptions;
 }
 
-const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
+const ArgQueryEditor = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onChange,
   setError,
-}) => {
+}: ArgQueryEditorProps) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
   useMemo(() => {
     datasource

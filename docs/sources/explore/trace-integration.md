@@ -13,16 +13,16 @@ Explore allows you to visualize traces from tracing data sources. This is availa
 
 Supported data sources are:
 
-- [Jaeger]({{< relref "../datasources/jaeger/" >}})
 - [Tempo]({{< relref "../datasources/tempo/" >}})
-- [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
+- [Jaeger]({{< relref "../datasources/jaeger/" >}})
 - [Zipkin]({{< relref "../datasources/zipkin/" >}})
+- [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
-## Trace View explanation
+## Trace View
 
-This section explains the elements of the Trace View dashboard.
+This section explains the elements of the Trace View.
 
 {{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
@@ -39,6 +39,22 @@ This section explains the elements of the Trace View dashboard.
 {{< figure src="/static/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view minimap" >}}
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
+
+### Span Filters
+
+> **Note:** This feature is behind the `newTraceView` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
 
 ### Timeline
 
@@ -57,38 +73,42 @@ Clicking anywhere on the span row shows span details.
 
 {{< figure src="/static/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view span details" >}}
 
-- Operation name
-- Span metadata
+- Operation name.
+- Span metadata.
 - Tags: Any tags associated with this span.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
-
-### Node graph
-
-You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
-
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
 
 ### Trace to logs
 
 > **Note:** Available in Grafana 7.4 and later versions.
 
-You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger, and Zipkin data sources at this moment. Refer to their relevant documentation for instructions on how to configure this feature.
+You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
 
 {{< figure src="/static/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
 
-## APM dashboard
+### Trace to metrics
 
-Application performance management (APM) uses data gathered from services, agents, systems, and microservices to visualize and identify areas of concern.
+> **Note:** This feature is currently in beta & behind the `traceToMetrics` feature toggle.
 
-The Grafana APM dashboard visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
-Once the requirements are set up, this pre-configured dashboard is immediately available.
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-metrics) for configuration instructions.
 
-For more information, refer to the [APM table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#apm-table) of the Tempo data source page and the [APM dashboard page](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/) in the Tempo documentation.
+## Node Graph
 
-{{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the APM dashboard" >}}
+You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
+
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
+
+## Service Graph
+
+The Service Graph visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
+Once the requirements are set up, this pre-configured view is immediately available.
+
+For more information, refer to the [Service Graph view section]({{< relref "/docs/grafana/latest/datasources/tempo/#open-the-service-graph-view" >}}) of the Tempo data source page and the [service graph view page]({{< relref "/docs/tempo/latest/metrics-generator/service-graph-view/" >}}) in the Tempo documentation.
+
+{{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the Service Graph view" >}}
 
 ## Data API
 
@@ -120,4 +140,4 @@ Optional fields:
 | stackTraces    | string[]            | List of stack traces associated with the current span.             |
 | errorIconColor | string              | Color of the error icon in case span is tagged with `error: true`. |
 
-For details about the types see [TraceSpanRow](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/trace.ts#L28), [TraceKeyValuePair](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/trace.ts#L4) and [TraceLog](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/trace.ts#L12)
+For details about the types see [TraceSpanRow](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/trace.ts#L28), [TraceKeyValuePair](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/trace.ts#L4) and [TraceLog](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/trace.ts#L12).

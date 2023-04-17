@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
+import { Tooltip, Themeable2, withTheme2, clearButtonStyles, stylesFactory } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { ALL_VARIABLE_VALUE } from '../../constants';
@@ -41,13 +41,14 @@ class VariableOptions extends PureComponent<Props> {
 
   render() {
     // Don't want to pass faulty rest props to the div
-    const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, ...restProps } = this.props;
+    const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, theme, ...restProps } = this.props;
+    const styles = getStyles(theme);
 
     return (
-      <div className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}>
-        <div className="variable-options-wrapper">
+      <div className={styles.variableValueDropdown}>
+        <div className={styles.variableOptionsWrapper}>
           <ul
-            className={listStyles}
+            className={styles.variableOptionsColumn}
             aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
@@ -60,22 +61,34 @@ class VariableOptions extends PureComponent<Props> {
   }
 
   renderOption(option: VariableOption, index: number) {
-    const { highlightIndex, theme } = this.props;
-    const selectClass = option.selected ? 'variable-option pointer selected' : 'variable-option pointer';
-    const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
+    const { highlightIndex, multi, theme } = this.props;
+    const styles = getStyles(theme);
 
     const isAllOption = option.value === ALL_VARIABLE_VALUE;
 
     return (
       <li key={`${option.value}`}>
         <button
+          data-testid={selectors.components.Variables.variableOption}
           role="checkbox"
           type="button"
           aria-checked={option.selected}
-          className={classNames(highlightClass, clearButtonStyles(theme), noStyledButton)}
+          className={cx(
+            clearButtonStyles(theme),
+            styles.variableOption,
+            {
+              [styles.highlighted]: index === highlightIndex,
+            },
+            styles.noStyledButton
+          )}
           onClick={this.onToggle(option)}
         >
-          <span className="variable-option-icon"></span>
+          <span
+            className={cx(styles.variableOptionIcon, {
+              [styles.variableOptionIconSelected]: option.selected,
+              [styles.hideVariableOptionIcon]: !multi,
+            })}
+          ></span>
           <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
             {isAllOption ? t('variable.picker.option-all', 'All') : option.text}
           </span>
@@ -86,6 +99,7 @@ class VariableOptions extends PureComponent<Props> {
 
   renderMultiToggle() {
     const { multi, selectedValues, theme } = this.props;
+    const styles = getStyles(theme);
 
     if (!multi) {
       return null;
@@ -96,18 +110,23 @@ class VariableOptions extends PureComponent<Props> {
     return (
       <Tooltip content={tooltipContent} placement={'top'}>
         <button
-          className={`${
-            selectedValues.length > 1
-              ? 'variable-options-column-header many-selected'
-              : 'variable-options-column-header'
-          } ${noStyledButton} ${clearButtonStyles(theme)}`}
+          className={cx(
+            clearButtonStyles(theme),
+            styles.variableOption,
+            styles.variableOptionColumnHeader,
+            styles.noStyledButton
+          )}
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
           aria-label="Toggle all values"
           data-placement="top"
         >
-          <span className="variable-option-icon"></span>
+          <span
+            className={cx(styles.variableOptionIcon, {
+              [styles.variableOptionIconManySelected]: selectedValues.length > 1,
+            })}
+          ></span>
           <Trans i18nKey="variable.picker.option-selected-values">Selected</Trans> ({selectedValues.length})
         </button>
       </Tooltip>
@@ -115,16 +134,74 @@ class VariableOptions extends PureComponent<Props> {
   }
 }
 
-const listStyles = cx(
-  'variable-options-column',
-  css`
-    list-style-type: none;
-  `
-);
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const checkboxImageUrl = theme.isDark ? 'public/img/checkbox.png' : 'public/img/checkbox_white.png';
 
-const noStyledButton = css`
-  width: 100%;
-  text-align: left;
-`;
+  return {
+    hideVariableOptionIcon: css({
+      display: 'none',
+    }),
+    highlighted: css({
+      backgroundColor: theme.colors.action.hover,
+    }),
+    noStyledButton: css({
+      width: '100%',
+      textAlign: 'left',
+    }),
+    variableOption: css({
+      display: 'block',
+      padding: '2px 27px 0 8px',
+      position: 'relative',
+      whiteSpace: 'nowrap',
+      minWidth: '115px',
+      ['&:hover']: {
+        backgroundColor: theme.colors.action.hover,
+      },
+    }),
+    variableOptionColumnHeader: css({
+      paddingTop: '5px',
+      paddingBottom: '5px',
+      marginBottom: '5px',
+    }),
+    variableOptionIcon: css({
+      display: 'inline-block',
+      width: '24px',
+      height: '18px',
+      position: 'relative',
+      top: '4px',
+      background: `url(${checkboxImageUrl}) left top no-repeat`,
+    }),
+    variableOptionIconManySelected: css({
+      background: `url(${checkboxImageUrl}) 0px -36px no-repeat`,
+    }),
+    variableOptionIconSelected: css({
+      background: `url(${checkboxImageUrl}) 0px -18px no-repeat`,
+    }),
+    variableValueDropdown: css({
+      backgroundColor: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.borderRadius(2),
+      boxShadow: theme.shadows.z2,
+      position: 'absolute',
+      top: theme.spacing(theme.components.height.md),
+      maxHeight: '400px',
+      minHeight: '150px',
+      minWidth: '150px',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      zIndex: theme.zIndex.typeahead,
+    }),
+    variableOptionsColumn: css({
+      maxHeight: '350px',
+      display: 'table-cell',
+      lineHeight: '26px',
+      listStyleType: 'none',
+    }),
+    variableOptionsWrapper: css({
+      display: 'table',
+      width: '100%',
+    }),
+  };
+});
 
 export default withTheme2(VariableOptions);

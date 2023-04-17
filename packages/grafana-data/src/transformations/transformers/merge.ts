@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import { MutableDataFrame } from '../../dataframe';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
 
@@ -117,7 +116,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
 const copyFieldStructure = (field: Field): Field => {
   return {
     ...omit(field, ['values', 'state', 'labels', 'config']),
-    values: new ArrayVector(),
+    values: [],
     config: {
       ...omit(field.config, 'displayName'),
     },

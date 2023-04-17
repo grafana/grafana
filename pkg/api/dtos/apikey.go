@@ -22,5 +22,6 @@ type ApiKeyDTO struct {
 	Name          string                 `json:"name"`
 	Role          org.RoleType           `json:"role"`
 	Expiration    *time.Time             `json:"expiration,omitempty"`
+	LastUsedAt    *time.Time             `json:"lastUsedAt,omitempty"`
 	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 }

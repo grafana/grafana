@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, useState, useEffect } from 'react';
+import React, { FormEvent, useState, useEffect } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
@@ -16,7 +16,7 @@ export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, Lok
 
 const refId = 'LokiVariableQueryEditor-VariableQuery';
 
-export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource }) => {
+export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
   const [type, setType] = useState<number | undefined>(undefined);
   const [label, setLabel] = useState('');
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
@@ -31,10 +31,6 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     setType(variableQuery.type);
     setLabel(variableQuery.label || '');
     setStream(variableQuery.stream || '');
-
-    if (variableQuery.label) {
-      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    }
   }, [query]);
 
   useEffect(() => {

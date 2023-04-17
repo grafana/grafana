@@ -491,6 +491,42 @@ func TestBuildExternalURL(t *testing.T) {
 			},
 			expectedURL: "http://localhost:9000/path/to/am",
 		},
+		{
+			name: "adds /alertmanager to path when implementation is mimir",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanager",
+		},
+		{
+			name: "adds /alertmanager to path when implementation is cortex",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "cortex")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/am/alertmanager",
+		},
+		{
+			name: "do nothing when implementation is prometheus",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/am",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

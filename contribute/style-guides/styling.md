@@ -13,12 +13,12 @@ To access the theme in your styles, use the `useStyles` hook. It provides basic 
 > Please remember to put `getStyles` function at the end of the file!
 
 ```tsx
-import React, { FC } from 'react';
+import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-const Foo: FC<FooProps> = () => {
+const Foo = (props: FooProps) => {
   const styles = useStyles2(getStyles);
 
   // Use styles with classNames
@@ -34,7 +34,7 @@ const getStyles = (theme: GrafanaTheme2) =>
 ### Styling complex components
 
 In more complex cases, especially when you need to style multiple DOM elements in one component, or when using styles that depend on properties and/or state you
-can have your getStyles function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/emotion#cx) to compose them.
+can have your getStyles function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them.
 
 Let's say you need to style a component that has a different background depending on the `isActive` property :
 
@@ -48,7 +48,7 @@ interface ComponentAProps {
   isActive: boolean;
 }
 
-const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
+const ComponentA = ({ isActive }: ComponentAProps) => {
   const theme = useTheme();
   const styles = useStyles2(theme);
 

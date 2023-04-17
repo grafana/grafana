@@ -30,6 +30,7 @@ import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 
 import { config } from '../config';
@@ -67,8 +68,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
+   *
+   * We also don't have expressions, so filter those out
    */
-  let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panel.targets
+    .map((t) => omit(t, 'legendFormat'))
+    .filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
   let url: string | undefined;
   // if the mixed datasource is not enabled for explore, choose only one datasource
   if (
@@ -137,7 +142,6 @@ export function buildQueryTransaction(
 
   const request: DataQueryRequest = {
     app: CoreApp.Explore,
-    dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: timeZone || DefaultTimeZone,
     startTime: Date.now(),
@@ -192,7 +196,7 @@ export const safeParseJson = (text?: string): any | undefined => {
 };
 
 export const safeStringifyValue = (value: any, space?: number) => {
-  if (!value) {
+  if (value === undefined || value === null) {
     return '';
   }
 

@@ -164,7 +164,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
         .pipe(
           map((res: FetchResponse<BackendDataSourceResponse>) => {
             const rsp = toDataQueryResponse(res, queries);
-            return rsp.data[0];
+            return rsp.data[0] ?? { fields: [] };
           })
         )
     );

@@ -309,9 +309,9 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
-		ac1, err := usrSvc.CreateUserForTests(context.Background(), ac1cmd)
+		ac1, err := usrSvc.Create(context.Background(), ac1cmd)
 		require.NoError(t, err)
-		ac2, err := usrSvc.CreateUserForTests(context.Background(), ac2cmd)
+		ac2, err := usrSvc.Create(context.Background(), ac2cmd)
 		require.NoError(t, err)
 		cmd := org.AddOrgUserCommand{
 			OrgID:  ac1.OrgID,
@@ -415,24 +415,32 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
 		ss = db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		ss.Cfg.AutoAssignOrg = true
+		ss.Cfg.AutoAssignOrgId = 1
+		ss.Cfg.AutoAssignOrgRole = "Viewer"
+
+		orgSvc, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 
 		testUser := &user.SignedInUser{
 			Permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
 			},
 		}
-		ss.Cfg.AutoAssignOrg = true
-		ss.Cfg.AutoAssignOrgId = 1
-		ss.Cfg.AutoAssignOrgRole = "Viewer"
 
-		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
-		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
-
-		ac1, err := usrSvc.CreateUserForTests(context.Background(), ac1cmd)
-		testUser.OrgID = ac1.OrgID
+		o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 		require.NoError(t, err)
-		_, err = usrSvc.Create(context.Background(), ac2cmd)
+
+		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name", OrgID: o.ID}
+		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", OrgID: o.ID}
+
+		ac1, err := usrSvc.Create(context.Background(), ac1cmd)
+		require.NoError(t, err)
+		testUser.OrgID = ac1.OrgID
+		require.Equal(t, int64(1), ac1.OrgID)
+		require.NoError(t, err)
+
+		ac2, err := usrSvc.Create(context.Background(), ac2cmd)
+		require.Equal(t, int64(1), ac2.OrgID)
 		require.NoError(t, err)
 
 		t.Run("Can get organization users paginated with query", func(t *testing.T) {
@@ -475,16 +483,20 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 		dialect: store.GetDialect(),
 		cfg:     setting.NewCfg(),
 	}
-	_, usrSvc := createOrgAndUserSvc(t, store, store.Cfg)
+	orgSvc, usrSvc := createOrgAndUserSvc(t, store, store.Cfg)
+
+	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
+	require.NoError(t, err)
 
 	// create org and admin
-	u, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+	u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login: "admin",
+		OrgID: o.ID,
 	})
 	require.NoError(t, err)
 
 	// create a service account with no org
-	sa, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+	sa, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login:            "sa-no-org",
 		IsServiceAccount: true,
 		SkipOrgSetup:     true,
@@ -530,49 +542,6 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	tests := []struct {
-		desc             string
-		query            *org.SearchOrgUsersQuery
-		expectedNumUsers int
-	}{
-		{
-			desc: "should return all users",
-			query: &org.SearchOrgUsersQuery{
-				OrgID: 1,
-				User: &user.SignedInUser{
-					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-				},
-			},
-			expectedNumUsers: 10,
-		},
-		{
-			desc: "should return no users",
-			query: &org.SearchOrgUsersQuery{
-				OrgID: 1,
-				User: &user.SignedInUser{
-					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {""}}},
-				},
-			},
-			expectedNumUsers: 0,
-		},
-		{
-			desc: "should return some users",
-			query: &org.SearchOrgUsersQuery{
-				OrgID: 1,
-				User: &user.SignedInUser{
-					OrgID: 1,
-					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {
-						"users:id:1",
-						"users:id:5",
-						"users:id:9",
-					}}},
-				},
-			},
-			expectedNumUsers: 3,
-		},
-	}
 
 	store := db.InitTestDB(t)
 	orgUserStore := sqlStore{
@@ -585,7 +554,57 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 		orgUserStore.cfg.IsEnterprise = false
 	}()
 	store.Cfg = setting.NewCfg()
-	seedOrgUsers(t, &orgUserStore, store, 10)
+
+	orgSvc, userSvc := createOrgAndUserSvc(t, store, store.Cfg)
+
+	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
+	require.NoError(t, err)
+
+	seedOrgUsers(t, &orgUserStore, store, 10, userSvc, o.ID)
+
+	tests := []struct {
+		desc             string
+		query            *org.SearchOrgUsersQuery
+		expectedNumUsers int
+	}{
+		{
+			desc: "should return all users",
+			query: &org.SearchOrgUsersQuery{
+				OrgID: o.ID,
+				User: &user.SignedInUser{
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			},
+			expectedNumUsers: 10,
+		},
+		{
+			desc: "should return no users",
+			query: &org.SearchOrgUsersQuery{
+				OrgID: o.ID,
+				User: &user.SignedInUser{
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {""}}},
+				},
+			},
+			expectedNumUsers: 0,
+		},
+		{
+			desc: "should return some users",
+			query: &org.SearchOrgUsersQuery{
+				OrgID: o.ID,
+				User: &user.SignedInUser{
+					OrgID: o.ID,
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {
+						"users:id:1",
+						"users:id:5",
+						"users:id:9",
+					}}},
+				},
+			},
+			expectedNumUsers: 3,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -602,26 +621,27 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	}
 }
 
-func seedOrgUsers(t *testing.T, orgUserStore store, store *sqlstore.SQLStore, numUsers int) {
+func seedOrgUsers(t *testing.T, orgUserStore store, store *sqlstore.SQLStore, numUsers int, usrSvc user.Service, orgID int64) {
 	t.Helper()
-	_, usrSvc := createOrgAndUserSvc(t, store, store.Cfg)
 
 	// Seed users
 	for i := 1; i <= numUsers; i++ {
-		user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+		user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Login: fmt.Sprintf("user-%d", i),
-			OrgID: 1,
 		})
 		require.NoError(t, err)
 
-		if i != 1 {
-			err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
-				Role:   "Viewer",
-				OrgID:  1,
-				UserID: user.ID,
-			})
-			require.NoError(t, err)
+		role := org.RoleViewer
+		if i == 1 {
+			role = org.RoleAdmin
 		}
+
+		err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+			Role:   role,
+			OrgID:  orgID,
+			UserID: user.ID,
+		})
+		require.NoError(t, err)
 	}
 }
 
@@ -659,7 +679,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	newUser, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+	newUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login:      "Viewer",
 		Email:      "viewer@localhost",
 		OrgID:      id,
@@ -704,6 +724,21 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
+	store := db.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	orgUserStore := sqlStore{
+		db:      store,
+		dialect: store.GetDialect(),
+		cfg:     setting.NewCfg(),
+	}
+	// orgUserStore.cfg.Skip
+	orgSvc, userSvc := createOrgAndUserSvc(t, store, store.Cfg)
+
+	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
+	require.NoError(t, err)
+
+	seedOrgUsers(t, &orgUserStore, store, 10, userSvc, o.ID)
+
 	tests := []struct {
 		desc             string
 		query            *org.SearchOrgUsersQuery
@@ -712,9 +747,9 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 		{
 			desc: "should return all users",
 			query: &org.SearchOrgUsersQuery{
-				OrgID: 1,
+				OrgID: o.ID,
 				User: &user.SignedInUser{
-					OrgID:       1,
+					OrgID:       o.ID,
 					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			},
@@ -723,9 +758,9 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 		{
 			desc: "should return no users",
 			query: &org.SearchOrgUsersQuery{
-				OrgID: 1,
+				OrgID: o.ID,
 				User: &user.SignedInUser{
-					OrgID:       1,
+					OrgID:       o.ID,
 					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {""}}},
 				},
 			},
@@ -734,9 +769,9 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 		{
 			desc: "should return some users",
 			query: &org.SearchOrgUsersQuery{
-				OrgID: 1,
+				OrgID: o.ID,
 				User: &user.SignedInUser{
-					OrgID: 1,
+					OrgID: o.ID,
 					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
@@ -747,15 +782,6 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 			expectedNumUsers: 3,
 		},
 	}
-
-	store := db.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	orgUserStore := sqlStore{
-		db:      store,
-		dialect: store.GetDialect(),
-		cfg:     setting.NewCfg(),
-	}
-	// orgUserStore.cfg.Skip
-	seedOrgUsers(t, &orgUserStore, store, 10)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -782,11 +808,15 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 		dialect: store.GetDialect(),
 		cfg:     setting.NewCfg(),
 	}
-	_, usrSvc := createOrgAndUserSvc(t, store, store.Cfg)
+	orgSvc, usrSvc := createOrgAndUserSvc(t, store, store.Cfg)
+
+	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: MainOrgName})
+	require.NoError(t, err)
+
 	// create org and admin
-	_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login: "admin",
-		OrgID: 1,
+		OrgID: o.ID,
 	})
 	require.NoError(t, err)
 

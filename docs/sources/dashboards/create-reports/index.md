@@ -43,10 +43,11 @@ When [RBAC]({{< relref "../../administration/roles-and-permissions/access-contro
 
 Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}).
 
-1. Click on the Reports icon in the side navigation menu.
+1. Click **Dashboards > Reports** in the side navigation menu.
 
-   The Reports tab allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
+   The Reports page allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
 
+1. Click **+ Create a new report**.
 1. Select report dashboard.
    - **Source dashboard:** Select the dashboard from which you want to generate the report.
    - **Time range:** (optional) Use custom time range for the report. For more information, refer to [Report time range]({{< relref "#report-time-range" >}}).
@@ -183,7 +184,7 @@ You can generate and save PDF files of any dashboard.
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 6.7 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-1. In the upper-right corner of the dashboard that you want to export as PDF, click the **Share dashboard** icon.
+1. In the dashboard that you want to export as PDF, click the **Share dashboard** icon.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
 1. Click **Save as PDF** to render the dashboard as a PDF file.
 
@@ -230,20 +231,22 @@ font_italic = DejaVuSansCondensed-Oblique.ttf
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.2 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
+You can configure organization-wide report settings in the **Settings** under **Dashboards > Reporting**. Settings are applied to all the reports for current organization.
 
 You can customize the branding options.
 
 Report branding:
 
-- **Company logo URL:** Company logo displayed in the report PDF. Defaults to the Grafana logo.
+- **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. Defaults to the Grafana logo.
 
 Email branding:
 
-- **Company logo URL:** Company logo displayed in the report PDF. Defaults to the Grafana logo.
+- **Company logo:** Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. Defaults to the Grafana logo.
 - **Email footer:** Toggle to enable the report email footer. Select **Sent by** or **None**.
 - **Footer link text:** Text of the link in the report email footer. Defaults to `Grafana`.
 - **Footer link URL:** Link of the report email footer.
+
+> Note: Currently, the API does not allow for the simultaneous upload of files with identical names for both the email logo and report logo. You can still upload the same file for each logo separately in two distinct steps.
 
 ## Troubleshoot reporting
 

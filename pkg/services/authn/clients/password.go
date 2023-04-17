@@ -51,9 +51,9 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 	for _, pwClient := range c.clients {
 		identity, clientErr := pwClient.AuthenticatePassword(ctx, r, username, password)
 		clientErrs = multierror.Append(clientErrs, clientErr)
-		// for invalid password or if the identity is not found by a client continue to next one
+		// we always try next client on any error
 		if clientErr != nil {
-			c.log.Warn("failed to authenticate password identity", "client", pwClient, "error", clientErr)
+			c.log.FromContext(ctx).Debug("Failed to authenticate password identity", "client", pwClient, "error", clientErr)
 			continue
 		}
 

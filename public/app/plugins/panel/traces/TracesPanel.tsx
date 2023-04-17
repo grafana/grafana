@@ -3,7 +3,7 @@ import React, { useMemo, useState, createRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { PanelProps } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import TracePageSearchBar from 'app/features/explore/TraceView/components/TracePageHeader/TracePageSearchBar';
 import { TopOfViewRefType } from 'app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView';
@@ -17,7 +17,7 @@ const styles = {
   `,
 };
 
-export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
+export const TracesPanel = ({ data }: PanelProps) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
@@ -26,7 +26,6 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
   const dataSource = useAsync(async () => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
-  const scrollElement = document.getElementsByClassName(styles.wrapper)[0];
   const datasourceType = dataSource && dataSource.value ? dataSource.value.type : 'unknown';
 
   if (!data || !data.series.length || !traceProp) {
@@ -40,7 +39,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
   return (
     <div className={styles.wrapper}>
       <div ref={topOfViewRef}></div>
-      {data.series[0]?.meta?.preferredVisualisationType === 'trace' ? (
+      {!config.featureToggles.newTraceView ? (
         <TracePageSearchBar
           navigable={true}
           searchValue={search}
@@ -56,7 +55,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
 
       <TraceView
         dataFrames={data.series}
-        scrollElement={scrollElement}
+        scrollElementClass={styles.wrapper}
         traceProp={traceProp}
         spanFindMatches={spanFindMatches}
         search={search}

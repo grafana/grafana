@@ -18,14 +18,15 @@ package common
 // Specific implementations will *extend* this interface, adding the required
 // properties for the given context.
 DataQuery: {
-	// A - Z
+	// A unique identifier for the query within the list of targets.  
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	refId: string
 
 	// true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	hide?: bool
-
-	// Unique, guid like, string used in explore mode
-	key?: string
 
 	// Specify the query flavor
 	// TODO make this required and give it a default

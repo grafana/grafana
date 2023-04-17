@@ -1,7 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 
 import {
   ensureTimeField,
@@ -18,13 +17,13 @@ describe('field convert type', () => {
     const stringTime = {
       name: 'proper dates',
       type: FieldType.string,
-      values: new ArrayVector([
+      values: [
         '2021-07-19 00:00:00.000',
         '2021-07-23 00:00:00.000',
         '2021-07-25 00:00:00.000',
         '2021-08-01 00:00:00.000',
         '2021-08-02 00:00:00.000',
-      ]),
+      ],
       config: {},
     };
 
@@ -32,7 +31,7 @@ describe('field convert type', () => {
     expect(timefield).toEqual({
       name: 'proper dates',
       type: FieldType.time,
-      values: new ArrayVector([1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000]),
+      values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
       config: {},
     });
   });
@@ -42,13 +41,13 @@ describe('field convert type', () => {
     const yearFormat = {
       name: 'format to year',
       type: FieldType.string,
-      values: new ArrayVector([
+      values: [
         '2017-07-19 00:00:00.000',
         '2018-07-23 00:00:00.000',
         '2019-07-25 00:00:00.000',
         '2020-08-01 00:00:00.000',
         '2021-08-02 00:00:00.000',
-      ]),
+      ],
       config: {},
     };
 
@@ -56,7 +55,7 @@ describe('field convert type', () => {
     expect(timefield).toEqual({
       name: 'format to year',
       type: FieldType.time,
-      values: new ArrayVector([1483246800000, 1514782800000, 1546318800000, 1577854800000, 1609477200000]),
+      values: [1483246800000, 1514782800000, 1546318800000, 1577854800000, 1609477200000],
       config: {},
     });
   });
@@ -67,7 +66,7 @@ describe('field convert type', () => {
     const misformattedStrings = {
       name: 'misformatted dates',
       type: FieldType.string,
-      values: new ArrayVector(['2021/08-01 00:00.00:000', '2021/08/01 00.00-000', '2021/08-01 00:00.00:000']),
+      values: ['2021/08-01 00:00.00:000', '2021/08/01 00.00-000', '2021/08-01 00:00.00:000'],
       config: { unit: 'time' },
     };
 
@@ -75,7 +74,7 @@ describe('field convert type', () => {
     expect(timefield).toEqual({
       name: 'misformatted dates',
       type: FieldType.time,
-      values: new ArrayVector([null, null, null]),
+      values: [null, null, null],
       config: { unit: 'time' },
     });
   });
@@ -86,7 +85,7 @@ describe('field convert type', () => {
     const stringyNumbers = {
       name: 'stringy nums',
       type: FieldType.string,
-      values: new ArrayVector(['10', '12', '30', '14', '10']),
+      values: ['10', '12', '30', '14', '10'],
       config: {},
     };
 
@@ -95,7 +94,7 @@ describe('field convert type', () => {
     expect(numbers).toEqual({
       name: 'stringy nums',
       type: FieldType.number,
-      values: new ArrayVector([10, 12, 30, 14, 10]),
+      values: [10, 12, 30, 14, 10],
       config: {},
     });
   });
@@ -117,6 +116,7 @@ it('can convert strings with commas to numbers', () => {
     name: 'stringy nums',
     type: FieldType.number,
     values: new ArrayVector([1000, 1000000, 0, null, 0, 1]),
+    values: [1000, 1000000],
     config: {},
   });
 });
@@ -127,7 +127,7 @@ it('converts booleans to numbers', () => {
   const stringyNumbers = {
     name: 'booleans',
     type: FieldType.boolean,
-    values: new ArrayVector([true, false]),
+    values: [true, false],
     config: {},
   };
 
@@ -136,7 +136,7 @@ it('converts booleans to numbers', () => {
   expect(numbers).toEqual({
     name: 'booleans',
     type: FieldType.number,
-    values: new ArrayVector([1, 0]),
+    values: [1, 0],
     config: {},
   });
 });
@@ -338,6 +338,31 @@ describe('field convert types transformer', () => {
       },
     ]);
   });
+
+  it('will convert time fields to strings', () => {
+    const options = {
+      conversions: [{ targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM' }],
+    };
+
+    const stringified = convertFieldTypes(options, [
+      toDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
+          },
+        ],
+      }),
+    ])[0].fields[0];
+    expect(stringified.values.toArray()).toEqual([
+      '2021-07',
+      '2021-07',
+      '2021-07', // can group by month
+      '2021-08',
+      '2021-08',
+    ]);
+  });
 });
 
 describe('ensureTimeField', () => {
@@ -357,7 +382,7 @@ describe('ensureTimeField', () => {
       config: {},
       name: 'proper dates',
       type: FieldType.time,
-      values: new ArrayVector([1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000]),
+      values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
     });
   });
 });
@@ -366,19 +391,47 @@ describe('fieldToTimeField', () => {
   // this needs to run in a non-UTC timezone env to ensure the parsing is not dependent on env tz settings
   //process.env.TZ = 'Pacific/Easter';
 
-  it('should always parse ISO 8601 date strings in UTC timezone (e.g. 2011-10-05T14:48:00.000Z)', () => {
+  it('should properly parse ISO 8601 date strings in UTC offset timezone', () => {
     const stringTimeField: Field = {
       config: {},
       name: 'ISO 8601 date strings',
       type: FieldType.time,
-      values: new ArrayVector(['2021-11-11T19:45:00.000Z']),
+      values: ['2021-11-11T19:45:00Z'],
     };
 
     expect(fieldToTimeField(stringTimeField)).toEqual({
       config: {},
       name: 'ISO 8601 date strings',
       type: FieldType.time,
-      values: new ArrayVector([1636659900000]),
+      values: [1636659900000],
+    });
+  });
+
+  it('should properly parse additional ISO 8601 date strings with tz offsets and millis', () => {
+    const stringTimeField: Field = {
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: [
+        '2021-11-11T19:45:00+05:30',
+        '2021-11-11T19:45:00-05:30',
+        '2021-11-11T19:45:00+0530',
+        '2021-11-11T19:45:00-0530',
+        '2021-11-11T19:45:00.0000000000+05:30',
+        '2021-11-11T19:45:00.0000000000-0530',
+        '2021-11-11T19:45:00.000Z',
+        '2021-11-11T19:45:00.0000000000Z',
+      ],
+    };
+
+    expect(fieldToTimeField(stringTimeField)).toEqual({
+      config: {},
+      name: 'ISO 8601 date strings',
+      type: FieldType.time,
+      values: [
+        1636640100000, 1636679700000, 1636640100000, 1636679700000, 1636640100000, 1636679700000, 1636659900000,
+        1636659900000,
+      ],
     });
   });
 });
