@@ -57,10 +57,12 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		var connectionDefaults = sqleng.GetDefaultConnectionSettings(cfg)
 
+		logger.Info(fmt.Sprintf("%#v", connectionDefaults))
+
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:      connectionDefaults.MaxOpenConns,
-			MaxIdleConns:      connectionDefaults.MaxIdleConns,
-			ConnMaxLifetime:   connectionDefaults.ConnMaxLifetime,
+			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:   cfg.SqlDatasourceMaxConnLifetimeDefault,
 			Encrypt:           "false",
 			ConnectionTimeout: 0,
 			SecureDSProxy:     false,

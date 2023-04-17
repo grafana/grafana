@@ -20,7 +20,6 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -29,15 +28,6 @@ var XormDriverMu sync.RWMutex
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
-
-// MaxOpenConnsDefault is the default number maximum number of open connections
-const MaxOpenConnsDefault = 100
-
-// MaxIdleConnsDefault is the default number maximum number of idle connections
-const MaxIdleConnsDefault = 100
-
-// ConnMaxLifetimeDefault is the default maximum connection lifetime in seconds
-const ConnMaxLifetimeDefault = 14400
 
 var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
 
@@ -141,35 +131,6 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	}
 
 	return e.queryResultTransformer.TransformQueryError(logger, err)
-}
-
-// Retrieve the default connection settings given access
-// to Grafana configuration. If these differ from the
-// prederminted defaults the defaults will be overridden
-func GetDefaultConnectionSettings(cfg *setting.Cfg) *DefaultConnectionInfo {
-	// Allow override of default for max open connections
-	var maxOpenConnsDefault = MaxOpenConnsDefault
-	if cfg.SqlDatasourceMaxOpenConnsDefault != maxOpenConnsDefault {
-		maxOpenConnsDefault = cfg.SqlDatasourceMaxOpenConnsDefault
-	}
-
-	// Allow override of default for max idle connections
-	var maxIdleConnsDefault = MaxIdleConnsDefault
-	if cfg.SqlDatasourceMaxOpenConnsDefault != maxIdleConnsDefault {
-		maxIdleConnsDefault = cfg.SqlDatasourceMaxIdleConnsDefault
-	}
-
-	// Allow override of the default for max connection lifetime
-	var connMaxLifetimeDefault = ConnMaxLifetimeDefault
-	if cfg.SqlDatasourceMaxConnLifetimeDefault != connMaxLifetimeDefault {
-		connMaxLifetimeDefault = cfg.SqlDatasourceMaxConnLifetimeDefault
-	}
-
-	return &DefaultConnectionInfo{
-		MaxOpenConns:    maxOpenConnsDefault,
-		MaxIdleConns:    maxIdleConnsDefault,
-		ConnMaxLifetime: connMaxLifetimeDefault,
-	}
 }
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,

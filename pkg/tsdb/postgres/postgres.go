@@ -54,13 +54,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var connectionDefaults = sqleng.GetDefaultConnectionSettings(cfg)
-
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        connectionDefaults.MaxOpenConns,
-			MaxIdleConns:        connectionDefaults.MaxIdleConns,
-			ConnMaxLifetime:     connectionDefaults.ConnMaxLifetime,
+			MaxOpenConns:        cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:        cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:     cfg.SqlDatasourceMaxConnLifetimeDefault,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
 			SecureDSProxy:       false,
