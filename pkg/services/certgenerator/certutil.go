@@ -285,7 +285,7 @@ func (cu *CertUtil) EnsureApiServerPKI(advertiseAddress string, alternateIP net.
 	validFrom := time.Now().Add(-time.Hour) // valid an hour earlier to avoid flakes due to clock skew
 	maxAge := time.Hour * 24 * 365          // one year self-signed certs
 	alternateIPs := []net.IP{alternateIP}
-	alternateDNS := []string{"kubernetes.default.svc", "kubernetes.default", "kubernetes"}
+	alternateDNS := []string{"kubernetes.default.svc", "kubernetes.default", "kubernetes", "host.docker.internal"}
 
 	priv, err := rsa.GenerateKey(cryptorand.Reader, 2048)
 	if err != nil {

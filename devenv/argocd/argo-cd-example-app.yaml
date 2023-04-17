@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: example-dashboards
+spec:
+  destination:
+    name: ''
+    namespace: default
+    server: 'https://host.docker.internal:8080'
+  source:
+    path: example_1
+    repoURL: 'https://github.com/charandas/dashboards-as-code.git'
+    targetRevision: HEAD
+  sources: []
+  project: grafana-project
+  syncPolicy:
+    automated: {}

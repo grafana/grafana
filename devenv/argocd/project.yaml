@@ -2,7 +2,6 @@ apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: grafana-project
-  namespace: argocd
   # Finalizer that ensures that project is not deleted until it is not referenced by any application
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -18,5 +17,5 @@ spec:
   # Destination clusters can be identified by 'server', 'name', or both.
   destinations:
     - namespace: default
-      server: https://127.0.0.1:6443
+      server: https://host.docker.internal:8080
       name: grafana-apiserver
