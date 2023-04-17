@@ -78,7 +78,7 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
       await dispatch(fetchUserStatusAction());
       await dispatch(fetchServerInfoAction());
       await dispatch(fetchServerSaasHostAction());
-      await dispatch(fetchAdvisors());
+      await dispatch(fetchAdvisors({ disableNotifications: true }));
       onReady();
     };
 

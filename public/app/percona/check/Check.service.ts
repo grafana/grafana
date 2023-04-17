@@ -30,11 +30,11 @@ const BASE_URL = '/v1/management/SecurityChecks';
  * A service-like object to store the API methods
  */
 export const CheckService = {
-  async getAllFailedChecks(token?: CancelToken): Promise<FailedCheckSummary[]> {
+  async getAllFailedChecks(token?: CancelToken, disableNotifications?: boolean): Promise<FailedCheckSummary[]> {
     const { result = [] } = await api.post<CheckResultSummaryPayload, Object>(
       `${BASE_URL}/ListFailedServices`,
       {},
-      false,
+      disableNotifications,
       token
     );
 
