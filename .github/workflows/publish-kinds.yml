@@ -35,8 +35,14 @@ jobs:
         env:
           CODEGEN_VERIFY: 1
 
-      - name: "Install Actions from library"
-        run: "npm install --production --prefix ./actions"
+      # - name: "Checkout Actions library"
+      #   uses: "actions/checkout@v3"
+      #   with:
+      #     repository: "grafana/grafana-github-actions"
+      #     path: "./actions"
+
+      # - name: "Install Actions from library"
+      #   run: "npm install --production --prefix ./actions"
 
       # - name: "Determine if there is a matching release tag"
       #   id: "has-matching-release-tag"
