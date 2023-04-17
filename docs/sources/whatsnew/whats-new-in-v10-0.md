@@ -258,7 +258,7 @@ Use the improved State history view to get insight into how your alert instances
 
 ### Test notification templates from within Grafana
 
-Create notification templates for custom alert rules or existing active alert rules to preview how they will look before using them in your contact points.
+Create notification templates for custom alert rules or existing active alert rules and preview how they will look before using them in your contact points.
 
 ## Security
 
