@@ -82,6 +82,10 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 
 func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	clusterLogger := moa.logger.New("component", "clustering")
+	// We set the settlement timeout to be a multiple of the gossip interval,
+	// ensuring that a sufficient number of broadcasts have occurred, thereby
+	// increasing the probability of success when waiting for the cluster to settle.
+	const settleTimeout = cluster.DefaultGossipInterval * 10
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
@@ -97,7 +101,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 		}
 		var ctx context.Context
 		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
-		go redisPeer.Settle(ctx, cluster.DefaultGossipInterval*10)
+		go redisPeer.Settle(ctx, settleTimeout)
 		moa.peer = redisPeer
 		return nil
 	}
@@ -131,7 +135,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
 		var ctx context.Context
 		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
-		go peer.Settle(ctx, cluster.DefaultGossipInterval*10)
+		go peer.Settle(ctx, settleTimeout)
 		moa.peer = peer
 		return nil
 	}
