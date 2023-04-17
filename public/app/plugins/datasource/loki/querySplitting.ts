@@ -3,10 +3,13 @@ import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  ArrayVector,
   DataQueryRequest,
   DataQueryResponse,
   dateTime,
   durationToMilliseconds,
+  Field,
+  FieldType,
   parseDuration,
   TimeRange,
 } from '@grafana/data';
@@ -84,7 +87,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
-  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
+  let mergedResponse: DataQueryResponse = getLoadingResponse(requests);
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
   let shouldStop = false;
@@ -97,6 +100,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
     const done = () => {
       mergedResponse.state = LoadingState.Done;
+      console.log(mergedResponse);
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
@@ -153,6 +157,43 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   });
 
   return response;
+}
+
+function getLoadingResponse(requests: LokiGroupedRequest): DataQueryResponse {
+  const response: DataQueryResponse = { data: [], state: LoadingState.Streaming };
+
+  for (const group of requests) {
+    if (isLogsQuery(group.request.targets[0].expr)) {
+      continue;
+    }
+    for (const target of group.request.targets) {
+      response.data.push({
+        refId: target.refId,
+        length: 0,
+        fields: getLoadingFields(target, group.partition),
+      });
+    }
+  }
+
+  return response;
+}
+
+function getLoadingFields(target: LokiQuery, partitions: TimeRange[]): Field[] {
+  const timeField: Field = {
+    name: 'Time',
+    type: FieldType.time,
+    config: {},
+    values: new ArrayVector([partitions[0].from, partitions[0].to]),
+  };
+  const valuesField: Field = {
+    name: 'Value',
+    type: FieldType.number,
+    config: {
+      displayNameFromDS: target.expr,
+    },
+    values: new ArrayVector([0, 0]),
+  };
+  return [timeField, valuesField];
 }
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
