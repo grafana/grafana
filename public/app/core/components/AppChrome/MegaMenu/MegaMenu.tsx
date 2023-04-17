@@ -3,12 +3,12 @@ import { cloneDeep } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, NavSection } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
 import { NavBarMenu } from './NavBarMenu';
-import { enrichConfigItems, enrichWithInteractionTracking, getActiveItem } from './utils';
+import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export interface Props {
   onClose: () => void;
@@ -23,15 +23,10 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
 
   const navTree = cloneDeep(navBarTree);
 
-  const coreItems = navTree
-    .filter((item) => item.section === NavSection.Core || item.section === NavSection.Plugin)
+  // Remove profile + help from tree
+  const navItems = navTree
+    .filter((item) => item.id !== 'profile' && item.id !== 'help')
     .map((item) => enrichWithInteractionTracking(item, true));
-  const configItems = enrichConfigItems(
-    navTree.filter((item) => item.section === NavSection.Config && item && item.id !== 'help' && item.id !== 'profile'),
-    location
-  ).map((item) => enrichWithInteractionTracking(item, true));
-
-  const navItems = [...coreItems, ...configItems];
 
   const activeItem = getActiveItem(navItems, location.pathname);
 
