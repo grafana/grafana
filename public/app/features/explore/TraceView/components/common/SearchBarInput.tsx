@@ -27,7 +27,7 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-export default class UiFindInput extends React.PureComponent<Props> {
+export default class SearchBarInput extends React.PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     inputProps: {},
     trackFindFunction: undefined,
