@@ -460,7 +460,7 @@ func setup(t *testing.T) *testContext {
 		}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), plugincontext.ProvideKeyService(),
 	)
-	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider, &featuremgmt.FeatureManager{})
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider, &featuremgmt.FeatureManager{}, nil)
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,

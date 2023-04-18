@@ -41,6 +41,7 @@ func TestService(t *testing.T) {
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
 		features:     &featuremgmt.FeatureManager{},
+		metrics:      newMetrics(nil),
 	}
 
 	queries := []Query{

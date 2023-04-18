@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -43,15 +44,18 @@ type Service struct {
 	dataService  backend.QueryDataHandler
 	pCtxProvider *plugincontext.Provider
 	features     featuremgmt.FeatureToggles
+
+	metrics *metrics
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles) *Service {
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer) *Service {
 	return &Service{
 		cfg:          cfg,
 		dataService:  pluginClient,
 		pCtxProvider: pCtxProvider,
 		features:     features,
+		metrics:      newMetrics(registerer),
 	}
 }
 

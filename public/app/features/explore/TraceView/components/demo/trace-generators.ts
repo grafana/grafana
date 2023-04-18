@@ -14,11 +14,62 @@
 
 import Chance from 'chance';
 
-import { TraceSpanData, TraceProcess } from 'app/features/explore/TraceView/components/types/trace';
+import {
+  TraceSpanData,
+  TraceProcess,
+  TraceKeyValuePair,
+  TraceResponse,
+} from 'app/features/explore/TraceView/components/types/trace';
 
 import { getSpanId } from '../selectors/span';
 
-const chance = new Chance();
+interface Process extends TraceProcess {
+  processID: string;
+}
+
+interface ChanceSpanOptions {
+  traceID?: string;
+  processes?: Record<string, unknown>;
+  traceStartTime?: number;
+  traceEndTime?: number;
+  operations?: string[];
+}
+
+interface ChanceTraceOptions {
+  numberOfSpans?: number;
+  numberOfProcesses?: number;
+  maxDepth?: number;
+  spansPerLevel?: number | null;
+}
+
+interface ChanceTracesOptions {
+  numberOfTraces?: number;
+}
+
+interface ChanceProcessOptions {
+  services?: string[];
+}
+
+interface ChanceProcessesOptions {
+  numberOfProcesses?: number;
+}
+
+interface ChanceMixins {
+  tag(): TraceKeyValuePair;
+  tags(): TraceKeyValuePair[];
+
+  span(options: ChanceSpanOptions): TraceSpanData;
+
+  trace(options: ChanceTraceOptions): TraceResponse;
+  traces(options: ChanceTracesOptions): TraceResponse[];
+
+  process(options: ChanceProcessOptions): Process;
+  processes(options: ChanceProcessesOptions): Process[];
+}
+
+// Difficult to extend Chance interface with our mixins, so we just steam roll them in instead
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+const chance = new Chance() as Chance.Chance & ChanceMixins;
 
 export const SERVICE_LIST = ['serviceA', 'serviceB', 'serviceC', 'serviceD', 'serviceE', 'serviceF'];
 export const OPERATIONS_LIST = [
@@ -31,10 +82,6 @@ export const OPERATIONS_LIST = [
   'MongoDB::find',
   'MongoDB::update',
 ];
-
-type Process = TraceProcess & {
-  processID: string;
-};
 
 function setupParentSpan(spans: TraceSpanData[], parentSpanValues: TraceSpanData) {
   Object.assign(spans[0], parentSpanValues);
@@ -55,7 +102,7 @@ function getParentSpanId(span: TraceSpanData, levels: string[][]) {
 }
 
 /* this simulates the hierarchy created by CHILD_OF tags */
-function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: null) {
+function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: number | null) {
   let levels: string[][] = [[getSpanId(spans[0])]];
 
   const duplicateLevelFilter = (currentLevels: string[][]) => (span: TraceSpanData) =>
@@ -81,7 +128,7 @@ function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: 
           ...span,
           references: [
             {
-              refType: 'CHILD_OF',
+              refType: 'CHILD_OF' as const,
               traceID: span.traceID,
               spanID: parentSpanId,
             },
@@ -104,7 +151,7 @@ export default chance.mixin({
     numberOfProcesses = chance.integer({ min: 1, max: 10 }),
     maxDepth = chance.integer({ min: 1, max: 10 }),
     spansPerLevel = null,
-  }) {
+  }: ChanceTraceOptions) {
     const traceID = chance.guid();
     const duration: number = chance.integer({ min: 10000, max: 5000000 });
     const timestamp = (new Date().getTime() - chance.integer({ min: 0, max: 1000 }) * 1000) * 1000;
@@ -129,6 +176,7 @@ export default chance.mixin({
       processes,
     };
   },
+
   tag() {
     return {
       key: 'http.url',
@@ -136,13 +184,14 @@ export default chance.mixin({
       value: `/v2/${chance.pickone(['alpha', 'beta', 'gamma'])}/${chance.guid()}`,
     };
   },
+
   span({
     traceID = chance.guid(),
     processes = {},
     traceStartTime = 0,
     traceEndTime = 0,
     operations = OPERATIONS_LIST,
-  }) {
+  }: ChanceSpanOptions) {
     // Set default values for trace start/end time.
     traceStartTime = traceStartTime || chance.timestamp() * 1000 * 1000;
     traceEndTime = traceEndTime || traceStartTime + 100000;
@@ -167,20 +216,24 @@ export default chance.mixin({
       logs: [],
     };
   },
-  process({ services = SERVICE_LIST }) {
+
+  process({ services = SERVICE_LIST }: ChanceProcessOptions) {
     return {
       processID: chance.guid(),
       serviceName: chance.pickone(services),
       tags: chance.tags(),
     };
   },
-  traces({ numberOfTraces = chance.integer({ min: 5, max: 15 }) }) {
+
+  traces({ numberOfTraces = chance.integer({ min: 5, max: 15 }) }: ChanceTracesOptions) {
     return chance.n(chance.trace, numberOfTraces, {});
   },
+
   tags() {
     return chance.n(chance.tag, chance.integer({ min: 1, max: 10 }), {});
   },
-  processes({ numberOfProcesses = chance.integer({ min: 1, max: 25 }) }) {
+
+  processes({ numberOfProcesses = chance.integer({ min: 1, max: 25 }) }: ChanceProcessesOptions) {
     return chance.n(chance.process, numberOfProcesses, {});
   },
 });

@@ -95,5 +95,5 @@ describe('SortBy transformer', () => {
 });
 
 function getFieldSnapshot(f: Field): Object {
-  return { name: f.name, values: f.values.toArray() };
+  return { name: f.name, values: f.values };
 }

@@ -42,15 +42,17 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
 		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), settings, dashboardStore, foldertest.NewFakeFolderStore(t), mockSQLStore, featuremgmt.WithFeatures())
+		dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
+			settings, dashboardStore, foldertest.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
+			folderSvc,
+		)
+		require.NoError(t, err)
 		hs := &HTTPServer{
-			Cfg:      settings,
-			SQLStore: mockSQLStore,
-			Features: features,
-			DashboardService: dashboardservice.ProvideDashboardServiceImpl(
-				settings, dashboardStore, foldertest.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
-				folderSvc,
-			),
-			AccessControl: accesscontrolmock.New().WithDisabled(),
+			Cfg:              settings,
+			SQLStore:         mockSQLStore,
+			Features:         features,
+			DashboardService: dashboardService,
+			AccessControl:    accesscontrolmock.New().WithDisabled(),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
