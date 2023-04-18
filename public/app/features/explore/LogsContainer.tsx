@@ -66,10 +66,10 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | undefined> => {
+  getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
     const { datasourceInstance, logsQueries } = this.props;
 
-    if (hasLogsContextSupport(datasourceInstance)) {
+    if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
       // we need to find the query, and we need to be very sure that
       // it's a query from this datasource
       const query = (logsQueries ?? []).find(
@@ -78,7 +78,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       return datasourceInstance.getLogRowContextQuery(row, options, query);
     }
 
-    return undefined;
+    return null;
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
