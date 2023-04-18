@@ -519,6 +519,12 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
+			Name:        "pluginsAPIManifestKey",
+			Description: "Use grafana.com API to retrieve the public manifest key",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "advancedDataSourcePicker",
 			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
 			State:        FeatureStateAlpha,
