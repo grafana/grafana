@@ -23,6 +23,7 @@ export interface QueryHeaderProps {
   queryRowFilter: QueryRowFilter;
   isQueryRunnable: boolean;
   disableDatasetSelector?: boolean;
+  cascadeDisable?: boolean;
 }
 
 const editorModes = [
@@ -40,6 +41,7 @@ export function QueryHeader({
   onQueryRowChange,
   isQueryRunnable,
   disableDatasetSelector,
+  cascadeDisable,
 }: QueryHeaderProps) {
   const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
 
@@ -108,6 +110,7 @@ export function QueryHeader({
     <>
       <EditorHeader>
         <InlineSelect
+          // disabled={cascadeDisable}
           label="Format"
           value={query.format}
           placeholder="Select format"
@@ -119,6 +122,7 @@ export function QueryHeader({
         {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
+              // disabled={cascadeDisable}
               id="sql-filter"
               label="Filter"
               transparent={true}
@@ -131,6 +135,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
+              // disabled={cascadeDisable}
               id="sql-group"
               label="Group"
               transparent={true}
@@ -143,6 +148,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
+              // disabled={cascadeDisable}
               id="sql-order"
               label="Order"
               transparent={true}
@@ -155,6 +161,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
+              // disabled={cascadeDisable}
               id="sql-preview"
               label="Preview"
               transparent={true}
@@ -171,7 +178,7 @@ export function QueryHeader({
         <FlexItem grow={1} />
 
         {isQueryRunnable ? (
-          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
+          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()} disabled={cascadeDisable}>
             Run query
           </Button>
         ) : (
@@ -185,13 +192,25 @@ export function QueryHeader({
             }
             placement="top"
           >
-            <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+            <Button
+              icon="exclamation-triangle"
+              variant="secondary"
+              size="sm"
+              onClick={() => onRunQuery()}
+              disabled={cascadeDisable}
+            >
               Run query
             </Button>
           </Tooltip>
         )}
 
-        <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
+        <RadioButtonGroup
+          options={editorModes}
+          size="sm"
+          value={editorMode}
+          onChange={onEditorModeChange}
+          // disabled={cascadeDisable}
+        />
 
         <ConfirmModal
           isOpen={showConfirm}
@@ -224,7 +243,7 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  dataset={preconfiguredDataset ? preconfiguredDataset : query.dataset}
+                  dataset={query.dataset}
                   disableDatasetSelector={disableDatasetSelector}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
@@ -234,10 +253,11 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                dataset={preconfiguredDataset ? preconfiguredDataset : query.dataset}
+                dataset={query.dataset}
                 table={query.table}
                 onChange={onTableChange}
                 applyDefault
+                cascadeDisable={cascadeDisable}
               />
             </EditorField>
           </EditorRow>

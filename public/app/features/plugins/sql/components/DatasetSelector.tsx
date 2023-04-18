@@ -51,41 +51,29 @@ export const DatasetSelector = ({
   }, []);
 
   const determinePlaceholder = () => {
-    if (preconfiguredDataset) {
-      return preconfiguredDataset;
-    }
-
     if (disableDatasetSelector) {
       return 'Unconfigured database';
     }
 
-    return 'Select table';
+    if (!dataset) {
+      return 'Select table';
+    }
+
+    return dataset;
   };
 
   return (
     <Select
       aria-label="Dataset selector"
-      value={
-        sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled
-          ? usePreconfiguredDataset
-            ? preconfiguredDataset
-            : dataset
-          : dataset
-      }
+      value={dataset}
       options={state.value}
       onChange={onChange}
       disabled={
         sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled ? hasPreconfigCondition || state.loading : state.loading
       }
-      isLoading={
-        sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled
-          ? hasPreconfigCondition
-            ? false
-            : state.loading
-          : state.loading
-      }
+      isLoading={state.loading}
       menuShouldPortal={true}
-      placeholder={sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled ? determinePlaceholder() : undefined}
+      placeholder={determinePlaceholder()}
     />
   );
 };

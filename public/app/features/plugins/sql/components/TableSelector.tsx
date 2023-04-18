@@ -11,9 +11,11 @@ interface TableSelectorProps extends ResourceSelectorProps {
   table: string | undefined;
   dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
+  cascadeDisable?: boolean;
 }
 
-export const TableSelector = ({ db, dataset, table, className, onChange }: TableSelectorProps) => {
+export const TableSelector = ({ db, dataset, table, className, onChange, cascadeDisable }: TableSelectorProps) => {
+  console.log(table, 'table');
   const state = useAsync(async () => {
     if (!dataset) {
       return [];
@@ -26,14 +28,14 @@ export const TableSelector = ({ db, dataset, table, className, onChange }: Table
   return (
     <Select
       className={className}
-      disabled={state.loading}
+      disabled={state.loading || cascadeDisable}
       aria-label="Table selector"
       value={table}
       options={state.value}
       onChange={onChange}
       isLoading={state.loading}
       menuShouldPortal={true}
-      placeholder={state.loading ? 'Loading tables' : 'Select table'}
+      placeholder={state.loading ? 'Loading tables' : table}
     />
   );
 };

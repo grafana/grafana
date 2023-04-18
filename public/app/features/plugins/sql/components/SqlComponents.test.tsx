@@ -9,6 +9,7 @@ import { buildSqlQueryEditorProps, buildMockDataSelectorProps, buildMockDatasour
 
 // Needed a way to test, but only under the conditions of a truthy feature flag.
 const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = !!config.featureToggles.sqlDatasourceDatabaseSelection;
+console.log(sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled, 'featureFlag');
 const runTestIf = (condition: boolean) => (condition ? it : it.skip);
 
 describe('SqlQueryEditor', () => {

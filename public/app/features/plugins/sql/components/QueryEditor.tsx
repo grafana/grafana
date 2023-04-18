@@ -27,7 +27,8 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
-  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
+  console.log(query, 'query');
+  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = !!config.featureToggles.sqlDatasourceDatabaseSelection;
 
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
   const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
@@ -93,6 +94,18 @@ export function SqlQueryEditor({
     [onRunQuery]
   );
 
+  const resetQuery = () => {
+    const updatedQuery = {
+      ...query,
+      dataset: preconfiguredDatabase,
+      table: undefined,
+      sql: undefined,
+      rawSql: '',
+    };
+    onChange(updatedQuery);
+    // onRunQuery();
+  };
+
   const onQueryChange = (q: SQLQuery, process = true) => {
     setQueryToValidate(q);
     onChange(q);
@@ -125,28 +138,26 @@ export function SqlQueryEditor({
           onRemove={() => {
             // Remove the warning, and reset state with the new database.
             setHasDatabaseConfigIssue(false);
-            onChange({ ...query, dataset: preconfiguredDatabase });
+            resetQuery();
           }}
           buttonContent="Update Query"
         >
           <span>
-            Your default database configuration has been changed or updated. Make note of the query you have built
-            before clicking <code>Update Query.</code> Clicking <code>Update Query</code> will clear your previous query
-            parameters.
+            Your default database configuration has been changed or updated. The previous database is no longer
+            available. Make note of the query you have built before clicking <code>Update Query.</code>
+            Clicking <code>Update Query</code> will clear your previous query parameters.
           </span>
         </Alert>
       )}
+
       {hasNoPostgresDefaultDatabaseConfig && (
-        <Alert
-          severity="warning"
-          title="Default datasource error"
-          elevated={true}
-          onRemove={() => setHasNoPostgresDefaultDatabaseConfig(false)}
-        >
-          You do not currently have a database configured for this datasource. Please configure a default database
-          first.
+        <Alert severity="error" title="Default datasource error" elevated={true}>
+          You do not currently have a default database configured for this data source. Please configure one through the
+          Data Sources Configuration page, or if you are using a provisioned data source, update you configuration file
+          with a default database name.
         </Alert>
       )}
+
       <QueryHeader
         db={db}
         preconfiguredDataset={preconfiguredDatabase}
@@ -156,6 +167,7 @@ export function SqlQueryEditor({
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
+        cascadeDisable={hasDatabaseConfigIssue || hasNoPostgresDefaultDatabaseConfig}
         {...queryHeaderProps}
       />
 
