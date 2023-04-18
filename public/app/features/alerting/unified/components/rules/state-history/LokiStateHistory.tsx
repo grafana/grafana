@@ -181,8 +181,8 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
 
   return useMemo(() => {
     // merge timestamp with "line"
-    // @ts-ignore
-    const timestamps: number[] = stateHistory?.data?.values[0] ?? [];
+    const tsValues = stateHistory?.data?.values[0] ?? [];
+    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
     const lines = stateHistory?.data?.values[1] ?? [];
 
     const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
@@ -228,6 +228,10 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
       totalRecordsCount: linesWithTimestamp.length,
     };
   }, [stateHistory, filter, theme]);
+}
+
+function isNumbers(value: unknown[]): value is number[] {
+  return value.every((v) => typeof v === 'number');
 }
 
 function isLine(value: unknown): value is Line {

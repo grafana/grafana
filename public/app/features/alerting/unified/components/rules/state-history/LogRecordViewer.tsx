@@ -27,7 +27,7 @@ export const LogRecordViewerByTimestamp = React.memo(
     logsRef.current = [];
 
     return (
-      <div className={styles.logsScrollable}>
+      <div className={styles.logsScrollable} data-testid="history-by-timestamp-viewer">
         {Object.entries(groupedLines).map(([key, records]) => {
           return (
             <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>

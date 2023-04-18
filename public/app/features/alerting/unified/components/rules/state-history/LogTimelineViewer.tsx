@@ -83,7 +83,7 @@ export const LogTimelineViewer = React.memo(({ frames, timeRange, onPointerMove 
               });
             }
 
-            return <></>; // Just to satisfy the type checker
+            return null;
           }}
         </TimelineChart>
       )}
