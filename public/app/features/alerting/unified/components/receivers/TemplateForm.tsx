@@ -50,9 +50,21 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
-  const NO_DEFAULT_TEMPLATE = 'No default template found';
+export const DEFAULT_PAYLOAD = `{
+  "alerts": [{
+    "annotations": {
+      "summary": "Instance instance1 has been down for more than 5 minutes"
+    },
+    "labels": {
+      "instance": "instance1"
+    },
+    "startsAt": "2023-04-01T00:00:00Z",
+    "endsAt": "2023-04-01T00:05:00Z"
+  }]
 
+}`;
+
+export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
@@ -63,7 +75,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const location = useLocation();
   const isduplicating = isDuplicating(location);
 
-  const [payload, setPayload] = useState(NO_DEFAULT_TEMPLATE);
+  const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
   const [isPayloadEditorOpen, toggleIsPayloadEditorOpen] = useToggle(false);
@@ -209,7 +221,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
               <TemplateDataDocs />
             </ExpandableSection>
             <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
-              <PayloadEditor payload={payload} setPayload={setPayload} />
+              <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />
             </ExpandableSection>
           </>
         )}
@@ -325,7 +337,7 @@ export function TemplatePreview({
   const onPreview = () => {
     try {
       JSON.parse(payload);
-      trigger({ template: templateContent, payload: payload });
+      trigger({ template: templateContent, payload: JSON.parse(payload) });
       setPayloadFormatError(null);
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');

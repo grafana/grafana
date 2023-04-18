@@ -1,7 +1,6 @@
 import { alertingApi } from './alertingApi';
 
-export const defaultPayloadUrl = `/api/templates/default`;
-export const previewTemplateUrl = `/api/templates/preview`;
+export const previewTemplateUrl = `/api/alertmanager/grafana/config/api/v1/templates/test`;
 
 export interface TemplatePreviewResult {
   name: string;
@@ -16,16 +15,18 @@ export interface TemplatesPreviewResponse {
   errors?: TemplatePreviewErrors[];
 }
 
-export interface TemplateDefaultPayloadResponse {
-  defaultPayload: string;
+type AnnoField = {
+  key: string;
+  value: string;
+};
+export interface AlertFields {
+  annotations: AnnoField[];
+  labels: AnnoField[];
 }
 
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    defaultPayload: build.query<TemplateDefaultPayloadResponse, void>({
-      query: () => ({ url: defaultPayloadUrl }),
-    }),
-    previewPayload: build.mutation<TemplatesPreviewResponse, { template: string; payload: string }>({
+    previewPayload: build.mutation<TemplatesPreviewResponse, { template: string; payload: AlertFields[] }>({
       query: ({ template, payload }) => ({
         url: previewTemplateUrl,
         data: { template: template, data: payload },
@@ -35,4 +36,4 @@ export const templatesApi = alertingApi.injectEndpoints({
   }),
 });
 
-export const { useDefaultPayloadQuery, usePreviewPayloadMutation } = templatesApi;
+export const { usePreviewPayloadMutation } = templatesApi;

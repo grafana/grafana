@@ -1,39 +1,24 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { Stack } from '@grafana/experimental';
-import { Button, LoadingPlaceholder, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, TextArea, useStyles2 } from '@grafana/ui';
 
-import { useDefaultPayloadQuery } from '../../api/templateApi';
-
-export const NO_DEFAULT_PAYLOAD = 'No default payload found';
 export const RESET_TO_DEFAULT = 'Reset to default payload';
 
 export function PayloadEditor({
   payload,
   setPayload,
+  defaultPayload,
 }: {
   payload: string;
+  defaultPayload: string;
   setPayload: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const styles = useStyles2(getStyles);
-  const { data, isLoading, isError } = useDefaultPayloadQuery();
-  const defaultPayload = data?.defaultPayload;
   const onReset = () => {
-    setPayload(defaultPayload ?? NO_DEFAULT_PAYLOAD);
+    setPayload(defaultPayload);
   };
-
-  useEffect(() => {
-    !isError && defaultPayload && setPayload(defaultPayload);
-  }, [defaultPayload, setPayload, isError]);
-
-  useEffect(() => {
-    isError && setPayload(NO_DEFAULT_PAYLOAD);
-  }, [isError, setPayload]);
-
-  if (isLoading) {
-    return <LoadingPlaceholder text={'Loading default payload'} />;
-  }
 
   return (
     <Stack direction="row" alignItems="center">
