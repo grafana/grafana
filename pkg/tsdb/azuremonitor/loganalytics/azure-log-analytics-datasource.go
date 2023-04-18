@@ -661,21 +661,18 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 			for _, val := range filter.Filters {
 				filterValues = append(filterValues, fmt.Sprintf(`"%s"`, val))
 			}
-			filtersClause += fmt.Sprintf("| where %s %s (%s)\n", filter.Property, operation, strings.Join(filterValues, ","))
+			filtersClause += fmt.Sprintf("| where %s %s (%s)", filter.Property, operation, strings.Join(filterValues, ","))
 		}
 	}
 
-	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000;
-	set truncationmaxsize=67108864;
-	union isfuzzy=true %s
-	| where $__timeFilter()`, strings.Join(types, ","))
-	propertiesQuery := fmt.Sprintf(`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))
-	| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))
-	| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))
-	| extend tags = bag_pack_columns(%s)`, strings.Join(tags, ","))
-	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name
-	| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType
-	| order by startTime asc`
+	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s | where $__timeFilter()`, strings.Join(types, ","))
+	propertiesStaticQuery := `| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+		`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+		`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))`
+	propertiesQuery := fmt.Sprintf(`| extend tags = bag_pack_columns(%s)`, strings.Join(tags, ","))
+	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
+		`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+		`| order by startTime asc`
 
-	return baseQuery + whereClause + propertiesQuery + filtersClause + projectClause
+	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + filtersClause + projectClause
 }
