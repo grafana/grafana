@@ -34,7 +34,12 @@ func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Resp
 }
 
 func (hs *HTTPServer) AdminGetVerboseSettings(c *contextmodel.ReqContext) response.Response {
-	verboseSettings, err := hs.getAuthorizedVerboseSettings(c.Req.Context(), c.SignedInUser, hs.SettingsProvider.CurrentVerbose())
+	bag := hs.SettingsProvider.CurrentVerbose()
+	if bag == nil {
+		return response.JSON(http.StatusNotImplemented, make(map[string]string))
+	}
+
+	verboseSettings, err := hs.getAuthorizedVerboseSettings(c.Req.Context(), c.SignedInUser, bag)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
 	}

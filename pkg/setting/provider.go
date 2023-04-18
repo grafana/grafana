@@ -127,17 +127,7 @@ func (o *OSSImpl) Current() SettingsBag {
 }
 
 func (o *OSSImpl) CurrentVerbose() VerboseSettingsBag {
-	settingsCopy := make(VerboseSettingsBag)
-
-	for _, section := range o.Cfg.Raw.Sections() {
-		settingsCopy[section.Name()] = make(map[string]map[VerboseSourceType]string)
-		for _, key := range section.Keys() {
-			settingsCopy[section.Name()][key.Name()] = make(map[VerboseSourceType]string)
-			settingsCopy[section.Name()][key.Name()][System] = RedactedValue(EnvKey(section.Name(), key.Name()), key.Value())
-		}
-	}
-
-	return settingsCopy
+	return nil
 }
 
 func (OSSImpl) Update(SettingsBag, SettingsRemovals) error {
