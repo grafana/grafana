@@ -4,7 +4,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   AbsoluteTimeRange,
-  DataFrame,
   GrafanaTheme2,
   isTimeSeriesFrames,
   PanelData,
@@ -14,10 +13,8 @@ import { GraphTresholdsStyleMode, LoadingState } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
-import { RawPrometheusContainer } from 'app/features/explore/RawPrometheusContainer';
-import { toTimeSeriesMulti } from 'app/features/transformers/prepareTimeSeries/prepareTimeSeries';
-import { ExploreId } from 'app/types/explore';
 
+import { ExpressionResult } from '../expressions/Expression';
 
 interface Props {
   data: PanelData;
@@ -53,16 +50,10 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
                 thresholdsConfig={thresholds}
               />
             ) : (
-              <RawPrometheusContainer
-                showRawPrometheus={false} // TODO set to true
-                exploreId={ExploreId.left}
-                loading={data.state === LoadingState.Loading}
-                tableResult={prepareTimeSeries(data.series)}
-                width={width}
-                range={data.timeRange}
-                timeZone="browser"
-                splitOpenFn={() => { }}
-              />
+              <div className={styles.instantVectorResultWrapper}>
+                <header className={styles.title}>Table</header>
+                <ExpressionResult series={data.series} />
+              </div>
             )}
           </div>
         )}
@@ -71,23 +62,23 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
   );
 };
 
-/*
-  The eval endpoint returns a dataframe for each "alert instance" that would be generated
-  This is not very friendly to show in a table so we're converting multiple data frames to
-  a single data frame with multiple fields
-
-    Fields:
-
-    Time | <Label> | <Label> | Value
-    []   | []      | []      | []
-*/
-function prepareTimeSeries(series: DataFrame[]): DataFrame[] {
-  return toTimeSeriesMulti(series)
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     width: 100%;
     position: relative;
   `,
+  instantVectorResultWrapper: css`
+    border: solid 1px ${theme.colors.border.medium};
+    border-radius: ${theme.shape.borderRadius()};
+    padding: 0;
+  `,
+  title: css({
+    label: 'panel-title',
+    padding: theme.spacing(),
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    fontSize: theme.typography.h6.fontSize,
+    fontWeight: theme.typography.h6.fontWeight,
+  }),
 });
