@@ -51,6 +51,21 @@ func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
+type Signature struct {
+	verifier *manifestverifier.ManifestVerifier
+	mlog     log.Logger
+}
+
+var _ plugins.SignatureCalculator = &Signature{}
+
+func ProvideService(cfg *config.Cfg) *Signature {
+	log := log.New("plugin.signature")
+	return &Signature{
+		verifier: manifestverifier.New(cfg, log),
+		mlog:     log,
+	}
+}
+
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
@@ -71,21 +86,6 @@ func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
 	}
 
 	return &manifest, nil
-}
-
-type Signature struct {
-	verifier *manifestverifier.ManifestVerifier
-	mlog     log.Logger
-}
-
-var _ plugins.SignatureCalculator = &Signature{}
-
-func ProvideService(cfg *config.Cfg) *Signature {
-	log := log.New("plugin.signature")
-	return &Signature{
-		verifier: manifestverifier.New(cfg, log),
-		mlog:     log,
-	}
 }
 
 func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
