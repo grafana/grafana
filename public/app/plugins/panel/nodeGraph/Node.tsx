@@ -133,13 +133,11 @@ function NodeContents({ node, hovering }: { node: NodeDatum; hovering: HoverStat
   ) : (
     <foreignObject x={node.x - (isHovered ? 100 : 35)} y={node.y - 15} width={isHovered ? '200' : '70'} height="40">
       <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
-        <span>
-          {node.mainStat && statToString(node.mainStat.config, node.mainStat.values.get(node.dataFrameRowIndex))}
-        </span>
+        <span>{node.mainStat && statToString(node.mainStat.config, node.mainStat.values[node.dataFrameRowIndex])}</span>
         <br />
         <span>
           {node.secondaryStat &&
-            statToString(node.secondaryStat.config, node.secondaryStat.values.get(node.dataFrameRowIndex))}
+            statToString(node.secondaryStat.config, node.secondaryStat.values[node.dataFrameRowIndex])}
         </span>
       </div>
     </foreignObject>
@@ -151,7 +149,7 @@ function NodeContents({ node, hovering }: { node: NodeDatum; hovering: HoverStat
  */
 function ColorCircle(props: { node: NodeDatum }) {
   const { node } = props;
-  const fullStat = node.arcSections.find((s) => s.values.get(node.dataFrameRowIndex) >= 1);
+  const fullStat = node.arcSections.find((s) => s.values[node.dataFrameRowIndex] >= 1);
   const theme = useTheme2();
 
   if (fullStat) {
@@ -168,7 +166,7 @@ function ColorCircle(props: { node: NodeDatum }) {
     );
   }
 
-  const nonZero = node.arcSections.filter((s) => s.values.get(node.dataFrameRowIndex) !== 0);
+  const nonZero = node.arcSections.filter((s) => s.values[node.dataFrameRowIndex] !== 0);
   if (nonZero.length === 0) {
     // Fallback if no arc is defined
     return (
@@ -189,7 +187,7 @@ function ColorCircle(props: { node: NodeDatum }) {
   }>(
     (acc, section, index) => {
       const color = section.config.color?.fixedColor || '';
-      const value = section.values.get(node.dataFrameRowIndex);
+      const value = section.values[node.dataFrameRowIndex];
 
       const el = (
         <ArcSection
@@ -254,8 +252,8 @@ function ArcSection({
 
 function getColor(field: Field, index: number, theme: GrafanaTheme2): string {
   if (!field.config.color) {
-    return field.values.get(index);
+    return field.values[index];
   }
 
-  return getFieldColorModeForField(field).getCalculator(field, theme)(0, field.values.get(index));
+  return getFieldColorModeForField(field).getCalculator(field, theme)(0, field.values[index]);
 }

@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { PluginError, PluginErrorCode, unEscapeStringFromRegex } from '@grafana/data';
 
-import { RequestStatus, PluginCatalogStoreState } from '../types';
+import { RequestStatus, PluginCatalogStoreState, CatalogPlugin } from '../types';
 
 import { pluginsAdapter } from './reducer';
 
@@ -14,43 +14,43 @@ export const selectDisplayMode = createSelector(selectRoot, ({ settings }) => se
 
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
-const selectInstalled = (filterBy: string) =>
+const findByState = (state: string) =>
   createSelector(selectAll, (plugins) =>
-    plugins.filter((plugin) => (filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore))
+    plugins.filter((plugin) => (state === 'installed' ? plugin.isInstalled : !plugin.isCore))
   );
 
-const findByInstallAndType = (filterBy: string, filterByType: string) =>
-  createSelector(selectInstalled(filterBy), (plugins) =>
-    plugins.filter((plugin) => filterByType === 'all' || plugin.type === filterByType)
+type PluginFilters = {
+  state: string;
+  type: string;
+};
+
+const findPluginsByFilters = (filters: PluginFilters) =>
+  createSelector(findByState(filters.state), (plugins) =>
+    plugins.filter((plugin) => filters.type === 'all' || plugin.type === filters.type)
   );
 
-const findByKeyword = (searchBy: string) =>
-  createSelector(selectAll, (plugins) => {
-    if (searchBy === '') {
-      return [];
+const findByKeyword = (plugins: CatalogPlugin[], query: string) => {
+  if (query === '') {
+    return plugins;
+  }
+
+  return plugins.filter((plugin) => {
+    const fields: String[] = [];
+    if (plugin.name) {
+      fields.push(plugin.name.toLowerCase());
     }
 
-    return plugins.filter((plugin) => {
-      const fields: String[] = [];
-      if (plugin.name) {
-        fields.push(plugin.name.toLowerCase());
-      }
+    if (plugin.orgName) {
+      fields.push(plugin.orgName.toLowerCase());
+    }
 
-      if (plugin.orgName) {
-        fields.push(plugin.orgName.toLowerCase());
-      }
-
-      return fields.some((f) => f.includes(unEscapeStringFromRegex(searchBy).toLowerCase()));
-    });
+    return fields.some((f) => f.includes(unEscapeStringFromRegex(query).toLowerCase()));
   });
+};
 
 export const find = (searchBy: string, filterBy: string, filterByType: string) =>
-  createSelector(
-    findByInstallAndType(filterBy, filterByType),
-    findByKeyword(searchBy),
-    (filteredPlugins, searchedPlugins) => {
-      return searchBy === '' ? filteredPlugins : searchedPlugins;
-    }
+  createSelector(findPluginsByFilters({ state: filterBy, type: filterByType }), (filteredPlugins) =>
+    findByKeyword(filteredPlugins, searchBy)
   );
 
 export const selectPluginErrors = createSelector(selectAll, (plugins) =>

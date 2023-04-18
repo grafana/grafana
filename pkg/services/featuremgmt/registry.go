@@ -279,11 +279,10 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:            "nestedFolders",
-			Description:     "Enable folder nesting",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaBackendPlatformSquad,
+			Name:        "nestedFolders",
+			Description: "Enable folder nesting",
+			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
@@ -525,6 +524,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "opensearchDetectVersion",
+			Description:  "Enable version detection in OpenSearch",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 	}
 )

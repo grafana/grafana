@@ -1,15 +1,6 @@
-import { isArray } from 'lodash';
 import React from 'react';
 
-import {
-  ArrayVector,
-  FieldType,
-  FieldConfig,
-  getMinMaxAndDelta,
-  FieldSparkline,
-  isDataFrame,
-  Field,
-} from '@grafana/data';
+import { FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame, Field } from '@grafana/data';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -79,12 +70,12 @@ export const SparklineCell = (props: TableCellProps) => {
 };
 
 function getSparkline(value: unknown): FieldSparkline | undefined {
-  if (isArray(value)) {
+  if (Array.isArray(value)) {
     return {
       y: {
         name: 'test',
         type: FieldType.number,
-        values: new ArrayVector(value),
+        values: value,
         config: {},
       },
     };

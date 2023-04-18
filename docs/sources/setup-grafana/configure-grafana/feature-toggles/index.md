@@ -52,6 +52,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `disableAngular`                     | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
 | `grpcServer`                         | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`                | Access control primitives for OnCall                                                                                                                                                         |
+| `nestedFolders`                      | Enable folder nesting                                                                                                                                                                        |
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
@@ -109,6 +110,7 @@ Alpha features might be changed or removed without prior notice.
 | `dataplaneFrontendFallback`        | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                |
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                                                                                                             |
 | `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode                                                                                      |
+| `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                                                                                                              |
 
 ## Development feature toggles
 
@@ -118,5 +120,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | --------------------- | -------------------------------------------------------------- |
 | `k8s`                 | Explore native k8s integrations                                |
 | `entityStore`         | SQL-based entity store (requires storage flag also)            |
-| `nestedFolders`       | Enable folder nesting                                          |
 | `externalServiceAuth` | Starts an OAuth2 authentication provider for external services |
