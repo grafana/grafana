@@ -22,15 +22,19 @@ Description. Include an overview of the feature and problem it solves, and where
 
 ## Authentication and authorization
 
-### Role-based access control is always enabled
+### No longer possible to disable Role-based access control
 
-[Role-based access control (RBAC)](({{< relref "../administration/roles-and-permissions/access-control/" >}})) is now enabled by default and you can't disable it using configuration options in Grafana.
+_Generally available in all editions of Grafana._
+
+It is no longer possible to disable [Role-based access control (RBAC)](({{< relref "../administration/roles-and-permissions/access-control/" >}})) using a configuration option in Grafana.
 
 We understand that this may affect some users who have relied on the ability to disable RBAC in the past. However, we believe that this change is necessary to ensure the best possible security and user experience for our community and customers.
 
 If you have disabled RBAC for you Grafana instance, refer to our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}) to check if the change is impacting you and what you can do to mitigate any potential issues.
 
 ### SAML UI
+
+_Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 You can now configure SAML using our new user interface, making the process easier and more convenient than ever before.
 With the new user interface, you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control/" >}}). which makes the process much faster and more efficient.
@@ -40,6 +44,8 @@ The SAML UI is available in Grafana Enterprise and Grafana Cloud Pro and Advance
 For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../setup-grafana/configure-security/configure-authentication/saml-ui/" >}}).
 
 ### Case-insensitive usernames and email addresses
+
+_Generally available in all editions of Grafana._
 
 Usernames and email addresses are now treated as case-insensitive, which means that you will no longer need to worry about capitalization when logging in or creating an account.
 
