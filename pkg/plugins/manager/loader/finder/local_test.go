@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -62,10 +63,7 @@ func TestFinder_Find(t *testing.T) {
 							Backend:    true,
 							Executable: "test",
 						},
-						FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-							filepath.Join(testData, "valid-v2-signature/plugin/plugin.json"):  {},
-							filepath.Join(testData, "valid-v2-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "valid-v2-signature/plugin"), nil),
+						FS: mustNewTestFSWithCollect(t, filepath.Join(testData, "valid-v2-signature/plugin")),
 					},
 				},
 			},
@@ -94,12 +92,13 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-							filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
-							filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "duplicate-plugins/nested"), nil),
+						FS: plugins.NewAllowListLocalFSForTests(
+							filepath.Join(testData, "duplicate-plugins/nested"),
+							"plugin.json",
+							"MANIFEST.txt",
+							"nested/plugin.json",
+							"nested/MANIFEST.txt",
+						),
 					},
 					Children: []*plugins.FoundPlugin{
 						{
@@ -121,10 +120,10 @@ func TestFinder_Find(t *testing.T) {
 									Plugins:        []plugins.Dependency{},
 								},
 							},
-							FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-								filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-								filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-							}, filepath.Join(testData, "duplicate-plugins/nested/nested"), nil),
+							FS: plugins.NewAllowListLocalFSForTests(
+								filepath.Join(testData, "duplicate-plugins/nested/nested"),
+								"plugin.json", "MANIFEST.txt",
+							),
 						},
 					},
 				},
@@ -185,14 +184,15 @@ func TestFinder_Find(t *testing.T) {
 								{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer"},
 							},
 						},
-						FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-							filepath.Join(testData, "includes-symlinks/MANIFEST.txt"):                 {},
-							filepath.Join(testData, "includes-symlinks/dashboards/connections.json"):  {},
-							filepath.Join(testData, "includes-symlinks/dashboards/extra/memory.json"): {},
-							filepath.Join(testData, "includes-symlinks/plugin.json"):                  {},
-							filepath.Join(testData, "includes-symlinks/symlink_to_txt"):               {},
-							filepath.Join(testData, "includes-symlinks/text.txt"):                     {},
-						}, filepath.Join(testData, "includes-symlinks"), nil),
+						FS: plugins.NewAllowListLocalFSForTests(
+							filepath.Join(testData, "includes-symlinks"),
+							"MANIFEST.txt",
+							"dashboards/connections.json",
+							"dashboards/extra/memory.json",
+							"plugin.json",
+							"symlink_to_txt",
+							"text.txt",
+						),
 					},
 				},
 			},
@@ -220,12 +220,13 @@ func TestFinder_Find(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 					},
-					FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-						filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
-						filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
-						filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-						filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-					}, filepath.Join(testData, "duplicate-plugins/nested"), nil),
+					FS: plugins.NewAllowListLocalFSForTests(
+						filepath.Join(testData, "duplicate-plugins/nested"),
+						"plugin.json",
+						"MANIFEST.txt",
+						"nested/plugin.json",
+						"nested/MANIFEST.txt",
+					),
 				},
 				Children: []*plugins.FoundPlugin{
 					{
@@ -247,10 +248,10 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "duplicate-plugins/nested/nested"), nil),
+						FS: plugins.NewAllowListLocalFSForTests(
+							filepath.Join(testData, "duplicate-plugins/nested/nested"),
+							"plugin.json", "MANIFEST.txt",
+						),
 					},
 				},
 			},
@@ -274,10 +275,10 @@ func TestFinder_Find(t *testing.T) {
 							State:   plugins.AlphaRelease,
 							Backend: true,
 						},
-						FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-							filepath.Join(testData, "invalid-v1-signature/plugin/plugin.json"):  {},
-							filepath.Join(testData, "invalid-v1-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "invalid-v1-signature/plugin"), nil),
+						FS: plugins.NewAllowListLocalFSForTests(
+							filepath.Join(testData, "invalid-v1-signature/plugin"),
+							"plugin.json", "MANIFEST.txt",
+						),
 					},
 				},
 			},
@@ -301,8 +302,8 @@ func TestFinder_Find(t *testing.T) {
 				return pluginBundles[i].Primary.JSONData.ID < pluginBundles[j].Primary.JSONData.ID
 			})
 
-			if !cmp.Equal(pluginBundles, tc.expectedBundles, localFSComparer) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, localFSComparer))
+			if !cmp.Equal(pluginBundles, tc.expectedBundles, fsComparer) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, fsComparer))
 			}
 		})
 	}
@@ -480,7 +481,27 @@ func TestFinder_readPluginJSON(t *testing.T) {
 	}
 }
 
-var localFSComparer = cmp.Comparer(func(fs1 plugins.AllowListLocalFS, fs2 plugins.AllowListLocalFS) bool {
+func mustNewTestFSWithCollect(t *testing.T, dir string) plugins.FS {
+	t.Helper()
+	var files []string
+	require.NoError(t, filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		files = append(files, rel)
+		return nil
+	}))
+	return plugins.NewAllowListLocalFSForTests(dir, files...)
+}
+
+var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
 	if err != nil {
 		panic(err)

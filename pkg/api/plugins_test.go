@@ -279,7 +279,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewAllowListLocalFS(map[string]struct{}{requestedFile: {}}, filepath.Dir(requestedFile), nil))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewAllowListLocalFSForTests(filepath.Dir(requestedFile), requestedFile))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -297,7 +297,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewAllowListLocalFS(map[string]struct{}{}, "", nil))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewAllowListLocalFSForTests(""))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -314,9 +314,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewAllowListLocalFS(map[string]struct{}{
-			requestedFile: {},
-		}, "", nil))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewAllowListLocalFSForTests("", requestedFile))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -334,7 +332,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewAllowListLocalFS(map[string]struct{}{}, "", nil))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewAllowListLocalFSForTests(""))
 		service := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -656,13 +654,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.External, plugins.NewAllowListLocalFS(map[string]struct{}{}, "", nil))
+		}}, plugins.External, plugins.NewAllowListLocalFSForTests(""))
 	p2 := createPlugin(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
-			}}, plugins.Core, plugins.NewAllowListLocalFS(map[string]struct{}{}, "", nil))
+			}}, plugins.Core, plugins.NewAllowListLocalFSForTests(""))
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{

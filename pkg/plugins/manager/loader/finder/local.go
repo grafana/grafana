@@ -89,23 +89,23 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	var res = make(map[string]*plugins.FoundBundle)
 	for pluginDir, data := range foundPlugins {
 		var pluginFs plugins.FS
-		collectFilesWalkFuncProvider := defaultCollectFilesWalkFuncProvider(pluginDir)
-		if l.devMode {
-			// In dev mode, allow accessing all files, even those added after we validate the plugin.
-			l.log.Debug("using unsecure localfs for plugin", "pluginDir", pluginDir)
-			pluginFs = plugins.NewLocalFS(pluginDir, collectFilesWalkFuncProvider)
-		} else {
+		pluginFs = newDefaultLocalFS(pluginDir)
+		if !l.devMode {
 			// In prod, tighten up security by allowing access only to the files present up to this point.
 			// Any new file "sneaked in" won't be allowed and will acts as if the file did not exist.
-			// TODO: do something similar, but with content check, to ensure file content is not altered at runtime.
 			l.log.Debug("using secure allow-list localfs for plugin", "pluginDir", pluginDir)
 
-			// Build the allow-list by walking over the directory once, using walkDirProvider.
-			files := map[string]struct{}{}
-			if err := filepath.Walk(pluginDir, collectFilesWalkFuncProvider(files)); err != nil {
-				return nil, fmt.Errorf("allow-list filepath walk: %w", err)
+			// Build the allow-list by calling Files() once
+			fsFiles, err := pluginFs.Files()
+			if err != nil {
+				return nil, err
 			}
-			pluginFs = plugins.NewAllowListLocalFS(files, pluginDir, collectFilesWalkFuncProvider)
+			allowList := make(map[string]struct{}, len(fsFiles))
+			for _, k := range fsFiles {
+				allowList[k] = struct{}{}
+			}
+			// Wrap FS with allow list
+			pluginFs = plugins.NewAllowListFS(allowList, pluginFs)
 		}
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
@@ -211,9 +211,9 @@ func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 	return pluginJSONPaths, nil
 }
 
-// defaultCollectFilesWalkFuncProvider returns a plugins.CollectFilesWalkFuncProvider that will build a list of
-// files by walking over the local filesystem. Files and symlinks that end up outside the provided dir will be ignored.
-func defaultCollectFilesWalkFuncProvider(dir string) plugins.CollectFilesWalkFuncProvider {
+// defaultCollectFilesFunc returns a plugins.CollectFilesFunc that will build a list of files by walking over the local
+// filesystem. Files and symlinks that end up outside the provided dir will be ignored.
+func defaultCollectFilesFunc(dir string) plugins.CollectFilesFunc {
 	return func(acc map[string]struct{}) filepath.WalkFunc {
 		return func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -263,6 +263,12 @@ func defaultCollectFilesWalkFuncProvider(dir string) plugins.CollectFilesWalkFun
 			return nil
 		}
 	}
+}
+
+// newDefaultLocalFS returns a new plugins.FS that uses plugins.LocalFS on the provided basePath (plugin directory)
+// and uses defaultCollectFilesFunc as CollectFilesFunc.
+func newDefaultLocalFS(basePath string) plugins.FS {
+	return plugins.NewLocalFS(basePath, defaultCollectFilesFunc(basePath))
 }
 
 func (l *Local) readFile(pluginJSONPath string) (io.ReadCloser, error) {

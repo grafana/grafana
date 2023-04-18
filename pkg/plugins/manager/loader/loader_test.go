@@ -3,7 +3,7 @@ package loader
 import (
 	"context"
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -26,9 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), localFSComparer}
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), fsComparer}
 
-var localFSComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
+var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
 	if err != nil {
 		panic(err)
@@ -111,10 +111,8 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:  "app/plugins/datasource/cloudwatch/module",
 					BaseURL: "public/app/plugins/datasource/cloudwatch",
-					FS: plugins.NewAllowListLocalFS(
-						filesInDir(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
-						filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
-						nil),
+
+					FS:        mustNewTestFSWithCollect(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureInternal,
 					Class:     plugins.Core,
 				},
@@ -151,13 +149,9 @@ func TestLoader_Load(t *testing.T) {
 						Backend:    true,
 						State:      "alpha",
 					},
-					Module:  "plugins/test-datasource/module",
-					BaseURL: "public/plugins/test-datasource",
-					FS: plugins.NewAllowListLocalFS(
-						filesInDir(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
-						filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
-						nil,
-					),
+					Module:        "plugins/test-datasource/module",
+					BaseURL:       "public/plugins/test-datasource",
+					FS:            mustNewTestFSWithCollect(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
 					Signature:     "valid",
 					SignatureType: plugins.GrafanaSignature,
 					SignatureOrg:  "Grafana Labs",
@@ -234,17 +228,14 @@ func TestLoader_Load(t *testing.T) {
 					Class:   plugins.External,
 					Module:  "plugins/test-app/module",
 					BaseURL: "public/plugins/test-app",
-					FS: plugins.NewAllowListLocalFS(
-						map[string]struct{}{
-							filepath.Join(parentDir, "testdata/includes-symlinks", "/MANIFEST.txt"):                {},
-							filepath.Join(parentDir, "testdata/includes-symlinks", "dashboards/connections.json"):  {},
-							filepath.Join(parentDir, "testdata/includes-symlinks", "dashboards/extra/memory.json"): {},
-							filepath.Join(parentDir, "testdata/includes-symlinks", "plugin.json"):                  {},
-							filepath.Join(parentDir, "testdata/includes-symlinks", "symlink_to_txt"):               {},
-							filepath.Join(parentDir, "testdata/includes-symlinks", "text.txt"):                     {},
-						},
+					FS: plugins.NewAllowListLocalFSForTests(
 						filepath.Join(parentDir, "testdata/includes-symlinks"),
-						nil,
+						"MANIFEST.txt",
+						"dashboards/connections.json",
+						"dashboards/extra/memory.json",
+						"plugin.json",
+						"symlink_to_txt",
+						"text.txt",
 					),
 					Signature:     "valid",
 					SignatureType: plugins.GrafanaSignature,
@@ -282,14 +273,10 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.AlphaRelease,
 					},
-					Class:   plugins.External,
-					Module:  "plugins/test-datasource/module",
-					BaseURL: "public/plugins/test-datasource",
-					FS: plugins.NewLocalFS(
-						// filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
-						filesInDirCollectFilesWalkFuncProvider(filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-					),
+					Class:     plugins.External,
+					Module:    "plugins/test-datasource/module",
+					BaseURL:   "public/plugins/test-datasource",
+					FS:        mustNewTestFSWithCollect(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: "unsigned",
 				},
 			},
@@ -337,14 +324,10 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.AlphaRelease,
 					},
-					Class:   plugins.External,
-					Module:  "plugins/test-datasource/module",
-					BaseURL: "public/plugins/test-datasource",
-					FS: plugins.NewAllowListLocalFS(
-						filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
-						nil,
-					),
+					Class:     plugins.External,
+					Module:    "plugins/test-datasource/module",
+					BaseURL:   "public/plugins/test-datasource",
+					FS:        mustNewTestFSWithCollect(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: plugins.SignatureUnsigned,
 				},
 			},
@@ -448,10 +431,10 @@ func TestLoader_Load(t *testing.T) {
 					Backend: false,
 				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-						filepath.Join(parentDir, "testdata/test-app-with-includes", "dashboards/memory.json"): {},
-						filepath.Join(parentDir, "testdata/test-app-with-includes", "plugin.json"):            {},
-					}, filepath.Join(parentDir, "testdata/test-app-with-includes"), nil),
+					FS: plugins.NewAllowListLocalFSForTests(
+						filepath.Join(parentDir, "testdata/test-app-with-includes"),
+						"dashboards/memory.json", "plugin.json",
+					),
 					Class:     plugins.External,
 					Signature: plugins.SignatureUnsigned,
 					Module:    "plugins/test-app/module",
@@ -542,9 +525,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					Plugins:        []plugins.Dependency{},
 				},
 			},
-			FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-				filepath.Join(parentDir, "testdata/cdn/plugin", "plugin.json"): {},
-			}, filepath.Join(parentDir, "testdata/cdn/plugin"), nil),
+			FS:        plugins.NewAllowListLocalFSForTests(filepath.Join(parentDir, "testdata/cdn/plugin"), "plugin.json"),
 			Class:     plugins.Bundled,
 			Signature: plugins.SignatureValid,
 			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
@@ -683,10 +664,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Class:   plugins.External,
 						Module:  "plugins/test-datasource/module",
 						BaseURL: "public/plugins/test-datasource",
-						FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin/plugin.json"):  {},
-							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"), nil),
+						FS: plugins.NewAllowListLocalFSForTests(
+							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"),
+							"plugin.json", "MANIFEST.txt",
+						),
 						Signature:     "valid",
 						SignatureType: plugins.PrivateSignature,
 						SignatureOrg:  "Will Browne",
@@ -807,10 +788,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						},
 						Backend: false,
 					},
-					FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-						filepath.Join(pluginDir, "plugin.json"):  {},
-						filepath.Join(pluginDir, "MANIFEST.txt"): {},
-					}, pluginDir, nil),
+					FS:            plugins.NewAllowListLocalFSForTests(pluginDir, "plugin.json", "MANIFEST.txt"),
 					Class:         plugins.External,
 					Signature:     plugins.SignatureValid,
 					SignatureType: plugins.PrivateSignature,
@@ -899,10 +877,10 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					Backend:      true,
 					Executable:   "test",
 				},
-				FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "plugin.json"):  {},
-					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "MANIFEST.txt"): {},
-				}, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), nil),
+				FS: plugins.NewAllowListLocalFSForTests(
+					filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
+					"plugin.json", "MANIFEST.txt",
+				),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.PrivateSignature,
@@ -988,7 +966,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				FS:            plugins.NewAllowListLocalFS(filesInDir(t, pluginDir), pluginDir, nil),
+				FS:            mustNewTestFSWithCollect(t, pluginDir),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaSignature,
@@ -1080,7 +1058,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				FS:            plugins.NewAllowListLocalFS(filesInDir(t, pluginDir1), pluginDir1, nil),
+				FS:            mustNewTestFSWithCollect(t, pluginDir1),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaSignature,
@@ -1157,10 +1135,9 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Backend: true,
 		},
-		Module:  "plugins/test-datasource/module",
-		BaseURL: "public/plugins/test-datasource",
-		FS: plugins.NewAllowListLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
-			filepath.Join(rootDir, "testdata/nested-plugins/parent"), nil),
+		Module:        "plugins/test-datasource/module",
+		BaseURL:       "public/plugins/test-datasource",
+		FS:            mustNewTestFSWithCollect(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -1190,10 +1167,9 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				Plugins:        []plugins.Dependency{},
 			},
 		},
-		Module:  "plugins/test-panel/module",
-		BaseURL: "public/plugins/test-panel",
-		FS: plugins.NewAllowListLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
-			filepath.Join(rootDir, "testdata/nested-plugins/parent/nested"), nil),
+		Module:        "plugins/test-panel/module",
+		BaseURL:       "public/plugins/test-panel",
+		FS:            mustNewTestFSWithCollect(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -1332,10 +1308,9 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 				Backend: false,
 			},
-			Module:  "plugins/myorgid-simple-app/module",
-			BaseURL: "public/plugins/myorgid-simple-app",
-			FS: plugins.NewAllowListLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
-				filepath.Join(rootDir, "testdata/app-with-child/dist"), nil),
+			Module:        "plugins/myorgid-simple-app/module",
+			BaseURL:       "public/plugins/myorgid-simple-app",
+			FS:            mustNewTestFSWithCollect(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
 			Signature:     plugins.SignatureValid,
 			SignatureType: plugins.GrafanaSignature,
@@ -1371,10 +1346,9 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					Plugins:           []plugins.Dependency{},
 				},
 			},
-			Module:  "plugins/myorgid-simple-app/child/module",
-			BaseURL: "public/plugins/myorgid-simple-app",
-			FS: plugins.NewAllowListLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
-				filepath.Join(rootDir, "testdata/app-with-child/dist/child"), nil),
+			Module:          "plugins/myorgid-simple-app/child/module",
+			BaseURL:         "public/plugins/myorgid-simple-app",
+			FS:              mustNewTestFSWithCollect(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureValid,
 			SignatureType:   plugins.GrafanaSignature,
@@ -1483,13 +1457,27 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegist
 	}
 }
 
-func filesInDirCollectFilesWalkFuncProvider(dir string) plugins.CollectFilesWalkFuncProvider {
-	return func(acc map[string]struct{}) filepath.WalkFunc {
-		return collectFilesWalkFunc(acc)
-	}
+func mustNewTestFSWithCollect(t *testing.T, dir string) plugins.FS {
+	t.Helper()
+	var files []string
+	require.NoError(t, filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		files = append(files, rel)
+		return nil
+	}))
+	return plugins.NewAllowListLocalFSForTests(dir, files...)
 }
 
-func filesInDir(t *testing.T, dir string) map[string]struct{} {
+/* func filesInDir(t *testing.T, dir string) map[string]struct{} {
 	files, err := collectFilesWithin(dir)
 	if err != nil {
 		t.Logf("Could not collect plugin file info. Err: %v", err)
@@ -1498,8 +1486,9 @@ func filesInDir(t *testing.T, dir string) map[string]struct{} {
 	return files
 }
 
-func collectFilesWalkFunc(files map[string]struct{}) func(path string, info os.FileInfo, err error) error {
-	return func(path string, info os.FileInfo, err error) error {
+func collectFilesWithin(dir string) (map[string]struct{}, error) {
+	files := map[string]struct{}{}
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -1520,11 +1509,6 @@ func collectFilesWalkFunc(files map[string]struct{}) func(path string, info os.F
 
 		files[path] = struct{}{}
 		return nil
-	}
-}
-
-func collectFilesWithin(dir string) (map[string]struct{}, error) {
-	files := map[string]struct{}{}
-	err := filepath.Walk(dir, collectFilesWalkFunc(files))
+	})
 	return files, err
-}
+} */

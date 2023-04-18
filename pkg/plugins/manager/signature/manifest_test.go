@@ -166,10 +166,7 @@ func TestCalculate(t *testing.T) {
 						Version: "1.0.0",
 					},
 				},
-				FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-					filepath.Join(basePath, "MANIFEST.txt"): {},
-					filepath.Join(basePath, "plugin.json"):  {},
-				}, basePath, nil),
+				FS: plugins.NewAllowListLocalFSForTests(basePath, "MANIFEST.txt", "plugin.json"),
 			})
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
@@ -197,11 +194,10 @@ func TestCalculate(t *testing.T) {
 					Version: "1.0.0",
 				},
 			},
-			FS: plugins.NewAllowListLocalFS(map[string]struct{}{
-				filepath.Join(basePath, "MANIFEST.txt"):         {},
-				filepath.Join(basePath, "plugin.json"):          {},
-				filepath.Join(basePath, "chrome-win/debug.log"): {},
-			}, basePath, nil),
+			FS: plugins.NewAllowListLocalFSForTests(
+				basePath,
+				"MANIFEST.txt", "plugin.json", "chrome-win/debug.log",
+			),
 		})
 		require.NoError(t, err)
 		require.Equal(t, plugins.Signature{
@@ -245,11 +241,10 @@ func TestCalculate(t *testing.T) {
 							Version: "%VERSION%",
 						},
 					},
-					FS: newPathSeparatorOverrideFS(tc.sep, map[string]struct{}{
-						filepath.Join(basePath, "MANIFEST.txt"):      {},
-						filepath.Join(basePath, "plugin.json"):       {},
-						filepath.Join(basePath, "child/plugin.json"): {},
-					}, basePath),
+					FS: newPathSeparatorOverrideFS(
+						tc.sep, basePath,
+						"MANIFEST.txt", "plugin.json", "child/plugin.json",
+					),
 				})
 				require.NoError(t, err)
 				require.Equal(t, plugins.Signature{
@@ -301,9 +296,13 @@ type fsPathSeparatorFiles struct {
 // newPathSeparatorOverrideFS returns a new fsPathSeparatorFiles. Sep is the separator that will be used ONLY for
 // the elements returned by Files(). Files and basePath MUST use the os-specific path separator (filepath.Separator)
 // if Open() is required to work for the test case.
-func newPathSeparatorOverrideFS(sep string, files map[string]struct{}, basePath string) fsPathSeparatorFiles {
+func newPathSeparatorOverrideFS(sep string, basePath string, files ...string) fsPathSeparatorFiles {
+	allowList := make(map[string]struct{})
+	for _, k := range files {
+		allowList[k] = struct{}{}
+	}
 	return fsPathSeparatorFiles{
-		FS:        plugins.NewAllowListLocalFS(files, basePath, nil),
+		FS:        plugins.NewAllowListFS(allowList, plugins.NewAllowListLocalFSForTests(basePath, files...)),
 		separator: sep,
 	}
 }
@@ -330,10 +329,10 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 		{"windows", "\\"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			fs := newPathSeparatorOverrideFS("/", map[string]struct{}{
-				"a": {},
-				strings.Join([]string{"a", "b", "c"}, tc.sep): {},
-			}, ".")
+			fs := newPathSeparatorOverrideFS(
+				"/", ".",
+				"a", strings.Join([]string{"a", "b", "c"}, tc.sep),
+			)
 			files, err := fs.Files()
 			require.NoError(t, err)
 			filesMap := make(map[string]struct{}, len(files))
