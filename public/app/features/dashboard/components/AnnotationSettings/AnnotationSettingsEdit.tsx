@@ -276,6 +276,6 @@ const panelFilters = [
   {
     label: 'All panels except',
     value: PanelFilterType.ExcludePanels,
-    description: 'Do not send data to the following panels',
+    description: 'Do not send annotation data to the following panels',
   },
 ];
