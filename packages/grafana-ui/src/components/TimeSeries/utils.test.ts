@@ -1,4 +1,4 @@
-import { ArrayVector, EventBus, FieldType } from '@grafana/data';
+import { EventBus, FieldType } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { preparePlotConfigBuilder } from './utils';
@@ -26,21 +26,21 @@ describe('when fill below to option is used', () => {
           fields: [
             {
               config: {},
-              values: new ArrayVector([1667406900000, 1667407170000, 1667407185000]),
+              values: [1667406900000, 1667407170000, 1667407185000],
               name: 'Time',
               state: { multipleFrames: true, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
               type: FieldType.time,
             },
             {
               config: { displayNameFromDS: 'Test1', custom: { fillBelowTo: 'Test2' }, min: 0, max: 100 },
-              values: new ArrayVector([1, 2, 3]),
+              values: [1, 2, 3],
               name: 'Value',
               state: { multipleFrames: true, displayName: 'Test1', origin: { fieldIndex: 1, frameIndex: 0 } },
               type: FieldType.number,
             },
             {
               config: { displayNameFromDS: 'Test2', min: 0, max: 100 },
-              values: new ArrayVector([4, 5, 6]),
+              values: [4, 5, 6],
               name: 'Value',
               state: { multipleFrames: true, displayName: 'Test2', origin: { fieldIndex: 1, frameIndex: 1 } },
               type: FieldType.number,
@@ -55,14 +55,14 @@ describe('when fill below to option is used', () => {
             fields: [
               {
                 config: {},
-                values: new ArrayVector([1667406900000, 1667407170000, 1667407185000]),
+                values: [1667406900000, 1667407170000, 1667407185000],
                 name: 'Time',
                 state: { multipleFrames: true, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
                 type: FieldType.time,
               },
               {
                 config: { displayNameFromDS: 'Test1', custom: { fillBelowTo: 'Test2' }, min: 0, max: 100 },
-                values: new ArrayVector([1, 2, 3]),
+                values: [1, 2, 3],
                 name: 'Value',
                 state: { multipleFrames: true, displayName: 'Test1', origin: { fieldIndex: 1, frameIndex: 0 } },
                 type: FieldType.number,
@@ -76,14 +76,14 @@ describe('when fill below to option is used', () => {
             fields: [
               {
                 config: {},
-                values: new ArrayVector([1667406900000, 1667407170000, 1667407185000]),
+                values: [1667406900000, 1667407170000, 1667407185000],
                 name: 'Time',
                 state: { multipleFrames: true, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 1 } },
                 type: FieldType.time,
               },
               {
                 config: { displayNameFromDS: 'Test2', min: 0, max: 100 },
-                values: new ArrayVector([1, 2, 3]),
+                values: [1, 2, 3],
                 name: 'Value',
                 state: { multipleFrames: true, displayName: 'Test2', origin: { fieldIndex: 1, frameIndex: 1 } },
                 type: FieldType.number,
@@ -99,35 +99,35 @@ describe('when fill below to option is used', () => {
           fields: [
             {
               config: {},
-              values: new ArrayVector([1667406900000, 1667407170000, 1667407185000]),
+              values: [1667406900000, 1667407170000, 1667407185000],
               name: 'time',
               state: { multipleFrames: true, displayName: 'time', origin: { fieldIndex: 0, frameIndex: 0 } },
               type: FieldType.time,
             },
             {
               config: { custom: { fillBelowTo: 'below_value1' } },
-              values: new ArrayVector([1, 2, 3]),
+              values: [1, 2, 3],
               name: 'value1',
               state: { multipleFrames: true, displayName: 'value1', origin: { fieldIndex: 1, frameIndex: 0 } },
               type: FieldType.number,
             },
             {
               config: { custom: { fillBelowTo: 'below_value2' } },
-              values: new ArrayVector([4, 5, 6]),
+              values: [4, 5, 6],
               name: 'value2',
               state: { multipleFrames: true, displayName: 'value2', origin: { fieldIndex: 2, frameIndex: 0 } },
               type: FieldType.number,
             },
             {
               config: {},
-              values: new ArrayVector([4, 5, 6]),
+              values: [4, 5, 6],
               name: 'below_value1',
               state: { multipleFrames: true, displayName: 'below_value1', origin: { fieldIndex: 1, frameIndex: 1 } },
               type: FieldType.number,
             },
             {
               config: {},
-              values: new ArrayVector([4, 5, 6]),
+              values: [4, 5, 6],
               name: 'below_value2',
               state: { multipleFrames: true, displayName: 'below_value2', origin: { fieldIndex: 2, frameIndex: 1 } },
               type: FieldType.number,
@@ -141,21 +141,21 @@ describe('when fill below to option is used', () => {
             fields: [
               {
                 config: {},
-                values: new ArrayVector([1667406900000, 1667407170000, 1667407185000]),
+                values: [1667406900000, 1667407170000, 1667407185000],
                 name: 'time',
                 state: { multipleFrames: true, displayName: 'time', origin: { fieldIndex: 0, frameIndex: 0 } },
                 type: FieldType.time,
               },
               {
                 config: { custom: { fillBelowTo: 'below_value1' } },
-                values: new ArrayVector([1, 2, 3]),
+                values: [1, 2, 3],
                 name: 'value1',
                 state: { multipleFrames: true, displayName: 'value1', origin: { fieldIndex: 1, frameIndex: 0 } },
                 type: FieldType.number,
               },
               {
                 config: { custom: { fillBelowTo: 'below_value2' } },
-                values: new ArrayVector([4, 5, 6]),
+                values: [4, 5, 6],
                 name: 'value2',
                 state: { multipleFrames: true, displayName: 'value2', origin: { fieldIndex: 2, frameIndex: 0 } },
                 type: FieldType.number,
@@ -168,21 +168,21 @@ describe('when fill below to option is used', () => {
             fields: [
               {
                 config: {},
-                values: new ArrayVector([1667406900000, 1667407170000, 1667407185000]),
+                values: [1667406900000, 1667407170000, 1667407185000],
                 name: 'time',
                 state: { multipleFrames: true, displayName: 'time', origin: { fieldIndex: 0, frameIndex: 1 } },
                 type: FieldType.time,
               },
               {
                 config: {},
-                values: new ArrayVector([4, 5, 6]),
+                values: [4, 5, 6],
                 name: 'below_value1',
                 state: { multipleFrames: true, displayName: 'below_value1', origin: { fieldIndex: 1, frameIndex: 1 } },
                 type: FieldType.number,
               },
               {
                 config: {},
-                values: new ArrayVector([4, 5, 6]),
+                values: [4, 5, 6],
                 name: 'below_value2',
                 state: { multipleFrames: true, displayName: 'below_value2', origin: { fieldIndex: 2, frameIndex: 1 } },
                 type: FieldType.number,

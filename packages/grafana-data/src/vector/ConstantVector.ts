@@ -2,6 +2,7 @@ import { FunctionalVector } from './FunctionalVector';
 
 /**
  * @public
+ * @deprecated use a simple Arrays
  */
 export class ConstantVector<T = any> extends FunctionalVector<T> {
   constructor(private value: T, private len: number) {

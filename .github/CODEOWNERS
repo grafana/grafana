@@ -455,6 +455,8 @@ lerna.json @grafana/frontend-ops
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
 /scripts/ci-* @grafana/grafana-delivery
 /scripts/circle-* @grafana/grafana-delivery
+/scripts/publish-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
+/scripts/validate-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code

@@ -6,6 +6,7 @@ import { vectorToArray } from './vectorToArray';
 
 /**
  * @public
+ * @deprecated use a simple Arrays
  */
 export class BinaryOperationVector extends FunctionalVector<number> {
   constructor(private left: Vector<number>, private right: Vector<number>, private operation: BinaryOperation) {

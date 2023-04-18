@@ -311,12 +311,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:        "secureSocksDatasourceProxy",
-			Description: "Enable secure socks tunneling for supported core datasources",
-			State:       FeatureStateAlpha,
-			Owner:       hostedGrafanaTeam,
-		},
-		{
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
@@ -517,6 +511,12 @@ var (
 			Description: "Enables authentication configuration UI",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:        "pluginsAPIManifestKey",
+			Description: "Use grafana.com API to retrieve the public manifest key",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "advancedDataSourcePicker",
