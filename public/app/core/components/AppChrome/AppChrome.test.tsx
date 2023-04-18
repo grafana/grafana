@@ -55,6 +55,10 @@ const setup = (children: ReactNode) => {
         { text: 'Child2', id: 'child2', url: 'section/child2' },
       ],
     },
+    {
+      text: 'Help',
+      id: 'help',
+    },
   ];
 
   const context = getGrafanaContextMock();
