@@ -9,11 +9,11 @@ import { DataFrame, Labels, roundDecimals } from '@grafana/data';
  * see https://github.com/Microsoft/TypeScript/issues/13778
  */
 
-const getSeriesName = (frame: DataFrame): string => {
+const getSeriesName = (frame: DataFrame): string | undefined => {
   const firstField = frame.fields[0];
 
   const displayNameFromDS = firstField?.config?.displayNameFromDS;
-  return displayNameFromDS ?? frame.name ?? formatLabels(firstField?.labels ?? {});
+  return displayNameFromDS ?? frame.name ?? firstField?.labels?.__name__;
 };
 
 const getSeriesValue = (frame: DataFrame) => {
@@ -24,6 +24,11 @@ const getSeriesValue = (frame: DataFrame) => {
   }
 
   return value;
+};
+
+const getSeriesLabels = (frame: DataFrame): Record<string, string> => {
+  const firstField = frame.fields[0];
+  return firstField?.labels ?? {};
 };
 
 const formatLabels = (labels: Labels): string => {
@@ -40,4 +45,4 @@ const isEmptySeries = (series: DataFrame[]): boolean => {
   return isEmpty;
 };
 
-export { getSeriesName, getSeriesValue, formatLabels, isEmptySeries };
+export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, isEmptySeries };

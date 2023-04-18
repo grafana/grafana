@@ -71,6 +71,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: solid 1px ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius()};
     padding: 0;
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
   `,
   title: css({
     label: 'panel-title',

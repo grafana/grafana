@@ -19,7 +19,7 @@ import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { AlertConditionIndicator } from './AlertConditionIndicator';
-import { formatLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -73,7 +73,7 @@ export const Expression: FC<ExpressionProps> = ({
 
       switch (query.type) {
         case ExpressionQueryType.math:
-          return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
+          return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => { }} />;
 
         case ExpressionQueryType.reduce:
           return <Reduce onChange={onChangeQuery} refIds={availableRefIds} labelWidth={'auto'} query={query} />;
@@ -302,16 +302,34 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 
   const name = getSeriesName(frame) || 'Series ' + index;
   const value = getSeriesValue(frame);
+  const labelsRecord = getSeriesLabels(frame);
+  const labels = Object.entries(labelsRecord);
 
   const showFiring = isAlertCondition && value !== 0;
   const showNormal = isAlertCondition && value === 0;
 
+  const title = `${labels.length === 0 ? name : ''}{${formatLabels(labelsRecord ?? {})}}`
+
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
-        <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
-          {name}
-        </span>
+        <div className={cx(styles.expression.resultLabel)} title={title}>
+          <span>
+            {labels.length === 0 ? name : ''}
+          </span>
+          <span>{'{'}</span>
+          {labels.map(([key, value], index) => (
+            <span key={uniqueId()} className={styles.expression.labelWrapper}>
+              <span className={styles.expression.labelKey}>{key}</span>
+              <span>=</span>
+              <span>&quot;</span>
+              <span className={styles.expression.labelValue}>{value}</span>
+              <span>&quot;</span>
+              {index < labels.length - 1 && <span>, </span>}
+            </span>
+          ))}
+          <span>{'}'}</span>
+        </div>
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
         {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
@@ -397,6 +415,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: ${theme.colors.primary.text};
     `,
     results: css`
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+
       border-top: solid 1px ${theme.colors.border.medium};
     `,
     noResults: css`
@@ -415,12 +437,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
         background-color: ${theme.colors.background.canvas};
       }
     `,
+    labelWrapper: css``,
+    labelKey: css`
+      color: ${theme.isDark ? '#ce9178' : '#a31515'};
+    `,
+    labelValue: css`
+      color: ${theme.isDark ? '#73bf69' : '#56a64b'};
+    `,
     resultValue: css`
-      color: ${theme.colors.text.maxContrast};
       text-align: right;
     `,
     resultLabel: css`
       flex: 1;
+      overflow-x: auto;
+
+      display: inline-block;
+      white-space: nowrap;
     `,
     noData: css`
       display: flex;
