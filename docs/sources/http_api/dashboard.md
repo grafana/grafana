@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/dashboard/
 description: Grafana Dashboard HTTP API
 keywords:
   - grafana
