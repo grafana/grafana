@@ -380,7 +380,7 @@ describe('PanelModel', () => {
         model.pluginLoaded(reactPlugin);
       });
 
-      it('should call update model and remove old model props', () => {
+      it('should run panel changed handler and remove old model props', () => {
         expect(model.options).toEqual({ name: 'old name' });
         expect(model.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
         expect(model.autoMigrateFrom).toBe(undefined);
