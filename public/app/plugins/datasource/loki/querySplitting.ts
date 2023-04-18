@@ -133,7 +133,12 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse);
-        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, group.partition.slice(0, requestN - 1));
+        mergedResponse = updateLoadingFrame(
+          mergedResponse,
+          subRequest,
+          group.partition.slice(0, requestN - 1),
+          totalRequests
+        );
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -164,7 +169,8 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 function updateLoadingFrame(
   response: DataQueryResponse,
   request: DataQueryRequest<LokiQuery>,
-  remainingPartition: TimeRange[]
+  remainingPartition: TimeRange[],
+  totalRequests: number
 ): DataQueryResponse {
   if (isLogsQuery(request.targets[0].expr)) {
     return response;
@@ -177,12 +183,14 @@ function updateLoadingFrame(
     return response;
   }
 
+  const progress = Math.round(((totalRequests - remainingPartition.length) / totalRequests) * 100);
+
   for (const target of request.targets) {
     const loadingFrame: DataFrame = {
       refId: target.refId,
       name: `Loading ${target.refId}`,
       length: 2,
-      fields: getLoadingFrameFields(target, remainingPartition),
+      fields: getLoadingFrameFields(target, remainingPartition, progress),
     };
     response.data.push(loadingFrame);
   }
@@ -190,7 +198,7 @@ function updateLoadingFrame(
   return response;
 }
 
-function getLoadingFrameFields(target: LokiQuery, partitions: TimeRange[]): Field[] {
+function getLoadingFrameFields(target: LokiQuery, partitions: TimeRange[], progress: number): Field[] {
   const timeField: Field = {
     name: 'Time',
     type: FieldType.time,
@@ -201,7 +209,7 @@ function getLoadingFrameFields(target: LokiQuery, partitions: TimeRange[]): Fiel
     name: 'Value',
     type: FieldType.number,
     config: {
-      displayNameFromDS: `Loading ${target.refId}`,
+      displayNameFromDS: `Loading ${progress}%`,
       color: {
         mode: FieldColorModeId.Fixed,
         fixedColor: '#999',
