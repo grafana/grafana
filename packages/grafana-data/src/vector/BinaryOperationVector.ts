@@ -1,13 +1,17 @@
 import { Vector } from '../types/vector';
 import { BinaryOperation } from '../utils/binaryOperators';
 
+import { FunctionalVector } from './FunctionalVector';
 import { vectorToArray } from './vectorToArray';
 
 /**
  * @public
+ * @deprecated use a simple Arrays
  */
-export class BinaryOperationVector implements Vector<number> {
-  constructor(private left: Vector<number>, private right: Vector<number>, private operation: BinaryOperation) {}
+export class BinaryOperationVector extends FunctionalVector<number> {
+  constructor(private left: Vector<number>, private right: Vector<number>, private operation: BinaryOperation) {
+    super();
+  }
 
   get length(): number {
     return this.left.length;

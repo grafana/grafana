@@ -20,6 +20,9 @@ describe('Check Circular Vector', () => {
 
     v.add(8);
     expect(v.toArray()).toEqual([6, 7, 8]);
+
+    v.push(9, 10);
+    expect(v.toArray()).toEqual([8, 9, 10]);
   });
 
   it('should grow buffer until it hits capacity (append)', () => {

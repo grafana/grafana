@@ -2137,9 +2137,9 @@ export const otlpResponse = {
         {
           spans: [
             {
-              traceId: 'AAAAAAAAAABguiq7RPE+rg==',
-              spanId: 'cmteMBAvwNA=',
-              parentSpanId: 'OY8PIaPbma4=',
+              traceId: '000000000000000060ba2abb44f13eae',
+              spanId: '726b5e30102fc0d0',
+              parentSpanId: '398f0f21a3db99ae',
               name: 'HTTP GET - root',
               kind: 'SPAN_KIND_CLIENT',
               startTimeUnixNano: 1627471657255809000,

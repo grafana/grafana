@@ -38,15 +38,14 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
-        | Name           | Description                                                              |
-
+    | Name           | Description                                                              |
     | -------------- | ------------------------------------------------------------------------ |
-    | **Name** | Sets the name you use to refer to the data source in panels and queries. |
-    | **Default** | Defines whether this data source is pre-selected for new panels. |
-    | **URL** | Sets the URL of the Zipkin instance, such as `http://localhost:9411`. |
-    | **Basic Auth** | Enables basic authentication for the Zipkin data source. |
-    | **User** | Defines the user name for basic authentication. |
-    | **Password** | Defines the password for basic authentication. |
+    | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default**    | Defines whether this data source is pre-selected for new panels.         |
+    | **URL**        | Sets the URL of the Zipkin instance, such as `http://localhost:9411`.    |
+    | **Basic Auth** | Enables basic authentication for the Zipkin data source.                 |
+    | **User**       | Defines the user name for basic authentication.                          |
+    | **Password**   | Defines the password for basic authentication.                           |
 
 ### Trace to logs
 
@@ -191,6 +190,10 @@ datasources:
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
       nodeGraph:
         enabled: true
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
       spanBar:
         type: 'None'
     secureJsonData:
@@ -258,6 +261,22 @@ If the file has multiple traces, Grafana visualizes its first trace.
   }
 ]
 ```
+
+## Span Filters
+
+> **Note:** This feature is behind the `newTraceView` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
 
 ## Link to a trace ID from logs
 
