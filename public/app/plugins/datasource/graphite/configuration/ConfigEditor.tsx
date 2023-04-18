@@ -6,14 +6,7 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
-import {
-  Alert,
-  DataSourceHttpSettings,
-  InlineFormLabel,
-  LegacyForms,
-  Select,
-  SecureSocksProxySettings,
-} from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
 
