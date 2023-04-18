@@ -313,9 +313,14 @@ type TestTemplatesConfigParams struct {
 }
 
 type TestTemplatesConfigBodyParams struct {
-	Alerts   []amv2.PostableAlert `json:"alerts"`
-	Template string               `json:"template"`
-	Name     string               `json:"name"`
+	// Alerts to use as data when testing the template.
+	Alerts []amv2.PostableAlert `json:"alerts"`
+
+	// Template string to test.
+	Template string `json:"template"`
+
+	// Name of the template file.
+	Name string `json:"name"`
 }
 
 // swagger:model
@@ -325,14 +330,31 @@ type TestTemplatesResults struct {
 }
 
 type TestTemplatesResult struct {
+	// Name of the associated template definition for this result.
 	Name string `json:"name"`
+
+	// Interpolated value of the template.
 	Text string `json:"text"`
 }
 
 type TestTemplatesErrorResult struct {
-	Kind    string `json:"kind"`
+	// Name of the associated template for this error. Will be empty if the Kind is "invalid_template".
+	Name string `json:"name,omitempty"`
+
+	// Kind of template error that occurred.
+	Kind TemplateErrorKind `json:"kind"`
+
+	// Error message.
 	Message string `json:"message"`
 }
+
+// swagger:enum TemplateErrorKind
+type TemplateErrorKind string
+
+const (
+	InvalidTemplate TemplateErrorKind = "invalid_template"
+	ExecutionError  TemplateErrorKind = "execution_error"
+)
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
 type CreateSilenceParams struct {
