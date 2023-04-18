@@ -209,7 +209,7 @@ function getLoadingFrameFields(partition: TimeRange[], progress: number): Field[
       displayNameFromDS: `Loading ${progress}%`,
       color: {
         mode: FieldColorModeId.Fixed,
-        fixedColor: 'rgba(150, 150, 150, 0.4)',
+        fixedColor: '#888',
       },
     },
     values: new ArrayVector([0, 0]),
