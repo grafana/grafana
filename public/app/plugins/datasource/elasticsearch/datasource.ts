@@ -1,6 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap, switchMap } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
 import {
@@ -26,11 +26,8 @@ import {
   CoreApp,
   SupplementaryQueryType,
   DataQueryError,
-  FieldCache,
-  FieldType,
   rangeUtil,
   Field,
-  sortDataFrame,
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
@@ -502,8 +499,8 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const { disableElasticsearchBackendQuerying } = config.featureToggles;
-    if (!disableElasticsearchBackendQuerying) {
+    const { enableElasticsearchBackendQuerying } = config.featureToggles;
+    if (enableElasticsearchBackendQuerying) {
       const contextRequest = this.makeLogContextDataRequest(row, options);
 
       return lastValueFrom(
@@ -515,9 +512,6 @@ export class ElasticDatasource
               statusText: err.statusText,
             };
             throw error;
-          }),
-          switchMap((res) => {
-            return of(processToLogContextDataFrames(res));
           })
         )
       );
@@ -680,8 +674,8 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-    const { disableElasticsearchBackendQuerying } = config.featureToggles;
-    if (!disableElasticsearchBackendQuerying) {
+    const { enableElasticsearchBackendQuerying } = config.featureToggles;
+    if (enableElasticsearchBackendQuerying) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
@@ -1221,44 +1215,6 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
         },
       },
     ],
-  };
-}
-
-function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
-  const frames = result.data.map((frame) => sortDataFrame(frame, 0, true));
-  const processedFrames = frames.map((frame) => {
-    // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-    const cache = new FieldCache(frame);
-    const timestampField = cache.getFirstFieldOfType(FieldType.time);
-    const lineField = cache.getFirstFieldOfType(FieldType.string);
-    const idField = cache.getFieldByName('_id');
-
-    if (!timestampField || !lineField || !idField) {
-      return { ...frame, fields: [] };
-    }
-
-    return {
-      ...frame,
-      fields: [
-        {
-          ...timestampField,
-          name: 'ts',
-        },
-        {
-          ...lineField,
-          name: 'line',
-        },
-        {
-          ...idField,
-          name: 'id',
-        },
-      ],
-    };
-  });
-
-  return {
-    ...result,
-    data: processedFrames,
   };
 }
 

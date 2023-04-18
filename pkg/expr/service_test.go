@@ -34,6 +34,7 @@ func TestService(t *testing.T) {
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
 		features:          &featuremgmt.FeatureManager{},
+		metrics:           newMetrics(nil),
 	}
 
 	queries := []Query{

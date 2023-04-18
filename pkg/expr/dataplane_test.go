@@ -49,6 +49,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
 		features:          &featuremgmt.FeatureManager{},
+		metrics:           newMetrics(nil),
 	}
 	queries := []Query{{
 		RefID: "A",

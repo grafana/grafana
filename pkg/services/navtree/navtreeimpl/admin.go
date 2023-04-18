@@ -36,18 +36,6 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 		})
 	}
 
-	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
-			configNodes = append(configNodes, &navtree.NavLink{
-				Text:     "Users",
-				Id:       "users",
-				SubTitle: "Invite and assign roles to users",
-				Icon:     "user",
-				Url:      s.cfg.AppSubURL + "/org/users",
-			})
-		}
-	}
-
 	if hasAccess(s.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Teams",
@@ -108,7 +96,6 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 		Text:       "Configuration",
 		SubTitle:   "Organization: " + c.OrgName,
 		Icon:       "cog",
-		Section:    navtree.NavSectionConfig,
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
 	}
@@ -122,18 +109,10 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	adminNavLinks := []*navtree.NavLink{}
 
-	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
-			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-				Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
-			})
-		}
-	} else {
-		if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
-			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-				Text: "Users", SubTitle: "Manage and create users across the whole Grafana server", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
-			})
-		}
+	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+		})
 	}
 
 	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
@@ -181,7 +160,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 		Id:         navtree.NavIDAdmin,
 		Icon:       "shield",
 		SortWeight: navtree.WeightAdmin,
-		Section:    navtree.NavSectionConfig,
 		Children:   adminNavLinks,
 	}
 

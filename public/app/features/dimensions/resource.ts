@@ -43,7 +43,7 @@ export function getResourceDimension(
     const mapper = (v: string) => getPublicOrAbsoluteUrl(`${v}`);
     return {
       field,
-      get: (i) => mapper(field.values.get(i)),
+      get: (i) => mapper(field.values[i]),
       value: () => mapper(getLastNotNullFieldValue(field)),
     };
   }
@@ -60,7 +60,7 @@ export function getResourceDimension(
 
   return {
     field,
-    get: (index: number): string => getIcon(field.values.get(index)),
+    get: (index: number): string => getIcon(field.values[index]),
     value: () => getIcon(getLastNotNullFieldValue(field)),
   };
 }

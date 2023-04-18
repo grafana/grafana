@@ -18,7 +18,7 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
     case FieldType.boolean:
       return booleanIndexComparer(values, reverse);
     case FieldType.time:
-      if (typeof field.values.get(0) === 'number') {
+      if (typeof field.values[0] === 'number') {
         return timestampIndexComparer(values, reverse);
       }
       return timeIndexComparer(values, reverse);
@@ -80,39 +80,38 @@ const falsyComparer = (a: unknown, b: unknown): number => {
 };
 
 const timestampIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
-  let vals = values.toArray();
   let mult = reverse ? -1 : 1;
-  return (a: number, b: number): number => mult * (vals[a] - vals[b]);
+  return (a: number, b: number): number => mult * (values[a] - values[b]);
 };
 
 const timeIndexComparer = (values: Vector<unknown>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA = values.get(a);
-    const vB = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
   };
 };
 
 const booleanIndexComparer = (values: Vector<boolean>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA = values.get(a);
-    const vB = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? booleanComparer(vB, vA) : booleanComparer(vA, vB);
   };
 };
 
 const numericIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA = values.get(a);
-    const vB = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? numericComparer(vB, vA) : numericComparer(vA, vB);
   };
 };
 
 const stringIndexComparer = (values: Vector<string>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA = values.get(a);
-    const vB = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? stringComparer(vB, vA) : stringComparer(vA, vB);
   };
 };

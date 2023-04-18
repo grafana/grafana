@@ -100,7 +100,7 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
 		},
@@ -279,11 +279,10 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:            "nestedFolders",
-			Description:     "Enable folder nesting",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaBackendPlatformSquad,
+			Name:        "nestedFolders",
+			Description: "Enable folder nesting",
+			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
@@ -390,13 +389,6 @@ var (
 			Description: "Prohibits a user from changing organization roles synced with external auth providers",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:         "drawerDataSourcePicker",
-			Description:  "Changes the user experience for data source selection to a drawer.",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
 		},
 		{
 			Name:         "traceqlSearch",
@@ -515,9 +507,9 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "disableElasticsearchBackendQuerying",
-			Description: "Disable the processing of queries and responses in the Elasticsearch data source through backend",
-			State:       FeatureStateStable,
+			Name:        "enableElasticsearchBackendQuerying",
+			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
@@ -525,6 +517,20 @@ var (
 			Description: "Enables authentication configuration UI",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:         "advancedDataSourcePicker",
+			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "opensearchDetectVersion",
+			Description:  "Enable version detection in OpenSearch",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 	}
 )

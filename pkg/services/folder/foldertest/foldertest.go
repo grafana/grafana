@@ -45,3 +45,7 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
+
+func (s *FakeService) RegisterService(service folder.RegistryService) error {
+	return s.ExpectedError
+}

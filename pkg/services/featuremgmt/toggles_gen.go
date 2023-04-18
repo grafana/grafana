@@ -239,10 +239,6 @@ const (
 	// Prohibits a user from changing organization roles synced with external auth providers
 	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
 
-	// FlagDrawerDataSourcePicker
-	// Changes the user experience for data source selection to a drawer.
-	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
-
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
 	FlagTraceqlSearch = "traceqlSearch"
@@ -315,11 +311,19 @@ const (
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
 	FlagUseCachingService = "useCachingService"
 
-	// FlagDisableElasticsearchBackendQuerying
-	// Disable the processing of queries and responses in the Elasticsearch data source through backend
-	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+	// FlagEnableElasticsearchBackendQuerying
+	// Enable the processing of queries and responses in the Elasticsearch data source through backend
+	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
 	// FlagAuthenticationConfigUI
 	// Enables authentication configuration UI
 	FlagAuthenticationConfigUI = "authenticationConfigUI"
+
+	// FlagAdvancedDataSourcePicker
+	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
+
+	// FlagOpensearchDetectVersion
+	// Enable version detection in OpenSearch
+	FlagOpensearchDetectVersion = "opensearchDetectVersion"
 )
