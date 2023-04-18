@@ -91,6 +91,7 @@ type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partitio
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
+  const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
   let shouldStop = false;
   let subquerySubsciption: Subscription | null = null;
@@ -133,12 +134,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse);
-        mergedResponse = updateLoadingFrame(
-          mergedResponse,
-          subRequest,
-          group.partition.slice(0, requestN - 1),
-          totalRequests
-        );
+        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN, totalRequests);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -169,44 +165,42 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 function updateLoadingFrame(
   response: DataQueryResponse,
   request: DataQueryRequest<LokiQuery>,
-  remainingPartition: TimeRange[],
+  partition: TimeRange[],
+  requestN: number,
   totalRequests: number
 ): DataQueryResponse {
   if (isLogsQuery(request.targets[0].expr)) {
     return response;
   }
-  response.data = response.data.filter(
-    (frame) => !request.targets.some((target) => frame.name === `Loading ${target.refId}`)
-  );
+  const loadingFrameName = 'loki-splitting-progress';
+  response.data = response.data.filter((frame) => frame.name !== loadingFrameName);
 
-  if (!remainingPartition.length) {
+  if (requestN <= 1) {
     return response;
   }
 
-  const progress = Math.round(((totalRequests - remainingPartition.length) / totalRequests) * 100);
+  const progress = Math.round(((totalRequests - requestN) / totalRequests) * 100);
 
-  for (const target of request.targets) {
-    const loadingFrame: DataFrame = {
-      refId: target.refId,
-      name: `Loading ${target.refId}`,
-      length: 2,
-      fields: getLoadingFrameFields(target, remainingPartition, progress),
-      meta: {
-        preferredVisualisationType: 'graph',
-      },
-    };
-    response.data.push(loadingFrame);
-  }
+  const loadingFrame: DataFrame = {
+    refId: loadingFrameName,
+    name: loadingFrameName,
+    length: 2,
+    fields: getLoadingFrameFields(partition.slice(0, requestN), progress),
+    meta: {
+      preferredVisualisationType: 'graph',
+    },
+  };
+  response.data.push(loadingFrame);
 
   return response;
 }
 
-function getLoadingFrameFields(target: LokiQuery, partitions: TimeRange[], progress: number): Field[] {
+function getLoadingFrameFields(partition: TimeRange[], progress: number): Field[] {
   const timeField: Field = {
     name: 'Time',
     type: FieldType.time,
     config: {},
-    values: new ArrayVector([partitions[0].from.valueOf(), partitions[partitions.length - 1].to.valueOf()]),
+    values: new ArrayVector([partition[0].from.valueOf(), partition[partition.length - 1].to.valueOf()]),
   };
   const valuesField: Field = {
     name: 'Value',
