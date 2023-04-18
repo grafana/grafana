@@ -9,6 +9,7 @@ import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { LogContextProvider } from '../LogContextProvider';
+import { escapeLabelValueInSelector } from '../languageUtils';
 import { lokiGrammar } from '../syntax';
 import { ContextFilter, LokiQuery } from '../types';
 
@@ -149,7 +150,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const contextFilterToSelectFilter = useCallback((contextFilter: ContextFilter): SelectableValue<string> => {
     return {
-      label: `${contextFilter.label}="${contextFilter.value}"`,
+      label: `${contextFilter.label}="${escapeLabelValueInSelector(contextFilter.value)}"`,
       value: contextFilter.label,
     };
   }, []);
