@@ -10,6 +10,7 @@ import {
   TimeInterval,
   TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
+import { replaceVariables } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
 import { Labels } from 'app/types/unified-alerting-dto';
 
 import { MatcherFieldValue } from '../types/silence-form';
@@ -132,6 +133,23 @@ const matcherOperators = [
   MatcherOperator.notEqual,
   MatcherOperator.equal,
 ];
+
+// Returns a list of Matchers given a string maqtcher that contains a list
+export function getMatcherListFromString(matcher: string): Matcher[] {
+  //we need to remove curly braces and change the separated-coma format to an array of strings
+  //otherwise the API throws 400
+  if (matcher?.length === 0) {
+    return [];
+  }
+  return matcher
+    ?.replace(/[{}]/g, '')
+    .split(',')
+    .map((value) => value.trim())
+    .map((matcherStr) => {
+      const replacedLabelFilter = replaceVariables(matcherStr);
+      return parseMatcher(replacedLabelFilter);
+    });
+}
 
 export function parseMatcher(matcher: string): Matcher {
   const trimmed = matcher.trim();
