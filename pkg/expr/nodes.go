@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 )
 
@@ -229,11 +230,16 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	responseType := "unknown"
+	respStatus := "success"
+	var useDataplane bool
 	defer func() {
 		if e != nil {
 			responseType = "error"
+			respStatus = "failure"
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
+
+		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane)).Inc()
 	}()
 
 	resp, err := s.dataService.QueryData(ctx, req)
@@ -256,6 +262,13 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	if response.Error != nil {
 		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
+	}
+
+	var dt data.FrameType
+	dt, useDataplane, _ = shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
+	if useDataplane {
+		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
+		return handleDataplaneFrames(dt.Kind(), response.Frames)
 	}
 
 	dataSource := dn.datasource.Type

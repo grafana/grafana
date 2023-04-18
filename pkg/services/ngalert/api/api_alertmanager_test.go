@@ -108,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -116,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}}))
 	})
@@ -148,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -156,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})

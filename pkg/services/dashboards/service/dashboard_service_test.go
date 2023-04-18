@@ -240,6 +240,13 @@ func TestDashboardService(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, int64(3), count)
 		})
+
+		t.Run("Delete dashboards in folder", func(t *testing.T) {
+			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUID: "uid"}
+			fakeStore.On("DeleteDashboardsInFolder", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolder(context.Background(), 1, "uid")
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("Delete user by acl", func(t *testing.T) {

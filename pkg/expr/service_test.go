@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,6 +33,8 @@ func TestService(t *testing.T) {
 		cfg:               cfg,
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
+		features:          &featuremgmt.FeatureManager{},
+		metrics:           newMetrics(nil),
 	}
 
 	queries := []Query{
@@ -67,6 +70,10 @@ func TestService(t *testing.T) {
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
+	bDF.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
 
 	expect := &backend.QueryDataResponse{
 		Responses: backend.Responses{

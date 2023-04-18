@@ -18,6 +18,8 @@ export * from './appEvent';
 export * from './query';
 export * from './accessControl';
 export * from './supportBundles';
+export * from './configAuth';
+export * from './settings';
 
 import * as CoreEvents from './events';
 export { CoreEvents };

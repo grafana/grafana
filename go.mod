@@ -29,7 +29,7 @@ replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.
 
 require (
 	cloud.google.com/go/storage v1.28.1
-	cuelang.org/go v0.5.0-beta.2
+	cuelang.org/go v0.5.0
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/BurntSushi/toml v1.2.1
@@ -61,7 +61,6 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20230315185333-d1e3c68ac064
-	github.com/grafana/cuetsy v0.1.6
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.159.0
@@ -97,7 +96,7 @@ require (
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
-	github.com/urfave/cli/v2 v2.3.0
+	github.com/urfave/cli/v2 v2.24.4
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/yalue/merged_fs v1.2.2
@@ -210,7 +209,7 @@ require (
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rs/cors v1.8.3 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
-	github.com/segmentio/encoding v0.3.5
+	github.com/segmentio/encoding v0.3.5 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
@@ -274,6 +273,9 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/dave/dst v0.27.2
 	github.com/go-jose/go-jose/v3 v3.0.0
+	github.com/grafana/cuetsy v0.1.8
+	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
+	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375
 	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7
@@ -362,6 +364,7 @@ require (
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
+	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.5 // indirect
 	go.opentelemetry.io/collector/pdata v1.0.0-rc4 // indirect
@@ -396,7 +399,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20191112132149-a4c4c47bc57f // indirect
