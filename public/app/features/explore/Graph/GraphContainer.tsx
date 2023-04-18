@@ -1,7 +1,15 @@
 import React, { useCallback, useState } from 'react';
 
-import { DataFrame, EventBus, AbsoluteTimeRange, TimeZone, SplitOpen, LoadingState, ThresholdsConfig } from '@grafana/data';
-import { Collapse, GraphThresholdsStyleConfig, PanelChrome, useTheme2 } from '@grafana/ui';
+import {
+  DataFrame,
+  EventBus,
+  AbsoluteTimeRange,
+  TimeZone,
+  SplitOpen,
+  LoadingState,
+  ThresholdsConfig,
+} from '@grafana/data';
+import { GraphThresholdsStyleConfig, PanelChrome } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
