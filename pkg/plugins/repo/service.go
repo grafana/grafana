@@ -58,12 +58,7 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 
 // GetPluginDownloadOptions returns the options for downloading the requested plugin (with optional `version`)
 func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
-	versions, err := m.pluginVersions(pluginID, version, compatOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	v, err := m.selectVersion(versions, pluginID, version, compatOpts)
+	v, err := m.pluginVersion(pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -85,39 +80,40 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 	}, nil
 }
 
-// pluginVersions
-func (m *Manager) pluginVersions(pluginID, version string, compatOpts CompatOpts) ([]Version, error) {
-	// TODO simplify this (Do this before continuing on with tests)
-	if compatOpts.AnyGrafanaVersion() {
-		// if no explicit version requested, get latest version
-		if version == "" {
-			var err error
-			version, err = m.latestPluginVersionNumber(pluginID)
-			if err != nil {
-				return nil, err
-			}
-		}
-		v, err := m.versionInfo(version)
+// pluginVersion will return plugin version based on the requested information
+func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts) (*Version, error) {
+	var err error
+	if !compatOpts.AnyGrafanaVersion() {
+		versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
 		if err != nil {
 			return nil, err
 		}
-		return []Version{v}, nil
+		return m.selectCompatibleVersion(versions, pluginID, version, compatOpts)
 	}
 
-	v, err := m.repoInfo(pluginID, compatOpts)
-	if err != nil {
-		return nil, err
+	var v Version
+	if version == "" {
+		v, err = m.latestPluginVersion(pluginID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		v, err = m.specificPluginVersion(version)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return v.Versions, nil
+
+	return m.selectCompatibleVersion([]Version{v}, pluginID, version, compatOpts)
 }
 
-// selectVersion selects the most appropriate plugin version
+// selectCompatibleVersion selects the most appropriate plugin version
 // returns the specified version if supported.
 // returns the latest version if no specific version is specified.
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (m *Manager) selectVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (*Version, error) {
+func (m *Manager) selectCompatibleVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (*Version, error) {
 	version = normalizeVersion(version)
 
 	var ver Version
@@ -198,8 +194,9 @@ func (m *Manager) downloadURL(pluginID, version string) string {
 	return fmt.Sprintf("%s/%s/version/%s/download", m.cfg.BaseURL, pluginID, version)
 }
 
-// versionInfo returns the plugin version information from /api/plugins/$pluginID/version/$version
-func (m *Manager) versionInfo(version string) (Version, error) {
+// specificPluginVersion returns specific plugin version information from /api/plugins/$pluginID/version/$version
+// regardless of the Grafana version
+func (m *Manager) specificPluginVersion(version string) (Version, error) {
 	u, err := url.Parse(m.cfg.BaseURL)
 	if err != nil {
 		return Version{}, err
@@ -227,52 +224,58 @@ func (m *Manager) versionInfo(version string) (Version, error) {
 }
 
 // latestPluginVersionNumber will get latest version from /api/plugins/$pluginID
-func (m *Manager) latestPluginVersionNumber(pluginID string) (string, error) {
+// regardless of the Grafana version
+func (m *Manager) latestPluginVersion(pluginID string) (Version, error) {
 	u, err := url.Parse(m.cfg.BaseURL)
 	if err != nil {
-		return "", err
+		return Version{}, err
 	}
 	u.Path = path.Join(u.Path, pluginID)
 
 	body, err := m.client.sendReq(u)
 	if err != nil {
-		return "", err
+		return Version{}, err
 	}
 	var pv Plugin
 	err = json.Unmarshal(body, &pv)
 	if err != nil {
 		m.log.Error("Failed to unmarshal plugin version response", err)
-		return "", err
+		return Version{}, err
 	}
 
 	if pv.Status != "active" || pv.VersionStatus != "active" {
-		return "", errors.New("plugin is not active")
+		return Version{}, errors.New("plugin is not active")
 	}
 
-	return pv.Version, nil
+	archMeta := make(map[string]ArchMeta)
+	for _, p := range pv.Packages {
+		archMeta[p.PackageName] = ArchMeta{SHA256: p.Sha256}
+	}
+
+	return Version{Version: pv.Version, Arch: archMeta}, nil
 }
 
-// repoInfo will get version info from /api/plugins/repo/$pluginID based on
+// grafanaCompatiblePluginVersions will get version info from /api/plugins/repo/$pluginID based on
 // the provided compatibility information (sent via HTTP headers)
-func (m *Manager) repoInfo(pluginID string, compatOpts CompatOpts) (PluginRepo, error) {
+func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts CompatOpts) ([]Version, error) {
 	u, err := url.Parse(m.cfg.BaseURL)
 	if err != nil {
-		return PluginRepo{}, err
+		return nil, err
 	}
 
 	u.Path = path.Join(u.Path, "repo", pluginID)
 
 	body, err := m.client.sendReq(u, compatOpts)
 	if err != nil {
-		return PluginRepo{}, err
+		return nil, err
 	}
 
 	var v PluginRepo
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		m.log.Error("Failed to unmarshal plugin repo response", err)
-		return PluginRepo{}, err
+		return nil, err
 	}
 
-	return v, nil
+	return v.Versions, nil
 }

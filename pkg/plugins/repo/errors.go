@@ -3,19 +3,19 @@ package repo
 import "fmt"
 
 type ErrResponse4xx struct {
-	message    string
-	statusCode int
+	Message    string
+	StatusCode int
 	systemInfo string
 }
 
 func newErrResponse4xx(statusCode int) *ErrResponse4xx {
 	return &ErrResponse4xx{
-		statusCode: statusCode,
+		StatusCode: statusCode,
 	}
 }
 
 func (e *ErrResponse4xx) WithMessage(message string) *ErrResponse4xx {
-	e.message = message
+	e.Message = message
 	return e
 }
 func (e *ErrResponse4xx) WithSystemInfo(systemInfo string) *ErrResponse4xx {
@@ -24,13 +24,13 @@ func (e *ErrResponse4xx) WithSystemInfo(systemInfo string) *ErrResponse4xx {
 }
 
 func (e *ErrResponse4xx) Error() string {
-	if len(e.message) > 0 {
+	if len(e.Message) > 0 {
 		if len(e.systemInfo) > 0 {
-			return fmt.Sprintf("%d: %s (%s)", e.statusCode, e.message, e.systemInfo)
+			return fmt.Sprintf("%d: %s (%s)", e.StatusCode, e.Message, e.systemInfo)
 		}
-		return fmt.Sprintf("%d: %s", e.statusCode, e.message)
+		return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
 	}
-	return fmt.Sprintf("%d", e.statusCode)
+	return fmt.Sprintf("%d", e.StatusCode)
 }
 
 type ErrVersionUnsupported struct {
