@@ -74,6 +74,18 @@ content_security_policy = true
 content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://$ROOT_PATH wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
 ```
 
+### Enable trusted types
+
+**Currently in development. Trusted types is an experimental browser feature with [limited browser support](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types).**
+
+Trusted types reduce the risk of XSS by enforcing developers to sanitize strings that are used in injection sinks, such as setting `innerHTML` on an element. Furthermore, when enabling trusted types, these injection sinks will be automatically sanitized using a default policy. This provides some protection from vulnerabilities in third party libraries, such as jQuery, Angular and even thrid party plugins.
+
+To enable trusted types:
+
+1. Enable the `trustedTypes` feature toggle.
+2. Enable `content_security_policy` in the configuration.
+3. Add `require-trusted-types;` to the `content_security_policy_template` in the configuration.
+
 ## Additional security hardening
 
 The Grafana server has several built-in security features that you can opt-in to enhance security. This section describes additional techniques you can use to harden security.
