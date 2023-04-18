@@ -233,52 +233,56 @@ func (p *redisPeer) membersSyncLoop() {
 	for {
 		select {
 		case <-ticker.C:
-			startTime := time.Now()
-			// The 100 is a hint for the server, how many records there might be for the
-			// provided pattern. It _might_ only return the first 100 records, which should
-			// be more than enough for our use case.
-			// More here: https://redis.io/commands/scan/
-			members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
-			if err != nil {
-				p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
-				// To prevent a spike of duplicate messages, we return for the duration of
-				// membersValidFor the last known members and only empty the list if we do
-				// not eventually recover.
-				if p.membersFetchedAt.Before(time.Now().Add(-p.membersValidFor)) {
-					p.membersMtx.Lock()
-					p.members = []string{}
-					p.membersMtx.Unlock()
-					continue
-				}
-				p.logger.Warn("fetching members from redis failed, falling back to last known members", "last_known", p.members)
-				continue
-			}
-			// This might happen on startup, when no value is in the store yet.
-			if len(members) == 0 {
-				p.membersMtx.Lock()
-				p.members = []string{}
-				p.membersMtx.Unlock()
-				continue
-			}
-			values := p.redis.MGet(context.Background(), members...)
-			if values.Err() != nil {
-				p.logger.Error("error getting values from redis", "err", values.Err(), "keys", members)
-			}
-			// After getting the list of possible members from redis, we filter
-			// those out that have failed to send a heartbeat during the heartbeatTimeout.
-			peers := p.filterUnhealthyMembers(members, values.Val())
-			sort.Strings(peers)
-			dur := time.Since(startTime)
-			p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
-			p.membersMtx.Lock()
-			p.members = peers
-			p.membersMtx.Unlock()
-			p.membersFetchedAt = time.Now()
+			p.membersSync()
 		case <-p.shutdownc:
 			ticker.Stop()
 			return
 		}
 	}
+}
+
+func (p *redisPeer) membersSync() {
+	startTime := time.Now()
+	// The 100 is a hint for the server, how many records there might be for the
+	// provided pattern. It _might_ only return the first 100 records, which should
+	// be more than enough for our use case.
+	// More here: https://redis.io/commands/scan/
+	members, _, err := p.redis.Scan(context.Background(), 0, p.withPrefix(peerPattern), 100).Result()
+	if err != nil {
+		p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
+		// To prevent a spike of duplicate messages, we return for the duration of
+		// membersValidFor the last known members and only empty the list if we do
+		// not eventually recover.
+		if p.membersFetchedAt.Before(time.Now().Add(-p.membersValidFor)) {
+			p.membersMtx.Lock()
+			p.members = []string{}
+			p.membersMtx.Unlock()
+			return
+		}
+		p.logger.Warn("fetching members from redis failed, falling back to last known members", "last_known", p.members)
+		return
+	}
+	// This might happen on startup, when no value is in the store yet.
+	if len(members) == 0 {
+		p.membersMtx.Lock()
+		p.members = []string{}
+		p.membersMtx.Unlock()
+		return
+	}
+	values := p.redis.MGet(context.Background(), members...)
+	if values.Err() != nil {
+		p.logger.Error("error getting values from redis", "err", values.Err(), "keys", members)
+	}
+	// After getting the list of possible members from redis, we filter
+	// those out that have failed to send a heartbeat during the heartbeatTimeout.
+	peers := p.filterUnhealthyMembers(members, values.Val())
+	sort.Strings(peers)
+	dur := time.Since(startTime)
+	p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
+	p.membersMtx.Lock()
+	p.members = peers
+	p.membersMtx.Unlock()
+	p.membersFetchedAt = time.Now()
 }
 
 // filterUnhealthyMembers will filter out the members that have failed to send
