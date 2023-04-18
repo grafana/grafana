@@ -194,10 +194,10 @@ describe('AnnotationsSettings', () => {
   test('Adding a new annotation', async () => {
     setup(dashboard);
 
-    await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
+    await userEvent.click(screen.getByRole('button', { name: /new query/i }));
 
-    expect(locationService.getSearchObject().editIndex).toBe('1');
-    expect(dashboard.annotations.list.length).toBe(2);
+    expect(locationService.getSearchObject().editIndex).toBe('2');
+    expect(dashboard.annotations.list.length).toBe(3);
   });
 
   test('Editing annotation', async () => {
