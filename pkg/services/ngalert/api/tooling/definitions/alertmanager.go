@@ -168,6 +168,19 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/templates/test alertmanager RoutePostTestGrafanaTemplates
+//
+// Test Grafana managed templates without saving them.
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//
+//       200: TestTemplatesResults
+//       207: TestTemplatesResults
+//       400: ValidationError
+//       403: PermissionDenied
+
 // swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
 //
 // get silences
@@ -291,6 +304,34 @@ type TestReceiverConfigResult struct {
 	UID    string `json:"uid"`
 	Status string `json:"status"`
 	Error  string `json:"error,omitempty"`
+}
+
+// swagger:parameters RoutePostTestGrafanaTemplates
+type TestTemplatesConfigParams struct {
+	// in:body
+	Body TestTemplatesConfigBodyParams
+}
+
+type TestTemplatesConfigBodyParams struct {
+	Alerts   PostableAlerts `json:"alerts"`
+	Template string         `json:"template"`
+	Name     string         `json:"name"`
+}
+
+// swagger:model
+type TestTemplatesResults struct {
+	Results []TestTemplatesResult      `json:"results"`
+	Errors  []TestTemplatesErrorResult `json:"errors"`
+}
+
+type TestTemplatesResult struct {
+	Name string `json:"name"`
+	Text string `json:"text"`
+}
+
+type TestTemplatesErrorResult struct {
+	Kind    string `json:"kind"`
+	Message string `json:"message"`
 }
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
