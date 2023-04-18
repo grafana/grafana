@@ -93,12 +93,14 @@ type ReloadHandler interface {
 }
 
 type SettingsBag map[string]map[string]string
-type VerboseSettingsBag map[string]SettingsBag
 type SettingsRemovals map[string][]string
 
+type VerboseSourceType string
+type VerboseSettingsBag map[string]map[string]map[VerboseSourceType]string
+
 const (
-	DB     string = "db"
-	System string = "system"
+	DB     VerboseSourceType = "db"
+	System VerboseSourceType = "system"
 )
 
 func ProvideProvider(cfg *Cfg) *OSSImpl {
@@ -128,9 +130,9 @@ func (o OSSImpl) CurrentVerbose() VerboseSettingsBag {
 	settingsCopy := make(VerboseSettingsBag)
 
 	for _, section := range o.Cfg.Raw.Sections() {
-		settingsCopy[section.Name()] = make(map[string]map[string]string)
+		settingsCopy[section.Name()] = make(map[string]map[VerboseSourceType]string)
 		for _, key := range section.Keys() {
-			settingsCopy[section.Name()][key.Name()] = make(map[string]string)
+			settingsCopy[section.Name()][key.Name()] = make(map[VerboseSourceType]string)
 			settingsCopy[section.Name()][key.Name()][System] = RedactedValue(EnvKey(section.Name(), key.Name()), key.Value())
 		}
 	}

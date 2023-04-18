@@ -147,7 +147,7 @@ func (hs *HTTPServer) getAuthorizedVerboseSettings(ctx context.Context, user *us
 			}
 
 			if _, exists := authorizedBag[section]; !exists {
-				authorizedBag[section] = make(map[string]map[string]string)
+				authorizedBag[section] = make(map[string]map[setting.VerboseSourceType]string)
 			}
 			authorizedBag[section][key] = bag[section][key]
 		}
