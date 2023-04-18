@@ -14,7 +14,9 @@ import {
   DataFrame,
   SupplementaryQueryType,
   DataQueryResponse,
+  LogRowContextOptions,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -62,6 +64,21 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     }
 
     return [];
+  };
+
+  getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | undefined> => {
+    const { datasourceInstance, logsQueries } = this.props;
+
+    if (hasLogsContextSupport(datasourceInstance)) {
+      // we need to find the query, and we need to be very sure that
+      // it's a query from this datasource
+      const query = (logsQueries ?? []).find(
+        (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
+      );
+      return datasourceInstance.getLogRowContextQuery(row, options, query);
+    }
+
+    return undefined;
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
@@ -172,6 +189,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             scanRange={range.raw}
             showContextToggle={this.showContextToggle}
             getRowContext={this.getLogRowContext}
+            getRowContextQuery={this.getLogRowContextQuery}
             getLogRowContextUi={this.getLogRowContextUi}
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}

@@ -12,13 +12,16 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   SelectableValue,
+  rangeUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
-import { LoadingBar, Modal, useTheme2 } from '@grafana/ui';
+import { DataQuery, TimeZone } from '@grafana/schema';
+import { Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { splitOpen } from 'app/features/explore/state/main';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
+import { useDispatch } from 'app/types';
 
 import { LogRows } from '../LogRows';
 
@@ -104,6 +107,8 @@ interface LogRowContextModalProps {
   timeZone: TimeZone;
   onClose: () => void;
   getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
+
+  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | undefined>;
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -113,10 +118,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   row,
   open,
   logsSortOrder,
+  timeZone,
   getLogRowContextUi,
+  getRowContextQuery,
   onClose,
   getRowContext,
-  timeZone,
 }) => {
   const scrollElement = React.createRef<HTMLDivElement>();
   const entryElement = React.createRef<HTMLTableRowElement>();
@@ -125,6 +131,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   // first.
   const preEntryElement = React.createRef<HTMLTableRowElement>();
 
+  const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
@@ -300,6 +307,31 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
       </div>
+      {getRowContextQuery && (
+        <Modal.ButtonRow>
+          <Button
+            variant="primary"
+            onClick={async () => {
+              const query = await getRowContextQuery(row, { limit: 2 * limit + 1 });
+              if (query?.datasource?.uid) {
+                dispatch(
+                  splitOpen({
+                    queries: [query],
+                    range: rangeUtil.convertRawToRange({
+                      from: context.after[0].timeUtc,
+                      to: context.before[0].timeUtc,
+                    }),
+                    datasourceUid: query.datasource.uid,
+                  })
+                );
+                onClose();
+              }
+            }}
+          >
+            Open in split view
+          </Button>
+        </Modal.ButtonRow>
+      )}
     </Modal>
   );
 };

@@ -33,6 +33,26 @@ export class LogContextProvider {
     this.appliedContextFilters = [];
   }
 
+  getLogRowContextQuery = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<DataQuery> => {
+    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
+    const limit = (options && options.limit) || 10;
+
+    // This happens only on initial load, when user haven't applied any filters yet
+    // We need to get the initial filters from the row labels
+    if (this.appliedContextFilters.length === 0) {
+      const filters = (await this.getInitContextFiltersFromLabels(row.labels)).filter((filter) => filter.enabled);
+      this.appliedContextFilters = filters;
+    }
+
+    const { query } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+
+    return query;
+  };
+
   getLogRowContext = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
@@ -101,6 +121,7 @@ export class LogContextProvider {
       refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
       maxLines: limit,
       direction: queryDirection,
+      datasource: { uid: this.datasource.uid, type: this.datasource.type },
     };
 
     const fieldCache = new FieldCache(row.dataFrame);
