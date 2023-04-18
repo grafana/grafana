@@ -1,10 +1,9 @@
-+++
-title = "Team sync"
-description = "Grafana Team Sync"
-keywords = ["grafana", "auth", "documentation"]
-aliases = ["/docs/grafana/latest/auth/saml/"]
-weight = 1000
-+++
+---
+title: 'Team sync'
+description: 'Grafana Team Sync'
+keywords: ['grafana', 'auth', 'documentation']
+weight: 1000
+---
 
 # Team sync
 
