@@ -1,6 +1,9 @@
 package definitions
 
 import (
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -65,7 +68,8 @@ type DiscoveryBase struct {
 // swagger:model
 type RuleDiscovery struct {
 	// required: true
-	RuleGroups []*RuleGroup `json:"groups"`
+	RuleGroups []RuleGroup      `json:"groups"`
+	Totals     map[string]int64 `json:"totals,omitempty"`
 }
 
 // AlertDiscovery has info for all active alerts.
@@ -85,12 +89,36 @@ type RuleGroup struct {
 	// specific properties, both alerting and recording rules are exposed in the
 	// same array.
 	// required: true
-	Rules []AlertingRule `json:"rules"`
+	Rules  []AlertingRule   `json:"rules"`
+	Totals map[string]int64 `json:"totals"`
 	// required: true
 	Interval       float64   `json:"interval"`
 	LastEvaluation time.Time `json:"lastEvaluation"`
 	EvaluationTime float64   `json:"evaluationTime"`
 }
+
+// RuleGroupsBy is a function that defines the ordering of Rule Groups.
+type RuleGroupsBy func(a1, a2 *RuleGroup) bool
+
+func (by RuleGroupsBy) Sort(groups []RuleGroup) {
+	sort.Sort(RuleGroupsSorter{groups: groups, by: by})
+}
+
+func RuleGroupsByFileAndName(a1, a2 *RuleGroup) bool {
+	if a1.File == a2.File {
+		return a1.Name < a2.Name
+	}
+	return a1.File < a2.File
+}
+
+type RuleGroupsSorter struct {
+	groups []RuleGroup
+	by     RuleGroupsBy
+}
+
+func (s RuleGroupsSorter) Len() int           { return len(s.groups) }
+func (s RuleGroupsSorter) Swap(i, j int)      { s.groups[i], s.groups[j] = s.groups[j], s.groups[i] }
+func (s RuleGroupsSorter) Less(i, j int) bool { return s.by(&s.groups[i], &s.groups[j]) }
 
 // adapted from cortex
 // swagger:model
@@ -106,7 +134,9 @@ type AlertingRule struct {
 	// required: true
 	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true
-	Alerts []*Alert `json:"alerts,omitempty"`
+	ActiveAt *time.Time       `json:"activeAt,omitempty"`
+	Alerts   []Alert          `json:"alerts,omitempty"`
+	Totals   map[string]int64 `json:"totals,omitempty"`
 	Rule
 }
 
@@ -140,6 +170,107 @@ type Alert struct {
 	// required: true
 	Value string `json:"value"`
 }
+
+type StateByImportance int
+
+const (
+	StateAlerting = iota
+	StatePending
+	StateError
+	StateNoData
+	StateNormal
+)
+
+func stateByImportanceFromString(s string) (StateByImportance, error) {
+	switch s = strings.ToLower(s); s {
+	case "alerting":
+		return StateAlerting, nil
+	case "pending":
+		return StatePending, nil
+	case "error":
+		return StateError, nil
+	case "nodata":
+		return StateNoData, nil
+	case "normal":
+		return StateNormal, nil
+	default:
+		return -1, fmt.Errorf("unknown state: %s", s)
+	}
+}
+
+// AlertsBy is a function that defines the ordering of alerts.
+type AlertsBy func(a1, a2 *Alert) bool
+
+func (by AlertsBy) Sort(alerts []Alert) {
+	sort.Sort(AlertsSorter{alerts: alerts, by: by})
+}
+
+// AlertsByImportance orders alerts by importance. An alert is more important
+// than another alert if its status has higher importance. For example, "alerting"
+// is more important than "normal". If two alerts have the same importance
+// then the ordering is based on their ActiveAt time and their labels.
+func AlertsByImportance(a1, a2 *Alert) bool {
+	// labelsForComparison concatenates each key/value pair into a string and
+	// sorts them.
+	labelsForComparison := func(m map[string]string) []string {
+		s := make([]string, 0, len(m))
+		for k, v := range m {
+			s = append(s, k+v)
+		}
+		sort.Strings(s)
+		return s
+	}
+
+	// compareLabels returns true if labels1 are less than labels2. This happens
+	// when labels1 has fewer labels than labels2, or if the next label from
+	// labels1 is lexicographically less than the next label from labels2.
+	compareLabels := func(labels1, labels2 []string) bool {
+		if len(labels1) == len(labels2) {
+			for i := range labels1 {
+				if labels1[i] != labels2[i] {
+					return labels1[i] < labels2[i]
+				}
+			}
+		}
+		return len(labels1) < len(labels2)
+	}
+
+	// The importance of an alert is first based on the importance of their states.
+	// This ordering is intended to show the most important alerts first when
+	// using pagination.
+	importance1, _ := stateByImportanceFromString(a1.State)
+	importance2, _ := stateByImportanceFromString(a2.State)
+
+	// If both alerts have the same importance then the ordering is based on
+	// their ActiveAt time, and if those are equal, their labels.
+	if importance1 == importance2 {
+		if a1.ActiveAt != nil && a2.ActiveAt == nil {
+			// The first alert is active but not the second
+			return true
+		} else if a1.ActiveAt == nil && a2.ActiveAt != nil {
+			// The second alert is active but not the first
+			return false
+		} else if a1.ActiveAt != nil && a2.ActiveAt != nil && a1.ActiveAt.Before(*a2.ActiveAt) {
+			// Both alerts are active but a1 happened before a2
+			return true
+		}
+		// Both alerts are active since the same time so compare their labels
+		labels1 := labelsForComparison(a1.Labels)
+		labels2 := labelsForComparison(a2.Labels)
+		return compareLabels(labels1, labels2)
+	}
+
+	return importance1 < importance2
+}
+
+type AlertsSorter struct {
+	alerts []Alert
+	by     AlertsBy
+}
+
+func (s AlertsSorter) Len() int           { return len(s.alerts) }
+func (s AlertsSorter) Swap(i, j int)      { s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i] }
+func (s AlertsSorter) Less(i, j int) bool { return s.by(&s.alerts[i], &s.alerts[j]) }
 
 // override the labels type with a map for generation.
 // The custom marshaling for labels.Labels ends up doing this anyways.
