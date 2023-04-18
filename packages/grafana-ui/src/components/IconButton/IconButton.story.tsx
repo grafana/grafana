@@ -57,7 +57,7 @@ const RenderScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'xxxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
-  const variants: IconButtonVariant[] = ['secondary', 'primary', 'destructive'];
+  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 
   return (
     <div
@@ -100,6 +100,27 @@ const RenderScenario = ({ background }: ScenarioProps) => {
               </div>
             );
           })}
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+            `}
+          >
+            {icons.map((icon) => (
+              <div
+                className={css`
+                  display: flex;
+                `}
+                key={icon}
+              >
+                {sizes.map((size) => (
+                  <span key={icon + size}>
+                    <IconButton name={icon} size={size} disabled />
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </VerticalGroup>
     </div>
