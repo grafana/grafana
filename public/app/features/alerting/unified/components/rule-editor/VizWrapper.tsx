@@ -2,13 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  AbsoluteTimeRange,
-  GrafanaTheme2,
-  isTimeSeriesFrames,
-  PanelData,
-  ThresholdsConfig,
-} from '@grafana/data';
+import { GrafanaTheme2, isTimeSeriesFrames, PanelData, ThresholdsConfig } from '@grafana/data';
 import { GraphTresholdsStyleMode, LoadingState } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -27,7 +21,11 @@ interface Props {
 export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
   const styles = useStyles2(getStyles);
   const isTimeSeriesData = isTimeSeriesFrames(data.series);
-  // const thresholdsStyle = thresholdsType ? { mode: thresholdsType } : undefined;
+  const thresholdsStyle = thresholdsType ? { mode: thresholdsType } : undefined;
+  const timeRange = {
+    from: data.timeRange.from.valueOf(),
+    to: data.timeRange.to.valueOf(),
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -41,14 +39,13 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
                 eventBus={appEvents}
                 height={300}
                 width={width}
-                // @ts-ignore
-                absoluteRange={data.timeRange as unknown as AbsoluteTimeRange}
+                absoluteRange={timeRange}
                 timeZone="browser"
-                onChangeTime={() => { }}
-                splitOpenFn={() => { }}
+                onChangeTime={() => {}}
+                splitOpenFn={() => {}}
                 loadingState={data.state}
                 thresholdsConfig={thresholds}
-                thresholdsStyle={thresholdsType ? { mode: thresholdsType } : undefined}
+                thresholdsStyle={thresholdsStyle}
               />
             ) : (
               <div className={styles.instantVectorResultWrapper}>
