@@ -113,7 +113,7 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
   });
 
-  test('it renders the annotation names or uid if annotation doesnt exist', async () => {
+  test('it renders the annotation names or uid if annotation does not exist', async () => {
     dashboard.annotations.list = [
       ...dashboard.annotations.list,
       {
@@ -208,7 +208,7 @@ describe('AnnotationsSettings', () => {
       enable: true,
     });
 
-    setup(dashboard, 1);
+    setup(dashboard, 2);
 
     const nameInput = screen.getByRole('textbox', { name: /name/i });
     await userEvent.clear(nameInput);

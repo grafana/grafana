@@ -224,7 +224,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         <Button
           variant="secondary"
           onClick={onPreview}
-          data-testId={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard}
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard}
         >
           Preview in dashboard
         </Button>
