@@ -1,4 +1,4 @@
-import { Vector } from '../types/vector';
+import { makeArrayIndexableVector, Vector } from '../types/vector';
 import { BinaryOperation } from '../utils/binaryOperators';
 
 import { FunctionalVector } from './FunctionalVector';
@@ -11,6 +11,7 @@ import { vectorToArray } from './vectorToArray';
 export class BinaryOperationVector extends FunctionalVector<number> {
   constructor(private left: Vector<number>, private right: Vector<number>, private operation: BinaryOperation) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length(): number {

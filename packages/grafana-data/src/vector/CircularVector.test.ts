@@ -5,6 +5,9 @@ describe('Check Circular Vector', () => {
     const buffer = [1, 2, 3];
     const v = new CircularVector({ buffer }); // tail is default option
     expect(v.toArray()).toEqual([1, 2, 3]);
+    expect(v[0]).toEqual(1);
+    expect(v[1]).toEqual(2);
+    expect(v[2]).toEqual(3);
 
     v.add(4);
     expect(v.toArray()).toEqual([2, 3, 4]);

@@ -1,4 +1,4 @@
-import { Field, FieldType } from '../types';
+import { Field, FieldType, makeArrayIndexableVector } from '../types';
 
 import { FunctionalVector } from './FunctionalVector';
 
@@ -12,6 +12,7 @@ import { FunctionalVector } from './FunctionalVector';
 export class IndexVector extends FunctionalVector<number> {
   constructor(private len: number) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length() {

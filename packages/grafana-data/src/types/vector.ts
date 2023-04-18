@@ -97,3 +97,30 @@ export interface ReadWriteVector<T = any> extends Vector<T> {}
  * @deprecated -- this is now part of the base Vector interface
  */
 export interface MutableVector<T = any> extends ReadWriteVector<T> {}
+
+/**
+ * This is an extreemly inefficient Vector wrapper that allows vecorts to
+ * be treated as arrays.  We should avoid using this wrapper, but it is helpful
+ * for a clean migration to arrys
+ *
+ * @deprecated
+ */
+export function makeArrayIndexableVector<T extends Vector>(v: T): T {
+  return new Proxy(v, {
+    get(target: Vector, property: string, receiver: Vector) {
+      const idx = +property;
+      if (String(idx) === property) {
+        return target.get(idx);
+      }
+      return Reflect.get(target, property, receiver);
+    },
+    set(target: Vector, property: string, value: any, receiver: Vector) {
+      const idx = +property;
+      if (String(idx) === property) {
+        target.set(idx, value);
+        return true;
+      }
+      return Reflect.set(target, property, value, receiver);
+    },
+  }) as T;
+}

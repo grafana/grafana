@@ -1,4 +1,4 @@
-import { Vector } from '../types';
+import { makeArrayIndexableVector, Vector } from '../types';
 
 import { FunctionalVector } from './FunctionalVector';
 import { vectorToArray } from './vectorToArray';
@@ -11,6 +11,7 @@ import { vectorToArray } from './vectorToArray';
 export class RowVector extends FunctionalVector<number> {
   constructor(private columns: Vector[]) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   rowIndex = 0;

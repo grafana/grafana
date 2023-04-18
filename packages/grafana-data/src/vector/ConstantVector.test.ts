@@ -12,6 +12,7 @@ describe('ConstantVector', () => {
     // Now check all of them
     for (let i = 0; i < 10; i++) {
       expect(v.get(i)).toEqual(value);
+      expect(v[i]).toEqual(value);
     }
   });
 });

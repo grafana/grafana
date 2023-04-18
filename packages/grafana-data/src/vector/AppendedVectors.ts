@@ -1,4 +1,4 @@
-import { Vector } from '../types/vector';
+import { Vector, makeArrayIndexableVector } from '../types/vector';
 
 import { FunctionalVector } from './FunctionalVector';
 import { vectorToArray } from './vectorToArray';
@@ -23,6 +23,7 @@ export class AppendedVectors<T = any> extends FunctionalVector<T> {
   constructor(startAt = 0) {
     super();
     this.length = startAt;
+    return makeArrayIndexableVector(this);
   }
 
   /**

@@ -1,3 +1,5 @@
+import { makeArrayIndexableVector } from '../types';
+
 import { FunctionalVector } from './FunctionalVector';
 
 /**
@@ -7,6 +9,7 @@ import { FunctionalVector } from './FunctionalVector';
 export class ConstantVector<T = any> extends FunctionalVector<T> {
   constructor(private value: T, private len: number) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length() {

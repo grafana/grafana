@@ -1,5 +1,5 @@
 import { DisplayProcessor } from '../types';
-import { Vector } from '../types/vector';
+import { makeArrayIndexableVector, Vector } from '../types/vector';
 import { formattedValueToString } from '../valueFormats';
 
 import { FunctionalVector } from './FunctionalVector';
@@ -11,6 +11,7 @@ import { FunctionalVector } from './FunctionalVector';
 export class FormattedVector<T = any> extends FunctionalVector<string> {
   constructor(private source: Vector<T>, private formatter: DisplayProcessor) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length() {
