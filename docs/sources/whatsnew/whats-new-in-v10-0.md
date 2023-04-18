@@ -191,7 +191,7 @@ Weâ€™ve improved the way you can configure annotations by adding the possibility
 
 ## Scenes
 
-_This is an experiemental library_
+_This is an experimental library_
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
@@ -233,6 +233,13 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If youâ€
 The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
 This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insigts resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
+
+### Prometheus dashboard performance improvements
+
+_This is an experimental feature_
+
+As of Grafana 10, the Prometheus datasource supports delta (incremental) querying, in which values from data frames are cached and leveraged to modify future requests to avoid requesting duplicate values in dashboards with now-relative (i.e. any dashboard querying until "now") queries. This feature is disabled by default as it is still experimental, but can be turned on and configured in the Prometheus data source configuration.
+This will reduce network load, and speed up now-relative dashboards, especially for dashboards returning lots of data.
 
 ## Redesigned and improved Log Context
 
