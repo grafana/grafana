@@ -32,6 +32,8 @@ interface Props {
   ruleUID: string;
 }
 
+const MAX_TIMELINE_SERIES = 20;
+
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
@@ -53,7 +55,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     instancesFilter
   );
 
-  const frameSubset = useMemo(() => take(dataFrames, 20), [dataFrames]);
+  const frameSubset = useMemo(() => take(dataFrames, MAX_TIMELINE_SERIES), [dataFrames]);
 
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
