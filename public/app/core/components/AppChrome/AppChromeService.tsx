@@ -1,7 +1,7 @@
 import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
-import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
+import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -13,12 +13,13 @@ import { RouteDescriptor } from '../../navigation/types';
 
 export interface AppChromeState {
   chromeless?: boolean;
-  sectionNav: NavModelItem;
+  sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
   megaMenuOpen?: boolean;
   kioskMode: KioskMode | null;
+  layout: PageLayoutType;
 }
 
 export class AppChromeService {
@@ -28,9 +29,10 @@ export class AppChromeService {
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
-    sectionNav: { text: t('nav.home.title', 'Home') },
+    sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     kioskMode: null,
+    layout: PageLayoutType.Standard,
   });
 
   setMatchedRoute(route: RouteDescriptor) {
@@ -50,8 +52,9 @@ export class AppChromeService {
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
       newState.pageNav = undefined;
-      newState.sectionNav = { text: t('nav.home.title', 'Home') };
+      newState.sectionNav = { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
       newState.chromeless = this.currentRoute?.chromeless;
+      newState.layout = PageLayoutType.Standard;
       this.routeChangeHandled = true;
     }
 
@@ -74,7 +77,7 @@ export class AppChromeService {
     if (newState.sectionNav !== current.sectionNav || newState.pageNav !== current.pageNav) {
       if (
         newState.actions === current.actions &&
-        navItemsAreTheSame(newState.sectionNav, current.sectionNav) &&
+        navItemsAreTheSame(newState.sectionNav.node, current.sectionNav.node) &&
         navItemsAreTheSame(newState.pageNav, current.pageNav)
       ) {
         return true;

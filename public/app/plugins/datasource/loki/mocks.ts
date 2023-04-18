@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameType,
   DataSourceInstanceSettings,
   DataSourceSettings,
   FieldType,
@@ -151,6 +152,9 @@ export function getMockFrames() {
       },
     ],
     meta: {
+      custom: {
+        frameType: 'LabeledTimeValues',
+      },
       stats: [
         { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
         { displayName: 'Ingester: total reached', value: 1 },
@@ -198,6 +202,9 @@ export function getMockFrames() {
       },
     ],
     meta: {
+      custom: {
+        frameType: 'LabeledTimeValues',
+      },
       stats: [
         { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
         { displayName: 'Ingester: total reached', value: 2 },
@@ -220,9 +227,13 @@ export function getMockFrames() {
         type: FieldType.number,
         config: {},
         values: new ArrayVector([5, 4]),
+        labels: {
+          level: 'debug',
+        },
       },
     ],
     meta: {
+      type: DataFrameType.TimeSeriesMulti,
       stats: [
         { displayName: 'Ingester: total reached', value: 1 },
         { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
@@ -245,9 +256,13 @@ export function getMockFrames() {
         type: FieldType.number,
         config: {},
         values: new ArrayVector([6, 7]),
+        labels: {
+          level: 'debug',
+        },
       },
     ],
     meta: {
+      type: DataFrameType.TimeSeriesMulti,
       stats: [
         { displayName: 'Ingester: total reached', value: 2 },
         { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
@@ -271,9 +286,13 @@ export function getMockFrames() {
         type: FieldType.number,
         config: {},
         values: new ArrayVector([6, 7]),
+        labels: {
+          level: 'error',
+        },
       },
     ],
     meta: {
+      type: DataFrameType.TimeSeriesMulti,
       stats: [
         { displayName: 'Ingester: total reached', value: 2 },
         { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 33 },

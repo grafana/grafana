@@ -96,6 +96,7 @@ export interface FeatureToggles {
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
+  pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
 }

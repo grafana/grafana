@@ -1550,6 +1550,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
+    "public/app/core/components/AppChrome/SectionNav/SectionNavItem.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/core/components/DynamicImports/SafeDynamicImport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1651,9 +1654,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "84"],
       [0, 0, 0, "Do not use any type assertions.", "85"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "86"]
-    ],
-    "public/app/core/components/PageNew/SectionNavItem.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

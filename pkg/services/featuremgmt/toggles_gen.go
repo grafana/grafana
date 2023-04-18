@@ -319,6 +319,10 @@ const (
 	// Enables authentication configuration UI
 	FlagAuthenticationConfigUI = "authenticationConfigUI"
 
+	// FlagPluginsAPIManifestKey
+	// Use grafana.com API to retrieve the public manifest key
+	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
+
 	// FlagAdvancedDataSourcePicker
 	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
