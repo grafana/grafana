@@ -185,7 +185,7 @@ function updateLoadingFrame(
     refId: loadingFrameName,
     name: loadingFrameName,
     length: 2,
-    fields: getLoadingFrameFields(partition.slice(0, requestN), progress),
+    fields: getLoadingFrameFields(partition.slice(0, requestN - 1), progress),
     meta: {
       preferredVisualisationType: 'graph',
     },
