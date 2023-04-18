@@ -33,7 +33,7 @@ func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, settings)
 }
 
-// swagger:route GET /admin/verbise-settings admin adminGetVerboseSettings
+// swagger:route GET /admin/verbose-settings admin adminGetVerboseSettings
 //
 // Fetch verbise settings.
 //
