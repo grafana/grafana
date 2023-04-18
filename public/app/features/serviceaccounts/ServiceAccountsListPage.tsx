@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -167,14 +167,14 @@ export const ServiceAccountsListPageUnconnected = ({
     <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
         <div className="page-action-bar">
-          <div className="gf-form gf-form--grow">
+          <InlineField grow="true">
             <FilterInput
               placeholder="Search service account by name"
               value={query}
               onChange={onQueryChange}
               width={50}
             />
-          </div>
+          </InlineField>
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },
