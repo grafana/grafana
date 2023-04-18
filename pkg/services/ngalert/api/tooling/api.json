@@ -2070,18 +2070,6 @@
    "title": "Point represents a single data point for a given timestamp.",
    "type": "object"
   },
-  "PostableAlerts": {
-   "properties": {
-    "PostableAlerts": {
-     "description": "in:body",
-     "items": {
-      "$ref": "#/definitions/postableAlert"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
   "PostableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -3383,7 +3371,10 @@
   "TestTemplatesConfigBodyParams": {
    "properties": {
     "alerts": {
-     "$ref": "#/definitions/PostableAlerts"
+     "items": {
+      "$ref": "#/definitions/postableAlert"
+     },
+     "type": "array"
     },
     "name": {
      "type": "string"
@@ -3735,7 +3726,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3918,12 +3908,14 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3972,6 +3964,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4122,7 +4115,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4160,7 +4152,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
