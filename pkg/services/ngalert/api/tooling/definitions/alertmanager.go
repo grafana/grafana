@@ -313,9 +313,9 @@ type TestTemplatesConfigParams struct {
 }
 
 type TestTemplatesConfigBodyParams struct {
-	Alerts   PostableAlerts `json:"alerts"`
-	Template string         `json:"template"`
-	Name     string         `json:"name"`
+	Alerts   []amv2.PostableAlert `json:"alerts"`
+	Template string               `json:"template"`
+	Name     string               `json:"name"`
 }
 
 // swagger:model
