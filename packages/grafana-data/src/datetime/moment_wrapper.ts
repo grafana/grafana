@@ -129,6 +129,10 @@ export const dateTimeForTimeZone = (
   if (timezone === 'utc') {
     return toUtc(input, formatInput);
   }
+  if (timezone) {
+    //@ts-ignore
+    return moment.tz(input as MomentInput, formatInput, timezone) as DateTime;
+  }
 
   return dateTime(input, formatInput);
 };
