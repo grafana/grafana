@@ -113,7 +113,7 @@ type OSSImpl struct {
 	Cfg *Cfg
 }
 
-func (o OSSImpl) Current() SettingsBag {
+func (o *OSSImpl) Current() SettingsBag {
 	settingsCopy := make(SettingsBag)
 
 	for _, section := range o.Cfg.Raw.Sections() {
@@ -126,7 +126,7 @@ func (o OSSImpl) Current() SettingsBag {
 	return settingsCopy
 }
 
-func (o OSSImpl) CurrentVerbose() VerboseSettingsBag {
+func (o *OSSImpl) CurrentVerbose() VerboseSettingsBag {
 	settingsCopy := make(VerboseSettingsBag)
 
 	for _, section := range o.Cfg.Raw.Sections() {
@@ -152,9 +152,9 @@ func (o *OSSImpl) Section(section string) Section {
 	return &sectionImpl{section: o.Cfg.Raw.Section(section)}
 }
 
-func (OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
+func (*OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
 
-func (o OSSImpl) IsFeatureToggleEnabled(name string) bool {
+func (o *OSSImpl) IsFeatureToggleEnabled(name string) bool {
 	return o.Cfg.IsFeatureToggleEnabled(name)
 }
 
