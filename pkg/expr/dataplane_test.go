@@ -51,6 +51,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		dataSourceService: &datafakes.FakeDataSourceService{},
 		features:          &featuremgmt.FeatureManager{},
 		tracer:            tracing.InitializeTracerForTest(),
+		metrics:           newMetrics(nil),
 	}
 	queries := []Query{{
 		RefID: "A",
