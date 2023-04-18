@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataFrame, EventBus, AbsoluteTimeRange, TimeZone, SplitOpen, LoadingState, ThresholdsConfig } from '@grafana/data';
-import { Collapse, useTheme2 } from '@grafana/ui';
+import { Collapse, GraphThresholdsStyleConfig, useTheme2 } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
@@ -23,6 +23,7 @@ interface Props {
   splitOpenFn: SplitOpen;
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 
 export const GraphContainer = ({
@@ -37,6 +38,7 @@ export const GraphContainer = ({
   onChangeTime,
   splitOpenFn,
   thresholdsConfig,
+  thresholdsStyle,
   loadingState,
 }: Props) => {
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -66,6 +68,7 @@ export const GraphContainer = ({
         splitOpenFn={splitOpenFn}
         loadingState={loadingState}
         thresholdsConfig={thresholdsConfig}
+        thresholdsStyle={thresholdsStyle}
         eventBus={eventBus}
       />
     </Collapse>

@@ -20,7 +20,7 @@ import {
   EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder, GraphThresholdsStyleConfig } from '@grafana/schema';
 import {
   Button,
   Icon,
@@ -57,6 +57,7 @@ interface Props {
   anchorToZero?: boolean;
   yAxisMaximum?: number;
   thresholdsConfig?: ThresholdsConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
 }
 
@@ -76,6 +77,7 @@ export function ExploreGraph({
   anchorToZero = false,
   yAxisMaximum,
   thresholdsConfig,
+  thresholdsStyle,
   eventBus,
 }: Props) {
   const theme = useTheme2();
@@ -107,11 +109,26 @@ export function ExploreGraph({
         drawStyle: GraphDrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
+        thresholdsStyle: thresholdsStyle,
       },
       thresholds: thresholdsConfig,
     },
     overrides: [],
   });
+
+  useEffect(() => {
+    setFieldConfig({
+      ...fieldConfig,
+      defaults: {
+        ...fieldConfig.defaults,
+        thresholds: thresholdsConfig,
+        custom: {
+          ...fieldConfig.defaults.custom,
+          thresholdsStyle: thresholdsStyle,
+        }
+      }
+    })
+  }, [fieldConfig, thresholdsStyle, thresholdsConfig]);
 
   const styledFieldConfig = useMemo(
     () => applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum),

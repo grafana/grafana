@@ -304,31 +304,36 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const value = getSeriesValue(frame);
   const labelsRecord = getSeriesLabels(frame);
   const labels = Object.entries(labelsRecord);
+  const hasLabels = labels.length > 0;
 
   const showFiring = isAlertCondition && value !== 0;
   const showNormal = isAlertCondition && value === 0;
 
-  const title = `${labels.length === 0 ? name : ''}{${formatLabels(labelsRecord ?? {})}}`
+  const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`
 
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
         <div className={cx(styles.expression.resultLabel)} title={title}>
           <span>
-            {labels.length === 0 ? name : ''}
+            {hasLabels ? '' : name}
           </span>
-          <span>{'{'}</span>
-          {labels.map(([key, value], index) => (
-            <span key={uniqueId()} className={styles.expression.labelWrapper}>
-              <span className={styles.expression.labelKey}>{key}</span>
-              <span>=</span>
-              <span>&quot;</span>
-              <span className={styles.expression.labelValue}>{value}</span>
-              <span>&quot;</span>
-              {index < labels.length - 1 && <span>, </span>}
-            </span>
-          ))}
-          <span>{'}'}</span>
+          {hasLabels && (
+            <>
+              <span>{'{'}</span>
+              {labels.map(([key, value], index) => (
+                <span key={uniqueId()} className={styles.expression.labelWrapper}>
+                  <span className={styles.expression.labelKey}>{key}</span>
+                  <span>=</span>
+                  <span>&quot;</span>
+                  <span className={styles.expression.labelValue}>{value}</span>
+                  <span>&quot;</span>
+                  {index < labels.length - 1 && <span>, </span>}
+                </span>
+              ))}
+              <span>{'}'}</span>
+            </>
+          )}
         </div>
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}

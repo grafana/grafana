@@ -48,6 +48,7 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
                 splitOpenFn={() => { }}
                 loadingState={data.state}
                 thresholdsConfig={thresholds}
+                thresholdsStyle={thresholdsType ? { mode: thresholdsType } : undefined}
               />
             ) : (
               <div className={styles.instantVectorResultWrapper}>
