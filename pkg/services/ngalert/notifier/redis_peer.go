@@ -387,6 +387,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 
 func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Registerer) cluster.ClusterChannel {
 	p.statesMtx.Lock()
+	defer p.statesMtx.Unlock()	
 	p.states[key] = state
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
