@@ -242,6 +242,6 @@ describe('AnnotationsSettings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(locationService.getSearchObject().editIndex).toBe(undefined);
-    expect(dashboard.annotations.list.length).toBe(1); // started with two
+    expect(dashboard.annotations.list.length).toBe(2); // started with three
   });
 });
