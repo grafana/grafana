@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/auth/saml/
 description: Grafana SAML Authentication
 keywords:
   - grafana
