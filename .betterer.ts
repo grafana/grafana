@@ -9,7 +9,7 @@ export default {
     countEslintErrors()
       .include('**/*.{ts,tsx}')
       .exclude(/public\/app\/angular/),
-  'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
+  'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
 };
 
 function countUndocumentedStories() {

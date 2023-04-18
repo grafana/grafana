@@ -150,8 +150,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
-				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
+				reqContext.UserToken = identity.SessionToken
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule

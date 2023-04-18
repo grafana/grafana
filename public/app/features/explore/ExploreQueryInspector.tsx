@@ -90,7 +90,7 @@ export function ExploreQueryInspector(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const item: ExploreItemState = explore[exploreId]!;
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const { loading, queryResponse } = item;
 
   return {

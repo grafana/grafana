@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FilterInput } from '@grafana/ui';
+import { FilterInput, InlineField } from '@grafana/ui';
 
 interface Props {
   searchQuery: string;
@@ -11,9 +11,9 @@ interface Props {
 export const ApiKeysActionBar = ({ searchQuery, disabled, onSearchChange }: Props) => {
   return (
     <div className="page-action-bar">
-      <div className="gf-form gf-form--grow">
+      <InlineField grow="true">
         <FilterInput placeholder="Search keys" value={searchQuery} onChange={onSearchChange} />
-      </div>
+      </InlineField>
     </div>
   );
 };

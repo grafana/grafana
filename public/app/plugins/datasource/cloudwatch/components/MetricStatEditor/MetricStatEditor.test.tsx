@@ -6,13 +6,13 @@ import selectEvent from 'react-select-event';
 import { config } from '@grafana/runtime';
 
 import { MetricStatEditor } from '..';
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { setupMockedDataSource, statisticVariable } from '../../__mocks__/CloudWatchDataSource';
 import { validMetricSearchBuilderQuery } from '../../__mocks__/queries';
 import { MetricStat } from '../../types';
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const ds = setupMockedDataSource({
-  variables: [],
+  variables: [statisticVariable],
 });
 
 ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
@@ -40,10 +40,8 @@ describe('MetricStatEditor', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
   });
   describe('statistics field', () => {
-    test.each([['Average', 'p23.23', 'p34', '$statistic']])('should accept valid values', async (statistic) => {
+    test.each(['Average', 'p23.23', 'p34', '$statistic'])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
-      props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
-
       render(<MetricStatEditor {...props} onChange={onChange} />);
 
       const statisticElement = await screen.findByLabelText('Statistic');
@@ -54,9 +52,52 @@ describe('MetricStatEditor', () => {
       expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
     });
 
-    test.each([['CustomStat', 'p23,23', '$statistic']])('should not accept invalid values', async (statistic) => {
-      const onChange = jest.fn();
+    test.each(['CustomStat', 'p23,23', 'tc(80%:)', 'ts', 'wm', 'pr', 'tm', 'tm(10:90)', '$someUnknownValue'])(
+      'should not accept invalid values',
+      async (statistic) => {
+        const onChange = jest.fn();
 
+        render(<MetricStatEditor {...props} onChange={onChange} />);
+
+        const statisticElement = await screen.findByLabelText('Statistic');
+        expect(statisticElement).toBeInTheDocument();
+
+        await userEvent.type(statisticElement, statistic);
+        fireEvent.keyDown(statisticElement, { keyCode: 13 });
+        expect(onChange).not.toHaveBeenCalled();
+      }
+    );
+
+    test.each([
+      'IQM',
+      'tm90',
+      'tm23.23',
+      'TM(25%:75%)',
+      'TM(0.005:0.030)',
+      'TM(150:1000)',
+      'TM(:0.5)',
+      'TM(:95%)',
+      'wm98',
+      'wm23.23',
+      'WM(25%:75%)',
+      'WM(0.005:0.030)',
+      'WM(150:1000)',
+      'WM(:0.5)',
+      'PR(10:)',
+      'PR(:300)',
+      'PR(100:20000)',
+      'tc90',
+      'tc23.23',
+      'TC(0.005:0.030)',
+      'TC(:0.5)',
+      'TC(25%:75%)',
+      'TC(150:1000)',
+      'TC(:0.5)',
+      'ts90',
+      'ts23.23',
+      'TS(80%:)',
+    ])('should accept other valid statistics syntax', async (statistic) => {
+      const onChange = jest.fn();
       render(<MetricStatEditor {...props} onChange={onChange} />);
 
       const statisticElement = await screen.findByLabelText('Statistic');
@@ -64,7 +105,7 @@ describe('MetricStatEditor', () => {
 
       await userEvent.type(statisticElement, statistic);
       fireEvent.keyDown(statisticElement, { keyCode: 13 });
-      expect(onChange).not.toHaveBeenCalled();
+      expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
     });
   });
 

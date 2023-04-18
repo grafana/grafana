@@ -10,7 +10,6 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
-  DataSourceWithLogsContextSupport,
   DataQueryResponse,
   LogRowContextOptions,
 } from '@grafana/data';
@@ -43,7 +42,7 @@ export interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
-  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
+  getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;

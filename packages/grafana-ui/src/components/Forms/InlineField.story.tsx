@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { Input } from '../Input/Input';
@@ -8,7 +8,7 @@ import { Select } from '../Select/Select';
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
 
-const meta: ComponentMeta<typeof InlineField> = {
+const meta: Meta<typeof InlineField> = {
   title: 'Forms/InlineField',
   component: InlineField,
   argTypes: {
@@ -27,7 +27,7 @@ const meta: ComponentMeta<typeof InlineField> = {
   },
 };
 
-export const basic: ComponentStory<typeof InlineField> = (args) => {
+export const basic: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
       <Input placeholder="Inline input" />
@@ -48,7 +48,7 @@ basic.args = {
   validationMessageHorizontalOverflow: false,
 };
 
-export const withTooltip: ComponentStory<typeof InlineField> = (args) => {
+export const withTooltip: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
       <Input placeholder="Inline input" />
@@ -62,7 +62,7 @@ withTooltip.args = {
   label: 'Label',
 };
 
-export const grow: ComponentStory<typeof InlineField> = (args) => {
+export const grow: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
       <Input placeholder="Inline input" />
@@ -76,7 +76,7 @@ grow.args = {
   grow: true,
 };
 
-export const withSelect: ComponentStory<typeof InlineField> = (args) => {
+export const withSelect: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
       <Select
@@ -96,7 +96,7 @@ withSelect.args = {
   label: 'Select option',
 };
 
-export const multiple: ComponentStory<typeof InlineField> = () => {
+export const multiple: StoryFn<typeof InlineField> = () => {
   return (
     <>
       <InlineField label="Field 1">
@@ -112,7 +112,7 @@ export const multiple: ComponentStory<typeof InlineField> = () => {
   );
 };
 
-export const error: ComponentStory<typeof InlineField> = (args) => {
+export const error: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
       <Input placeholder="Inline input" />

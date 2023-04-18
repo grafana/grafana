@@ -15,7 +15,7 @@ weight: 600
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
-- [Azure AD OAuth2 authentication](#azure-ad-oauth2-authentication)
+- [Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
     - [Configure allowed groups](#configure-allowed-groups)
@@ -125,7 +125,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 
 ## Enable Azure AD OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
 ```
 [auth.azuread]
@@ -152,7 +152,7 @@ GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
-**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
+**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_url" >}}) is set in your Azure Application Redirect URLs.
 
 ### Configure refresh token
 
@@ -207,7 +207,7 @@ the correct teams.
 
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync/" >}}) documentation.
+To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync" >}}) documentation.
 
 ## Common troubleshooting
 
@@ -255,7 +255,7 @@ their organization membership will be reset to the default organization.
 ## Skip organization role sync
 
 If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
-See [configure-grafana]({{< relref "../../../configure-grafana#authazuread-skip-org-role-sync" >}}) for more details.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}}) for more details.
 
 ```ini
 [auth.azuread]

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, FilterInput, Label } from '@grafana/ui';
+import { Button, FilterInput, Label, InlineField } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
@@ -89,9 +89,9 @@ export class TeamMembers extends PureComponent<Props, State> {
     return (
       <div>
         <div className="page-action-bar">
-          <div className="gf-form gf-form--grow">
+          <InlineField grow="true">
             <FilterInput placeholder="Search members" value={searchMemberQuery} onChange={this.onSearchQueryChange} />
-          </div>
+            </InlineField>
           <Button className="pull-right" onClick={this.onToggleAdding} disabled={isAdding || !isTeamAdmin}>
             Add member
           </Button>
