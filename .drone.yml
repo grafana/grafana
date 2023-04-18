@@ -571,6 +571,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -1458,6 +1460,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -1734,7 +1738,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./scripts/circle-release-canary-packages.sh
+  - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1746,6 +1750,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: release-canary-npm-packages
   when:
+    paths:
+      include:
+      - packages/**
     repo:
     - grafana/grafana
 - commands:
@@ -4685,6 +4692,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -5328,6 +5337,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -6049,6 +6060,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -6810,6 +6823,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: d3567c954d0ac9f1f47d55bc85eb6594379c888fe591428f2dcd0146f2bd3ca2
+hmac: 7f282aaf4f3ba496f2d954241a16afd2facbf2cf1ef04dfb75cfec1b42fd39d1
 
 ...
