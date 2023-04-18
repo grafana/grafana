@@ -409,31 +409,35 @@ func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
 		case <-p.shutdownc:
 			return
 		case data := <-channel.Channel():
-			p.messagesReceived.WithLabelValues(update).Inc()
-			p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(data.Payload)))
-
-			var part clusterpb.Part
-			if err := proto.Unmarshal([]byte(data.Payload), &part); err != nil {
-				p.logger.Warn("error decoding the received broadcast message", "err", err)
-				continue
-			}
-
-			p.statesMtx.RLock()
-			s, ok := p.states[part.Key]
-			p.statesMtx.RUnlock()
-
-			if !ok {
-				continue
-			}
-			if err := s.Merge(part.Data); err != nil {
-				p.logger.Warn("error merging the received broadcast message", "err", err, "key", name)
-				continue
-			}
-			p.logger.Debug("partial state was successfully merged", "key", name)
+			p.mergePartialState([]byte(data.Payload))
 		default:
 			time.Sleep(waitForMsgIdle)
 		}
 	}
+}
+
+func (p *redisPeer) mergePartialState(buf []byte) {
+	p.messagesReceived.WithLabelValues(update).Inc()
+	p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(buf)))
+
+	var part clusterpb.Part
+	if err := proto.Unmarshal([]byte(buf), &part); err != nil {
+		p.logger.Warn("error decoding the received broadcast message", "err", err)
+		return
+	}
+
+	p.statesMtx.RLock()
+	s, ok := p.states[part.Key]
+	p.statesMtx.RUnlock()
+
+	if !ok {
+		return
+	}
+	if err := s.Merge(part.Data); err != nil {
+		p.logger.Warn("error merging the received broadcast message", "err", err, "key", part.Key)
+		return
+	}
+	p.logger.Debug("partial state was successfully merged", "key", part.Key)
 }
 
 func (p *redisPeer) fullStateReqReceiveLoop() {
@@ -462,36 +466,37 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 		case <-p.shutdownc:
 			return
 		case data := <-p.subs[fullStateChannel].Channel():
-
-			p.messagesReceived.WithLabelValues(fullState).Inc()
-			p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(data.Payload)))
-
-			var fs clusterpb.FullState
-			if err := proto.Unmarshal([]byte(data.Payload), &fs); err != nil {
-				p.logger.Warn("error unmarshaling the received remote state", "err", err)
-				continue
-			}
-			// This inline func is just a lazy workaround so we can use defer in the loop.
-			func() {
-				p.statesMtx.RLock()
-				defer p.statesMtx.RUnlock()
-				for _, part := range fs.Parts {
-					s, ok := p.states[part.Key]
-					if !ok {
-						p.logger.Warn("received", "unknown state key", "len", len(data.Payload), "key", part.Key)
-						continue
-					}
-					if err := s.Merge(part.Data); err != nil {
-						p.logger.Warn("error merging the received remote state", "err", err, "key", part.Key)
-						return
-					}
-				}
-				p.logger.Debug("full state was successfully merged")
-			}()
+			p.mergeFullState([]byte(data.Payload))
 		default:
 			time.Sleep(waitForMsgIdle)
 		}
 	}
+}
+
+func (p *redisPeer) mergeFullState(buf []byte) {
+	p.messagesReceived.WithLabelValues(fullState).Inc()
+	p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(buf)))
+
+	var fs clusterpb.FullState
+	if err := proto.Unmarshal(buf, &fs); err != nil {
+		p.logger.Warn("error unmarshaling the received remote state", "err", err)
+		return
+	}
+
+	p.statesMtx.RLock()
+	defer p.statesMtx.RUnlock()
+	for _, part := range fs.Parts {
+		s, ok := p.states[part.Key]
+		if !ok {
+			p.logger.Warn("received", "unknown state key", "len", len(buf), "key", part.Key)
+			continue
+		}
+		if err := s.Merge(part.Data); err != nil {
+			p.logger.Warn("error merging the received remote state", "err", err, "key", part.Key)
+			return
+		}
+	}
+	p.logger.Debug("full state was successfully merged")
 }
 
 func (p *redisPeer) fullStateSyncPublish() {
