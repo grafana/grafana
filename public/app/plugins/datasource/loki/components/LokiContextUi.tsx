@@ -7,11 +7,11 @@ import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import { LogContextProvider } from '../LogContextProvider';
 import { ContextFilter } from '../types';
 
 export interface LokiContextUiProps {
-  languageProvider: LokiLanguageProvider;
+  logContextProvider: LogContextProvider;
   row: LogRowModel;
   updateFilter: (value: ContextFilter[]) => void;
   onClose: () => void;
@@ -58,7 +58,7 @@ const formatOptionLabel = memoizeOne(({ label, description }: SelectableValue<st
 ));
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, languageProvider, updateFilter, onClose } = props;
+  const { row, logContextProvider, updateFilter, onClose } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
@@ -91,7 +91,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
     }
     setLoading(true);
     timerHandle.current = window.setTimeout(() => {
-      updateFilter(contextFilters);
+      updateFilter(contextFilters.filter(({ enabled }) => enabled));
       setLoading(false);
     }, 1500);
 
@@ -109,23 +109,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
   }, [onClose]);
 
   useAsync(async () => {
-    await languageProvider.start();
-    const allLabels = languageProvider.getLabelKeys();
-    const contextFilters: ContextFilter[] = [];
-
-    Object.entries(row.labels).forEach(([label, value]) => {
-      const filter: ContextFilter = {
-        label,
-        value: label, // this looks weird in the first place, but we need to set the label as value here
-        enabled: allLabels.includes(label),
-        fromParser: !allLabels.includes(label),
-        description: value,
-      };
-      contextFilters.push(filter);
-    });
-
+    setLoading(true);
+    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels);
     setContextFilters(contextFilters);
     setInitialized(true);
+    setLoading(false);
   });
 
   useEffect(() => {

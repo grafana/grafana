@@ -1,6 +1,12 @@
 import { cloneDeep } from 'lodash';
 
-import { buildRawQuery, changeGroupByPart, changeSelectPart, normalizeQuery } from './queryUtils';
+import {
+  buildRawQuery,
+  changeGroupByPart,
+  changeSelectPart,
+  normalizeQuery,
+  replaceHardCodedRetentionPolicy,
+} from './queryUtils';
 import { InfluxQuery } from './types';
 
 describe('InfluxDB query utils', () => {
@@ -433,6 +439,16 @@ describe('InfluxDB query utils', () => {
           },
         ],
       });
+    });
+  });
+  describe('replaceHardCodedRetentionPolicy', () => {
+    it('should replace non-existing hardcoded retention policy', () => {
+      const hardCodedRetentionPolicy = 'default';
+      const fetchedRetentionPolicies = ['foo', 'fighters', 'nirvana'];
+      expect(replaceHardCodedRetentionPolicy(hardCodedRetentionPolicy, fetchedRetentionPolicies)).toBe('foo');
+      expect(replaceHardCodedRetentionPolicy('foo', fetchedRetentionPolicies)).toBe('foo');
+      expect(replaceHardCodedRetentionPolicy(undefined, fetchedRetentionPolicies)).toBe('foo');
+      expect(replaceHardCodedRetentionPolicy(hardCodedRetentionPolicy, [])).toBe('');
     });
   });
 });

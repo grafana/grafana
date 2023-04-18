@@ -42,7 +42,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     currentTab,
     loading,
     error,
-    iframeLoading,
     options,
     showMessage,
     snapshotSize,
@@ -50,17 +49,12 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     snapshotText,
     randomize,
     panelTitle,
-    snapshotUpdate,
+    scene,
   } = service.useState();
 
   useEffect(() => {
     service.buildDebugDashboard();
   }, [service, plugin, randomize]);
-
-  useEffect(() => {
-    // Listen for messages from loaded iframe
-    return service.subscribeToIframeLoadingMessage();
-  }, [service]);
 
   if (!plugin) {
     return null;
@@ -211,20 +205,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
           <AutoSizer disableWidth>
             {({ height }) => (
-              <>
-                <iframe
-                  title="Support snapshot preview"
-                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
-                  width="100%"
-                  height={height - 100}
-                  frameBorder="0"
-                  style={{
-                    display: iframeLoading ? 'block' : 'none',
-                    marginTop: 16,
-                  }}
-                />
-                {!iframeLoading && <div>&nbsp;</div>}
-              </>
+              <div style={{ height, overflow: 'auto' }}>{scene && <scene.Component model={scene} />}</div>
             )}
           </AutoSizer>
         </>
