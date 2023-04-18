@@ -20,6 +20,10 @@ type ImageStore interface {
 	// if the image has expired or if an image with the token does not exist.
 	GetImage(ctx context.Context, token string) (*models.Image, error)
 
+	// GetImageByURL looks for a image by its URL. It returns ErrImageNotFound
+	// if the image has expired or if an image with the token does not exist.
+	GetImageByURL(ctx context.Context, url string) (*models.Image, error)
+
 	// GetImages returns all images that match the tokens. If one or more images
 	// have expired or do not exist then it also returns the unmatched tokens
 	// and an ErrImageNotFound error.
@@ -41,6 +45,23 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, er
 	var image models.Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		exists, err := sess.Where("token = ? AND expires_at > ?", token, TimeNow().UTC()).Get(&image)
+		if err != nil {
+			return fmt.Errorf("failed to get image: %w", err)
+		} else if !exists {
+			return models.ErrImageNotFound
+		} else {
+			return nil
+		}
+	}); err != nil {
+		return nil, err
+	}
+	return &image, nil
+}
+
+func (st DBstore) GetImageByURL(ctx context.Context, url string) (*models.Image, error) {
+	var image models.Image
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		exists, err := sess.Where("url = ? AND expires_at > ?", url, TimeNow().UTC()).Limit(1).Get(&image)
 		if err != nil {
 			return fmt.Errorf("failed to get image: %w", err)
 		} else if !exists {
