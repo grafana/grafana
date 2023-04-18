@@ -6,6 +6,12 @@ import (
 	"unicode"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -55,4 +61,30 @@ func stripNulls(j *simplejson.Json) {
 			stripNulls(j.Get(k))
 		}
 	}
+}
+
+// toUnstructured converts a Dashboard to an *unstructured.Unstructured.
+func dtoToUnstructured(dto *dashboards.Dashboard, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
+	dashboardObj := crd.Base[dashboard.Dashboard]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       CRD.GVK().Kind,
+			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
+		},
+		ObjectMeta: metadata,
+	}
+
+	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&dashboardObj)
+	if err != nil {
+		return nil, err
+	}
+
+	spec, err := dto.Data.Map()
+	if err != nil {
+		return nil, err
+	}
+	out["spec"] = spec
+
+	return &unstructured.Unstructured{
+		Object: out,
+	}, nil
 }
