@@ -1,9 +1,16 @@
-+++
-title = "Chained variables"
-keywords = ["grafana", "templating", "variable", "nested", "chained", "linked"]
-aliases = ["/docs/grafana/latest/variables/chained-variables.md"]
-weight = 800
-+++
+---
+aliases:
+  - ../chained-variables.md/
+keywords:
+  - grafana
+  - templating
+  - variable
+  - nested
+  - chained
+  - linked
+title: Chained variables
+weight: 800
+---
 
 # Chained variables
 

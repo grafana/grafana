@@ -1,10 +1,15 @@
-+++
-title = "Jaeger"
-description = "Guide for using Jaeger in Grafana"
-keywords = ["grafana", "jaeger", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/jaeger"]
-weight = 800
-+++
+---
+aliases:
+  - ../features/datasources/jaeger/
+description: Guide for using Jaeger in Grafana
+keywords:
+  - grafana
+  - jaeger
+  - guide
+  - tracing
+title: Jaeger
+weight: 800
+---
 
 # Jaeger data source
 

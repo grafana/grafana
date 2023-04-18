@@ -1,9 +1,14 @@
-+++
-title = "Annotations and labels for alerting rules"
-description = "Annotations and labels for alerting"
-keywords = ["grafana", "alerting", "guide", "rules", "create"]
-weight = 401
-+++
+---
+description: Annotations and labels for alerting
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - create
+title: Annotations and labels for alerting rules
+weight: 401
+---
 
 # Annotations and labels for alerting rules
 

@@ -1,9 +1,15 @@
-+++
-title = "Graph time series as points"
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/"]
-weight = 300
-+++
+---
+aliases:
+  - ../../panels/visualizations/time-series/graph-time-series-as-points/
+keywords:
+  - grafana
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Graph time series as points
+weight: 300
+---
 
 # Graph time series as points
 

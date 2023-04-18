@@ -1,9 +1,16 @@
-+++
-title = "Alert notification templating"
-keywords = ["grafana", "documentation", "alerting", "alerts", "notification", "templating"]
-weight = 110
-aliases = ["/docs/grafana/latest/alerting/add-notification-template/"]
-+++
+---
+aliases:
+  - ../add-notification-template/
+keywords:
+  - grafana
+  - documentation
+  - alerting
+  - alerts
+  - notification
+  - templating
+title: Alert notification templating
+weight: 110
+---
 
 # Alert notification templating
 

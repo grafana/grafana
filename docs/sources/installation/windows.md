@@ -1,9 +1,13 @@
-+++
-title = "Install on Windows"
-description = "Install Grafana on Windows"
-keywords = ["grafana", "configuration", "documentation", "windows"]
-weight = 400
-+++
+---
+description: Install Grafana on Windows
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - windows
+title: Install on Windows
+weight: 400
+---
 
 # Install on Windows
 

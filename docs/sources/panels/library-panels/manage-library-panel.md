@@ -1,8 +1,9 @@
-+++
-title = "Manage Grafana library panels"
-weight = 40
-aliases = ["/docs/sources/panels/library-panels/manage-library-panel/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/library-panels/manage-library-panel/
+title: Manage Grafana library panels
+weight: 40
+---
 
 # Manage Grafana library panels
 

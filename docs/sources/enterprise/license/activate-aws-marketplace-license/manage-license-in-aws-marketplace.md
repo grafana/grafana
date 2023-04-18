@@ -1,10 +1,19 @@
-+++
-title = "Manage your Grafana Enterprise license in AWS Marketplace"
-description = "Manage your Grafana Enterprise license in AWS Marketplace"
-keywords = ["grafana", "enterprise", "aws", "marketplace", "manage", "add", "remove", "users"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/manage-license-in-aws-marketplace"]
-weight = 400
-+++
+---
+aliases:
+  - ../../activate-aws-marketplace-license/manage-license-in-aws-marketplace/
+description: Manage your Grafana Enterprise license in AWS Marketplace
+keywords:
+  - grafana
+  - enterprise
+  - aws
+  - marketplace
+  - manage
+  - add
+  - remove
+  - users
+title: Manage your Grafana Enterprise license in AWS Marketplace
+weight: 400
+---
 
 ## Manage your Grafana Enterprise license in AWS Marketplace
 

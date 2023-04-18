@@ -1,7 +1,13 @@
-+++
-title = "Plugin protocol"
-keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-+++
+---
+keywords:
+  - grafana
+  - plugins
+  - backend
+  - plugin
+  - backend-plugins
+  - documentation
+title: Plugin protocol
+---
 
 # Plugin protocol
 

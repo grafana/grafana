@@ -1,9 +1,15 @@
-+++
-title = "Query History HTTP API "
-description = "Grafana Query History HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "queryHistory"]
-aliases = ["/docs/grafana/latest/http_api/query_history/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/http_api/query_history/
+description: Grafana Query History HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - queryHistory
+title: 'Query History HTTP API '
+---
 
 # Query history API
 

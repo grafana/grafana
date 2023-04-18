@@ -1,9 +1,14 @@
-+++
-title = "Create Cortex or Loki managed alert rule"
-description = "Create Cortex or Loki managed alerting rule"
-keywords = ["grafana", "alerting", "guide", "rules", "create"]
-weight = 400
-+++
+---
+description: Create Cortex or Loki managed alerting rule
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - create
+title: Create Cortex or Loki managed alert rule
+weight: 400
+---
 
 # Create a Cortex or Loki managed alerting rule
 

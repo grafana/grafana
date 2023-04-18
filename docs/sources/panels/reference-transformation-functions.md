@@ -1,8 +1,10 @@
-+++
-title = "Reference: Transformation functions"
-aliases = ["/docs/grafana/latest/panels/transformations/types-options/", "docs/sources/panels/reference-transformation-functions/"]
-weight = 1000
-+++
+---
+aliases:
+  - docs/sources/panels/reference-transformation-functions/
+  - transformations/types-options/
+title: 'Reference: Transformation functions'
+weight: 1000
+---
 
 # Reference: Transformation functions
 

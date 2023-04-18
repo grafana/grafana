@@ -1,9 +1,14 @@
-+++
-title = "Create Grafana managed alert rule"
-description = "Create Grafana managed alert rule"
-keywords = ["grafana", "alerting", "guide", "rules", "create"]
-weight = 400
-+++
+---
+description: Create Grafana managed alert rule
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - create
+title: Create Grafana managed alert rule
+weight: 400
+---
 
 # Create a Grafana managed alerting rule
 

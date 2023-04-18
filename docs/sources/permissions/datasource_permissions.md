@@ -1,9 +1,17 @@
-+++
-title = "Data source permissions"
-description = "Grafana Datasource Permissions Guide "
-keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams", "enterprise"]
-weight = 900
-+++
+---
+description: 'Grafana Datasource Permissions Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - datasource
+  - permissions
+  - users
+  - teams
+  - enterprise
+title: Data source permissions
+weight: 900
+---
 
 # Data source permissions
 

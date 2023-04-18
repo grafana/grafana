@@ -1,10 +1,15 @@
-+++
-title = "Loki"
-description = "Guide for using Loki in Grafana"
-keywords = ["grafana", "loki", "logging", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/loki"]
-weight = 800
-+++
+---
+aliases:
+  - ../features/datasources/loki/
+description: Guide for using Loki in Grafana
+keywords:
+  - grafana
+  - loki
+  - logging
+  - guide
+title: Loki
+weight: 800
+---
 
 # Using Loki in Grafana
 

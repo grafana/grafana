@@ -1,9 +1,15 @@
-+++
-title = "Manage built-in role assignments"
-description = "Manage built-in role assignments"
-keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "fine-grained-access-control-usage", "enterprise"]
-weight = 210
-+++
+---
+description: Manage built-in role assignments
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - permissions
+  - fine-grained-access-control-usage
+  - enterprise
+title: Manage built-in role assignments
+weight: 210
+---
 
 # Built-in role assignments
 

@@ -1,10 +1,14 @@
-+++
-title = "Security"
-description = "Security Docs"
-keywords = ["grafana", "security", "documentation"]
-aliases = ["/docs/grafana/latest/installation/security/"]
-weight = 500
-+++
+---
+aliases:
+  - ../installation/security/
+description: Security Docs
+keywords:
+  - grafana
+  - security
+  - documentation
+title: Security
+weight: 500
+---
 
 # Security
 

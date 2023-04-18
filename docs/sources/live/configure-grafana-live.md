@@ -1,9 +1,13 @@
-+++
-title = "Configure Grafana Live"
-description = "Grafana Live configuration guide"
-keywords = ["Grafana", "live", "guide", "websocket"]
-weight = 120
-+++
+---
+description: Grafana Live configuration guide
+keywords:
+  - Grafana
+  - live
+  - guide
+  - websocket
+title: Configure Grafana Live
+weight: 120
+---
 
 # Configure Grafana Live
 

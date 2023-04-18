@@ -1,7 +1,7 @@
-+++
-title = "Manage users"
-weight = 50
-+++
+---
+title: Manage users
+weight: 50
+---
 
 # Manage users
 

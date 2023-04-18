@@ -1,10 +1,14 @@
-+++
-title = "Authentication"
-description = "AWS authentication"
-keywords = ["grafana", "aws", "authentication"]
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
-weight = 5
-+++
+---
+aliases:
+  - ../cloudwatch/
+description: AWS authentication
+keywords:
+  - grafana
+  - aws
+  - authentication
+title: Authentication
+weight: 5
+---
 
 # AWS authentication
 

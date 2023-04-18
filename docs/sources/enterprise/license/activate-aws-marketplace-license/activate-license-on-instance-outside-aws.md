@@ -1,10 +1,18 @@
-+++
-title = "Activate a Grafana Enterprise license from AWS on an instance deployed outside of AWS"
-description = "Activate a Grafana Enterprise license from AWS on an instance deployed outside of AWS"
-keywords = ["grafana", "enterprise", "aws", "marketplace", "activate"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/activate-license-on-instance-outside-aws"]
-weight = 300
-+++
+---
+aliases:
+  - ../../activate-aws-marketplace-license/activate-license-on-instance-outside-aws/
+description: Activate a Grafana Enterprise license from AWS on an instance deployed
+  outside of AWS
+keywords:
+  - grafana
+  - enterprise
+  - aws
+  - marketplace
+  - activate
+title: Activate a Grafana Enterprise license from AWS on an instance deployed outside
+  of AWS
+weight: 300
+---
 
 # Activate a Grafana Enterprise license from AWS on an instance deployed outside of AWS
 

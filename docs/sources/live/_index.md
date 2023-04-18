@@ -1,8 +1,9 @@
-+++
-title = "Grafana Live"
-aliases = ["/docs/grafana/latest/live/live-feature-overview/"]
-weight = 115
-+++
+---
+aliases:
+  - live-feature-overview/
+title: Grafana Live
+weight: 115
+---
 
 # Grafana Live overview
 

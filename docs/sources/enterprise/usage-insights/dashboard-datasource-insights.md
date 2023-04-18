@@ -1,10 +1,14 @@
-+++
-title = "Dashboard and data source insights"
-description = "Understand how your dashboards and data sources are used"
-keywords = ["grafana", "usage-insights", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/dashboard-datasource-insights.md"]
-weight = 200
-+++
+---
+aliases:
+  - dashboard-datasource-insights.md/
+description: Understand how your dashboards and data sources are used
+keywords:
+  - grafana
+  - usage-insights
+  - enterprise
+title: Dashboard and data source insights
+weight: 200
+---
 
 # Dashboard and data source insights
 

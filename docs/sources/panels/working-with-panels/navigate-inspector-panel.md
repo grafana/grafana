@@ -1,8 +1,9 @@
-+++
-title = "Navigate the Grafana Inspector panel"
-aliases = ["/docs/sources/panels/working-with-panels/navigate-inspector-panel/"]
-weight = 90
-+++
+---
+aliases:
+  - /docs/sources/panels/working-with-panels/navigate-inspector-panel/
+title: Navigate the Grafana Inspector panel
+weight: 90
+---
 
 # Navigate the Grafana Inspector panel
 

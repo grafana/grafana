@@ -1,9 +1,13 @@
-+++
-title = "Export dashboard as PDF"
-description = ""
-keywords = ["grafana", "export", "pdf", "share"]
-weight = 1400
-+++
+---
+description: ''
+keywords:
+  - grafana
+  - export
+  - pdf
+  - share
+title: Export dashboard as PDF
+weight: 1400
+---
 
 # Export dashboard as PDF
 

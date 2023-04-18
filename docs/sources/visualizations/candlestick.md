@@ -1,10 +1,17 @@
-+++
-title = "Candlestick"
-description = "Candlestick visualization documentation"
-keywords = ["grafana", "Candlestick", "OHLC", "panel", "documentation"]
-aliases = ["/docs/grafana/latest/features/panels/candlestick/", "/docs/grafana/latest/panels/visualizations/candlestick/"]
-weight = 600
-+++
+---
+aliases:
+  - ../features/panels/candlestick/
+  - ../panels/visualizations/candlestick/
+description: Candlestick visualization documentation
+keywords:
+  - grafana
+  - Candlestick
+  - OHLC
+  - panel
+  - documentation
+title: Candlestick
+weight: 600
+---
 
 # Candlestick
 

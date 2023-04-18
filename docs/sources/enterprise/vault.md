@@ -1,9 +1,12 @@
-+++
-title = "Vault"
-description = ""
-keywords = ["grafana", "vault", "configuration"]
-weight = 1200
-+++
+---
+description: ''
+keywords:
+  - grafana
+  - vault
+  - configuration
+title: Vault
+weight: 1200
+---
 
 # Vault integration
 

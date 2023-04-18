@@ -1,10 +1,14 @@
-+++
-title = "Install on Debian/Ubuntu"
-description = "Install guide for Grafana on Debian or Ubuntu"
-keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/latest/installation/installation/debian"]
-weight = 200
-+++
+---
+aliases:
+  - installation/debian/
+description: Install guide for Grafana on Debian or Ubuntu
+keywords:
+  - grafana
+  - installation
+  - documentation
+title: Install on Debian/Ubuntu
+weight: 200
+---
 
 # Install on Debian or Ubuntu
 

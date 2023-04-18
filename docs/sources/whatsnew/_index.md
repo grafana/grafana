@@ -1,8 +1,9 @@
-+++
-title = "What's new"
-aliases = ["/docs/grafana/latest/guides/"]
-weight = 1
-+++
+---
+aliases:
+  - guides/
+title: What's new
+weight: 1
+---
 
 # What's new Grafana
 

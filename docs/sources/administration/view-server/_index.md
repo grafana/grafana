@@ -1,7 +1,7 @@
-+++
-title = "View server"
-weight = 100
-+++
+---
+title: View server
+weight: 100
+---
 
 # View server information
 

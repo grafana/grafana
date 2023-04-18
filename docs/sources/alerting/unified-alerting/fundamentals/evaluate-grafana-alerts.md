@@ -1,8 +1,9 @@
-+++
-title = "Alerting on numeric data"
-aliases = ["/docs/grafana/latest/alerting/metrics/"]
-weight = 116
-+++
+---
+aliases:
+  - ../../metrics/
+title: Alerting on numeric data
+weight: 116
+---
 
 # Alerting on numeric data
 

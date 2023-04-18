@@ -1,8 +1,8 @@
-+++
-title = "Provision InfluxDB"
-description = "Guide for provisioning InfluxDB"
-weight = 400
-+++
+---
+description: Guide for provisioning InfluxDB
+title: Provision InfluxDB
+weight: 400
+---
 
 # Provision InfluxDB
 

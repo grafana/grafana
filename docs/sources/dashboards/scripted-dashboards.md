@@ -1,9 +1,14 @@
-+++
-title = "Scripted dashboards"
-keywords = ["grafana", "dashboard", "documentation", "scripted"]
-aliases = ["/docs/grafana/latest/reference/scripting/"]
-weight = 1500
-+++
+---
+aliases:
+  - ../reference/scripting/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - scripted
+title: Scripted dashboards
+weight: 1500
+---
 
 # Scripted dashboards
 

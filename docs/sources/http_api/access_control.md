@@ -1,9 +1,17 @@
-+++
-title = "Fine-grained access control HTTP API "
-description = "Fine-grained access control API"
-keywords = ["grafana", "http", "documentation", "api", "fine-grained-access-control", "acl", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
-+++
+---
+aliases:
+  - accesscontrol/
+description: Fine-grained access control API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - fine-grained-access-control
+  - acl
+  - enterprise
+title: 'Fine-grained access control HTTP API '
+---
 
 # Fine-grained access control API
 

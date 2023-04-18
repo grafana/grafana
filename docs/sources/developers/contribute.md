@@ -1,7 +1,11 @@
-+++
-title = "Contribute to Grafana"
-keywords = ["grafana", "documentation", "developers", "resources"]
-+++
+---
+keywords:
+  - grafana
+  - documentation
+  - developers
+  - resources
+title: Contribute to Grafana
+---
 
 # Contribute to Grafana
 

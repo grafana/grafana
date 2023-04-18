@@ -1,10 +1,14 @@
-+++
-title = "Activate an Enterprise license"
-description = "Activate an Enterprise license"
-keywords = ["grafana", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/activate-license"]
-weight = 100
-+++
+---
+aliases:
+  - ../activate-license/
+description: Activate an Enterprise license
+keywords:
+  - grafana
+  - licensing
+  - enterprise
+title: Activate an Enterprise license
+weight: 100
+---
 
 # Activate an Enterprise license
 

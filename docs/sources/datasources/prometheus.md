@@ -1,10 +1,14 @@
-+++
-title = "Prometheus"
-description = "Guide for using Prometheus in Grafana"
-keywords = ["grafana", "prometheus", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/prometheus"]
-weight = 1300
-+++
+---
+aliases:
+  - ../features/datasources/prometheus/
+description: Guide for using Prometheus in Grafana
+keywords:
+  - grafana
+  - prometheus
+  - guide
+title: Prometheus
+weight: 1300
+---
 
 # Prometheus data source
 

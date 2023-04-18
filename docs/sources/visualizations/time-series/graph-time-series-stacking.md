@@ -1,9 +1,16 @@
-+++
-title = "Graph stacked time series"
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-stacking/"]
-weight = 400
-+++
+---
+aliases:
+  - ../../features/panels/histogram/
+  - ../../panels/visualizations/time-series/graph-time-series-stacking/
+keywords:
+  - grafana
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Graph stacked time series
+weight: 400
+---
 
 # Graph stacked time series
 

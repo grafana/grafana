@@ -1,7 +1,8 @@
-+++
-title = "Legacy code style guide"
-aliases = ["/docs/grafana/latest/plugins/developing/code-styleguide/"]
-+++
+---
+aliases:
+  - ../../../plugins/developing/code-styleguide/
+title: Legacy code style guide
+---
 
 # Legacy code style guide
 

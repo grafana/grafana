@@ -1,8 +1,9 @@
-+++
-title = "Add a query variable"
-aliases = ["/docs/grafana/latest/variables/add-query-variable.md"]
-weight = 100
-+++
+---
+aliases:
+  - ../add-query-variable.md/
+title: Add a query variable
+weight: 100
+---
 
 # Add a query variable
 

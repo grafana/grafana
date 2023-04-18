@@ -1,10 +1,15 @@
-+++
-title = "Sort dashboards by using insights data"
-description = "Sort dashboards by using insights data"
-keywords = ["grafana", "search", "sort", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/improved-search.md"]
-weight = 400
-+++
+---
+aliases:
+  - improved-search.md/
+description: Sort dashboards by using insights data
+keywords:
+  - grafana
+  - search
+  - sort
+  - enterprise
+title: Sort dashboards by using insights data
+weight: 400
+---
 
 # Sort dashboards by using insights data
 

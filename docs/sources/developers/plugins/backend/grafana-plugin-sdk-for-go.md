@@ -1,7 +1,14 @@
-+++
-title = "Grafana Plugin SDK for Go"
-keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "sdk", "documentation"]
-+++
+---
+keywords:
+  - grafana
+  - plugins
+  - backend
+  - plugin
+  - backend-plugins
+  - sdk
+  - documentation
+title: Grafana Plugin SDK for Go
+---
 
 # Grafana plugin SDK for Go
 

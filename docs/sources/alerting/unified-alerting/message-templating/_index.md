@@ -1,10 +1,16 @@
-+++
-title = "Message templating"
-description = "Message templating"
-aliases = ["/docs/grafana/latest/alerting/message-templating/"]
-keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
-weight = 440
-+++
+---
+aliases:
+  - ../message-templating/
+description: Message templating
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - contact point
+  - templating
+title: Message templating
+weight: 440
+---
 
 # Message templating
 

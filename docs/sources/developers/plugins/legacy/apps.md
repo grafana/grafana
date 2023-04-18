@@ -1,8 +1,12 @@
-+++
-title = "Legacy app plugins"
-keywords = ["grafana", "plugins", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/apps/"]
-+++
+---
+aliases:
+  - ../../../plugins/developing/apps/
+keywords:
+  - grafana
+  - plugins
+  - documentation
+title: Legacy app plugins
+---
 
 # Legacy app plugins
 

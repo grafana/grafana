@@ -1,8 +1,10 @@
-+++
-title = "Reference: Calculation types"
-aliases = ["/docs/grafana/latest/panels/calculations-list/", "/docs/sources/panels/reference-calculation-types/"]
-weight = 1100
-+++
+---
+aliases:
+  - /docs/sources/panels/reference-calculation-types/
+  - calculations-list/
+title: 'Reference: Calculation types'
+weight: 1100
+---
 
 # Reference: Calculations
 

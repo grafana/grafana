@@ -1,9 +1,13 @@
-+++
-title = "Okta OAuth2 authentication"
-description = "Grafana Okta OAuth Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-weight = 1000
-+++
+---
+description: 'Grafana Okta OAuth Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: Okta OAuth2 authentication
+weight: 1000
+---
 
 # Okta OAuth2 authentication
 

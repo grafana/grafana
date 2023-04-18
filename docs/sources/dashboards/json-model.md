@@ -1,9 +1,15 @@
-+++
-title = "JSON model"
-keywords = ["grafana", "dashboard", "documentation", "json", "model"]
-aliases = ["/docs/grafana/latest/reference/dashboard/"]
-weight = 1200
-+++
+---
+aliases:
+  - ../reference/dashboard/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - json
+  - model
+title: JSON model
+weight: 1200
+---
 
 # Dashboard JSON model
 

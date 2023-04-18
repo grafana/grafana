@@ -1,10 +1,13 @@
-+++
-title = "Run Grafana Docker image"
-description = "Guide for running Grafana using Docker"
-keywords = ["grafana", "configuration", "documentation", "docker"]
-weight = 600
-
-+++
+---
+description: Guide for running Grafana using Docker
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - docker
+title: Run Grafana Docker image
+weight: 600
+---
 
 # Run Grafana Docker image
 

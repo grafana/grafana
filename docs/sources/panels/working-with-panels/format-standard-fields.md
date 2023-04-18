@@ -1,8 +1,9 @@
-+++
-title = "Format a standard field"
-aliases = ["/docs/sources/panels/working-with-panels/format-standard-fields/"]
-weight = 40
-+++
+---
+aliases:
+  - /docs/sources/panels/working-with-panels/format-standard-fields/
+title: Format a standard field
+weight: 40
+---
 
 # Format a standard field
 

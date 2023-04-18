@@ -1,10 +1,17 @@
-+++
-title = "Histogram"
-description = "Histogram visualization"
-keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/histogram/"]
-weight = 605
-+++
+---
+aliases:
+  - ../features/panels/histogram/
+  - ../panels/visualizations/histogram/
+description: Histogram visualization
+keywords:
+  - grafana
+  - docs
+  - bar chart
+  - panel
+  - barchart
+title: Histogram
+weight: 605
+---
 
 # Histogram
 

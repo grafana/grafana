@@ -1,10 +1,16 @@
-+++
-title = "With Grafana and Prometheus"
-description = "Guide for getting started with Grafana and Prometheus"
-keywords = ["grafana", "intro", "guide", "started"]
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
-weight = 300
-+++
+---
+aliases:
+  - ../guides/getting_started/
+  - ../guides/gettingstarted/
+description: Guide for getting started with Grafana and Prometheus
+keywords:
+  - grafana
+  - intro
+  - guide
+  - started
+title: With Grafana and Prometheus
+weight: 300
+---
 
 # Getting started with Grafana and Prometheus
 

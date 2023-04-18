@@ -1,9 +1,13 @@
-+++
-title = "OAuth authentication"
-description = "Grafana OAuthentication Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-weight = 500
-+++
+---
+description: 'Grafana OAuthentication Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: OAuth authentication
+weight: 500
+---
 
 # Generic OAuth authentication
 
