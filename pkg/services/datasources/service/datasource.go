@@ -561,8 +561,8 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 	index := 0
 	for {
 		index++
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+		headerNameSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderName, index)
+		headerValueSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderValue, index)
 
 		key := jsonData.Get(headerNameSuffix).MustString()
 		if key == "" {
