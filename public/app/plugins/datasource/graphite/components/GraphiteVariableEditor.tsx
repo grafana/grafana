@@ -4,11 +4,13 @@ import { InlineField, Input, Select } from '@grafana/ui';
 
 import { GraphiteQuery, GraphiteQueryType } from '../types';
 
-import { convertToGraphiteQueryObject } from './helpers';
+import { concatParts, convertToVariableString, getQueryPart } from './helpers';
+
+export const VARIABLE_DELIMITER = '___';
 
 interface Props {
   query: GraphiteQuery | string;
-  onChange: (query: GraphiteQuery) => void;
+  onChange: (query: string) => void;
 }
 
 const GRAPHITE_QUERY_VARIABLE_TYPE_OPTIONS = [
@@ -19,7 +21,7 @@ const GRAPHITE_QUERY_VARIABLE_TYPE_OPTIONS = [
 
 export const GraphiteVariableEditor = (props: Props) => {
   const { query, onChange } = props;
-  const [value, setValue] = useState(convertToGraphiteQueryObject(query));
+  const [queryString, updateQueryString] = useState(convertToVariableString(query));
 
   return (
     <>
@@ -28,18 +30,14 @@ export const GraphiteVariableEditor = (props: Props) => {
           aria-label="select query type"
           options={GRAPHITE_QUERY_VARIABLE_TYPE_OPTIONS}
           width={25}
-          value={value.queryType ?? GraphiteQueryType.Default}
+          value={getQueryPart(queryString, 0) ?? GraphiteQueryType.Default}
           onChange={(selectableValue) => {
-            setValue({
-              ...value,
-              queryType: selectableValue.value,
-            });
+            const qs = concatParts(selectableValue.value, getQueryPart(queryString, 1));
+            updateQueryString(qs);
 
-            if (value.target) {
-              onChange({
-                ...value,
-                queryType: selectableValue.value,
-              });
+            // if the target exists, then call onChange
+            if (getQueryPart(queryString, 1)) {
+              onChange(qs);
             }
           }}
         />
@@ -47,13 +45,11 @@ export const GraphiteVariableEditor = (props: Props) => {
       <InlineField label="Query" labelWidth={20} grow>
         <Input
           aria-label="Variable editor query input"
-          value={value.target}
-          onBlur={() => onChange(value)}
+          value={getQueryPart(queryString, 1)}
+          onBlur={() => onChange(queryString)}
           onChange={(e) => {
-            setValue({
-              ...value,
-              target: e.currentTarget.value,
-            });
+            const qs = concatParts(getQueryPart(queryString, 0), e.currentTarget.value);
+            updateQueryString(qs);
           }}
         />
       </InlineField>

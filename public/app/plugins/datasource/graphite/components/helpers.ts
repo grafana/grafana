@@ -6,6 +6,7 @@ import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
 import { GraphiteQuery, GraphiteQueryType, GraphiteSegment } from '../types';
 
 import { EditableParam } from './FunctionParamEditor';
+import { VARIABLE_DELIMITER } from './GraphiteVariableEditor';
 
 export function mapStringsToSelectables<T extends string>(values: T[]): Array<SelectableValue<T>> {
   return values.map((value) => ({
@@ -88,4 +89,54 @@ export function convertToGraphiteQueryObject(query: string | GraphiteQuery): Gra
     };
   }
   return query;
+}
+
+export function convertVariableStringToGraphiteQueryObject(query: string | GraphiteQuery): GraphiteQuery {
+  if (typeof query === 'string') {
+    const queryParts = query.split(VARIABLE_DELIMITER);
+    if (queryParts.length === 1) {
+      return {
+        refId: 'A',
+        target: query,
+        queryType: GraphiteQueryType.Default.toString(),
+      };
+    } else {
+      return {
+        refId: 'A',
+        queryType: queryParts[0],
+        target: queryParts[1],
+      };
+    }
+  }
+  return query;
+}
+
+/**  Migrate the query back to a string so that Variable Definitions work */
+export function convertToVariableString(query: string | GraphiteQuery): string {
+  // if it is an old query or a new new hot fix query
+  if (typeof query === 'string') {
+    const queryParts = query.split(VARIABLE_DELIMITER);
+
+    if (queryParts.length === 1) {
+      // old query
+      // concat default queryType to it
+      return concatParts(GraphiteQueryType.Default, query);
+    } else {
+      // the new new hotfix query
+      return query;
+    }
+  }
+  // it is an object so we can
+  // concatenate the queryType and query
+  return concatParts(query.queryType, query.target);
+}
+
+/**  The query string consists of a query type of idx 0 and target of idx 1 */
+export function getQueryPart(query: string, idx: number): string {
+  return query.split(VARIABLE_DELIMITER)[idx];
+}
+
+/**  Concat the query parts type and target with the delimiter */
+export function concatParts(queryType: string | undefined, target: string | undefined): string {
+  return `${queryType}${VARIABLE_DELIMITER}${target}`;
 }

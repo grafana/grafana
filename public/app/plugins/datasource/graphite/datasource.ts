@@ -28,7 +28,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
-import { convertToGraphiteQueryObject } from './components/helpers';
+import { convertVariableStringToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 import { prepareAnnotation } from './migrations';
@@ -485,7 +485,7 @@ export class GraphiteDatasource
   metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
 
-    const queryObject = convertToGraphiteQueryObject(findQuery);
+    const queryObject = convertVariableStringToGraphiteQueryObject(findQuery);
     if (queryObject.queryType === GraphiteQueryType.Value || queryObject.queryType === GraphiteQueryType.MetricName) {
       return this.requestMetricRender(queryObject, options, queryObject.queryType);
     }
