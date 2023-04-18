@@ -23,7 +23,7 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
