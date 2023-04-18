@@ -11,10 +11,10 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
-import { getRulesSourceName } from './datasource';
+import { getRulesSourceName, isCloudRulesSource } from './datasource';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
-import { createUrl } from './url';
+import { createAbsoluteUrl, createUrl } from './url';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -33,6 +33,14 @@ export function createExploreLink(dataSourceName: string, query: string) {
       range: { from: 'now-1h', to: 'now' },
     }),
   });
+}
+
+export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string {
+  if (isCloudRulesSource(ruleSource)) {
+    return createAbsoluteUrl(`/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(rule.name)}/find`);
+  }
+
+  return window.location.href.split('?')[0];
 }
 
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
