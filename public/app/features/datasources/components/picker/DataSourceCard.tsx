@@ -16,7 +16,7 @@ export function DataSourceCard({ ds, onClick, selected }: DataSourceCardProps) {
   return (
     <Card key={ds.uid} onClick={onClick} className={cx(styles.card, selected ? styles.selected : undefined)}>
       <Card.Heading>{ds.name}</Card.Heading>
-      <Card.Meta>
+      <Card.Meta className={styles.meta}>
         {ds.meta.name}
         {ds.meta.info.description}
       </Card.Meta>
@@ -41,6 +41,14 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     selected: css`
       background-color: ${theme.colors.background.secondary};
+    `,
+    meta: css`
+      display: block;
+      overflow-wrap: unset;
+      white-space: nowrap;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     `,
   };
 }

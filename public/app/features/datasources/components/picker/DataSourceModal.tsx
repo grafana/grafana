@@ -4,7 +4,6 @@ import { DropEvent, FileRejection, DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import {
-  Button,
   Modal,
   FileDropzone,
   FileDropzoneDefaultChildren,
@@ -61,36 +60,45 @@ export function DataSourceModal({
           />
           <CustomScrollbar>
             <DataSourceList
-              filter={(ds) => !ds.meta.builtIn && ds.name.includes(search)}
+              dashboard={false}
+              mixed={false}
+              // FIXME: Filter out the grafana data source in a hacky way
+              filter={(ds) => ds.name.includes(search) && ds.name !== '-- Grafana --'}
               onChange={onChange}
               current={current}
             />
           </CustomScrollbar>
         </div>
         <div className={styles.rightColumn}>
-          <DataSourceList filter={(ds) => !!ds.meta.builtIn} onChange={onChange} current={current} />
-          {enableFileUpload && (
-            <FileDropzone
-              readAs="readAsArrayBuffer"
-              fileListRenderer={() => undefined}
-              options={{
-                maxSize: DFImport.maxFileSize,
-                multiple: false,
-                accept: DFImport.acceptedFiles,
-                ...fileUploadOptions,
-                onDrop: (...args) => {
-                  onFileDrop?.(...args);
-                  onDismiss();
-                },
-              }}
-            >
-              <FileDropzoneDefaultChildren primaryText={'Upload file'} />
-            </FileDropzone>
-          )}
+          <div className={styles.builtInDataSources}>
+            <DataSourceList
+              className={styles.builtInDataSourceList}
+              filter={(ds) => !!ds.meta.builtIn}
+              dashboard
+              mixed
+              onChange={onChange}
+              current={current}
+            />
+            {enableFileUpload && (
+              <FileDropzone
+                readAs="readAsArrayBuffer"
+                fileListRenderer={() => undefined}
+                options={{
+                  maxSize: DFImport.maxFileSize,
+                  multiple: false,
+                  accept: DFImport.acceptedFiles,
+                  ...fileUploadOptions,
+                  onDrop: (...args) => {
+                    onFileDrop?.(...args);
+                    onDismiss();
+                  },
+                }}
+              >
+                <FileDropzoneDefaultChildren />
+              </FileDropzone>
+            )}
+          </div>
           <div className={styles.dsCTAs}>
-            <Button variant="secondary" fill="text" onClick={() => {}}>
-              Can&apos;t find your data?
-            </Button>
             <LinkButton variant="secondary" href={`datasources/new`}>
               Configure a new data source
             </LinkButton>
@@ -105,38 +113,48 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
   return {
     modal: css`
       width: 80%;
+      height: 80%;
     `,
     modalContent: css`
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       align-items: stretch;
-      overflow: hidden;
       height: 100%;
     `,
     leftColumn: css`
       display: flex;
       flex-direction: column;
       width: 50%;
-      padding: ${theme.spacing(1)};
       height: 100%;
+      padding-right: ${theme.spacing(1)};
+      border-right: 1px solid ${theme.colors.border.weak};
     `,
     rightColumn: css`
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       width: 50%;
       height: 100%;
       padding: ${theme.spacing(1)};
+      justify-items: space-evenly;
+      align-items: stretch;
+      padding-left: ${theme.spacing(1)};
+    `,
+    builtInDataSources: css`
+      flex: 1;
+    `,
+    builtInDataSourceList: css`
+      margin-bottom: ${theme.spacing(4)};
     `,
     dsCTAs: css`
       display: flex;
       flex-direction: row;
       width: 100%;
-      justify-content: space-between;
+      justify-content: flex-end;
     `,
     searchInput: css`
       width: 100%;
+      min-height: 32px;
       margin-bottom: ${theme.spacing(1)};
     `,
   };
