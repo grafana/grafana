@@ -27,7 +27,7 @@ e2e.scenario({
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         // Loop through every panel type and ensure no crash
         Object.entries(win.grafanaBootData.settings.panels).forEach(([_, panel]) => {
-          // TODO: Remove Flame Graph from exclusion list as part of addressing #66803
+          // TODO: Remove Flame Graph check as part of addressing #66803
           if (!panel.hideFromList && panel.state !== 'deprecated' && panel.name !== 'Flame Graph') {
             e2e.components.PanelEditor.toggleVizPicker().click();
             e2e.components.PluginVisualization.item(panel.name).scrollIntoView().should('be.visible').click();
