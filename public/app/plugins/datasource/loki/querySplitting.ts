@@ -191,6 +191,9 @@ function updateLoadingFrame(
       name: `Loading ${target.refId}`,
       length: 2,
       fields: getLoadingFrameFields(target, remainingPartition, progress),
+      meta: {
+        preferredVisualisationType: 'graph',
+      },
     };
     response.data.push(loadingFrame);
   }
@@ -212,7 +215,7 @@ function getLoadingFrameFields(target: LokiQuery, partitions: TimeRange[], progr
       displayNameFromDS: `Loading ${progress}%`,
       color: {
         mode: FieldColorModeId.Fixed,
-        fixedColor: '#999',
+        fixedColor: 'rgba(150, 150, 150, 0.4)',
       },
     },
     values: new ArrayVector([0, 0]),
