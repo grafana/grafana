@@ -1,6 +1,4 @@
-import { makeArrayIndexableVector, Vector } from '../types';
-
-import { FunctionalVector } from './FunctionalVector';
+import { Vector } from '../types';
 
 /**
  * This will force all values to be numbers
@@ -8,17 +6,9 @@ import { FunctionalVector } from './FunctionalVector';
  * @public
  * @deprecated use a simple Arrays
  */
-export class AsNumberVector extends FunctionalVector<number> {
-  constructor(private field: Vector) {
+export class AsNumberVector extends Array<number> {
+  constructor(field: Vector) {
     super();
-    return makeArrayIndexableVector(this);
-  }
-
-  get length() {
-    return this.field.length;
-  }
-
-  get(index: number) {
-    return +this.field.get(index);
+    return field.map((v) => +v) as AsNumberVector;
   }
 }

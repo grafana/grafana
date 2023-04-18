@@ -8,6 +8,7 @@ describe('Check Circular Vector', () => {
     expect(v[0]).toEqual(1);
     expect(v[1]).toEqual(2);
     expect(v[2]).toEqual(3);
+    expect(v[3]).toEqual(1); // loops back to one
 
     v.add(4);
     expect(v.toArray()).toEqual([2, 3, 4]);

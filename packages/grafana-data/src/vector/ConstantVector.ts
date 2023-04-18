@@ -1,31 +1,10 @@
-import { makeArrayIndexableVector } from '../types';
-
-import { FunctionalVector } from './FunctionalVector';
-
 /**
  * @public
  * @deprecated use a simple Arrays
  */
-export class ConstantVector<T = any> extends FunctionalVector<T> {
-  constructor(private value: T, private len: number) {
+export class ConstantVector<T = any> extends Array<T> {
+  constructor(value: T, len: number) {
     super();
-    return makeArrayIndexableVector(this);
-  }
-
-  get length() {
-    return this.len;
-  }
-
-  get(index: number): T {
-    return this.value;
-  }
-
-  toArray(): T[] {
-    const arr = new Array<T>(this.length);
-    return arr.fill(this.value);
-  }
-
-  toJSON(): T[] {
-    return this.toArray();
+    return new Array<T>(len).fill(value) as ConstantVector<T>;
   }
 }

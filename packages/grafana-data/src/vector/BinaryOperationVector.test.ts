@@ -12,11 +12,11 @@ describe('ScaledVector', () => {
     const v = new BinaryOperationVector(source, new ConstantVector(scale, source.length), operation);
     expect(v.length).toEqual(source.length);
     // Accessed with getters
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 4; i++) {
       expect(v.get(i)).toEqual(source.get(i) * scale);
     }
     // Accessed with array index
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 4; i++) {
       expect(v[i]).toEqual(source[i] * scale);
     }
   });

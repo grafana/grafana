@@ -1,6 +1,4 @@
-import { Field, FieldType, makeArrayIndexableVector } from '../types';
-
-import { FunctionalVector } from './FunctionalVector';
+import { Field, FieldType } from '../types';
 
 /**
  * IndexVector is a simple vector implementation that returns the index value
@@ -9,18 +7,14 @@ import { FunctionalVector } from './FunctionalVector';
  *
  * @deprecated use a simple Arrays
  */
-export class IndexVector extends FunctionalVector<number> {
-  constructor(private len: number) {
+export class IndexVector extends Array<number> {
+  constructor(len: number) {
     super();
-    return makeArrayIndexableVector(this);
-  }
-
-  get length() {
-    return this.len;
-  }
-
-  get(index: number): number {
-    return index;
+    const arr = new Array(len);
+    for (let i = 0; i < len; i++) {
+      arr[i] = i;
+    }
+    return arr as IndexVector;
   }
 
   /**
