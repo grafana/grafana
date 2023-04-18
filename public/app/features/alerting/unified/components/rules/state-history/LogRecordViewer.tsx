@@ -15,7 +15,7 @@ import { LogRecord, omitLabels } from './common';
 interface LogRecordViewerProps {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
-  logsRef: React.MutableRefObject<HTMLDivElement[]>;
+  logsRef: React.MutableRefObject<HTMLElement[]>;
   onLabelClick?: (label: string) => void;
 }
 
@@ -27,10 +27,10 @@ export const LogRecordViewerByTimestamp = React.memo(
     logsRef.current = [];
 
     return (
-      <div className={styles.logsScrollable} data-testid="history-by-timestamp-viewer">
+      <ul className={styles.logsScrollable} aria-label="State history by timestamp">
         {Object.entries(groupedLines).map(([key, records]) => {
           return (
-            <div id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
+            <li id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
               <Timestamp time={parseInt(key, 10)} />
               <div className={styles.logsContainer}>
                 {records.map(({ line }) => (
@@ -52,10 +52,10 @@ export const LogRecordViewerByTimestamp = React.memo(
                   </React.Fragment>
                 ))}
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     );
   }
 );

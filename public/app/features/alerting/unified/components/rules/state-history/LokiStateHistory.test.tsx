@@ -2,7 +2,7 @@ import { render, waitFor } from '@testing-library/react';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
-import { byTestId, byText } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 import 'whatwg-fetch';
 
 import { createTheme, DataFrameJSON, FieldType } from '@grafana/data';
@@ -72,10 +72,6 @@ beforeAll(() => {
   );
 });
 
-// beforeEach(() => {
-//   server.resetHandlers();
-// });
-
 afterAll(() => {
   server.close();
 });
@@ -84,7 +80,8 @@ window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 const ui = {
   loadingIndicator: byText('Loading...'),
-  timestampViewer: byTestId('history-by-timestamp-viewer'),
+  timestampViewer: byRole('list', { name: 'State history by timestamp' }),
+  record: byRole('listitem'),
 };
 
 describe('LokiStateHistory', () => {
@@ -93,7 +90,12 @@ describe('LokiStateHistory', () => {
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-    expect(ui.timestampViewer.get()).toBeInTheDocument();
+    const timestampViewerElement = ui.timestampViewer.get();
+    expect(timestampViewerElement).toBeInTheDocument();
+
+    expect(timestampViewerElement).toHaveTextContent('/api/prometheus/grafana/api/v1/rules');
+    expect(timestampViewerElement).toHaveTextContent('/api/live/ws');
+    expect(timestampViewerElement).toHaveTextContent('/api/folders/:uid/');
   });
 
   describe('logRecordsToDataFrame', () => {
