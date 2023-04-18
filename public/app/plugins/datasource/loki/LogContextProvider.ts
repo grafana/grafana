@@ -137,7 +137,7 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
+  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, originalQuery?: DataQuery): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
       this.appliedContextFilters = contextFilters;
 
@@ -153,8 +153,15 @@ export class LogContextProvider {
         this.appliedContextFilters = [];
       });
 
+    let origQuery: LokiQuery | undefined = undefined;
+    // Type guard for LokiQuery
+    if (originalQuery && isLokiQuery(originalQuery)) {
+      origQuery = originalQuery;
+    }
+
     return LokiContextUi({
       row,
+      origQuery,
       updateFilter,
       onClose: this.onContextClose,
       logContextProvider: this,
@@ -164,10 +171,9 @@ export class LogContextProvider {
   processContextFiltersToExpr = (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) => {
     const labelFilters = contextFilters
       .map((filter) => {
-        const label = filter.value;
         if (!filter.fromParser && filter.enabled) {
           // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+          return `${filter.label}="${escapeLabelValueInExactSelector(filter.value)}"`;
         }
         return '';
       })
@@ -186,7 +192,7 @@ export class LogContextProvider {
         const parsedLabels = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
         for (const parsedLabel of parsedLabels) {
           if (parsedLabel.enabled) {
-            expr = addLabelToQuery(expr, parsedLabel.label, '=', row.labels[parsedLabel.label]);
+            expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value);
           }
         }
       }
@@ -202,10 +208,9 @@ export class LogContextProvider {
     Object.entries(labels).forEach(([label, value]) => {
       const filter: ContextFilter = {
         label,
-        value: label, // this looks weird in the first place, but we need to set the label as value here
+        value: value,
         enabled: allLabels.includes(label),
         fromParser: !allLabels.includes(label),
-        description: value,
       };
       contextFilters.push(filter);
     });
