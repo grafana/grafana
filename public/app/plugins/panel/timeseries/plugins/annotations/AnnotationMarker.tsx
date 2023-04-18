@@ -3,6 +3,7 @@ import React, { HTMLAttributes, useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Portal, useStyles2, usePanelContext } from '@grafana/ui';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 
@@ -127,6 +128,7 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={!isRegionAnnotation ? styles.markerWrapper : undefined}
+        data-testId={selectors.pages.SoloPanel.Annotations.marker}
       >
         {marker}
       </div>
