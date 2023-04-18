@@ -392,7 +392,6 @@ func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Regis
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
 	go p.receiveLoop(key, sub)
 	p.subs[key] = sub
-	p.statesMtx.Unlock()
 	return newRedisChannel(p, key, p.withPrefix(key), update)
 }
 
