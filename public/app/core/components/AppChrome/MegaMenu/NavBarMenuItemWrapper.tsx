@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { toIconName, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarMenuSection } from './NavBarMenuSection';
@@ -34,14 +34,12 @@ export function NavBarMenuItemWrapper({
       {linkHasChildren(link) && (
         <ul className={styles.children}>
           {link.children.map((childLink) => {
-            const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
             return (
               !childLink.isCreateAction && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
                   isActive={isMatchOrChildMatch(childLink, activeItem)}
                   isChild
-                  icon={childLink.showIconInNavbar ? icon : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();

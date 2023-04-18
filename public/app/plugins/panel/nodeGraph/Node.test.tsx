@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { ArrayVector, FieldType } from '@grafana/data/src';
+import { FieldType } from '@grafana/data/src';
 
 import { Node } from './Node';
 
@@ -50,7 +50,7 @@ const nodeDatum = {
   subTitle: 'node subtitle',
   dataFrameRowIndex: 0,
   incoming: 0,
-  mainStat: { name: 'stat', values: new ArrayVector([1234]), type: FieldType.number, config: {} },
-  secondaryStat: { name: 'stat2', values: new ArrayVector([9876]), type: FieldType.number, config: {} },
+  mainStat: { name: 'stat', values: [1234], type: FieldType.number, config: {} },
+  secondaryStat: { name: 'stat2', values: [9876], type: FieldType.number, config: {} },
   arcSections: [],
 };

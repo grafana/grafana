@@ -35,7 +35,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   // use a shared function to update respective properties
   const onJSONDataNumberChanged = (property: keyof SQLConnectionLimits) => {
     return (number?: number) => {
-      updateJsonData({ property: number });
+      updateJsonData({ [property]: number });
     };
   };
 
