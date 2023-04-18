@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
@@ -64,6 +65,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
+	metrics.MApiAPIkeysGet.Inc()
 	return response.JSON(http.StatusOK, result)
 }
 
@@ -99,6 +101,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 		return response.Error(status, "Failed to delete API key", err)
 	}
 
+	metrics.MApiAPIkeysDelete.Inc()
 	return response.Success("API key deleted")
 }
 
@@ -166,6 +169,7 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 		Key:  newKeyInfo.ClientSecret,
 	}
 
+	metrics.MApiAPIkeysCreate.Inc()
 	return response.JSON(http.StatusOK, result)
 }
 
