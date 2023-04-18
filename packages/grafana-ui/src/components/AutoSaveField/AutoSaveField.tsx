@@ -1,4 +1,4 @@
-import { css, keyframes } from '@emotion/css';
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
@@ -6,17 +6,7 @@ import { useStyles2 } from '../../themes';
 import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 
-/**
-1.- Use the Input component as a base
-2.- Just save if there is any change and when it loses focus
-3.- Set the loading to true while the backend is saving
-4.- Be aware of the backend response. If there is an error show a proper message and return the focus to the input.
-5.- Add aria-live="polite" and check how it works in a screen-reader.
-Debounce instead of working with onBlur?
-import debouncePromise from 'debounce-promise';
-or
-import { debounce} from 'lodash';
- */
+import { EllipsisAnimated } from './EllipsisAnimated';
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
@@ -140,85 +130,5 @@ const getStyles = () => {
     widthFitContent: css({
       width: 'fit-content',
     }),
-    ellipsis: css({
-      display: 'inline',
-    }),
-    firstDot: css({
-      animation: `${firstDot} 2s linear infinite`,
-    }),
-    secondDot: css({
-      animation: `${secondDot} 2s linear infinite`,
-    }),
-    thirdDot: css({
-      animation: `${thirdDot} 2s linear infinite`,
-    }),
   };
 };
-
-const EllipsisAnimated = () => {
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.ellipsis}>
-      <span className={styles.firstDot}>.</span>
-      <span className={styles.secondDot}>.</span>
-      <span className={styles.thirdDot}>.</span>
-    </div>
-  );
-};
-
-const firstDot = keyframes`
-0% {
-  opacity: 1;
-}
-65% {
-  opacity: 1;
-}
-66% {
-  opacity: 0.5;
-}
-100% {
-  opacity: 0;
-}
-`;
-
-const secondDot = keyframes`
-0% {
-  opacity: 0;
-}
-21% {
-  opacity: 0.5;
-}
-22% {
-  opacity: 1;
-}
-65% {
-  opacity: 1;
-}
-66% {
-  opacity: 0.5;
-}
-100% {
-  opacity: 0;
-}
-`;
-
-const thirdDot = keyframes`
-0% {
-  opacity: 0;
-}
-43% {
-  opacity: 0.5;
-}
-44% {
-  opacity: 1;
-}
-65% {
-  opacity: 1;
-}
-66% {
-  opacity: 0.5;
-}
-100% {
-  opacity: 0;
-}
-`;
