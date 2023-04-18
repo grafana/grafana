@@ -55,7 +55,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   };
 
   const onSearch = (q: string) => {
-    history.push({ query: { filterBy: 'all', filterByType: 'all', q } });
+    history.push({ query: { filterBy, filterByType, q } });
   };
 
   // How should we handle errors?

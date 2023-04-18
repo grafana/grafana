@@ -139,6 +139,21 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.InDelta(t, 2.0, entry.Values.Get("A").MustFloat64(), 1e-4)
 			require.InDelta(t, 5.5, entry.Values.Get("B").MustFloat64(), 1e-4)
 		})
+
+		t.Run("captures condition from rule", func(t *testing.T) {
+			rule := createTestRule()
+			rule.Condition = "some-condition"
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State:  eval.Alerting,
+				Labels: data.Labels{"a": "b"},
+			})
+
+			res := statesToStream(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Equal(t, rule.Condition, entry.Condition)
+		})
 	})
 
 	t.Run("selector string", func(t *testing.T) {

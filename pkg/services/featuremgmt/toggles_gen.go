@@ -191,10 +191,6 @@ const (
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
 
-	// FlagSecureSocksDatasourceProxy
-	// Enable secure socks tunneling for supported core datasources
-	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
-
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
@@ -318,6 +314,10 @@ const (
 	// FlagAuthenticationConfigUI
 	// Enables authentication configuration UI
 	FlagAuthenticationConfigUI = "authenticationConfigUI"
+
+	// FlagPluginsAPIManifestKey
+	// Use grafana.com API to retrieve the public manifest key
+	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
 
 	// FlagAdvancedDataSourcePicker
 	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
