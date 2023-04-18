@@ -304,7 +304,7 @@ func (p *redisPeer) Position() int {
 			return i
 		}
 	}
-	p.logger.Warn("failed to look up position, falling back to poistion 0")
+	p.logger.Warn("failed to look up position, falling back to position 0")
 	return 0
 }
 
