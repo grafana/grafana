@@ -1,8 +1,9 @@
-+++
-title = "Add a query"
-weight = 30
-aliases = ["/docs/sources/panels/query-a-data-source/add-a-query/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/query-a-data-source/add-a-query/
+title: Add a query
+weight: 30
+---
 
 # Add a query
 

@@ -1,7 +1,7 @@
-+++
-title = "Templates and variables"
-weight = 130
-+++
+---
+title: Templates and variables
+weight: 130
+---
 
 # Templates and variables
 

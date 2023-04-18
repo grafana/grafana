@@ -1,8 +1,9 @@
-+++
-title = "About value mapping"
-weight = 10
-aliases = ["/docs/sources/panels/format-data/about-value-mapping/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/format-data/about-value-mapping/
+title: About value mapping
+weight: 10
+---
 
 # About value mapping
 

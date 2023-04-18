@@ -1,7 +1,7 @@
-+++
-title = "Legacy Grafana Alerts"
-weight = 114
-+++
+---
+title: Legacy Grafana Alerts
+weight: 114
+---
 
 # Legacy Grafana alerts
 

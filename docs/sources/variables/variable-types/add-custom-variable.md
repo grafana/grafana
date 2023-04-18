@@ -1,8 +1,9 @@
-+++
-title = "Add a custom variable"
-aliases = ["/docs/grafana/latest/variables/add-custom-variable.md"]
-weight = 200
-+++
+---
+aliases:
+  - ../add-custom-variable.md/
+title: Add a custom variable
+weight: 200
+---
 
 # Add a custom variable
 

@@ -1,9 +1,13 @@
-+++
-title = "View server stats"
-keywords = ["grafana", "server", "statistics"]
-aliases = ["/docs/grafana/latest/admin/view-server-stats/"]
-weight = 400
-+++
+---
+aliases:
+  - ../../admin/view-server-stats/
+keywords:
+  - grafana
+  - server
+  - statistics
+title: View server stats
+weight: 400
+---
 
 # View Grafana server stats
 

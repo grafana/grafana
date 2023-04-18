@@ -1,9 +1,15 @@
-+++
-title = "News"
-keywords = ["grafana", "news", "documentation", "panels", "news panel"]
-aliases = ["/docs/grafana/latest/panels/visualizations/news-graph/"]
-weight = 800
-+++
+---
+aliases:
+  - ../panels/visualizations/news-graph/
+keywords:
+  - grafana
+  - news
+  - documentation
+  - panels
+  - news panel
+title: News
+weight: 800
+---
 
 ## News
 

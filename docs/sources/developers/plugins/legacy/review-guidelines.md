@@ -1,7 +1,8 @@
-+++
-title = "Legacy review guidelines"
-aliases = ["/docs/grafana/latest/plugins/developing/plugin-review-guidelines/"]
-+++
+---
+aliases:
+  - ../../../plugins/developing/plugin-review-guidelines/
+title: Legacy review guidelines
+---
 
 # Legacy review guidelines
 

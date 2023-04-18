@@ -1,8 +1,9 @@
-+++
-title = "Edit a value mapping"
-weight = 60
-aliases = ["/docs/sources/panels/format-data/edit-value-mapping/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/format-data/edit-value-mapping/
+title: Edit a value mapping
+weight: 60
+---
 
 # Edit a value mapping
 

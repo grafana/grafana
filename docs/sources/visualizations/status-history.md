@@ -1,10 +1,15 @@
-+++
-title = "Status history"
-description = "Status history visualization"
-keywords = ["grafana", "docs", "status history", "panel"]
-aliases = ["/docs/grafana/latest/panels/visualizations/status-history/"]
-weight = 900
-+++
+---
+aliases:
+  - ../panels/visualizations/status-history/
+description: Status history visualization
+keywords:
+  - grafana
+  - docs
+  - status history
+  - panel
+title: Status history
+weight: 900
+---
 
 # Status history
 

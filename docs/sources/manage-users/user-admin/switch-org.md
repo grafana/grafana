@@ -1,8 +1,8 @@
-+++
-title = "Switch organization"
-description = "Change which organization you are logged in with"
-weight = 300
-+++
+---
+description: Change which organization you are logged in with
+title: Switch organization
+weight: 300
+---
 
 # Change the organization you are signed in to
 

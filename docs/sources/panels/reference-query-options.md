@@ -1,8 +1,9 @@
-+++
-title = "Reference: Query options"
-aliases = ["/docs/sources/panels/reference-query-options/"]
-weight = 900
-+++
+---
+aliases:
+  - /docs/sources/panels/reference-query-options/
+title: 'Reference: Query options'
+weight: 900
+---
 
 # Reference: Query options
 

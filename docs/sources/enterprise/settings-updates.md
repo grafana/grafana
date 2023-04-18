@@ -1,9 +1,12 @@
-+++
-title = "Settings updates at runtime"
-description = "Settings updates at runtime"
-keywords = ["grafana", "runtime", "settings"]
-weight = 500
-+++
+---
+description: Settings updates at runtime
+keywords:
+  - grafana
+  - runtime
+  - settings
+title: Settings updates at runtime
+weight: 500
+---
 
 # Settings updates at runtime
 

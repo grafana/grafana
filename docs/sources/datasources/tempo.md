@@ -1,10 +1,16 @@
-+++
-title = "Tempo"
-description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
-keywords = ["grafana", "tempo", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/tempo"]
-weight = 1400
-+++
+---
+aliases:
+  - ../features/datasources/tempo/
+description: High volume, minimal dependency trace storage. OSS tracing solution from
+  Grafana Labs.
+keywords:
+  - grafana
+  - tempo
+  - guide
+  - tracing
+title: Tempo
+weight: 1400
+---
 
 # Tempo data source
 

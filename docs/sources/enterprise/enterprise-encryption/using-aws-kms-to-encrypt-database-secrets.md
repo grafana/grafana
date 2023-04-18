@@ -1,9 +1,11 @@
-+++
-title = "AMS KMS"
-description = "Using AWS KMS to encrypt database secrets"
-keywords = ["grafana", "AWS KMS integration"]
-weight = 3
-+++
+---
+description: Using AWS KMS to encrypt database secrets
+keywords:
+  - grafana
+  - AWS KMS integration
+title: AMS KMS
+weight: 3
+---
 
 # Using AWS KMS to encrypt database secrets
 

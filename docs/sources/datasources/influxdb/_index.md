@@ -1,10 +1,16 @@
-+++
-title = "InfluxDB data source"
-description = "Guide for using InfluxDB in Grafana"
-keywords = ["grafana", "influxdb", "guide", "flux"]
-aliases = ["/docs/grafana/latest/features/datasources/influxdb", "/docs/grafana/latest/datasources/influxdb"]
-weight = 700
-+++
+---
+aliases:
+  - ../features/datasources/influxdb/
+  - /docs/grafana/latest/datasources/influxdb/
+description: Guide for using InfluxDB in Grafana
+keywords:
+  - grafana
+  - influxdb
+  - guide
+  - flux
+title: InfluxDB data source
+weight: 700
+---
 
 # InfluxDB data source
 

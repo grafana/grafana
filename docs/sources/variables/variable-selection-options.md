@@ -1,7 +1,7 @@
-+++
-title = "Variable selection options"
-weight = 400
-+++
+---
+title: Variable selection options
+weight: 400
+---
 
 # Configure variable selection options
 

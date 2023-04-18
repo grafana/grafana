@@ -1,9 +1,15 @@
-+++
-title = "TestData"
-keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
-aliases = ["/docs/grafana/latest/features/datasources/testdata"]
-weight = 1500
-+++
+---
+aliases:
+  - ../features/datasources/testdata/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - panels
+  - testdata
+title: TestData
+weight: 1500
+---
 
 # Grafana TestData DB
 

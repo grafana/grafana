@@ -1,8 +1,14 @@
-+++
-title = "Advanced variable format options"
-keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-weight = 600
-+++
+---
+keywords:
+  - grafana
+  - templating
+  - documentation
+  - guide
+  - template
+  - variable
+title: Advanced variable format options
+weight: 600
+---
 
 # Advanced variable format options
 

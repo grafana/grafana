@@ -1,6 +1,6 @@
-+++
-title = "Data frames"
-+++
+---
+title: Data frames
+---
 
 # Data frames
 

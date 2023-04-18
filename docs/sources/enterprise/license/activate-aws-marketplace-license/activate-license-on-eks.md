@@ -1,10 +1,17 @@
-+++
-title = "Activate a Grafana Enterprise license from AWS Marketplace on EKS"
-description = "Activate a Grafana Enterprise license from AWS Marketplace on EKS"
-keywords = ["grafana", "enterprise", "aws", "marketplace", "eks", "activate"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/activate-license-on-eks"]
-weight = 200
-+++
+---
+aliases:
+  - ../../activate-aws-marketplace-license/activate-license-on-eks/
+description: Activate a Grafana Enterprise license from AWS Marketplace on EKS
+keywords:
+  - grafana
+  - enterprise
+  - aws
+  - marketplace
+  - eks
+  - activate
+title: Activate a Grafana Enterprise license from AWS Marketplace on EKS
+weight: 200
+---
 
 # Activate a Grafana Enterprise license from AWS Marketplace on EKS
 

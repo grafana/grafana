@@ -1,8 +1,9 @@
-+++
-title = "Map a regular expression"
-weight = 40
-aliases = ["/docs/sources/panels/format-data/map-a-regular-expression/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/format-data/map-a-regular-expression/
+title: Map a regular expression
+weight: 40
+---
 
 # Map a regular expression
 

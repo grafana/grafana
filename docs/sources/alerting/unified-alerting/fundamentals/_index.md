@@ -1,8 +1,9 @@
-+++
-title = "Alerting fundamentals"
-aliases = ["/docs/grafana/latest/alerting/metrics/"]
-weight = 120
-+++
+---
+aliases:
+  - ../metrics/
+title: Alerting fundamentals
+weight: 120
+---
 
 # Alerting fundamentals
 

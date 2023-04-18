@@ -1,9 +1,15 @@
-+++
-title = "Contact points"
-description = "Create or edit contact point"
-keywords = ["grafana", "alerting", "guide", "contact point", "notification channel", "create"]
-weight = 430
-+++
+---
+description: Create or edit contact point
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - contact point
+  - notification channel
+  - create
+title: Contact points
+weight: 430
+---
 
 # Contact points
 

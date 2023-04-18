@@ -1,9 +1,14 @@
-+++
-title = "Monitoring the image renderer"
-description = "Image rendering monitoring"
-keywords = ["grafana", "image", "rendering", "plugin", "monitoring"]
-weight = 100
-+++
+---
+description: Image rendering monitoring
+keywords:
+  - grafana
+  - image
+  - rendering
+  - plugin
+  - monitoring
+title: Monitoring the image renderer
+weight: 100
+---
 
 # Monitoring the image renderer
 

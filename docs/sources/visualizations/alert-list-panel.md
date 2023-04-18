@@ -1,9 +1,17 @@
-+++
-title = "Alert list"
-keywords = ["grafana", "alert list", "documentation", "panel", "alertlist"]
-aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/", "/docs/grafana/latest/panels/visualizations/alert-list-panel/"]
-weight = 100
-+++
+---
+aliases:
+  - ../features/panels/alertlist/
+  - ../panels/visualizations/alert-list-panel/
+  - ../reference/alertlist/
+keywords:
+  - grafana
+  - alert list
+  - documentation
+  - panel
+  - alertlist
+title: Alert list
+weight: 100
+---
 
 # Alert list
 

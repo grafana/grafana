@@ -1,8 +1,9 @@
-+++
-title = "Add a field override"
-weight = 30
-aliases = ["/docs/sources/panels/override-field-values/add-a-field-override/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/override-field-values/add-a-field-override/
+title: Add a field override
+weight: 30
+---
 
 # Add a field override
 

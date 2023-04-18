@@ -1,7 +1,8 @@
-+++
-title = "Copyright notice"
-aliases = ["/docs/grafana/next/copyright-notice"]
-+++
+---
+aliases:
+  - /docs/grafana/next/copyright-notice/
+title: Copyright notice
+---
 
 # Copyright notice
 

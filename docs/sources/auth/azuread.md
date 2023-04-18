@@ -1,9 +1,13 @@
-+++
-title = "Azure AD OAuth2 authentication"
-description = "Grafana Azure AD OAuth Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-weight = 700
-+++
+---
+description: 'Grafana Azure AD OAuth Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: Azure AD OAuth2 authentication
+weight: 700
+---
 
 # Azure AD OAuth2 authentication
 

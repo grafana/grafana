@@ -1,10 +1,15 @@
-+++
-title = "Alert notifications"
-description = "Alerting notifications guide"
-keywords = ["Grafana", "alerting", "guide", "notifications"]
-weight = 100
-aliases = ["/docs/grafana/latest/alerting/notifications/"]
-+++
+---
+aliases:
+  - ../notifications/
+description: Alerting notifications guide
+keywords:
+  - Grafana
+  - alerting
+  - guide
+  - notifications
+title: Alert notifications
+weight: 100
+---
 
 # Alert notifications
 

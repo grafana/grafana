@@ -1,8 +1,9 @@
-+++
-title = "Configure a legend"
-aliases = ["/docs/sources/panels/working-with-panels/configure-legend/"]
-weight = 70
-+++
+---
+aliases:
+  - /docs/sources/panels/working-with-panels/configure-legend/
+title: Configure a legend
+weight: 70
+---
 
 # Configure a legend
 

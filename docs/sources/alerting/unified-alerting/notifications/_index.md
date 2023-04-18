@@ -1,9 +1,14 @@
-+++
-title = "Notification policies"
-description = "Notification policies"
-keywords = ["grafana", "alerting", "guide", "notification policies", "routes"]
-weight = 450
-+++
+---
+description: Notification policies
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - notification policies
+  - routes
+title: Notification policies
+weight: 450
+---
 
 # Notification policies
 

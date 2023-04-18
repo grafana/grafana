@@ -1,9 +1,14 @@
-+++
-title = "Fine-grained access control"
-description = "Grant, change, or revoke access to Grafana resources"
-keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "enterprise"]
-weight = 100
-+++
+---
+description: Grant, change, or revoke access to Grafana resources
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - permissions
+  - enterprise
+title: Fine-grained access control
+weight: 100
+---
 
 # Fine-grained access control
 

@@ -1,9 +1,14 @@
-+++
-title = "Dashboard links"
-description = ""
-keywords = ["grafana", "linking", "create links", "link dashboards", "navigate"]
-weight = 200
-+++
+---
+description: ''
+keywords:
+  - grafana
+  - linking
+  - create links
+  - link dashboards
+  - navigate
+title: Dashboard links
+weight: 200
+---
 
 # Dashboard links
 

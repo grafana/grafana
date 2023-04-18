@@ -1,8 +1,9 @@
-+++
-title = "Add a constant variable"
-aliases = ["/docs/grafana/latest/variables/add-constant-variable.md"]
-weight = 400
-+++
+---
+aliases:
+  - ../add-constant-variable.md/
+title: Add a constant variable
+weight: 400
+---
 
 # Add a constant variable
 

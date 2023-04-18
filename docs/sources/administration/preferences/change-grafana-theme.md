@@ -1,9 +1,13 @@
-+++
-title = "Change UI theme"
-description = "How to set the Grafana UI theme"
-keywords = ["grafana", "configuration", "documentation", "home"]
-weight = 200
-+++
+---
+description: How to set the Grafana UI theme
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - home
+title: Change UI theme
+weight: 200
+---
 
 # Change Grafana UI theme
 

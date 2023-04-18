@@ -1,8 +1,9 @@
-+++
-title = "Introduction to Grafana"
-weight = 5
-aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
-+++
+---
+aliases:
+  - guides/what-is-grafana/
+title: Introduction to Grafana
+weight: 5
+---
 
 # Introduction to Grafana
 

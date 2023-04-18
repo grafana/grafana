@@ -1,7 +1,8 @@
-+++
-title = "Build a plugin"
-aliases = ["/docs/grafana/latest/plugins/developing/"]
-+++
+---
+aliases:
+  - ../plugins/developing/
+title: Build a plugin
+---
 
 # Build a plugin
 

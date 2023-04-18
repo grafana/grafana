@@ -1,8 +1,9 @@
-+++
-title = "Download query results"
-aliases = ["/docs/sources/panels/working-with-panels/download-query-results/"]
-weight = 110
-+++
+---
+aliases:
+  - /docs/sources/panels/working-with-panels/download-query-results/
+title: Download query results
+weight: 110
+---
 
 # Download query results
 

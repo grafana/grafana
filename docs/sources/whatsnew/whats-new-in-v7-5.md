@@ -1,12 +1,18 @@
-+++
-title = "What's new in Grafana v7.5"
-description = "Feature and improvement highlights for Grafana v7.5"
-keywords = ["grafana", "new", "documentation", "7.5", "release notes"]
-weight = -32
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-5/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - ../guides/whats-new-in-v7-5/
+description: Feature and improvement highlights for Grafana v7.5
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '7.5'
+  - release notes
+title: What's new in Grafana v7.5
+weight: -32
+---
 
 # What’s new in Grafana v7.5
 

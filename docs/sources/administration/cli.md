@@ -1,9 +1,13 @@
-+++
-title = "Grafana CLI"
-description = "Guide to using grafana-cli"
-keywords = ["grafana", "cli", "grafana-cli", "command line interface"]
-weight = 400
-+++
+---
+description: Guide to using grafana-cli
+keywords:
+  - grafana
+  - cli
+  - grafana-cli
+  - command line interface
+title: Grafana CLI
+weight: 400
+---
 
 # Grafana CLI
 

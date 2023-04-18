@@ -1,10 +1,13 @@
-+++
-title = "License expiration"
-description = ""
-keywords = ["grafana", "licensing"]
-aliases = ["/docs/grafana/latest/enterprise/license-expiration"]
-weight = 200
-+++
+---
+aliases:
+  - ../license-expiration/
+description: ''
+keywords:
+  - grafana
+  - licensing
+title: License expiration
+weight: 200
+---
 
 # License expiration
 

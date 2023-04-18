@@ -1,8 +1,9 @@
-+++
-title = "Create and manage rules"
-aliases = ["/docs/grafana/latest/alerting/rules/"]
-weight = 130
-+++
+---
+aliases:
+  - ../rules/
+title: Create and manage rules
+weight: 130
+---
 
 # Create and manage Grafana alerting rules
 

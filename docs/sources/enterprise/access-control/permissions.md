@@ -1,9 +1,14 @@
-+++
-title = "Permissions"
-description = "Understand fine-grained access control permissions"
-keywords = ["grafana", "fine-grained access-control", "roles", "permissions", "enterprise"]
-weight = 110
-+++
+---
+description: Understand fine-grained access control permissions
+keywords:
+  - grafana
+  - fine-grained access-control
+  - roles
+  - permissions
+  - enterprise
+title: Permissions
+weight: 110
+---
 
 # Permissions
 

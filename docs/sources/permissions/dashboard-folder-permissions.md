@@ -1,10 +1,18 @@
-+++
-title = "Dashboard and folder permissions"
-description = "Grafana Dashboard and Folder Permissions Guide "
-keywords = ["grafana", "configuration", "documentation", "dashboard", "folder", "permissions", "teams"]
-aliases = ["/docs/grafana/latest/permissions/dashboard_folder_permissions/"]
-weight = 200
-+++
+---
+aliases:
+  - dashboard_folder_permissions/
+description: 'Grafana Dashboard and Folder Permissions Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - dashboard
+  - folder
+  - permissions
+  - teams
+title: Dashboard and folder permissions
+weight: 200
+---
 
 # Grant dashboard and folder permissions
 

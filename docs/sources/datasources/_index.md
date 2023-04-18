@@ -1,8 +1,9 @@
-+++
-title = "Data sources"
-aliases = ["/docs/grafana/latest/datasources/overview/"]
-weight = 60
-+++
+---
+aliases:
+  - overview/
+title: Data sources
+weight: 60
+---
 
 # Data sources
 

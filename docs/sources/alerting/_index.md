@@ -1,7 +1,7 @@
-+++
-title = "Alerts"
-weight = 110
-+++
+---
+title: Alerts
+weight: 110
+---
 
 # Grafana alerts
 

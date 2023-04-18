@@ -1,9 +1,14 @@
-+++
-title = "Search"
-keywords = ["grafana", "dashboard", "documentation", "search"]
-aliases =["/docs/grafana/latest/reference/search/"]
-weight = 9
-+++
+---
+aliases:
+  - ../reference/search/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - search
+title: Search
+weight: 9
+---
 
 # Dashboard Search
 

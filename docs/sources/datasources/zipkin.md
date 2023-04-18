@@ -1,10 +1,15 @@
-+++
-title = "Zipkin"
-description = "Guide for using Zipkin in Grafana"
-keywords = ["grafana", "zipkin", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/datasources/zipkin"]
-weight = 1600
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/zipkin/
+description: Guide for using Zipkin in Grafana
+keywords:
+  - grafana
+  - zipkin
+  - guide
+  - tracing
+title: Zipkin
+weight: 1600
+---
 
 # Zipkin data source
 

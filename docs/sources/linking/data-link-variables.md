@@ -1,9 +1,16 @@
-+++
-title = "URL variables"
-keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
-aliases = ["/docs/grafana/latest/variables/url-variables.md","/docs/grafana/latest/variables/variable-types/url-variables.md"]
-weight = 400
-+++
+---
+aliases:
+  - ../variables/url-variables.md/
+  - ../variables/variable-types/url-variables.md/
+keywords:
+  - grafana
+  - url variables
+  - documentation
+  - variables
+  - data link
+title: URL variables
+weight: 400
+---
 
 # Data link variables
 

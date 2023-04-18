@@ -1,9 +1,12 @@
-+++
-title = "Requirements"
-description = "Requirements for Grafana"
-keywords = ["grafana", "installation", "documentation"]
-weight = 100
-+++
+---
+description: Requirements for Grafana
+keywords:
+  - grafana
+  - installation
+  - documentation
+title: Requirements
+weight: 100
+---
 
 # Grafana requirements
 

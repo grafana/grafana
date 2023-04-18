@@ -1,8 +1,9 @@
-+++
-title = "Configure repeating rows"
-weight = 30
-aliases = ["/docs/sources/panels/add-panels-dynamically/configure-repeating-rows/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/add-panels-dynamically/configure-repeating-rows/
+title: Configure repeating rows
+weight: 30
+---
 
 # Configure repeating rows
 

@@ -1,9 +1,12 @@
-+++
-title = "Grafana Enterprise license"
-description = "Enterprise license"
-keywords = ["grafana", "licensing", "enterprise"]
-weight = 10
-+++
+---
+description: Enterprise license
+keywords:
+  - grafana
+  - licensing
+  - enterprise
+title: Grafana Enterprise license
+weight: 10
+---
 
 # Grafana Enterprise license
 

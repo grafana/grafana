@@ -1,8 +1,13 @@
-+++
-title = "Data links"
-keywords = ["grafana", "data links", "documentation", "playlist"]
-aliases = ["/docs/grafana/latest/reference/datalinks/"]
-+++
+---
+aliases:
+  - ../reference/datalinks/
+keywords:
+  - grafana
+  - data links
+  - documentation
+  - playlist
+title: Data links
+---
 
 # Data links
 

@@ -1,8 +1,10 @@
-+++
-title = "Manage users"
-weight = 100
-aliases =["/docs/grafana/latest/manage-users/add-or-remove-user/","/docs/grafana/latest/manage-users/enable-or-disable-user/"]
-+++
+---
+aliases:
+  - ../add-or-remove-user/
+  - ../enable-or-disable-user/
+title: Manage users
+weight: 100
+---
 
 # Manage users as a Server Admin
 

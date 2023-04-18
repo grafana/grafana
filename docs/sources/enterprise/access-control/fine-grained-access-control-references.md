@@ -1,9 +1,16 @@
-+++
-title = "Fine-grained access control references"
-description = "Refer to fine-grained access control references"
-keywords = ["grafana", "fine-grained-access-control", "roles", "fixed-roles", "built-in-role-assignments", "permissions", "enterprise"]
-weight = 130
-+++
+---
+description: Refer to fine-grained access control references
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - fixed-roles
+  - built-in-role-assignments
+  - permissions
+  - enterprise
+title: Fine-grained access control references
+weight: 130
+---
 
 # Fine-grained access control references
 
