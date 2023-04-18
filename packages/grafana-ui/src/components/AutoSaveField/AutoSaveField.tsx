@@ -80,7 +80,6 @@ export function AutoSaveField<T = string>(props: Props<T>) {
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
   //We never want to pass false to field, because it won't be deleted with deleteUndefinedProps() being false
   const isInvalid = invalid || fieldState.showError || undefined;
-  const isLoading = loading || fieldState.isLoading || undefined;
   /**
    * use Field around input to pass the error message
    * use InlineToast.tsx to show the save message
@@ -104,7 +103,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
           })
         )}
       </Field>
-      {isLoading && (
+      {fieldState.isLoading && (
         <InlineToast referenceElement={fieldRef.current} placement="right" alternativePlacement="bottom">
           Saving <EllipsisAnimated />
         </InlineToast>
