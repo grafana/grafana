@@ -116,17 +116,6 @@ func newFSAllowList(files map[string]struct{}) fsAllowList {
 	return allowListCopy
 }
 
-// newFSAllowListFromAbsolute creates a new fsAllowList from a list of absolute paths.
-// All provided paths are not checked or altered in any way, so it's up to the caller to ensure they are
-// valid and secure (e.g.: they all are relative to the same base directory, if necessary).
-/* func newFSAllowListFromAbsolute(files map[string]struct{}) fsAllowList {
-	allowListCopy := fsAllowList(make(map[string]struct{}, len(files)))
-	for k := range files {
-		allowListCopy[k] = struct{}{}
-	}
-	return allowListCopy
-} */
-
 // AllowListFS wraps an FS and allows accessing only the files in the allowList.
 // This is a more secure implementation of FS suitable for production environments.
 type AllowListFS struct {
@@ -146,24 +135,9 @@ func NewAllowListFS(allowList map[string]struct{}, fs FS) AllowListFS {
 	}
 }
 
-// absolutePath returns the absolute path from a relative path.
-// The relative path is cleaned and then appended to f.Base().
-// This can be used to retrieve the key that is used by f.allowList.
-/* func (f AllowListFS) absolutePath(relPath string) (string, error) {
-	cleanRelativePath, err := util.CleanRelativePath(relPath)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(f.Base(), cleanRelativePath), nil
-} */
-
 // Open checks that name is an allowed file and returns a fs.File to access it.
 func (f AllowListFS) Open(name string) (fs.File, error) {
 	// Ensure access to the file is allowed
-	/* k, err := f.absolutePath(name)
-	if err != nil {
-		return nil, err
-	} */
 	if !f.allowList.isAllowed(name) {
 		return nil, ErrFileNotExist
 	}

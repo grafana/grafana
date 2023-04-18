@@ -1476,39 +1476,3 @@ func mustNewTestFSWithCollect(t *testing.T, dir string) plugins.FS {
 	}))
 	return plugins.NewAllowListLocalFSForTests(dir, files...)
 }
-
-/* func filesInDir(t *testing.T, dir string) map[string]struct{} {
-	files, err := collectFilesWithin(dir)
-	if err != nil {
-		t.Logf("Could not collect plugin file info. Err: %v", err)
-		return map[string]struct{}{}
-	}
-	return files
-}
-
-func collectFilesWithin(dir string) (map[string]struct{}, error) {
-	files := map[string]struct{}{}
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// skip directories
-		if info.IsDir() {
-			return nil
-		}
-
-		// verify that file is within plugin directory
-		//file, err := filepath.Rel(dir, path)
-		//if err != nil {
-		//	return err
-		//}
-		//if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
-		//	return fmt.Errorf("file '%s' not inside of plugin directory", file)
-		//}
-
-		files[path] = struct{}{}
-		return nil
-	})
-	return files, err
-} */
