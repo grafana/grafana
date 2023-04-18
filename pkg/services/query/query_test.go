@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -446,7 +447,7 @@ func setup(t *testing.T) *testContext {
 		DataSources:           nil,
 		SimulatePluginFailure: false,
 	}
-	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService, &featuremgmt.FeatureManager{})
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest())
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,

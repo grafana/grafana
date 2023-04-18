@@ -25,44 +25,45 @@ import (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	pluginFinder       finder.Finder
-	processManager     process.Service
-	pluginRegistry     registry.Service
-	roleRegistry       plugins.RoleRegistry
-	pluginInitializer  initializer.Initializer
-	signatureValidator signature.Validator
-	pluginStorage      storage.Manager
-	assetPath          *assetpath.Service
-	log                log.Logger
-	cfg                *config.Cfg
-
-	errs map[string]*plugins.SignatureError
+	pluginFinder        finder.Finder
+	processManager      process.Service
+	pluginRegistry      registry.Service
+	roleRegistry        plugins.RoleRegistry
+	pluginInitializer   initializer.Initializer
+	signatureValidator  signature.Validator
+	signatureCalculator plugins.SignatureCalculator
+	pluginStorage       storage.Manager
+	assetPath           *assetpath.Service
+	log                 log.Logger
+	cfg                 *config.Cfg
+	errs                map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service) *Loader {
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, assetPath,
-		pluginFinder)
+		pluginFinder, signatureCalculator)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return &Loader{
-		pluginFinder:       pluginFinder,
-		pluginRegistry:     pluginRegistry,
-		pluginInitializer:  initializer.New(cfg, backendProvider, license),
-		signatureValidator: signature.NewValidator(authorizer),
-		processManager:     processManager,
-		pluginStorage:      pluginStorage,
-		errs:               make(map[string]*plugins.SignatureError),
-		log:                log.New("plugin.loader"),
-		roleRegistry:       roleRegistry,
-		cfg:                cfg,
-		assetPath:          assetPath,
+		pluginFinder:        pluginFinder,
+		pluginRegistry:      pluginRegistry,
+		pluginInitializer:   initializer.New(cfg, backendProvider, license),
+		signatureValidator:  signature.NewValidator(authorizer),
+		signatureCalculator: signatureCalculator,
+		processManager:      processManager,
+		pluginStorage:       pluginStorage,
+		errs:                make(map[string]*plugins.SignatureError),
+		log:                 log.New("plugin.loader"),
+		roleRegistry:        roleRegistry,
+		cfg:                 cfg,
+		assetPath:           assetPath,
 	}
 }
 
@@ -77,13 +78,14 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 
 func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
+
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 			continue
 		}
 
-		sig, err := signature.Calculate(ctx, l.log, src, p.Primary)
+		sig, err := l.signatureCalculator.Calculate(ctx, src, p.Primary)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue
@@ -141,11 +143,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		// verify module.js exists for SystemJS to load.
 		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			_, err := plugin.FS.Open("module.js")
+			f, err := plugin.FS.Open("module.js")
 			if err != nil {
 				if errors.Is(err, plugins.ErrFileNotExist) {
 					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
+				}
+			} else if f != nil {
+				if err := f.Close(); err != nil {
+					l.log.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
 				}
 			}
 		}

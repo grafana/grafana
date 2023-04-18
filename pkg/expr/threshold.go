@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type ThresholdCommand struct {
@@ -89,7 +90,7 @@ func (tc *ThresholdCommand) NeedsVars() []string {
 	return []string{tc.ReferenceVar}
 }
 
-func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars) (mathexp.Results, error) {
+func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	mathExpression, err := createMathExpression(tc.ReferenceVar, tc.ThresholdFunc, tc.Conditions)
 	if err != nil {
 		return mathexp.Results{}, err
@@ -100,7 +101,7 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 		return mathexp.Results{}, err
 	}
 
-	return mathCommand.Execute(ctx, now, vars)
+	return mathCommand.Execute(ctx, now, vars, tracer)
 }
 
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression

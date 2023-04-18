@@ -154,4 +154,4 @@ Click the **Live** button in the Explore toolbar to switch to Live tail view.
 
 While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
 
-{{< figure src="/static/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+{{< video-embed src="/static/img/docs/v95/explore_live_tailing.mp4" >}}

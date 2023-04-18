@@ -31,6 +31,7 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -40,7 +41,6 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '../../../features/logs/components/log-context/types';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
@@ -75,7 +75,6 @@ import {
   isValidQuery,
   requestSupportsSplitting,
 } from './queryUtils';
-import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -99,7 +98,7 @@ export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
 const NS_IN_MS = 1000000;
 
-function makeRequest(
+export function makeRequest(
   query: LokiQuery,
   range: TimeRange,
   app: CoreApp,
@@ -148,7 +147,7 @@ export class LokiDatasource
       QueryEditor: LokiAnnotationsQueryEditor,
     };
     this.variables = new LokiVariableSupport(this);
-    this.logContextProvider = new LogContextProvider(this.languageProvider);
+    this.logContextProvider = new LogContextProvider(this);
   }
 
   getDataProvider(
@@ -420,7 +419,12 @@ export class LokiDatasource
     return res.data ?? (res || []);
   }
 
-  async getQueryStats(query: string): Promise<QueryStats> {
+  async getQueryStats(query: string): Promise<QueryStats | undefined> {
+    // if query is invalid, clear stats, and don't request
+    if (!isValidQuery(query)) {
+      return undefined;
+    }
+
     const { start, end } = this.getTimeRangeParams();
     const labelMatchers = getStreamSelectorsFromQuery(query);
 
@@ -646,81 +650,14 @@ export class LokiDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    options?: RowContextOptions,
+    options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    const direction = (options && options.direction) || 'BACKWARD';
-    const limit = (options && options.limit) || 10;
-    const { query, range } = await this.logContextProvider.prepareLogRowContextQueryTarget(
-      row,
-      limit,
-      direction,
-      origQuery
-    );
-
-    const processDataFrame = (frame: DataFrame): DataFrame => {
-      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-      const cache = new FieldCache(frame);
-      const timestampField = cache.getFirstFieldOfType(FieldType.time);
-      const lineField = cache.getFirstFieldOfType(FieldType.string);
-      const idField = cache.getFieldByName('id');
-
-      if (timestampField === undefined || lineField === undefined || idField === undefined) {
-        // this should never really happen, but i want to keep typescript happy
-        return { ...frame, fields: [] };
-      }
-
-      return {
-        ...frame,
-        fields: [
-          {
-            ...timestampField,
-            name: 'ts',
-          },
-          {
-            ...lineField,
-            name: 'line',
-          },
-          {
-            ...idField,
-            name: 'id',
-          },
-        ],
-      };
-    };
-
-    const processResults = (result: DataQueryResponse): DataQueryResponse => {
-      const frames: DataFrame[] = result.data;
-      const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, SortDirection.Descending))
-        .map((frame) => processDataFrame(frame)); // rename fields if needed
-
-      return {
-        ...result,
-        data: processedFrames,
-      };
-    };
-
-    // this can only be called from explore currently
-    const app = CoreApp.Explore;
-
-    return lastValueFrom(
-      this.query(makeRequest(query, range, app, `${REF_ID_STARTER_LOG_ROW_CONTEXT}${direction}`)).pipe(
-        catchError((err) => {
-          const error: DataQueryError = {
-            message: 'Error during context query. Please check JS console logs.',
-            status: err.status,
-            statusText: err.statusText,
-          };
-          throw error;
-        }),
-        switchMap((res) => of(processResults(res)))
-      )
-    );
+    return await this.logContextProvider.getLogRowContext(row, options, origQuery);
   };
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery);
+  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, origQuery);
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
@@ -734,11 +671,11 @@ export class LokiDatasource
     return this.metadataRequest('labels', params).then(
       (values) => {
         return values.length > 0
-          ? { status: 'success', message: 'Data source connected and labels found.' }
+          ? { status: 'success', message: 'Data source successfully connected.' }
           : {
               status: 'error',
               message:
-                'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+                'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
             };
       },
       (err) => {
@@ -749,7 +686,7 @@ export class LokiDatasource
         // because those will only describe how the request between browser<>server failed
         const info: string = err?.data?.message ?? '';
         const infoInParentheses = info !== '' ? ` (${info})` : '';
-        const message = `Unable to fetch labels from Loki${infoInParentheses}, please check the server logs for more details`;
+        const message = `Unable to connect with Loki${infoInParentheses}. Please check the server logs for more details.`;
         return { status: 'error', message: message };
       }
     );

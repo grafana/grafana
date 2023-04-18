@@ -1,13 +1,17 @@
 import { Vector } from '../types';
 
+import { FunctionalVector } from './FunctionalVector';
 import { vectorToArray } from './vectorToArray';
 
 /**
  * RowVector makes the row values look like a vector
  * @internal
+ * @deprecated use a simple Arrays
  */
-export class RowVector implements Vector {
-  constructor(private columns: Vector[]) {}
+export class RowVector extends FunctionalVector<number> {
+  constructor(private columns: Vector[]) {
+    super();
+  }
 
   rowIndex = 0;
 

@@ -64,9 +64,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const matrixValues: { [key: string]: { [key: string]: any } } = {};
 
         for (let index = 0; index < valueField.values.length; index++) {
-          const columnName = keyColumnField.values.get(index);
-          const rowName = keyRowField.values.get(index);
-          const value = valueField.values.get(index);
+          const columnName = keyColumnField.values[index];
+          const rowName = keyRowField.values[index];
+          const value = valueField.values[index];
 
           if (!matrixValues[columnName]) {
             matrixValues[columnName] = {};
@@ -115,7 +115,7 @@ function uniqueValues(values: Vector): any[] {
   const unique = new Set();
 
   for (let index = 0; index < values.length; index++) {
-    unique.add(values.get(index));
+    unique.add(values[index]);
   }
 
   return Array.from(unique);
