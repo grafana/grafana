@@ -3,7 +3,7 @@ import { BinaryOperation } from '../utils/binaryOperators';
 
 /**
  * @public
- * @deprecated use a simple Arrays
+ * @deprecated use a simple Arrays.  NOTE: Not used in grafana core
  */
 export class BinaryOperationVector extends Array<number> {
   constructor(left: Vector<number>, right: Vector<number>, operation: BinaryOperation) {

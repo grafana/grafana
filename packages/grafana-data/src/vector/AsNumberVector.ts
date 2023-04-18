@@ -4,7 +4,7 @@ import { Vector } from '../types';
  * This will force all values to be numbers
  *
  * @public
- * @deprecated use a simple Arrays
+ * @deprecated use a simple Arrays.  NOTE: Not used in grafana core
  */
 export class AsNumberVector extends Array<number> {
   constructor(field: Vector) {

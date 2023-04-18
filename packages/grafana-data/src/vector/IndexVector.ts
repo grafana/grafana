@@ -5,7 +5,7 @@ import { Field, FieldType } from '../types';
  * for each element in the vector.  It is functionally equivolant a vector backed
  * by an array with values: `[0,1,2,...,length-1]`
  *
- * @deprecated use a simple Arrays
+ * @deprecated use a simple Arrays.  NOTE: not used in grafana core
  */
 export class IndexVector extends Array<number> {
   constructor(len: number) {
@@ -19,6 +19,8 @@ export class IndexVector extends Array<number> {
 
   /**
    * Returns a field representing the range [0 ... length-1]
+   *
+   * @deprecated
    */
   static newField(len: number): Field<number> {
     return {
