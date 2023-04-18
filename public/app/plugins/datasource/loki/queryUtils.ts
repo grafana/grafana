@@ -17,8 +17,6 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
-  Nre,
-  Neq,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
@@ -33,7 +31,7 @@ export function formatQuery(selector: string | undefined): string {
 
 /**
  * Returns search terms from a LogQL query.
- * E.g.: `{} |= foo |=bar != baz` returns `['foo', 'bar', '-baz']`.
+ * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
  */
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
   const results = [];
@@ -51,10 +49,9 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   for (let filter of filters) {
     const pipeExact = filter.getChild(Filter)?.getChild(PipeExact);
     const pipeMatch = filter.getChild(Filter)?.getChild(PipeMatch);
-    const negativeExp = filter.getChild(Filter)?.getChild(Neq) || filter.getChild(Filter)?.getChild(Nre);
     const string = filter.getChild(String);
 
-    if ((!pipeExact && !pipeMatch && !negativeExp) || !string) {
+    if ((!pipeExact && !pipeMatch) || !string) {
       continue;
     }
 
@@ -79,7 +76,7 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     }
 
     if (resultTerm) {
-      results.push(negativeExp ? `-${resultTerm}` : resultTerm);
+      results.push(resultTerm);
     }
   }
   return results;

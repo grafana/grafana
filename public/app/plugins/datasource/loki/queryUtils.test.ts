@@ -63,10 +63,6 @@ describe('getHighlighterExpressionsFromQuery', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" |~ `y`')).toEqual(['x', 'y']);
   });
 
-  it('returns expressions for query with negative filter chain using both backticks and quotes', () => {
-    expect(getHighlighterExpressionsFromQuery('{foo="bar"} != "x" !~ `y`')).toEqual(['-x', '-y']);
-  });
-
   it('returns expression for query with log parser', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" | logfmt')).toEqual(['x']);
   });
@@ -75,8 +71,8 @@ describe('getHighlighterExpressionsFromQuery', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" |~ "y" | logfmt')).toEqual(['x', 'y']);
   });
 
-  it('returns expressions for query with negative filter chain using quotes', () => {
-    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" != "y"')).toEqual(['x', '-y']);
+  it('returns drops expressions for query with negative filter chain using quotes', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" != "y"')).toEqual(['x']);
   });
 
   it('returns expressions for query with filter chain using backticks', () => {
