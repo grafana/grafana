@@ -82,10 +82,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
           defaultUrl="http://localhost:8080"
           dataSourceConfig={options}
           onChange={onOptionsChange}
+          secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
         />
-        {config.secureSocksDSProxyEnabled && (
-          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-        )}
         <h3 className="page-heading">Graphite details</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
