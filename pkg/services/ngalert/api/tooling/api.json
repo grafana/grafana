@@ -299,6 +299,10 @@
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
+    "activeAt": {
+     "format": "date-time",
+     "type": "string"
+    },
     "alerts": {
      "items": {
       "$ref": "#/definitions/Alert"
@@ -339,6 +343,13 @@
      "description": "State can be \"pending\", \"firing\", \"inactive\".",
      "type": "string"
     },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
+    },
     "type": {
      "$ref": "#/definitions/RuleType"
     }
@@ -350,7 +361,7 @@
     "type",
     "state",
     "annotations",
-    "alerts"
+    "activeAt"
    ],
    "type": "object"
   },
@@ -2059,6 +2070,18 @@
    "title": "Point represents a single data point for a given timestamp.",
    "type": "object"
   },
+  "PostableAlerts": {
+   "properties": {
+    "PostableAlerts": {
+     "description": "in:body",
+     "items": {
+      "$ref": "#/definitions/postableAlert"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "PostableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -2845,6 +2868,13 @@
       "$ref": "#/definitions/RuleGroup"
      },
      "type": "array"
+    },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
     }
    },
    "required": [
@@ -2878,6 +2908,13 @@
       "$ref": "#/definitions/AlertingRule"
      },
      "type": "array"
+    },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
     }
    },
    "required": [
@@ -3343,6 +3380,59 @@
    },
    "type": "object"
   },
+  "TestTemplatesConfigBodyParams": {
+   "properties": {
+    "alerts": {
+     "$ref": "#/definitions/PostableAlerts"
+    },
+    "name": {
+     "type": "string"
+    },
+    "template": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesErrorResult": {
+   "properties": {
+    "kind": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesResult": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "text": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesResults": {
+   "properties": {
+    "errors": {
+     "items": {
+      "$ref": "#/definitions/TestTemplatesErrorResult"
+     },
+     "type": "array"
+    },
+    "results": {
+     "items": {
+      "$ref": "#/definitions/TestTemplatesResult"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Threshold": {
    "description": "Threshold a single step on the threshold list",
    "properties": {
@@ -3432,6 +3522,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3467,7 +3558,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "Userinfo": {
@@ -3668,7 +3759,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3773,7 +3863,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3835,7 +3924,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3884,7 +3972,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4073,6 +4160,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",

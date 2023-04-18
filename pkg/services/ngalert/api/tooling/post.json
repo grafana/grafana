@@ -299,6 +299,10 @@
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
+    "activeAt": {
+     "format": "date-time",
+     "type": "string"
+    },
     "alerts": {
      "items": {
       "$ref": "#/definitions/Alert"
@@ -339,6 +343,13 @@
      "description": "State can be \"pending\", \"firing\", \"inactive\".",
      "type": "string"
     },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
+    },
     "type": {
      "$ref": "#/definitions/RuleType"
     }
@@ -350,7 +361,7 @@
     "type",
     "state",
     "annotations",
-    "alerts"
+    "activeAt"
    ],
    "type": "object"
   },
@@ -2059,6 +2070,18 @@
    "title": "Point represents a single data point for a given timestamp.",
    "type": "object"
   },
+  "PostableAlerts": {
+   "properties": {
+    "PostableAlerts": {
+     "description": "in:body",
+     "items": {
+      "$ref": "#/definitions/postableAlert"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "PostableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -2845,6 +2868,13 @@
       "$ref": "#/definitions/RuleGroup"
      },
      "type": "array"
+    },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
     }
    },
    "required": [
@@ -2878,6 +2908,13 @@
       "$ref": "#/definitions/AlertingRule"
      },
      "type": "array"
+    },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
     }
    },
    "required": [
@@ -3343,6 +3380,59 @@
    },
    "type": "object"
   },
+  "TestTemplatesConfigBodyParams": {
+   "properties": {
+    "alerts": {
+     "$ref": "#/definitions/PostableAlerts"
+    },
+    "name": {
+     "type": "string"
+    },
+    "template": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesErrorResult": {
+   "properties": {
+    "kind": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesResult": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "text": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesResults": {
+   "properties": {
+    "errors": {
+     "items": {
+      "$ref": "#/definitions/TestTemplatesErrorResult"
+     },
+     "type": "array"
+    },
+    "results": {
+     "items": {
+      "$ref": "#/definitions/TestTemplatesResult"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Threshold": {
    "description": "Threshold a single step on the threshold list",
    "properties": {
@@ -3644,7 +3734,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3668,6 +3757,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3772,6 +3862,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3827,12 +3918,14 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3881,7 +3974,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4069,6 +4161,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4601,6 +4694,53 @@
      }
     },
     "summary": "Test Grafana managed receivers without saving them.",
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/config/api/v1/templates/test": {
+   "post": {
+    "operationId": "RoutePostTestGrafanaTemplates",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestTemplatesConfigBodyParams"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "TestTemplatesResults",
+      "schema": {
+       "$ref": "#/definitions/TestTemplatesResults"
+      }
+     },
+     "207": {
+      "description": "TestTemplatesResults",
+      "schema": {
+       "$ref": "#/definitions/TestTemplatesResults"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Test Grafana managed templates without saving them.",
     "tags": [
      "alertmanager"
     ]

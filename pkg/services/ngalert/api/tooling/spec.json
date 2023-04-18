@@ -435,6 +435,53 @@
         }
       }
     },
+    "/api/alertmanager/grafana/config/api/v1/templates/test": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "alertmanager"
+        ],
+        "summary": "Test Grafana managed templates without saving them.",
+        "operationId": "RoutePostTestGrafanaTemplates",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TestTemplatesConfigBodyParams"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TestTemplatesResults",
+            "schema": {
+              "$ref": "#/definitions/TestTemplatesResults"
+            }
+          },
+          "207": {
+            "description": "TestTemplatesResults",
+            "schema": {
+              "$ref": "#/definitions/TestTemplatesResults"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
+            }
+          }
+        }
+      }
+    },
     "/api/alertmanager/grafana/config/history": {
       "get": {
         "description": "gets Alerting configurations that were successfully applied in the past",
@@ -3016,9 +3063,13 @@
         "type",
         "state",
         "annotations",
-        "alerts"
+        "activeAt"
       ],
       "properties": {
+        "activeAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "alerts": {
           "type": "array",
           "items": {
@@ -3058,6 +3109,13 @@
         "state": {
           "description": "State can be \"pending\", \"firing\", \"inactive\".",
           "type": "string"
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
         },
         "type": {
           "$ref": "#/definitions/RuleType"
@@ -4773,6 +4831,18 @@
         }
       }
     },
+    "PostableAlerts": {
+      "type": "object",
+      "properties": {
+        "PostableAlerts": {
+          "description": "in:body",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/postableAlert"
+          }
+        }
+      }
+    },
     "PostableApiAlertingConfig": {
       "type": "object",
       "properties": {
@@ -5563,6 +5633,13 @@
           "items": {
             "$ref": "#/definitions/RuleGroup"
           }
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -5598,6 +5675,13 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertingRule"
+          }
+        },
+        "totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }
@@ -6057,6 +6141,59 @@
         }
       }
     },
+    "TestTemplatesConfigBodyParams": {
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "$ref": "#/definitions/PostableAlerts"
+        },
+        "name": {
+          "type": "string"
+        },
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "TestTemplatesErrorResult": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "TestTemplatesResult": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "TestTemplatesResults": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestTemplatesErrorResult"
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestTemplatesResult"
+          }
+        }
+      }
+    },
     "Threshold": {
       "description": "Threshold a single step on the threshold list",
       "type": "object",
@@ -6358,7 +6495,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -6383,6 +6519,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6488,6 +6625,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -6544,6 +6682,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6551,6 +6690,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6600,7 +6740,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -6791,6 +6930,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
