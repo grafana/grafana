@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/team/
 description: Grafana Team HTTP API
 keywords:
   - grafana

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/reporting/
 description: Grafana Enterprise APIs
 keywords:
   - grafana

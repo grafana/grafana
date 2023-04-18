@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/alerting/
 description: Grafana Alerts HTTP API
 keywords:
   - grafana
