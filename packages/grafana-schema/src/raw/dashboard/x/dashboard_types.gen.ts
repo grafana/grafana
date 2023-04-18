@@ -72,12 +72,9 @@ export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
  */
 export interface AnnotationQuery {
   /**
-   * TODO: Should be DataSourceRef
+   * Datasource
    */
-  datasource: {
-    type?: string;
-    uid?: string;
-  };
+  datasource: DataSourceRef;
   /**
    * When enabled the annotation query is issued with every dashboard refresh
    */
@@ -633,7 +630,7 @@ export interface FieldConfig {
   /**
    * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
-   * 
+   *
    * When defined, this value can be used as an identifier within the datasource scope, and
    * may be used to update the results
    */

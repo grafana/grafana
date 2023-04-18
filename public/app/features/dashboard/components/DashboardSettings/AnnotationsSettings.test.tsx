@@ -74,21 +74,11 @@ describe('AnnotationsSettings', () => {
   });
 
   beforeEach(() => {
+    // we have a default build-in annotation
     dashboard = createDashboardModelFixture({
       id: 74,
       version: 7,
-      annotations: {
-        list: [
-          {
-            datasource: { uid: 'uid1', type: 'grafana' },
-            enable: true,
-            hide: true,
-            iconColor: 'rgba(0, 211, 255, 1)',
-            name: 'Annotations & Alerts',
-            type: 'dashboard',
-          },
-        ],
-      },
+      annotations: {},
       links: [],
     });
   });
@@ -97,7 +87,8 @@ describe('AnnotationsSettings', () => {
     setup(dashboard);
 
     expect(screen.queryByRole('grid')).toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /annotations & alerts \(built-in\) -- grafana --/i })).toBeInTheDocument();
+
     expect(
       screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
@@ -194,10 +185,10 @@ describe('AnnotationsSettings', () => {
   test('Adding a new annotation', async () => {
     setup(dashboard);
 
-    await userEvent.click(screen.getByRole('button', { name: /new query/i }));
+    await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
 
-    expect(locationService.getSearchObject().editIndex).toBe('2');
-    expect(dashboard.annotations.list.length).toBe(3);
+    expect(locationService.getSearchObject().editIndex).toBe('1');
+    expect(dashboard.annotations.list.length).toBe(2);
   });
 
   test('Editing annotation', async () => {
@@ -208,7 +199,7 @@ describe('AnnotationsSettings', () => {
       enable: true,
     });
 
-    setup(dashboard, 2);
+    setup(dashboard, 1);
 
     const nameInput = screen.getByRole('textbox', { name: /name/i });
     await userEvent.clear(nameInput);
@@ -242,6 +233,6 @@ describe('AnnotationsSettings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(locationService.getSearchObject().editIndex).toBe(undefined);
-    expect(dashboard.annotations.list.length).toBe(2); // started with three
+    expect(dashboard.annotations.list.length).toBe(1); // started with two
   });
 });
