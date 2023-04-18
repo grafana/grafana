@@ -114,10 +114,10 @@ func (a fsAllowList) isAllowed(path string) bool {
 }
 
 // newFSAllowList creates a new fsAllowList from a list of allowed file paths.
-func newFSAllowList(files map[string]struct{}) fsAllowList {
+func newFSAllowList(files ...string) fsAllowList {
 	// Clean and convert all relative paths to absolute
 	allowListCopy := fsAllowList(make(map[string]struct{}, len(files)))
-	for k := range files {
+	for _, k := range files {
 		allowListCopy[k] = struct{}{}
 	}
 	return allowListCopy
@@ -137,10 +137,10 @@ type AllowListFS struct {
 // NewAllowListFS returns a new AllowListFS that can access the files in the specified base path on
 // an underlying FS, but only if they are also specified in the provided allowList.
 // The keys of the allow list must be in the same format used by the underlying FS' "Open()" method.
-func NewAllowListFS(allowList map[string]struct{}, fs FS) AllowListFS {
+func NewAllowListFS(fs FS, allowList ...string) AllowListFS {
 	return AllowListFS{
 		FS:        fs,
-		allowList: newFSAllowList(allowList),
+		allowList: newFSAllowList(allowList...),
 	}
 }
 
@@ -193,12 +193,7 @@ func (f allowListFSNoFiles) Files() ([]string, error) {
 
 // NewAllowListLocalFSForTests returns a new allowListFSNoFiles (as FS) wrapping a NewLocalFS using a no-op function.
 func NewAllowListLocalFSForTests(dir string, files ...string) FS {
-	// Create allow-list from slice
-	m := make(map[string]struct{}, len(files))
-	for _, k := range files {
-		m[k] = struct{}{}
-	}
-	return allowListFSNoFiles(NewAllowListFS(m, NewLocalFS(dir, emptyCollectFilesFunc)))
+	return allowListFSNoFiles(NewAllowListFS(NewLocalFS(dir, emptyCollectFilesFunc), files...))
 }
 
 // LocalFile implements a fs.File for accessing the local filesystem.

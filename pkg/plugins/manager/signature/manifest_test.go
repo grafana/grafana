@@ -297,12 +297,8 @@ type fsPathSeparatorFiles struct {
 // the elements returned by Files(). Files and basePath MUST use the os-specific path separator (filepath.Separator)
 // if Open() is required to work for the test case.
 func newPathSeparatorOverrideFS(sep string, basePath string, files ...string) fsPathSeparatorFiles {
-	allowList := make(map[string]struct{})
-	for _, k := range files {
-		allowList[k] = struct{}{}
-	}
 	return fsPathSeparatorFiles{
-		FS:        plugins.NewAllowListFS(allowList, plugins.NewAllowListLocalFSForTests(basePath, files...)),
+		FS:        plugins.NewAllowListLocalFSForTests(basePath, files...),
 		separator: sep,
 	}
 }

@@ -100,12 +100,8 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			if err != nil {
 				return nil, err
 			}
-			allowList := make(map[string]struct{}, len(fsFiles))
-			for _, k := range fsFiles {
-				allowList[k] = struct{}{}
-			}
 			// Wrap FS with allow list
-			pluginFs = plugins.NewAllowListFS(allowList, pluginFs)
+			pluginFs = plugins.NewAllowListFS(pluginFs, fsFiles...)
 		}
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{

@@ -146,7 +146,7 @@ func TestLocalFile_Close(t *testing.T) {
 }
 
 func createDummyTempFile(dir, fn string) (err error) {
-	f, err := os.Create(filepath.Join(dir, fn))
+	f, err := os.Create(filepath.Join(dir, fn)) // nolint: gosec
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func TestAllowList(t *testing.T) {
 	}
 
 	localFS := NewLocalFS(tmp, nil)
-	allowFS := NewAllowListFS(map[string]struct{}{allowedFn: {}}, localFS)
+	allowFS := NewAllowListFS(localFS, allowedFn)
 
 	t.Run("open allowed", func(t *testing.T) {
 		f, err := allowFS.Open(allowedFn)
@@ -211,7 +211,7 @@ func TestAllowListFSNoFiles(t *testing.T) {
 		}
 	})
 	const fn = "allowed.txt"
-	afs := allowListFSNoFiles(NewAllowListFS(map[string]struct{}{fn: {}}, lfs))
+	afs := allowListFSNoFiles(NewAllowListFS(lfs, fn))
 	files, err := afs.Files()
 	require.NoError(t, err)
 	require.Equal(t, []string{fn}, files)
