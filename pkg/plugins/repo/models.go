@@ -14,7 +14,7 @@ type PluginDownloadOptions struct {
 
 // PluginRepo is (a subset of) the JSON response from /api/plugins/repo/$pluginID
 type PluginRepo struct {
-	Versions []Version `json:"version"`
+	Versions []Version `json:"versions"`
 }
 
 type Version struct {

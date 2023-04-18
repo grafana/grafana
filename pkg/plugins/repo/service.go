@@ -87,6 +87,7 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 
 // pluginVersions
 func (m *Manager) pluginVersions(pluginID, version string, compatOpts CompatOpts) ([]Version, error) {
+	// TODO simplify this (Do this before continuing on with tests)
 	if compatOpts.AnyGrafanaVersion() {
 		// if no explicit version requested, get latest version
 		if version == "" {
@@ -251,6 +252,8 @@ func (m *Manager) latestPluginVersionNumber(pluginID string) (string, error) {
 	return pv.Version, nil
 }
 
+// repoInfo will get version info from /api/plugins/repo/$pluginID based on
+// the provided compatibility information (sent via HTTP headers)
 func (m *Manager) repoInfo(pluginID string, compatOpts CompatOpts) (PluginRepo, error) {
 	u, err := url.Parse(m.cfg.BaseURL)
 	if err != nil {

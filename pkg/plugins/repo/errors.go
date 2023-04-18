@@ -3,34 +3,34 @@ package repo
 import "fmt"
 
 type ErrResponse4xx struct {
-	Message    string
-	StatusCode int
-	SystemInfo string
+	message    string
+	statusCode int
+	systemInfo string
 }
 
 func newErrResponse4xx(statusCode int) *ErrResponse4xx {
 	return &ErrResponse4xx{
-		StatusCode: statusCode,
+		statusCode: statusCode,
 	}
 }
 
 func (e *ErrResponse4xx) WithMessage(message string) *ErrResponse4xx {
-	e.Message = message
+	e.message = message
 	return e
 }
 func (e *ErrResponse4xx) WithSystemInfo(systemInfo string) *ErrResponse4xx {
-	e.SystemInfo = systemInfo
+	e.systemInfo = systemInfo
 	return e
 }
 
 func (e *ErrResponse4xx) Error() string {
-	if len(e.Message) > 0 {
-		if len(e.SystemInfo) > 0 {
-			return fmt.Sprintf("%s (%s)", e.Message, e.SystemInfo)
+	if len(e.message) > 0 {
+		if len(e.systemInfo) > 0 {
+			return fmt.Sprintf("%d: %s (%s)", e.statusCode, e.message, e.systemInfo)
 		}
-		return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
+		return fmt.Sprintf("%d: %s", e.statusCode, e.message)
 	}
-	return fmt.Sprintf("%d", e.StatusCode)
+	return fmt.Sprintf("%d", e.statusCode)
 }
 
 type ErrVersionUnsupported struct {
