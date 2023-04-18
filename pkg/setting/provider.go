@@ -97,7 +97,8 @@ type VerboseSettingsBag map[string]SettingsBag
 type SettingsRemovals map[string][]string
 
 const (
-	Value string = "value"
+	DB     string = "db"
+	System string = "system"
 )
 
 func ProvideProvider(cfg *Cfg) *OSSImpl {
@@ -130,7 +131,7 @@ func (o OSSImpl) CurrentVerbose() VerboseSettingsBag {
 		settingsCopy[section.Name()] = make(map[string]map[string]string)
 		for _, key := range section.Keys() {
 			settingsCopy[section.Name()][key.Name()] = make(map[string]string)
-			settingsCopy[section.Name()][key.Name()][Value] = RedactedValue(EnvKey(section.Name(), key.Name()), key.Value())
+			settingsCopy[section.Name()][key.Name()][System] = RedactedValue(EnvKey(section.Name(), key.Name()), key.Value())
 		}
 	}
 
