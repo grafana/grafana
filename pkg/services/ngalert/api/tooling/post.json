@@ -3371,15 +3371,18 @@
   "TestTemplatesConfigBodyParams": {
    "properties": {
     "alerts": {
+     "description": "Alerts to use as data when testing the template.",
      "items": {
       "$ref": "#/definitions/postableAlert"
      },
      "type": "array"
     },
     "name": {
+     "description": "Name of the template file.",
      "type": "string"
     },
     "template": {
+     "description": "Template string to test.",
      "type": "string"
     }
    },
@@ -3388,9 +3391,19 @@
   "TestTemplatesErrorResult": {
    "properties": {
     "kind": {
+     "description": "Kind of template error that occurred.",
+     "enum": [
+      "invalid_template",
+      "execution_error"
+     ],
      "type": "string"
     },
     "message": {
+     "description": "Error message.",
+     "type": "string"
+    },
+    "name": {
+     "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
      "type": "string"
     }
    },
@@ -3399,9 +3412,11 @@
   "TestTemplatesResult": {
    "properties": {
     "name": {
+     "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
     "text": {
+     "description": "Interpolated value of the template.",
      "type": "string"
     }
    },
@@ -3513,7 +3528,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3549,7 +3563,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -3726,6 +3740,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3749,7 +3764,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3965,14 +3979,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",

@@ -6133,15 +6133,18 @@
       "type": "object",
       "properties": {
         "alerts": {
+          "description": "Alerts to use as data when testing the template.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/postableAlert"
           }
         },
         "name": {
+          "description": "Name of the template file.",
           "type": "string"
         },
         "template": {
+          "description": "Template string to test.",
           "type": "string"
         }
       }
@@ -6150,9 +6153,19 @@
       "type": "object",
       "properties": {
         "kind": {
-          "type": "string"
+          "description": "Kind of template error that occurred.",
+          "type": "string",
+          "enum": [
+            "invalid_template",
+            "execution_error"
+          ]
         },
         "message": {
+          "description": "Error message.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
           "type": "string"
         }
       }
@@ -6161,9 +6174,11 @@
       "type": "object",
       "properties": {
         "name": {
+          "description": "Name of the associated template definition for this result.",
           "type": "string"
         },
         "text": {
+          "description": "Interpolated value of the template.",
           "type": "string"
         }
       }
@@ -6274,9 +6289,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -6487,6 +6501,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -6511,7 +6526,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6731,7 +6745,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -6739,7 +6752,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",

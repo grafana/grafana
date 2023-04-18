@@ -3371,15 +3371,18 @@
   "TestTemplatesConfigBodyParams": {
    "properties": {
     "alerts": {
+     "description": "Alerts to use as data when testing the template.",
      "items": {
       "$ref": "#/definitions/postableAlert"
      },
      "type": "array"
     },
     "name": {
+     "description": "Name of the template file.",
      "type": "string"
     },
     "template": {
+     "description": "Template string to test.",
      "type": "string"
     }
    },
@@ -3388,9 +3391,19 @@
   "TestTemplatesErrorResult": {
    "properties": {
     "kind": {
+     "description": "Kind of template error that occurred.",
+     "enum": [
+      "invalid_template",
+      "execution_error"
+     ],
      "type": "string"
     },
     "message": {
+     "description": "Error message.",
+     "type": "string"
+    },
+    "name": {
+     "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
      "type": "string"
     }
    },
@@ -3399,9 +3412,11 @@
   "TestTemplatesResult": {
    "properties": {
     "name": {
+     "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
     "text": {
+     "description": "Interpolated value of the template.",
      "type": "string"
     }
    },
@@ -3908,7 +3923,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4115,6 +4129,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
