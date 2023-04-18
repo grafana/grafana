@@ -228,6 +228,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                 multiple: false,
                 accept: DFImport.acceptedFiles,
               }}
+              onClickAddCSV={this.onClickAddCSV}
             />
           </div>
           {dataSource && (
@@ -302,6 +303,24 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
+  };
+
+  onClickAddCSV = async () => {
+    const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
+    await this.onChangeDataSource(ds!);
+
+    this.onQueriesChange([
+      {
+        refId: 'A',
+        datasource: {
+          type: 'grafana',
+          uid: 'grafana',
+        },
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: [],
+      },
+    ]);
+    this.props.onRunQueries();
   };
 
   onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {

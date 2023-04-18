@@ -76,7 +76,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { recentlyUsed, fileUploadOptions, enableFileUpload } = this.props;
+    const { recentlyUsed, fileUploadOptions, enableFileUpload, onClickAddCSV } = this.props;
 
     return (
       <div>
@@ -87,6 +87,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           current={this.getCurrentDs()}
           fileUploadOptions={fileUploadOptions}
           enableFileUpload={enableFileUpload}
+          onClickAddCSV={onClickAddCSV}
         />
       </div>
     );

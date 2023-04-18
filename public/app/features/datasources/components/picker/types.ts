@@ -10,6 +10,7 @@ export interface DataSourceDrawerProps {
   current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
+  onClickAddCSV?: () => void;
   recentlyUsed?: string[];
 }
 
@@ -43,6 +44,7 @@ export interface DataSourcePickerProps {
   disabled?: boolean;
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
+  onClickAddCSV?: () => void;
 }
 
 export interface DataSourcePickerWithHistoryProps extends Omit<DataSourcePickerProps, 'recentlyUsed'> {

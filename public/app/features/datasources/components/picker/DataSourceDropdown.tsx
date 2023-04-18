@@ -103,13 +103,18 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, current } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current } = props;
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
     },
     [onChange]
   );
+
+  const clickAddCSVCallback = useCallback(() => {
+    onClickAddCSV?.();
+    onClose();
+  }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStyles);
 
@@ -125,9 +130,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       </div>
 
       <div className={styles.footer}>
-        <Button variant="secondary" size="sm">
-          Add csv or spreadsheet
-        </Button>
+        {onClickAddCSV && (
+          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            Add csv or spreadsheet
+          </Button>
+        )}
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
