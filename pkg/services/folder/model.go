@@ -49,12 +49,6 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
-type FolderDTO struct {
-	Folder
-
-	Children []FolderDTO
-}
-
 // NewFolder tales a title and returns a Folder with the Created and Updated
 // fields set to the current time.
 func NewFolder(title string, description string) *Folder {
