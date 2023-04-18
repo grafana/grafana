@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, FilterInput, LinkButton, Select, VerticalGroup } from '@grafana/ui';
+import { Button, FilterInput, LinkButton, Select, VerticalGroup, InlineField } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -98,9 +98,9 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
       <Page navId="alert-list">
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
+            <InlineField grow="true">
               <FilterInput placeholder="Search alerts" value={search} onChange={this.onSearchQueryChange} />
-            </div>
+            </InlineField>
             <div className="gf-form">
               <label className="gf-form-label" htmlFor="alert-state-filter">
                 States
