@@ -88,7 +88,7 @@ lineage: seqs: [
 
 				// TODO -- should not be a public interface on its own, but required for Veneer
 				#AnnotationContainer: {
-					// anoying... but required so that the list is defined using the nested Veneer
+					// annoying... but required so that the list is defined using the nested Veneer
 					@grafana(TSVeneer="type")
 
 					list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
@@ -109,18 +109,18 @@ lineage: seqs: [
 				// these match the properties of the "grafana" datasouce that is default in most dashboards
 				#AnnotationTarget: {
 					// Only required/valid for the grafana datasource... 
-					// but code+tests is already dependin on it so hard to change
+					// but code+tests is already depending on it so hard to change
 					limit: int64
 					// Only required/valid for the grafana datasource... 
-					// but code+tests is already dependin on it so hard to change
+					// but code+tests is already depending on it so hard to change
 					matchAny: bool
 					// Only required/valid for the grafana datasource... 
-					// but code+tests is already dependin on it so hard to change
+					// but code+tests is already depending on it so hard to change
 					tags: [...string]
 					// Only required/valid for the grafana datasource... 
-					// but code+tests is already dependin on it so hard to change
+					// but code+tests is already depending on it so hard to change
 					type: string
-					... // datasource will stick thier raw DataQuery here
+					... // datasource will stick their raw DataQuery here
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				#AnnotationPanelFilter: {
@@ -165,7 +165,7 @@ lineage: seqs: [
 					type?: string @grafanamaturity(NeedsExpertReview)
 
 					// unless datasources have migrated to the target+mapping,
-					// thhey just spread their query into the base object :(
+					// they just spread their query into the base object :(
 					...
 				} @cuetsy(kind="interface")
 

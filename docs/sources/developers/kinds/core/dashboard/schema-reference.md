@@ -76,12 +76,12 @@ FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 TODO: this should be a regular DataQuery that depends on the selected dashboard
 these match the properties of the "grafana" datasouce that is default in most dashboards
 
-| Property   | Type     | Required | Default | Description                                                                                                      |
-|------------|----------|----------|---------|------------------------------------------------------------------------------------------------------------------|
-| `limit`    | integer  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
-| `matchAny` | boolean  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
-| `tags`     | string[] | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
-| `type`     | string   | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already dependin on it so hard to change |
+| Property   | Type     | Required | Default | Description                                                                                                       |
+|------------|----------|----------|---------|-------------------------------------------------------------------------------------------------------------------|
+| `limit`    | integer  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `matchAny` | boolean  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `tags`     | string[] | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `type`     | string   | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
 
 ### Datasource
 

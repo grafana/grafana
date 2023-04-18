@@ -209,19 +209,19 @@ type AnnotationQuery struct {
 // these match the properties of the "grafana" datasouce that is default in most dashboards
 type AnnotationTarget struct {
 	// Only required/valid for the grafana datasource...
-	// but code+tests is already dependin on it so hard to change
+	// but code+tests is already depending on it so hard to change
 	Limit int64 `json:"limit"`
 
 	// Only required/valid for the grafana datasource...
-	// but code+tests is already dependin on it so hard to change
+	// but code+tests is already depending on it so hard to change
 	MatchAny bool `json:"matchAny"`
 
 	// Only required/valid for the grafana datasource...
-	// but code+tests is already dependin on it so hard to change
+	// but code+tests is already depending on it so hard to change
 	Tags []string `json:"tags"`
 
 	// Only required/valid for the grafana datasource...
-	// but code+tests is already dependin on it so hard to change
+	// but code+tests is already depending on it so hard to change
 	Type string `json:"type"`
 }
 

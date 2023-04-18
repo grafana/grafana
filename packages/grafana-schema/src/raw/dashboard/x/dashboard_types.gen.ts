@@ -26,22 +26,22 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
 export interface AnnotationTarget {
   /**
    * Only required/valid for the grafana datasource...
-   * but code+tests is already dependin on it so hard to change
+   * but code+tests is already depending on it so hard to change
    */
   limit: number;
   /**
    * Only required/valid for the grafana datasource...
-   * but code+tests is already dependin on it so hard to change
+   * but code+tests is already depending on it so hard to change
    */
   matchAny: boolean;
   /**
    * Only required/valid for the grafana datasource...
-   * but code+tests is already dependin on it so hard to change
+   * but code+tests is already depending on it so hard to change
    */
   tags: Array<string>;
   /**
    * Only required/valid for the grafana datasource...
-   * but code+tests is already dependin on it so hard to change
+   * but code+tests is already depending on it so hard to change
    */
   type: string;
 }
