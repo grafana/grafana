@@ -42,7 +42,7 @@ const getConfigError = (err: unknown) => ({ error: isFetchError(err) && err.stat
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
-  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
+  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard', 'UsersWithActiveSessions'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
@@ -116,6 +116,12 @@ export const publicDashboardApi = createApi({
         url: '',
       }),
     }),
+    getUsersWithActiveSessions: builder.query<string[], void>({
+      query: () => ({
+        url: '/',
+      }),
+      providesTags: ['UsersWithActiveSessions'],
+    }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
         url: '/dashboards/public-dashboards',
@@ -153,4 +159,5 @@ export const {
   useAddRecipientMutation,
   useDeleteRecipientMutation,
   useReshareAccessToRecipientMutation,
+  useGetUsersWithActiveSessionsQuery,
 } = publicDashboardApi;
