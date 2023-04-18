@@ -23,7 +23,6 @@ const meta: ComponentMeta<typeof UserIcon> = {
     },
   },
   args: {
-    showBorder: false,
     showTooltip: false,
   },
 };
@@ -44,7 +43,6 @@ export const Basic: ComponentStory<typeof UserIcon> = (args) => {
   return <UserIcon {...args} userView={userView} />;
 };
 Basic.args = {
-  showBorder: true,
   showTooltip: true,
 };
 
@@ -85,7 +83,4 @@ export const MultipleUsers: ComponentStory<typeof UserIcon> = (args) => {
   );
 };
 
-MultipleUsers.args = {
-  showBorder: true,
-};
 export default meta;

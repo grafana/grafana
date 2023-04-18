@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme, dateTime, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles, useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { Tooltip } from '../Tooltip';
 
@@ -26,9 +26,6 @@ export interface UserIconProps {
   userView: UserViewDTO;
   /** A boolean value that determines whether the tooltip should be shown or not */
   showTooltip?: boolean;
-  /** A boolean value that determines whether the border should be shown or not.
-   * Used when displaying multiple icons to prevent transparent overlay. */
-  showBorder?: boolean;
   /** An optional class name to be added to the icon element */
   className?: string;
 }
@@ -43,11 +40,11 @@ const formatViewed = (dateString: string): string => {
   return `Active last ${(Math.floor(-diffHours / 24) + 1) * 24}h`;
 };
 
-export const UserIcon = ({ userView, showTooltip = true, showBorder = false, className }: UserIconProps) => {
+export const UserIcon = ({ userView, showTooltip = true, className }: UserIconProps) => {
   const { user, viewed } = userView;
   const isActive = dateTime(viewed).diff(dateTime(), 'minutes', true) >= -15;
 
-  const styles = useStyles((theme) => getStyles(theme, isActive, showBorder));
+  const styles = useStyles2((theme) => getStyles(theme, isActive));
 
   const userDisplayName = user.name || user.login;
   const initialsArray = userDisplayName.split(' ');
@@ -75,10 +72,10 @@ export const UserIcon = ({ userView, showTooltip = true, showBorder = false, cla
         <div className={styles.tooltipName}>{userDisplayName}</div>
         <div className={styles.tooltipDate}>
           {isActive ? (
-            <>
+            <div className={styles.dotContainer}>
               <span>Active last 15m</span>
               <span className={styles.dot}></span>
-            </>
+            </div>
           ) : (
             formatViewed(viewed)
           )}
@@ -100,10 +97,9 @@ const getIconBorder = (color: string): string => {
   return `0 0 0 1px ${color}`;
 };
 
-export const getStyles = (theme: GrafanaTheme, isActive: boolean, showBorder: boolean) => {
-  const shadowColor = isActive ? theme.palette.blue80 : theme.colors.border2;
-  const shadowHoverColor = isActive ? theme.palette.blue95 : theme.colors.border3;
-  const borderColor = showBorder ? theme.colors.dashboardBg : 'transparent';
+export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
+  const shadowColor = isActive ? theme.colors.primary.main : theme.colors.border.medium;
+  const shadowHoverColor = isActive ? theme.colors.primary.text : theme.colors.border.strong;
 
   return {
     icon: css`
@@ -111,7 +107,7 @@ export const getStyles = (theme: GrafanaTheme, isActive: boolean, showBorder: bo
       width: 30px;
       height: 30px;
       margin-left: -6px;
-      border: 3px ${borderColor} solid;
+      border: 3px ${theme.colors.background.primary} solid;
       box-shadow: ${getIconBorder(shadowColor)};
       background-clip: padding-box;
       &:hover {
@@ -120,39 +116,42 @@ export const getStyles = (theme: GrafanaTheme, isActive: boolean, showBorder: bo
       }
     `,
     textIcon: css`
-      padding: 0px;
+      padding: 0;
       text-align: center;
       line-height: 22px;
       justify-content: center;
-      color: ${theme.colors.textSemiWeak};
+      color: ${theme.colors.text.secondary};
       cursor: auto;
       font-size: ${theme.typography.size.sm};
-      background: ${theme.isDark ? theme.palette.dark9 : theme.palette.gray90};
+      background: ${theme.colors.background.primary};
       &:focus {
         box-shadow: ${getIconBorder(shadowColor)};
       }
       &:hover {
-        background: ${theme.isDark ? theme.palette.dark10 : theme.palette.gray95};
+        background: ${theme.colors.background.primary};
       }
     `,
     tooltipContainer: css`
       text-align: center;
-      padding: 0px ${theme.spacing.sm};
+      padding: ${theme.spacing(0, 1)};
     `,
     tooltipName: css`
-      font-weight: ${theme.typography.weight.bold};
+      font-weight: ${theme.typography.fontWeightBold};
     `,
     tooltipDate: css`
-      font-weight: ${theme.typography.weight.regular};
+      font-weight: ${theme.typography.fontWeightRegular};
+    `,
+    dotContainer: css`
+      display: flex;
+      align-items: center;
     `,
     dot: css`
       height: 6px;
       width: 6px;
-      background-color: ${theme.palette.blue80};
+      background-color: ${theme.colors.primary.main};
       border-radius: 50%;
       display: inline-block;
-      margin-left: 6px;
-      margin-bottom: 1px;
+      margin-left: ${theme.spacing(1)};
     `,
   };
 };
