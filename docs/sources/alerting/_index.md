@@ -19,7 +19,7 @@ Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cl
 
 Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
-_Video shows Alerting in Grafana v9.0. Refer to [Manage your alert rules]({{< relref "../alerting/alerting-rules/" >}}) for current instructions._
+_Refer to [Manage your alert rules]({{< relref "../alerting/alerting-rules/" >}}) for current instructions._
 
 ## Overview
 
