@@ -21,12 +21,13 @@ type Service interface {
 type CSRF struct {
 	cfg *setting.Cfg
 
-	trustedOrigins map[string]struct{}
-	headers        map[string]struct{}
-	safeEndpoints  map[string]struct{}
+	trustedOrigins                       map[string]struct{}
+	headers                              map[string]struct{}
+	safeEndpoints                        map[string]struct{}
+	skipCSRFCheckIfLoginCookieNotPresent bool
 }
 
-func ProvideCSRFFilter(cfg *setting.Cfg) Service {
+func ProvideCSRFFilter(cfg *setting.Cfg) *CSRF {
 	c := &CSRF{
 		cfg:            cfg,
 		trustedOrigins: map[string]struct{}{},
@@ -36,6 +37,7 @@ func ProvideCSRFFilter(cfg *setting.Cfg) Service {
 
 	additionalHeaders := cfg.SectionWithEnvOverrides("security").Key("csrf_additional_headers").Strings(" ")
 	trustedOrigins := cfg.SectionWithEnvOverrides("security").Key("csrf_trusted_origins").Strings(" ")
+	c.skipCSRFCheckIfLoginCookieNotPresent = cfg.SectionWithEnvOverrides("security").Key("csrf_skip_check_if_login_cookie_not_present").MustBool(true)
 
 	for _, header := range additionalHeaders {
 		c.headers[header] = struct{}{}
@@ -72,9 +74,12 @@ func (c *CSRF) check(r *http.Request) error {
 	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
 
 	// If request has no login cookie - skip CSRF checks
-	if _, err := r.Cookie(c.cfg.LoginCookieName); errors.Is(err, http.ErrNoCookie) {
-		return nil
+	if c.skipCSRFCheckIfLoginCookieNotPresent {
+		if _, err := r.Cookie(c.cfg.LoginCookieName); errors.Is(err, http.ErrNoCookie) {
+			return nil
+		}
 	}
+
 	// Skip CSRF checks for "safe" methods
 	for _, method := range safeMethods {
 		if r.Method == method {
