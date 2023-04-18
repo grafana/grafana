@@ -46,6 +46,7 @@ interface Props<TQuery extends DataQuery> {
   index: number;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
+  onDataSourceLoaded?: (instance: DataSourceApi) => void;
   renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
@@ -160,6 +161,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     } catch (error) {
       // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
       datasource = await this.dataSourceSrv.get();
+    }
+
+    if (typeof this.props.onDataSourceLoaded === 'function') {
+      this.props.onDataSourceLoaded(datasource);
     }
 
     this.setState({

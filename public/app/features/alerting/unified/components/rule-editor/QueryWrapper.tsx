@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 
 import {
   CoreApp,
@@ -12,10 +12,9 @@ import {
   LoadingState,
   PanelData,
   RelativeTimeRange,
-  ThresholdsConfig,
+  ThresholdsConfig
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { getDataSourceSrv } from '@grafana/runtime';
 import {
   GraphTresholdsStyleMode,
   Icon,
@@ -23,7 +22,7 @@ import {
   Input,
   RelativeTimeRangePicker,
   Tooltip,
-  useStyles2,
+  useStyles2
 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -44,7 +43,7 @@ interface Props {
   query: AlertQuery;
   queries: AlertQuery[];
   dsSettings: DataSourceInstanceSettings;
-  onChangeDataSource: (instance: DataSourceApi, settings: DataSourceInstanceSettings, index: number) => void;
+  onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
   onChangeQuery: (query: DataQuery, index: number) => void;
   onChangeTimeRange?: (timeRange: RelativeTimeRange, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
@@ -80,6 +79,8 @@ export const QueryWrapper = ({
   onChangeQueryOptions,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const [dsInstance, setDsInstance] = useState<DataSourceApi>();
+  const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -144,18 +145,17 @@ export const QueryWrapper = ({
         <QueryEditorRow<DataQuery>
           alerting
           dataSource={dsSettings}
-          onChangeDataSource={(settings) => {
-            getDataSourceSrv()
-              .get({ type: settings.type, uid: settings.uid })
-              .then((instance) => {
-                onChangeDataSource(instance, settings, index);
-              });
-          }}
+          // our datasource instance is loaded, now we update the query if the defaults aren't set yet
+          onDataSourceLoaded={setDsInstance}
+          onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
           id={query.refId}
           index={index}
           key={query.refId}
           data={data}
-          query={cloneDeep(query.model)}
+          query={{
+            ...defaults,
+            ...cloneDeep(query.model)
+          }}
           onChange={(query) => onChangeQuery(query, index)}
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}

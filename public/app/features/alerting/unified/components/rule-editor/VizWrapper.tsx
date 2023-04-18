@@ -15,8 +15,8 @@ import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
 import { RawPrometheusContainer } from 'app/features/explore/RawPrometheusContainer';
-import { ExploreId } from 'app/types/explore';
 import { toTimeSeriesMulti } from 'app/features/transformers/prepareTimeSeries/prepareTimeSeries';
+import { ExploreId } from 'app/types/explore';
 
 
 interface Props {
@@ -30,7 +30,7 @@ interface Props {
 export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
   const styles = useStyles2(getStyles);
   const isTimeSeriesData = isTimeSeriesFrames(data.series);
-  const thresholdsStyle = thresholdsType ? { mode: thresholdsType } : undefined;
+  // const thresholdsStyle = thresholdsType ? { mode: thresholdsType } : undefined;
 
   return (
     <div className={styles.wrapper}>
@@ -44,13 +44,13 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
                 eventBus={appEvents}
                 height={300}
                 width={width}
+                // @ts-ignore
                 absoluteRange={data.timeRange as unknown as AbsoluteTimeRange}
                 timeZone="browser"
                 onChangeTime={() => { }}
                 splitOpenFn={() => { }}
                 loadingState={data.state}
                 thresholdsConfig={thresholds}
-                thresholdsStyle={thresholdsStyle}
               />
             ) : (
               <RawPrometheusContainer
@@ -82,7 +82,6 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
     []   | []      | []      | []
 */
 function prepareTimeSeries(series: DataFrame[]): DataFrame[] {
-  console.dir(series)
   return toTimeSeriesMulti(series)
 }
 

@@ -139,7 +139,7 @@ function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDat
   const { name } = settings;
   const { refId, ...rest } = model;
 
-  /**
+  /*
     In my testing I've found some alerts that don't have a data source embedded inside the model.
 
     At this moment in time it is unclear to me why some alert definitions not have a data source embedded in the model.

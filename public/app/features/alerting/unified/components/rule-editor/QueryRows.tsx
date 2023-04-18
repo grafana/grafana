@@ -3,9 +3,7 @@ import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
-  CoreApp,
   DataQuery,
-  DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
@@ -74,7 +72,7 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
-  onChangeDataSource = (instance: DataSourceApi, settings: DataSourceInstanceSettings, index: number) => {
+  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
     const updatedQueries = queries.map((item, itemIndex) => {
@@ -83,14 +81,12 @@ export class QueryRows extends PureComponent<Props> {
       }
 
       const previousSettings = this.getDataSourceSettings(item);
-      const defaultSettings =
-        typeof instance.getDefaultQuery === 'function' ? instance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
       // Copy model if changing to a datasource of same type.
       if (settings.type === previousSettings?.type) {
-        return copyModel(item, settings, defaultSettings);
+        return copyModel(item, settings);
       }
-      return newModel(item, settings, defaultSettings);
+      return newModel(item, settings);
     });
 
     onQueriesChange(updatedQueries);
@@ -176,8 +172,8 @@ export class QueryRows extends PureComponent<Props> {
 
                           getDatasourceSrv()
                             .get()
-                            .then((instance) => {
-                              this.onChangeDataSource(instance, defaultDataSource, index);
+                            .then(() => {
+                              this.onChangeDataSource(defaultDataSource, index);
                             });
                         }}
                         onRemoveQuery={() => {
@@ -223,12 +219,10 @@ export class QueryRows extends PureComponent<Props> {
 function copyModel(
   item: AlertQuery,
   settings: DataSourceInstanceSettings,
-  defaults: Partial<AlertDataQuery> = {}
 ): Omit<AlertQuery, 'datasource'> {
   return {
     ...item,
     model: {
-      ...defaults,
       ...omit(item.model, 'datasource'),
       datasource: {
         type: settings.type,
@@ -242,7 +236,6 @@ function copyModel(
 function newModel(
   item: AlertQuery,
   settings: DataSourceInstanceSettings,
-  defaults: Partial<AlertDataQuery> = {}
 ): Omit<AlertQuery, 'datasource'> {
   return {
     refId: item.refId,
@@ -250,7 +243,6 @@ function newModel(
     queryType: '',
     datasourceUid: settings.uid,
     model: {
-      ...defaults,
       refId: item.refId,
       hide: false,
       datasource: {
