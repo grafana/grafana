@@ -121,6 +121,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      paddingTop: theme.spacing(3),
     }),
     pageInner: css({
       label: 'page-inner',

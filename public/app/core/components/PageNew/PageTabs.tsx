@@ -13,7 +13,7 @@ export function PageTabs({ navItem }: Props) {
 
   return (
     <div className={styles.tabsWrapper}>
-      <TabsBar>
+      <TabsBar hideBorder>
         {navItem.children!.map((child, index) => {
           const icon = child.icon ? toIconName(child.icon) : undefined;
           return (
@@ -37,7 +37,7 @@ export function PageTabs({ navItem }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     tabsWrapper: css({
-      paddingBottom: theme.spacing(3),
+      //paddingBottom: theme.spacing(3),
     }),
   };
 };
