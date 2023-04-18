@@ -174,7 +174,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/templates/test":
-		fallback = middleware.ReqEditorRole
+		fallback = middleware.ReqSignedIn
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 
 	// External Alertmanager Paths
