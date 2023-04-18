@@ -20,10 +20,8 @@ import (
 var ErrPluginNotFound = errors.New("plugin not found")
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
-	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
-	keyProvider KeyProvider) *Provider {
+	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service) *Provider {
 	return &Provider{
-		keyProvider:           keyProvider,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
@@ -36,7 +34,6 @@ type Provider struct {
 	pluginStore           plugins.Store
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
-	keyProvider           KeyProvider
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -60,7 +57,6 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedIn
 			return backend.PluginContext{}, err
 		}
 		pCtx.AppInstanceSettings = appSettings
-		//pCtx.Key = p.keyProvider.AppKey(ctx, pluginID, user.OrgID)
 	}
 
 	return pCtx, nil
@@ -79,7 +75,6 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		return pCtx, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
-	//pCtx.Key = p.keyProvider.DataSourceKey(ctx, datasourceSettings)
 
 	return pCtx, nil
 }
