@@ -1,14 +1,10 @@
 package datasources
 
 import (
-	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -78,42 +74,6 @@ func (ds DataSource) AllowedCookies() []string {
 	}
 
 	return []string{}
-}
-
-// CustomHeaders returns a map of custom headers the user might have
-// configured for this Datasource. Not every datasource can has the option
-// to configure those.
-func (ds DataSource) CustomHeaders(ctx context.Context, secretService secrets.Service) (map[string]string, error) {
-	m, err := ds.JsonData.Map()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch headers for datasource: %w", err)
-	}
-
-	var headers map[string]string
-	for k, v := range m {
-		if !strings.HasPrefix(k, CustomHeaderName) {
-			continue
-		}
-		keyName := v.(string)
-		// The header field names are saved as "httpHeaderName1", "httpHeaderName2" etc.
-		// We need to extract the number to create the right key that will enable us the
-		// extract the coresponding value in the secure json value, as it uses the same index
-		// but a different name i.e. "httpHeaderValue1".
-		index := strings.TrimPrefix(k, CustomHeaderName)
-		val, ok := ds.SecureJsonData[CustomHeaderValue+index]
-		if !ok {
-			return nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
-		}
-		decVal, err := secretService.Decrypt(ctx, val)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt the value for the declared header field %s: %w", k, err)
-		}
-		if headers == nil {
-			headers = map[string]string{}
-		}
-		headers[keyName] = string(decVal)
-	}
-	return headers, nil
 }
 
 // Specific error type for grpc secrets management so that we can show more detailed plugin errors to users

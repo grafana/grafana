@@ -651,3 +651,11 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
 	return limits, nil
 }
+
+func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+	return s.getCustomHeaders(ds.JsonData, values), nil
+}
