@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -49,7 +48,25 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	for _, alertState := range srv.manager.GetAll(c.OrgID) {
+	alertResponse.Data = PrepareAlertStatuses(srv.manager, AlertStatusesOptions{
+		OrgID:        c.OrgID,
+		LabelOptions: labelOptions,
+	})
+
+	return response.JSON(http.StatusOK, alertResponse)
+}
+
+type AlertStatusesOptions struct {
+	OrgID        int64
+	LabelOptions []ngmodels.LabelOption
+}
+
+func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatusesOptions) apimodels.AlertDiscovery {
+	data := apimodels.AlertDiscovery{
+		Alerts: []*apimodels.Alert{},
+	}
+
+	for _, alertState := range manager.GetAll(opts.OrgID) {
 		startsAt := alertState.StartsAt
 		valString := ""
 
@@ -57,8 +74,8 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 			valString = formatValues(alertState)
 		}
 
-		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
-			Labels:      alertState.GetLabels(labelOptions...),
+		data.Alerts = append(data.Alerts, &apimodels.Alert{
+			Labels:      alertState.GetLabels(opts.LabelOptions...),
 			Annotations: alertState.Annotations,
 
 			// TODO: or should we make this two fields? Using one field lets the
@@ -69,7 +86,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 		})
 	}
 
-	return response.JSON(http.StatusOK, alertResponse)
+	return data
 }
 
 func formatValues(alertState *state.State) string {
@@ -217,6 +234,41 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
 	}
 
+	folderTitles := map[string]string{}
+	for namespaceUID, folder := range namespaceMap {
+		folderTitles[namespaceUID] = folder.Title
+	}
+
+	ruleResponse.Data = PrepareRuleGroupStatuses(srv.log, srv.manager, folderTitles, ruleList, RuleGroupStatusesOptions{
+		LimitGroups:        limitGroups,
+		LimitRulesPerGroup: limitRulesPerGroup,
+		LimitAlertsPerRule: limitAlertsPerRule,
+		Matchers:           matchers,
+		WithStates:         withStatesFast,
+		LabelOptions:       labelOptions,
+		AuthorizeRuleGroup: func(rules []*ngmodels.AlertRule) bool {
+			return authorizeAccessToRuleGroup(rules, hasAccess)
+		},
+	})
+
+	return response.JSON(http.StatusOK, ruleResponse)
+}
+
+type RuleGroupStatusesOptions struct {
+	LimitGroups        int64
+	LimitRulesPerGroup int64
+	LimitAlertsPerRule int64
+	Matchers           labels.Matchers
+	WithStates         map[eval.State]struct{}
+	LabelOptions       []ngmodels.LabelOption
+	AuthorizeRuleGroup func(rules []*ngmodels.AlertRule) bool
+}
+
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, namespaceMap map[string]string, ruleList []*ngmodels.AlertRule, opts RuleGroupStatusesOptions) apimodels.RuleDiscovery {
+	data := apimodels.RuleDiscovery{
+		RuleGroups: []apimodels.RuleGroup{},
+	}
+
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
 	// but in this API all rules belong to the same organization.
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
@@ -234,21 +286,21 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for groupKey, rules := range groupedRules {
-		folder := namespaceMap[groupKey.NamespaceUID]
-		if folder == nil {
-			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
+		folderTitle, ok := namespaceMap[groupKey.NamespaceUID]
+		if !ok {
+			log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
-		if !authorizeAccessToRuleGroup(rules, hasAccess) {
+		if !opts.AuthorizeRuleGroup(rules) {
 			continue
 		}
-		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
+		ruleGroup, totals := toRuleGroup(log, manager, groupKey, folderTitle, rules, opts)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
 
-		if len(withStates) > 0 {
+		if len(opts.WithStates) > 0 {
 			// Filtering is weird but firing, pending, and normal filters also need to be
 			// applied to the rule. Others such as nodata and error should have no effect.
 			// This is to match the current behavior in the UI.
@@ -264,7 +316,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 					state = util.Pointer(eval.Pending)
 				}
 				if state != nil {
-					if _, ok := withStatesFast[*state]; ok {
+					if _, ok := opts.WithStates[*state]; ok {
 						filteredRules = append(filteredRules, rule)
 					}
 				}
@@ -272,22 +324,22 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			ruleGroup.Rules = filteredRules
 		}
 
-		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
-			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+		if opts.LimitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > opts.LimitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:opts.LimitRulesPerGroup]
 		}
 
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		data.RuleGroups = append(data.RuleGroups, *ruleGroup)
 	}
 
-	ruleResponse.Data.Totals = rulesTotals
+	data.Totals = rulesTotals
 
 	// Sort Rule Groups before checking limits
-	apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(ruleResponse.Data.RuleGroups)
-	if limitGroups > -1 && int64(len(ruleResponse.Data.RuleGroups)) >= limitGroups {
-		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
+	apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(data.RuleGroups)
+	if opts.LimitGroups > -1 && int64(len(data.RuleGroups)) >= opts.LimitGroups {
+		data.RuleGroups = data.RuleGroups[0:opts.LimitGroups]
 	}
 
-	return response.JSON(http.StatusOK, ruleResponse)
+	return data
 }
 
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
@@ -300,11 +352,11 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder *folder.Folder, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ngmodels.AlertRuleGroupKey, folderTitle string, rules []*ngmodels.AlertRule, opts RuleGroupStatusesOptions) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folder.Title,
+		File: folderTitle,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))
@@ -314,20 +366,20 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
-			Query:       ruleToQuery(srv.log, rule),
+			Query:       ruleToQuery(log, rule),
 			Duration:    rule.For.Seconds(),
 			Annotations: rule.Annotations,
 		}
 
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
-			Labels:         rule.GetLabels(labelOptions...),
+			Labels:         rule.GetLabels(opts.LabelOptions...),
 			Health:         "ok",
 			Type:           apiv1.RuleTypeAlerting,
 			LastEvaluation: time.Time{},
 		}
 
-		states := srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		totals := make(map[string]int64)
 		for _, alertState := range states {
 			activeAt := alertState.StartsAt
@@ -341,7 +393,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				totals["error"] += 1
 			}
 			alert := apimodels.Alert{
-				Labels:      alertState.GetLabels(labelOptions...),
+				Labels:      alertState.GetLabels(opts.LabelOptions...),
 				Annotations: alertState.Annotations,
 
 				// TODO: or should we make this two fields? Using one field lets the
@@ -379,13 +431,13 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				newRule.Health = "error"
 			}
 
-			if len(withStates) > 0 {
-				if _, ok := withStates[alertState.State]; !ok {
+			if len(opts.WithStates) > 0 {
+				if _, ok := opts.WithStates[alertState.State]; !ok {
 					continue
 				}
 			}
 
-			if !matchersMatch(matchers, alertState.Labels) {
+			if !matchersMatch(opts.Matchers, alertState.Labels) {
 				continue
 			}
 
@@ -402,8 +454,8 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 
 		apimodels.AlertsBy(apimodels.AlertsByImportance).Sort(alertingRule.Alerts)
 
-		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
-			alertingRule.Alerts = alertingRule.Alerts[0:limitAlerts]
+		if opts.LimitAlertsPerRule > -1 && int64(len(alertingRule.Alerts)) > opts.LimitAlertsPerRule {
+			alertingRule.Alerts = alertingRule.Alerts[0:opts.LimitAlertsPerRule]
 		}
 
 		alertingRule.Rule = newRule
