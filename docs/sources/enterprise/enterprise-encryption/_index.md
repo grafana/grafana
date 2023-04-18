@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ''
 description: Grafana Enterprise database encryption
 keywords:
   - grafana
