@@ -26,7 +26,8 @@ export interface UserIconProps {
   userView: UserViewDTO;
   /** A boolean value that determines whether the tooltip should be shown or not */
   showTooltip?: boolean;
-  /** A boolean value that determines whether the border should be shown or not */
+  /** A boolean value that determines whether the border should be shown or not.
+   * Used when displaying multiple icons to prevent transparent overlay. */
   showBorder?: boolean;
   /** An optional class name to be added to the icon element */
   className?: string;

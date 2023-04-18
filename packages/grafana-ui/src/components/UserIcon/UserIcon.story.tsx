@@ -33,7 +33,7 @@ export const Basic: ComponentStory<typeof UserIcon> = (args) => {
     user: {
       id: 1,
       name: 'John Smith',
-      avatarUrl: 'https://example.com/avatar.png',
+      avatarUrl: 'https://picsum.photos/id/1/200/200',
       login: 'jsmith',
       email: 'jsmith@example.com',
       hasCustomAvatar: true,
@@ -43,5 +43,49 @@ export const Basic: ComponentStory<typeof UserIcon> = (args) => {
 
   return <UserIcon {...args} userView={userView} />;
 };
+Basic.args = {
+  showBorder: true,
+  showTooltip: true,
+};
 
+export const MultipleUsers: ComponentStory<typeof UserIcon> = (args) => {
+  const users = [
+    {
+      id: 1,
+      name: 'John Doe',
+      avatarUrl: 'https://picsum.photos/id/1/200/200',
+      login: 'johndoe',
+      email: 'johndoe@example.com',
+      hasCustomAvatar: true,
+    },
+    {
+      id: 2,
+      name: 'Jane Smith',
+      avatarUrl: 'https://picsum.photos/id/2/200/200',
+      login: 'janesmith',
+      email: 'janesmith@example.com',
+      hasCustomAvatar: false,
+    },
+    {
+      id: 3,
+      name: 'Bob Johnson',
+      avatarUrl: 'https://picsum.photos/id/3/200/200',
+      login: 'bobjohnson',
+      email: 'bobjohnson@example.com',
+      hasCustomAvatar: true,
+    },
+  ];
+
+  return (
+    <div style={{ display: 'flex' }}>
+      {users.map((user) => (
+        <UserIcon {...args} key={user.id} userView={{ user, viewed: new Date().toDateString() }} />
+      ))}
+    </div>
+  );
+};
+
+MultipleUsers.args = {
+  showBorder: true,
+};
 export default meta;
