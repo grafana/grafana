@@ -11,7 +11,7 @@ title: AccessPolicy kind
 #### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
-Access rules for a scope+role
+Access rules for a scope+role.  NOTE there is a unique constraint on role+scope
 
 | Property | Type                        | Required | Default | Description                                                                                         |
 |----------|-----------------------------|----------|---------|-----------------------------------------------------------------------------------------------------|
