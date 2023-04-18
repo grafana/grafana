@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
@@ -19,6 +20,11 @@ import (
 // Get auth keys.
 //
 // Will return auth keys.
+//
+// Deprecated: true.
+//
+// Deprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead
+// see https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
 //
 // Responses:
 // 200: getAPIkeyResponse
@@ -59,6 +65,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
+	metrics.MApiAPIkeysGet.Inc()
 	return response.JSON(http.StatusOK, result)
 }
 
@@ -66,6 +73,10 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 //
 // Delete API key.
 //
+// Deletes an API key.
+// Deprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+//
+// Deprecated: true
 // Responses:
 // 200: okResponse
 // 401: unauthorisedError
@@ -90,6 +101,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 		return response.Error(status, "Failed to delete API key", err)
 	}
 
+	metrics.MApiAPIkeysDelete.Inc()
 	return response.Success("API key deleted")
 }
 
@@ -98,6 +110,11 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // Creates an API key.
 //
 // Will return details of the created API key.
+//
+// Deprecated: true
+// Deprecated. Please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens
+//
+// see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
 //
 // Responses:
 // 200: postAPIkeyResponse
@@ -152,6 +169,7 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 		Key:  newKeyInfo.ClientSecret,
 	}
 
+	metrics.MApiAPIkeysCreate.Inc()
 	return response.JSON(http.StatusOK, result)
 }
 

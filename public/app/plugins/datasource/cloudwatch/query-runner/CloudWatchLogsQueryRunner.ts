@@ -24,6 +24,8 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   LoadingState,
+  LogRowContextOptions,
+  LogRowContextQueryDirection,
   LogRowModel,
   rangeUtil,
 } from '@grafana/data';
@@ -31,7 +33,6 @@ import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQue
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../../features/logs/components/LogRowContextProvider';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
@@ -301,7 +302,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return this.awsRequest(this.dsQueryEndpoint, requestParams, {
       'X-Cache-Skip': 'true',
     }).pipe(
-      map((response) => resultsToDataFrames({ data: response })),
+      map((response) => resultsToDataFrames(response)),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
           throw err;
@@ -325,7 +326,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
+    { limit = 10, direction = LogRowContextQueryDirection.Backward }: LogRowContextOptions = {},
     query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
@@ -347,13 +348,13 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     const requestParams: GetLogEventsRequest = {
       limit,
-      startFromHead: direction !== 'BACKWARD',
+      startFromHead: direction !== LogRowContextQueryDirection.Backward,
       region: query?.region,
       logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
       logStreamName: logStreamField!.values.get(row.rowIndex),
     };
 
-    if (direction === 'BACKWARD') {
+    if (direction === LogRowContextQueryDirection.Backward) {
       requestParams.endTime = row.timeEpochMs;
     } else {
       requestParams.startTime = row.timeEpochMs;

@@ -15,6 +15,7 @@ import {
   SceneControlsSpacer,
   SceneDataTransformer,
   SceneRefreshPicker,
+  SceneFlexItem,
 } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -142,63 +143,70 @@ export function getHttpHandlerListScene(): EmbeddedScene {
       children: [],
     }),
     getLayoutChild: (data, frame, frameIndex) => {
-      return new SceneFlexLayout({
+      return new SceneFlexItem({
         key: `panel-${frameIndex}`,
-        direction: 'row',
-        placement: { minHeight: 200 },
+        minHeight: 200,
         $data: new SceneDataNode({
           data: {
             ...data,
             series: [frame],
           },
         }),
-        children: [
-          new VizPanel({
-            pluginId: 'timeseries',
-            // titleLink: {
-            //   path: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
-            //   queryKeys: ['from', 'to', 'var-instance'],
-            // },
-            title: getFrameDisplayName(frame),
-            options: {
-              legend: { displayMode: 'hidden' },
-            },
-          }),
-          new VizPanel({
-            placement: { width: 200 },
-            title: 'Last',
-            pluginId: 'stat',
-            fieldConfig: {
-              defaults: {
-                displayName: 'Last',
-                links: [
-                  {
-                    title: 'Go to handler drilldown view',
-                    url: ``,
-                    onBuildUrl: () => {
-                      const params = locationService.getSearchObject();
-                      return getLinkUrlWithAppUrlState(
-                        '/scenes/grafana-monitoring/handlers/${__field.labels.handler:percentencode}',
-                        params
-                      );
-                    },
+        body: new SceneFlexLayout({
+          direction: 'row',
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                pluginId: 'timeseries',
+                // titleLink: {
+                //   path: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
+                //   queryKeys: ['from', 'to', 'var-instance'],
+                // },
+                title: getFrameDisplayName(frame),
+                options: {
+                  legend: { displayMode: 'hidden' },
+                },
+              }),
+            }),
+
+            new SceneFlexItem({
+              width: 200,
+              body: new VizPanel({
+                title: 'Last',
+                pluginId: 'stat',
+                fieldConfig: {
+                  defaults: {
+                    displayName: 'Last',
+                    links: [
+                      {
+                        title: 'Go to handler drilldown view',
+                        url: ``,
+                        onBuildUrl: () => {
+                          const params = locationService.getSearchObject();
+                          return getLinkUrlWithAppUrlState(
+                            '/scenes/grafana-monitoring/handlers/${__field.labels.handler:percentencode}',
+                            params
+                          );
+                        },
+                      },
+                    ],
                   },
-                ],
-              },
-              overrides: [],
-            },
-            options: {
-              graphMode: 'none',
-              textMode: 'value',
-            },
-          }),
-        ],
+                  overrides: [],
+                },
+                options: {
+                  graphMode: 'none',
+                  textMode: 'value',
+                },
+              }),
+            }),
+          ],
+        }),
       });
     },
   });
 
   const layout = new SceneFlexLayout({
-    children: [httpHandlersTable],
+    children: [new SceneFlexItem({ body: httpHandlersTable })],
   });
 
   const sceneToggle = new SceneRadioToggle({
@@ -209,7 +217,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     value: 'table',
     onChange: (value) => {
       if (value === 'table') {
-        layout.setState({ children: [httpHandlersTable] });
+        layout.setState({ children: [new SceneFlexItem({ body: httpHandlersTable })] });
       } else {
         layout.setState({ children: [graphsScene] });
       }
@@ -257,20 +265,23 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new VizPanel({
-          $data: reqDurationTimeSeries,
-          pluginId: 'timeseries',
-          title: 'Request duration avg (ms)',
-          placement: {},
-          //displayMode: 'transparent',
-          options: {},
+        new SceneFlexItem({
+          body: new VizPanel({
+            $data: reqDurationTimeSeries,
+            pluginId: 'timeseries',
+            title: 'Request duration avg (ms)',
+            //displayMode: 'transparent',
+            options: {},
+          }),
         }),
-        new VizPanel({
-          $data: reqCountTimeSeries,
-          pluginId: 'timeseries',
-          title: 'Request count/s',
-          //displayMode: 'transparent',
-          options: {},
+        new SceneFlexItem({
+          body: new VizPanel({
+            $data: reqCountTimeSeries,
+            pluginId: 'timeseries',
+            title: 'Request count/s',
+            //displayMode: 'transparent',
+            options: {},
+          }),
         }),
       ],
     }),
@@ -322,79 +333,94 @@ export function getOverviewScene(): EmbeddedScene {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new SceneFlexLayout({
-          placement: { height: 150 },
-          children: [
-            getInstantStatPanel('grafana_stat_totals_dashboard', 'Dashboards'),
-            getInstantStatPanel('grafana_stat_total_users', 'Users'),
-            getInstantStatPanel('sum(grafana_stat_totals_datasource)', 'Data sources'),
-            getInstantStatPanel('grafana_stat_total_service_account_tokens', 'Service account tokens'),
-          ],
-        }),
-        new VizPanel({
-          $data: new SceneQueryRunner({
-            datasource: { uid: 'gdev-prometheus' },
-            queries: [
-              {
-                refId: 'A',
-                expr: `sum(process_resident_memory_bytes{job="grafana", instance=~"$instance"})`,
-                range: true,
-                format: 'time_series',
-                maxDataPoints: 500,
-              },
+        new SceneFlexItem({
+          height: 150,
+          body: new SceneFlexLayout({
+            children: [
+              new SceneFlexItem({
+                body: getInstantStatPanel('grafana_stat_totals_dashboard', 'Dashboards'),
+              }),
+              new SceneFlexItem({
+                body: getInstantStatPanel('grafana_stat_total_users', 'Users'),
+              }),
+              new SceneFlexItem({
+                body: getInstantStatPanel('sum(grafana_stat_totals_datasource)', 'Data sources'),
+              }),
+              new SceneFlexItem({
+                body: getInstantStatPanel('grafana_stat_total_service_account_tokens', 'Service account tokens'),
+              }),
             ],
           }),
-          pluginId: 'timeseries',
-          title: 'Memory usage',
-          options: {
-            legend: {
-              showLegend: false,
-            },
-          },
-          fieldConfig: {
-            defaults: {
-              unit: 'bytes',
-              min: 0,
-              custom: {
-                lineWidth: 2,
-                fillOpacity: 6,
-                //gradientMode: 'opacity',
-              },
-            },
-            overrides: [],
-          },
         }),
-        new VizPanel({
-          $data: new SceneQueryRunner({
-            datasource: { uid: 'gdev-prometheus' },
-            queries: [
-              {
-                refId: 'A',
-                expr: `sum(go_goroutines{job="grafana", instance=~"$instance"})`,
-                range: true,
-                format: 'time_series',
-                maxDataPoints: 500,
+
+        new SceneFlexItem({
+          body: new VizPanel({
+            $data: new SceneQueryRunner({
+              datasource: { uid: 'gdev-prometheus' },
+              queries: [
+                {
+                  refId: 'A',
+                  expr: `sum(process_resident_memory_bytes{job="grafana", instance=~"$instance"})`,
+                  range: true,
+                  format: 'time_series',
+                  maxDataPoints: 500,
+                },
+              ],
+            }),
+            pluginId: 'timeseries',
+            title: 'Memory usage',
+            options: {
+              legend: {
+                showLegend: false,
               },
-            ],
+            },
+            fieldConfig: {
+              defaults: {
+                unit: 'bytes',
+                min: 0,
+                custom: {
+                  lineWidth: 2,
+                  fillOpacity: 6,
+                  //gradientMode: 'opacity',
+                },
+              },
+              overrides: [],
+            },
           }),
-          pluginId: 'timeseries',
-          title: 'Go routines',
-          options: {
-            legend: {
-              showLegend: false,
-            },
-          },
-          fieldConfig: {
-            defaults: {
-              min: 0,
-              custom: {
-                lineWidth: 2,
-                fillOpacity: 6,
-                //gradientMode: 'opacity',
+        }),
+        new SceneFlexItem({
+          body: new VizPanel({
+            $data: new SceneQueryRunner({
+              datasource: { uid: 'gdev-prometheus' },
+              queries: [
+                {
+                  refId: 'A',
+                  expr: `sum(go_goroutines{job="grafana", instance=~"$instance"})`,
+                  range: true,
+                  format: 'time_series',
+                  maxDataPoints: 500,
+                },
+              ],
+            }),
+            pluginId: 'timeseries',
+            title: 'Go routines',
+            options: {
+              legend: {
+                showLegend: false,
               },
             },
-            overrides: [],
-          },
+            fieldConfig: {
+              defaults: {
+                min: 0,
+                custom: {
+                  lineWidth: 2,
+                  fillOpacity: 6,
+                  //gradientMode: 'opacity',
+                },
+              },
+              overrides: [],
+            },
+          }),
         }),
       ],
     }),
@@ -455,31 +481,35 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new VizPanel({
-          pluginId: 'text',
-          title: '',
-          options: {
-            mode: 'markdown',
-            content: `
-[mupp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mupp)
-[mapp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mapp)
-`,
-          },
+        new SceneFlexItem({
+          body: new VizPanel({
+            pluginId: 'text',
+            title: '',
+            options: {
+              mode: 'markdown',
+              content: `
+  [mupp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mupp)
+  [mapp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mapp)
+  `,
+            },
+          }),
         }),
-        new VizPanel({
-          $data: logsQuery,
-          pluginId: 'logs',
-          title: '',
-          options: {
-            showTime: true,
-            showLabels: false,
-            showCommonLabels: false,
-            wrapLogMessage: true,
-            prettifyLogMessage: false,
-            enableLogDetails: true,
-            dedupStrategy: 'none',
-            sortOrder: 'Descending',
-          },
+        new SceneFlexItem({
+          body: new VizPanel({
+            $data: logsQuery,
+            pluginId: 'logs',
+            title: '',
+            options: {
+              showTime: true,
+              showLabels: false,
+              showCommonLabels: false,
+              wrapLogMessage: true,
+              prettifyLogMessage: false,
+              enableLogDetails: true,
+              dedupStrategy: 'none',
+              sortOrder: 'Descending',
+            },
+          }),
         }),
       ],
     }),
@@ -513,20 +543,22 @@ export function getOverviewLogsScene(): EmbeddedScene {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new VizPanel({
-          $data: logsQuery,
-          pluginId: 'logs',
-          title: '',
-          options: {
-            showTime: true,
-            showLabels: false,
-            showCommonLabels: false,
-            wrapLogMessage: true,
-            prettifyLogMessage: false,
-            enableLogDetails: true,
-            dedupStrategy: 'none',
-            sortOrder: 'Descending',
-          },
+        new SceneFlexItem({
+          body: new VizPanel({
+            $data: logsQuery,
+            pluginId: 'logs',
+            title: '',
+            options: {
+              showTime: true,
+              showLabels: false,
+              showCommonLabels: false,
+              wrapLogMessage: true,
+              prettifyLogMessage: false,
+              enableLogDetails: true,
+              dedupStrategy: 'none',
+              sortOrder: 'Descending',
+            },
+          }),
         }),
       ],
     }),

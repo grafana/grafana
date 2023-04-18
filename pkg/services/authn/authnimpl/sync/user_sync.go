@@ -40,6 +40,11 @@ var (
 		"user.sync.fetch",
 		errutil.WithPublicMessage("Insufficient information to authenticate user"),
 	)
+	errFetchingSignedInUserNotFound = errutil.NewBase(
+		errutil.StatusUnauthorized,
+		"user.sync.fetch-not-found",
+		errutil.WithPublicMessage("User not found"),
+	)
 )
 
 func ProvideUserSync(userService user.Service,
@@ -114,6 +119,9 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		OrgID:  r.OrgID,
 	})
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return errFetchingSignedInUserNotFound.Errorf("%w", err)
+		}
 		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
 	}
 

@@ -23,24 +23,29 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 Once you've added the Zipkin data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "#query-the-data-source" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
+You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), [link to a trace ID from logs]({{< relref "#link-to-a-trace-id-from-logs" >}}), and [link to a trace ID from metrics]({{< relref "#link-to-a-trace-id-from-metrics" >}}).
+
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Zipkin data source.
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `Zipkin` in the search bar.
+1.  Select **Zipkin**.
 
-Set the data source's basic configuration options carefully:
+    The **Settings** tab of the data source is displayed.
 
-| Name           | Description                                                              |
-| -------------- | ------------------------------------------------------------------------ |
-| **Name**       | Sets the name you use to refer to the data source in panels and queries. |
-| **Default**    | Defines whether this data source is pre-selected for new panels.         |
-| **URL**        | Sets the URL of the Zipkin instance, such as `http://localhost:9411`.    |
-| **Basic Auth** | Enables basic authentication for the Zipkin data source.                 |
-| **User**       | Defines the user name for basic authentication.                          |
-| **Password**   | Defines the password for basic authentication.                           |
+1.  Set the data source's basic configuration options:
+
+    | Name           | Description                                                              |
+    | -------------- | ------------------------------------------------------------------------ |
+    | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default**    | Defines whether this data source is pre-selected for new panels.         |
+    | **URL**        | Sets the URL of the Zipkin instance, such as `http://localhost:9411`.    |
+    | **Basic Auth** | Enables basic authentication for the Zipkin data source.                 |
+    | **User**       | Defines the user name for basic authentication.                          |
+    | **Password**   | Defines the password for basic authentication.                           |
 
 ### Trace to logs
 
@@ -90,23 +95,23 @@ To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
-| Setting name              | Description                                                                                                                                                                                                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                    |
-| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                              |
-| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                  |
-| **Tags**                  | Defines the the tags to use in the logs query. Default is `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example map `http.status` to `http_status`. |
-| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                    |
-| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                     |
-| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                              |
-| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                            |
+| Setting name              | Description                                                                                                                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                               |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                         |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                             |
+| **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Filter by trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                               |
+| **Filter by span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                         |
+| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                       |
 
 ### Trace to metrics
 
 > **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-The **Trace to metrics** section configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Zipkin.
+The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Zipkin.
 
 To configure trace to metrics:
 
@@ -131,9 +136,9 @@ The **Node Graph** setting enables the [Node Graph visualization]({{< relref "..
 
 Once enabled, Grafana displays the Node Graph after loading the trace view.
 
-### Span bar label
+### Span bar
 
-The **Span bar label** section helps you display additional information in the span bar row.
+The **Span bar** setting helps you display additional information in the span bar row.
 
 You can choose one of three options:
 
@@ -142,6 +147,58 @@ You can choose one of three options:
 | **None**     | Adds nothing to the span bar row.                                                                                                |
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `span.kind`. |
+
+### Provision the data source
+
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
+
+#### Provisioning example
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Zipkin
+    type: zipkin
+    uid: EbPG8fYoz
+    url: http://localhost:16686
+    access: proxy
+    basicAuth: true
+    basicAuthUser: my_user
+    readOnly: true
+    isDefault: false
+    jsonData:
+      tracesToLogsV2:
+        # Field with an internal link pointing to a logs data source in Grafana.
+        # datasourceUid value must match the uid value of the logs data source.
+        datasourceUid: 'loki'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        filterByTraceID: false
+        filterBySpanID: false
+        customQuery: true
+        query: 'method="${__span.tags.method}"'
+      tracesToMetrics:
+        datasourceUid: 'prom'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+      nodeGraph:
+        enabled: true
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+      spanBar:
+        type: 'None'
+    secureJsonData:
+      basicAuthPassword: my_password
+```
 
 ## Query the data source
 
@@ -205,8 +262,30 @@ If the file has multiple traces, Grafana visualizes its first trace.
 ]
 ```
 
-## Link a trace ID from logs
+## Span Filters
 
-You can link to a Zipkin trace from logs in [Loki](/docs/loki/latest/) or Splunk by configuring a derived field with an internal link.
+> **Note:** This feature is behind the `newTraceView` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-For details, refer to [Derived fields]({{< relref "../loki/#configure-derived-fields" >}}) section of the [Loki data source]({{< relref "../loki/" >}}) documentation.
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
+
+## Link to a trace ID from logs
+
+You can link to Zipkin traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
+
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+
+## Link to a trace ID from metrics
+
+You can link to Zipkin traces from metrics in Prometheus data sources by configuring an exemplar.
+
+To configure this feature, see the [introduction to exemplars]({{< relref "docs/grafana/latest/fundamentals/exemplars" >}}) documentation.

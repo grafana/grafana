@@ -109,16 +109,14 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               }}
             />
           </Field>
-          {!isWithExpirationDate && (
-            <Field label="Expiration">
-              <RadioButtonGroup
-                options={EXPIRATION_OPTIONS}
-                value={isWithExpirationDate}
-                onChange={setIsWithExpirationDate}
-                size="md"
-              />
-            </Field>
-          )}
+          <Field label="Expiration">
+            <RadioButtonGroup
+              options={EXPIRATION_OPTIONS}
+              value={isWithExpirationDate}
+              onChange={setIsWithExpirationDate}
+              size="md"
+            />
+          </Field>
           {isWithExpirationDate && (
             <Field label="Expiration date">
               <DatePickerWithInput

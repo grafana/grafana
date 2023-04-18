@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import InfluxDatasource from '../../datasource';
@@ -39,12 +39,13 @@ async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
   const datasource: InfluxDatasource = {
+    retentionPolicies: [],
     metricFindQuery: () => Promise.resolve([]),
   } as unknown as InfluxDatasource;
-  await act(async () => {
-    const { container } = await render(
-      <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-    );
+  const { container } = render(
+    <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+  );
+  await waitFor(() => {
     expect(container.textContent).toBe(textContent);
   });
 }

@@ -18,6 +18,7 @@ import {
   Matcher,
   Identifier,
 } from '@grafana/lezer-logql';
+import { DataQuery } from '@grafana/schema';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -175,9 +176,9 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
-export function getParserFromQuery(query: string) {
+export function getParserFromQuery(query: string): string | undefined {
   const tree = parser.parse(query);
-  let logParser;
+  let logParser: string | undefined = undefined;
   tree.iterate({
     enter: (node: SyntaxNode): false | void => {
       if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
@@ -296,7 +297,7 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupporsChunking(allQueries: LokiQuery[]) {
+export function requestSupportsSplitting(allQueries: LokiQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)
     .filter((query) => !query.refId.includes('do-not-chunk'))
@@ -304,3 +305,12 @@ export function requestSupporsChunking(allQueries: LokiQuery[]) {
 
   return queries.length > 0;
 }
+
+export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
+  if (!query) {
+    return false;
+  }
+
+  const lokiQuery = query as LokiQuery;
+  return lokiQuery.expr !== undefined;
+};

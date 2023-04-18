@@ -85,7 +85,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFrames(queryRes, target)
+			nameFields(queryRes, target)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -806,7 +806,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFrames(queryResult backend.DataResponse, target *Query) {
+func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -825,7 +825,10 @@ func nameFrames(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			frame.Name = fieldName
+			if valueField.Config == nil {
+				valueField.Config = &data.FieldConfig{}
+			}
+			valueField.Config.DisplayNameFromDS = fieldName
 		}
 	}
 }
@@ -895,7 +898,7 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 				found := false
 				for _, metric := range target.Metrics {
 					if metric.ID == field {
-						metricName += " " + describeMetric(metric.Type, field)
+						metricName += " " + describeMetric(metric.Type, metric.Field)
 						found = true
 					}
 				}

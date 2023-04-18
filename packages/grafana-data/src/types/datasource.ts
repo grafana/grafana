@@ -465,6 +465,11 @@ export interface DataQueryResponse {
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
+
+  /**
+   * traceIds related to the response, if available
+   */
+  traceIds?: string[];
 }
 
 export enum DataQueryErrorType {
@@ -488,6 +493,7 @@ export interface DataQueryError {
   status?: number;
   statusText?: string;
   refId?: string;
+  traceId?: string;
   type?: DataQueryErrorType;
 }
 
@@ -508,8 +514,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
-  /** @deprecate */
-  dashboardId?: number;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
 

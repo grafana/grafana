@@ -92,7 +92,7 @@ describe('FieldCache', () => {
     it('should get the first field with a duplicate name', () => {
       const field = fieldCache.getFieldByName('value');
       expect(field!.name).toEqual('value');
-      expect(field!.values.toArray()).toEqual([1, 2, 3]);
+      expect(field!.values).toEqual([1, 2, 3]);
     });
 
     it('should return index of the field', () => {

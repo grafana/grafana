@@ -136,6 +136,13 @@ type AlertRuleGroup struct {
 	Rules      []AlertRule
 }
 
+// AlertRuleGroupWithFolderTitle extends AlertRuleGroup with orgID and folder title
+type AlertRuleGroupWithFolderTitle struct {
+	*AlertRuleGroup
+	OrgID       int64
+	FolderTitle string
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -172,6 +179,37 @@ type AlertRuleWithOptionals struct {
 	// DB in case it was not sent.
 	HasPause bool
 }
+
+// AlertsRulesBy is a function that defines the ordering of alert rules.
+type AlertRulesBy func(a1, a2 *AlertRule) bool
+
+func (by AlertRulesBy) Sort(rules []*AlertRule) {
+	sort.Sort(AlertRulesSorter{rules: rules, by: by})
+}
+
+// AlertRulesByIndex orders alert rules by rule group index. You should
+// make sure that all alert rules belong to the same rule group (have the
+// same RuleGroupKey) before using this ordering.
+func AlertRulesByIndex(a1, a2 *AlertRule) bool {
+	return a1.RuleGroupIndex < a2.RuleGroupIndex
+}
+
+func AlertRulesByGroupKeyAndIndex(a1, a2 *AlertRule) bool {
+	k1, k2 := a1.GetGroupKey(), a2.GetGroupKey()
+	if k1 == k2 {
+		return a1.RuleGroupIndex < a2.RuleGroupIndex
+	}
+	return AlertRuleGroupKeyByNamespaceAndRuleGroup(&k1, &k2)
+}
+
+type AlertRulesSorter struct {
+	rules []*AlertRule
+	by    AlertRulesBy
+}
+
+func (s AlertRulesSorter) Len() int           { return len(s.rules) }
+func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
+func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
@@ -296,6 +334,29 @@ func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
 
+// AlertRuleGroupKeyBy is a function that defines the ordering of alert rule group keys.
+type AlertRuleGroupKeyBy func(a1, a2 *AlertRuleGroupKey) bool
+
+func (by AlertRuleGroupKeyBy) Sort(keys []AlertRuleGroupKey) {
+	sort.Sort(AlertRuleGroupKeySorter{keys: keys, by: by})
+}
+
+func AlertRuleGroupKeyByNamespaceAndRuleGroup(k1, k2 *AlertRuleGroupKey) bool {
+	if k1.NamespaceUID == k2.NamespaceUID {
+		return k1.RuleGroup < k2.RuleGroup
+	}
+	return k1.NamespaceUID < k2.NamespaceUID
+}
+
+type AlertRuleGroupKeySorter struct {
+	keys []AlertRuleGroupKey
+	by   AlertRuleGroupKeyBy
+}
+
+func (s AlertRuleGroupKeySorter) Len() int           { return len(s.keys) }
+func (s AlertRuleGroupKeySorter) Swap(i, j int)      { s.keys[i], s.keys[j] = s.keys[j], s.keys[i] }
+func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &s.keys[j]) }
+
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
@@ -391,6 +452,7 @@ type CountAlertRulesQuery struct {
 
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
+	RuleGroups      []string
 
 	ResultRules         []*AlertRule
 	ResultFoldersTitles map[string]string

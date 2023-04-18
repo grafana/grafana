@@ -16,7 +16,6 @@ import (
 )
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
-	topNavEnabled := s.features.IsEnabled(featuremgmt.FlagTopnav)
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
 
@@ -47,7 +46,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
-		if appNode := s.processAppPlugin(plugin, c, topNavEnabled, treeRoot); appNode != nil {
+		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
 	}
@@ -65,23 +64,17 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	return nil
 }
 
-func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
+func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
 		Img:        plugin.Info.Logos.Small,
 		SubTitle:   plugin.Info.Description,
-		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
 		IsSection:  true,
 		PluginID:   plugin.ID,
-	}
-
-	if topNavEnabled {
-		appLink.Url = s.cfg.AppSubURL + "/a/" + plugin.ID
-	} else {
-		appLink.Url = path.Join(s.cfg.AppSubURL, plugin.DefaultNavURL)
+		Url:        s.cfg.AppSubURL + "/a/" + plugin.ID,
 	}
 
 	for _, include := range plugin.Includes {
@@ -159,10 +152,6 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel
 		appLink.Children = []*navtree.NavLink{}
 	}
 
-	if !topNavEnabled {
-		return appLink
-	}
-
 	// Remove default nav child
 	childrenWithoutDefault := []*navtree.NavLink{}
 	for _, child := range appLink.Children {
@@ -211,7 +200,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "App plugins that extend the Grafana experience",
 				Id:         navtree.NavIDApps,
 				Children:   []*navtree.NavLink{appLink},
-				Section:    navtree.NavSectionCore,
 				SortWeight: navtree.WeightApps,
 				Url:        s.cfg.AppSubURL + "/apps",
 			})
@@ -221,7 +209,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDMonitoring,
 				SubTitle:   "Monitoring and infrastructure apps",
 				Icon:       "heart-rate",
-				Section:    navtree.NavSectionCore,
 				SortWeight: navtree.WeightMonitoring,
 				Children:   []*navtree.NavLink{appLink},
 				Url:        s.cfg.AppSubURL + "/monitoring",
@@ -234,11 +221,10 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			}
 			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Alerts & incidents",
+				Text:       "Alerts & IRM",
 				Id:         navtree.NavIDAlertsAndIncidents,
 				SubTitle:   "Alerting and incident management apps",
 				Icon:       "bell",
-				Section:    navtree.NavSectionCore,
 				SortWeight: navtree.WeightAlertsAndIncidents,
 				Children:   alertsAndIncidentsChildren,
 				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",

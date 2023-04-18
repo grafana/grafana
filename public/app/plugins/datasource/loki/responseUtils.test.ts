@@ -84,17 +84,17 @@ describe('extractLevelLikeLabelFromDataFrame', () => {
 describe('extractLogParserFromDataFrame', () => {
   it('returns false by default', () => {
     const input = cloneDeep(frame);
-    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: false });
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: false, hasPack: false });
   });
   it('identifies JSON', () => {
     const input = cloneDeep(frame);
     input.fields[2].values = new ArrayVector(['{"a":"b"}']);
-    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: true, hasLogfmt: false });
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: true, hasLogfmt: false, hasPack: false });
   });
   it('identifies logfmt', () => {
     const input = cloneDeep(frame);
     input.fields[2].values = new ArrayVector(['a=b']);
-    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: true });
+    expect(extractLogParserFromDataFrame(input)).toEqual({ hasJSON: false, hasLogfmt: true, hasPack: false });
   });
 });
 
@@ -191,6 +191,9 @@ describe('combineResponses', () => {
           ],
           length: 4,
           meta: {
+            custom: {
+              frameType: 'LabeledTimeValues',
+            },
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -228,10 +231,14 @@ describe('combineResponses', () => {
               name: 'Value',
               type: 'number',
               values: new ArrayVector([6, 7, 5, 4]),
+              labels: {
+                level: 'debug',
+              },
             },
           ],
           length: 4,
           meta: {
+            type: 'timeseries-multi',
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -269,10 +276,14 @@ describe('combineResponses', () => {
               name: 'Value',
               type: 'number',
               values: new ArrayVector([6, 7, 5, 4]),
+              labels: {
+                level: 'debug',
+              },
             },
           ],
           length: 4,
           meta: {
+            type: 'timeseries-multi',
             stats: [
               {
                 displayName: 'Summary: total bytes processed',

@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
@@ -160,7 +160,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 		}
 	}
 
-	newKeyInfo, err := apikeygenprefix.New(ServiceID)
+	newKeyInfo, err := satokengen.New(ServiceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Generating service account token failed", err)
 	}
