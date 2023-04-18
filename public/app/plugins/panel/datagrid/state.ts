@@ -1,22 +1,84 @@
-import { CellClickedEventArgs, GridColumnIcon, GridSelection, HeaderClickedEventArgs, Item, Rectangle, SizedGridColumn } from "@glideapps/glide-data-grid";
+import {
+  CellClickedEventArgs,
+  GridColumnIcon,
+  GridSelection,
+  HeaderClickedEventArgs,
+  Item,
+  Rectangle,
+  SizedGridColumn,
+} from '@glideapps/glide-data-grid';
 
-import { Field, FieldType, getFieldDisplayName } from "@grafana/data";
+import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
-import { DatagridContextMenuData, DEFAULT_CONTEXT_MENU, DEFAULT_RENAME_INPUT_DATA, EMPTY_GRID_SELECTION, getCellWidth, isDatagridEditEnabled, RenameColumnInputData } from "./utils";
+import {
+  DatagridContextMenuData,
+  DEFAULT_CONTEXT_MENU,
+  DEFAULT_RENAME_INPUT_DATA,
+  EMPTY_GRID_SELECTION,
+  getCellWidth,
+  isDatagridEditEnabled,
+  RenameColumnInputData,
+} from './utils';
 
 interface DatagridState {
-  columns: SizedGridColumn[],
-  contextMenuData: DatagridContextMenuData,
-  renameColumnInputData: RenameColumnInputData,
-  gridSelection: GridSelection,
-  columnFreezeIndex: number,
-  toggleSearch: boolean,
-  isResizeInProgress: boolean,
+  columns: SizedGridColumn[];
+  contextMenuData: DatagridContextMenuData;
+  renameColumnInputData: RenameColumnInputData;
+  gridSelection: GridSelection;
+  columnFreezeIndex: number;
+  toggleSearch: boolean;
+  isResizeInProgress: boolean;
+}
+
+interface UpdateColumnsPayload {
+  frame: DataFrame;
+}
+
+interface ColumnResizeStartPayload {
+  columnIndex: number;
+  width: number;
+}
+
+interface OpenCellContextMenuPayload {
+  event: CellClickedEventArgs;
+  cell: Item;
+}
+
+interface OpenHeaderContextMenuPayload {
+  event: HeaderClickedEventArgs;
+  columnIndex: number;
+}
+
+interface OpenHeaderDropdownMenuPayload {
+  screenPosition: Rectangle;
+  columnIndex: number;
+  value: string;
+}
+
+interface ColumnMovePayload {
+  from: number;
+  to: number;
+}
+
+interface MultipleCellsSelectedPayload {
+  selection: GridSelection;
+}
+
+interface ColumnFreezeChangedPayload {
+  columnIndex: number;
 }
 
 export interface DatagridAction {
-  type: DatagridActionType,
-  payload?: any,
+  type: DatagridActionType;
+  payload?:
+    | UpdateColumnsPayload
+    | ColumnResizeStartPayload
+    | OpenCellContextMenuPayload
+    | OpenHeaderContextMenuPayload
+    | OpenHeaderDropdownMenuPayload
+    | ColumnMovePayload
+    | MultipleCellsSelectedPayload
+    | ColumnFreezeChangedPayload;
 }
 
 export enum DatagridActionType {
@@ -58,64 +120,55 @@ const typeToIconMap: Map<string, GridColumnIcon> = new Map([
 
 export const datagridReducer = (state: DatagridState, action: DatagridAction): DatagridState => {
   let columns: SizedGridColumn[] = [];
-  
+
   switch (action.type) {
     case DatagridActionType.columnResizeStart:
       columns = [...state.columns];
-      columns[action.payload.columnIndex] = {
-        ...state.columns[action.payload.columnIndex],
-        width: action.payload.width,
-      }
+      const columnResizeStartPayload: ColumnResizeStartPayload = action.payload as ColumnResizeStartPayload;
 
-      return {
-        ...state,
-        columns,
-        isResizeInProgress: true,
-      }
-    break;
-    case DatagridActionType.columnMove:
-      columns = [...state.columns];
-      const widthFrom = state.columns[action.payload.from].width;
-      //TODO FIX DRAGGING AND DROPPING COLUMNS
-      // const widthTo = state.columns[action.payload.to].width;
-
-      if (action.payload.from < action.payload.to) {
-        for (let i = action.payload.from; i < action.payload.to; i++) {
-          columns[i] = {
-            ...state.columns[i],
-            width: state.columns[i + 1].width,
-          };
-        }
-        // THIS ONE DOESNT WORK YET
-      } else {
-        for (let i = action.payload.from; i < action.payload.to; i--) {
-          columns[i] = {
-            ...state.columns[i],
-            width: state.columns[i + 1].width,
-          };
-        }
-      }
-      
-      columns[action.payload.to] = {
-        ...state.columns[action.payload.to],
-        width: widthFrom,
+      columns[columnResizeStartPayload.columnIndex] = {
+        ...state.columns[columnResizeStartPayload.columnIndex],
+        width: columnResizeStartPayload.width,
       };
 
       return {
         ...state,
         columns,
-      }
-    break;
+        isResizeInProgress: true,
+      };
+      break;
+    case DatagridActionType.columnMove:
+      columns = [...state.columns];
+      const columnMovePayload: ColumnMovePayload = action.payload as ColumnMovePayload;
+
+      const widthFrom = state.columns[columnMovePayload.from].width;
+
+      let fromColumn = columns.splice(columnMovePayload.from, 1)[0];
+
+      fromColumn = {
+        ...fromColumn,
+        width: widthFrom,
+      };
+
+      columns.splice(columnMovePayload.to, 0, fromColumn);
+
+      return {
+        ...state,
+        columns,
+      };
+      break;
     case DatagridActionType.columnResizeEnd:
       return {
         ...state,
         isResizeInProgress: false,
-      }
-    break;
+      };
+      break;
     case DatagridActionType.updateColumns:
+      const updateColumnsPayload: UpdateColumnsPayload = action.payload as UpdateColumnsPayload;
+
       columns = [
-        ...action.payload.frame.fields.map((field: Field, index: number) => {
-          const displayName = getFieldDisplayName(field, action.payload.frame);
+        ...updateColumnsPayload.frame.fields.map((field: Field, index: number) => {
+          const displayName = getFieldDisplayName(field, updateColumnsPayload.frame);
           return {
             title: displayName,
             width: state.columns[index]?.width ?? getCellWidth(field),
@@ -123,14 +176,14 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
             hasMenu: isDatagridEditEnabled(),
             trailingRowOptions: { targetColumn: --index },
           };
-        })
-      ]
+        }),
+      ];
 
       return {
         ...state,
-        columns
-      }
-    break;
+        columns,
+      };
+      break;
     case DatagridActionType.showColumnRenameInput:
       return {
         ...state,
@@ -138,8 +191,8 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           ...state.renameColumnInputData,
           isInputOpen: true,
         },
-      }
-    break;
+      };
+      break;
     case DatagridActionType.hideColumnRenameInput:
       return {
         ...state,
@@ -147,11 +200,12 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           ...state.renameColumnInputData,
           isInputOpen: false,
         },
-      }
-    break;
+      };
+      break;
     case DatagridActionType.openCellContextMenu:
-      const cellEvent: CellClickedEventArgs = action.payload.event;
-      const cell: Item = action.payload.cell;
+      const openCellContextMenuPayload: OpenCellContextMenuPayload = action.payload as OpenCellContextMenuPayload;
+      const cellEvent: CellClickedEventArgs = openCellContextMenuPayload.event;
+      const cell: Item = openCellContextMenuPayload.cell;
 
       return {
         ...state,
@@ -161,93 +215,100 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           column: cell[0] === -1 ? undefined : cell[0], //row numbers,
           row: cell[1],
           isContextMenuOpen: true,
-          isHeaderMenu: false
+          isHeaderMenu: false,
         },
-      }
-    break;
+      };
+      break;
     case DatagridActionType.openHeaderContextMenu:
-      const headerEvent: HeaderClickedEventArgs = action.payload.event;
+      const openHeaderContextMenuPayload: OpenHeaderContextMenuPayload = action.payload as OpenHeaderContextMenuPayload;
+      const headerEvent: HeaderClickedEventArgs = openHeaderContextMenuPayload.event;
 
       return {
         ...state,
         contextMenuData: {
           x: headerEvent.bounds.x + headerEvent.localEventX,
           y: headerEvent.bounds.y + headerEvent.localEventY,
-          column: action.payload.columnIndex,
+          column: openHeaderContextMenuPayload.columnIndex,
           row: undefined, //header
           isContextMenuOpen: true,
-          isHeaderMenu: false
+          isHeaderMenu: false,
         },
-      }
-    break;
+      };
+      break;
     case DatagridActionType.openHeaderDropdownMenu:
-      const screenPosition: Rectangle = action.payload.screenPosition;
+      const openHeaderDropdownMenuPayload: OpenHeaderDropdownMenuPayload =
+        action.payload as OpenHeaderDropdownMenuPayload;
+      const screenPosition: Rectangle = openHeaderDropdownMenuPayload.screenPosition;
 
       return {
         ...state,
         contextMenuData: {
           x: screenPosition.x + screenPosition.width,
           y: screenPosition.y + screenPosition.height,
-          column: action.payload.columnIndex,
+          column: openHeaderDropdownMenuPayload.columnIndex,
           row: undefined, //header
           isContextMenuOpen: true,
-          isHeaderMenu: true
+          isHeaderMenu: true,
         },
         renameColumnInputData: {
           x: screenPosition.x,
           y: screenPosition.y,
           width: screenPosition.width,
           height: screenPosition.height,
-          columnIdx: action.payload.columnIndex,
+          columnIdx: openHeaderDropdownMenuPayload.columnIndex,
           isInputOpen: false,
-          inputValue: action.payload.value
-        }
-      }
-    break;
+          inputValue: openHeaderDropdownMenuPayload.value,
+        },
+      };
+      break;
     case DatagridActionType.closeContextMenu:
       return {
         ...state,
         contextMenuData: {
           isContextMenuOpen: false,
-        }
-      }
-    break;
+        },
+      };
+      break;
     case DatagridActionType.closeSearch:
       return {
         ...state,
-        toggleSearch: false
-      }
-    break;
+        toggleSearch: false,
+      };
+      break;
     case DatagridActionType.openSearch:
       return {
         ...state,
-        toggleSearch: true
-      }
-    break;
-    case DatagridActionType.multipleCellsSelected: 
+        toggleSearch: true,
+      };
+      break;
+    case DatagridActionType.multipleCellsSelected:
+      const multipleCellsSelectedPayload: MultipleCellsSelectedPayload = action.payload as MultipleCellsSelectedPayload;
+
       return {
         ...state,
-        gridSelection: action.payload.selection
-      }
-    break;
+        gridSelection: multipleCellsSelectedPayload.selection,
+      };
+      break;
     case DatagridActionType.gridSelectionCleared:
       return {
         ...state,
-        gridSelection: EMPTY_GRID_SELECTION
-      }
-    break;
+        gridSelection: EMPTY_GRID_SELECTION,
+      };
+      break;
     case DatagridActionType.columnFreezeReset:
       return {
         ...state,
-        columnFreezeIndex: 0
-      }
-    break;
+        columnFreezeIndex: 0,
+      };
+      break;
     case DatagridActionType.columnFreezeChanged:
+      const columnFreezeChangedPayload: ColumnFreezeChangedPayload = action.payload as ColumnFreezeChangedPayload;
+
       return {
         ...state,
-        columnFreezeIndex: action.payload.columnIndex
-      }
-    break;
+        columnFreezeIndex: columnFreezeChangedPayload.columnIndex,
+      };
+      break;
     default:
       return state;
   }
