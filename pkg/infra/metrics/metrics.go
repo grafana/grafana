@@ -201,9 +201,6 @@ var (
 
 	// MStatTotalPublicDashboards is a metric total amount of public dashboards
 	MStatTotalPublicDashboards prometheus.Gauge
-
-	// MStatTotalCorrelations is a metric total amount of correlations
-	MStatTotalCorrelations prometheus.Gauge
 )
 
 func init() {
@@ -597,12 +594,6 @@ func init() {
 		Help:      "total amount of public dashboards",
 		Namespace: ExporterName,
 	})
-
-	MStatTotalCorrelations = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "stat_totals_correlations",
-		Help:      "total amount of correlations",
-		Namespace: ExporterName,
-	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -714,7 +705,6 @@ func initMetricVars() {
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
-		MStatTotalCorrelations,
 		MApiAPIkeysGet,
 		MApiAPIkeysCreate,
 		MApiAPIkeysDelete,
