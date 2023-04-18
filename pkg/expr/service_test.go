@@ -34,7 +34,7 @@ func TestService(t *testing.T) {
 		PluginList: []plugins.PluginDTO{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeDataSourceService{}, nil, nil)
+	}, &datafakes.FakeDataSourceService{}, nil)
 
 	s := Service{
 		cfg:          setting.NewCfg(),

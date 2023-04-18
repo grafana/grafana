@@ -75,7 +75,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				},
 			},
 		}, &fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-			secretstest.NewFakeSecretsService()), plugincontext.ProvideKeyService(),
+			secretstest.NewFakeSecretsService()),
 		),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -122,7 +122,6 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 			},
 		},
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()),
-		plugincontext.ProvideKeyService(),
 	)
 	qds := query.ProvideService(
 		setting.NewCfg(),
@@ -298,7 +297,7 @@ func TestDataSourceQueryError(t *testing.T) {
 						PluginList: []plugins.PluginDTO{p.ToDTO()},
 					},
 						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-							secretstest.NewFakeSecretsService()), plugincontext.ProvideKeyService(),
+							secretstest.NewFakeSecretsService()),
 					),
 				)
 				hs.QuotaService = quotatest.New(false, nil)

@@ -72,7 +72,7 @@ func TestCallResource(t *testing.T) {
 	require.NoError(t, err)
 
 	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeDataSourceService{},
-		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), plugincontext.ProvideKeyService())
+		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()))
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

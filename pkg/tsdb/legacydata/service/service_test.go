@@ -44,7 +44,7 @@ func TestHandleRequest(t *testing.T) {
 
 		pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{{JSONData: plugins.JSONData{ID: "test"}}},
-		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService), plugincontext.ProvideKeyService())
+		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService))
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
 		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}

@@ -55,7 +55,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			PluginList: []plugins.PluginDTO{
 				{JSONData: plugins.JSONData{ID: "test"}},
 			}},
-			&datafakes.FakeDataSourceService{}, nil, nil),
+			&datafakes.FakeDataSourceService{}, nil),
 		metrics: newMetrics(nil),
 	}
 	queries := []Query{{
