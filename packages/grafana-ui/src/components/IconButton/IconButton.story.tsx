@@ -55,7 +55,7 @@ interface ScenarioProps {
 
 const RenderScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
-  const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
+  const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'xxxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
   const variants: IconButtonVariant[] = ['secondary', 'primary', 'destructive'];
 
@@ -67,25 +67,40 @@ const RenderScenario = ({ background }: ScenarioProps) => {
         button {
           margin-right: 8px;
           margin-left: 8px;
-          margin-bottom: 8px;
+          margin-bottom: 30px;
         }
       `}
     >
       <VerticalGroup spacing="md">
         <div>{background}</div>
-        {variants.map((variant) => {
-          return (
-            <div key={variant}>
-              {icons.map((icon) => {
-                return sizes.map((size) => (
-                  <span key={icon + size}>
-                    <IconButton name={icon} size={size} variant={variant} />
-                  </span>
-                ));
-              })}
-            </div>
-          );
-        })}
+        <div
+          className={css`
+            display: flex;
+          `}
+        >
+          {variants.map((variant) => {
+            return (
+              <div key={variant}>
+                {icons.map((icon) => {
+                  return (
+                    <div
+                      className={css`
+                        display: flex;
+                      `}
+                      key={icon}
+                    >
+                      {sizes.map((size) => (
+                        <span key={icon + size}>
+                          <IconButton name={icon} size={size} variant={variant} />
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
       </VerticalGroup>
     </div>
   );
