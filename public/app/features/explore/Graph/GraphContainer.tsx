@@ -1,6 +1,14 @@
 import React, { useCallback, useState } from 'react';
 
-import { DataFrame, EventBus, AbsoluteTimeRange, TimeZone, SplitOpen, LoadingState, ThresholdsConfig } from '@grafana/data';
+import {
+  DataFrame,
+  EventBus,
+  AbsoluteTimeRange,
+  TimeZone,
+  SplitOpen,
+  LoadingState,
+  ThresholdsConfig,
+} from '@grafana/data';
 import { Collapse, GraphThresholdsStyleConfig, useTheme2 } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 

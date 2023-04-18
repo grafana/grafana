@@ -12,7 +12,7 @@ import {
   LoadingState,
   PanelData,
   RelativeTimeRange,
-  ThresholdsConfig
+  ThresholdsConfig,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
@@ -22,7 +22,7 @@ import {
   Input,
   RelativeTimeRangePicker,
   Tooltip,
-  useStyles2
+  useStyles2,
 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -154,7 +154,7 @@ export const QueryWrapper = ({
           data={data}
           query={{
             ...defaults,
-            ...cloneDeep(query.model)
+            ...cloneDeep(query.model),
           }}
           onChange={(query) => onChangeQuery(query, index)}
           onRemoveQuery={onRemoveQuery}

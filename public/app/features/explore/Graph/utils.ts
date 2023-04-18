@@ -28,7 +28,11 @@ export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
   return found ?? DEFAULT_GRAPH_STYLE;
 };
 
-export const applyThresholdsConfig = (fieldConfig: FieldConfigSource<GraphFieldConfig>, thresholdsStyle: GraphThresholdsStyleConfig | undefined, thresholdsConfig: ThresholdsConfig | undefined): FieldConfigSource<GraphFieldConfig> => {
+export const applyThresholdsConfig = (
+  fieldConfig: FieldConfigSource<GraphFieldConfig>,
+  thresholdsStyle: GraphThresholdsStyleConfig | undefined,
+  thresholdsConfig: ThresholdsConfig | undefined
+): FieldConfigSource<GraphFieldConfig> => {
   return {
     ...fieldConfig,
     defaults: {
@@ -37,7 +41,7 @@ export const applyThresholdsConfig = (fieldConfig: FieldConfigSource<GraphFieldC
       custom: {
         ...fieldConfig.defaults.custom,
         thresholdsStyle: thresholdsStyle,
-      }
-    }
-  }
-}
+      },
+    },
+  };
+};

@@ -73,7 +73,7 @@ export const Expression: FC<ExpressionProps> = ({
 
       switch (query.type) {
         case ExpressionQueryType.math:
-          return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => { }} />;
+          return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
 
         case ExpressionQueryType.reduce:
           return <Reduce onChange={onChangeQuery} refIds={availableRefIds} labelWidth={'auto'} query={query} />;
@@ -309,15 +309,13 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const showFiring = isAlertCondition && value !== 0;
   const showNormal = isAlertCondition && value === 0;
 
-  const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`
+  const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`;
 
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
         <div className={cx(styles.expression.resultLabel)} title={title}>
-          <span>
-            {hasLabels ? '' : name}
-          </span>
+          <span>{hasLabels ? '' : name}</span>
           {hasLabels && (
             <>
               <span>{'{'}</span>

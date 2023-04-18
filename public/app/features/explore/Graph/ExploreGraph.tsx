@@ -20,7 +20,13 @@ import {
   EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder, GraphThresholdsStyleConfig } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  LegendDisplayMode,
+  TooltipDisplayMode,
+  SortOrder,
+  GraphThresholdsStyleConfig,
+} from '@grafana/schema';
 import {
   Button,
   Icon,
@@ -120,7 +126,7 @@ export function ExploreGraph({
 
   useEffect(() => {
     const updatedFieldConfig = applyThresholdsConfig(fieldConfig, thresholdsStyle, thresholdsConfig);
-    setFieldConfig(updatedFieldConfig)
+    setFieldConfig(updatedFieldConfig);
   }, [fieldConfig, thresholdsStyle, thresholdsConfig]);
 
   const styledFieldConfig = useMemo(

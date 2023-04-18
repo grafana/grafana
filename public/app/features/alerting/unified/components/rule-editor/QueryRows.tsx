@@ -2,13 +2,7 @@ import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import {
-  DataQuery,
-  DataSourceInstanceSettings,
-  LoadingState,
-  PanelData,
-  RelativeTimeRange,
-} from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -166,15 +160,9 @@ export class QueryRows extends PureComponent<Props> {
                         model={query.model}
                         onUpdateDatasource={() => {
                           const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
-                          if (!defaultDataSource) {
-                            return;
+                          if (defaultDataSource) {
+                            this.onChangeDataSource(defaultDataSource, index);
                           }
-
-                          getDatasourceSrv()
-                            .get()
-                            .then(() => {
-                              this.onChangeDataSource(defaultDataSource, index);
-                            });
                         }}
                         onRemoveQuery={() => {
                           this.onRemoveQuery(query);
@@ -216,10 +204,7 @@ export class QueryRows extends PureComponent<Props> {
   }
 }
 
-function copyModel(
-  item: AlertQuery,
-  settings: DataSourceInstanceSettings,
-): Omit<AlertQuery, 'datasource'> {
+function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
   return {
     ...item,
     model: {
@@ -233,10 +218,7 @@ function copyModel(
   };
 }
 
-function newModel(
-  item: AlertQuery,
-  settings: DataSourceInstanceSettings,
-): Omit<AlertQuery, 'datasource'> {
+function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
