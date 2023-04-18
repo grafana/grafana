@@ -1,6 +1,4 @@
 ---
-aliases:
-  - saml/
 description: Grafana Team Sync
 keywords:
   - grafana
