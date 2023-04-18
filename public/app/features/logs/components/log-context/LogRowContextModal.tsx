@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import {
@@ -138,6 +138,20 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+
+  const getFullTimerange = useCallback(() => {
+    const { before, after } = context;
+    const allRows = [...before, row, ...after].sort((a, b) => a.timeEpochMs - b.timeEpochMs);
+    const first = allRows[0];
+    const last = allRows[allRows.length - 1];
+    return rangeUtil.convertRawToRange(
+      {
+        from: first.timeUtc,
+        to: last.timeUtc,
+      },
+      'utc'
+    );
+  }, [context, row]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
@@ -312,15 +326,12 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           <Button
             variant="primary"
             onClick={async () => {
-              const query = await getRowContextQuery(row, { limit: 2 * limit + 1 });
+              const query = await getRowContextQuery(row);
               if (query?.datasource?.uid) {
                 dispatch(
                   splitOpen({
                     queries: [query],
-                    range: rangeUtil.convertRawToRange({
-                      from: context.after[0].timeUtc,
-                      to: context.before[0].timeUtc,
-                    }),
+                    range: getFullTimerange(),
                     datasourceUid: query.datasource.uid,
                   })
                 );

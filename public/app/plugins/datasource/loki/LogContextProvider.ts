@@ -39,7 +39,7 @@ export class LogContextProvider {
     origQuery?: DataQuery
   ): Promise<DataQuery> => {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
-    const limit = (options && options.limit) || 10;
+    const limit = (options && options.limit) || this.datasource.maxLines;
 
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
