@@ -404,7 +404,6 @@ type CloudWatchMetricsQuery struct {
 	Sql    *struct {
 		From    *CloudWatchMetricsQuerySqlFrom `json:"from,omitempty"`
 		GroupBy *struct {
-			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 			Expressions []CloudWatchMetricsQuerySqlGroupByExpressionsItem `json:"expressions"`
 			Type        CloudWatchMetricsQuerySqlGroupByType              `json:"type"`
 		} `json:"groupBy,omitempty"`
@@ -427,7 +426,6 @@ type CloudWatchMetricsQuery struct {
 			Type CloudWatchMetricsQuerySqlSelectType `json:"type"`
 		} `json:"select,omitempty"`
 		Where *struct {
-			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 			Expressions []CloudWatchMetricsQuerySqlWhereExpressionsItem `json:"expressions"`
 			Type        CloudWatchMetricsQuerySqlWhereType              `json:"type"`
 		} `json:"where,omitempty"`
@@ -578,7 +576,6 @@ type MetricStat struct {
 
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
-	// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 	Expressions []QueryEditorArrayExpressionExpressionsItem `json:"expressions"`
 	Type        QueryEditorArrayExpressionType              `json:"type"`
 }
@@ -737,7 +734,6 @@ type QueryEditorPropertyExpressionType string
 type SQLExpression struct {
 	From    *SQLExpressionFrom `json:"from,omitempty"`
 	GroupBy *struct {
-		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 		Expressions []SQLExpressionGroupByExpressionsItem `json:"expressions"`
 		Type        SQLExpressionGroupByType              `json:"type"`
 	} `json:"groupBy,omitempty"`
@@ -760,7 +756,6 @@ type SQLExpression struct {
 		Type SQLExpressionSelectType `json:"type"`
 	} `json:"select,omitempty"`
 	Where *struct {
-		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 		Expressions []SQLExpressionWhereExpressionsItem `json:"expressions"`
 		Type        SQLExpressionWhereType              `json:"type"`
 	} `json:"where,omitempty"`
