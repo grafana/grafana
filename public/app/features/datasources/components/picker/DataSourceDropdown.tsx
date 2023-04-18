@@ -55,7 +55,6 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
             onChange={(e) => {
               setFilterTerm(e.currentTarget.value);
             }}
-            focusStyles={() => ''}
             ref={setMarkerElement}
           ></Input>
           <Portal>
@@ -81,22 +80,26 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
           </Portal>
         </FocusScope>
       ) : (
-        <Input
+        <div
           className={css`
+            cursor: pointer;
             input {
               cursor: pointer;
             }
           `}
-          prefix={<DataSourceLogo dataSource={current}></DataSourceLogo>}
-          suffix={<Icon name="angle-down"></Icon>}
-          value={dataSourceName(current)}
           onClick={() => {
             setOpen(true);
           }}
-          onFocus={() => {
-            setOpen(true);
-          }}
-        ></Input>
+        >
+          <Input
+            prefix={<DataSourceLogo dataSource={current}></DataSourceLogo>}
+            suffix={<Icon name="angle-down"></Icon>}
+            value={dataSourceName(current)}
+            onFocus={() => {
+              setOpen(true);
+            }}
+          ></Input>
+        </div>
       )}
     </div>
   );
