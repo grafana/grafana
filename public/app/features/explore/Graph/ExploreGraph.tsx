@@ -30,6 +30,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { PanelOptions as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
@@ -38,6 +39,7 @@ import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVi
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
+import { applyThresholdsConfig } from './utils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -98,7 +100,7 @@ export function ExploreGraph({
     []
   );
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
@@ -117,17 +119,8 @@ export function ExploreGraph({
   });
 
   useEffect(() => {
-    setFieldConfig({
-      ...fieldConfig,
-      defaults: {
-        ...fieldConfig.defaults,
-        thresholds: thresholdsConfig,
-        custom: {
-          ...fieldConfig.defaults.custom,
-          thresholdsStyle: thresholdsStyle,
-        }
-      }
-    })
+    const updatedFieldConfig = applyThresholdsConfig(fieldConfig, thresholdsStyle, thresholdsConfig);
+    setFieldConfig(updatedFieldConfig)
   }, [fieldConfig, thresholdsStyle, thresholdsConfig]);
 
   const styledFieldConfig = useMemo(

@@ -1,4 +1,7 @@
+import { FieldConfigSource, ThresholdsConfig } from '@grafana/data';
+import { GraphThresholdsStyleConfig } from '@grafana/schema';
 import store from 'app/core/store';
+import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/types';
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
@@ -24,3 +27,17 @@ export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
   const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
   return found ?? DEFAULT_GRAPH_STYLE;
 };
+
+export const applyThresholdsConfig = (fieldConfig: FieldConfigSource<GraphFieldConfig>, thresholdsStyle: GraphThresholdsStyleConfig | undefined, thresholdsConfig: ThresholdsConfig | undefined): FieldConfigSource<GraphFieldConfig> => {
+  return {
+    ...fieldConfig,
+    defaults: {
+      ...fieldConfig.defaults,
+      thresholds: thresholdsConfig,
+      custom: {
+        ...fieldConfig.defaults.custom,
+        thresholdsStyle: thresholdsStyle,
+      }
+    }
+  }
+}
