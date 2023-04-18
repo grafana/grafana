@@ -53,12 +53,12 @@ func (e Response4xxError) Error() string {
 	return fmt.Sprintf("%d", e.StatusCode)
 }
 
-type ErrArchUnsupported struct {
+type ErrArcNotFound struct {
 	PluginID   string
 	SystemInfo string
 }
 
-func (e ErrArchUnsupported) Error() string {
+func (e ErrArcNotFound) Error() string {
 	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.PluginID, e.SystemInfo)
 }
 

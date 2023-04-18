@@ -469,7 +469,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
 		}
-		var archError repo.ErrArchUnsupported
+		var archError repo.ErrArcNotFound
 		if errors.As(err, &archError) {
 			return response.Error(http.StatusNotFound, archError.Error(), nil)
 		}
