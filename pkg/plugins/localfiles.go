@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -82,7 +83,7 @@ type fsAllowList map[string]struct{}
 
 func newFSAllowList(files map[string]struct{}) fsAllowList {
 	// Copy map so it cannot be modified from outside
-	allowListCopy := make(map[string]struct{}, len(files))
+	allowListCopy := fsAllowList(make(map[string]struct{}, len(files)))
 	for k := range files {
 		allowListCopy[k] = struct{}{}
 	}
@@ -90,16 +91,16 @@ func newFSAllowList(files map[string]struct{}) fsAllowList {
 }
 
 // key returns the corresponding internal map key for the provided path.
-func (a fsAllowList) key(path string) string {
+/* func (a fsAllowList) key(path string) string {
 	cleanPath, err := util.CleanRelativePath(path)
 	if err != nil {
 		return ""
 	}
 	return cleanPath
-}
+} */
 
 func (a fsAllowList) isAllowed(path string) bool {
-	_, ok := a[a.key(path)]
+	_, ok := a[path]
 	return ok
 }
 
@@ -128,7 +129,11 @@ func NewAllowListLocalFS(allowList map[string]struct{}, basePath string, walkFun
 // Open checks that name is an allowed file and returns a fs.File to access it.
 func (f AllowListLocalFS) Open(name string) (fs.File, error) {
 	// Ensure access to the file is allowed
-	if !f.allowList.isAllowed(name) {
+	cleanRelativePath, err := util.CleanRelativePath(name)
+	if err != nil {
+		return nil, err
+	}
+	if !f.allowList.isAllowed(filepath.Join(f.basePath, cleanRelativePath)) {
 		return nil, ErrFileNotExist
 	}
 	// Use the wrapped LocalFS to access the file
@@ -141,6 +146,18 @@ func (f AllowListLocalFS) Files() ([]string, error) {
 	filesystemFiles, err := f.LocalFS.Files()
 	if err != nil {
 		return filesystemFiles, err
+	}
+	// TODO: FS: ???? Separate Walker and Files implementation??
+	if len(filesystemFiles) == 0 {
+		files := make([]string, 0, len(f.allowList))
+		for p := range f.allowList {
+			r, err := filepath.Rel(f.basePath, p)
+			if strings.Contains(r, "..") || err != nil {
+				continue
+			}
+			files = append(files, p)
+		}
+		return files, nil
 	}
 
 	// Intersect with allow list

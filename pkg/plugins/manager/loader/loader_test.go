@@ -28,7 +28,7 @@ import (
 
 var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), localFSComparer}
 
-var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS) bool {
+var localFSComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
 	if err != nil {
 		panic(err)
@@ -285,10 +285,10 @@ func TestLoader_Load(t *testing.T) {
 					Class:   plugins.External,
 					Module:  "plugins/test-datasource/module",
 					BaseURL: "public/plugins/test-datasource",
-					FS: plugins.NewAllowListLocalFS(
-						filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					FS: plugins.NewLocalFS(
+						// filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
-						nil,
+						filesInDirCollectFilesWalkFuncProvider(filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					),
 					Signature: "unsigned",
 				},
@@ -1483,6 +1483,12 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegist
 	}
 }
 
+func filesInDirCollectFilesWalkFuncProvider(dir string) plugins.CollectFilesWalkFuncProvider {
+	return func(acc map[string]struct{}) filepath.WalkFunc {
+		return collectFilesWalkFunc(acc)
+	}
+}
+
 func filesInDir(t *testing.T, dir string) map[string]struct{} {
 	files, err := collectFilesWithin(dir)
 	if err != nil {
@@ -1492,9 +1498,8 @@ func filesInDir(t *testing.T, dir string) map[string]struct{} {
 	return files
 }
 
-func collectFilesWithin(dir string) (map[string]struct{}, error) {
-	files := map[string]struct{}{}
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+func collectFilesWalkFunc(files map[string]struct{}) func(path string, info os.FileInfo, err error) error {
+	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -1515,7 +1520,11 @@ func collectFilesWithin(dir string) (map[string]struct{}, error) {
 
 		files[path] = struct{}{}
 		return nil
-	})
+	}
+}
 
+func collectFilesWithin(dir string) (map[string]struct{}, error) {
+	files := map[string]struct{}{}
+	err := filepath.Walk(dir, collectFilesWalkFunc(files))
 	return files, err
 }

@@ -480,7 +480,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 	}
 }
 
-var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS) bool {
+var localFSComparer = cmp.Comparer(func(fs1 plugins.AllowListLocalFS, fs2 plugins.AllowListLocalFS) bool {
 	fs1Files, err := fs1.Files()
 	if err != nil {
 		panic(err)
