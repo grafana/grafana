@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
@@ -13,32 +13,30 @@ export interface Props {
   hideBorder?: boolean;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false) => {
-  return {
-    tabsWrapper:
-      !hideBorder &&
-      css`
-        border-bottom: 1px solid ${theme.colors.border.weak};
-      `,
-    tabs: css`
-      position: relative;
-      display: flex;
-      height: ${theme.components.menuTabs.height}px;
-    `,
-  };
-});
-
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder }, ref) => {
-  const theme = useTheme2();
-  const tabsStyles = getTabsBarStyles(theme, hideBorder);
+export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
-      <div className={tabsStyles.tabs} role="tablist">
+    <div className={cx({ [styles.tabsBorderBottom]: !hideBorder }, styles.tabsScroll, className)} ref={ref}>
+      <div className={styles.tabs} role="tablist">
         {children}
       </div>
     </div>
   );
+});
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  tabsBorderBottom: css`
+    border-bottom: 1px solid ${theme.colors.border.weak};
+  `,
+  tabsScroll: css`
+    overflow-x: auto;
+  `,
+  tabs: css`
+    position: relative;
+    display: flex;
+    height: ${theme.components.menuTabs.height}px;
+  `,
 });
 
 TabsBar.displayName = 'TabsBar';
