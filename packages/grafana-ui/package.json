@@ -122,7 +122,6 @@
     "@storybook/addon-docs": "7.0.4",
     "@storybook/addon-essentials": "7.0.4",
     "@storybook/addon-storysource": "7.0.4",
-    "@storybook/addons": "7.0.4",
     "@storybook/api": "7.0.4",
     "@storybook/blocks": "7.0.4",
     "@storybook/client-api": "7.0.4",

@@ -40,21 +40,14 @@ const preview: Preview = {
     },
     docs: {
       container: ThemedDocsContainer,
-      canvas: { sourceState: 'none' },
     },
     knobs: {
       disable: true,
     },
     layout: 'fullscreen',
     options: {
-      showPanel: true,
-      panelPosition: 'right',
-      showNav: true,
-      isFullscreen: false,
-      isToolshown: true,
       storySort: {
         method: 'alphabetical',
-        // Order Docs Overview and Docs Overview/Intro story first
         order: ['Docs Overview', ['Intro']],
       },
     },

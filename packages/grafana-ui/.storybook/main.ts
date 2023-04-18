@@ -67,7 +67,7 @@ const mainConfig: StorybookConfig = {
       name: 'storybook-addon-turbo-build',
       options: {
         optimizationLevel: 3,
-        // Target must match storybook 7 manager otherwise docs error in production
+        // Target must match storybook 7 manager otherwise minimised docs error in production
         esbuildMinifyOptions: {
           target: 'chrome100',
           minify: true,
@@ -138,10 +138,6 @@ const mainConfig: StorybookConfig = {
       test: /(unicons|mono|custom)[\\/].*\.svg$/,
       type: 'asset/source',
     });
-
-    //DEBUG DON'T COMMIT
-    // config.mode = 'development';
-    // config.optimization!.minimize = false;
 
     return config;
   },
