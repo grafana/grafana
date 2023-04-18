@@ -1,4 +1,4 @@
-import { Meta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { Badge } from '@grafana/ui';
@@ -22,7 +22,7 @@ const meta: Meta<typeof Badge> = {
   },
 };
 
-const Template: ComponentStory<typeof Badge> = (args) => <Badge {...args} />;
+const Template: StoryFn<typeof Badge> = (args) => <Badge {...args} />;
 
 export const Basic = Template.bind({});
 

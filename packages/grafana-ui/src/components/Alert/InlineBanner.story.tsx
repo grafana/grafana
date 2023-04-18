@@ -62,7 +62,7 @@ WithActions.args = {
   buttonContent: 'Close',
 };
 
-export const Examples: ComponentStory<typeof Alert> = () => {
+export const Examples: StoryFn<typeof Alert> = () => {
   return (
     <VerticalGroup>
       <StoryExample name="With buttonContent and children">
