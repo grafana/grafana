@@ -264,25 +264,9 @@ func (p *redisPeer) membersSyncLoop() {
 			if values.Err() != nil {
 				p.logger.Error("error getting values from redis", "err", values.Err(), "keys", members)
 			}
-			peers := []string{}
 			// After getting the list of possible members from redis, we filter
 			// those out that have failed to send a heartbeat during the heartbeatTimeout.
-			for i, peer := range members {
-				val := values.Val()[i]
-				if val == nil {
-					continue
-				}
-				ts, err := strconv.ParseInt(val.(string), 10, 64)
-				if err != nil {
-					p.logger.Error("error parsing timestamp value", "err", err, "peer", peer, "val", val)
-					continue
-				}
-				tm := time.Unix(ts, 0)
-				if tm.Before(time.Now().Add(-p.heartbeatTimeout)) {
-					continue
-				}
-				peers = append(peers, peer)
-			}
+			peers := p.filterUnhealthyMembers(members, values.Val())
 			sort.Strings(peers)
 			dur := time.Since(startTime)
 			p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
@@ -295,6 +279,29 @@ func (p *redisPeer) membersSyncLoop() {
 			return
 		}
 	}
+}
+
+// filterUnhealthyMembers will filter out the members that have failed to send
+// a heartbeat since heartbeatTimeout.
+func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{}) []string {
+	peers := []string{}
+	for i, peer := range members {
+		val := values[i]
+		if val == nil {
+			continue
+		}
+		ts, err := strconv.ParseInt(val.(string), 10, 64)
+		if err != nil {
+			p.logger.Error("error parsing timestamp value", "err", err, "peer", peer, "val", val)
+			continue
+		}
+		tm := time.Unix(ts, 0)
+		if tm.Before(time.Now().Add(-p.heartbeatTimeout)) {
+			continue
+		}
+		peers = append(peers, peer)
+	}
+	return peers
 }
 
 func (p *redisPeer) Position() int {
@@ -387,7 +394,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 
 func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Registerer) cluster.ClusterChannel {
 	p.statesMtx.Lock()
-	defer p.statesMtx.Unlock()	
+	defer p.statesMtx.Unlock()
 	p.states[key] = state
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
