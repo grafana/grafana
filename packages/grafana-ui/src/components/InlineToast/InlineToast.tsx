@@ -68,11 +68,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(0.5),
       alignItems: 'center',
     }),
-    loadingSpinner: css({
-      width: '16px',
-      height: '16px',
-      fontSize: 'inherit',
-    }),
   };
 };
 
