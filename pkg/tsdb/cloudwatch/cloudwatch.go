@@ -274,7 +274,7 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if e.cfg.SecureSocksDSProxy.Enabled && e.features.IsEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && instance.Settings.SecureSocksProxyEnabled {
+	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
 	}

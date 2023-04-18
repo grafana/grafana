@@ -45,7 +45,6 @@ accessTokenExpirationCheck,stable,@grafana/grafana-authnz-team,false,false,false
 showTraceId,alpha,@grafana/observability-logs,false,false,false,false
 datasourceOnboarding,alpha,@grafana/dashboards-squad,false,false,false,false
 emptyDashboardPage,stable,@grafana/dashboards-squad,false,false,false,true
-secureSocksDatasourceProxy,alpha,@grafana/hosted-grafana-team,false,false,false,false
 authnService,alpha,@grafana/grafana-authnz-team,false,false,false,false
 disablePrometheusExemplarSampling,stable,@grafana/observability-metrics,false,false,false,false
 alertingBacktesting,alpha,@grafana/alerting-squad,false,false,false,false
