@@ -26,7 +26,7 @@ import {
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
-import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
+import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
@@ -35,7 +35,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const styles = useStyles2(getStyles);
   const jsonData = options.jsonData;
 
-  useMigrateDatabaseField(props);
+  useMigrateDatabaseFields(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -232,13 +232,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </FieldSet>
 
-      <ConnectionLimits
-        labelWidth={shortWidth}
-        jsonData={jsonData}
-        onPropertyChanged={(property, value) => {
-          updateDatasourcePluginJsonDataOption(props, property, value);
-        }}
-      ></ConnectionLimits>
+      <ConnectionLimits labelWidth={shortWidth} options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MS SQL details">
         <InlineField

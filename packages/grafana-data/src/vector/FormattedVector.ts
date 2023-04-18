@@ -6,6 +6,7 @@ import { FunctionalVector } from './FunctionalVector';
 
 /**
  * @public
+ * @deprecated use a simple Arrays
  */
 export class FormattedVector<T = any> extends FunctionalVector<string> {
   constructor(private source: Vector<T>, private formatter: DisplayProcessor) {

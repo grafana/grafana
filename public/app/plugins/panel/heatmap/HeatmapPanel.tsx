@@ -14,10 +14,10 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
@@ -68,22 +68,20 @@ export const HeatmapPanel = ({
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
-      exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
+      exemplarsXFacet = info.exemplars?.fields[0].values;
 
       // ordinal/labeled heatmap-buckets?
       const hasLabeledY = meta.yOrdinalDisplay != null;
 
       if (hasLabeledY) {
-        let matchExemplarsBy = info.exemplars?.fields
-          .find((field) => field.name === meta.yMatchWithLabel)!
-          .values.toArray();
+        let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
         exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
       } else {
-        exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+        exemplarsyFacet = info.exemplars?.fields[1].values as number[]; // "Value" field
       }
     }
 
-    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
+    return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
@@ -206,26 +204,7 @@ export const HeatmapPanel = ({
             offset={{ x: 10, y: 10 }}
             allowPointerEvents={isToolTipOpen.current}
           >
-            {shouldDisplayCloseButton && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  paddingBottom: '6px',
-                }}
-              >
-                <CloseButton
-                  onClick={onCloseToolTip}
-                  style={{
-                    position: 'relative',
-                    top: 'auto',
-                    right: 'auto',
-                    marginRight: 0,
-                  }}
-                />
-              </div>
-            )}
+            {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
             <HeatmapHoverView
               timeRange={timeRange}
               data={info}
