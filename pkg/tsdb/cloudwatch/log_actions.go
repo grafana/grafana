@@ -112,7 +112,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Lo
 	}
 
 	var data *data.Frame = nil
-	switch logsQuery.SubType {
+	switch logsQuery.Subtype {
 	case "StartQuery":
 		data, err = e.handleStartQuery(ctx, logger, logsClient, logsQuery, query.TimeRange, query.RefID)
 	case "StopQuery":
@@ -123,7 +123,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Lo
 		data, err = e.handleGetLogEvents(ctx, logsClient, logsQuery)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.SubType, err)
+		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.Subtype, err)
 	}
 
 	return data, nil
@@ -214,7 +214,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 {
 		var logGroupIdentifiers []string
 		for _, lg := range logsQuery.LogGroups {
-			arn := lg.ARN
+			arn := lg.Arn
 			// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
 			logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
 		}

@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 
@@ -270,16 +271,16 @@ type queryDimensions struct {
 }
 
 type queryParameters struct {
-	MetricQueryType  models.MetricQueryType  `json:"metricQueryType"`
-	MetricEditorMode models.MetricEditorMode `json:"metricEditorMode"`
-	Dimensions       queryDimensions         `json:"dimensions"`
-	Expression       string                  `json:"expression"`
-	Alias            string                  `json:"alias"`
-	Label            *string                 `json:"label"`
-	Statistic        string                  `json:"statistic"`
-	Period           string                  `json:"period"`
-	MatchExact       bool                    `json:"matchExact"`
-	MetricName       string                  `json:"metricName"`
+	MetricQueryType  dataquery.CloudWatchMetricsQueryMetricQueryType  `json:"metricQueryType"`
+	MetricEditorMode dataquery.CloudWatchMetricsQueryMetricEditorMode `json:"metricEditorMode"`
+	Dimensions       queryDimensions                                  `json:"dimensions"`
+	Expression       string                                           `json:"expression"`
+	Alias            string                                           `json:"alias"`
+	Label            *string                                          `json:"label"`
+	Statistic        string                                           `json:"statistic"`
+	Period           string                                           `json:"period"`
+	MatchExact       bool                                             `json:"matchExact"`
+	MetricName       string                                           `json:"metricName"`
 }
 
 var queryId = "query id"
@@ -288,11 +289,11 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 	t.Helper()
 
 	tsq := struct {
-		Type             string                  `json:"type"`
-		MetricQueryType  models.MetricQueryType  `json:"metricQueryType"`
-		MetricEditorMode models.MetricEditorMode `json:"metricEditorMode"`
-		Namespace        string                  `json:"namespace"`
-		MetricName       string                  `json:"metricName"`
+		Type             string                                           `json:"type"`
+		MetricQueryType  dataquery.CloudWatchMetricsQueryMetricQueryType  `json:"metricQueryType"`
+		MetricEditorMode dataquery.CloudWatchMetricsQueryMetricEditorMode `json:"metricEditorMode"`
+		Namespace        string                                           `json:"namespace"`
+		MetricName       string                                           `json:"metricName"`
 		Dimensions       struct {
 			InstanceID []string `json:"InstanceId,omitempty"`
 		} `json:"dimensions"`

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -598,7 +599,7 @@ func TestConditionsCmd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars)
+			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars, tracing.NewFakeTracer())
 			require.NoError(t, err)
 			require.Equal(t, tt.expected(), res)
 		})

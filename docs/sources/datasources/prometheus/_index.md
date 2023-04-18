@@ -92,6 +92,8 @@ datasources:
       incrementalQuerying: true
       incrementalQueryOverlapWindow: 10m
       cacheLevel: 'High'
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.

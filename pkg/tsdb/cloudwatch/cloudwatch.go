@@ -27,21 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 type DataQueryJson struct {
-	QueryType       string `json:"type,omitempty"`
-	QueryMode       string
-	PrefixMatching  bool
-	Region          string
-	Namespace       string
-	MetricName      string
-	Dimensions      map[string]interface{}
-	Statistic       *string
-	Period          string
-	ActionPrefix    string
-	AlarmNamePrefix string
+	dataquery.CloudWatchAnnotationQuery
+	Type string `json:"type,omitempty"`
 }
 
 type DataSource struct {
@@ -179,7 +171,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	}
 
 	var result *backend.QueryDataResponse
-	switch model.QueryType {
+	switch model.Type {
 	case annotationQuery:
 		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
 	case logAction:
@@ -274,7 +266,7 @@ func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region 
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if e.cfg.SecureSocksDSProxy.Enabled && e.features.IsEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && instance.Settings.SecureSocksProxyEnabled {
+	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
 	}
