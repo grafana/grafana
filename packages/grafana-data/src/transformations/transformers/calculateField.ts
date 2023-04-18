@@ -5,7 +5,7 @@ import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
-import { BinaryOperationVector, ConstantVector, IndexVector } from '../../vector';
+import { BinaryOperationVector, ConstantVector } from '../../vector';
 import { AsNumberVector } from '../../vector/AsNumberVector';
 import { RowVector } from '../../vector/RowVector';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
@@ -104,11 +104,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             const f = {
               name: options.alias ?? 'Row',
               type: FieldType.number,
-              values: new IndexVector(frame.length),
-              config: {
-                min: 0,
-                max: frame.length - 1,
-              },
+              values: [...Array(frame.length).keys()],
+              config: {},
             };
             return {
               ...frame,
