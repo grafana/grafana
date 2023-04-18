@@ -229,7 +229,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             if (frame && time) {
               const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
               if (timeField) {
-                const timestamps: number[] = timeField.values.toArray();
+                const timestamps: number[] = timeField.values;
                 const pointIdx = findNearestTimeIndex(timestamps, time);
                 if (pointIdx !== null) {
                   const out = getGeometryField(frame, location);

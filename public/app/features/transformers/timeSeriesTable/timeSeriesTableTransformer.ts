@@ -1,7 +1,6 @@
 import { map } from 'rxjs/operators';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   DataTransformerInfo,
@@ -45,7 +44,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   // initialize fields from labels for each refId
   const refId2LabelFields = getLabelFields(data);
 
-  const refId2frameField: Record<string, Field<DataFrame, ArrayVector>> = {};
+  const refId2frameField: Record<string, Field<DataFrame>> = {};
 
   const result: DataFrame[] = [];
 
@@ -65,7 +64,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         name: 'Trend' + (refId && Object.keys(refId2LabelFields).length > 1 ? ` #${refId}` : ''),
         type: FieldType.frame,
         config: {},
-        values: new ArrayVector(),
+        values: [],
       };
       refId2frameField[refId] = frameField;
 
@@ -91,9 +90,9 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 }
 
 // For each refId, initialize a field for each label name
-function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Field<string, ArrayVector>>> {
+function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Field<string>>> {
   // refId -> label name -> field
-  const labelFields: Record<string, Record<string, Field<string, ArrayVector>>> = {};
+  const labelFields: Record<string, Record<string, Field<string>>> = {};
 
   for (const frame of frames) {
     if (!isTimeSeriesFrame(frame)) {
@@ -117,7 +116,7 @@ function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Fiel
             name: labelName,
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(),
+            values: [],
           };
         }
       }

@@ -1,5 +1,4 @@
 import { DataLink, FieldType, TimeRange } from '../types';
-import { ArrayVector } from '../vector';
 
 import { mapInternalLinkToExplore } from './dataLinks';
 
@@ -24,7 +23,7 @@ describe('mapInternalLinkToExplore', () => {
         name: 'test',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([2]),
+        values: [2],
       },
       replaceVariables: (val) => val,
     });
@@ -65,7 +64,7 @@ describe('mapInternalLinkToExplore', () => {
         name: 'test',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([2]),
+        values: [2],
       },
       replaceVariables: (val) => val,
     });
@@ -112,7 +111,7 @@ describe('mapInternalLinkToExplore', () => {
         name: 'test',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([2]),
+        values: [2],
       },
       replaceVariables: (val, scopedVars) => val.replace(/\$var/g, scopedVars!['var1']!.value),
     });

@@ -84,8 +84,8 @@ describe('Prepare time series transformer', () => {
       frames.map((f) => ({
         name: getFrameDisplayName(f),
         labels: f.fields[1].labels,
-        time: f.fields[0].values.toArray(),
-        values: f.fields[1].values.toArray(),
+        time: f.fields[0].values,
+        values: f.fields[1].values,
       }))
     ).toMatchInlineSnapshot(`
       [

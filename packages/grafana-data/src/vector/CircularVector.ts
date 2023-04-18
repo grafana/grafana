@@ -14,6 +14,7 @@ interface CircularOptions<T> {
  * to match a configured capacity.
  *
  * @public
+ * @deprecated use a simple Arrays
  */
 export class CircularVector<T = any> extends FunctionalVector<T> {
   private buffer: T[];

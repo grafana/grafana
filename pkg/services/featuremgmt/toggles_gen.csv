@@ -40,7 +40,7 @@ newPanelChromeUI,stable,@grafana/dashboards-squad,false,false,false,true
 showDashboardValidationWarnings,alpha,@grafana/dashboards-squad,false,false,false,false
 mysqlAnsiQuotes,alpha,@grafana/backend-platform,false,false,false,false
 accessControlOnCall,beta,@grafana/grafana-authnz-team,false,false,false,false
-nestedFolders,alpha,@grafana/backend-platform,true,false,false,false
+nestedFolders,beta,@grafana/backend-platform,false,false,false,false
 accessTokenExpirationCheck,stable,@grafana/grafana-authnz-team,false,false,false,false
 showTraceId,alpha,@grafana/observability-logs,false,false,false,false
 datasourceOnboarding,alpha,@grafana/dashboards-squad,false,false,false,false
@@ -78,3 +78,4 @@ useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,
 enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
 advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
+opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
