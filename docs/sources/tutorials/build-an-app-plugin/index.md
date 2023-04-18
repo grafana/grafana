@@ -195,9 +195,9 @@ If you want to let users know that your app requires an existing plugin, you can
   "plugins": [
     {
       "type": "panel",
-      "name": "Worldmap Panel",
-      "id": "grafana-worldmap-panel",
-      "version": "^0.3.2"
+      "name": "Clock",
+      "id": "grafana-clock-panel",
+      "version": "^2.1.2"
     }
   ]
 }

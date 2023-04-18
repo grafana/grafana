@@ -19,7 +19,7 @@ Grafana supports three types of plugins: [panels](/grafana/plugins?type=panel), 
 
 ## Panel plugins
 
-Add new visualizations to your dashboard with panel plugins, such as the [Worldmap Panel](/grafana/plugins/grafana-worldmap-panel), [Clock](/grafana/plugins/grafana-clock-panel), and [Pie Chart](/grafana/plugins/grafana-piechart-panel).
+Add new visualizations to your dashboard with panel plugins, such as the [Geomap Panel](/grafana/plugins/grafana-geomap-panel), [Clock](/grafana/plugins/grafana-clock-panel), and [Pyroscope Flamegraph](/grafana/plugins/pyroscope-panel/).
 
 Use panel plugins when you want to:
 
