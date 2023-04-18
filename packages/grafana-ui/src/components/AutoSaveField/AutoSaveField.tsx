@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
@@ -115,13 +115,8 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         )}
       </Field>
       {isLoading && (
-        <InlineToast
-          referenceElement={fieldRef.current}
-          placement="right"
-          alternativePlacement="bottom"
-          loading={isLoading}
-        >
-          Saving...
+        <InlineToast referenceElement={fieldRef.current} placement="right" alternativePlacement="bottom">
+          Saving <EllipsisAnimated />
         </InlineToast>
       )}
       {fieldState.showSuccess && (
@@ -145,5 +140,85 @@ const getStyles = () => {
     widthFitContent: css({
       width: 'fit-content',
     }),
+    ellipsis: css({
+      display: 'inline',
+    }),
+    firstDot: css({
+      animation: `${firstDot} 2s linear infinite`,
+    }),
+    secondDot: css({
+      animation: `${secondDot} 2s linear infinite`,
+    }),
+    thirdDot: css({
+      animation: `${thirdDot} 2s linear infinite`,
+    }),
   };
 };
+
+const EllipsisAnimated = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.ellipsis}>
+      <span className={styles.firstDot}>.</span>
+      <span className={styles.secondDot}>.</span>
+      <span className={styles.thirdDot}>.</span>
+    </div>
+  );
+};
+
+const firstDot = keyframes`
+0% {
+  opacity: 1;
+}
+65% {
+  opacity: 1;
+}
+66% {
+  opacity: 0.5;
+}
+100% {
+  opacity: 0;
+}
+`;
+
+const secondDot = keyframes`
+0% {
+  opacity: 0;
+}
+21% {
+  opacity: 0.5;
+}
+22% {
+  opacity: 1;
+}
+65% {
+  opacity: 1;
+}
+66% {
+  opacity: 0.5;
+}
+100% {
+  opacity: 0;
+}
+`;
+
+const thirdDot = keyframes`
+0% {
+  opacity: 0;
+}
+43% {
+  opacity: 0.5;
+}
+44% {
+  opacity: 1;
+}
+65% {
+  opacity: 1;
+}
+66% {
+  opacity: 0.5;
+}
+100% {
+  opacity: 0;
+}
+`;
