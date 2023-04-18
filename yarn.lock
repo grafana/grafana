@@ -16606,13 +16606,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.0.1":
-  version: 3.0.1
-  resolution: "dompurify@npm:3.0.1"
-  checksum: 19447e6d96415a8ad3a67bc9c76ffe671eb31cf7c1e0a538cbe5037c8b8b03afe144d64cf96c6e0f7fe63b83721a33b5b913394d20a85e96550e42e31f7c086b
-  languageName: node
-  linkType: hard
-
 "dompurify@npm:^2.2.0":
   version: 2.3.8
   resolution: "dompurify@npm:2.3.8"
@@ -20173,7 +20166,6 @@ __metadata:
     "@types/d3-force": ^3.0.0
     "@types/d3-scale-chromatic": 3.0.0
     "@types/debounce-promise": 3.1.6
-    "@types/dompurify": ^2
     "@types/eslint": 8.21.1
     "@types/file-saver": 2.0.5
     "@types/glob": ^8.0.0
@@ -20261,7 +20253,6 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.29.3
     debounce-promise: 3.1.2
-    dompurify: 3.0.1
     emotion: 11.0.0
     esbuild: 0.16.17
     esbuild-loader: 2.21.0
