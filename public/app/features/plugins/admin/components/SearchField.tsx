@@ -20,6 +20,7 @@ const useDebounceWithoutFirstRender = (callBack: () => any, delay = 0, deps: Rea
         isFirstRender.current = false;
         return;
       }
+      console.log('--------- DEBUOUNCE');
       return callBack();
     },
     delay,
@@ -42,6 +43,7 @@ export const SearchField = ({ value, onSearch }: Props) => {
       }}
       placeholder="Search Grafana plugins"
       onChange={(value) => {
+        console.log('--------- ONCHANGE', value);
         setQuery(value);
       }}
       width={46}

@@ -54,7 +54,7 @@ export function getColorDimensionForField(
 
     return {
       field,
-      get: (index: number): string => getColor(field!.values.get(index)),
+      get: (index: number): string => getColor(field!.values[index]),
       value: () => getColor(getLastNotNullFieldValue(field!)),
     };
   }

@@ -7,27 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
-
-var (
-	expressionsQuerySummary *prometheus.SummaryVec
-)
-
-func init() {
-	expressionsQuerySummary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       "expressions_queries_duration_milliseconds",
-			Help:       "Expressions query summary",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-		[]string{"status"},
-	)
-
-	prometheus.MustRegister(expressionsQuerySummary)
-}
 
 // Request is similar to plugins.DataQuery but with the Time Ranges is per Query.
 type Request struct {
@@ -97,7 +79,7 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 			respStatus = "failure"
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+		s.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 	}()
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
