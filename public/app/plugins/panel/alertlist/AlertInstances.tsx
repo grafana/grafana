@@ -19,10 +19,17 @@ interface Props {
   alerts: Alert[];
   options: PanelProps<UnifiedAlertListOptions>['options'];
   grafanaTotalInstances?: number;
-  handleShowAllInstances?: () => void;
+  handleInstancesLimit?: (limit: boolean) => void;
+  limitInstances?: boolean;
 }
 
-export const AlertInstances = ({ alerts, options, grafanaTotalInstances, handleShowAllInstances }: Props) => {
+export const AlertInstances = ({
+  alerts,
+  options,
+  grafanaTotalInstances,
+  handleInstancesLimit,
+  limitInstances,
+}: Props) => {
   // when custom grouping is enabled, we will always uncollapse the list of alert instances
   const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
   const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
@@ -54,23 +61,31 @@ export const AlertInstances = ({ alerts, options, grafanaTotalInstances, handleS
   }, [filteredAlerts]);
 
   const onShowAllClick = async () => {
-    if (!handleShowAllInstances) {
+    if (!handleInstancesLimit) {
       return;
     }
-    await handleShowAllInstances();
+    await handleInstancesLimit(false);
     setDisplayInstances(true);
   };
 
+  const onShowLimitedClick = async () => {
+    if (!handleInstancesLimit) {
+      return;
+    }
+    await handleInstancesLimit(true);
+    setDisplayInstances(true);
+  };
+  const limitStatus = limitInstances ? `Limiting the result to ${INSTANCES_DISPLAY_LIMIT} instances` : `Showing all`;
+
+  const limitButtonLabel = limitInstances ? 'Remove limit' : `Limit the result to ${INSTANCES_DISPLAY_LIMIT} instances`;
   const footerRow =
-    hiddenInstances > 0 &&
-    grafanaTotalInstances &&
-    grafanaTotalInstances > INSTANCES_DISPLAY_LIMIT &&
-    filteredAlerts.length <= INSTANCES_DISPLAY_LIMIT ? (
+    (grafanaTotalInstances && grafanaTotalInstances > filteredAlerts.length) ||
+    (grafanaTotalInstances && grafanaTotalInstances === filteredAlerts.length && !limitInstances) ? (
       <div className={styles.footerRow}>
-        <div>Limiting the result to {INSTANCES_DISPLAY_LIMIT} instances</div>
+        <div>{limitStatus}</div>
         {
-          <Button size="sm" variant="secondary" onClick={onShowAllClick}>
-            Remove limit
+          <Button size="sm" variant="secondary" onClick={limitInstances ? onShowAllClick : onShowLimitedClick}>
+            {limitButtonLabel}
           </Button>
         }
       </div>
