@@ -6250,10 +6250,10 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [
+    "packages/grafana-ui/src/components/Text/Text.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/Typography/Typography.story.tsx:5381": [
+    "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [

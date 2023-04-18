@@ -4,11 +4,11 @@ import React from 'react';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
-import { Typography } from './Typography';
+import { Text } from './Text';
 
 const meta: Meta = {
   title: 'General/Typography',
-  component: Typography,
+  component: Text,
   parameters: {
     docs: {},
   },
