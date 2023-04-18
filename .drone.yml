@@ -1738,7 +1738,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
+  - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -6823,6 +6823,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 7f282aaf4f3ba496f2d954241a16afd2facbf2cf1ef04dfb75cfec1b42fd39d1
+hmac: e8c29c328c07ab24a7f858cc319c9b35a5bec1fc79531e809e5d3a390bbcbc2f
 
 ...
