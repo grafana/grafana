@@ -471,7 +471,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		}
 		var archError repo.ErrArchUnsupported
 		if errors.As(err, &archError) {
-			return response.Error(http.StatusConflict, archError.Error(), nil)
+			return response.Error(http.StatusNotFound, archError.Error(), nil)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
