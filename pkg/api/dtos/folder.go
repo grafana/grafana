@@ -24,6 +24,8 @@ type Folder struct {
 	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 	// only used if nested folders are enabled
 	ParentUID string `json:"parentUid,omitempty"`
+	// the parent folders starting from the root going down
+	Parents []Folder `json:"parents,omitempty"`
 }
 
 type FolderSearchHit struct {
