@@ -9,7 +9,6 @@ import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
-import { Spinner } from '../Spinner/Spinner';
 
 export interface InlineToastProps {
   children: React.ReactNode;
@@ -18,8 +17,6 @@ export interface InlineToastProps {
   placement: BasePlacement;
   /** Placement to use if there is not enough space to show the full toast with the original placement*/
   alternativePlacement?: BasePlacement;
-  /** To show the spinner while it is loading */
-  loading?: boolean;
 }
 
 export function InlineToast({
@@ -28,7 +25,6 @@ export function InlineToast({
   suffixIcon,
   placement,
   alternativePlacement,
-  loading,
 }: InlineToastProps) {
   const [indicatorElement, setIndicatorElement] = useState<HTMLElement | null>(null);
   const [toastPlacement, setToastPlacement] = useState(placement);
@@ -52,7 +48,6 @@ export function InlineToast({
       >
         <span className={cx(styles.root, placementStyles[toastPlacement])}>
           {children && <span>{children}</span>}
-          {loading && <Spinner className={styles.loadingSpinner} />}
           {suffixIcon && <Icon name={suffixIcon} />}
         </span>
       </div>
