@@ -49,7 +49,11 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
-    this.preconfiguredDatabase = settingsData?.database ?? '';
+    /* 
+      The `settingsData.database` will be defined if a default database has been defined in either
+      1) the ConfigurationEditor.tsx, OR 2) the provisioning config file under `jsondata.database`.
+    */
+    this.preconfiguredDatabase = settingsData.database ?? '';
     this.annotations = {
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
