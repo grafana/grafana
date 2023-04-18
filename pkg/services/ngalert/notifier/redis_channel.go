@@ -37,7 +37,7 @@ func (c *RedisChannel) handleMessages() {
 		case b := <-c.msgc:
 			pub := c.p.redis.Publish(context.Background(), c.channel, string(b))
 			// An error here might not be as critical as one might think on first sight.
-			// The state will eventually be propagted to other members by the full sync.
+			// The state will eventually be propagated to other members by the full sync.
 			if pub.Err() != nil {
 				c.p.messagesPublishFailures.WithLabelValues(c.msgType, reasonRedisIssue).Inc()
 				c.p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
