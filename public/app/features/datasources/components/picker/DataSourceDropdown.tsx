@@ -141,7 +141,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                   recentlyUsed: props.recentlyUsed,
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
-                  onFileDrop: props.onFileDrop,
                   current,
                   onDismiss: hideModal,
                   onChange: (ds) => {
