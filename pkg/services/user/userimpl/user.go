@@ -62,7 +62,6 @@ func ProvideService(
 	}); err != nil {
 		return s, err
 	}
-	s.GetUsageStats(context.Background())
 
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 	return s, nil
