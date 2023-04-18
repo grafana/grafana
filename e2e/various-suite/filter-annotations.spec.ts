@@ -19,20 +19,16 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         // All panels
-        e2e().get(`input[id*="annotations-type-input"]`).click({ force: true }).type('All panels{enter}');
-
-        e2e().get(`input[id*="choose-panels-input"]`).should('not.exist');
+        e2e.components.Annotations.annotationsTypeInput().click({ force: true }).type('All panels{enter}');
+        e2e.components.Annotations.annotationsChoosePanelInput().should('not.exist');
 
         // All panels except
-        e2e().get(`input[id*="annotations-type-input"]`).click({ force: true }).type('All panels except{enter}');
-
-        e2e().get(`input[id*="choose-panels-input"]`).should('be.visible');
+        e2e.components.Annotations.annotationsTypeInput().click({ force: true }).type('All panels except{enter}');
+        e2e.components.Annotations.annotationsChoosePanelInput().should('be.visible');
 
         // Selected panels
-        e2e().get(`input[id*="annotations-type-input"]`).click({ force: true }).type('Selected panels{enter}');
-
-        e2e()
-          .get(`input[id*="choose-panels-input"]`)
+        e2e.components.Annotations.annotationsTypeInput().click({ force: true }).type('Selected panels{enter}');
+        e2e.components.Annotations.annotationsChoosePanelInput()
           .should('be.visible')
           .click({ force: true })
           .type('Panel two{enter}');
@@ -56,7 +52,6 @@ e2e.scenario({
 
     e2e().wait(3000);
 
-    // @TODO Change the annotations count
     e2e.components.Panels.Panel.title('Panel one')
       .should('exist')
       .within(() => {

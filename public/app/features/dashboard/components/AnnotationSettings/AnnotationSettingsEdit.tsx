@@ -38,8 +38,6 @@ type Props = {
 };
 
 export const newAnnotationName = 'New annotation';
-export const FILTER_TYPE_ID = 'annotations-type-input';
-export const CHOOSE_PANELS_ID = 'choose-panels-input';
 
 export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const styles = useStyles2(getStyles);
@@ -186,7 +184,12 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         </Field>
         <Field label="Show in" aria-label={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
           <>
-            <Select options={panelFilters} value={panelFilter} onChange={onFilterTypeChange} inputId={FILTER_TYPE_ID} />
+            <Select
+              options={panelFilters}
+              value={panelFilter}
+              onChange={onFilterTypeChange}
+              aria-label={selectors.components.Annotations.annotationsTypeInput}
+            />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
                 options={panels}
@@ -197,7 +200,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
                 width={100}
                 closeMenuOnSelect={false}
                 className={styles.select}
-                inputId={CHOOSE_PANELS_ID}
+                aria-label={selectors.components.Annotations.annotationsChoosePanelInput}
               />
             )}
           </>
