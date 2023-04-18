@@ -98,7 +98,7 @@ func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts)
 			return nil, err
 		}
 	} else {
-		v, err = m.specificPluginVersion(version)
+		v, err = m.specificPluginVersion(pluginID, version)
 		if err != nil {
 			return nil, err
 		}
@@ -196,12 +196,12 @@ func (m *Manager) downloadURL(pluginID, version string) string {
 
 // specificPluginVersion returns specific plugin version information from /api/plugins/$pluginID/version/$version
 // regardless of the Grafana version
-func (m *Manager) specificPluginVersion(version string) (Version, error) {
+func (m *Manager) specificPluginVersion(pluginID, version string) (Version, error) {
 	u, err := url.Parse(m.cfg.BaseURL)
 	if err != nil {
 		return Version{}, err
 	}
-	u.Path = path.Join(u.Path, "version", version)
+	u.Path = path.Join(u.Path, pluginID, "version", version)
 
 	body, err := m.client.sendReq(u)
 	if err != nil {

@@ -29,7 +29,6 @@ type ArchMeta struct {
 // Plugin is (a subset of) the JSON response from /api/plugins/$pluginID
 type Plugin struct {
 	Status        string             `json:"status"`
-	ID            int                `json:"id"`
 	Version       string             `json:"version"`
 	VersionStatus string             `json:"versionStatus"`
 	Packages      map[string]Package `json:"packages"`
@@ -43,5 +42,4 @@ type PluginVersion struct {
 type Package struct {
 	Sha256      string `json:"sha256"`
 	PackageName string `json:"packageName"`
-	DownloadURL string `json:"downloadUrl"`
 }
