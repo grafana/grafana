@@ -352,6 +352,44 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('when autoMigrateFrom angular to react', () => {
+      const onPanelTypeChanged = (panel: PanelModel, prevPluginId: string, prevOptions: Record<string, any>) => {
+        panel.fieldConfig = { defaults: { unit: 'bytes' }, overrides: [] };
+        return { name: prevOptions.angular.oldName };
+      };
+
+      const reactPlugin = getPanelPlugin({ id: 'timeseries' })
+        .setPanelChangeHandler(onPanelTypeChanged as any)
+        .useFieldConfig({
+          disableStandardOptions: [FieldConfigProperty.Thresholds],
+        })
+        .setPanelOptions((builder) => {
+          builder.addTextInput({
+            name: 'Name',
+            path: 'name',
+          });
+        });
+
+      beforeEach(() => {
+        model = new PanelModel({
+          autoMigrateFrom: 'graph',
+          oldName: 'old name',
+          type: 'timeseries',
+        });
+
+        model.pluginLoaded(reactPlugin);
+      });
+
+      it('should call update model and remove old model props', () => {
+        expect(model.options).toEqual({ name: 'old name' });
+        expect(model.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
+        expect(model.autoMigrateFrom).toBe(undefined);
+        expect(model.oldName).toBe(undefined);
+        expect(model.plugin).toBe(reactPlugin);
+        expect(model.type).toBe('timeseries');
+      });
+    });
+
     describe('variables interpolation', () => {
       let panelQueryRunner: any;
 
