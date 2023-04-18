@@ -11,6 +11,8 @@ import (
 )
 
 // CollectFilesFunc is a function that returns a filepath.WalkFunc, which will accumulate its results into acc.
+// The file paths collected into acc should be absolute file paths
+// (like the first argument provided to filepath.WalkFunc)
 type CollectFilesFunc func(acc map[string]struct{}) filepath.WalkFunc
 
 // defaultCollectFilesFunc is a simple CollectFilesFunc that skips all directories and collects all files into acc.
@@ -40,12 +42,13 @@ type LocalFS struct {
 	// basePath is the basePath that will be prepended to all the files (in allowList map) before accessing them.
 	basePath string
 
-	// collectFilesFunc returns a filepath.WalkFunc that creates a list of files in this LocalFS for Files()
+	// collectFilesFunc returns a filepath.WalkFunc that creates a slice of files in this LocalFS, for Files()
 	collectFilesFunc CollectFilesFunc
 }
 
 // NewLocalFS returns a new LocalFS that can access any file in the specified base path on the filesystem.
 // basePath must use os-specific path separator for Open() to work properly.
+// If collectFilesFunc is not provided, defaultCollectFilesFunc is used instead, which will collect all files.
 func NewLocalFS(basePath string, collectFilesFunc CollectFilesFunc) LocalFS {
 	if collectFilesFunc == nil {
 		collectFilesFunc = defaultCollectFilesFunc
@@ -57,11 +60,13 @@ func NewLocalFS(basePath string, collectFilesFunc CollectFilesFunc) LocalFS {
 // The provided name must be a relative file name that uses os-specific path separators.
 // The function returns the corresponding fs.File.
 // If a nil error is returned, the caller should take care of calling Close() the returned fs.File.
+// If the file does not exist, ErrFileNotExist is returned.
 func (f LocalFS) Open(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: path traversal check
 	fn := filepath.Join(f.basePath, cleanPath)
 	if _, err := os.Stat(fn); err != nil {
 		return nil, ErrFileNotExist
@@ -75,10 +80,11 @@ func (f LocalFS) Base() string {
 	return f.basePath
 }
 
-// Files returns a slice of all the file paths on the LocalFS relative to the base path.
+// Files returns a slice of all the relative file paths on the LocalFS.
 // The returned strings use os-specific path separator.
 func (f LocalFS) Files() ([]string, error) {
 	// Accumulate all files into filesMap by calling f.collectFilesFunc, which will write into the accumulator.
+	// Those are absolute because filepath.Walk uses absolute file paths.
 	absFilePaths := make(map[string]struct{})
 	if err := filepath.Walk(f.basePath, f.collectFilesFunc(absFilePaths)); err != nil {
 		return nil, fmt.Errorf("walk: %w", err)
@@ -91,6 +97,7 @@ func (f LocalFS) Files() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		// TODO: path traversal check just to be sure
 		relFiles = append(relFiles, relFn)
 	}
 	return relFiles, nil
@@ -106,7 +113,7 @@ func (a fsAllowList) isAllowed(path string) bool {
 	return ok
 }
 
-// newFSAllowList creates a new fsAllowList from a list of allowed paths.
+// newFSAllowList creates a new fsAllowList from a list of allowed file paths.
 func newFSAllowList(files map[string]struct{}) fsAllowList {
 	// Clean and convert all relative paths to absolute
 	allowListCopy := fsAllowList(make(map[string]struct{}, len(files)))
@@ -117,17 +124,19 @@ func newFSAllowList(files map[string]struct{}) fsAllowList {
 }
 
 // AllowListFS wraps an FS and allows accessing only the files in the allowList.
-// This is a more secure implementation of FS suitable for production environments.
+// This is a more secure implementation of a FS suitable for production environments.
+// The keys of the allow list must be in the same format used by the underlying FS' "Open()" method
+// for this implementation to work properly.
 type AllowListFS struct {
 	FS
 
-	// allowList is a map of absolute file paths that can be accessed on the local filesystem.
-	// The path separator must be os-specific.
+	// allowList is a map of allowed paths (accepted by FS.Open())
 	allowList fsAllowList
 }
 
 // NewAllowListFS returns a new AllowListFS that can access the files in the specified base path on
-// an underlying FS, but ONLY if they are also specified in the provided allowList.
+// an underlying FS, but only if they are also specified in the provided allowList.
+// The keys of the allow list must be in the same format used by the underlying FS' "Open()" method.
 func NewAllowListFS(allowList map[string]struct{}, fs FS) AllowListFS {
 	return AllowListFS{
 		FS:        fs,
@@ -135,7 +144,8 @@ func NewAllowListFS(allowList map[string]struct{}, fs FS) AllowListFS {
 	}
 }
 
-// Open checks that name is an allowed file and returns a fs.File to access it.
+// Open checks that name is an allowed file and, if so, it returns a fs.File to access it.
+// If access is denied, the function returns ErrFileNotExist.
 func (f AllowListFS) Open(name string) (fs.File, error) {
 	// Ensure access to the file is allowed
 	if !f.allowList.isAllowed(name) {
@@ -181,8 +191,7 @@ func (f allowListFSNoFiles) Files() ([]string, error) {
 	return files, nil
 }
 
-// NewAllowListLocalFSForTests returns a new AllowListFS (as FS) wrapping NewLocalFS using a no-op function.
-// Files() will simply return the provided file names, which will also form the allow-list.
+// NewAllowListLocalFSForTests returns a new allowListFSNoFiles (as FS) wrapping a NewLocalFS using a no-op function.
 func NewAllowListLocalFSForTests(dir string, files ...string) FS {
 	// Create allow-list from slice
 	m := make(map[string]struct{}, len(files))
