@@ -8,7 +8,6 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
-import { getSvgSize } from '../Icon/utils';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
@@ -46,7 +45,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, size, variant);
+    const styles = getStyles(theme, variant);
     const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
     const button = (
@@ -69,7 +68,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: IconButtonVariant) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, variant: IconButtonVariant) => {
   let iconColor = theme.colors.text.primary;
 
   if (variant === 'primary') {
@@ -105,6 +104,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: 
         transition-duration: 0.2s;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-property: transform, opacity;
+      }
+
+      &[disabled],
+      &:disabled {
+        cursor: not-allowed;
+        color: ${theme.colors.action.disabledText};
+        opacity: 0.65;
+        box-shadow: none;
+      }
+
+      &:focus,
+      &:focus-visible {
+        ${getFocusStyles(theme)}
+      }
+
+      &:focus:not(:focus-visible) {
+        ${getMouseFocusStyles(theme)}
       }
 
       &:hover {
