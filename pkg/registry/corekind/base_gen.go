@@ -12,7 +12,9 @@ package corekind
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/kinds/accesspolicy"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/kinds/folder"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
@@ -40,7 +42,9 @@ import (
 // kind-schematized type.
 type Base struct {
 	all             []kindsys.Core
+	accesspolicy    *accesspolicy.Kind
 	dashboard       *dashboard.Kind
+	folder          *folder.Kind
 	librarypanel    *librarypanel.Kind
 	playlist        *playlist.Kind
 	preferences     *preferences.Kind
@@ -51,7 +55,9 @@ type Base struct {
 
 // type guards
 var (
+	_ kindsys.Core = &accesspolicy.Kind{}
 	_ kindsys.Core = &dashboard.Kind{}
+	_ kindsys.Core = &folder.Kind{}
 	_ kindsys.Core = &librarypanel.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
 	_ kindsys.Core = &preferences.Kind{}
@@ -60,9 +66,19 @@ var (
 	_ kindsys.Core = &team.Kind{}
 )
 
+// AccessPolicy returns the [kindsys.Interface] implementation for the accesspolicy kind.
+func (b *Base) AccessPolicy() *accesspolicy.Kind {
+	return b.accesspolicy
+}
+
 // Dashboard returns the [kindsys.Interface] implementation for the dashboard kind.
 func (b *Base) Dashboard() *dashboard.Kind {
 	return b.dashboard
+}
+
+// Folder returns the [kindsys.Interface] implementation for the folder kind.
+func (b *Base) Folder() *folder.Kind {
+	return b.folder
 }
 
 // LibraryPanel returns the [kindsys.Interface] implementation for the librarypanel kind.
@@ -99,11 +115,23 @@ func doNewBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{}
 
+	reg.accesspolicy, err = accesspolicy.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the accesspolicy Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.accesspolicy)
+
 	reg.dashboard, err = dashboard.NewKind(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing the dashboard Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.dashboard)
+
+	reg.folder, err = folder.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the folder Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.folder)
 
 	reg.librarypanel, err = librarypanel.NewKind(rt)
 	if err != nil {

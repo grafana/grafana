@@ -7,6 +7,16 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Raw generated types from AccessPolicy kind.
+export type {
+  AccessPolicy,
+  ResourceID,
+  AccessRule
+} from './raw/accesspolicy/x/accesspolicy_types.gen';
+
+// Raw generated enums and default consts from accesspolicy kind.
+export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen';
+
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
@@ -86,6 +96,9 @@ export {
   defaultMatcherConfig,
   defaultFieldConfig
 } from './veneer/dashboard.types';
+
+// Raw generated types from Folder kind.
+export type { Folder } from './raw/folder/x/folder_types.gen';
 
 // Raw generated types from LibraryPanel kind.
 export type {
