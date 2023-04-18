@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -686,4 +687,92 @@ func setupRBACPermission(t *testing.T, repo xormRepositoryImpl, role *accesscont
 	})
 
 	require.NoError(t, err)
+}
+
+func BenchmarkFindTags_10k(b *testing.B) {
+	benchmarkFindTags(b, 10000)
+}
+
+func BenchmarkFindTags_100k(b *testing.B) {
+	benchmarkFindTags(b, 100000)
+}
+
+func benchmarkFindTags(b *testing.B, numAnnotations int) {
+	sql := db.InitTestDB(b)
+	var maximumTagsLength int64 = 60
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+
+	type annotationTag struct {
+		ID           int64 `xorm:"pk autoincr 'id'"`
+		AnnotationID int64 `xorm:"annotation_id"`
+		TagID        int64 `xorm:"tag_id"`
+	}
+	newAnnotations := make([]annotations.Item, 0, numAnnotations)
+	newTags := make([]tag.Tag, 0, numAnnotations)
+	newAnnotationTags := make([]annotationTag, 0, numAnnotations)
+	for i := 0; i < numAnnotations; i++ {
+		newAnnotations = append(newAnnotations, annotations.Item{
+			ID:          int64(i),
+			OrgID:       1,
+			UserID:      1,
+			DashboardID: int64(i),
+			Text:        "hello",
+			Type:        "alert",
+			Epoch:       10,
+			Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+		})
+		newTags = append(newTags, tag.Tag{
+			Id:  int64(i),
+			Key: fmt.Sprintf("tag%d", i),
+		})
+
+		newAnnotationTags = append(newAnnotationTags, annotationTag{
+			AnnotationID: int64(i),
+			TagID:        int64(1),
+		})
+	}
+	err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		batchSize := 1000
+		numOfBatches := numAnnotations / batchSize
+		for i := 0; i < numOfBatches; i++ {
+			_, err := sess.Insert(newAnnotations[i*batchSize : (i+1)*batchSize-1])
+			require.NoError(b, err)
+
+			_, err = sess.Insert(newTags[i*batchSize : (i+1)*batchSize-1])
+			require.NoError(b, err)
+
+			_, err = sess.Insert(newAnnotationTags[i*batchSize : (i+1)*batchSize-1])
+			require.NoError(b, err)
+		}
+		return nil
+	})
+	require.NoError(b, err)
+
+	annotationWithTheTag := annotations.Item{
+		ID:          int64(numAnnotations) + 1,
+		OrgID:       1,
+		UserID:      1,
+		DashboardID: int64(1),
+		Text:        "hello",
+		Type:        "alert",
+		Epoch:       10,
+		Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+		Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+	}
+	err = repo.Add(context.Background(), &annotationWithTheTag)
+	require.NoError(b, err)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		result, err := repo.GetTags(context.Background(), &annotations.TagsQuery{
+			OrgID: 1,
+			Tag:   "outage",
+		})
+		require.NoError(b, err)
+		require.Len(b, result.Tags, 2)
+		require.Equal(b, "outage", result.Tags[0].Tag)
+		require.Equal(b, "type:outage", result.Tags[1].Tag)
+		require.Equal(b, int64(1), result.Tags[0].Count)
+		require.Equal(b, int64(1), result.Tags[1].Count)
+	}
 }

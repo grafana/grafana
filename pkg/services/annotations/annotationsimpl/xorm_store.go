@@ -411,9 +411,10 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query *annotations.Tag
 			count(*) as count
 		FROM tag
 		INNER JOIN annotation_tag ON tag.id = annotation_tag.tag_id
+		INNER JOIN annotation ON annotation.id = annotation_tag.annotation_id
 `)
 
-		sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
+		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
 
 		sql.WriteString(` AND (` + tagKey + ` ` + r.db.GetDialect().LikeStr() + ` ? OR ` + tagValue + ` ` + r.db.GetDialect().LikeStr() + ` ?)`)
