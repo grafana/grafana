@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import Tooltip from 'rc-tooltip';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme, dateTime, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles, useStyles2 } from '../../themes';
 import { Button } from '../Button';
+import { Tooltip } from '../Tooltip';
 
 export interface RecentUser {
   id: number;
@@ -22,19 +22,27 @@ export interface UserViewDTO {
 }
 
 export interface UserIconProps {
+  /** An object that contains the user's details and 'viewed' status */
   userView: UserViewDTO;
+  /** A boolean value that determines whether the tooltip should be shown or not */
   showTooltip?: boolean;
+  /** A boolean value that determines whether the border should be shown or not */
   showBorder?: boolean;
+  /** An optional class name to be added to the icon element */
   className?: string;
 }
 
+/**
+ * A helper function that takes in a dateString parameter
+ * and returns the user's last viewed date in a specific format.
+ */
 const formatViewed = (dateString: string): string => {
   const date = dateTime(dateString);
   const diffHours = date.diff(dateTime(), 'hours', false);
   return `Active last ${(Math.floor(-diffHours / 24) + 1) * 24}h`;
 };
 
-export const UserIcon: FC<UserIconProps> = ({ userView, showTooltip = true, showBorder = false, className }) => {
+export const UserIcon = ({ userView, showTooltip = true, showBorder = false, className }: UserIconProps) => {
   const { user, viewed } = userView;
   const isActive = dateTime(viewed).diff(dateTime(), 'minutes', true) >= -15;
 
