@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
@@ -210,7 +211,7 @@ func TestContactPointService(t *testing.T) {
 					require.Equal(t, newCp.UID, cps[1].UID)
 					require.Equal(t, test.to, models.Provenance(cps[1].Provenance))
 				} else {
-					require.Error(t, err)
+					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
 				}
 			})
 		}
