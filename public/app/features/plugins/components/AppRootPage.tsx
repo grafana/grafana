@@ -52,7 +52,11 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   );
 
   if (!plugin || pluginId !== plugin.meta.id) {
-    return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
+    return (
+      <Page navModel={navModel} pageNav={{ text: '' }}>
+        {loading && <PageLoader />}
+      </Page>
+    );
   }
 
   if (!plugin.root) {
