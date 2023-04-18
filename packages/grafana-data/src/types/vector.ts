@@ -101,7 +101,7 @@ export interface MutableVector<T = any> extends ReadWriteVector<T> {}
 /**
  * This is an extremely inefficient Vector wrapper that allows vectors to
  * be treated as arrays.  We should avoid using this wrapper, but it is helpful
- * for a clean migration to arrys
+ * for a clean migration to arrays
  *
  * @deprecated
  */
