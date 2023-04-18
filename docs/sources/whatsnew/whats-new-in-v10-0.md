@@ -250,10 +250,6 @@ These improvements make working with log context in Grafana more intuitive and e
 
 ## Alerting
 
-### Guided set up of alert rules
-
-Simplifies the alert rule creation process by introducing a wizard to guide you step-by-step through creating your alert rules as well as providing in-app guidance along the way.
-
 ### State history view
 
 Use the improved State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
@@ -261,6 +257,10 @@ Use the improved State history view to get insight into how your alert instances
 ### Test notification templates from within Grafana
 
 Create notification templates for custom alert rules or existing active alert rules and preview how they will look before using them in your contact points.
+
+### OnCall contact point
+
+Add the OnCall contact point to your notification policies to notify your OnCall teams when alert instances are firing.
 
 ## Security
 
