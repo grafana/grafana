@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs';
 
 import {
-  ArrayVector,
   DataFrame,
   DataQuery,
   DataQueryRequest,
@@ -327,15 +326,15 @@ describe('dataFrameToLogsModel', () => {
       {
         name: 'info',
         fields: [
-          { type: 'time', values: new ArrayVector([1556270891000, 1556289770000]) },
-          { type: 'number', values: new ArrayVector([1, 0]) },
+          { type: 'time', values: [1556270891000, 1556289770000] },
+          { type: 'number', values: [1, 0] },
         ],
       },
       {
         name: 'error',
         fields: [
-          { type: 'time', values: new ArrayVector([1556289770000]) },
-          { type: 'number', values: new ArrayVector([1]) },
+          { type: 'time', values: [1556289770000] },
+          { type: 'number', values: [1] },
         ],
       },
     ]);
@@ -425,15 +424,15 @@ describe('dataFrameToLogsModel', () => {
       {
         name: 'info',
         fields: [
-          { type: 'time', values: new ArrayVector([1556270891000, 1556289770000]) },
-          { type: 'number', values: new ArrayVector([1, 0]) },
+          { type: 'time', values: [1556270891000, 1556289770000] },
+          { type: 'number', values: [1, 0] },
         ],
       },
       {
         name: 'error',
         fields: [
-          { type: 'time', values: new ArrayVector([1556289770000]) },
-          { type: 'number', values: new ArrayVector([1]) },
+          { type: 'time', values: [1556289770000] },
+          { type: 'number', values: [1] },
         ],
       },
     ]);
@@ -698,15 +697,15 @@ describe('dataFrameToLogsModel', () => {
       {
         name: 'error',
         fields: [
-          { type: 'time', values: new ArrayVector([0, 1000, 2000]) },
-          { type: 'number', values: new ArrayVector([1, 0, 1]) },
+          { type: 'time', values: [0, 1000, 2000] },
+          { type: 'number', values: [1, 0, 1] },
         ],
       },
       {
         name: 'debug',
         fields: [
-          { type: 'time', values: new ArrayVector([1000, 2000]) },
-          { type: 'number', values: new ArrayVector([1, 0]) },
+          { type: 'time', values: [1000, 2000] },
+          { type: 'number', values: [1, 0] },
         ],
       },
     ]);

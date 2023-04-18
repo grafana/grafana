@@ -19,10 +19,6 @@ const (
 	// Add Prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
 
-	// FlagDashboardPreviews
-	// Create and show thumbnails for dashboard search results
-	FlagDashboardPreviews = "dashboardPreviews"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -50,10 +46,6 @@ const (
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
-
-	// FlagLokiDataframeApi
-	// Use experimental loki api for WebSocket streaming (early prototype)
-	FlagLokiDataframeApi = "lokiDataframeApi"
 
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
@@ -247,10 +239,6 @@ const (
 	// Prohibits a user from changing organization roles synced with external auth providers
 	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
 
-	// FlagDrawerDataSourcePicker
-	// Changes the user experience for data source selection to a drawer.
-	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
-
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
 	FlagTraceqlSearch = "traceqlSearch"
@@ -279,6 +267,10 @@ const (
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
 	FlagPrometheusDataplane = "prometheusDataplane"
 
+	// FlagLokiMetricDataplane
+	// Changes responses from Loki to be compliant with the dataplane specification.
+	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
@@ -290,6 +282,10 @@ const (
 	// FlagAlertStateHistoryLokiOnly
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -311,7 +307,23 @@ const (
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 
-	// FlagDisableElasticsearchBackendQuerying
-	// Disable the processing of queries and responses in the Elasticsearch data source through backend
-	FlagDisableElasticsearchBackendQuerying = "disableElasticsearchBackendQuerying"
+	// FlagUseCachingService
+	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	FlagUseCachingService = "useCachingService"
+
+	// FlagEnableElasticsearchBackendQuerying
+	// Enable the processing of queries and responses in the Elasticsearch data source through backend
+	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
+
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
+
+	// FlagAdvancedDataSourcePicker
+	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
+
+	// FlagOpensearchDetectVersion
+	// Enable version detection in OpenSearch
+	FlagOpensearchDetectVersion = "opensearchDetectVersion"
 )

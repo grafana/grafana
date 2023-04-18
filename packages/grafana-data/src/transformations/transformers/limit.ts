@@ -1,7 +1,6 @@
 import { map } from 'rxjs/operators';
 
 import { DataTransformerInfo } from '../../types';
-import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
 
@@ -28,10 +27,9 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
             return {
               ...frame,
               fields: frame.fields.map((f) => {
-                const vals = f.values.toArray();
                 return {
                   ...f,
-                  values: new ArrayVector(vals.slice(0, limitFieldMatch)),
+                  values: f.values.slice(0, limitFieldMatch),
                 };
               }),
               length: limitFieldMatch,

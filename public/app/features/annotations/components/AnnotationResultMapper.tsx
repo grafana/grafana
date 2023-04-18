@@ -42,7 +42,8 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   }
 
   updateFields = () => {
-    const frame = this.props.response?.panelData?.series[0];
+    const panelData = this.props.response?.panelData;
+    const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
     if (frame && frame.fields) {
       const fieldNames = frame.fields.map((f) => {
         const name = getFieldDisplayName(f, frame);
