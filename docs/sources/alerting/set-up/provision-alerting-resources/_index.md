@@ -33,14 +33,11 @@ Currently, provisioning for Grafana Alerting supports alert rules, contact point
 To allow editing of provisioned resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
 
 - `POST /api/v1/provisioning/alert-rules`
+- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` (calling this endpoint will change provenance for all alert rules within the alert group)
 - `POST /api/v1/provisioning/contact-points`
 - `POST /api/v1/provisioning/mute-timings`
 - `PUT /api/v1/provisioning/policies`
 - `PUT /api/v1/provisioning/templates/{name}`
-
-The next API call will change provenance of all alert rules in the group.
-
-- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}`
 
 **Useful Links:**
 
