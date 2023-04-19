@@ -4,6 +4,7 @@ import { CellProps, Column, TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
@@ -52,7 +53,13 @@ export function DashboardsTree({
         }
 
         const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
-        return <Checkbox value={isSelected} onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)} />;
+        return (
+          <Checkbox
+            data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
+            value={isSelected}
+            onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
+          />
+        );
       },
     };
 
@@ -105,6 +112,7 @@ export function DashboardsTree({
 
       <div {...getTableBodyProps()}>
         <List
+          className="virtual list"
           height={height - HEADER_HEIGHT}
           width={width}
           itemCount={items.length}
@@ -136,7 +144,11 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   prepareRow(row);
 
   return (
-    <div {...row.getRowProps({ style })} className={cx(styles.row, styles.bodyRow)}>
+    <div
+      {...row.getRowProps({ style })}
+      className={cx(styles.row, styles.bodyRow)}
+      data-testid={selectors.pages.BrowseDashbards.table.row(row.original.item.uid)}
+    >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();
 

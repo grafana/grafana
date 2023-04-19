@@ -5,11 +5,15 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { DashboardsTreeItem, UIDashboardViewItem } from '../types';
 
 export function wellFormedEmptyFolder(
+  seed = 1,
   partial?: Partial<DashboardsTreeItem<UIDashboardViewItem>>
 ): DashboardsTreeItem<UIDashboardViewItem> {
+  const random = Chance(seed);
+
   return {
     item: {
       kind: 'ui-empty-folder',
+      uid: random.guid(),
     },
     level: 0,
     isOpen: false,
@@ -18,7 +22,7 @@ export function wellFormedEmptyFolder(
 }
 
 export function wellFormedDashboard(
-  seed = 0,
+  seed = 1,
   partial?: Partial<DashboardsTreeItem<DashboardViewItem>>,
   itemPartial?: Partial<DashboardViewItem>
 ): DashboardsTreeItem<DashboardViewItem> {
@@ -39,7 +43,7 @@ export function wellFormedDashboard(
 }
 
 export function wellFormedFolder(
-  seed = 0,
+  seed = 1,
   partial?: Partial<DashboardsTreeItem<DashboardViewItem>>,
   itemPartial?: Partial<DashboardViewItem>
 ): DashboardsTreeItem<DashboardViewItem> {
@@ -58,21 +62,21 @@ export function wellFormedFolder(
   };
 }
 
-export function wellFormedTree(): [DashboardsTreeItem[], Record<string, DashboardsTreeItem>] {
-  let seed = 0;
+export function wellFormedTree() {
+  let seed = 1;
 
   // prettier-ignore so its easier to see the tree structure
   /* prettier-ignore */ const folderA = wellFormedFolder(seed++);
-  /* prettier-ignore */ const folderA_folderA = wellFormedFolder(seed++, { level: 1},{ parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderA_folderB = wellFormedFolder(seed++, { level: 1},{ parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderA_folderB_dashbdA = wellFormedDashboard(seed++, { level: 2},{ parentUID: folderA_folderB.item.uid });
-  /* prettier-ignore */ const folderA_folderB_dashbdB = wellFormedDashboard(seed++, { level: 2},{ parentUID: folderA_folderB.item.uid });
+  /* prettier-ignore */ const folderA_folderA = wellFormedFolder(seed++, { level: 1}, { parentUID: folderA.item.uid });
+  /* prettier-ignore */ const folderA_folderB = wellFormedFolder(seed++, { level: 1}, { parentUID: folderA.item.uid });
+  /* prettier-ignore */ const folderA_folderB_dashbdA = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderB.item.uid });
+  /* prettier-ignore */ const folderA_folderB_dashbdB = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderB.item.uid });
   /* prettier-ignore */ const folderA_folderC = wellFormedFolder(seed++, { level: 1},{ parentUID: folderA.item.uid });
-  /* prettier-ignore */ const folderA_folderC_dashbdA = wellFormedDashboard(seed++, { level: 2},{ parentUID: folderA_folderC.item.uid });
-  /* prettier-ignore */ const folderA_folderC_dashbdB = wellFormedDashboard(seed++, { level: 2},{ parentUID: folderA_folderC.item.uid });
-  /* prettier-ignore */ const folderA_dashbdD = wellFormedDashboard(seed++, { level: 1},{ parentUID: folderA.item.uid });
+  /* prettier-ignore */ const folderA_folderC_dashbdA = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderC.item.uid });
+  /* prettier-ignore */ const folderA_folderC_dashbdB = wellFormedDashboard(seed++, { level: 2}, { parentUID: folderA_folderC.item.uid });
+  /* prettier-ignore */ const folderA_dashbdD = wellFormedDashboard(seed++, { level: 1}, { parentUID: folderA.item.uid });
   /* prettier-ignore */ const folderB = wellFormedFolder(seed++);
-  /* prettier-ignore */ const folderB_empty = wellFormedEmptyFolder();
+  /* prettier-ignore */ const folderB_empty = wellFormedEmptyFolder(seed++);
   /* prettier-ignore */ const folderC = wellFormedFolder(seed++);
   /* prettier-ignore */ const dashbdD = wellFormedDashboard(seed++);
   /* prettier-ignore */ const dashbdE = wellFormedDashboard(seed++);
@@ -110,13 +114,5 @@ export function wellFormedTree(): [DashboardsTreeItem[], Record<string, Dashboar
       dashbdD,
       dashbdE,
     },
-  ];
-}
-
-export function hasUID(item: DashboardsTreeItem['item']): DashboardViewItem {
-  if ('uid' in item) {
-    return item;
-  }
-
-  throw new Error('cannot be ui item');
+  ] as const;
 }

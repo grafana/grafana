@@ -2,6 +2,7 @@ import { DashboardViewItem as OrigDashboardViewItem, DashboardViewItemKind } fro
 
 export interface UIDashboardViewItem {
   kind: 'ui-empty-folder';
+  uid: string;
 }
 
 type DashboardViewItem = OrigDashboardViewItem | UIDashboardViewItem;
