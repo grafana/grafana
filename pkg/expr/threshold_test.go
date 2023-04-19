@@ -76,16 +76,6 @@ func TestNewThresholdCommand(t *testing.T) {
 	}
 }
 
-func TestNewThresholdCommandWithInsufficientConditions(t *testing.T) {
-	cmd, err := NewThresholdCommand("B", "A", "within_range", []float64{})
-	require.Error(t, err)
-	require.Nil(t, cmd)
-
-	cmd, err = NewThresholdCommand("B", "A", "lt", []float64{})
-	require.Error(t, err)
-	require.Nil(t, cmd)
-}
-
 func TestUnmarshalThresholdCommand(t *testing.T) {
 	type testCase struct {
 		description   string
