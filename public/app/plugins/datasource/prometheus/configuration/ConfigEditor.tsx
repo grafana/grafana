@@ -3,12 +3,7 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
-import {
-  Alert,
-  DataSourceHttpSettings,
-  FieldValidationMessage,
-  useTheme2,
-} from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PromOptions } from '../types';
@@ -71,7 +66,11 @@ export const ConfigEditor = (props: Props) => {
     </>
   );
 };
-
+/**
+ * Use this to return a url in a tooltip in a field. Don't forget to make the field interactive to be able to click on the tooltip
+ * @param url
+ * @returns
+ */
 export function docsTip(url?: string) {
   const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
 
