@@ -229,30 +229,22 @@ export const navIndex: NavIndex = {
     sortWeight: -1300,
     children: [
       {
-        id: 'connections-your-connections',
-        text: 'Your connections',
-        subTitle: 'Manage your existing connections',
-        url: '/connections/your-connections',
-        children: [
-          {
-            id: 'connections-your-connections-datasources',
-            text: 'Datasources',
-            subTitle: 'Manage your existing datasource connections',
-            url: '/connections/your-connections/datasources',
-          },
-          {
-            id: 'standalone-plugin-page-/connections/your-connections/infrastructure',
-            text: 'Infrastructure',
-            url: '/connections/your-connections/infrastructure',
-            pluginId: 'grafana-easystart-app',
-          },
-        ],
-      },
-      {
         id: 'connections-connect-data',
-        text: 'Connect data',
+        text: 'Add new connection',
         subTitle: 'Browse and create new connections',
         url: '/connections/connect-data',
+      },
+      {
+        id: 'connections-your-connections-datasources',
+        text: 'Datasources',
+        subTitle: 'Manage your existing datasource connections',
+        url: '/connections/your-connections/datasources',
+      },
+      {
+        id: 'standalone-plugin-page-/connections/your-connections/infrastructure',
+        text: 'Infrastructure',
+        url: '/connections/your-connections/infrastructure',
+        pluginId: 'grafana-easystart-app',
       },
     ],
     parentItem: {

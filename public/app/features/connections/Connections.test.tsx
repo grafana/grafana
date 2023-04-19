@@ -78,7 +78,7 @@ describe('Connections', () => {
     // We are overriding the navIndex to have the "Connect data" page registered by a plugin
     const standalonePluginPage = {
       id: 'standalone-plugin-page-/connections/connect-data',
-      text: 'Connect data',
+      text: 'Add new connection',
       subTitle: 'Browse and create new connections',
       url: '/connections/connect-data',
       pluginId: 'grafana-easystart-app',
@@ -105,35 +105,5 @@ describe('Connections', () => {
     // We expect not to see the text that would be rendered by the core "Connect data" page
     expect(screen.queryByText('Data sources')).not.toBeInTheDocument();
     expect(screen.queryByText('No results matching your query were found.')).not.toBeInTheDocument();
-  });
-
-  test('Your connections redirects to Data sources if it has one child', async () => {
-    const navIndexCopy = {
-      ...navIndex,
-      'connections-your-connections': {
-        id: 'connections-your-connections',
-        text: 'Your connections',
-        subTitle: 'Manage your existing connections',
-        url: '/connections/your-connections',
-        children: [
-          {
-            id: 'connections-your-connections-datasources',
-            text: 'Datasources',
-            subTitle: 'Manage your existing datasource connections',
-            url: '/connections/your-connections/datasources',
-          },
-        ],
-      },
-    };
-
-    const store = configureStore({
-      navIndex: navIndexCopy,
-      plugins: getPluginsStateMock([]),
-    });
-
-    renderPage(ROUTES.YourConnections, store);
-
-    expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
-    expect(await screen.queryByRole('link', { name: 'Datasources' })).toBeNull();
   });
 });
