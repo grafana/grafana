@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
+	"github.com/grafana/grafana/pkg/kinds/role"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/kindsys"
@@ -49,6 +50,7 @@ type Base struct {
 	playlist        *playlist.Kind
 	preferences     *preferences.Kind
 	publicdashboard *publicdashboard.Kind
+	role            *role.Kind
 	serviceaccount  *serviceaccount.Kind
 	team            *team.Kind
 }
@@ -62,6 +64,7 @@ var (
 	_ kindsys.Core = &playlist.Kind{}
 	_ kindsys.Core = &preferences.Kind{}
 	_ kindsys.Core = &publicdashboard.Kind{}
+	_ kindsys.Core = &role.Kind{}
 	_ kindsys.Core = &serviceaccount.Kind{}
 	_ kindsys.Core = &team.Kind{}
 )
@@ -99,6 +102,11 @@ func (b *Base) Preferences() *preferences.Kind {
 // PublicDashboard returns the [kindsys.Interface] implementation for the publicdashboard kind.
 func (b *Base) PublicDashboard() *publicdashboard.Kind {
 	return b.publicdashboard
+}
+
+// Role returns the [kindsys.Interface] implementation for the role kind.
+func (b *Base) Role() *role.Kind {
+	return b.role
 }
 
 // ServiceAccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
@@ -156,6 +164,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the publicdashboard Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.publicdashboard)
+
+	reg.role, err = role.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the role Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.role)
 
 	reg.serviceaccount, err = serviceaccount.NewKind(rt)
 	if err != nil {

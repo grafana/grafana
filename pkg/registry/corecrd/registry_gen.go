@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/resources/playlist"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/preferences"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/role"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/serviceaccount"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/team"
 	"github.com/grafana/thema"
@@ -49,6 +50,7 @@ func New(
 	playlistWatcher playlist.Watcher,
 	preferencesWatcher preferences.Watcher,
 	publicdashboardWatcher publicdashboard.Watcher,
+	roleWatcher role.Watcher,
 	serviceaccountWatcher serviceaccount.Watcher,
 	teamWatcher team.Watcher,
 ) *Registry {
@@ -64,6 +66,7 @@ func New(
 		playlistWatcher,
 		preferencesWatcher,
 		publicdashboardWatcher,
+		roleWatcher,
 		serviceaccountWatcher,
 		teamWatcher,
 	)
@@ -92,7 +95,7 @@ func (r *Registry) All() []crd.Kind {
 // generically across all kinds.
 type Registry struct {
 	*services.BasicService
-	all                    [9]crd.Kind
+	all                    [10]crd.Kind
 	clientsetProvider      client.ClientSetProvider
 	informerFactory        informer.Informer
 	accesspolicyWatcher    accesspolicy.Watcher
@@ -102,6 +105,7 @@ type Registry struct {
 	playlistWatcher        playlist.Watcher
 	preferencesWatcher     preferences.Watcher
 	publicdashboardWatcher publicdashboard.Watcher
+	roleWatcher            role.Watcher
 	serviceaccountWatcher  serviceaccount.Watcher
 	teamWatcher            team.Watcher
 }
@@ -281,14 +285,38 @@ func (r *Registry) start(ctx context.Context) error {
 	watcherWrapper6 := publicdashboard.NewWatcherWrapper(r.publicdashboardWatcher)
 	r.informerFactory.AddWatcher(publicdashboard.CRD, watcherWrapper6)
 
-	/************************ ServiceAccount ************************/
+	/************************ Role ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map7 := make(map[string]any)
-	err = yaml.Unmarshal(serviceaccount.CRDYaml, map7)
+	err = yaml.Unmarshal(role.CRDYaml, map7)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD YAML for Role failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map7)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for Role: %s", err))
+	}
+	err = json.Unmarshal(b, &role.CRD.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for Role: %s", err))
+	}
+
+	err = clientSet.RegisterKind(ctx, role.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Role failed to register: %s\n", err))
+	}
+
+	watcherWrapper7 := role.NewWatcherWrapper(r.roleWatcher)
+	r.informerFactory.AddWatcher(role.CRD, watcherWrapper7)
+
+	/************************ ServiceAccount ************************/
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map8 := make(map[string]any)
+	err = yaml.Unmarshal(serviceaccount.CRDYaml, map8)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for ServiceAccount failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map7)
+	b, err = json.Marshal(map8)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for ServiceAccount: %s", err))
 	}
@@ -302,17 +330,17 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s\n", err))
 	}
 
-	watcherWrapper7 := serviceaccount.NewWatcherWrapper(r.serviceaccountWatcher)
-	r.informerFactory.AddWatcher(serviceaccount.CRD, watcherWrapper7)
+	watcherWrapper8 := serviceaccount.NewWatcherWrapper(r.serviceaccountWatcher)
+	r.informerFactory.AddWatcher(serviceaccount.CRD, watcherWrapper8)
 
 	/************************ Team ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-	map8 := make(map[string]any)
-	err = yaml.Unmarshal(team.CRDYaml, map8)
+	map9 := make(map[string]any)
+	err = yaml.Unmarshal(team.CRDYaml, map9)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Team failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map8)
+	b, err = json.Marshal(map9)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Team: %s", err))
 	}
@@ -326,8 +354,8 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for Team failed to register: %s\n", err))
 	}
 
-	watcherWrapper8 := team.NewWatcherWrapper(r.teamWatcher)
-	r.informerFactory.AddWatcher(team.CRD, watcherWrapper8)
+	watcherWrapper9 := team.NewWatcherWrapper(r.teamWatcher)
+	r.informerFactory.AddWatcher(team.CRD, watcherWrapper9)
 
 	return nil
 }
@@ -372,14 +400,19 @@ func (r *Registry) PublicDashboard() crd.Kind {
 	return r.all[6]
 }
 
+// Role returns the [crd.Kind] instance for the Role kind.
+func (r *Registry) Role() crd.Kind {
+	return r.all[7]
+}
+
 // ServiceAccount returns the [crd.Kind] instance for the ServiceAccount kind.
 func (r *Registry) ServiceAccount() crd.Kind {
-	return r.all[7]
+	return r.all[8]
 }
 
 // Team returns the [crd.Kind] instance for the Team kind.
 func (r *Registry) Team() crd.Kind {
-	return r.all[8]
+	return r.all[9]
 }
 
 func doNewRegistry(
@@ -393,6 +426,7 @@ func doNewRegistry(
 	playlistWatcher playlist.Watcher,
 	preferencesWatcher preferences.Watcher,
 	publicdashboardWatcher publicdashboard.Watcher,
+	roleWatcher role.Watcher,
 	serviceaccountWatcher serviceaccount.Watcher,
 	teamWatcher team.Watcher,
 ) *Registry {
@@ -421,11 +455,14 @@ func doNewRegistry(
 	reg.publicdashboardWatcher = publicdashboardWatcher
 	reg.all[6] = publicdashboard.CRD
 
+	reg.roleWatcher = roleWatcher
+	reg.all[7] = role.CRD
+
 	reg.serviceaccountWatcher = serviceaccountWatcher
-	reg.all[7] = serviceaccount.CRD
+	reg.all[8] = serviceaccount.CRD
 
 	reg.teamWatcher = teamWatcher
-	reg.all[8] = team.CRD
+	reg.all[9] = team.CRD
 
 	return reg
 }

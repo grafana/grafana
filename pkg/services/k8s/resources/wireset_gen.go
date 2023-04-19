@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/resources/playlist"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/preferences"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/role"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/serviceaccount"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/team"
 )
@@ -31,6 +32,7 @@ var WireSet = wire.NewSet(
 	playlist.WireSet,
 	preferences.WireSet,
 	publicdashboard.WireSet,
+	role.WireSet,
 	serviceaccount.WireSet,
 	team.WireSet,
 )
