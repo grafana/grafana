@@ -431,12 +431,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
+		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			sqlStore.Cfg, dashboardStore, folderStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(),
 		)
-		require.NoError(t, err)
+		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashService)
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
