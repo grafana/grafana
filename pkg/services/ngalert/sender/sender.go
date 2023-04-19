@@ -45,6 +45,29 @@ type externalAMcfg struct {
 	headers map[string]string
 }
 
+func (cfg *externalAMcfg) SHA256() string {
+	return asSHA256([]string{cfg.headerString(), cfg.amURL})
+}
+
+// headersString transforms all the headers in a sorted way as a
+// single string so it can be used for hashing and comparing.
+func (cfg *externalAMcfg) headerString() string {
+	var result strings.Builder
+
+	headerKeys := make([]string, 0, len(cfg.headers))
+	for key := range cfg.headers {
+		headerKeys = append(headerKeys, key)
+	}
+
+	sort.Strings(headerKeys)
+
+	for _, key := range headerKeys {
+		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.headers[key]))
+	}
+
+	return result.String()
+}
+
 func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())

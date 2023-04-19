@@ -129,12 +129,12 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		redactedAMs := buildRedactedAMs(d.logger, alertmanagers, cfg.OrgID)
 		d.logger.Debug("Alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
-		var urls []string
+		var hashes []string
 		for _, cfg := range alertmanagers {
-			urls = append(urls, cfg.amURL)
+			hashes = append(hashes, cfg.SHA256())
 		}
 		// We have a running sender, check if we need to apply a new config.
-		amHash := asSHA256(append(urls, headersString(alertmanagers)))
+		amHash := strings.Join(hashes, "")
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
 				d.logger.Debug("Sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
@@ -187,27 +187,6 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	d.logger.Debug("Finish of admin configuration sync")
 
 	return nil
-}
-
-// headersString transforms all the headers in a sorted way as a
-// single string so it can be used for hashing and comparing.
-func headersString(externalAMS []externalAMcfg) string {
-	var result strings.Builder
-
-	for _, am := range externalAMS {
-		headerKeys := make([]string, 0, len(am.headers))
-		for key := range am.headers {
-			headerKeys = append(headerKeys, key)
-		}
-
-		sort.Strings(headerKeys)
-
-		for _, key := range headerKeys {
-			result.WriteString(fmt.Sprintf("%s:%s", key, am.headers[key]))
-		}
-	}
-
-	return result.String()
 }
 
 func buildRedactedAMs(l log.Logger, alertmanagers []externalAMcfg, ordId int64) []string {
