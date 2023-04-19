@@ -146,6 +146,9 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <div className={styles.dataSourceList}>
         <CustomScrollbar>
           <DataSourceList
+            mixed
+            dashboard
+            current={current}
             onChange={changeCallback}
             filter={(ds) => !ds.meta.builtIn && ds.name.includes(filterTerm ?? '')}
           ></DataSourceList>
