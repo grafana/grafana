@@ -201,4 +201,4 @@ Recommended actions:
 
 - Review the React 18 [upgrade docs](https://react.dev/blog/2022/03/08/react-18-upgrade-guide)
 - Test your plugins against one of the latest [grafana-dev docker images](https://hub.docker.com/r/grafana/grafana-dev/tags?page=1) (for example, [this one](https://hub.docker.com/layers/grafana/grafana-dev/10.0.0-111404pre/images/sha256-ac78acf54b44bd2ce7e68b796b1df47030da7f35e53b02bc3eec3f4de05f780f?context=explore))
-- Add a comment to the [forum discussion](link) if your plugin is impacted in any way. Either to socialise the changes needed for your plugin or to reach out and ask for help yourself.
+- Add a comment to the [forum discussion](https://community.grafana.com/t/grafana-10-is-upgrading-to-react-18/86051) if your plugin is impacted in any way. Either to socialise the changes needed for your plugin or to reach out and ask for help yourself.
