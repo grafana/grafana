@@ -86,6 +86,8 @@ To enable trusted types:
 2. Enable `content_security_policy` in the configuration.
 3. Add `require-trusted-types-for 'script'` to the `content_security_policy_template` in the configuration.
 
+As this is a feature currently in development, things may break. If they do, or if you have any other feedback, feel free to [leave a comment](https://github.com/grafana/grafana/discussions/66823).
+
 ## Additional security hardening
 
 The Grafana server has several built-in security features that you can opt-in to enhance security. This section describes additional techniques you can use to harden security.
