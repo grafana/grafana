@@ -138,7 +138,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             datasource: grafanaDS,
           },
         ],
-        isNew: true,
       });
     });
 
