@@ -826,6 +826,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
+		// TODO: is this needed for the testing of RBAC?
 		// ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -905,7 +906,6 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		dashboardPermissions,
-		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		actest.FakeAccessControl{ExpectedEvaluate: true},
 		foldertest.NewFakeService(),
 	)
@@ -928,7 +928,6 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
-		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{ExpectedEvaluate: true},
 		foldertest.NewFakeService(),
@@ -972,7 +971,6 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		dashboardPermissions,
-		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
@@ -1022,14 +1020,11 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		accesscontrolmock.NewMockedPermissionsService(),
-		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		actest.FakeAccessControl{ExpectedEvaluate: true},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
-	t.Logf("res: %v", res)
-	t.Logf("err: %v", err)
 	require.NoError(t, err)
 
 	return res

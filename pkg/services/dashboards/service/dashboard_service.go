@@ -355,7 +355,6 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), !allowUiUpdate)
 	if err != nil {
-		fmt.Printf("BuildSaveDashboardCommand failed: %v", err)
 		return nil, err
 	}
 
