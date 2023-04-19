@@ -54,7 +54,7 @@ async function getFilesToLint(files: BettererFilePaths): Promise<BettererFilePat
     findFiles = await glob('**/*.{ts,tsx}', { ignore: ['**/.*', '**/.*/**'] });
   }
 
-  return findFiles.filter((file) => file.includes('public/app/angular'));
+  return findFiles.filter((file) => !file.includes('public/app/angular'));
 }
 
 async function getEslintConfigFiles(): Promise<string[]> {
