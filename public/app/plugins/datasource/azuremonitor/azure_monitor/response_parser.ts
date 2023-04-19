@@ -14,6 +14,7 @@ import {
   Location,
   Subscription,
   Resource,
+  Workspace,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues<T>(
@@ -156,27 +157,6 @@ export default class ResponseParser {
         list.push({
           label: `${get(result.data.value[i], textFieldName)} - ${get(result.data.value[i], valueFieldName)}`,
           value: get(result.data.value[i], valueFieldName),
-        });
-      }
-    }
-
-    return list;
-  }
-
-  static parseWorkspacesForSelect(result: any): Array<{ label: string; value: string }> {
-    const list: Array<{ label: string; value: string }> = [];
-
-    if (!result) {
-      return list;
-    }
-
-    const valueFieldName = 'customerId';
-    const textFieldName = 'name';
-    for (let i = 0; i < result.data.value.length; i++) {
-      if (!find(list, ['value', get(result.data.value[i].properties, valueFieldName)])) {
-        list.push({
-          label: get(result.data.value[i], textFieldName),
-          value: get(result.data.value[i].properties, valueFieldName),
         });
       }
     }
