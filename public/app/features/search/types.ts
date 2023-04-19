@@ -64,7 +64,6 @@ export interface DashboardViewItem {
 
   icon?: string;
 
-  // Most commonly parent folder title, but can be dashboard if panelTitleSearch is enabled
   parentUID?: string;
   parentTitle?: string;
   parentKind?: string;
