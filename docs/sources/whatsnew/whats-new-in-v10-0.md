@@ -55,21 +55,21 @@ To help you with dealing with potential user identity conflicts, we have built a
 
 Note that if you are running Grafana with MySQL as a database, this change does not have any impact as MySQL users were already treated as case-insensitive.
 
-## Nested folders
+## Creating subfolders
 
 _Available in preview in all editions of Grafana._
 
-You can now create nested folders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete nested folders, making it easier to sort resources by business units, departments, and teams.
+You can now create subfolders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
 
 You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions will cascade, being inherited from the parent folder, which simplifies access management.
 
-It's worth noting that the nested folders feature is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
+It's worth noting that the the ability to add subfolders is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
 
-To try out the nested folders feature, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To get started with creating subfolders, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Nested folders in Grafana" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Subfolders in Grafana" >}}
 
 ## Correlations
 
@@ -197,7 +197,7 @@ We’ve improved the way you can configure annotations by adding the possibility
 
 ## Scenes
 
-_This is an experiemental library_
+_This is an experimental library_
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
@@ -239,6 +239,13 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If you�
 The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
 This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insigts resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
+
+### Prometheus dashboard performance improvements
+
+_This is an experimental feature_
+
+As of Grafana 10, the Prometheus datasource supports delta (incremental) querying, in which values from data frames are cached and leveraged to modify future requests to avoid requesting duplicate values in dashboards with now-relative (i.e. any dashboard querying until "now") queries. This feature is disabled by default as it is still experimental, but can be turned on and configured in the Prometheus data source configuration.
+This will reduce network load, and speed up now-relative dashboards, especially for dashboards returning lots of data.
 
 ## Redesigned and improved Log Context
 
