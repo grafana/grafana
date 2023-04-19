@@ -418,3 +418,89 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 		})
 	}
 }
+
+func TestFolderGetAPIEndpoint(t *testing.T) {
+	folderService := &foldertest.FakeService{
+		ExpectedFolder: &folder.Folder{
+			ID:    1,
+			UID:   "uid",
+			Title: "uid title",
+		},
+		ExpectedFolders: []*folder.Folder{
+			{
+				UID:   "parent",
+				Title: "parent title",
+			},
+			{
+				UID:   "subfolder",
+				Title: "subfolder title",
+			},
+		},
+	}
+	setUpRBACGuardian(t)
+
+	type testCase struct {
+		description          string
+		URL                  string
+		features             *featuremgmt.FeatureManager
+		expectedCode         int
+		expectedParentUIDs   []string
+		expectedParentTitles []string
+		permissions          []accesscontrol.Permission
+	}
+	tcs := []testCase{
+		{
+			description:          "get folder by UID should return parent folders if nested folder are enabled",
+			URL:                  "/api/folders/uid",
+			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedParentUIDs:   []string{"parent", "subfolder"},
+			expectedParentTitles: []string{"parent title", "subfolder title"},
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+			},
+		},
+		{
+			description:          "get folder by UID should not return parent folders if nested folder are disabled",
+			URL:                  "/api/folders/uid",
+			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(),
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = &setting.Cfg{
+				RBACEnabled: true,
+			}
+			hs.Features = tc.features
+			hs.folderService = folderService
+		})
+
+		t.Run(tc.description, func(t *testing.T) {
+			req := srv.NewGetRequest(tc.URL)
+			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
+			resp, err := srv.Send(req)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			folder := dtos.Folder{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+
+			require.Equal(t, len(folder.Parents), len(tc.expectedParentUIDs))
+			require.Equal(t, len(folder.Parents), len(tc.expectedParentTitles))
+
+			for i := 0; i < len(tc.expectedParentUIDs); i++ {
+				assert.Equal(t, tc.expectedParentUIDs[i], folder.Parents[i].Uid)
+				assert.Equal(t, tc.expectedParentTitles[i], folder.Parents[i].Title)
+			}
+			require.NoError(t, resp.Body.Close())
+		})
+	}
+}
