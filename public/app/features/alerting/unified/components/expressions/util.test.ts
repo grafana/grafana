@@ -1,6 +1,6 @@
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
-import { getSeriesName, formatLabels, getSeriesValue, isEmptySeries } from './util';
+import { getSeriesName, formatLabels, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
 
 const EMPTY_FRAME: DataFrame = toDataFrame([]);
 const NAMED_FRAME: DataFrame = {
@@ -17,7 +17,7 @@ const DATA_FRAME_LARGE_DECIMAL: DataFrame = toDataFrame({
 });
 
 const DATA_FRAME_WITH_LABELS: DataFrame = toDataFrame({
-  fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3], labels: { foo: 'bar' } }],
+  fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3], labels: { __name__: 'my-series', foo: 'bar' } }],
 });
 
 describe('formatLabels', () => {
@@ -51,16 +51,16 @@ describe('getSeriesName', () => {
   });
 
   it('should work with empty data frame', () => {
-    expect(getSeriesName(EMPTY_FRAME)).toBe('');
+    expect(getSeriesName(EMPTY_FRAME)).toBe(undefined);
   });
 
-  it('should work with labeled frame', () => {
+  it('should work with __name__ labeled frame', () => {
     const name = getSeriesName(DATA_FRAME_WITH_LABELS);
-    expect(name).toBe('foo=bar');
+    expect(name).toBe('my-series');
   });
 
   it('should work with NoData frames', () => {
-    expect(getSeriesName(EMPTY_FRAME)).toBe('');
+    expect(getSeriesName(EMPTY_FRAME)).toBe(undefined);
   });
 
   it('should give preference to displayNameFromDS', () => {
@@ -95,5 +95,15 @@ describe('getSeriesValue', () => {
 
   it('should round values', () => {
     expect(getSeriesValue(DATA_FRAME_LARGE_DECIMAL)).toBe(1.23457);
+  });
+});
+
+describe('getSeriesLabels', () => {
+  it('should work for dataframe with labels', () => {
+    expect(getSeriesLabels(DATA_FRAME_WITH_LABELS)).toStrictEqual({ __name__: 'my-series', foo: 'bar' });
+  });
+
+  it('should work for dataframe with no labels', () => {
+    expect(getSeriesLabels(EMPTY_FRAME)).toStrictEqual({});
   });
 });
