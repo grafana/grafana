@@ -39,7 +39,7 @@ import {
 
 interface DatagridProps extends PanelProps<PanelOptions> {}
 
-export const DataGridPanel: React.FC<DatagridProps> = ({ options, data, id, fieldConfig }) => {
+export function DataGridPanel({ options, data, id, fieldConfig }: DatagridProps) {
   const [state, dispatch] = useReducer(datagridReducer, initialState);
   const {
     columns,
@@ -285,4 +285,4 @@ export const DataGridPanel: React.FC<DatagridProps> = ({ options, data, id, fiel
       ) : null}
     </>
   );
-};
+}

@@ -1,7 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
 const DASHBOARD_ID = 'a70ecb44-6c31-412d-ae74-d6306303ce37';
-const DATAGRID_SELECT_SERIES = 'Datagrid Select series';
 const DATAGRID_CANVAS = 'data-grid-canvas';
 
 e2e.scenario({

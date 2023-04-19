@@ -6,7 +6,6 @@ import {
   DataFrame,
   DataFrameJSON,
   dataFrameToJSON,
-  DatagridDataChangeEvent,
   MutableDataFrame,
   Field,
   GrafanaTheme2,
@@ -15,6 +14,7 @@ import {
 import { config } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { PanelQueriesChangedEvent } from 'app/types/events';
 
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
@@ -152,18 +152,13 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
 };
 
 export const publishSnapshot = (data: DataFrame, panelID: number): void => {
+  if (!isDatagridEditEnabled()) {
+    return;
+  }
+
   const snapshot: DataFrameJSON[] = [dataFrameToJSON(data)];
   const dashboard = getDashboardSrv().getCurrent();
   const panelModel = dashboard?.getPanelById(panelID);
-
-  if (dashboard?.panelInEdit?.id === panelID) {
-    dashboard?.events.publish({
-      type: DatagridDataChangeEvent.type,
-      payload: {
-        snapshot,
-      },
-    });
-  }
 
   const query: GrafanaQuery = {
     refId: 'A',
@@ -178,6 +173,8 @@ export const publishSnapshot = (data: DataFrame, panelID: number): void => {
   });
 
   panelModel!.refresh();
+
+  dashboard?.events.publish(PanelQueriesChangedEvent);
 };
 
 export const isDatagridEditEnabled = () => {

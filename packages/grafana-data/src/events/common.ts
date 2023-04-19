@@ -54,8 +54,3 @@ export type DashboardLoadedEventPayload<T> = {
 export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
   static type = 'dashboard-loaded';
 }
-
-/** @alpha */
-export class DatagridDataChangeEvent extends BusEventBase {
-  static type = 'datagrid-data-change';
-}

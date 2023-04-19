@@ -13,7 +13,6 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
-  DatagridDataChangeEvent,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
@@ -22,7 +21,6 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import * as DFImport from 'app/features/dataframe-import';
 import { DataSourcePickerWithHistory } from 'app/features/datasource-drawer/DataSourcePickerWithHistory';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -69,7 +67,6 @@ export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null = null;
-  datagridEditEventSubscription: Unsubscribable | null = null;
 
   state: State = {
     isLoadingHelp: false,
@@ -96,28 +93,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
-
-    if (config.featureToggles.enableDatagridEditing) {
-      const dashboard = getDashboardSrv().getCurrent();
-      if (dashboard) {
-        this.datagridEditEventSubscription = dashboard.events.getStream(DatagridDataChangeEvent).subscribe({
-          next: async (event) => {
-            this.onQueriesChange([
-              {
-                refId: 'A',
-                datasource: {
-                  type: 'grafana',
-                  uid: 'grafana',
-                },
-                queryType: GrafanaQueryType.Snapshot,
-                snapshot: event.payload.snapshot,
-              },
-            ]);
-            this.props.onRunQueries();
-          },
-        });
-      }
-    }
 
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
@@ -152,17 +127,13 @@ export class QueryGroup extends PureComponent<Props, State> {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
     }
-
-    if (config.featureToggles.enableDatagridEditing) {
-      if (this.datagridEditEventSubscription) {
-        this.datagridEditEventSubscription.unsubscribe();
-        this.datagridEditEventSubscription = null;
-      }
-    }
   }
 
   onPanelDataUpdate(data: PanelData) {
-    this.setState({ data });
+    this.setState({
+      queries: this.props.options.queries,
+      data,
+    });
   }
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
