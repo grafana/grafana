@@ -406,15 +406,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
-    const contextQuery = (logsQueries ?? []).find(
-      (q) =>
-        q.refId === contextRow?.dataFrame.refId &&
-        q.datasource != null &&
-        q.datasource.type === contextRow.datasourceType
-    );
     return (
       <>
-        {getRowContext && contextRow && contextQuery && (
+        {getRowContext && contextRow && (
           <LogRowContextModal
             open={contextOpen}
             row={contextRow}
