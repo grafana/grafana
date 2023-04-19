@@ -192,7 +192,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         if (skipToken) {
           url += `&$skiptoken=${skipToken}`;
         }
-        return this.getResource(url).then(async (result: any) => {
+        return this.getResource(url).then(async (result) => {
           let list: Array<{ text: string; value: string }> = [];
           if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
             list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');

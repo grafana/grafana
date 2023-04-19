@@ -344,7 +344,23 @@ export interface Workspace {
   name: string;
   type: string;
   location: string;
-  tags: {
-    [key: string]: string;
-  };
+  tags: Record<string, string>;
+}
+
+export interface Resource {
+  changedTime: string;
+  createdTime: string;
+  extendedLocation: { name: string; type: string };
+  id: string;
+  identity: { principalId: string; tenantId: string; type: string; userAssignedIdentities: string[] };
+  kind: string;
+  location: string;
+  managedBy: string;
+  name: string;
+  plan: { name: string; product: string; promotionCode: string; publisher: string; version: string };
+  properties: Record<string, string>;
+  provisioningState: string;
+  sku: { capacity: number; family: string; model: string; name: string; size: string; tier: string };
+  tags: Record<string, string>;
+  type: string;
 }

@@ -1,5 +1,8 @@
 import { find, get } from 'lodash';
 
+import { DataQueryResponse } from '@grafana/data/src/types';
+import { FetchResponse } from '@grafana/runtime';
+
 import TimeGrainConverter from '../time_grain_converter';
 import {
   AzureMonitorLocalizedValue,
@@ -10,6 +13,7 @@ import {
   AzureAPIResponse,
   Location,
   Subscription,
+  Resource,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues(
@@ -37,7 +41,10 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseResourceNames(result: any, metricNamespace?: string): Array<{ text: string; value: string }> {
+  static parseResourceNames(
+    result: AzureAPIResponse<Resource>,
+    metricNamespace?: string
+  ): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
     if (!result) {
@@ -133,7 +140,9 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseSubscriptionsForSelect(result: any): Array<{ label: string; value: string }> {
+  static parseSubscriptionsForSelect(
+    result?: FetchResponse<AzureAPIResponse<Subscription>>
+  ): Array<{ label: string; value: string }> {
     const list: Array<{ label: string; value: string }> = [];
 
     if (!result) {
