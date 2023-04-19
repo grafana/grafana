@@ -7,11 +7,12 @@ import store from 'app/core/store';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
-export function onCreateNewPanel(dashboard: DashboardModel): number | undefined {
+export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {
   const newPanel: Partial<PanelModel> = {
     type: 'timeseries',
     title: 'Panel Title',
     gridPos: calculateNewPanelGridPos(dashboard),
+    datasource: datasource ? { uid: datasource } : undefined,
   };
 
   dashboard.addPanel(newPanel);

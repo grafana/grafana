@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
 
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { useLoadDataSource } from 'app/features/datasources/state';
+import { useDispatch } from 'app/types';
 
 import { getNewDashboardModelData, setDashboardToFetchFromLocalStorage } from '../state/initDashboard';
+import { setInitialDatasource } from '../state/reducers';
 
 export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ datasourceUid: string }>) {
   const [error, setError] = useState<string | null>(null);
   const { datasourceUid } = props.match.params;
+  const dispatch = useDispatch();
+  useLoadDataSource(datasourceUid);
 
   useEffect(() => {
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
@@ -17,19 +22,24 @@ export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ d
       return;
     }
 
-    const newDashboard = getNewDashboardModelData();
-    const { dashboard } = newDashboard;
-    dashboard.panels[0] = {
-      ...dashboard.panels[0],
-      datasource: {
-        uid: ds.uid,
-        type: ds.type,
-      },
-    };
+    if (!config.featureToggles.emptyDashboardPage) {
+      const newDashboard = getNewDashboardModelData();
+      const { dashboard } = newDashboard;
+      dashboard.panels[0] = {
+        ...dashboard.panels[0],
+        datasource: {
+          uid: ds.uid,
+          type: ds.type,
+        },
+      };
 
-    setDashboardToFetchFromLocalStorage(newDashboard);
+      setDashboardToFetchFromLocalStorage(newDashboard);
+    } else {
+      dispatch(setInitialDatasource(datasourceUid));
+    }
+
     locationService.replace('/dashboard/new');
-  }, [datasourceUid]);
+  }, [datasourceUid, dispatch]);
 
   if (error) {
     return (
