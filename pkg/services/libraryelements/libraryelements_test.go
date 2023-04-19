@@ -375,11 +375,12 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
+	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		sqlStore.Cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 	)
+	require.NoError(t, svcErr)
 	guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashboardService)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
