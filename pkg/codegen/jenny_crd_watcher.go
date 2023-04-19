@@ -26,7 +26,7 @@ func (j crdWatcherJenny) JennyName() string {
 
 func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	_, isCore := kind.(kindsys.Core)
-	_, isCustom := kind.(kindsys.Core)
+	_, isCustom := kind.(kindsys.Custom)
 	if !(isCore || isCustom) {
 		return nil, nil
 	}
