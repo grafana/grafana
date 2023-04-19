@@ -17,6 +17,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/gobwas/glob"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -58,10 +59,10 @@ type Signature struct {
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.Cfg) *Signature {
+func ProvideService(cfg *config.Cfg, kv kvstore.KVStore) *Signature {
 	log := log.New("plugin.signature")
 	return &Signature{
-		verifier: manifestverifier.New(cfg, log),
+		verifier: manifestverifier.New(cfg, log, kvstore.WithNamespace(kv, 0, "plugin.signature")),
 		mlog:     log,
 	}
 }

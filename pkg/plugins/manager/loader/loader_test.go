@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -1191,7 +1192,7 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 			if r.URL.Path == "/api/plugins/ci/keys" {
 				w.WriteHeader(http.StatusOK)
 				// Use the hardcoded key
-				k, err := manifestverifier.New(&config.Cfg{}, log.New("test")).GetPublicKey("7e4d0c6a708866e7")
+				k, err := manifestverifier.New(&config.Cfg{}, log.New("test"), kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, "")).GetPublicKey("7e4d0c6a708866e7")
 				require.NoError(t, err)
 				data := struct {
 					Items []manifestverifier.ManifestKeys `json:"items"`
@@ -1551,7 +1552,8 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(), signature.ProvideService(cfg))
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(),
+		signature.ProvideService(cfg, kvstore.NewFakeKVStore()))
 
 	for _, cb := range cbs {
 		cb(l)

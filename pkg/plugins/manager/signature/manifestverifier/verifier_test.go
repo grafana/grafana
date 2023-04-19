@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -16,7 +17,7 @@ import (
 
 func Test_Verify(t *testing.T) {
 	t.Run("it should verify a manifest with the default key", func(t *testing.T) {
-		v := New(&config.Cfg{}, log.New("test"))
+		v := New(&config.Cfg{}, log.New("test"), kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, ""))
 
 		body, err := os.ReadFile("../../testdata/test-app/MANIFEST.txt")
 		if err != nil {
@@ -36,7 +37,7 @@ func Test_Verify(t *testing.T) {
 		cfg := &config.Cfg{
 			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
 		}
-		v := New(cfg, log.New("test"))
+		v := New(cfg, log.New("test"), kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, ""))
 		apiCalled := false
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/api/plugins/ci/keys" {
