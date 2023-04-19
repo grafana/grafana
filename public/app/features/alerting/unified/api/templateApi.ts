@@ -7,8 +7,9 @@ export interface TemplatePreviewResult {
   text: string;
 }
 export interface TemplatePreviewErrors {
-  name: string;
-  error: string;
+  name?: string;
+  message: string;
+  kind: string;
 }
 export interface TemplatesPreviewResponse {
   results?: TemplatePreviewResult[];

@@ -130,7 +130,10 @@ describe('TemplatePreview component', () => {
   it('Should render preview response with some errors, after clicking preview, if payload has correct format after clicking preview button', async () => {
     const response: TemplatesPreviewResponse = {
       results: [{ name: 'template1', text: 'This is the template result bla bla bla' }],
-      errors: [{ name: 'template2', error: 'Unexpected "{" in operand' }],
+      errors: [
+        { name: 'template2', message: 'Unexpected "{" in operand', kind: 'kind_of_error' },
+        { name: 'template3', kind: 'kind_of_error', message: 'Unexpected "{" in operand' },
+      ],
     };
     mockPreviewTemplateResponse(server, response);
     render(
@@ -149,7 +152,7 @@ describe('TemplatePreview component', () => {
     await userEvent.click(within(button).getByText(/preview/i));
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        'Preview for template1: This is the template result bla bla bla ERROR in template2: Unexpected "{" in operand'
+        'Preview for template1: This is the template result bla bla bla ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'
       );
     });
   });

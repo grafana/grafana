@@ -290,7 +290,15 @@ function getResultsToRender(results: TemplatePreviewResult[]) {
   return results.map((result: TemplatePreviewResult) => `Preview for ${result.name}:\n${result.text}`).join(`\n\n`);
 }
 function getErrorsToRender(results: TemplatePreviewErrors[]) {
-  return results.map((result: TemplatePreviewErrors) => `ERROR in ${result.name}:\n${result.error}`).join(`\n\n`);
+  return results
+    .map((result: TemplatePreviewErrors) => {
+      if (result.name) {
+        return `ERROR in ${result.name}:\n`.concat(`${result.kind}\n${result.message}`);
+      } else {
+        return `ERROR:\n${result.kind}\n${result.message}`;
+      }
+    })
+    .join(`\n\n`);
 }
 export const PREVIEW_NOT_AVAILABLE = 'Preview is not available';
 
