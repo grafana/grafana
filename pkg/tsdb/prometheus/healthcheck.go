@@ -57,23 +57,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return getHealthCheckMessage(logger, string(resp.Body), nil)
 }
 
-func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
-	if err == nil {
-		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusOk,
-			Message: fmt.Sprintf("Prometheus datasource is working. %s", message),
-		}, nil
-	}
-
-	logger.Warn("error performing prometheus healthcheck", "err", err.Error())
-	errorMessage := fmt.Sprintf("%s %s", err.Error(), message)
-
-	return &backend.CheckHealthResult{
-		Status:  backend.HealthStatusError,
-		Message: errorMessage,
-	}, nil
-}
-
 func healthcheckFallback(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
 		LegendFormat: "",
@@ -109,4 +92,21 @@ func healthcheckFallback(ctx context.Context, req *backend.CheckHealthRequest, i
 	}
 
 	return getHealthCheckMessage(logger, "A successful query has been made.", nil)
+}
+
+func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
+	if err == nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: fmt.Sprintf("Prometheus datasource is working. %s", message),
+		}, nil
+	}
+
+	logger.Warn("error performing prometheus healthcheck", "err", err.Error())
+	errorMessage := fmt.Sprintf("%s %s", err.Error(), message)
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusError,
+		Message: errorMessage,
+	}, nil
 }

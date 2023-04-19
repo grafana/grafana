@@ -173,10 +173,16 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
-
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,
+		}
+	}
+
+	// This is only for health check fall back scenario
+	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
+		return backend.DataResponse{
+			Error: fmt.Errorf(res.Status),
 		}
 	}
 

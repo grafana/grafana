@@ -1,107 +1,127 @@
 package prometheus
 
 import (
-	// "context"
-	// "bytes"
-	// "encoding/json"
-	// "io"
-	// "net/http"
+	"context"
+	"net/http"
 	"testing"
-	// "github.com/grafana/grafana-plugin-sdk-go/backend"
-	// sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	// "github.com/grafana/grafana/pkg/infra/httpclient"
-	// "github.com/grafana/grafana/pkg/infra/log/logtest"
-	// "github.com/grafana/grafana/pkg/infra/tracing"
-	// "github.com/grafana/grafana/pkg/setting"
-	// "github.com/grafana/grafana/pkg/tsdb/prometheus/client"
-	// "github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
-	// "github.com/grafana/grafana-plugin-sdk-go/backend"
-	// "github.com/stretchr/testify/assert"
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_healthcheck(t *testing.T) {
-	// the health check returns a successful health check, *backend.CheckHealthResult, from the /-/healthy api
-
-	// the health check returns a successful *backend.CheckHealthResult based on a query when there is a 404 returned from the /-/healthy api
+type healthCheckProvider[T http.RoundTripper] struct {
+	httpclient.Provider
+	RoundTripper *T
 }
 
-// type testContext struct {
-// 	httpProvider *fakeHttpClientProvider
-// 	queryData    *querydata.QueryData
-// }
+type healthCheckSuccessRoundTripper struct {
+}
+type healthCheckFailRoundTripper struct {
+}
 
-// func setup(wideFrames bool) (*testContext, error) {
-// 	tracer := tracing.InitializeTracerForTest()
-// 	httpProvider := &fakeHttpClientProvider{
-// 		opts: sdkhttpclient.Options{
-// 			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
-// 		},
-// 		res: &http.Response{
-// 			StatusCode: 200,
-// 			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
-// 		},
-// 	}
-// 	settings := backend.DataSourceInstanceSettings{
-// 		URL:      "http://localhost:9090",
-// 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
-// 	}
+func (rt *healthCheckSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return &http.Response{
+		Status:        "200",
+		StatusCode:    200,
+		Header:        nil,
+		Body:          nil,
+		ContentLength: 0,
+		Request:       req,
+	}, nil
+}
 
-// 	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false,
-// 		"prometheusWideSeries": wideFrames}}
+func (rt *healthCheckFailRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return &http.Response{
+		Status:        "400",
+		StatusCode:    400,
+		Header:        nil,
+		Body:          nil,
+		ContentLength: 0,
+		Request:       req,
+	}, nil
+}
 
-// 	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (provider *healthCheckProvider[T]) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
+	client := &http.Client{}
+	provider.RoundTripper = new(T)
+	client.Transport = *provider.RoundTripper
+	return client, nil
+}
 
-// 	httpClient, err := httpProvider.New(*opts)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (provider *healthCheckProvider[T]) GetTransport(opts ...sdkHttpClient.Options) (http.RoundTripper, error) {
+	return *new(T), nil
+}
 
-// 	queryData, _ := querydata.New(httpClient, features, tracer, settings, &logtest.Fake{})
+func getMockProvider[T http.RoundTripper]() *healthCheckProvider[T] {
+	return &healthCheckProvider[T]{
+		RoundTripper: new(T),
+	}
+}
 
-// 	return &testContext{
-// 		httpProvider: httpProvider,
-// 		queryData:    queryData,
-// 	}, nil
-// }
+func Test_healthcheck(t *testing.T) {
+	t.Run("should do a successful health check", func(t *testing.T) {
+		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
+		s := &Service{
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+		}
 
-// type fakeFeatureToggles struct {
-// 	flags map[string]bool
-// }
+		req := &backend.CheckHealthRequest{
+			PluginContext: getPluginContext(),
+			Headers:       nil,
+		}
 
-// func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
-// 	return f.flags[feature]
-// }
+		res, err := s.CheckHealth(context.Background(), req)
+		assert.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusOk, res.Status)
+	})
 
-// type fakeHttpClientProvider struct {
-// 	httpclient.Provider
-// 	opts sdkhttpclient.Options
-// 	req  *http.Request
-// 	res  *http.Response
-// }
+	// /~/healthy endpoint will return 400 there is no healthcheck support
+	// so it will fall back to querying
+	t.Run("should fail back to make an instant query", func(t *testing.T) {
+		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
+		s := &Service{
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+		}
 
-// func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
-// 	p.opts = opts[0]
-// 	c, err := sdkhttpclient.New(opts[0])
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	c.Transport = p
-// 	return c, nil
-// }
+		req := &backend.CheckHealthRequest{
+			PluginContext: getPluginContext(),
+			Headers:       nil,
+		}
 
-// func (p *fakeHttpClientProvider) GetTransport(opts ...sdkhttpclient.Options) (http.RoundTripper, error) {
-// 	p.opts = opts[0]
-// 	return http.DefaultTransport, nil
-// }
+		res, err := s.CheckHealth(context.Background(), req)
+		assert.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusOk, res.Status)
+	})
+}
 
-// func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
-// 	p.res = res
-// }
-
-// func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
-// 	p.req = req
-// 	return p.res, nil
-// }
+func getPluginContext() backend.PluginContext {
+	return backend.PluginContext{
+		OrgID:                      0,
+		PluginID:                   "prometheus",
+		User:                       nil,
+		AppInstanceSettings:        nil,
+		DataSourceInstanceSettings: getPromInstanceSettings(),
+	}
+}
+func getPromInstanceSettings() *backend.DataSourceInstanceSettings {
+	return &backend.DataSourceInstanceSettings{
+		ID:                      0,
+		UID:                     "",
+		Type:                    "prometheus",
+		Name:                    "test-prometheus",
+		URL:                     "http://promurl:9090",
+		User:                    "",
+		Database:                "",
+		BasicAuthEnabled:        true,
+		BasicAuthUser:           "admin",
+		JSONData:                []byte("{}"),
+		DecryptedSecureJSONData: map[string]string{},
+		Updated:                 time.Time{},
+	}
+}
