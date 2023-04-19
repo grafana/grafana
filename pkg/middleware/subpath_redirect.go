@@ -16,7 +16,7 @@ func SubPathRedirect(cfg *setting.Cfg) web.Middleware {
 			// Direct to url with subpath if the request is missing the subpath and is not an API request.
 			if !strings.HasPrefix(req.RequestURI, cfg.AppSubURL) && !strings.HasPrefix(req.RequestURI, "/api") {
 				newURL := fmt.Sprintf("%s%s", cfg.AppURL, strings.TrimPrefix(req.RequestURI, "/"))
-				http.Redirect(rw, req, newURL, 301)
+				http.Redirect(rw, req, newURL, http.StatusMovedPermanently)
 				return
 			}
 
