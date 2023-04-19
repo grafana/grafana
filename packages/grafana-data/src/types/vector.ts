@@ -1,12 +1,12 @@
 declare global {
   interface Array<T> {
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
     get(idx: number): T;
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
     set(idx: number, value: T): void;
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated Use .push(value). This only exists to help migrate Vector to Array */
     add(value: T): void;
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated this is not necessary.  This only exists to help migrate Vector to Array */
     toArray(): T[];
   }
 }
