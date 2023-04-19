@@ -21,7 +21,7 @@ interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
-  datasources: DataSourceInstanceSettings[];
+  datasources?: DataSourceInstanceSettings[];
   recentlyUsed?: string[];
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
