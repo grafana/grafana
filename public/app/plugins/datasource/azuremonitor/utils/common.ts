@@ -1,9 +1,7 @@
 import { map } from 'lodash';
 
-import { rangeUtil } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 
-import TimegrainConverter from '../time_grain_converter';
 import { AzureMonitorOption, VariableOptionGroup } from '../types';
 
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
@@ -37,16 +35,6 @@ export const addValueToOptions = (
   return options;
 };
 
-export function convertTimeGrainsToMs<T extends { value: string }>(timeGrains: T[]) {
-  const allowedTimeGrainsMs: number[] = [];
-  timeGrains.forEach((tg: any) => {
-    if (tg.value !== 'auto') {
-      allowedTimeGrainsMs.push(rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
-    }
-  });
-  return allowedTimeGrainsMs;
-}
-
 // Route definitions shared with the backend.
 // Check: /pkg/tsdb/azuremonitor/azuremonitor-resource-handler.go <registerRoutes>
 export const routeNames = {
@@ -56,7 +44,10 @@ export const routeNames = {
   resourceGraph: 'resourcegraph',
 };
 
-export function interpolateVariable(value: any, variable: VariableWithMultiSupport) {
+export function interpolateVariable(
+  value: string | number | Array<string | number>,
+  variable: VariableWithMultiSupport
+) {
   if (typeof value === 'string') {
     // When enabling multiple responses, quote the value to mimic the array result below
     // even if only one response is selected. This does not apply if only the "include all"

@@ -18,13 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => templateSrv,
 }));
 
-const makeResourceURI = (
-  resourceName: string,
-  resourceGroup = 'test-resource-group',
-  subscriptionID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-) =>
-  `/subscriptions/${subscriptionID}/resourceGroups/${resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/${resourceName}`;
-
 describe('AzureLogAnalyticsDatasource', () => {
   let ctx: Context;
 

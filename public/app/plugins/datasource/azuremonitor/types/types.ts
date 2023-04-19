@@ -1,10 +1,4 @@
-import {
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceSettings,
-  PanelData,
-  TableData,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings, PanelData } from '@grafana/data';
 
 import Datasource from '../datasource';
 
@@ -100,15 +94,6 @@ export interface AzureMonitorMetricMetadataItem {
   metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
 }
 
-export interface AzureMonitorMetricNamespacesResponse {
-  value: AzureMonitorMetricNamespaceItem[];
-}
-
-export interface AzureMonitorMetricNamespaceItem {
-  name: string;
-  properties: { metricNamespacename: string };
-}
-
 export interface AzureMonitorMetricAvailabilityMetadata {
   timeGrain: string;
   retention: string;
@@ -122,17 +107,6 @@ export interface AzureMonitorLocalizedValue {
 export interface AzureLogsVariable {
   text: string;
   value: string;
-}
-
-export interface AzureLogsTableData extends TableData {
-  columns: AzureLogsTableColumn[];
-  rows: any[];
-  type: string;
-}
-
-export interface AzureLogsTableColumn {
-  text: string;
-  type: string;
 }
 
 export interface AzureMonitorOption<T = string> {
@@ -378,7 +352,7 @@ export interface Metric {
   errorCode: string;
   errorMessage: string;
   id: string;
-  name: LocalizableString;
+  name: AzureMonitorLocalizedValue;
   timeseries: Array<{ data: MetricValue[]; metadatavalues: MetricMetadataValue[] }>;
   type: string;
   unit: string;
@@ -394,11 +368,6 @@ interface MetricValue {
 }
 
 interface MetricMetadataValue {
-  name: LocalizableString;
-  value: string;
-}
-
-interface LocalizableString {
-  localizedValue: string;
+  name: AzureMonitorLocalizedValue;
   value: string;
 }

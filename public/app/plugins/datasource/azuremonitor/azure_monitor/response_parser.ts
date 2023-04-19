@@ -1,6 +1,5 @@
 import { find, get } from 'lodash';
 
-import { DataQueryResponse } from '@grafana/data/src/types';
 import { FetchResponse } from '@grafana/runtime';
 
 import TimeGrainConverter from '../time_grain_converter';
@@ -14,7 +13,6 @@ import {
   Location,
   Subscription,
   Resource,
-  Workspace,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues<T>(
