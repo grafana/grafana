@@ -70,7 +70,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
-				Color:       *anno.IconColor,
+				Color:       anno.IconColor,
 				Time:        item.Time,
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
@@ -78,7 +78,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
 			// which is only intended for tag and org annotations.
-			if anno.Type == "dashboard" {
+			if anno.Type != nil && *anno.Type == "dashboard" {
 				event.PanelId = item.PanelID
 			}
 

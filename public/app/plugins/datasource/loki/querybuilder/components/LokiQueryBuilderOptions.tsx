@@ -18,7 +18,7 @@ export interface Props {
   maxLines: number;
   app?: CoreApp;
   datasource: LokiDatasource;
-  queryStats: QueryStats | undefined;
+  queryStats: QueryStats | null;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(

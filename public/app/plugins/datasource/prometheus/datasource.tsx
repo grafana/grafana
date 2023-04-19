@@ -195,7 +195,6 @@ export class PrometheusDatasource
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
     if (this.access === 'proxy') {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
@@ -934,10 +933,11 @@ export class PrometheusDatasource
     );
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getLabelNames(options?: any) {
+  async getTagKeys(options?: any) {
     if (options?.series) {
       // Get tags for the provided series only
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
@@ -956,6 +956,7 @@ export class PrometheusDatasource
     }
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: { key?: string } = {}) {
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);

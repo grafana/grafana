@@ -122,30 +122,6 @@ export const getFieldLinksForExplore = (options: {
         if (!linkModel.title) {
           linkModel.title = getTitleFromHref(linkModel.href);
         }
-
-        // Take over the onClick to report the click, then either call the original onClick or navigate to the URL
-        // Note: it is likely that an external link that opens in the same tab will not be reported, as the browser redirect might cancel reporting the interaction
-        const origOnClick = linkModel.onClick;
-
-        linkModel.onClick = (...args) => {
-          reportInteraction(DATA_LINK_USAGE_KEY, {
-            origin: link.origin || DataLinkConfigOrigin.Datasource,
-            app: CoreApp.Explore,
-            internal: false,
-          });
-
-          if (origOnClick) {
-            origOnClick?.apply(...args);
-          } else {
-            // for external links without an onClick, we want to duplicate default href behavior since onClick stops it
-            if (linkModel.target === '_blank') {
-              window.open(linkModel.href);
-            } else {
-              window.location.href = linkModel.href;
-            }
-          }
-        };
-
         return linkModel;
       } else {
         let internalLinkSpecificVars: ScopedVars = {};
@@ -195,7 +171,9 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: (options) => splitFnWithTracking(options),
+            // Don't track internal links without split view as they are used only in Dashboards
+            // TODO: It should be revisited in #66570
+            onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };

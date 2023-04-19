@@ -7,7 +7,6 @@ import {
   Alert,
   DataSourceHttpSettings,
   FieldValidationMessage,
-  SecureSocksProxySettings,
   useTheme2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -56,11 +55,8 @@ export const ConfigEditor = (props: Props) => {
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         azureAuthSettings={azureAuthSettings}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
-
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
       <>
         <hr className={styles.hrTopSpace} />
         <h3 className={styles.sectionHeaderPadding}>Additional Settings</h3>

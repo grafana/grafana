@@ -260,6 +260,7 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Previous:       state.PreviousFormatted(),
 			Current:        state.Formatted(),
 			Values:         valuesAsDataBlob(state.State),
+			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
 			InstanceLabels: removePrivateLabels(state.Labels),
@@ -302,6 +303,7 @@ type lokiEntry struct {
 	Current       string           `json:"current"`
 	Error         string           `json:"error,omitempty"`
 	Values        *simplejson.Json `json:"values"`
+	Condition     string           `json:"condition"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.

@@ -94,6 +94,16 @@ describe('PrometheusDatasource', () => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
   });
 
+  // Some functions are required by the parent datasource class to provide functionality such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues functions
+  describe('Datasource contract', () => {
+    it('has function called getTagKeys', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagKeys');
+    });
+    it('has function called getTagValues', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagValues');
+    });
+  });
+
   describe('Query', () => {
     it('returns empty array when no queries', async () => {
       await expect(ds.query(createDataRequest([]))).toEmitValuesWith((response) => {
@@ -162,7 +172,7 @@ describe('PrometheusDatasource', () => {
       ).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
-      await expect(directDs.getLabelNames()).rejects.toMatchObject({
+      await expect(directDs.getTagKeys()).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
       await expect(directDs.getTagValues()).rejects.toMatchObject({
@@ -1993,7 +2003,7 @@ describe('PrometheusDatasource for POST', () => {
   });
 
   describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
-    const options = { dashboardId: 1, panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
+    const options = { panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     } as PromQueryRequest;
@@ -2017,7 +2027,6 @@ describe('PrometheusDatasource for POST', () => {
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions, options);
-      expect(httpOptions.headers['X-Dashboard-Id']).toBe(options.dashboardId);
       expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
       expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
     });

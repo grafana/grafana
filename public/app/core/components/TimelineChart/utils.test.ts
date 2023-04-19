@@ -1,13 +1,4 @@
-import {
-  ArrayVector,
-  createTheme,
-  FieldType,
-  ThresholdsMode,
-  TimeRange,
-  toDataFrame,
-  dateTime,
-  DataFrame,
-} from '@grafana/data';
+import { createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime, DataFrame } from '@grafana/data';
 import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 
 import {
@@ -70,7 +61,7 @@ describe('prepare timeline graph', () => {
     const out = info.frames![0];
 
     const field = out.fields.find((f) => f.name === 'b');
-    expect(field?.values.toArray()).toMatchInlineSnapshot(`
+    expect(field?.values).toMatchInlineSnapshot(`
       [
         1,
         1,
@@ -94,7 +85,7 @@ describe('prepare timeline graph', () => {
       }),
     ];
     const result = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(result.frames?.[0].fields[0].values.toArray()).toEqual([1, 2, 3, 4]);
+    expect(result.frames?.[0].fields[0].values).toEqual([1, 2, 3, 4]);
   });
 });
 
@@ -103,7 +94,7 @@ describe('findNextStateIndex', () => {
     const field = {
       name: 'time',
       type: FieldType.number,
-      values: new ArrayVector([1, undefined, undefined, 2, undefined, undefined]),
+      values: [1, undefined, undefined, 2, undefined, undefined],
       config: {},
     };
     const result = findNextStateIndex(field, 0);
@@ -114,7 +105,7 @@ describe('findNextStateIndex', () => {
     const field = {
       name: 'time',
       type: FieldType.number,
-      values: new ArrayVector([1, undefined, undefined, 2, undefined, 3]),
+      values: [1, undefined, undefined, 2, undefined, 3],
       config: {},
     };
     const result = findNextStateIndex(field, 5);
@@ -125,7 +116,7 @@ describe('findNextStateIndex', () => {
     const field = {
       name: 'time',
       type: FieldType.number,
-      values: new ArrayVector([1, undefined, undefined, 2, undefined, 3, undefined]),
+      values: [1, undefined, undefined, 2, undefined, 3, undefined],
       config: {},
     };
     const result = findNextStateIndex(field, 5);
@@ -136,19 +127,7 @@ describe('findNextStateIndex', () => {
     const field = {
       name: 'time',
       type: FieldType.number,
-      values: new ArrayVector([
-        1,
-        undefined,
-        undefined,
-        3,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        2,
-        undefined,
-        undefined,
-      ]),
+      values: [1, undefined, undefined, 3, undefined, undefined, undefined, undefined, 2, undefined, undefined],
       config: {},
     };
     const result = findNextStateIndex(field, 3);
@@ -159,7 +138,7 @@ describe('findNextStateIndex', () => {
     const field = {
       name: 'time',
       type: FieldType.number,
-      values: new ArrayVector([1, 3, 2]),
+      values: [1, 3, 2],
       config: {},
     };
 
@@ -212,10 +191,10 @@ describe('prepareTimelineLegendItems', () => {
                 ],
               },
             },
-            values: new ArrayVector([
+            values: [
               1634092733455, 1634092763455, 1634092793455, 1634092823455, 1634092853455, 1634092883455, 1634092913455,
               1634092943455, 1634092973455, 1634093003455,
-            ]),
+            ],
             display: (value: string) => ({
               text: value,
               color: undefined,
@@ -238,7 +217,7 @@ describe('prepareTimelineLegendItems', () => {
                 ],
               },
             },
-            values: new ArrayVector(['< -∞', null, null, null, null, null, null, null, null, null]),
+            values: ['< -∞', null, null, null, null, null, null, null, null, null],
             display: (value?: string) => ({
               text: value || '',
               color: 'green',
