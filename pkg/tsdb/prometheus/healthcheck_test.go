@@ -64,15 +64,15 @@ func (rt *healthCheckNotImplementedRoundTripper) RoundTrip(req *http.Request) (*
 		}, nil
 	} else {
 		fakeResponse := `{
-    "data": {
-        "result": [
-            1681919899.44,
-            "2"
-        ],
-        "resultType": "scalar"
-    },
-    "status": "success"
-}`
+			"data": {
+				"result": [
+					1681919899.44,
+					"2"
+				],
+				"resultType": "scalar"
+			},
+			"status": "success"
+	  }`
 		bodyJSON, _ := simplejson.NewJson([]byte(fakeResponse))
 		body, _ := bodyJSON.MarshalJSON()
 		return &http.Response{
