@@ -18,7 +18,7 @@ var angularDetectionRegexes = []*regexp.Regexp{
 func Inspect(p *plugins.Plugin) (isAngular bool, err error) {
 	f, err := p.FS.Open("module.js")
 	if err != nil {
-		return false, fmt.Errorf("module.js open: %w", err)
+		return false, fmt.Errorf("open module.js: %w", err)
 	}
 	defer func() {
 		if closeErr := f.Close(); closeErr != nil && err == nil {
