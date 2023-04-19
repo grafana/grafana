@@ -143,8 +143,15 @@ export function exitPanelEditor(): ThunkResult<void> {
           sourcePanel.configRev = 0;
         }
       }, 20);
-    } else if (sourcePanel.isNew && shouldDiscardChanges) {
-      dashboard && removePanel(dashboard, sourcePanel, true);
+    }
+
+    // A new panel is only new until the first time we exit the panel editor
+    if (sourcePanel.isNew) {
+      if (!shouldDiscardChanges) {
+        delete sourcePanel.isNew;
+      } else {
+        dashboard && removePanel(dashboard, sourcePanel, true);
+      }
     }
 
     dispatch(cleanUpPanelState(panel.key));
