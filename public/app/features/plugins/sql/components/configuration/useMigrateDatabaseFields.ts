@@ -18,62 +18,58 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
     let newOptions = { ...options };
     let optionsUpdated = false;
 
-    const updateData = () => {
-      // Migrate the database field from the column into the jsonData object
-      if (options.database) {
-        logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
-        newOptions.database = '';
-        newOptions.jsonData = { ...jsonData, database: options.database };
-        optionsUpdated = true;
-      }
+    // Migrate the database field from the column into the jsonData object
+    if (options.database) {
+      logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
+      newOptions.database = '';
+      newOptions.jsonData = { ...jsonData, database: options.database };
+      optionsUpdated = true;
+    }
 
-      // Set default values for max open connections, max idle connection,
-      // and auto idle if they're all undefined
-      if (
-        jsonData.maxOpenConns === undefined &&
-        jsonData.maxIdleConns === undefined &&
-        jsonData.maxIdleConnsAuto === undefined
-      ) {
-        const { maxOpenConns, maxIdleConns } = config.sqlConnectionLimits;
+    // Set default values for max open connections, max idle connection,
+    // and auto idle if they're all undefined
+    if (
+      jsonData.maxOpenConns === undefined &&
+      jsonData.maxIdleConns === undefined &&
+      jsonData.maxIdleConnsAuto === undefined
+    ) {
+      const { maxOpenConns, maxIdleConns } = config.sqlConnectionLimits;
 
-        logDebug(
-          `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
-        );
+      logDebug(
+        `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
+      );
 
-        // Spread from the jsonData in new options in case
-        // the database field was migrated as well
-        newOptions.jsonData = {
-          ...newOptions.jsonData,
-          maxOpenConns: maxOpenConns,
-          maxIdleConns: maxIdleConns,
-          maxIdleConnsAuto: true,
-        };
+      // Spread from the jsonData in new options in case
+      // the database field was migrated as well
+      newOptions.jsonData = {
+        ...newOptions.jsonData,
+        maxOpenConns: maxOpenConns,
+        maxIdleConns: maxIdleConns,
+        maxIdleConnsAuto: true,
+      };
 
-        // Make sure we issue an update if options changed
-        optionsUpdated = true;
-      }
+      // Make sure we issue an update if options changed
+      optionsUpdated = true;
+    }
 
-      // If the maximum connection lifetime hasn't been
-      // otherwise set fill in with the default from configuration
-      if (jsonData.connMaxLifetime === undefined) {
-        const { connMaxLifetime } = config.sqlConnectionLimits;
+    // If the maximum connection lifetime hasn't been
+    // otherwise set fill in with the default from configuration
+    if (jsonData.connMaxLifetime === undefined) {
+      const { connMaxLifetime } = config.sqlConnectionLimits;
 
-        // Spread new options and add our value
-        newOptions.jsonData = {
-          ...newOptions.jsonData,
-          connMaxLifetime: connMaxLifetime,
-        };
+      // Spread new options and add our value
+      newOptions.jsonData = {
+        ...newOptions.jsonData,
+        connMaxLifetime: connMaxLifetime,
+      };
 
-        // Note that we've updated the options
-        optionsUpdated = true;
-      }
+      // Note that we've updated the options
+      optionsUpdated = true;
+    }
 
-      // Only issue an update if we changed options
-      if (optionsUpdated) {
-        onOptionsChange(newOptions);
-      }
-    };
-
-    updateData();
+    // Only issue an update if we changed options
+    if (optionsUpdated) {
+      onOptionsChange(newOptions);
+    }
   }, [onOptionsChange, options]);
 }
