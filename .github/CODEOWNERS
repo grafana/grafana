@@ -353,7 +353,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
-/public/app/features/datasource-drawer/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
