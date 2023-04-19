@@ -10,6 +10,12 @@ import { Editor } from './Editor';
 
 jest.mock('../../influxQLMetadataQuery', () => {
   return {
+    __esModule: true,
+    getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
+    getFieldKeysForMeasurement: jest
+      .fn()
+      .mockReturnValueOnce(Promise.resolve(['free', 'total']))
+      .mockReturnValueOnce(Promise.resolve([])),
     getTagKeysForMeasurementAndTags: jest
       .fn()
       // first time we are called when the widget mounts,

@@ -59,21 +59,11 @@ Set the data source's basic configuration options carefully:
 | `Disable metrics lookup`        | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                   |
 | `Custom query parameters`       | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                         |
 | **Exemplars configuration**     |                                                                                                                                                                                                                                                                                                                 |
-| `Internal link`                 | Enable this option is you have an internal link. When you enable this option, you will see a data source selector. Select the backend tracing data store for your exemplar data.                                                                                                                                |
-| `Data source`                   | You will see this option only if you enable `Internal link` option. Select the backend tracing data store for your exemplar data.                                                                                                                                                                               |
-| `URL`                           | You will see this option only if the `Internal link` option is disabled. Enter the full URL of the external link. You can interpolate the value from the field with `${__value.raw }` macro.                                                                                                                    |
-| `URL Label`                     | (Optional) add a custom display label to override the value of the `Label name` field.                                                                                                                                                                                                                          |
-| `Label name`                    | Add a name for the exemplar traceID property.                                                                                                                                                                                                                                                                   |
-
-**Exemplars configuration:**
-
-| Name              | Description                                                                                                                                                                                                                                                    |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                            |
-| **Data source**   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                                  |
-| **URL**           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}). |
-| **URL label**     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                      |
-| **Label name**    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                                 |
+| `Internal link`                 | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                                                                             |
+| `Data source`                   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                                                                                   |
+| `URL`                           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}).                                                  |
+| `URL Label`                     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                                                                       |
+| `Label name`                    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                                                                                  |
 
 ### Provision the data source
 
@@ -106,12 +96,6 @@ datasources:
         - name: traceID
           url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
 ```
-
-## Query the data source
-
-The Prometheus query editor includes a code editor and visual query builder.
-
-For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## View Grafana metrics with Prometheus
 

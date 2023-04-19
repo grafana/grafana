@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
@@ -121,7 +122,7 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db := sqlstore.InitTestDB(t)
-	statsService := ProvideService(db)
+	statsService := ProvideService(&setting.Cfg{}, db)
 
 	query := stats.GetAdminStatsQuery{}
 	err := statsService.GetAdminStats(context.Background(), &query)

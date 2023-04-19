@@ -5,6 +5,10 @@ aliases:
   - ../../enterprise/team-sync/
 description: Learn how to use Team Sync to synchronize between your authentication
   provider teams and Grafana teams.
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Configure Team Sync
 weight: 1000
 ---

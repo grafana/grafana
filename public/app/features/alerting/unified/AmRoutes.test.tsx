@@ -302,9 +302,9 @@ describe('AmRoutes', () => {
     // configure timing intervals
     await userEvent.click(byText('Timing options').get(rootRouteContainer));
 
-    await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
-    await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
-    await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
+    await updateTiming(ui.groupWaitContainer.get(), '1m');
+    await updateTiming(ui.groupIntervalContainer.get(), '4m');
+    await updateTiming(ui.groupRepeatContainer.get(), '5h');
 
     //save
     await userEvent.click(ui.saveButton.get(rootRouteContainer));
@@ -728,11 +728,9 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
   await selectOptionInTest(selectElement, optionText);
 };
 
-const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
-  const input = byRole('textbox').get(selectElement);
-  const select = byRole('combobox').get(selectElement);
+const updateTiming = async (timingInputContainer: HTMLElement, value: string): Promise<void> => {
+  const input = byRole('textbox').get(timingInputContainer);
+
   await userEvent.clear(input);
   await userEvent.type(input, value);
-  await userEvent.click(select);
-  await selectOptionInTest(selectElement, timeUnit);
 };

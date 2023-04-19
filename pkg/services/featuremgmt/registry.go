@@ -424,6 +424,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "onlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with external auth providers",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
 			State:        FeatureStateAlpha,
@@ -434,6 +439,21 @@ var (
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "alertStateHistoryLokiSecondary",
+			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertStateHistoryLokiPrimary",
+			Description: "Enable a remote Loki instance as the primary source for state history reads.",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertStateHistoryLokiOnly",
+			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

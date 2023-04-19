@@ -62,6 +62,11 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	panel := parsePanelKey(rule, logger)
 
 	errCh := make(chan error, 1)
+	if len(annotations) == 0 {
+		close(errCh)
+		return errCh
+	}
+
 	go func() {
 		defer close(errCh)
 		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
@@ -180,10 +185,6 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 }
 
 func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
-	if len(annotations) == 0 {
-		return nil
-	}
-
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
@@ -198,11 +199,11 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 	}
 
 	org := fmt.Sprint(orgID)
-	h.metrics.WritesTotal.WithLabelValues(org).Inc()
+	h.metrics.WritesTotal.WithLabelValues(org, "annotations").Inc()
 	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailed.WithLabelValues(org).Inc()
+		h.metrics.WritesFailed.WithLabelValues(org, "annotations").Inc()
 		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}

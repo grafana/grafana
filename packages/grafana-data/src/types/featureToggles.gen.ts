@@ -91,6 +91,10 @@ export interface FeatureToggles {
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
+  onlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
+  alertStateHistoryLokiSecondary?: boolean;
+  alertStateHistoryLokiPrimary?: boolean;
+  alertStateHistoryLokiOnly?: boolean;
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FieldSet, useStyles2 } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { FieldSet, useStyles2 } from '@grafana/ui';
 export interface RuleEditorSectionProps {
   title: string;
   stepNo: number;
-  description?: string;
+  description?: string | ReactElement;
 }
 
 export const RuleEditorSection = ({

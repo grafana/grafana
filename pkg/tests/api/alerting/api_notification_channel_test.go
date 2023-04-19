@@ -17,10 +17,11 @@ import (
 	"time"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -716,8 +717,13 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockEmail := &mockEmailHandler{}
 
 	// Set up responses
-	mockChannel.responses["slack_recv1"] = `{"ok": true}`
-	mockChannel.responses["slack_recvX"] = `{"ok": true}`
+	mockChannel.responses["slack_recv1"] = func(res http.ResponseWriter) {
+		res.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(res, `{"ok": true}`)
+	}
+	mockChannel.responses["slack_recvX"] = func(res http.ResponseWriter) {
+		fmt.Fprint(res, `ok`)
+	}
 
 	// Overriding some URLs to send to the mock channel.
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
@@ -1002,7 +1008,7 @@ type mockNotificationChannel struct {
 	server *http.Server
 
 	receivedNotifications  map[string][]string
-	responses              map[string]string
+	responses              map[string]func(res http.ResponseWriter)
 	notificationErrorCount int
 	notificationsMtx       sync.RWMutex
 }
@@ -1020,7 +1026,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
-		responses:             make(map[string]string),
+		responses:             make(map[string]func(res http.ResponseWriter)),
 		t:                     t,
 	}
 
@@ -1049,8 +1055,11 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	body := getBody(nc.t, req.Body)
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
-	res.WriteHeader(http.StatusOK)
-	fmt.Fprint(res, nc.responses[paths[0]])
+	if f, ok := nc.responses[paths[0]]; ok {
+		f(res)
+	} else {
+		res.WriteHeader(http.StatusOK)
+	}
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {

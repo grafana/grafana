@@ -154,7 +154,7 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 			Config: &ServerConfig{
 				Groups: []*GroupToOrgRole{},
 			},
-			log: logger.New("test"),
+			log: log.New("test"),
 		}
 
 		user := &login.ExternalUserInfo{
@@ -174,7 +174,7 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 					},
 				},
 			},
-			log: logger.New("test"),
+			log: log.New("test"),
 		}
 
 		user := &login.ExternalUserInfo{

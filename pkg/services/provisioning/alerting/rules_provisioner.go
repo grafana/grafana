@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/xorcare/pointer"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -97,8 +98,9 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
 	cmd := &dashboards.GetDashboardQuery{
-		Slug:  slugify.Slugify(folderName),
-		OrgID: orgID,
+		Title:    &folderName,
+		FolderID: pointer.Int64(0),
+		OrgID:    orgID,
 	}
 	cmdResult, err := prov.dashboardService.GetDashboard(ctx, cmd)
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {

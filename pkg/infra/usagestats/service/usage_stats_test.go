@@ -78,7 +78,7 @@ func TestMetrics(t *testing.T) {
 			BuildVersion:         "5.0.0",
 			AnonymousEnabled:     true,
 			BasicAuthEnabled:     true,
-			LDAPEnabled:          true,
+			LDAPAuthEnabled:      true,
 			AuthProxyEnabled:     true,
 			Packaging:            "deb",
 			ReportingDistributor: "hosted-grafana",

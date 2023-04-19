@@ -66,9 +66,9 @@ func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*org
 
 	sc := setupScenarioContext(t, requestURL)
 
-	origLDAP := setting.LDAPEnabled
-	setting.LDAPEnabled = true
-	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
+	origLDAP := setting.LDAPAuthEnabled
+	setting.LDAPAuthEnabled = true
+	t.Cleanup(func() { setting.LDAPAuthEnabled = origLDAP })
 
 	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), orgService: &orgtest.FakeOrgService{ExpectedOrgs: searchOrgRst}}
 
@@ -313,9 +313,9 @@ func getLDAPStatusContext(t *testing.T) *scenarioContext {
 	requestURL := "/api/admin/ldap/status"
 	sc := setupScenarioContext(t, requestURL)
 
-	ldap := setting.LDAPEnabled
-	setting.LDAPEnabled = true
-	t.Cleanup(func() { setting.LDAPEnabled = ldap })
+	ldap := setting.LDAPAuthEnabled
+	setting.LDAPAuthEnabled = true
+	t.Cleanup(func() { setting.LDAPAuthEnabled = ldap })
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
@@ -373,11 +373,11 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 	sc := setupScenarioContext(t, requestURL)
 	sc.authInfoService = &logintest.AuthInfoServiceFake{}
 
-	ldap := setting.LDAPEnabled
+	ldap := setting.LDAPAuthEnabled
 	t.Cleanup(func() {
-		setting.LDAPEnabled = ldap
+		setting.LDAPAuthEnabled = ldap
 	})
-	setting.LDAPEnabled = true
+	setting.LDAPAuthEnabled = true
 
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
@@ -600,22 +600,22 @@ func TestLDAP_AccessControl(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			enabled := setting.LDAPEnabled
+			enabled := setting.LDAPAuthEnabled
 			configFile := setting.LDAPConfigFile
 
 			t.Cleanup(func() {
-				setting.LDAPEnabled = enabled
+				setting.LDAPAuthEnabled = enabled
 				setting.LDAPConfigFile = configFile
 			})
 
-			setting.LDAPEnabled = true
+			setting.LDAPAuthEnabled = true
 			path, err := filepath.Abs("../../conf/ldap.toml")
 			assert.NoError(t, err)
 			setting.LDAPConfigFile = path
 
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				cfg := setting.NewCfg()
-				cfg.LDAPEnabled = true
+				cfg.LDAPAuthEnabled = true
 				hs.Cfg = cfg
 				hs.SQLStore = dbtest.NewFakeDB()
 				hs.orgService = orgtest.NewOrgServiceFake()

@@ -55,4 +55,13 @@ describe('MetricQueryEditor', () => {
     const l = await screen.findByLabelText('Project');
     expect(l).toBeInTheDocument();
   });
+
+  it('renders a Project dropdown', async () => {
+    const query = createMockQuery();
+    query.queryType = QueryType.TIME_SERIES_QUERY;
+
+    render(<MetricQueryEditor {...defaultProps} />);
+    const projectDropdown = await screen.findByLabelText('Project');
+    expect(projectDropdown).toBeInTheDocument();
+  });
 });

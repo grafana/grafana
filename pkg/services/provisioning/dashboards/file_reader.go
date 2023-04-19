@@ -11,9 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xorcare/pointer"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
@@ -299,7 +300,11 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &dashboards.GetDashboardQuery{Slug: slugify.Slugify(folderName), OrgID: cfg.OrgID}
+	cmd := &dashboards.GetDashboardQuery{
+		Title:    &folderName,
+		FolderID: pointer.Int64(0),
+		OrgID:    cfg.OrgID,
+	}
 	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {

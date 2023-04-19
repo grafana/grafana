@@ -73,7 +73,7 @@ var loadingMutex = &sync.Mutex{}
 
 // IsEnabled checks if ldap is enabled
 func IsEnabled() bool {
-	return setting.LDAPEnabled
+	return setting.LDAPAuthEnabled
 }
 
 func SkipOrgRoleSync() bool {
@@ -102,7 +102,7 @@ var config *Config
 // the config or it reads it and caches it first.
 func GetConfig(cfg *setting.Cfg) (*Config, error) {
 	if cfg != nil {
-		if !cfg.LDAPEnabled {
+		if !cfg.LDAPAuthEnabled {
 			return nil, nil
 		}
 	} else if !IsEnabled() {

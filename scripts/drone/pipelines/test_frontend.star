@@ -66,10 +66,10 @@ def test_frontend_enterprise(trigger, ver_mode, committish, edition = "enterpris
 
     steps = (
         [
+            download_grabpl_step(),
             clone_enterprise_step(committish),
             init_enterprise_step(ver_mode),
             identify_runner_step(),
-            download_grabpl_step(),
         ] +
         with_deps([yarn_install_step()], ["init-enterprise"]) +
         [

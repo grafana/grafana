@@ -1,3 +1,22 @@
+<!-- 9.4.7 START -->
+
+# 9.4.7 (2023-03-16)
+
+### Bug fixes
+
+- **Alerting:** Update scheduler to receive rule updates only from database. [#64780](https://github.com/grafana/grafana/pull/64780), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Influxdb:** Re-introduce backend migration feature toggle. [#64842](https://github.com/grafana/grafana/pull/64842), [@itsmylife](https://github.com/itsmylife)
+- **Security:** Fixes for CVE-2023-1410. [#65278](https://github.com/grafana/grafana/pull/65278), [@itsmylife](https://github.com/itsmylife)
+
+### Breaking changes
+
+The InfluxDB backend migration feature toggle (influxdbBackendMigration) has been reintroduced in this version as issues were discovered with backend processing of InfluxDB data. Unless this feature toggle is enabled, all InfluxDB data will be parsed in the frontend. This frontend processing is the default behavior.
+In Grafana 9.4.4, InfluxDB data parsing started to be handled in the backend. If you have upgraded to 9.4.4 and then added new transformations on InfluxDB data, those panels will fail to render. To resolve this either:
+
+- Remove the affected panel and re-create it
+- Edit the `time` field as `Time` in `panel.json` or `dashboard.json` Issue [#64842](https://github.com/grafana/grafana/issues/64842)
+
+<!-- 9.4.7 END -->
 <!-- 9.4.3 START -->
 
 # 9.4.3 (2023-03-02)

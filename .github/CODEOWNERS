@@ -34,19 +34,25 @@ SUPPORT.md @torkelo
 UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 WORKFLOW.md @torkelo
 
-
-# Set up, dashboards/visualization, best practices: Chris Moyer
-# Alerting: Brenda Muir
-/docs/sources/administration/ @Eve832 @GrafanaWriter
-/docs/sources/alerting/ @brendamuir
-/docs/sources/dashboards/ @chri2547
-/docs/sources/datasources/ @Eve832 @GrafanaWriter
-/docs/sources/explore/ @Eve832 @GrafanaWriter
-/docs/sources/getting-started/ @chri2547
-/docs/sources/old-alerting/ @brendamuir
-/docs/sources/release-notes/ @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/ @chri2547
-/docs/sources/whatsnew/ @Eve832 @GrafanaWriter
+# Technical documentation
+/docs/                                    @Eve832 @jdbaldry
+/docs/sources/                            @Eve832
+/docs/sources/administration/             @Eve832 @GrafanaWriter
+/docs/sources/alerting/                   @brendamuir
+/docs/sources/dashboards/                 @imatwawana
+/docs/sources/datasources/                @Eve832 @GrafanaWriter
+/docs/sources/explore/                    @Eve832 @GrafanaWriter
+/docs/sources/fundamentals                @chri2547
+/docs/sources/getting-started/            @chri2547
+/docs/sources/introduction/               @chri2547
+/docs/sources/old-alerting/               @brendamuir
+/docs/sources/panels-visualizations/      @imatwawana
+/docs/sources/release-notes/              @Eve832 @GrafanaWriter
+/docs/sources/setup-grafana/              @chri2547
+/docs/sources/upgrade-guide/              @chri2547 @imatwawana
+/docs/sources/whatsnew/                   @chri2547 @imatwawana
+/docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
 /go.mod @grafana/backend-platform
@@ -220,14 +226,14 @@ WORKFLOW.md @torkelo
 
 
 # Continuous Integration
-.drone.yml @grafana/grafana-release-eng
-.drone.star @grafana/grafana-release-eng
-/scripts/drone/ @grafana/grafana-release-eng
-/pkg/build/ @grafana/grafana-release-eng
-/.dockerignore @grafana/grafana-release-eng
-/Dockerfile @grafana/grafana-release-eng
-/Makefile @grafana/grafana-release-eng
-/scripts/build/ @grafana/grafana-release-eng
+.drone.yml @grafana/grafana-delivery
+.drone.star @grafana/grafana-delivery
+/scripts/drone/ @grafana/grafana-delivery
+/pkg/build/ @grafana/grafana-delivery
+/.dockerignore @grafana/grafana-delivery
+/Dockerfile @grafana/grafana-delivery
+/Makefile @grafana/grafana-delivery
+/scripts/build/ @grafana/grafana-delivery
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-plugins
@@ -453,25 +459,25 @@ lerna.json @grafana/frontend-ops
 
 /scripts/benchmark-access-control.sh @grafana/grafana-authnz-team
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
-/scripts/ci-* @grafana/grafana-release-eng
-/scripts/circle-* @grafana/grafana-release-eng
+/scripts/ci-* @grafana/grafana-delivery
+/scripts/circle-* @grafana/grafana-delivery
 /scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/cli/ @grafana/user-essentials
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/user-essentials
-/scripts/helpers/ @grafana/grafana-release-eng
+/scripts/helpers/ @grafana/grafana-delivery
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-partnerships-team
 /scripts/prepare-packagejson.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
 /scripts/stripnulls.sh @grafana/grafana-as-code
-/scripts/tag_release.sh @grafana/grafana-release-eng
-/scripts/trigger_docker_build.sh @grafana/grafana-release-eng
-/scripts/trigger_grafana_packer.sh @grafana/grafana-release-eng
-/scripts/trigger_windows_build.sh @grafana/grafana-release-eng
-/scripts/validate-devenv-dashboards.sh @grafana/grafana-release-eng
-/scripts/verify-repo-update/ @grafana/grafana-release-eng
+/scripts/tag_release.sh @grafana/grafana-delivery
+/scripts/trigger_docker_build.sh @grafana/grafana-delivery
+/scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
+/scripts/trigger_windows_build.sh @grafana/grafana-delivery
+/scripts/validate-devenv-dashboards.sh @grafana/grafana-delivery
+/scripts/verify-repo-update/ @grafana/grafana-delivery
 
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/user-essentials
@@ -570,9 +576,9 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
-/.github/workflows/backport.yml @grafana/grafana-release-eng
-/.github/workflows/bump-version.yml @grafana/grafana-release-eng
-/.github/workflows/close-milestone.yml @grafana/grafana-release-eng
+/.github/workflows/backport.yml @grafana/grafana-delivery
+/.github/workflows/bump-version.yml @grafana/grafana-delivery
+/.github/workflows/close-milestone.yml @grafana/grafana-delivery
 /.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-plugins
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
@@ -599,8 +605,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/user-essentials
-/.github/workflows/update-changelog.yml @grafana/grafana-release-eng
-
+/.github/workflows/update-changelog.yml @grafana/grafana-delivery
+/.github/workflows/snyk.yml @grafana/security-team
 
 # Conf
 /conf/defaults.ini @torkelo

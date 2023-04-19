@@ -53,7 +53,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
-		"Subject": subjectTemplateFunc,
+		"Subject":                 subjectTemplateFunc,
+		"__dangerouslyInjectHTML": __dangerouslyInjectHTML,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -146,6 +147,17 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *SendWeb
 func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	obj["value"] = value
 	return ""
+}
+
+// __dangerouslyInjectHTML allows marking areas of am email template as HTML safe, this will _not_ sanitize the string and will allow HTML snippets to be rendered verbatim.
+// Use with absolute care as this _could_ allow for XSS attacks when used in an insecure context.
+//
+// It's safe to ignore gosec warning G203 when calling this function in an HTML template because we assume anyone who has write access
+// to the email templates folder is an administrator.
+//
+// nolint:gosec
+func __dangerouslyInjectHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {

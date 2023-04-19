@@ -307,6 +307,10 @@ const (
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 
+	// FlagOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with external auth providers
+	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
+
 	// FlagPrometheusMetricEncyclopedia
 	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
@@ -314,4 +318,16 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 )

@@ -18,7 +18,7 @@ const (
 	alertPollPeriod  = time.Second
 )
 
-var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -45,7 +45,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			return nil, err
 		}
 
-		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery)
+		getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, q, logsQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +73,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	queryContext backend.DataQuery, logsQuery models.LogsQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {

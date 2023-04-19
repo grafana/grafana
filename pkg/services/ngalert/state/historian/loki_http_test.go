@@ -72,6 +72,18 @@ func TestLokiConfig(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("captures external labels", func(t *testing.T) {
+		set := setting.UnifiedAlertingStateHistorySettings{
+			LokiRemoteURL:  "http://url.com",
+			ExternalLabels: map[string]string{"a": "b"},
+		}
+
+		res, err := NewLokiConfig(set)
+
+		require.NoError(t, err)
+		require.Contains(t, res.ExternalLabels, "a")
+	})
 }
 
 // This function can be used for local testing, just remove the skip call.
@@ -85,6 +97,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
+			Encoder:      JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
@@ -112,24 +125,21 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
+			Encoder:           JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.
 		// client.cfg.TenantID = "<your_tenant_id>"
 
-		// Create an array of selectors that should be used for the
-		// query.
-		selectors := []Selector{
-			{Label: "probe", Op: Eq, Value: "Paris"},
-		}
+		logQL := `{probe="Paris"}`
 
 		// Define the query time range
 		start := time.Now().Add(-30 * time.Minute).UnixNano()
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.query(context.Background(), selectors, start, end)
+		res, err := client.query(context.Background(), logQL, start, end)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})
