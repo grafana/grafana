@@ -3835,8 +3835,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/azure_monitor/response_parser.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/azure_resource_graph/azure_resource_graph_datasource.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

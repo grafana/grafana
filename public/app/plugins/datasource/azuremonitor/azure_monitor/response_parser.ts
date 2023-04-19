@@ -16,8 +16,8 @@ import {
   Resource,
 } from '../types';
 export default class ResponseParser {
-  static parseResponseValues(
-    result: any,
+  static parseResponseValues<T>(
+    result: AzureAPIResponse<T>,
     textFieldName: string,
     valueFieldName: string
   ): Array<{ text: string; value: string }> {

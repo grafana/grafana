@@ -109,14 +109,6 @@ export interface AzureMonitorMetricNamespaceItem {
   properties: { metricNamespacename: string };
 }
 
-export interface AzureMonitorMetricNamesResponse {
-  value: AzureMonitorMetricNameItem[];
-}
-
-export interface AzureMonitorMetricNameItem {
-  name: { value: string; localizedValue: string };
-}
-
 export interface AzureMonitorMetricAvailabilityMetadata {
   timeGrain: string;
   retention: string;
@@ -125,14 +117,6 @@ export interface AzureMonitorMetricAvailabilityMetadata {
 export interface AzureMonitorLocalizedValue {
   value: string;
   localizedValue: string;
-}
-
-export interface AzureMonitorResourceGroupsResponse {
-  data: {
-    value: Array<{ name: string }>;
-  };
-  status: number;
-  statusText: string;
 }
 
 export interface AzureLogsVariable {
@@ -290,6 +274,8 @@ export interface AzureAPIResponse<T> {
     type: string;
     value: number;
   };
+  status: number;
+  statusText: string;
 }
 
 export interface Location {
@@ -363,4 +349,56 @@ export interface Resource {
   sku: { capacity: number; family: string; model: string; name: string; size: string; tier: string };
   tags: Record<string, string>;
   type: string;
+}
+
+export interface ResourceGroup {
+  id: string;
+  location: string;
+  managedBy: string;
+  name: string;
+  properties: { provisioningState: string };
+  tags: object;
+  type: string;
+}
+
+export interface Namespace {
+  classification: {
+    Custom: string;
+    Platform: string;
+    Qos: string;
+  };
+  id: string;
+  name: string;
+  properties: { metricNamespaceName: string };
+  type: string;
+}
+
+export interface Metric {
+  displayDescription: string;
+  errorCode: string;
+  errorMessage: string;
+  id: string;
+  name: LocalizableString;
+  timeseries: Array<{ data: MetricValue[]; metadatavalues: MetricMetadataValue[] }>;
+  type: string;
+  unit: string;
+}
+
+interface MetricValue {
+  average: number;
+  count: number;
+  maximum: number;
+  minimum: number;
+  timeStamp: string;
+  total: number;
+}
+
+interface MetricMetadataValue {
+  name: LocalizableString;
+  value: string;
+}
+
+interface LocalizableString {
+  localizedValue: string;
+  value: string;
 }

@@ -1,3 +1,4 @@
+import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
@@ -8,11 +9,8 @@ import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
-  AzureMonitorMetricNamespacesResponse,
-  AzureMonitorMetricNamesResponse,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
-  AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   DatasourceValidationResult,
   GetMetricNamespacesQuery,
@@ -25,6 +23,8 @@ import {
   AzureGetResourceNamesQuery,
   Subscription,
   Location,
+  ResourceGroup,
+  Metric,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -163,8 +163,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
       `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
-    ).then((result: AzureMonitorResourceGroupsResponse) => {
-      return ResponseParser.parseResponseValues(result, 'name', 'name');
+    ).then((result: AzureAPIResponse<ResourceGroup>) => {
+      return ResponseParser.parseResponseValues<ResourceGroup>(result, 'name', 'name');
     });
   }
 
@@ -232,7 +232,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.templateSrv
     );
     return this.getResource(url)
-      .then((result: AzureMonitorMetricNamespacesResponse) => {
+      .then((result: AzureAPIResponse<Namespace>) => {
         return ResponseParser.parseResponseValues(
           result,
           'properties.metricNamespaceName',
@@ -266,7 +266,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.replaceSingleTemplateVariables(query),
       this.templateSrv
     );
-    return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
+    return this.getResource(url).then((result: AzureAPIResponse<Metric>) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
