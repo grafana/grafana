@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 
 import { dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Field, Icon, Input, Label, TagList, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
@@ -19,7 +19,7 @@ interface Props {
   ruleUID: string;
 }
 
-const MAX_TIMELINE_SERIES = 20;
+const MAX_TIMELINE_SERIES = 12;
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
@@ -98,10 +98,15 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         <input type="submit" hidden />
       </form>
       {!isEmpty(commonLabels) && (
-        <Stack direction="row" alignItems="center">
-          <strong>Common labels</strong>
+        <div className={styles.commonLabels}>
+          <Stack gap={1} alignItems="center">
+            <strong>Common labels</strong>
+            <Tooltip content="Common labels are the ones attached to all of the alert instances">
+              <Icon name="info-circle" />
+            </Tooltip>
+          </Stack>
           <TagList tags={commonLabels.map((label) => label.join('='))} />
-        </Stack>
+        </div>
       )}
       {isEmpty(frameSubset) ? (
         <>
@@ -219,6 +224,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   moreInstancesWarning: css`
     color: ${theme.colors.warning.text};
     padding: ${theme.spacing()};
+  `,
+  commonLabels: css`
+    display: grid;
+    grid-template-columns: max-content auto;
   `,
 });
 
