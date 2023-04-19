@@ -1,5 +1,5 @@
 import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { defer, lastValueFrom, merge, mergeMap, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
@@ -35,10 +35,11 @@ import { CacheRequestInfo, QueryCache } from '../prometheus/querycache/QueryCach
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import { getAllPolicies } from './influxQLMetadataQuery';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
+import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
 import { InfluxQueryBuilder } from './query_builder';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
@@ -129,6 +130,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
+  retentionPolicies: string[];
   cache: QueryCache<InfluxQuery>;
   hasIncrementalQuery: boolean;
 
@@ -156,11 +158,17 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.retentionPolicies = [];
     this.hasIncrementalQuery = true; // @todo
 
     this.cache = new QueryCache<InfluxQuery>(
       this.getInfluxTargetSignature.bind(this),
-      '30s' //@todo
+      '30s', //@todo
+      (request, targ) => {
+        const target: Record<string, InfluxQuery> = this.applyTemplateVariables(targ, request.scopedVars);
+        //@todo get profiling working with influx
+        return { interval: request.interval, expr: target.query.query ?? '' };
+      }
     );
 
     if (this.isFlux) {
@@ -173,6 +181,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         QueryEditor: AnnotationEditor,
         prepareAnnotation,
       };
+    }
+  }
+
+  async getRetentionPolicies(): Promise<string[]> {
+    if (this.retentionPolicies.length) {
+      return Promise.resolve(this.retentionPolicies);
+    } else {
+      return getAllPolicies(this).catch((err) => {
+        console.error(
+          'Unable to fetch retention policies. Queries will be run without specifying retention policy.',
+          err
+        );
+        return Promise.resolve(this.retentionPolicies);
+      });
     }
   }
 
@@ -197,6 +219,28 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const error = new Error(BROWSER_MODE_DISABLED_MESSAGE);
       return throwError(() => error);
     }
+
+    // When the dashboard first load or on dashboard panel edit mode
+    // PanelQueryRunner runs the queries to have a visualization on the panel.
+    // At that point datasource doesn't have the retention policies fetched.
+    // So hardcoded policy is being sent. Which causes problems.
+    // To overcome this we check/load policies first and then do the query.
+    return defer(() => this.getRetentionPolicies()).pipe(
+      mergeMap((allPolicies) => {
+        this.retentionPolicies = allPolicies;
+        const policyFixedRequests = {
+          ...request,
+          targets: request.targets.map((t) => ({
+            ...t,
+            policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
+          })),
+        };
+        return this._query(policyFixedRequests);
+      })
+    );
+  }
+
+  _query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     // for not-flux queries we call `this.classicQuery`, and that
     // handles the is-hidden situation.
     // for the flux-case, we do the filtering here
@@ -580,13 +624,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    const interpolated = this.templateSrv.replace(query, undefined, 'regex');
+    const interpolated = new InfluxQueryModel(
+      {
+        refId: 'metricFindQuery',
+        query,
+        rawQuery: true,
+      },
+      this.templateSrv,
+      options.scopedVars
+    ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
     });
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
+  // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options: any = {}) {
     const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_KEYS');

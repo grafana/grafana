@@ -1,6 +1,5 @@
 ---
 description: Configure integrations
-draft: true
 keywords:
   - Grafana
   - alerting
@@ -14,7 +13,7 @@ weight: 100
 
 # Configure integrations
 
-Configure integrations in Grafana to select your preferred communication channel for receiving notifications when your alert rules are fire. Each integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
+Configure integrations in Grafana to select your preferred communication channel for receiving notifications when your alert rules are firing. Each integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
 
 Once configured, you can use integrations as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
 

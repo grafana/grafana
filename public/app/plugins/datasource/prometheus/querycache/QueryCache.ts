@@ -1,3 +1,5 @@
+import { toInteger } from 'lodash';
+
 import {
   ArrayVector,
   DataFrame,
@@ -9,14 +11,18 @@ import {
   isValidDuration,
   parseDuration,
 } from '@grafana/data/src';
+import { faro } from '@grafana/faro-web-sdk';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
+import { config } from '../../../../core/config';
 import { InfluxQuery } from '../../influxdb/types';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)
 type TargetIdent = string;
+
+type RequestID = string;
 
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
@@ -41,6 +47,18 @@ export interface CacheRequestInfo<T extends SupportedQueryTypes> {
   shouldCache: boolean;
 }
 
+export interface DatasourceProfileData {
+  [index: string]: number | string | null | undefined;
+  interval?: string;
+  expr: string;
+}
+
+interface ProfileData extends DatasourceProfileData {
+  identity: string;
+  bytes: number | null;
+  dashboardUID: string;
+}
+
 /**
  * Get field identity
  * This is the string used to uniquely identify a field within a "target"
@@ -57,8 +75,38 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
 export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
   private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+  private getProfileData?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
 
-  constructor(getTargetSignature: (request: DataQueryRequest<T>, target: T) => string, overlapString: string) {
+  private perfObeserver?: PerformanceObserver;
+  private shouldProfile: boolean;
+
+  // send profile events every 5 minutes
+  sendEventsInterval = 60000 * 5;
+
+  pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
+
+  pendingAccumulatedEvents = new Map<
+    string,
+    {
+      requestCount: number;
+      savedBytesTotal: number;
+      initialRequestSize: number;
+      lastRequestSize: number;
+      panelId: string;
+      dashId: string;
+      expr: string;
+      interval: string;
+      sent: boolean;
+    }
+  >();
+
+  cache = new Map<TargetIdent, TargetCache>();
+
+  constructor(
+    getTargetSignature: (request: DataQueryRequest<T>, target: T) => string,
+    overlapString: string,
+    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData
+  ) {
     const unverifiedOverlap = overlapString;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
@@ -67,10 +115,121 @@ export class QueryCache<T extends SupportedQueryTypes> {
       const duration = parseDuration(defaultPrometheusQueryOverlapWindow);
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
+
+    if (config.grafanaJavascriptAgent.enabled) {
+      this.profile();
+      this.shouldProfile = true;
+    } else {
+      this.shouldProfile = false;
+    }
+    this.getProfileData = profileFunction;
     this.getTargetSignature = getTargetSignature;
   }
 
-  cache = new Map<TargetIdent, TargetCache>();
+  private profile() {
+    // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
+    if (typeof PerformanceObserver === 'function') {
+      this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
+        list.getEntries().forEach((entry) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
+
+          // Safari support for this is coming in 16.4:
+          // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
+          // Gating that this exists to prevent runtime errors
+          const isSupported = typeof entryTypeCast?.transferSize === 'number';
+
+          if (entryTypeCast?.initiatorType === 'fetch' && isSupported) {
+            let fetchUrl = entryTypeCast.name;
+
+            if (fetchUrl.includes('/api/ds/query')) {
+              let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
+
+              if (match) {
+                let requestId = match[1];
+
+                const requestTransferSize = Math.round(entryTypeCast.transferSize);
+                const currentRequest = this.pendingRequestIdsToTargSigs.get(requestId);
+
+                if (currentRequest) {
+                  const entries = this.pendingRequestIdsToTargSigs.entries();
+
+                  for (let [, value] of entries) {
+                    if (value.identity === currentRequest.identity && value.bytes !== null) {
+                      const previous = this.pendingAccumulatedEvents.get(value.identity);
+
+                      const savedBytes = toInteger(value.bytes) - requestTransferSize;
+
+                      this.pendingAccumulatedEvents.set(value.identity, {
+                        requestCount: (previous?.requestCount ?? 0) + 1,
+                        savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
+                        initialRequestSize: value.bytes,
+                        lastRequestSize: requestTransferSize,
+                        panelId: currentRequest.panelId?.toString() ?? '',
+                        dashId: currentRequest.dashboardUID ?? '',
+                        expr: currentRequest.expr ?? '',
+                        interval: currentRequest.interval ?? '',
+                        sent: false,
+                      });
+
+                      // We don't need to save each subsequent request, only the first one
+                      this.pendingRequestIdsToTargSigs.delete(requestId);
+
+                      return;
+                    }
+                  }
+
+                  // If we didn't return above, this should be the first request, let's save the observed size
+                  this.pendingRequestIdsToTargSigs.set(requestId, { ...currentRequest, bytes: requestTransferSize });
+                }
+              }
+            }
+          }
+        });
+      });
+
+      this.perfObeserver.observe({ type: 'resource', buffered: false });
+
+      setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
+
+      // Send any pending profile information when the user navigates away
+      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+    }
+  }
+
+  sendPendingTrackingEvents = () => {
+    const entries = this.pendingAccumulatedEvents.entries();
+
+    for (let [key, value] of entries) {
+      if (!value.sent) {
+        this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
+        faro.api.pushMeasurement({
+          type: 'custom',
+          values: {
+            thing: 0,
+            thing2: 1,
+          },
+        });
+        faro.api.pushEvent(
+          'prometheus incremental query response size',
+          {
+            requestCount: value.requestCount.toString(),
+            savedBytesTotal: value.savedBytesTotal.toString(),
+            initialRequestSize: value.initialRequestSize.toString(),
+            lastRequestSize: value.lastRequestSize.toString(),
+            panelId: value.panelId.toString(),
+            dashId: value.dashId.toString(),
+            expr: value.expr.toString(),
+            interval: value.interval.toString(),
+          },
+          'no-interaction',
+          {
+            skipDedupe: true,
+          }
+        );
+      }
+    }
+  };
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
@@ -80,7 +239,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     const newTo = request.range.to.valueOf();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
-    const shouldCache = request.rangeRaw?.to?.toString() === 'now';
+    const shouldCache = request.rangeRaw?.to?.toString() === 'now' && !request.targets.some((targ) => targ.instant);
 
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
@@ -91,6 +250,16 @@ export class QueryCache<T extends SupportedQueryTypes> {
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
       let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
+
+      if (this.shouldProfile && this.getProfileData) {
+        this.pendingRequestIdsToTargSigs.set(request.requestId, {
+          ...this.getProfileData(request, targ),
+          identity: targIdent + '|' + targSig,
+          bytes: null,
+          panelId: request.panelId,
+          dashboardUID: request.dashboardUID ?? '',
+        });
+      }
 
       reqTargSigs.set(targIdent, targSig);
     });
@@ -200,12 +369,13 @@ export class QueryCache<T extends SupportedQueryTypes> {
             let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
+            if (amendedTable) {
+              for (let i = 0; i < amendedTable.length; i++) {
+                cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
+              }
 
-            for (let i = 0; i < amendedTable.length; i++) {
-              cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
+              cachedFrame.length = cachedFrame.fields[0].values.length;
             }
-
-            cachedFrame.length = cachedFrame.fields[0].values.length;
           }
         });
 

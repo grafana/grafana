@@ -10,7 +10,7 @@
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
-  AnnotationQuery,
+  AnnotationPanelFilter,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -34,7 +34,7 @@ export type {
 // Raw generated enums and default consts from dashboard kind.
 export {
   defaultAnnotationTarget,
-  defaultAnnotationQuery,
+  defaultAnnotationPanelFilter,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -59,6 +59,8 @@ export {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
   Dashboard,
+  AnnotationContainer,
+  AnnotationQuery,
   VariableModel,
   DataSourceRef,
   DataTransformerConfig,
@@ -79,6 +81,8 @@ export type {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export {
   defaultDashboard,
+  defaultAnnotationContainer,
+  defaultAnnotationQuery,
   defaultVariableModel,
   VariableHide,
   defaultPanel,

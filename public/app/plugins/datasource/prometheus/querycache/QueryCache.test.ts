@@ -6,7 +6,7 @@ import { InfluxQuery } from '../../influxdb/types';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { CacheRequestInfo, QueryCache } from './QueryCache';
+import { CacheRequestInfo, DatasourceProfileData, QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios, IncrementalStorageDataFrameScenariosInflux } from './QueryCacheTestData';
 
 // Will not interpolate vars!
@@ -98,14 +98,28 @@ const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQu
   };
 };
 
+const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): DatasourceProfileData => {
+  return {
+    expr: targ.expr,
+    interval: targ.interval ?? request.interval,
+  };
+};
+
+const getInfluxProfileData = (request: DataQueryRequest, targ: InfluxQuery): DatasourceProfileData => {
+  return {
+    expr: targ.rawQuery && targ.query ? targ.query : JSON.stringify(targ.select),
+    interval: request.interval,
+  };
+};
+
 describe('QueryCache: Generic', function () {
   it('instantiates', () => {
-    const storage = new QueryCache(() => '', '10m');
+    const storage = new QueryCache(() => '', '10m', getPromProfileData);
     expect(storage).toBeInstanceOf(QueryCache);
   });
 
   it('will not modify or crash with empty response', () => {
-    const storage = new QueryCache(() => '', '10m');
+    const storage = new QueryCache(() => '', '10m', getPromProfileData);
     const firstFrames: DataFrame[] = [];
     const secondFrames: DataFrame[] = [];
 
@@ -213,7 +227,7 @@ describe('QueryCache: Prometheus', function () {
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtStart(),
     ];
     scenarios.forEach((scenario, index) => {
-      const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+      const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
 
@@ -345,7 +359,7 @@ describe('QueryCache: Prometheus', function () {
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
 
     // Initial request with all data for time range
     const firstFrames = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.first
@@ -506,7 +520,7 @@ describe('QueryCache: Prometheus', function () {
       },
       rangeRaw: { from: '2023-01-30T19:33:01.332Z', to: '2023-01-30T20:33:01.332Z' },
     });
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(false);
@@ -514,7 +528,7 @@ describe('QueryCache: Prometheus', function () {
 
   it('mark request as shouldCache', () => {
     const request = mockPromRequest();
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
@@ -522,7 +536,7 @@ describe('QueryCache: Prometheus', function () {
 
   it('Should modify request', () => {
     const request = mockPromRequest();
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m');
+    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
@@ -531,7 +545,7 @@ describe('QueryCache: Prometheus', function () {
 
 describe('QueryCache: Influx', function () {
   it('avoids removing frames in influx 2', () => {
-    const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '1m');
+    const storage = new QueryCache<InfluxQuery>(getInfluxTargetSignature, '1m', getInfluxProfileData);
 
     const cache = new Map<string, string>();
 
@@ -1439,7 +1453,6 @@ describe('QueryCache: Influx', function () {
           requestId: 'Q110',
           timezone: 'browser',
           panelId: 1,
-          dashboardId: 1052,
           dashboardUID: 'e74c7505-cf1e-4605-bd6b-a043324e6dc5',
           publicDashboardAccessToken: '',
           range: {
@@ -1702,7 +1715,7 @@ describe('QueryCache: Influx', function () {
     expect(valuesAfterSecond?.length ?? 0).toBe(28);
   });
   it('is reproduction of bug from raw data', () => {
-    const storage = new QueryCache(getInfluxTargetSignature, '30s');
+    const storage = new QueryCache(getInfluxTargetSignature, '30s', getInfluxProfileData);
     const firstRequestInfo = storage.requestInfo(
       IncrementalStorageDataFrameScenariosInflux.missingRecords2.first.initial as DataQueryRequest<InfluxQuery>
     );
