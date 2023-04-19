@@ -44,7 +44,7 @@ var (
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
-	}, []string{"source", "plugin_id", "endpoint", "target", "status"})
+	}, []string{"source", "plugin_id", "endpoint", "status", "target"})
 )
 
 const (
