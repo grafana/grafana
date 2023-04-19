@@ -75,7 +75,7 @@ describe('browse-dashboards BrowseView', () => {
     }
   });
 
-  it("checks descendants of a selected folder after they're loaded", async () => {
+  it('checks descendants loaded after a folder is selected', async () => {
     render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
