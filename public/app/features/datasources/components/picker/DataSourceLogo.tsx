@@ -5,36 +5,38 @@ import { DataSourceInstanceSettings, DataSourceJsonData, GrafanaTheme2 } from '@
 import { DataSourceRef } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
-export interface DataSourceDisplayProps {
+export interface DataSourceLogoProps {
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
 }
 
-export function DataSourceDisplay(props: DataSourceDisplayProps) {
+export function DataSourceLogo(props: DataSourceLogoProps) {
   const { dataSource } = props;
   const styles = useStyles2(getStyles);
 
   if (!dataSource) {
-    return <span>Unknown</span>;
+    return null;
   }
 
   if (typeof dataSource === 'string') {
-    return <span>${dataSource} - not found</span>;
+    return null;
   }
 
   if ('name' in dataSource) {
     return (
-      <>
-        <img
-          className={styles.pickerDSLogo}
-          alt={`${dataSource.meta.name} logo`}
-          src={dataSource.meta.info.logos.small}
-        ></img>
-        <span>{dataSource.name}</span>
-      </>
+      <img
+        className={styles.pickerDSLogo}
+        alt={`${dataSource.meta.name} logo`}
+        src={dataSource.meta.info.logos.small}
+      ></img>
     );
   }
 
-  return <span>{dataSource.uid} - not found</span>;
+  return null;
+}
+
+export function DataSourceLogoPlaceHolder() {
+  const styles = useStyles2(getStyles);
+  return <div className={styles.pickerDSLogo}></div>;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -42,7 +44,6 @@ function getStyles(theme: GrafanaTheme2) {
     pickerDSLogo: css`
       height: 20px;
       width: 20px;
-      margin-right: ${theme.spacing(1)};
     `,
   };
 }

@@ -269,6 +269,12 @@ export const Pages = {
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
   },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+  },
   Search: {
     url: '/?search=openn',
     FolderView: {

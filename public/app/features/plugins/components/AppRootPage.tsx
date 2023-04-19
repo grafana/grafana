@@ -7,6 +7,7 @@ import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 
@@ -41,6 +42,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
+  const grafanaContext = useGrafana();
 
   useEffect(() => {
     loadAppPlugin(pluginId, dispatch);
@@ -52,7 +54,13 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   );
 
   if (!plugin || pluginId !== plugin.meta.id) {
-    return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
+    // Use current layout while loading to reduce flickering
+    const currentLayout = grafanaContext.chrome.state.getValue().layout;
+    return (
+      <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
+        {loading && <PageLoader />}
+      </Page>
+    );
   }
 
   if (!plugin.root) {

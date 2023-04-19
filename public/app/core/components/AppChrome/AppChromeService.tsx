@@ -32,7 +32,7 @@ export class AppChromeService {
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     kioskMode: null,
-    layout: PageLayoutType.Standard,
+    layout: PageLayoutType.Canvas,
   });
 
   setMatchedRoute(route: RouteDescriptor) {
@@ -77,6 +77,7 @@ export class AppChromeService {
     if (newState.sectionNav !== current.sectionNav || newState.pageNav !== current.pageNav) {
       if (
         newState.actions === current.actions &&
+        newState.layout === current.layout &&
         navItemsAreTheSame(newState.sectionNav.node, current.sectionNav.node) &&
         navItemsAreTheSame(newState.pageNav, current.pageNav)
       ) {
