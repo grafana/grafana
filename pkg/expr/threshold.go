@@ -30,6 +30,17 @@ var (
 )
 
 func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
+	switch thresholdFunc {
+	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 2", len(conditions))
+		}
+	case ThresholdIsAbove, ThresholdIsBelow:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 1", len(conditions))
+		}
+	}
+
 	return &ThresholdCommand{
 		RefID:         refID,
 		ReferenceVar:  referenceVar,
@@ -91,17 +102,6 @@ func (tc *ThresholdCommand) NeedsVars() []string {
 }
 
 func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
-	switch tc.ThresholdFunc {
-	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
-		if len(tc.Conditions) < 2 {
-			return mathexp.Results{}, fmt.Errorf("failed to evaluate threshold expression: incorrect number of arguments: got %d but need 2", len(tc.Conditions))
-		}
-	case ThresholdIsAbove, ThresholdIsBelow:
-		if len(tc.Conditions) < 1 {
-			return mathexp.Results{}, fmt.Errorf("failed to evaluate threshold expression: incorrect number of arguments: got %d but need 1", len(tc.Conditions))
-		}
-	}
-
 	mathExpression, err := createMathExpression(tc.ReferenceVar, tc.ThresholdFunc, tc.Conditions)
 	if err != nil {
 		return mathexp.Results{}, err
