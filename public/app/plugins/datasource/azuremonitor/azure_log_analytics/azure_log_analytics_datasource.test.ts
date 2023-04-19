@@ -1,4 +1,3 @@
-import { AnnotationEvent, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { Context, createContext } from '../__mocks__/datasource';
@@ -99,91 +98,6 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should include template variables as global parameters', async () => {
       const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
       expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
-    });
-  });
-
-  describe('When performing annotationQuery', () => {
-    const tableResponse = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
-            {
-              name: 'TimeGenerated',
-              type: 'datetime',
-            },
-            {
-              name: 'Text',
-              type: 'string',
-            },
-            {
-              name: 'Tags',
-              type: 'string',
-            },
-          ],
-          rows: [
-            ['2018-06-02T20:20:00Z', 'Computer1', 'tag1,tag2'],
-            ['2018-06-02T20:28:00Z', 'Computer2', 'tag2'],
-          ],
-        },
-      ],
-    };
-
-    const workspaceResponse = {
-      value: [
-        {
-          name: 'aworkspace',
-          id: makeResourceURI('a-workspace'),
-          properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-          },
-        },
-      ],
-    };
-
-    let annotationResults: AnnotationEvent[];
-
-    beforeEach(async () => {
-      ctx.datasource.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-        if (path.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return Promise.resolve(workspaceResponse);
-        } else {
-          return Promise.resolve(tableResponse);
-        }
-      });
-
-      annotationResults = await ctx.datasource.annotationQuery({
-        annotation: {
-          rawQuery: 'Heartbeat | where $__timeFilter()| project TimeGenerated, Text=Computer, tags="test"',
-          workspace: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-        },
-        range: {
-          from: toUtc('2017-08-22T20:00:00Z'),
-          to: toUtc('2017-08-22T23:59:00Z'),
-        },
-        rangeRaw: {
-          from: 'now-4h',
-          to: 'now',
-        },
-      });
-    });
-
-    it('should return a list of categories in the correct format', () => {
-      expect(annotationResults.length).toBe(2);
-
-      expect(annotationResults[0].time).toBe(1527970800000);
-      expect(annotationResults[0].text).toBe('Computer1');
-      expect(annotationResults[0].tags).toBeDefined();
-      expect(annotationResults[0].tags?.length).toBeGreaterThan(0);
-      expect(annotationResults[0].tags![0]).toBe('tag1');
-      expect(annotationResults[0].tags![1]).toBe('tag2');
-
-      expect(annotationResults[1].time).toBe(1527971280000);
-      expect(annotationResults[1].text).toBe('Computer2');
-      expect(annotationResults[1].tags).toBeDefined();
-      expect(annotationResults[1].tags?.length).toBeGreaterThan(0);
-      expect(annotationResults[1].tags![0]).toBe('tag2');
     });
   });
 
