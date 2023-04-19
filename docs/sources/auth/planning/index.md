@@ -178,4 +178,8 @@ Grafana will keep the users in sync by actively querying for any changes. No nee
 
 > **Note:** Available in Grafana version 7.0 and later.
 
-Organization sync happens upon configuration with an Identity Provider. With the proper configuration, the roles defined with the Identity Provider will be mapped to Grafana roles upon logging in for the first time.
+Organization sync is possible with the configuration for each Identity Provider. With the correct configuration, users will be synced from the Identity Provider into the Grafana user database upon logging in.
+
+> **Note:** When syncing users with Organization sync, you don't need to invite them through Grafana.
+
+> **Note:** Currently, only mapping of basic roles can be achieved via Organization sync.
