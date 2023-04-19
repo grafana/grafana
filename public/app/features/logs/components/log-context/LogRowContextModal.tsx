@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { useAsyncFn } from 'react-use';
+import { useAsync, useAsyncFn } from 'react-use';
 
 import {
   DataQueryResponse,
@@ -138,6 +138,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+  const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
@@ -236,6 +237,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   }, [scrollElement]);
 
+  useAsync(async () => {
+    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+    setContextQuery(contextQuery);
+  }, [getRowContextQuery, row]);
+
   return (
     <Modal
       isOpen={open}
@@ -321,22 +327,19 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
       </div>
-      {getRowContextQuery && (
+      {contextQuery?.datasource?.uid && (
         <Modal.ButtonRow>
           <Button
             variant="primary"
             onClick={async () => {
-              const query = await getRowContextQuery(row);
-              if (query?.datasource?.uid) {
-                dispatch(
-                  splitOpen({
-                    queries: [query],
-                    range: getFullTimeRange(),
-                    datasourceUid: query.datasource.uid,
-                  })
-                );
-                onClose();
-              }
+              dispatch(
+                splitOpen({
+                  queries: [contextQuery],
+                  range: getFullTimeRange(),
+                  datasourceUid: contextQuery.datasource!.uid!,
+                })
+              );
+              onClose();
             }}
           >
             Open in split view
