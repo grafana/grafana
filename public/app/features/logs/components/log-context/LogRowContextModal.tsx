@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
+import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -92,6 +92,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     paddingBottom: css`
       padding-bottom: ${theme.spacing(1)};
+    `,
+    link: css`
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      :hover {
+        color: ${theme.colors.text.link};
+      }
     `,
   };
 };
@@ -322,9 +329,20 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           </tbody>
         </table>
       </div>
-      <div>
+      <div className={styles.flexRow}>
         <div className={cx(styles.paddingTop, loading ? styles.hidden : '')}>
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
+        </div>
+        <div>
+          <a
+            href="https://forms.gle/Tsk4pN7vD95aBRbb7"
+            className={styles.link}
+            title="We recently reworked the Log Context UI, please let us know how we can further improve it."
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            <Icon name="comment-alt-message" /> Give feedback
+          </a>
         </div>
       </div>
       {contextQuery?.datasource?.uid && (
