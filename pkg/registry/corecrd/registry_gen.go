@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/resources/role"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/serviceaccount"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/team"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/teamrole"
 	"github.com/grafana/thema"
 	"gopkg.in/yaml.v3"
 )
@@ -53,6 +54,7 @@ func New(
 	roleWatcher role.Watcher,
 	serviceaccountWatcher serviceaccount.Watcher,
 	teamWatcher team.Watcher,
+	teamroleWatcher teamrole.Watcher,
 ) *Registry {
 	breg := corekind.NewBase(rt)
 	r := doNewRegistry(
@@ -69,6 +71,7 @@ func New(
 		roleWatcher,
 		serviceaccountWatcher,
 		teamWatcher,
+		teamroleWatcher,
 	)
 	r.BasicService = services.NewBasicService(r.start, r.run, nil).WithName(modules.KubernetesCRDs)
 	return r
@@ -95,7 +98,7 @@ func (r *Registry) All() []crd.Kind {
 // generically across all kinds.
 type Registry struct {
 	*services.BasicService
-	all                    [10]crd.Kind
+	all                    [11]crd.Kind
 	clientsetProvider      client.ClientSetProvider
 	informerFactory        informer.Informer
 	accesspolicyWatcher    accesspolicy.Watcher
@@ -108,6 +111,7 @@ type Registry struct {
 	roleWatcher            role.Watcher
 	serviceaccountWatcher  serviceaccount.Watcher
 	teamWatcher            team.Watcher
+	teamroleWatcher        teamrole.Watcher
 }
 
 func (r *Registry) start(ctx context.Context) error {
@@ -357,6 +361,30 @@ func (r *Registry) start(ctx context.Context) error {
 	watcherWrapper9 := team.NewWatcherWrapper(r.teamWatcher)
 	r.informerFactory.AddWatcher(team.CRD, watcherWrapper9)
 
+	/************************ TeamRole ************************/
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map10 := make(map[string]any)
+	err = yaml.Unmarshal(teamrole.CRDYaml, map10)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD YAML for TeamRole failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map10)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for TeamRole: %s", err))
+	}
+	err = json.Unmarshal(b, &teamrole.CRD.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for TeamRole: %s", err))
+	}
+
+	err = clientSet.RegisterKind(ctx, teamrole.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for TeamRole failed to register: %s\n", err))
+	}
+
+	watcherWrapper10 := teamrole.NewWatcherWrapper(r.teamroleWatcher)
+	r.informerFactory.AddWatcher(teamrole.CRD, watcherWrapper10)
+
 	return nil
 }
 
@@ -415,6 +443,11 @@ func (r *Registry) Team() crd.Kind {
 	return r.all[9]
 }
 
+// TeamRole returns the [crd.Kind] instance for the TeamRole kind.
+func (r *Registry) TeamRole() crd.Kind {
+	return r.all[10]
+}
+
 func doNewRegistry(
 	breg *corekind.Base,
 	clientsetProvider client.ClientSetProvider,
@@ -429,6 +462,7 @@ func doNewRegistry(
 	roleWatcher role.Watcher,
 	serviceaccountWatcher serviceaccount.Watcher,
 	teamWatcher team.Watcher,
+	teamroleWatcher teamrole.Watcher,
 ) *Registry {
 	reg := &Registry{}
 	reg.clientsetProvider = clientsetProvider
@@ -463,6 +497,9 @@ func doNewRegistry(
 
 	reg.teamWatcher = teamWatcher
 	reg.all[9] = team.CRD
+
+	reg.teamroleWatcher = teamroleWatcher
+	reg.all[10] = teamrole.CRD
 
 	return reg
 }

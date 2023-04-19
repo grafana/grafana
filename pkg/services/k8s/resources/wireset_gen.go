@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/resources/role"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/serviceaccount"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/team"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/teamrole"
 )
 
 var WireSet = wire.NewSet(
@@ -35,4 +36,5 @@ var WireSet = wire.NewSet(
 	role.WireSet,
 	serviceaccount.WireSet,
 	team.WireSet,
+	teamrole.WireSet,
 )

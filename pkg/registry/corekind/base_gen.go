@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/role"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
 	"github.com/grafana/grafana/pkg/kinds/team"
+	"github.com/grafana/grafana/pkg/kinds/teamrole"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
@@ -53,6 +54,7 @@ type Base struct {
 	role            *role.Kind
 	serviceaccount  *serviceaccount.Kind
 	team            *team.Kind
+	teamrole        *teamrole.Kind
 }
 
 // type guards
@@ -67,6 +69,7 @@ var (
 	_ kindsys.Core = &role.Kind{}
 	_ kindsys.Core = &serviceaccount.Kind{}
 	_ kindsys.Core = &team.Kind{}
+	_ kindsys.Core = &teamrole.Kind{}
 )
 
 // AccessPolicy returns the [kindsys.Interface] implementation for the accesspolicy kind.
@@ -117,6 +120,11 @@ func (b *Base) ServiceAccount() *serviceaccount.Kind {
 // Team returns the [kindsys.Interface] implementation for the team kind.
 func (b *Base) Team() *team.Kind {
 	return b.team
+}
+
+// TeamRole returns the [kindsys.Interface] implementation for the teamrole kind.
+func (b *Base) TeamRole() *teamrole.Kind {
+	return b.teamrole
 }
 
 func doNewBase(rt *thema.Runtime) *Base {
@@ -182,6 +190,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the team Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.team)
+
+	reg.teamrole, err = teamrole.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the teamrole Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.teamrole)
 
 	return reg
 }

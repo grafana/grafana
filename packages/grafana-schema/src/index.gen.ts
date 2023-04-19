@@ -156,3 +156,6 @@ export type { Team } from './raw/team/x/team_types.gen';
 
 // Raw generated enums and default consts from team kind.
 export { Permission } from './raw/team/x/team_types.gen';
+
+// Raw generated types from TeamRole kind.
+export type { TeamRole } from './raw/teamrole/x/teamrole_types.gen';
