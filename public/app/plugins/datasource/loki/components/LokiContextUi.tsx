@@ -162,7 +162,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, []);
 
-  // Currently we support adding of parser and showing parsed labels only f there is 1 parser
+  // Currently we support adding of parser and showing parsed labels only if there is 1 parser
   const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
 
   return (
