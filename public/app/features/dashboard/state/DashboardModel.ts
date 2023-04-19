@@ -292,6 +292,7 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
+    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
       .filter(
         (panel) =>

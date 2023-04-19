@@ -185,6 +185,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
+    // Todo: Remove this when we remove the emptyDashboardPage toggle
     if (panel.type === 'add-panel') {
       return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
