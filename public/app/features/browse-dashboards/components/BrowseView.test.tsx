@@ -95,7 +95,6 @@ describe('browse-dashboards BrowseView', () => {
     await expandFolder(folderA_folderB.item.uid);
 
     await clickCheckbox(folderA.item.uid);
-
     await clickCheckbox(folderA_folderB_dashbdB.item.uid);
 
     const itemCheckbox = screen.queryByTestId(
