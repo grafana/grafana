@@ -146,9 +146,6 @@ func transformRows(rows []Row, query Query) data.Frames {
 				name := string(formatFrameName(row, column, query, frameName[:]))
 
 				timeField := data.NewField("time", nil, timeArray)
-
-				timeField.SetConfig(&data.FieldConfig{Interval: float64(query.Interval.Milliseconds())})
-
 				if valType == "string" {
 					valueField := data.NewField("value", row.Tags, stringArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
