@@ -159,11 +159,8 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 		}
 	}
 
-	connStr := fmt.Sprintf("user='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(host), escape(dsInfo.Database))
-	if password := dsInfo.DecryptedSecureJSONData["password"]; password != "" {
-		connStr += fmt.Sprintf(" password='%s'", escape(password))
-	}
+	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
+		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
