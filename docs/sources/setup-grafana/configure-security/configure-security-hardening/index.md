@@ -76,15 +76,15 @@ content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-in
 
 ### Enable trusted types
 
-**Currently in development. Trusted types is an experimental browser feature with [limited browser support](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types).**
+**Currently in development. [Trusted types](https://github.com/w3c/trusted-types/blob/main/explainer.md) is an experimental Javascript API with [limited browser support](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types#browser_compatibility).**
 
-Trusted types reduce the risk of XSS by enforcing developers to sanitize strings that are used in injection sinks, such as setting `innerHTML` on an element. Furthermore, when enabling trusted types, these injection sinks will be automatically sanitized using a default policy. This provides some protection from vulnerabilities in third party libraries, such as jQuery, Angular and even thrid party plugins.
+Trusted types reduce the risk of DOM XSS by enforcing developers to sanitize strings that are used in injection sinks, such as setting `innerHTML` on an element. Furthermore, when enabling trusted types, these injection sinks need to go through a policy that will sanitize, or leave the string intact and return it as "safe". This provides some protection from client side injection vulnerabilities in third party libraries, such as jQuery, Angular and even third party plugins.
 
 To enable trusted types:
 
 1. Enable the `trustedTypes` feature toggle.
 2. Enable `content_security_policy` in the configuration.
-3. Add `require-trusted-types;` to the `content_security_policy_template` in the configuration.
+3. Add `require-trusted-types-for 'script'` to the `content_security_policy_template` in the configuration.
 
 ## Additional security hardening
 
