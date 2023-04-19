@@ -26,8 +26,13 @@ func (j crdWatcherJenny) JennyName() string {
 
 func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	_, isCore := kind.(kindsys.Core)
-	_, isCustom := kind.(kindsys.Core)
+	_, isCustom := kind.(kindsys.Custom)
 	if !(isCore || isCustom) {
+		return nil, nil
+	}
+
+	name := kind.Props().Common().MachineName
+	if name == "dashboard" {
 		return nil, nil
 	}
 
@@ -36,7 +41,6 @@ func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, fmt.Errorf("failed executing crd watcher template: %w", err)
 	}
 
-	name := kind.Props().Common().MachineName
 	path := filepath.Join(j.parentpath, name, name+"_watcher_gen.go")
 	b, err := postprocessGoFile(genGoFile{
 		path: path,

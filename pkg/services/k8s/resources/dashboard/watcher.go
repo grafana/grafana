@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -14,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var _ Watcher = (*watcher)(nil)
@@ -30,7 +31,7 @@ func ProvideWatcher(
 	userService user.Service,
 	accessControlService accesscontrol.Service,
 	folders folder.FolderStore,
-) (*watcher, error) {
+) (Watcher, error) {
 	c := watcher{
 		log:            log.New("k8s.dashboards.controller"),
 		dashboardStore: dashboardStore,
@@ -40,38 +41,44 @@ func ProvideWatcher(
 }
 
 // UID is currently saved in the dashboard body and the name may be a hash
-func getValidUID(dash *Dashboard) (string, error) {
-	uid := ""
-	if dash.Spec.Uid != nil {
-		uid = *dash.Spec.Uid
+func getValidUID(dash *unstructured.Unstructured) (string, error) {
+	objMeta, err := apimeta.Accessor(dash)
+	if err != nil {
+		return "", err
 	}
+	data := simplejson.NewFromAny(dash.Object)
+
+	uid := data.GetPath("spec", "uid").MustString("")
 	if uid == "" {
-		uid = dash.GetName()
-	} else if dash.GetName() != GrafanaUIDToK8sName(uid) {
+		uid = objMeta.GetName()
+	} else if objMeta.GetName() != GrafanaUIDToK8sName(uid) {
 		return uid, fmt.Errorf("UID and k8s name do not match")
 	}
 	return uid, nil
 }
 
-func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
+func (c *watcher) Add(ctx context.Context, dash *unstructured.Unstructured) error {
 	uid, err := getValidUID(dash)
 	if err != nil {
 		return err
 	}
-	c.log.Debug("adding dashboard", "dash", uid)
-	raw, err := json.Marshal(dash.Spec)
+	objMeta, err := apimeta.Accessor(dash)
 	if err != nil {
-		return fmt.Errorf("failed to marshal dashboard spec: %w", err)
+		return err
 	}
-	data, err := simplejson.NewJson(raw)
+
+	c.log.Debug("adding dashboard", "dash", uid)
+	wrap := simplejson.NewFromAny(dash.Object)
+	data := wrap.Get("spec")
+
 	if err != nil {
 		return fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
 	}
-	data.Set("resourceVersion", dash.ResourceVersion)
+	data.Set("resourceVersion", objMeta.GetResourceVersion())
 
 	data.Del("id") // ignore any internal id
 	anno := CommonAnnotations{}
-	anno.Read(dash.Annotations)
+	anno.Read(objMeta.GetAnnotations())
 	if anno.CreatedAt < 1 {
 		anno.CreatedAt = time.Now().UnixMilli()
 	}
@@ -80,7 +87,7 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	}
 
 	save := &dashboards.Dashboard{
-		OrgID:     GetOrgIDFromNamespace(dash.Namespace),
+		OrgID:     GetOrgIDFromNamespace(objMeta.GetNamespace()),
 		Data:      data,
 		Created:   time.UnixMilli(anno.CreatedAt),
 		CreatedBy: anno.CreatedBy,
@@ -122,13 +129,18 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	return err
 }
 
-func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
+func (c *watcher) Update(ctx context.Context, oldObj, newObj *unstructured.Unstructured) error {
 	return c.Add(ctx, newObj) // no difference between add+update
 }
 
-func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
+func (c *watcher) Delete(ctx context.Context, dash *unstructured.Unstructured) error {
+	objMeta, err := apimeta.Accessor(dash)
+	if err != nil {
+		return err
+	}
+
 	anno := CommonAnnotations{}
-	anno.Read(dash.Annotations)
+	anno.Read(objMeta.GetAnnotations())
 
 	uid, err := getValidUID(dash)
 	if err != nil {
@@ -137,7 +149,7 @@ func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
 
 	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 		UID:   uid, // Assumes same as UID!
-		OrgID: GetOrgIDFromNamespace(dash.Namespace),
+		OrgID: GetOrgIDFromNamespace(objMeta.GetNamespace()),
 	})
 
 	// no dashboard found, nothing to delete
