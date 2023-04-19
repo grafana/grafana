@@ -162,8 +162,10 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
 	if err != nil {
+		fmt.Printf("getGuardianForSavePermissionCheck error: %v", err)
 		return nil, err
 	}
+	fmt.Printf("getGuardianForSavePermissionCheck: %v", guard)
 
 	if dash.ID == 0 {
 		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
@@ -355,6 +357,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), !allowUiUpdate)
 	if err != nil {
+		fmt.Printf("BuildSaveDashboardCommand failed: %v", err)
 		return nil, err
 	}
 
