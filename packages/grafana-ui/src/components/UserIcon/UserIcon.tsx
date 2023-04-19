@@ -7,23 +7,20 @@ import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { Tooltip } from '../Tooltip';
 
-export interface RecentUser {
-  id: number;
-  name?: string;
-  avatarUrl: string;
-  login: string;
-  email?: string;
-  hasCustomAvatar?: boolean;
-}
-
-export interface UserViewDTO {
-  user: RecentUser;
-  viewed: string;
+export interface UserView {
+  user: {
+    /** User's name, containing first + last name */
+    name: string;
+    /** URL to the user's avatar */
+    avatarUrl?: string;
+  };
+  /** Datetime string when the user was last active */
+  lastActiveAt: string;
 }
 
 export interface UserIconProps {
-  /** An object that contains the user's details and 'viewed' status */
-  userView: UserViewDTO;
+  /** An object that contains the user's details and 'lastActiveAt' status */
+  userView: UserView;
   /** A boolean value that determines whether the tooltip should be shown or not */
   showTooltip?: boolean;
   /** An optional class name to be added to the icon element */
@@ -40,36 +37,46 @@ const formatViewed = (dateString: string): string => {
   return `Active last ${(Math.floor(-diffHours / 24) + 1) * 24}h`;
 };
 
-export const UserIcon = ({ userView, showTooltip = true, className }: UserIconProps) => {
-  const { user, viewed } = userView;
-  const isActive = dateTime(viewed).diff(dateTime(), 'minutes', true) >= -15;
+/**
+ * Output the initials of the first and last name (if given), capitalized and concatenated together.
+ * If name is not provided, an empty string is returned.
+ * @param name
+ */
+const getUserInitials = (name?: string) => {
+  if (!name) {
+    return '';
+  }
+  const [first, last] = name.split(' ');
+  return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
+};
 
+export const UserIcon = ({ userView, className, showTooltip = true }: UserIconProps) => {
+  const { user, lastActiveAt } = userView;
+  const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const styles = useStyles2((theme) => getStyles(theme, isActive));
+  const initials = getUserInitials(user.name);
 
-  const userDisplayName = user.name || user.login;
-  const initialsArray = userDisplayName.split(' ');
-  const initials = (
-    (initialsArray.shift()?.slice(0, 1) || '') + (initialsArray.pop()?.slice(0, 1) || '')
-  ).toUpperCase();
-
-  const content =
-    user.avatarUrl && user.hasCustomAvatar ? (
-      <img
-        className={cx(styles.icon, className)}
-        src={user.avatarUrl}
-        aria-label="Avatar icon"
-        alt={`${initials} avatar`}
-      />
-    ) : (
-      <Button variant="secondary" className={cx(styles.textIcon, styles.icon, className)} aria-label="Initials icon">
-        {initials}
-      </Button>
-    );
+  const content = user.avatarUrl ? (
+    <img
+      className={cx(styles.icon, className)}
+      src={user.avatarUrl}
+      aria-label="Avatar icon"
+      alt={`${initials} avatar`}
+    />
+  ) : (
+    <Button
+      variant="secondary"
+      className={cx(styles.textIcon, styles.icon, className)}
+      aria-label={`${user.name} icon`}
+    >
+      {initials}
+    </Button>
+  );
 
   if (showTooltip) {
     const tooltip = (
       <div className={styles.tooltipContainer}>
-        <div className={styles.tooltipName}>{userDisplayName}</div>
+        <div className={styles.tooltipName}>{user.name}</div>
         <div className={styles.tooltipDate}>
           {isActive ? (
             <div className={styles.dotContainer}>
@@ -77,17 +84,13 @@ export const UserIcon = ({ userView, showTooltip = true, className }: UserIconPr
               <span className={styles.dot}></span>
             </div>
           ) : (
-            formatViewed(viewed)
+            formatViewed(lastActiveAt)
           )}
         </div>
       </div>
     );
 
-    return (
-      <Tooltip content={tooltip} key={`recent-user-${user.id}`}>
-        {content}
-      </Tooltip>
-    );
+    return <Tooltip content={tooltip}>{content}</Tooltip>;
   } else {
     return content;
   }
