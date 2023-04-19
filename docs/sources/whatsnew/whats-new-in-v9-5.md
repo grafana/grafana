@@ -193,9 +193,9 @@ This feature adds support for using JWT tokens to store rendering keys instead o
 
 ## Note for plugin developers
 
-One of the major changes coming in Grafana 10 will be our upgrade to React 18 and use of the new React client rendering API. There are many significant benefits we gain from this: access to new React features like [transitions](https://react.dev/reference/react/useTransition) and concurrent rendering, as well as other general performance and security improvements.
+One of the major changes coming in Grafana 10 will be our upgrade to React 18 and use of the new React client rendering API. There are many significant benefits we gain from this: access to new React features like [transitions](https://react.dev/reference/react/useTransition) and concurrent rendering, as well as other general performance and security improvements. These changes have now been delivered to the core `grafana` repo with [PR 64428](https://github.com/grafana/grafana/pull/64428).
 
-As with any major upgrade, there's a potential for this to impact the way your plugin works. In particular, there could be unintended side effects caused by the changes around improving consistency with `useEffect` timings and automatic batching of state updates. These changes have now been delivered to the core `grafana` repo with [PR 64428](https://github.com/grafana/grafana/pull/64428).
+As with any major upgrade, there's a potential for this to impact the way your plugin works. In particular, there could be unintended side effects caused by the changes around improving consistency with `useEffect` timings and automatic batching of state updates.
 
 Recommended actions:
 
