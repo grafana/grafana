@@ -136,7 +136,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         columns,
         isResizeInProgress: true,
       };
-      break;
     case DatagridActionType.columnMove:
       columns = [...state.columns];
       const columnMovePayload: ColumnMovePayload = action.payload as ColumnMovePayload;
@@ -156,13 +155,11 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         ...state,
         columns,
       };
-      break;
     case DatagridActionType.columnResizeEnd:
       return {
         ...state,
         isResizeInProgress: false,
       };
-      break;
     case DatagridActionType.updateColumns:
       const updateColumnsPayload: UpdateColumnsPayload = action.payload as UpdateColumnsPayload;
 
@@ -183,7 +180,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         ...state,
         columns,
       };
-      break;
     case DatagridActionType.showColumnRenameInput:
       return {
         ...state,
@@ -192,7 +188,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           isInputOpen: true,
         },
       };
-      break;
     case DatagridActionType.hideColumnRenameInput:
       return {
         ...state,
@@ -201,7 +196,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           isInputOpen: false,
         },
       };
-      break;
     case DatagridActionType.openCellContextMenu:
       const openCellContextMenuPayload: OpenCellContextMenuPayload = action.payload as OpenCellContextMenuPayload;
       const cellEvent: CellClickedEventArgs = openCellContextMenuPayload.event;
@@ -218,7 +212,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           isHeaderMenu: false,
         },
       };
-      break;
     case DatagridActionType.openHeaderContextMenu:
       const openHeaderContextMenuPayload: OpenHeaderContextMenuPayload = action.payload as OpenHeaderContextMenuPayload;
       const headerEvent: HeaderClickedEventArgs = openHeaderContextMenuPayload.event;
@@ -234,7 +227,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           isHeaderMenu: false,
         },
       };
-      break;
     case DatagridActionType.openHeaderDropdownMenu:
       const openHeaderDropdownMenuPayload: OpenHeaderDropdownMenuPayload =
         action.payload as OpenHeaderDropdownMenuPayload;
@@ -260,7 +252,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           inputValue: openHeaderDropdownMenuPayload.value,
         },
       };
-      break;
     case DatagridActionType.closeContextMenu:
       return {
         ...state,
@@ -268,19 +259,16 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
           isContextMenuOpen: false,
         },
       };
-      break;
     case DatagridActionType.closeSearch:
       return {
         ...state,
         toggleSearch: false,
       };
-      break;
     case DatagridActionType.openSearch:
       return {
         ...state,
         toggleSearch: true,
       };
-      break;
     case DatagridActionType.multipleCellsSelected:
       const multipleCellsSelectedPayload: MultipleCellsSelectedPayload = action.payload as MultipleCellsSelectedPayload;
 
@@ -288,19 +276,16 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         ...state,
         gridSelection: multipleCellsSelectedPayload.selection,
       };
-      break;
     case DatagridActionType.gridSelectionCleared:
       return {
         ...state,
         gridSelection: EMPTY_GRID_SELECTION,
       };
-      break;
     case DatagridActionType.columnFreezeReset:
       return {
         ...state,
         columnFreezeIndex: 0,
       };
-      break;
     case DatagridActionType.columnFreezeChanged:
       const columnFreezeChangedPayload: ColumnFreezeChangedPayload = action.payload as ColumnFreezeChangedPayload;
 
@@ -308,7 +293,6 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         ...state,
         columnFreezeIndex: columnFreezeChangedPayload.columnIndex,
       };
-      break;
     default:
       return state;
   }

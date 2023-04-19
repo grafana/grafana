@@ -10,13 +10,7 @@ import DataEditor, {
 } from '@glideapps/glide-data-grid';
 import React, { useEffect, useReducer } from 'react';
 
-import {
-  ArrayVector,
-  Field,
-  MutableDataFrame,
-  PanelProps,
-  FieldType,
-} from '@grafana/data';
+import { ArrayVector, Field, MutableDataFrame, PanelProps, FieldType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
@@ -39,14 +33,23 @@ import {
   TRAILING_ROW_OPTIONS,
   getStyles,
   ROW_MARKER_BOTH,
-  ROW_MARKER_NUMBER
+  ROW_MARKER_NUMBER,
+  TEST_ID_DATAGRID_EDITOR,
 } from './utils';
 
-interface Props extends PanelProps<PanelOptions> {}
+interface DatagridProps extends PanelProps<PanelOptions> {}
 
-export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig }) => {
+export const DataGridPanel: React.FC<DatagridProps> = ({ options, data, id, fieldConfig }) => {
   const [state, dispatch] = useReducer(datagridReducer, initialState);
-  const { columns, contextMenuData, renameColumnInputData, gridSelection, columnFreezeIndex, toggleSearch, isResizeInProgress } = state;
+  const {
+    columns,
+    contextMenuData,
+    renameColumnInputData,
+    gridSelection,
+    columnFreezeIndex,
+    toggleSearch,
+    isResizeInProgress,
+  } = state;
 
   const frame = data.series[options.selectedSeries ?? 0];
 
@@ -58,7 +61,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
       return;
     }
 
-    dispatch({ type: DatagridActionType.updateColumns, payload: { frame }})
+    dispatch({ type: DatagridActionType.updateColumns, payload: { frame } });
   }, [frame]);
 
   const getCellContent = ([col, row]: Item): GridCell => {
@@ -73,8 +76,8 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
     // If there is a gridSelection, then the only possible action for it was a multiple cell clear edit, which
-    // is handled by the onDeletePressed handler. So, we can return early and avoid performance issues if
-    // gridSelection has height 1 and width 1, meaning the user activated a single cell for edit.
+    // is handled by the onDeletePressed handler. So we can return early and avoid performance issues. if
+    // gridSelection has height 1 and width 1, it means the user activated a single cell for edit.
     if (
       gridSelection.current?.range &&
       gridSelection.current.range.height > 1 &&
@@ -122,16 +125,16 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnResize = (column: GridColumn, width: number, columnIndex: number, newSizeWithGrow: number) => {
-    dispatch({ type: DatagridActionType.columnResizeStart, payload: { columnIndex, width} });
+    dispatch({ type: DatagridActionType.columnResizeStart, payload: { columnIndex, width } });
   };
 
   //Hack used to allow resizing last column, near add column btn. This is a workaround for a bug in the grid component
   const onColumnResizeEnd = (column: GridColumn, newSize: number, colIndex: number, newSizeWithGrow: number) => {
-    dispatch({ type: DatagridActionType.columnResizeEnd })
+    dispatch({ type: DatagridActionType.columnResizeEnd });
   };
 
   const closeContextMenu = () => {
-    dispatch({ type: DatagridActionType.closeContextMenu })
+    dispatch({ type: DatagridActionType.closeContextMenu });
   };
 
   const onDeletePressed = (selection: GridSelection) => {
@@ -159,7 +162,10 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
-    dispatch({ type: DatagridActionType.openHeaderDropdownMenu, payload: { screenPosition, columnIndex: col, value: frame.fields[col].name  } })
+    dispatch({
+      type: DatagridActionType.openHeaderDropdownMenu,
+      payload: { screenPosition, columnIndex: col, value: frame.fields[col].name },
+    });
   };
 
   const onColumnMove = (from: number, to: number) => {
@@ -187,24 +193,24 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   };
 
   const onColumnRename = () => {
-    dispatch({ type: DatagridActionType.showColumnRenameInput })
+    dispatch({ type: DatagridActionType.showColumnRenameInput });
   };
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
     const newFrame = new MutableDataFrame(frame);
     newFrame.fields[columnIdx].name = columnName;
 
-    dispatch({ type: DatagridActionType.hideColumnRenameInput })
+    dispatch({ type: DatagridActionType.hideColumnRenameInput });
     publishSnapshot(newFrame, id);
   };
 
   const onSearchClose = () => {
     dispatch({ type: DatagridActionType.closeSearch });
-  }
+  };
 
   const onGridSelectionChange = (selection: GridSelection) => {
     dispatch({ type: DatagridActionType.multipleCellsSelected, payload: { selection } });
-  }
+  };
 
   if (!frame) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -221,6 +227,7 @@ export const DataGridPanel: React.FC<Props> = ({ options, data, id, fieldConfig 
   return (
     <>
       <DataEditor
+        data-testid={TEST_ID_DATAGRID_EDITOR}
         className={styles.dataEditor}
         getCellContent={getCellContent}
         columns={columns}

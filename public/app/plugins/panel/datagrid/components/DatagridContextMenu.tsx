@@ -8,14 +8,9 @@ import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
 import { DatagridAction, DatagridActionType } from '../state';
-import {
-  cleanStringFieldAfterConversion,
-  DatagridContextMenuData,
-  deleteRows,
-  EMPTY_DF,
-} from '../utils';
+import { cleanStringFieldAfterConversion, DatagridContextMenuData, deleteRows, EMPTY_DF } from '../utils';
 
-interface Props {
+interface ContextMenuProps {
   menuData: DatagridContextMenuData;
   data: DataFrame;
   saveData: (data: DataFrame) => void;
@@ -35,7 +30,7 @@ export const DatagridContextMenu = ({
   gridSelection,
   columnFreezeIndex,
   renameColumnClicked,
-}: Props) => {
+}: ContextMenuProps) => {
   let selectedRows: number[] = [];
   let selectedColumns: number[] = [];
   const { row, column, x, y, isHeaderMenu } = menuData;
@@ -212,9 +207,9 @@ export const DatagridContextMenu = ({
           label={columnFreezeLabel}
           onClick={() => {
             if (columnFreezeIndex === columnIndex) {
-              dispatch({ type: DatagridActionType.columnFreezeReset })
+              dispatch({ type: DatagridActionType.columnFreezeReset });
             } else {
-              dispatch({ type: DatagridActionType.columnFreezeChanged, payload: { columnIndex } })
+              dispatch({ type: DatagridActionType.columnFreezeChanged, payload: { columnIndex } });
             }
           }}
         />

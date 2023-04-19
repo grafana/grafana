@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 
 import { SimpleInput } from './SimpleInput';
 
-interface Props {
+interface AddColumnProps {
   divStyle: string;
   onColumnInputBlur: (columnName: string) => void;
 }
 
-export const AddColumn = ({ divStyle, onColumnInputBlur }: Props) => {
+export const AddColumn = ({ divStyle, onColumnInputBlur }: AddColumnProps) => {
   const [showInput, setShowInput] = useState<boolean>(false);
 
   const setupColumnInput = () => {

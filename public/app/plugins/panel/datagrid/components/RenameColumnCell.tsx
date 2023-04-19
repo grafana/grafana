@@ -4,13 +4,13 @@ import { Portal } from '@grafana/ui';
 
 import { RenameColumnInputData } from '../utils';
 
-interface Props {
+interface RenameColumnProps {
   renameColumnData: RenameColumnInputData;
   onColumnInputBlur: (columnName: string, columnIdx: number) => void;
   classStyle?: string;
 }
 
-export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur, classStyle }: Props) => {
+export const RenameColumnCell = ({ renameColumnData, onColumnInputBlur, classStyle }: RenameColumnProps) => {
   const { x, y, width, height, inputValue, columnIdx } = renameColumnData;
   const [styles, setStyles] = useState({});
   const [value, setValue] = useState<string>(inputValue!);

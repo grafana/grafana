@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 
-interface Props {
+interface InputProps {
   onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   placeholder: string;
 }
 
-export const SimpleInput = ({ onBlur, placeholder }: Props) => {
+export const SimpleInput = ({ onBlur, placeholder }: InputProps) => {
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

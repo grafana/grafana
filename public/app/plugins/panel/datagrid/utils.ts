@@ -16,13 +16,14 @@ import { config } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-const ICON_AND_MENU_WIDTH = 65;
-const CELL_PADDING = 20;
-const MAX_COLUMN_WIDTH = 300;
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
 const TEXT_CANVAS = document.createElement('canvas');
 
+export const TEST_ID_DATAGRID_EDITOR = 'datagrid-editor';
+export const CELL_PADDING = 20;
+export const MAX_COLUMN_WIDTH = 300;
+export const ICON_AND_MENU_WIDTH = 65;
 export const ROW_MARKER_BOTH = 'both';
 export const ROW_MARKER_NUMBER = 'number';
 export const DEFAULT_CONTEXT_MENU = { isContextMenuOpen: false };
