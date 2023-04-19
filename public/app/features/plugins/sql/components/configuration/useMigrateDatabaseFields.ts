@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { logDebug, getBackendSrv } from '@grafana/runtime';
+import { logDebug, config } from '@grafana/runtime';
 
 import { SQLOptions } from '../../types';
 
@@ -18,11 +18,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
     let newOptions = { ...options };
     let optionsUpdated = false;
 
-    const updateData = async () => {
-      const settings = await getBackendSrv().get('/api/frontend/settings');
-      const { sqlConnectionLimits } = settings;
-      console.log(jsonData);
-
+    const updateData = () => {
       // Migrate the database field from the column into the jsonData object
       if (options.database) {
         logDebug(`Migrating from options.database with value ${options.database} for ${options.name}`);
@@ -38,7 +34,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
         jsonData.maxIdleConns === undefined &&
         jsonData.maxIdleConnsAuto === undefined
       ) {
-        const { maxOpenConns, maxIdleConns } = sqlConnectionLimits;
+        const { maxOpenConns, maxIdleConns } = config.sqlConnectionLimits;
 
         logDebug(
           `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
@@ -60,7 +56,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
       // If the maximum connection lifetime hasn't been
       // otherwise set fill in with the default from configuration
       if (jsonData.connMaxLifetime === undefined) {
-        const { connMaxLifetime } = sqlConnectionLimits;
+        const { connMaxLifetime } = config.sqlConnectionLimits;
 
         // Spread new options and add our value
         newOptions.jsonData = {
