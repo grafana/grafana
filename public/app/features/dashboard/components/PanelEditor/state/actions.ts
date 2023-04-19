@@ -1,6 +1,7 @@
 import { pick } from 'lodash';
 
 import store from 'app/core/store';
+import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { ThunkResult } from 'app/types';
@@ -113,9 +114,9 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
+    const sourcePanel = getSourcePanel();
     if (hasPanelChangedInPanelEdit(panel) && !shouldDiscardChanges) {
       const modifiedSaveModel = panel.getSaveModel();
-      const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
 
       dispatch(updateDuplicateLibraryPanels(panel, dashboard));
@@ -142,6 +143,8 @@ export function exitPanelEditor(): ThunkResult<void> {
           sourcePanel.configRev = 0;
         }
       }, 20);
+    } else if (sourcePanel.isNew && shouldDiscardChanges) {
+      dashboard && removePanel(dashboard, sourcePanel, true);
     }
 
     dispatch(cleanUpPanelState(panel.key));
