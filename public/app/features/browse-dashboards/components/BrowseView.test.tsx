@@ -37,14 +37,12 @@ describe('browse-dashboards BrowseView', () => {
 
   it('expands and collapses a folder', async () => {
     render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
 
-    const row = await screen.findByTestId(selectors.pages.BrowseDashbards.table.row(folderA.item.uid));
-    const expandButton = getByLabelText(row, 'Expand folder');
-    await userEvent.click(expandButton);
+    await expandFolder(folderA.item.uid);
     expect(screen.queryByText(folderA_folderA.item.title)).toBeInTheDocument();
 
-    const collapseButton = getByLabelText(row, 'Collapse folder');
-    await userEvent.click(collapseButton);
+    await collapseFolder(folderA.item.uid);
     expect(screen.queryByText(folderA_folderA.item.title)).not.toBeInTheDocument();
   });
 
@@ -118,6 +116,12 @@ describe('browse-dashboards BrowseView', () => {
 async function expandFolder(uid: string) {
   const row = screen.getByTestId(selectors.pages.BrowseDashbards.table.row(uid));
   const expandButton = getByLabelText(row, 'Expand folder');
+  await userEvent.click(expandButton);
+}
+
+async function collapseFolder(uid: string) {
+  const row = screen.getByTestId(selectors.pages.BrowseDashbards.table.row(uid));
+  const expandButton = getByLabelText(row, 'Collapse folder');
   await userEvent.click(expandButton);
 }
 
