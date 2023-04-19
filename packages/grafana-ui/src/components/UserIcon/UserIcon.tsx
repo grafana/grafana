@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useMemo, PropsWithChildren } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Button } from '../Button';
 import { Tooltip } from '../Tooltip';
 
@@ -15,7 +15,7 @@ export interface UserView {
     avatarUrl?: string;
   };
   /** Datetime string when the user was last active */
-  lastActiveAt: string;
+  lastActiveAt: DateTimeInput;
 }
 
 export interface UserIconProps {
@@ -25,13 +25,15 @@ export interface UserIconProps {
   showTooltip?: boolean;
   /** An optional class name to be added to the icon element */
   className?: string;
+  /** onClick handler to be called when the icon is clicked */
+  onClick?: () => void;
 }
 
 /**
  * A helper function that takes in a dateString parameter
  * and returns the user's last viewed date in a specific format.
  */
-const formatViewed = (dateString: string): string => {
+const formatViewed = (dateString: DateTimeInput): string => {
   const date = dateTime(dateString);
   const diffHours = date.diff(dateTime(), 'hours', false);
   return `Active last ${(Math.floor(-diffHours / 24) + 1) * 24}h`;
@@ -50,26 +52,33 @@ const getUserInitials = (name?: string) => {
   return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
 };
 
-export const UserIcon = ({ userView, className, showTooltip = true }: UserIconProps) => {
+export const UserIcon = ({
+  userView,
+  className,
+  children,
+  onClick,
+  showTooltip = true,
+}: PropsWithChildren<UserIconProps>) => {
   const { user, lastActiveAt } = userView;
   const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
-  const styles = useStyles2((theme) => getStyles(theme, isActive));
-  const initials = getUserInitials(user.name);
+  const theme = useTheme2();
+  const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
 
   const content = user.avatarUrl ? (
     <img
       className={cx(styles.icon, className)}
       src={user.avatarUrl}
       aria-label="Avatar icon"
-      alt={`${initials} avatar`}
+      alt={`${user.name} avatar`}
     />
   ) : (
     <Button
       variant="secondary"
+      onClick={onClick}
       className={cx(styles.textIcon, styles.icon, className)}
       aria-label={`${user.name} icon`}
     >
-      {initials}
+      {children || getUserInitials(user.name)}
     </Button>
   );
 
@@ -109,7 +118,7 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       border-radius: 50%;
       width: 30px;
       height: 30px;
-      margin-left: -6px;
+      margin-left: -${theme.spacing(1)}; // Slightly overlay multiple icons on top of each other
       border: 3px ${theme.colors.background.primary} solid;
       box-shadow: ${getIconBorder(shadowColor)};
       background-clip: padding-box;
