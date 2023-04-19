@@ -32,7 +32,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   if (item.img) {
     icon = <img data-testid="section-image" className={styles.sectionImg} src={item.img} alt="" />;
   } else if (item.icon) {
-    icon = <Icon data-testid="section-icon" name={item.icon} />;
+    icon = <Icon data-testid="section-icon" className={styles.sectionImg} name={item.icon} />;
   }
 
   const onItemClicked = () => {
@@ -68,7 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     link: css`
       padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       border-radius: ${theme.shape.radius.default};
       gap: ${theme.spacing(1)};
       height: 100%;
@@ -103,7 +103,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(1)};
     `,
     sectionImg: css({
-      width: 18,
+      margin: '6px 0',
+      width: 16,
     }),
     isSectionRoot: css({
       fontSize: theme.typography.h4.fontSize,
