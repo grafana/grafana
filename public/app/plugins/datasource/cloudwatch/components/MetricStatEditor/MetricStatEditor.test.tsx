@@ -40,19 +40,22 @@ describe('MetricStatEditor', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
   });
   describe('statistics field', () => {
-    test.each([['Average', 'p23.23', 'p34', '$statistic']])('should accept valid values', async (statistic) => {
-      const onChange = jest.fn();
-      props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
+    test.each([['Average', 'p23.23', 'p34', 'TM(2%:98%)', 'WM(10%:90%)', 'TS(80%:)', '$statistic']])(
+      'should accept valid values',
+      async (statistic) => {
+        const onChange = jest.fn();
+        props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
 
-      render(<MetricStatEditor {...props} onChange={onChange} />);
+        render(<MetricStatEditor {...props} onChange={onChange} />);
 
-      const statisticElement = await screen.findByLabelText('Statistic');
-      expect(statisticElement).toBeInTheDocument();
+        const statisticElement = await screen.findByLabelText('Statistic');
+        expect(statisticElement).toBeInTheDocument();
 
-      await userEvent.type(statisticElement, statistic);
-      fireEvent.keyDown(statisticElement, { keyCode: 13 });
-      expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
-    });
+        await userEvent.type(statisticElement, statistic);
+        fireEvent.keyDown(statisticElement, { keyCode: 13 });
+        expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
+      }
+    );
 
     test.each([['CustomStat', 'p23,23', '$statistic']])('should not accept invalid values', async (statistic) => {
       const onChange = jest.fn();
