@@ -1,17 +1,21 @@
 package angulardetector
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-var angularDetectionRegexes = []*regexp.Regexp{
-	regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`),
-	regexp.MustCompile(`from\s+['"]grafana\/app\/`),
-	regexp.MustCompile(`System\.register\(`),
+var angularDetectionPatterns = [][]byte{
+	[]byte("PanelCtrl"),
+	[]byte("QueryCtrl"),
+	[]byte("app/plugins/sdk"),
+	[]byte("angular.isNumber("),
+	[]byte("editor.html"),
+	[]byte("ctrl.annotation"),
+	[]byte("getLegacyAngularInjector"),
 }
 
 // Inspect open module.js and checks if the plugin is using Angular by matching against its source code.
@@ -29,8 +33,8 @@ func Inspect(p *plugins.Plugin) (isAngular bool, err error) {
 	if err != nil {
 		return false, fmt.Errorf("module.js readall: %w", err)
 	}
-	for _, r := range angularDetectionRegexes {
-		if r.Match(b) {
+	for _, pattern := range angularDetectionPatterns {
+		if bytes.Contains(b, pattern) {
 			isAngular = true
 			break
 		}
