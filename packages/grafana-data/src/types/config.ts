@@ -216,6 +216,7 @@ export interface GrafanaConfig {
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
+  secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;

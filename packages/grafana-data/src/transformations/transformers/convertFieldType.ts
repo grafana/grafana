@@ -147,7 +147,7 @@ function fieldToNumberField(field: Field): Field {
   for (let n = 0; n < numValues.length; n++) {
     let toBeConverted = numValues[n];
 
-    if (valuesAsStrings) {
+    if (valuesAsStrings && toBeConverted != null) {
       // some numbers returned from datasources have commas
       // strip the commas, coerce the string to a number
       toBeConverted = toBeConverted.replace(/,/g, '');

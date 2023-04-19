@@ -22,8 +22,7 @@ describe('ElasticDetails', () => {
 
     expect(onChangeMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        database: '[logstash-]YYYY.MM.DD',
-        jsonData: expect.objectContaining({ interval: 'Daily' }),
+        jsonData: expect.objectContaining({ interval: 'Daily', index: '[logstash-]YYYY.MM.DD' }),
       })
     );
   });
@@ -39,8 +38,7 @@ describe('ElasticDetails', () => {
 
     expect(onChangeMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        database: '[logstash-]YYYY.MM',
-        jsonData: expect.objectContaining({ interval: 'Monthly' }),
+        jsonData: expect.objectContaining({ interval: 'Monthly', index: '[logstash-]YYYY.MM' }),
       })
     );
   });
