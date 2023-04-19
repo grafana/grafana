@@ -166,9 +166,9 @@ When integrating Grafana with an Identity Provider, besides the initial authenti
 
 ### Team sync
 
-Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
+Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain IdP teams or groups to automatically be added or removed as members of certain teams in Grafana.
 
-Grafana will keep the users in sync by actively querying for any changes. No need to worry to remove the user from accessing Grafana once he has been removed from the Identity Provider. The users will be labeled according to their Identity Provider for easy tracking.
+Grafana will keep users in sync by querying for any IdP team or group changes upon user login, and adding or removing the user from teams accordingly.
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
 
