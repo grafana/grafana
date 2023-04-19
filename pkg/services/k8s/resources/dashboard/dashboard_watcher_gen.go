@@ -13,13 +13,12 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type Watcher interface {
-	Add(context.Context, *unstructured.Unstructured) error
-	Update(context.Context, *unstructured.Unstructured, *unstructured.Unstructured) error
-	Delete(context.Context, *unstructured.Unstructured) error
+	Add(context.Context, *Dashboard) error
+	Update(context.Context, *Dashboard, *Dashboard) error
+	Delete(context.Context, *Dashboard) error
 }
 
 type WatcherWrapper struct {
