@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -827,7 +826,8 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
+		// ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
+		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -895,11 +895,16 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
+		folderPermissions,
+		dashboardPermissions,
 		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		actest.FakeAccessControl{ExpectedEvaluate: true},
 		foldertest.NewFakeService(),
@@ -925,7 +930,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		accesscontrolmock.NewMockedPermissionsService(),
 		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		accesscontrolmock.NewMockedPermissionsService(),
-		actest.FakeAccessControl{},
+		actest.FakeAccessControl{ExpectedEvaluate: true},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
@@ -960,11 +965,13 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
+		dashboardPermissions,
 		// FIXME: do we need to add the same folder permissions as the test scenario above?
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
@@ -993,10 +1000,11 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		OrgID:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
+			OrgID:   orgID,
 			UserID:  1,
 			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ScopeDashboardsAll: {}},
+				orgID: {dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}, dashboards.ActionDashboardsWrite: {dashboards.ScopeDashboardsAll}},
 			},
 		},
 	}
