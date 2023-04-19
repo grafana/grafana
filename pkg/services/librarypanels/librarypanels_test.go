@@ -609,11 +609,6 @@ type scenarioContext struct {
 	sqlStore       db.DB
 }
 
-type folderACLItem struct {
-	roleType   org.RoleType
-	permission dashboards.PermissionType
-}
-
 func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement {
 	var libraryElementModel = libraryElementModel{}
 	err := json.Unmarshal(res.Model, &libraryElementModel)
@@ -790,7 +785,6 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		cfg := setting.NewCfg()
 		orgID := int64(1)
 		role := org.RoleAdmin
 		sqlStore, cfg := db.InitTestDBwithCfg(t)
