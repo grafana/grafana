@@ -84,7 +84,6 @@ func (rt *healthCheckNotImplementedRoundTripper) RoundTrip(req *http.Request) (*
 			Request:       req,
 		}, nil
 	}
-
 }
 
 func (provider *healthCheckProvider[T]) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
