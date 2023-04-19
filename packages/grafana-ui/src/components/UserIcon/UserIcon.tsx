@@ -63,15 +63,20 @@ export const UserIcon = ({
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
   const content = (
-    <div onClick={onClick} className={cx(styles.container, onClick && styles.pointer)} aria-label={`${user.name} icon`}>
+    <button
+      type={'button'}
+      onClick={onClick}
+      className={cx(styles.container, onClick && styles.pointer, className)}
+      aria-label={`${user.name} icon`}
+    >
       {children ? (
-        <div className={cx(styles.content, styles.textContent, className)}>{children}</div>
+        <div className={cx(styles.content, styles.textContent)}>{children}</div>
       ) : user.avatarUrl ? (
-        <img className={cx(styles.content, className)} src={user.avatarUrl} alt={`${user.name} avatar`} />
+        <img className={styles.content} src={user.avatarUrl} alt={`${user.name} avatar`} />
       ) : (
-        <div className={cx(styles.content, styles.textContent, className)}>{getUserInitials(user.name)}</div>
+        <div className={cx(styles.content, styles.textContent)}>{getUserInitials(user.name)}</div>
       )}
-    </div>
+    </button>
   );
 
   if (showTooltip) {
@@ -110,9 +115,14 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       padding: 0;
       width: 30px;
       height: 30px;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      & > * {
+        border-radius: 50%;
+      }
     `,
     content: css`
-      border-radius: 50%;
       line-height: 24px;
       max-width: 100%;
       border: 3px ${theme.colors.background.primary} solid;

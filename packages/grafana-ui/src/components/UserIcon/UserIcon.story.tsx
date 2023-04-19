@@ -24,6 +24,7 @@ const meta: ComponentMeta<typeof UserIcon> = {
   },
   args: {
     showTooltip: false,
+    onClick: undefined,
   },
 };
 
