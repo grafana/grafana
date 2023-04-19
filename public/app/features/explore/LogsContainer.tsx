@@ -15,8 +15,10 @@ import {
   SupplementaryQueryType,
   DataQueryResponse,
   LogRowContextOptions,
+  DataSourceWithLogsContextSupport,
+  DataSourceApi,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -51,31 +53,48 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  getLogRowContext = async (row: LogRowModel, options?: any): Promise<DataQueryResponse | []> => {
+  private async callIfDefined(
+    functionName: 'getLogRowContext' | 'getLogRowContextQuery',
+    row: LogRowModel,
+    options?: LogRowContextOptions
+  ): Promise<any> {
     const { datasourceInstance, logsQueries } = this.props;
-
     if (hasLogsContextSupport(datasourceInstance)) {
-      // we need to find the query, and we need to be very sure that
-      // it's a query from this datasource
-      const query = (logsQueries ?? []).find(
-        (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
-      );
-      return datasourceInstance.getLogRowContext(row, options, query);
+      const fn = datasourceInstance[functionName];
+      if (fn) {
+        const query = this.getQuery(logsQueries, row, datasourceInstance);
+        return fn(row, options, query);
+      }
     }
+    return false;
+  }
 
+  private getQuery(
+    logsQueries: DataQuery[] | undefined,
+    row: LogRowModel,
+    datasourceInstance: DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>
+  ) {
+    // we need to find the query, and we need to be very sure that it's a query
+    // from this datasource
+    return (logsQueries ?? []).find(
+      (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
+    );
+  }
+
+  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
+    const response = await this.callIfDefined('getLogRowContext', row, options);
+
+    if (response) {
+      return response;
+    }
     return [];
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const response = await this.callIfDefined('getLogRowContextQuery', row, options);
 
-    if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
-      // we need to find the query, and we need to be very sure that
-      // it's a query from this datasource
-      const query = (logsQueries ?? []).find(
-        (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
-      );
-      return datasourceInstance.getLogRowContextQuery(row, options, query);
+    if (response) {
+      return response;
     }
 
     return null;
@@ -85,9 +104,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextUiSupport(datasourceInstance) && datasourceInstance.getLogRowContextUi) {
-      const query = (logsQueries ?? []).find(
-        (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
-      );
+      const query = this.getQuery(logsQueries, row, datasourceInstance);
       return datasourceInstance.getLogRowContextUi(row, runContextQuery, query);
     }
 
