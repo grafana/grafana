@@ -56,6 +56,9 @@ type FS interface {
 
 	Base() string
 	Files() []string
+}
+
+type FSRemover interface {
 	Remove() error
 }
 

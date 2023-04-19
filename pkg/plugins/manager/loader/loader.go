@@ -232,9 +232,12 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	}
 	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
 
-	if err := p.FS.Remove(); err != nil {
-		return err
+	if remover, ok := p.FS.(plugins.FSRemover); ok {
+		if err := remover.Remove(); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 

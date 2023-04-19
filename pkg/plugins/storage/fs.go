@@ -20,11 +20,6 @@ var _ ZipExtractor = (*FS)(nil)
 
 var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
-var (
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of the plugins directory")
-	ErrUninstallInvalidPluginDir   = errors.New("cannot recognize as plugin folder")
-)
-
 type FS struct {
 	pluginsDir string
 	log        log.PrettyLogger

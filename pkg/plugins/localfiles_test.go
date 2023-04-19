@@ -3,44 +3,98 @@ package plugins
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-type tempFileScenario struct {
-	filePath string
-}
-
-func (s tempFileScenario) cleanup() error {
-	return os.Remove(s.filePath)
-}
-
-func (s tempFileScenario) newLocalFile() LocalFile {
-	return LocalFile{path: s.filePath}
-}
-
-func newTempFileScenario() (tempFileScenario, error) {
-	tf, err := os.CreateTemp(os.TempDir(), "*")
-	if err != nil {
-		return tempFileScenario{}, err
-	}
-	defer tf.Close() //nolint
-	if _, err := tf.Write([]byte("hello\n")); err != nil {
-		return tempFileScenario{}, err
-	}
-	return tempFileScenario{
-		filePath: tf.Name(),
-	}, nil
-}
-
-func newTempFileScenarioForTest(t *testing.T) tempFileScenario {
-	s, err := newTempFileScenario()
+func TestLocalFS_Remove(t *testing.T) {
+	pluginDir := t.TempDir()
+	pluginJSON := filepath.Join(pluginDir, "plugin.json")
+	//nolint:gosec
+	f, err := os.Create(pluginJSON)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, s.cleanup())
+	err = f.Close()
+	require.NoError(t, err)
+
+	fs := NewLocalFS(
+		map[string]struct{}{
+			"plugin.json": {},
+		},
+		pluginDir,
+	)
+
+	err = fs.Remove()
+	require.NoError(t, err)
+
+	_, err = os.Stat(pluginDir)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+
+	_, err = os.Stat(pluginJSON)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+
+	t.Run("Uninstall will search in nested dist folder for plugin.json", func(t *testing.T) {
+		pluginDistDir := filepath.Join(t.TempDir(), "dist")
+		err = os.Mkdir(pluginDistDir, os.ModePerm)
+		require.NoError(t, err)
+		pluginJSON = filepath.Join(pluginDistDir, "plugin.json")
+		//nolint:gosec
+		f, err = os.Create(pluginJSON)
+		require.NoError(t, err)
+		err = f.Close()
+		require.NoError(t, err)
+
+		pluginDir = filepath.Dir(pluginDistDir)
+
+		fs = NewLocalFS(
+			map[string]struct{}{
+				"dist/plugin.json": {},
+			},
+			pluginDir,
+		)
+
+		err = fs.Remove()
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.True(t, os.IsNotExist(err))
+
+		_, err = os.Stat(pluginJSON)
+		require.Error(t, err)
+		require.True(t, os.IsNotExist(err))
 	})
-	return s
+
+	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
+		pluginDir = filepath.Join(t.TempDir(), "system32")
+		err = os.Mkdir(pluginDir, os.ModePerm)
+		require.NoError(t, err)
+		testFile := filepath.Join(pluginDir, "important.exe")
+		//nolint:gosec
+		f, err = os.Create(testFile)
+		require.NoError(t, err)
+		err = f.Close()
+		require.NoError(t, err)
+
+		fs = NewLocalFS(
+			map[string]struct{}{
+				"system32/important.exe": {},
+			},
+			pluginDir,
+		)
+
+		err = fs.Remove()
+		require.ErrorIs(t, err, ErrUninstallInvalidPluginDir)
+
+		_, err = os.Stat(pluginDir)
+		require.NoError(t, err)
+
+		_, err = os.Stat(testFile)
+		require.NoError(t, err)
+	})
+
 }
 
 func TestLocalFile_Read(t *testing.T) {
@@ -140,4 +194,32 @@ func TestLocalFile_Close(t *testing.T) {
 		require.NoError(t, f.Close())
 		require.Error(t, f.Close())
 	})
+}
+
+type tempFileScenario struct {
+	filePath string
+}
+
+func (s tempFileScenario) newLocalFile() LocalFile {
+	return LocalFile{path: s.filePath}
+}
+
+func newTempFileScenario(t *testing.T) (tempFileScenario, error) {
+	tf, err := os.CreateTemp(t.TempDir(), "*")
+	if err != nil {
+		return tempFileScenario{}, err
+	}
+	defer tf.Close() //nolint
+	if _, err := tf.Write([]byte("hello\n")); err != nil {
+		return tempFileScenario{}, err
+	}
+	return tempFileScenario{
+		filePath: tf.Name(),
+	}, nil
+}
+
+func newTempFileScenarioForTest(t *testing.T) tempFileScenario {
+	s, err := newTempFileScenario(t)
+	require.NoError(t, err)
+	return s
 }
