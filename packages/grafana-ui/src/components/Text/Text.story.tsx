@@ -16,18 +16,32 @@ const meta: Meta = {
     },
   },
   argTypes: {
-    as: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'legend'] },
-    variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'legend'] },
+    as: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'legend', undefined] },
+    variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
     weight: {
       control: 'select',
-      options: ['bold', 'medium', 'light', 'regular'],
+      options: ['bold', 'medium', 'light', 'regular', undefined],
     },
     color: {
       control: 'select',
-      options: ['error', 'success', 'warning', 'info', 'primary', 'secondary', 'disabled', 'link', 'maxContrast'],
+      options: [
+        'error',
+        'success',
+        'warning',
+        'info',
+        'primary',
+        'secondary',
+        'disabled',
+        'link',
+        'maxContrast',
+        undefined,
+      ],
     },
     truncate: { control: 'boolean' },
-    textAlignment: { control: 'select', options: ['inherit', 'initial', 'left', 'right', 'center', 'justify'] },
+    textAlignment: {
+      control: 'select',
+      options: ['inherit', 'initial', 'left', 'right', 'center', 'justify', undefined],
+    },
     margin: { control: 'text' },
   },
 };
