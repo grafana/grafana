@@ -20,14 +20,14 @@ const meta: Meta = {
     variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'legend'] },
     weight: {
       control: 'select',
-      options: ['fontWeightBold', 'fontWeightMedium', 'fontWeightLight', 'fontWeightRegular'],
+      options: ['bold', 'medium', 'light', 'regular'],
     },
     color: {
       control: 'select',
-      options: ['color.error.text', 'color.success.text', 'color.warning.text', 'color.primary.text'],
+      options: ['error', 'success', 'warning', 'info', 'primary', 'secondary', 'disabled', 'link', 'maxContrast'],
     },
     truncate: { control: 'boolean' },
-    textAlign: { control: 'select', options: ['inherit', 'initial', 'left', 'right', 'center', 'justify'] },
+    textAlignment: { control: 'select', options: ['inherit', 'initial', 'left', 'right', 'center', 'justify'] },
     margin: { control: 'text' },
   },
 };
@@ -49,9 +49,18 @@ export const Example: Story = () => {
 
 export const Basic: Story = (args) => {
   return (
-    <Text as={args.as} variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-      Hola caracola
-    </Text>
+    <div style={{ width: '300px' }}>
+      <Text
+        as={args.as}
+        variant={args.variant}
+        weight={args.weight}
+        textAlignment={args.textAlignment}
+        margin={args.margin}
+        {...args}
+      >
+        {args.children}
+      </Text>
+    </div>
   );
 };
 
@@ -59,10 +68,11 @@ Basic.args = {
   variant: undefined,
   as: 'h1',
   weight: 'fontWeightBold',
-  textAlign: 'center',
+  textAlignment: 'center',
   truncate: false,
   color: 'color.error.text',
-  children: 'Hola caracola',
+  children: 'This is a text component',
+  margin: '100px auto',
 };
 
 export default meta;
