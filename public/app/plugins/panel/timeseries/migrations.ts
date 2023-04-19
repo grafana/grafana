@@ -380,7 +380,7 @@ export function graphToTimeseriesOptions(angular: any): {
   if (angular.timeRegions?.length) {
     let regions: any[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
       name: `T${idx + 1}`,
-      color: old.fillColor,
+      color: old.colorMode !== 'custom' ? old.colorMode : old.fillColor,
       line: old.line,
       fill: old.fill,
       fromDayOfWeek: old.fromDayOfWeek,
@@ -389,6 +389,8 @@ export function graphToTimeseriesOptions(angular: any): {
       to: old.to,
       timezone: 'utc',
     }));
+
+    console.log(regions);
 
     regions.forEach((region) => {
       const queryTarget: GrafanaQuery = {
