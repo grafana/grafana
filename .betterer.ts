@@ -1,14 +1,13 @@
-import { BettererFileTest } from '@betterer/betterer';
+import { BettererFilePaths, BettererFileTest } from '@betterer/betterer';
 import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
 import path from 'path';
 import glob from 'glob';
+import { exec, spawnSync } from 'child_process';
+import { promisify } from 'util';
 
 export default {
-  'better eslint': () =>
-    countEslintErrors()
-      .include('**/*.{ts,tsx}')
-      .exclude(/public\/app\/angular/),
+  'better eslint': () => countEslintErrors(),
   'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
 };
 
@@ -30,12 +29,54 @@ function countUndocumentedStories() {
   });
 }
 
+const execPromise = promisify(exec);
+
+function isFindAvailable() {
+  const result = spawnSync('find', ['--version']);
+  //@ts-ignore - code is not defined in the type definition
+  return !(result.error && result.error.code === 'ENOENT');
+}
+
+async function getFilesToLint(files: BettererFilePaths): Promise<BettererFilePaths> {
+  if (files.length) {
+    return files.filter(
+      (file) => (file.endsWith('.ts') || file.endsWith('.tsx')) && !file.includes('public/app/angular')
+    );
+  }
+
+  const findCommand = 'find . -type f \\( -iname "*.ts" -o -iname "*.tsx" \\) -not -path \'*/\\.*\' -print';
+  let findFiles: string[];
+
+  if (isFindAvailable()) {
+    const { stdout } = await execPromise(findCommand);
+    findFiles = stdout.toString().trim().split('\n');
+  } else {
+    findFiles = await glob('**/*.{ts,tsx}', { ignore: ['**/.*', '**/.*/**'] });
+  }
+
+  return findFiles.filter((file) => file.includes('public/app/angular'));
+}
+
+async function getEslintConfigFiles(): Promise<string[]> {
+  if (isFindAvailable()) {
+    const findCommand = 'find . -type f -name ".eslintrc" -not -path \'*/\\.*\' -print';
+    const { stdout } = await execPromise(findCommand);
+    const findFiles = stdout.toString().trim().split('\n');
+    return findFiles;
+  }
+  return await glob('**/.eslintrc');
+}
+
 function countEslintErrors() {
+  // small optimization
+  const eslintConfigPromise = getEslintConfigFiles();
   return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
     const { baseDirectory } = resolver;
     const cli = new ESLint({ cwd: baseDirectory });
 
-    const eslintConfigFiles = await glob('**/.eslintrc');
+    const filesToLint = await getFilesToLint(filePaths);
+
+    const eslintConfigFiles = await eslintConfigPromise;
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
 
     const baseRules: Partial<Linter.RulesRecord> = {
@@ -53,7 +94,7 @@ function countEslintErrors() {
     // one for test files and one for non-test files
     const fileGroups: Record<string, string[]> = {};
 
-    for (const filePath of filePaths) {
+    for (const filePath of filesToLint) {
       let configPath = eslintConfigMainPaths.find((configPath) => filePath.startsWith(configPath)) ?? '';
       const isTestFile =
         filePath.endsWith('.test.tsx') ||
