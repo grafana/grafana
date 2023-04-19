@@ -53,22 +53,6 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  private async callIfDefined(
-    functionName: 'getLogRowContext' | 'getLogRowContextQuery',
-    row: LogRowModel,
-    options?: LogRowContextOptions
-  ): Promise<any> {
-    const { datasourceInstance, logsQueries } = this.props;
-    if (hasLogsContextSupport(datasourceInstance)) {
-      const fn = datasourceInstance[functionName];
-      if (fn) {
-        const query = this.getQuery(logsQueries, row, datasourceInstance);
-        return fn(row, options, query);
-      }
-    }
-    return false;
-  }
-
   private getQuery(
     logsQueries: DataQuery[] | undefined,
     row: LogRowModel,
@@ -82,19 +66,22 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
-    const response = await this.callIfDefined('getLogRowContext', row, options);
+    const { datasourceInstance, logsQueries } = this.props;
 
-    if (response) {
-      return response;
+    if (hasLogsContextSupport(datasourceInstance)) {
+      const query = this.getQuery(logsQueries, row, datasourceInstance);
+      return datasourceInstance.getLogRowContext(row, options, query);
     }
+
     return [];
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
-    const response = await this.callIfDefined('getLogRowContextQuery', row, options);
+    const { datasourceInstance, logsQueries } = this.props;
 
-    if (response) {
-      return response;
+    if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
+      const query = this.getQuery(logsQueries, row, datasourceInstance);
+      return datasourceInstance.getLogRowContextQuery(row, options, query);
     }
 
     return null;
