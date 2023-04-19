@@ -13,7 +13,7 @@ import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDrawerProps } from './types';
-import { dataSourceName } from './utils';
+import { dataSourceName as dataSourceLabel } from './utils';
 
 export function DataSourceDropdown(props: DataSourceDrawerProps) {
   const { current, onChange, ...restProps } = props;
@@ -53,7 +53,8 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
           <Input
             prefix={filterTerm ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={current} />}
             suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
-            placeholder={dataSourceName(current)}
+            placeholder={dataSourceLabel(current)}
+            className={styles.input}
             onChange={(e) => {
               setFilterTerm(e.currentTarget.value);
             }}
@@ -89,10 +90,10 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
           }}
         >
           <Input
-            className={styles.input}
+            className={styles.markerInput}
             prefix={<DataSourceLogo dataSource={current} />}
             suffix={<Icon name="angle-down" />}
-            value={dataSourceName(current)}
+            value={dataSourceLabel(current)}
             onFocus={() => {
               setOpen(true);
             }}
@@ -112,6 +113,11 @@ function getStylesDropdown(theme: GrafanaTheme2) {
       cursor: pointer;
     `,
     input: css`
+      input:focus {
+        box-shadow: none;
+      }
+    `,
+    markerInput: css`
       input {
         cursor: pointer;
       }
