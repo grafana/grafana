@@ -258,35 +258,15 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcf
 				"error", err)
 			continue
 		}
-		m, err := ds.JsonData.Map()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		headers, err := d.datasourceService.CustomHeaders(ctx, ds)
+		cancel()
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch headers for datasource: %w", err)
-		}
-
-		const headerName = "httpHeaderName"
-		var headers map[string]string
-		for k, v := range m {
-			if !strings.HasPrefix(k, headerName) {
-				continue
-			}
-			keyName := v.(string)
-			// The header field names are saved as "httpHeaderName1", "httpHeaderName2" etc.
-			// We need to extract the number to create the right key that will enable us the
-			// extract the coresponding value in the secure json value, as it uses the same index
-			// but a different name i.e. "httpHeaderValue1".
-			index := strings.TrimPrefix(k, headerName)
-			val, ok := ds.SecureJsonData["httpHeaderValue"+index]
-			if !ok {
-				return nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
-			}
-			decVal, err := d.secretService.Decrypt(ctx, val)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decrypt the value for the declared header field %s: %w", k, err)
-			}
-			if headers == nil {
-				headers = map[string]string{}
-			}
-			headers[keyName] = string(decVal)
+			d.logger.Error("Failed to get headers for external alertmanager",
+				"org", ds.OrgID,
+				"uid", ds.UID,
+				"error", err)
+			continue
 		}
 		alertmanagers = append(alertmanagers, externalAMcfg{
 			amURL:   amURL,
