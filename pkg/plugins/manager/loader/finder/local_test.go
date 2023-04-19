@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -64,7 +63,7 @@ func TestFinder_Find(t *testing.T) {
 							Backend:    true,
 							Executable: "test",
 						},
-						FS: mustNewTestFSWithCollect(t, filepath.Join(testData, "valid-v2-signature/plugin")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "valid-v2-signature/plugin")),
 					},
 				},
 			},
@@ -93,13 +92,7 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewAllowListLocalFSForTests(
-							filepath.Join(testData, "duplicate-plugins/nested"),
-							"plugin.json",
-							"MANIFEST.txt",
-							"nested/plugin.json",
-							"nested/MANIFEST.txt",
-						),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
 					},
 					Children: []*plugins.FoundPlugin{
 						{
@@ -121,10 +114,7 @@ func TestFinder_Find(t *testing.T) {
 									Plugins:        []plugins.Dependency{},
 								},
 							},
-							FS: plugins.NewAllowListLocalFSForTests(
-								filepath.Join(testData, "duplicate-plugins/nested/nested"),
-								"plugin.json", "MANIFEST.txt",
-							),
+							FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
 						},
 					},
 				},
@@ -185,15 +175,7 @@ func TestFinder_Find(t *testing.T) {
 								{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer"},
 							},
 						},
-						FS: plugins.NewAllowListLocalFSForTests(
-							filepath.Join(testData, "includes-symlinks"),
-							"MANIFEST.txt",
-							"dashboards/connections.json",
-							"dashboards/extra/memory.json",
-							"plugin.json",
-							"symlink_to_txt",
-							"text.txt",
-						),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "includes-symlinks")),
 					},
 				},
 			},
@@ -221,13 +203,7 @@ func TestFinder_Find(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 					},
-					FS: plugins.NewAllowListLocalFSForTests(
-						filepath.Join(testData, "duplicate-plugins/nested"),
-						"plugin.json",
-						"MANIFEST.txt",
-						"nested/plugin.json",
-						"nested/MANIFEST.txt",
-					),
+					FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
 				},
 				Children: []*plugins.FoundPlugin{
 					{
@@ -249,10 +225,7 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewAllowListLocalFSForTests(
-							filepath.Join(testData, "duplicate-plugins/nested/nested"),
-							"plugin.json", "MANIFEST.txt",
-						),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
 					},
 				},
 			},
@@ -276,10 +249,7 @@ func TestFinder_Find(t *testing.T) {
 							State:   plugins.AlphaRelease,
 							Backend: true,
 						},
-						FS: plugins.NewAllowListLocalFSForTests(
-							filepath.Join(testData, "invalid-v1-signature/plugin"),
-							"plugin.json", "MANIFEST.txt",
-						),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "invalid-v1-signature/plugin")),
 					},
 				},
 			},
@@ -482,26 +452,6 @@ func TestFinder_readPluginJSON(t *testing.T) {
 	}
 }
 
-func mustNewTestFSWithCollect(t *testing.T, dir string) plugins.FS {
-	t.Helper()
-	var files []string
-	require.NoError(t, filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-		files = append(files, rel)
-		return nil
-	}))
-	return plugins.NewAllowListLocalFSForTests(dir, files...)
-}
-
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
 	if err != nil {
@@ -522,3 +472,9 @@ var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 
 	return cmp.Equal(fs1Files, fs2Files) && fs1.Base() == fs2.Base()
 })
+
+func mustNewStaticFSForTests(t *testing.T, dir string) plugins.FS {
+	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(dir))
+	require.NoError(t, err)
+	return sfs
+}

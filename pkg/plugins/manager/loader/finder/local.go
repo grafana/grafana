@@ -89,17 +89,15 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	var res = make(map[string]*plugins.FoundBundle)
 	for pluginDir, data := range foundPlugins {
 		var pluginFs plugins.FS
-		pluginFs = newDefaultLocalFS(pluginDir)
+		pluginFs = plugins.NewLocalFS(pluginDir)
 		if !l.devMode {
 			// In prod, tighten up security by allowing access only to the files present up to this point.
 			// Any new file "sneaked in" won't be allowed and will acts as if the file did not exist.
-			// Build the allow-list by calling Files() once
-			fsFiles, err := pluginFs.Files()
+			var err error
+			pluginFs, err = plugins.NewStaticFS(pluginFs)
 			if err != nil {
 				return nil, err
 			}
-			// Wrap FS with allow list
-			pluginFs = plugins.NewAllowListFS(pluginFs, fsFiles...)
 		}
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
@@ -203,66 +201,6 @@ func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 	}
 
 	return pluginJSONPaths, nil
-}
-
-// defaultCollectFilesFunc returns a plugins.CollectFilesFunc that will build a list of files by walking over the local
-// filesystem. Files and symlinks that end up outside the provided dir will be ignored.
-func defaultCollectFilesFunc(dir string) plugins.CollectFilesFunc {
-	return func(acc map[string]struct{}) filepath.WalkFunc {
-		return func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-				symlinkPath, err := filepath.EvalSymlinks(path)
-				if err != nil {
-					return err
-				}
-
-				symlink, err := os.Stat(symlinkPath)
-				if err != nil {
-					return err
-				}
-
-				// verify that symlinked file is within plugin directory
-				p, err := filepath.Rel(dir, symlinkPath)
-				if err != nil {
-					return err
-				}
-				if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
-					return fmt.Errorf("file '%s' not inside of plugin directory", p)
-				}
-
-				// skip adding symlinked directories
-				if symlink.IsDir() {
-					return nil
-				}
-			}
-
-			// skip directories
-			if info.IsDir() {
-				return nil
-			}
-
-			// verify that file is within plugin directory
-			file, err := filepath.Rel(dir, path)
-			if err != nil {
-				return err
-			}
-			if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("file '%s' not inside of plugin directory", file)
-			}
-
-			acc[path] = struct{}{}
-			return nil
-		}
-	}
-}
-
-// newDefaultLocalFS returns a new plugins.FS that uses plugins.LocalFS on the provided basePath (plugin directory)
-// and uses defaultCollectFilesFunc as CollectFilesFunc.
-func newDefaultLocalFS(basePath string) plugins.FS {
-	return plugins.NewLocalFS(basePath, defaultCollectFilesFunc(basePath))
 }
 
 func (l *Local) readFile(pluginJSONPath string) (io.ReadCloser, error) {

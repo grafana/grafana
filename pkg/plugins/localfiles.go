@@ -11,50 +11,88 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// CollectFilesFunc is a function that returns a filepath.WalkFunc, which will accumulate its results into acc.
-// The file paths collected into acc should be absolute file paths (like the first argument provided to
-// filepath.WalkFunc)
-type CollectFilesFunc func(acc map[string]struct{}) filepath.WalkFunc
+var (
+	_ fs.File = &LocalFile{}
 
-// defaultCollectFilesFunc is a simple CollectFilesFunc that skips all directories and collects all paths into acc.
-var defaultCollectFilesFunc CollectFilesFunc = func(acc map[string]struct{}) filepath.WalkFunc {
-	return func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		acc[path] = struct{}{}
-		return nil
-	}
-}
-
-// emptyCollectFilesFunc is a no-op CollectFilesFunc. It returns a filepath.WalkFunc that does nothing and
-// the accumulator map is not altered in any way. This is suitable to use with plugins.allowListFSNoFiles for tests.
-func emptyCollectFilesFunc(_ map[string]struct{}) filepath.WalkFunc {
-	return func(path string, info fs.FileInfo, err error) error {
-		return nil
-	}
-}
+	_ FS = &LocalFS{}
+	_ FS = &StaticFS{}
+)
 
 // LocalFS is a plugins.FS that allows accessing files on the local file system.
 type LocalFS struct {
 	// basePath is the basePath that will be prepended to all the files to get their absolute path.
 	basePath string
-
-	// collectFilesFunc returns a filepath.WalkFunc that creates a slice of files in this LocalFS, for Files()
-	collectFilesFunc CollectFilesFunc
 }
 
 // NewLocalFS returns a new LocalFS that can access any file in the specified base path on the filesystem.
 // basePath must use os-specific path separator for Open() to work properly.
-// If collectFilesFunc is not provided, defaultCollectFilesFunc is used instead, which will collect all files.
-func NewLocalFS(basePath string, collectFilesFunc CollectFilesFunc) LocalFS {
-	if collectFilesFunc == nil {
-		collectFilesFunc = defaultCollectFilesFunc
+func NewLocalFS(basePath string) LocalFS {
+	return LocalFS{basePath: basePath}
+}
+
+// fileIsAllowed takes an absolute path to a file and an os.FileInfo for that file, and it checks if access to that
+// file is allowed or not. Access to a file is allowed if the file is in the FS's Base() directory, and if it's a
+// symbolic link it should not end up outside the plugin's directory.
+func (f LocalFS) fileIsAllowed(absolutePath string, info os.FileInfo) (bool, error) {
+	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+		symlinkPath, err := filepath.EvalSymlinks(absolutePath)
+		if err != nil {
+			return false, err
+		}
+
+		symlink, err := os.Stat(symlinkPath)
+		if err != nil {
+			return false, err
+		}
+
+		// verify that symlinked file is within plugin directory
+		p, err := filepath.Rel(absolutePath, symlinkPath)
+		if err != nil {
+			return false, err
+		}
+		if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+			return false, fmt.Errorf("file '%s' not inside of plugin directory", p)
+		}
+
+		// skip adding symlinked directories
+		if symlink.IsDir() {
+			return false, nil
+		}
 	}
-	return LocalFS{basePath: basePath, collectFilesFunc: collectFilesFunc}
+
+	// skip directories
+	if info.IsDir() {
+		return false, nil
+	}
+
+	// verify that file is within plugin directory
+	file, err := filepath.Rel(f.Base(), absolutePath)
+	if err != nil {
+		return false, err
+	}
+	if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+		return false, fmt.Errorf("file '%s' not inside of plugin directory", file)
+	}
+	return true, nil
+}
+
+// walkFunc returns a filepath.WalkFunc that accumulates absolute file paths into acc by walking over f.Base().
+// f.fileIsAllowed is used as WalkFunc, see its documentation for more information on which files are collected.
+func (f LocalFS) walkFunc(acc map[string]struct{}) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		ok, err := f.fileIsAllowed(path, info)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return nil
+		}
+		acc[path] = struct{}{}
+		return nil
+	}
 }
 
 // Open opens the specified file on the local filesystem.
@@ -64,14 +102,29 @@ func NewLocalFS(basePath string, collectFilesFunc CollectFilesFunc) LocalFS {
 // If the file does not exist, ErrFileNotExist is returned.
 func (f LocalFS) Open(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
-	if strings.Contains(cleanPath, "..") || err != nil {
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: FS: Check if it's the same as the check in fileIsAllowed ?
+	//if strings.Contains(cleanPath, "..") {
+	//	return nil, ErrFileNotExist
+	//}
+
+	absFn := filepath.Join(f.basePath, cleanPath)
+	finfo, err := os.Stat(absFn)
+	if err != nil {
 		return nil, ErrFileNotExist
 	}
-	fn := filepath.Join(f.basePath, cleanPath)
-	if _, err := os.Stat(fn); err != nil {
+	// Make sure access to the file is allowed (symlink check, etc)
+	ok, err := f.fileIsAllowed(absFn, finfo)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
 		return nil, ErrFileNotExist
 	}
-	return &LocalFile{path: fn}, nil
+	return &LocalFile{path: absFn}, nil
 }
 
 // Base returns the base path for the LocalFS.
@@ -87,7 +140,7 @@ func (f LocalFS) Files() ([]string, error) {
 	// Accumulate all files into filesMap by calling f.collectFilesFunc, which will write into the accumulator.
 	// Those are absolute because filepath.Walk uses absolute file paths.
 	absFilePaths := make(map[string]struct{})
-	if err := filepath.Walk(f.basePath, f.collectFilesFunc(absFilePaths)); err != nil {
+	if err := filepath.Walk(f.basePath, f.walkFunc(absFilePaths)); err != nil {
 		return nil, fmt.Errorf("walk: %w", err)
 	}
 	// Convert the accumulator into a slice of relative path strings
@@ -107,51 +160,55 @@ func (f LocalFS) Files() ([]string, error) {
 	return relFiles, nil
 }
 
-// fsAllowList is a set-like map that contains files that can be accessed from a plugins.FS.
-type fsAllowList map[string]struct{}
+// staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.
+type staticFilesMap map[string]struct{}
 
 // isAllowed returns true if the provided path is allowed.
 // path is a string accepted by an FS Open() method.
-func (a fsAllowList) isAllowed(path string) bool {
+func (a staticFilesMap) isAllowed(path string) bool {
 	_, ok := a[path]
 	return ok
 }
 
-// newFSAllowList creates a new fsAllowList from a list of allowed file paths.
-func newFSAllowList(files ...string) fsAllowList {
-	allowListCopy := fsAllowList(make(map[string]struct{}, len(files)))
+// newStaticFilesMap creates a new staticFilesMap from a list of allowed file paths.
+func newStaticFilesMap(files ...string) staticFilesMap {
+	m := staticFilesMap(make(map[string]struct{}, len(files)))
 	for _, k := range files {
-		allowListCopy[k] = struct{}{}
+		m[k] = struct{}{}
 	}
-	return allowListCopy
+	return m
 }
 
-// AllowListFS wraps an FS and allows accessing only the files in the allowList.
+// StaticFS wraps an FS and allows accessing only the files in the allowList.
 // This is a more secure implementation of a FS suitable for production environments.
 // The keys of the allow list must be in the same format used by the underlying FS' Open() method.
-type AllowListFS struct {
+type StaticFS struct {
 	FS
 
-	// allowList is a map of allowed paths (accepted by FS.Open())
-	allowList fsAllowList
+	// staticFilesMap is a map of allowed paths (accepted by FS.Open())
+	staticFilesMap staticFilesMap
 }
 
-// NewAllowListFS returns a new AllowListFS that can access the files on an underlying FS,
-// but only if they are also specified in the provided allowList.
-// The keys of the allow list must be in the same format used by the underlying FS' Open() method.
-func NewAllowListFS(fs FS, allowList ...string) AllowListFS {
-	return AllowListFS{
-		FS:        fs,
-		allowList: newFSAllowList(allowList...),
+// NewStaticFS returns a new StaticFS that can access the files on an underlying FS,
+// but only if they are also specified in a static list, which is constructed when creating the object
+// by calling Files() on the underlying FS.
+func NewStaticFS(fs FS) (StaticFS, error) {
+	files, err := fs.Files()
+	if err != nil {
+		return StaticFS{}, err
 	}
+	return StaticFS{
+		FS:             fs,
+		staticFilesMap: newStaticFilesMap(files...),
+	}, nil
 }
 
 // Open checks that name is an allowed file and, if so, it returns a fs.File to access it, by calling the
 // underlying FS' Open() method.
 // If access is denied, the function returns ErrFileNotExist.
-func (f AllowListFS) Open(name string) (fs.File, error) {
+func (f StaticFS) Open(name string) (fs.File, error) {
 	// Ensure access to the file is allowed
-	if !f.allowList.isAllowed(name) {
+	if !f.staticFilesMap.isAllowed(name) {
 		return nil, ErrFileNotExist
 	}
 	// Use the wrapped FS to access the file
@@ -160,7 +217,7 @@ func (f AllowListFS) Open(name string) (fs.File, error) {
 
 // Files returns a slice of all the file paths in the FS relative to the base path.
 // It calls Files() on the underlying FS, and intersects the result with the allow-list.
-func (f AllowListFS) Files() ([]string, error) {
+func (f StaticFS) Files() ([]string, error) {
 	// Get files from the underlying FS
 	filesystemFiles, err := f.FS.Files()
 	if err != nil {
@@ -169,30 +226,12 @@ func (f AllowListFS) Files() ([]string, error) {
 	// Intersect with allow list
 	files := make([]string, 0, len(filesystemFiles))
 	for _, fn := range filesystemFiles {
-		if !f.allowList.isAllowed(fn) {
+		if !f.staticFilesMap.isAllowed(fn) {
 			continue
 		}
 		files = append(files, fn)
 	}
 	return files, nil
-}
-
-// allowListFSNoFiles is a AllowListFS, but it never calls the underlying FS' Files() when calling Files(),
-// instead it returns the files only based on the allow-list.
-type allowListFSNoFiles AllowListFS
-
-// Files returns the allow-list as a slice of strings.
-func (f allowListFSNoFiles) Files() ([]string, error) {
-	files := make([]string, 0, len(f.allowList))
-	for p := range f.allowList {
-		files = append(files, p)
-	}
-	return files, nil
-}
-
-// NewAllowListLocalFSForTests returns a new allowListFSNoFiles (as FS) wrapping a NewLocalFS using a no-op function.
-func NewAllowListLocalFSForTests(dir string, files ...string) FS {
-	return allowListFSNoFiles(NewAllowListFS(NewLocalFS(dir, emptyCollectFilesFunc), files...))
 }
 
 // LocalFile implements a fs.File for accessing the local filesystem.
@@ -248,13 +287,3 @@ func (p *LocalFile) Close() error {
 	p.f = nil
 	return nil
 }
-
-// static checks
-
-var (
-	_ fs.File = &LocalFile{}
-
-	_ FS = &LocalFS{}
-	_ FS = &AllowListFS{}
-	_ FS = &allowListFSNoFiles{}
-)

@@ -3,9 +3,9 @@ package plugins
 import (
 	"errors"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -159,32 +159,43 @@ func createDummyTempFile(dir, fn string) (err error) {
 	return
 }
 
-func TestAllowList(t *testing.T) {
+func TestStaticFS(t *testing.T) {
 	tmp := t.TempDir()
 	const allowedFn, deniedFn = "allowed.txt", "denied.txt"
-	for _, fn := range []string{allowedFn, deniedFn} {
-		require.NoError(t, createDummyTempFile(tmp, fn))
-	}
+	require.NoError(t, createDummyTempFile(tmp, allowedFn))
 
-	localFS := NewLocalFS(tmp, nil)
-	allowFS := NewAllowListFS(localFS, allowedFn)
+	localFS := NewLocalFS(tmp)
+	staticFS, err := NewStaticFS(localFS)
+	require.NoError(t, err)
 
 	t.Run("open allowed", func(t *testing.T) {
-		f, err := allowFS.Open(allowedFn)
+		f, err := staticFS.Open(allowedFn)
 		require.NoError(t, err)
-		defer func() { require.NoError(t, f.Close()) }()
+		t.Cleanup(func() { require.NoError(t, f.Close()) })
 		b, err := io.ReadAll(f)
 		require.NoError(t, err)
 		require.Equal(t, []byte(allowedFn), b)
 	})
 
 	t.Run("open denied", func(t *testing.T) {
-		_, err := allowFS.Open(deniedFn)
+		// Add file after initialization
+		require.NoError(t, createDummyTempFile(tmp, deniedFn))
+
+		// StaticFS should fail
+		_, err := staticFS.Open(deniedFn)
 		require.True(t, errors.Is(err, ErrFileNotExist))
+
+		// Underlying FS should succeed
+		f, err := localFS.Open(deniedFn)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, f.Close()) })
+		b, err := io.ReadAll(f)
+		require.NoError(t, err)
+		require.Equal(t, []byte("denied.txt"), b)
 	})
 
 	t.Run("open not existing", func(t *testing.T) {
-		_, err := allowFS.Open("unknown.txt")
+		_, err := staticFS.Open("unknown.txt")
 		require.True(t, errors.Is(err, ErrFileNotExist))
 	})
 
@@ -192,27 +203,14 @@ func TestAllowList(t *testing.T) {
 		t.Run("underlying fs has extra files", func(t *testing.T) {
 			files, err := localFS.Files()
 			require.NoError(t, err)
+			sort.Strings(files)
 			require.Equal(t, []string{allowedFn, deniedFn}, files)
 		})
 
-		t.Run("allowfs filters underelying fs's files", func(t *testing.T) {
-			files, err := allowFS.Files()
+		t.Run("staticfs filters underelying fs's files", func(t *testing.T) {
+			files, err := staticFS.Files()
 			require.NoError(t, err)
 			require.Equal(t, []string{allowedFn}, files)
 		})
 	})
-}
-
-func TestAllowListFSNoFiles(t *testing.T) {
-	lfs := NewLocalFS(".", func(acc map[string]struct{}) filepath.WalkFunc {
-		return func(path string, info fs.FileInfo, err error) error {
-			require.Fail(t, "WalkFunc shouldn't have been called")
-			return errors.New("shouldn't have been called")
-		}
-	})
-	const fn = "allowed.txt"
-	afs := allowListFSNoFiles(NewAllowListFS(lfs, fn))
-	files, err := afs.Files()
-	require.NoError(t, err)
-	require.Equal(t, []string{fn}, files)
 }
