@@ -51,4 +51,10 @@ func TestAngularDetector_Inspect(t *testing.T) {
 			require.Equal(t, tc.exp, isAngular)
 		})
 	}
+
+	t.Run("no module.js", func(t *testing.T) {
+		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
+		_, err := Inspect(p)
+		require.ErrorIs(t, err, plugins.ErrFileNotExist)
+	})
 }
