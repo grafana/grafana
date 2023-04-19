@@ -308,16 +308,14 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       background-color: ${isDragActive ? theme.colors.background.secondary : theme.colors.background.primary};
       cursor: pointer;
       align-items: center;
+      justify-content: center;
     `,
     dropzone: css`
       display: flex;
-      flex: 1;
       flex-direction: column;
     `,
     defaultDropZone: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
     `,
     icon: css`
       margin-bottom: ${theme.spacing(1)};
@@ -326,7 +324,7 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       margin-bottom: ${theme.spacing(1)};
     `,
     acceptContainer: css`
-      display: flex;
+      text-align: center;
       margin: 0;
     `,
     acceptSeparator: css`
