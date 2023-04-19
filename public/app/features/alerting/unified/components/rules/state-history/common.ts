@@ -23,7 +23,7 @@ export function omitLabels(labels: Label[], common: Label[]): Label[] {
   });
 }
 
-// find all common labels by looking and which ones occur in every record, then create a unique array of items for those
+// find all common labels by looking at which ones occur in every record, then create a unique array of items for those
 export function extractCommonLabels(labels: Label[][]): Label[] {
   const flatLabels = labels.flatMap((label) => label);
 
