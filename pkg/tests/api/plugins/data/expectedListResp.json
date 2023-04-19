@@ -3,6 +3,7 @@
     "name": "Alert list",
     "type": "panel",
     "id": "alertlist",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -39,6 +40,7 @@
     "name": "Alertmanager",
     "type": "datasource",
     "id": "alertmanager",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -80,6 +82,7 @@
     "name": "Annotations list",
     "type": "panel",
     "id": "annolist",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -116,6 +119,7 @@
     "name": "Azure Monitor",
     "type": "datasource",
     "id": "grafana-azure-monitor-datasource",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -174,6 +178,7 @@
     "name": "Bar chart",
     "type": "panel",
     "id": "barchart",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -210,6 +215,7 @@
     "name": "Bar gauge",
     "type": "panel",
     "id": "bargauge",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -246,6 +252,7 @@
     "name": "Candlestick",
     "type": "panel",
     "id": "candlestick",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -282,6 +289,7 @@
     "name": "Canvas",
     "type": "panel",
     "id": "canvas",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -318,6 +326,7 @@
     "name": "CloudWatch",
     "type": "datasource",
     "id": "cloudwatch",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -354,6 +363,7 @@
     "name": "Dashboard list",
     "type": "panel",
     "id": "dashlist",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -390,6 +400,7 @@
     "name": "Elasticsearch",
     "type": "datasource",
     "id": "elasticsearch",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -431,6 +442,7 @@
     "name": "Flame Graph",
     "type": "panel",
     "id": "flamegraph",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -467,6 +479,7 @@
     "name": "Gauge",
     "type": "panel",
     "id": "gauge",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -503,6 +516,7 @@
     "name": "Geomap",
     "type": "panel",
     "id": "geomap",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -539,6 +553,7 @@
     "name": "Getting Started",
     "type": "panel",
     "id": "gettingstarted",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -575,6 +590,7 @@
     "name": "Google Cloud Monitoring",
     "type": "datasource",
     "id": "stackdriver",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -611,6 +627,7 @@
     "name": "Graph (old)",
     "type": "panel",
     "id": "graph",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -647,6 +664,7 @@
     "name": "Graphite",
     "type": "datasource",
     "id": "graphite",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -692,6 +710,7 @@
     "name": "Heatmap",
     "type": "panel",
     "id": "heatmap",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -728,6 +747,7 @@
     "name": "Histogram",
     "type": "panel",
     "id": "histogram",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -764,6 +784,7 @@
     "name": "InfluxDB",
     "type": "datasource",
     "id": "influxdb",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -800,6 +821,7 @@
     "name": "Jaeger",
     "type": "datasource",
     "id": "jaeger",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -845,6 +867,7 @@
     "name": "Logs",
     "type": "panel",
     "id": "logs",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -881,6 +904,7 @@
     "name": "Loki",
     "type": "datasource",
     "id": "loki",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -926,6 +950,7 @@
     "name": "Microsoft SQL Server",
     "type": "datasource",
     "id": "mssql",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -962,6 +987,7 @@
     "name": "MySQL",
     "type": "datasource",
     "id": "mysql",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -998,6 +1024,7 @@
     "name": "News",
     "type": "panel",
     "id": "news",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1034,6 +1061,7 @@
     "name": "Node Graph",
     "type": "panel",
     "id": "nodeGraph",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1070,6 +1098,7 @@
     "name": "OpenTSDB",
     "type": "datasource",
     "id": "opentsdb",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1105,6 +1134,7 @@
     "name": "Parca",
     "type": "datasource",
     "id": "parca",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1144,6 +1174,7 @@
     "name": "Phlare",
     "type": "datasource",
     "id": "phlare",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1183,6 +1214,7 @@
     "name": "Pie chart",
     "type": "panel",
     "id": "piechart",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1219,6 +1251,7 @@
     "name": "PostgreSQL",
     "type": "datasource",
     "id": "postgres",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1255,6 +1288,7 @@
     "name": "Prometheus",
     "type": "datasource",
     "id": "prometheus",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1296,6 +1330,7 @@
     "name": "Stat",
     "type": "panel",
     "id": "stat",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1332,6 +1367,7 @@
     "name": "State timeline",
     "type": "panel",
     "id": "state-timeline",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1368,6 +1404,7 @@
     "name": "Status history",
     "type": "panel",
     "id": "status-history",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1404,6 +1441,7 @@
     "name": "Table",
     "type": "panel",
     "id": "table",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1440,6 +1478,7 @@
     "name": "Table (old)",
     "type": "panel",
     "id": "table-old",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1476,6 +1515,7 @@
     "name": "Tempo",
     "type": "datasource",
     "id": "tempo",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1517,6 +1557,7 @@
     "name": "TestData",
     "type": "datasource",
     "id": "testdata",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1553,6 +1594,7 @@
     "name": "Text",
     "type": "panel",
     "id": "text",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1589,6 +1631,7 @@
     "name": "Time series",
     "type": "panel",
     "id": "timeseries",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1625,6 +1668,7 @@
     "name": "Traces",
     "type": "panel",
     "id": "traces",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1661,6 +1705,7 @@
     "name": "Welcome",
     "type": "panel",
     "id": "welcome",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1697,6 +1742,7 @@
     "name": "XY Chart",
     "type": "panel",
     "id": "xychart",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1733,6 +1779,7 @@
     "name": "Zipkin",
     "type": "datasource",
     "id": "zipkin",
+    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
