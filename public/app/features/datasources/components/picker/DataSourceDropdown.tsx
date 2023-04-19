@@ -17,8 +17,8 @@ import { dataSourceName } from './utils';
 
 export function DataSourceDropdown(props: DataSourceDrawerProps) {
   const { current, onChange, ...restProps } = props;
-  const [isOpen, setOpen] = useState(false);
 
+  const [isOpen, setOpen] = useState(false);
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
@@ -44,13 +44,15 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
   );
   const { dialogProps } = useDialog({}, ref);
 
+  const styles = useStyles2(getStylesDropdown);
+
   return (
-    <div style={{ position: 'relative' }}>
+    <div className={styles.container}>
       {isOpen ? (
         <FocusScope contain autoFocus restoreFocus>
           <Input
-            prefix={filterTerm ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={current}></DataSourceLogo>}
-            suffix={<Icon name={filterTerm ? 'search' : 'angle-down'}></Icon>}
+            prefix={filterTerm ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={current} />}
+            suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
             placeholder={dataSourceName(current)}
             onChange={(e) => {
               setFilterTerm(e.currentTarget.value);
@@ -81,28 +83,38 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
         </FocusScope>
       ) : (
         <div
-          className={css`
-            cursor: pointer;
-            input {
-              cursor: pointer;
-            }
-          `}
+          className={styles.trigger}
           onClick={() => {
             setOpen(true);
           }}
         >
           <Input
-            prefix={<DataSourceLogo dataSource={current}></DataSourceLogo>}
-            suffix={<Icon name="angle-down"></Icon>}
+            className={styles.input}
+            prefix={<DataSourceLogo dataSource={current} />}
+            suffix={<Icon name="angle-down" />}
             value={dataSourceName(current)}
             onFocus={() => {
               setOpen(true);
             }}
-          ></Input>
+          />
         </div>
       )}
     </div>
   );
+}
+
+function getStylesDropdown(theme: GrafanaTheme2) {
+  return {
+    container: css`
+      position: relative;
+    `,
+    trigger: css`
+      cursor: pointer;
+    `,
+    input: css`
+      cursor: pointer;
+    `,
+  };
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
@@ -119,7 +131,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
     onClose();
   }, [onClickAddCSV, onClose]);
 
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStylesPickerContent);
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
@@ -161,7 +173,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               }}
             >
               Open advanced data source picker
-              <Icon name="arrow-right"></Icon>
+              <Icon name="arrow-right" />
             </Button>
           )}
         </ModalsController>
@@ -171,7 +183,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 });
 PickerContent.displayName = 'PickerContent';
 
-function getStyles(theme: GrafanaTheme2) {
+function getStylesPickerContent(theme: GrafanaTheme2) {
   return {
     container: css`
       display: flex;
