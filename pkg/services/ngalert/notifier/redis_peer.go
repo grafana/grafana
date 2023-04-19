@@ -421,7 +421,7 @@ func (p *redisPeer) mergePartialState(buf []byte) {
 	p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(buf)))
 
 	var part clusterpb.Part
-	if err := proto.Unmarshal([]byte(buf), &part); err != nil {
+	if err := proto.Unmarshal(buf, &part); err != nil {
 		p.logger.Warn("error decoding the received broadcast message", "err", err)
 		return
 	}
