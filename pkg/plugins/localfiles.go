@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -63,10 +64,9 @@ func NewLocalFS(basePath string, collectFilesFunc CollectFilesFunc) LocalFS {
 // If the file does not exist, ErrFileNotExist is returned.
 func (f LocalFS) Open(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
-	if err != nil {
-		return nil, err
+	if strings.Contains(cleanPath, "..") || err != nil {
+		return nil, ErrFileNotExist
 	}
-	// TODO: path traversal check
 	fn := filepath.Join(f.basePath, cleanPath)
 	if _, err := os.Stat(fn); err != nil {
 		return nil, ErrFileNotExist
@@ -93,12 +93,15 @@ func (f LocalFS) Files() ([]string, error) {
 	relFiles := make([]string, 0, len(absFilePaths))
 	base := f.Base()
 	for fn := range absFilePaths {
-		relFn, err := filepath.Rel(base, fn)
+		relPath, err := filepath.Rel(base, fn)
 		if err != nil {
 			return nil, err
 		}
-		// TODO: path traversal check just to be sure
-		relFiles = append(relFiles, relFn)
+		clenRelPath, err := util.CleanRelativePath(relPath)
+		if strings.Contains(clenRelPath, "..") || err != nil {
+			continue
+		}
+		relFiles = append(relFiles, clenRelPath)
 	}
 	return relFiles, nil
 }
@@ -182,10 +185,6 @@ type allowListFSNoFiles AllowListFS
 func (f allowListFSNoFiles) Files() ([]string, error) {
 	files := make([]string, 0, len(f.allowList))
 	for p := range f.allowList {
-		// TODO: CHECK in other impls
-		//if strings.Contains(r, "..") || err != nil {
-		//	continue
-		//}
 		files = append(files, p)
 	}
 	return files, nil
