@@ -33,11 +33,7 @@ export class LogContextProvider {
     this.appliedContextFilters = [];
   }
 
-  getLogRowContextQuery = async (
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    origQuery?: DataQuery
-  ): Promise<DataQuery> => {
+  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: DataQuery) {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const limit = (options && options.limit) || this.datasource.maxLines;
 
@@ -48,7 +44,15 @@ export class LogContextProvider {
       this.appliedContextFilters = filters;
     }
 
-    const { query } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+  }
+
+  getLogRowContextQuery = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<LokiQuery> => {
+    const { query } = await this.getQueryAndRange(row, options, origQuery);
 
     return query;
   };
@@ -59,16 +63,8 @@ export class LogContextProvider {
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
-    const limit = (options && options.limit) || 10;
 
-    // This happens only on initial load, when user haven't applied any filters yet
-    // We need to get the initial filters from the row labels
-    if (this.appliedContextFilters.length === 0) {
-      const filters = (await this.getInitContextFiltersFromLabels(row.labels)).filter((filter) => filter.enabled);
-      this.appliedContextFilters = filters;
-    }
-
-    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+    const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
