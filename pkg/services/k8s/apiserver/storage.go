@@ -276,9 +276,10 @@ func (s *entityStorage) Update(ctx context.Context,
 			return output, nil
 		}
 
-		if updateValidation != nil {
-			return nil, fmt.Errorf("update updateValidation not supported")
-		}
+		// TODO?
+		// if updateValidation != nil {
+		// 	//	return nil, fmt.Errorf("update updateValidation not supported")
+		// }
 
 		outputMeta, err := apimeta.Accessor(output)
 		if err != nil {
@@ -551,7 +552,7 @@ func (s *entityStorage) getSignedInUser(ctx context.Context, obj runtime.Object)
 	if signedInUser.Permissions[signedInUser.OrgID] == nil {
 		permissions, err := s.acService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
 		if err != nil {
-			fmt.Errorf("failed fetching permissions for user: userID=%d, error=%s", signedInUser.UserID, err.Error())
+			fmt.Printf("failed fetching permissions for user: userID=%d, error=%s\n", signedInUser.UserID, err.Error())
 		}
 		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}

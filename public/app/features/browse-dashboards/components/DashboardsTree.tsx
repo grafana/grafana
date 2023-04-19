@@ -4,9 +4,11 @@ import { CellProps, Column, TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Checkbox, useStyles2 } from '@grafana/ui';
+import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
-import { DashboardsTreeItem, INDENT_AMOUNT_CSS_VAR } from '../types';
+import { DashboardsTreeItem, DashboardTreeSelection, INDENT_AMOUNT_CSS_VAR } from '../types';
 
 import { NameCell } from './NameCell';
 import { TypeCell } from './TypeCell';
@@ -15,28 +17,56 @@ interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
+  selectedItems: DashboardTreeSelection;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
+  onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
 }
 
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
+type DashboardsTreeCellProps = CellProps<DashboardsTreeItem, unknown> & {
+  // Note: userProps for cell renderers (e.g. second argument in `cell.render('Cell', foo)` )
+  // aren't typed, so we must be careful when accessing this
+  selectedItems?: DashboardsTreeProps['selectedItems'];
+};
 
 const HEADER_HEIGHT = 35;
 const ROW_HEIGHT = 35;
 
-export function DashboardsTree({ items, width, height, onFolderClick }: DashboardsTreeProps) {
+export function DashboardsTree({
+  items,
+  width,
+  height,
+  selectedItems,
+  onFolderClick,
+  onItemSelectionChange,
+}: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
       Header: () => <Checkbox value={false} />,
-      Cell: () => <Checkbox value={false} />,
+      Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
+        const item = row.item;
+        if (item.kind === 'ui-empty-folder' || !selectedItems) {
+          return <></>;
+        }
+
+        const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
+        return (
+          <Checkbox
+            data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
+            value={isSelected}
+            onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
+          />
+        );
+      },
     };
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
       Header: <span style={{ paddingLeft: 20 }}>Name</span>,
-      Cell: (props: CellProps<DashboardsTreeItem, unknown>) => <NameCell {...props} onFolderClick={onFolderClick} />,
+      Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const typeColumn: DashboardsTreeColumn = {
@@ -46,10 +76,17 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
     };
 
     return [checkboxColumn, nameColumn, typeColumn];
-  }, [onFolderClick]);
+  }, [onItemSelectionChange, onFolderClick]);
 
   const table = useTable({ columns: tableColumns, data: items });
   const { getTableProps, getTableBodyProps, headerGroups } = table;
+
+  const virtualData = useMemo(() => {
+    return {
+      table,
+      selectedItems,
+    };
+  }, [table, selectedItems]);
 
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">
@@ -75,10 +112,11 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
 
       <div {...getTableBodyProps()}>
         <List
+          className="virtual list"
           height={height - HEADER_HEIGHT}
           width={width}
           itemCount={items.length}
-          itemData={table}
+          itemData={virtualData}
           itemSize={ROW_HEIGHT}
         >
           {VirtualListRow}
@@ -91,24 +129,32 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
 interface VirtualListRowProps {
   index: number;
   style: React.CSSProperties;
-  data: TableInstance<DashboardsTreeItem>;
+  data: {
+    table: TableInstance<DashboardsTreeItem>;
+    selectedItems: Record<DashboardViewItemKind, Record<string, boolean | undefined>>;
+  };
 }
 
-function VirtualListRow({ index, style, data: table }: VirtualListRowProps) {
+function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
+  const { table, selectedItems } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
   prepareRow(row);
 
   return (
-    <div {...row.getRowProps({ style })} className={cx(styles.row, styles.bodyRow)}>
+    <div
+      {...row.getRowProps({ style })}
+      className={cx(styles.row, styles.bodyRow)}
+      data-testid={selectors.pages.BrowseDashbards.table.row(row.original.item.uid)}
+    >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell')}
+            {cell.render('Cell', { selectedItems })}
           </div>
         );
       })}
@@ -121,8 +167,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     tableRoot: css({
-      // The Indented component uses this css variable to indent items to their position
-      // in the tree
+      // Responsively
       [INDENT_AMOUNT_CSS_VAR]: theme.spacing(1),
 
       [theme.breakpoints.up('md')]: {

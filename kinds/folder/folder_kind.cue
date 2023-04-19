@@ -9,7 +9,7 @@ lineage: seqs: [
 		schemas: [
 			//0.0
 			{
-				// Unique folder id.
+				// Unique folder id. (will be k8s name)
 				uid: string
 
 				// Folder title

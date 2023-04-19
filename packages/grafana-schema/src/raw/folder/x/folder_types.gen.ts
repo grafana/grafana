@@ -18,7 +18,7 @@ export interface Folder {
    */
   title: string;
   /**
-   * Unique folder id.
+   * Unique folder id. (will be k8s name)
    */
   uid: string;
 }

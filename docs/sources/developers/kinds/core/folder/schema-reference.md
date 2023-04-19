@@ -13,10 +13,10 @@ title: Folder kind
 
 A collection of items together
 
-| Property      | Type   | Required | Default | Description                |
-|---------------|--------|----------|---------|----------------------------|
-| `title`       | string | **Yes**  |         | Folder title               |
-| `uid`         | string | **Yes**  |         | Unique folder id.          |
-| `description` | string | No       |         | Description of the folder. |
+| Property      | Type   | Required | Default | Description                          |
+|---------------|--------|----------|---------|--------------------------------------|
+| `title`       | string | **Yes**  |         | Folder title                         |
+| `uid`         | string | **Yes**  |         | Unique folder id. (will be k8s name) |
+| `description` | string | No       |         | Description of the folder.           |
 
 

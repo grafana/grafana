@@ -18,6 +18,6 @@ type Folder struct {
 	// Folder title
 	Title string `json:"title"`
 
-	// Unique folder id.
+	// Unique folder id. (will be k8s name)
 	Uid string `json:"uid"`
 }

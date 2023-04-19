@@ -21,7 +21,9 @@ type watcher struct {
 	accessControlService accesscontrol.Service
 }
 
-func ProvideWatcher(userService user.Service, publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl, accessControlService accesscontrol.Service) *watcher {
+func ProvideWatcher(userService user.Service,
+	publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl,
+	accessControlService accesscontrol.Service) Watcher {
 	return &watcher{
 		log:                  log.New("k8s.publicdashboard.service-watcher"),
 		publicDashboardStore: publicDashboardStore,

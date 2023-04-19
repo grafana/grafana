@@ -29,7 +29,7 @@ spec:
                                 description: Folder title
                                 type: string
                             uid:
-                                description: Unique folder id.
+                                description: Unique folder id. (will be k8s name)
                                 type: string
                         required:
                             - uid

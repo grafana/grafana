@@ -1,0 +1,12 @@
+{
+  "apiVersion": "dashboard.core.grafana.com/v0-0alpha1",
+  "kind": "Folder",
+  "metadata": {
+    "name": "ryan-folder-1",
+    "namespace": "default"
+  },
+  "spec": {
+    "title": "hellol",
+    "uid": "d4e307b9-5a7a-4d20-af88-f00dda7ba62b"
+  }
+}

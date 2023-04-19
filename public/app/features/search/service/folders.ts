@@ -51,6 +51,7 @@ async function getChildFolders(parentUid?: string, parentTitle?: string): Promis
     uid: item.uid,
     title: item.title,
     parentTitle,
+    parentUID: parentUid,
     url: `/dashboards/f/${item.uid}/`,
   }));
 }

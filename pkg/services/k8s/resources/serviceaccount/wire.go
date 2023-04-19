@@ -6,5 +6,4 @@ import (
 
 var WireSet = wire.NewSet(
 	ProvideWatcher,
-	wire.Bind(new(Watcher), new(*watcher)),
 )

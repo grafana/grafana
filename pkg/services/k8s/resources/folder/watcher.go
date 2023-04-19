@@ -1,13 +1,23 @@
 package folder
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/folder"
+)
 
 var _ Watcher = (*watcher)(nil)
 
-type watcher struct{}
+type watcher struct {
+	dashboardStore database.DashboardSQLStore
+	folders        folder.FolderStore
+}
 
-func ProvideWatcher() *watcher {
-	return &watcher{}
+func ProvideWatcher(
+	dashboardStore database.DashboardSQLStore,
+	folders folder.FolderStore) Watcher {
+	return &watcher{dashboardStore, folders}
 }
 
 func (w *watcher) Add(ctx context.Context, obj *Folder) error {
