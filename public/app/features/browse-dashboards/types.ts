@@ -1,6 +1,6 @@
-import { DashboardViewItem as OrigDashboardViewItem } from 'app/features/search/types';
+import { DashboardViewItem as OrigDashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
-interface UIDashboardViewItem {
+export interface UIDashboardViewItem {
   kind: 'ui-empty-folder';
 }
 
@@ -11,5 +11,7 @@ export interface DashboardsTreeItem<T extends DashboardViewItem = DashboardViewI
   level: number;
   isOpen: boolean;
 }
+
+export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>>;
 
 export const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';
