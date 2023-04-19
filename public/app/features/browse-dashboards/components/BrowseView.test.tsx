@@ -73,8 +73,18 @@ describe('browse-dashboards BrowseView', () => {
       const childCheckbox = screen.queryByTestId(selectors.pages.BrowseDashbards.table.checkbox(child.item.uid));
       expect(childCheckbox).toBeChecked();
     }
+  });
 
-    // Now expand folderA_folderB and make sure it's children are expanded
+  it("checks descendants of a selected folder after they're loaded", async () => {
+    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    // First expand then click folderA
+    await expandFolder(folderA.item.uid);
+    await clickCheckbox(folderA.item.uid);
+
+    // When additional children are loaded (by expanding a folder), those items
+    // should also be selected
     await expandFolder(folderA_folderB.item.uid);
 
     const grandchildren = mockTree.filter(
