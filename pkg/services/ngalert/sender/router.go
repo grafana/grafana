@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -134,7 +133,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			hashes = append(hashes, cfg.SHA256())
 		}
 		// We have a running sender, check if we need to apply a new config.
-		amHash := strings.Join(hashes, "")
+		amHash := asSHA256(hashes)
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
 				d.logger.Debug("Sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
