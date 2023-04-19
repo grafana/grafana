@@ -66,6 +66,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	filestore.ProvideService,
 	wire.Bind(new(plugins.FileStore), new(*filestore.Service)),
+	wire.Bind(new(plugins.SignatureCalculator), new(*signature.Signature)),
+	signature.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

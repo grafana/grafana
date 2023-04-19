@@ -2,8 +2,12 @@ package loader
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -21,8 +25,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/manifestverifier"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1105,6 +1111,117 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
+	t.Run("Load plugin using API manifest", func(t *testing.T) {
+		pluginDir, err := filepath.Abs("../testdata/test-app")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		expected := []*plugins.Plugin{
+			{
+				JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/plugins/test-app/img/logo_small.png",
+							Large: "public/plugins/test-app/img/logo_large.png",
+						},
+						Screenshots: []plugins.Screenshots{
+							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "3.x.x",
+						Plugins: []plugins.Dependency{
+							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
+							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+						},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+					},
+					Backend: false,
+				},
+				FS:            plugins.NewLocalFS(filesInDir(t, pluginDir), pluginDir),
+				Class:         plugins.External,
+				Signature:     plugins.SignatureValid,
+				SignatureType: plugins.GrafanaSignature,
+				SignatureOrg:  "Grafana Labs",
+				Module:        "plugins/test-app/module",
+				BaseURL:       "public/plugins/test-app",
+			},
+		}
+
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		apiCalled := false
+		cfg := &config.Cfg{Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...)}
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/api/plugins/ci/keys" {
+				w.WriteHeader(http.StatusOK)
+				// Use the hardcoded key
+				k, err := manifestverifier.New(&config.Cfg{}, log.New("test")).GetPublicKey("7e4d0c6a708866e7")
+				require.NoError(t, err)
+				data := struct {
+					Items []manifestverifier.ManifestKeys `json:"items"`
+				}{
+					Items: []manifestverifier.ManifestKeys{{PublicKey: k, KeyID: "7e4d0c6a708866e7"}},
+				}
+				b, err := json.Marshal(data)
+				require.NoError(t, err)
+				_, err = w.Write(b)
+				require.NoError(t, err)
+				apiCalled = true
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		cfg.GrafanaComURL = s.URL
+		l := newLoader(cfg, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(cfg, procPrvdr, fakes.NewFakeLicensingService())
+		})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir}
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, apiCalled)
+
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+
+		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+	})
+}
+
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	rootDir, err := filepath.Abs("../")
 	if err != nil {
@@ -1419,7 +1536,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg))
+		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg), signature.ProvideService(cfg))
 
 	for _, cb := range cbs {
 		cb(l)

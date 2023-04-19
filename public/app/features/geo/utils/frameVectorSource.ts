@@ -26,7 +26,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
         new Feature({
           frame,
           rowIndex: i,
-          geometry: info.field.values.get(i) as T,
+          geometry: info.field.values[i] as T,
         })
       );
     }
@@ -45,7 +45,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
 
     //eslint-disable-next-line
     const field = info.field as unknown as Field<Point>;
-    const geometry = new LineString(field.values.toArray().map((p) => p.getCoordinates())) as Geometry;
+    const geometry = new LineString(field.values.map((p) => p.getCoordinates())) as Geometry;
     this.addFeatureInternal(
       new Feature({
         frame,

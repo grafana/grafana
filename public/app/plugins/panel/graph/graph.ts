@@ -371,7 +371,7 @@ class GraphElement {
       return dataIndex;
     }
 
-    const correctIndex = timeField.values.toArray().findIndex((value) => value === ts);
+    const correctIndex = timeField.values.findIndex((value) => value === ts);
     return correctIndex > -1 ? correctIndex : dataIndex;
   }
 

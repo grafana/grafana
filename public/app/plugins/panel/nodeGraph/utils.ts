@@ -122,7 +122,7 @@ export function processNodes(
     // Create the nodes here
     const nodesMap: { [id: string]: NodeDatum } = {};
     for (let i = 0; i < nodeFields.id.values.length; i++) {
-      const id = nodeFields.id.values.get(i);
+      const id = nodeFields.id.values[i];
       nodesMap[id] = makeNodeDatum(id, nodeFields, i);
     }
 
@@ -167,12 +167,12 @@ export function processNodes(
       // they are numbers. Here we just sum all incoming edges to get the final value for node.
       if (computableField(edgeFields.mainStat)) {
         nodesMap[target.id].mainStatNumeric =
-          (nodesMap[target.id].mainStatNumeric ?? 0) + edgeFields.mainStat!.values.get(i);
+          (nodesMap[target.id].mainStatNumeric ?? 0) + edgeFields.mainStat!.values[i];
       }
 
       if (computableField(edgeFields.secondaryStat)) {
         nodesMap[target.id].secondaryStatNumeric =
-          (nodesMap[target.id].secondaryStatNumeric ?? 0) + edgeFields.secondaryStat!.values.get(i);
+          (nodesMap[target.id].secondaryStatNumeric ?? 0) + edgeFields.secondaryStat!.values[i];
       }
 
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
@@ -199,20 +199,18 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
     throw new Error('id field is required for edges data frame.');
   }
 
-  return edgeFields.id.values.toArray().map((id, index) => {
-    const target = edgeFields.target?.values.get(index);
-    const source = edgeFields.source?.values.get(index);
+  return edgeFields.id.values.map((id, index) => {
+    const target = edgeFields.target?.values[index];
+    const source = edgeFields.source?.values[index];
 
     return {
       id,
       dataFrameRowIndex: index,
       source,
       target,
-      mainStat: edgeFields.mainStat
-        ? statToString(edgeFields.mainStat.config, edgeFields.mainStat.values.get(index))
-        : '',
+      mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat.config, edgeFields.mainStat.values[index]) : '',
       secondaryStat: edgeFields.secondaryStat
-        ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values.get(index))
+        ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
     };
   });
@@ -269,8 +267,8 @@ function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, e
 }
 
 function makeNodeDatumsFromEdge(edgeFields: EdgeFields, index: number) {
-  const targetId = edgeFields.target?.values.get(index);
-  const sourceId = edgeFields.source?.values.get(index);
+  const targetId = edgeFields.target?.values[index];
+  const sourceId = edgeFields.source?.values[index];
   return {
     target: makeSimpleNodeDatum(targetId, index),
     source: makeSimpleNodeDatum(sourceId, index),
@@ -291,15 +289,15 @@ function makeSimpleNodeDatum(name: string, index: number): NodeDatumFromEdge {
 function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeDatum {
   return {
     id: id,
-    title: nodeFields.title?.values.get(index) || '',
-    subTitle: nodeFields.subTitle?.values.get(index) || '',
+    title: nodeFields.title?.values[index] || '',
+    subTitle: nodeFields.subTitle?.values[index] || '',
     dataFrameRowIndex: index,
     incoming: 0,
     mainStat: nodeFields.mainStat,
     secondaryStat: nodeFields.secondaryStat,
     arcSections: nodeFields.arc,
     color: nodeFields.color,
-    icon: nodeFields.icon?.values.get(index) || '',
+    icon: nodeFields.icon?.values[index] || '',
   };
 }
 

@@ -84,6 +84,13 @@ type DataSourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 }
 
+// Defaults for the xorm connection pool
+type DefaultConnectionInfo struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime int
+}
+
 type DataPluginConfiguration struct {
 	DriverName        string
 	DSInfo            DataSourceInfo

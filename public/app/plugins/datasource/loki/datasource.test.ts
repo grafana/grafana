@@ -1142,6 +1142,14 @@ describe('Variable support', () => {
   });
 });
 
+describe('showContextToggle()', () => {
+  it('always displays logs context', () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    expect(ds.showContextToggle()).toBe(true);
+  });
+});
+
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
   const lokiQuery: LokiQuery = { refId: 'A', expr: query };
   const result = ds.addAdHocFilters(lokiQuery.expr);

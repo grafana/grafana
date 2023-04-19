@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'app/types';
 import { sortPlugins, Sorters } from '../helpers';
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal } from './actions';
+import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
 import { setDisplayMode } from './reducer';
 import {
   find,
@@ -72,6 +72,12 @@ export const useGetErrors = (): PluginError[] => {
 export const useInstall = () => {
   const dispatch = useDispatch();
   return (id: string, version?: string, isUpdating?: boolean) => dispatch(install({ id, version, isUpdating }));
+};
+
+export const useUnsetInstall = () => {
+  const dispatch = useDispatch();
+
+  return () => dispatch(unsetInstall());
 };
 
 export const useUninstall = () => {
