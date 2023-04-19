@@ -1,7 +1,9 @@
 package prometheus
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,6 +26,8 @@ type healthCheckProvider[T http.RoundTripper] struct {
 type healthCheckSuccessRoundTripper struct {
 }
 type healthCheckFailRoundTripper struct {
+}
+type healthCheckNotImplementedRoundTripper struct {
 }
 
 func (rt *healthCheckSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -45,6 +50,41 @@ func (rt *healthCheckFailRoundTripper) RoundTrip(req *http.Request) (*http.Respo
 		ContentLength: 0,
 		Request:       req,
 	}, nil
+}
+
+func (rt *healthCheckNotImplementedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.URL.Path == "/-/healthy" {
+		return &http.Response{
+			Status:        "400",
+			StatusCode:    400,
+			Header:        nil,
+			Body:          nil,
+			ContentLength: 0,
+			Request:       req,
+		}, nil
+	} else {
+		fakeResponse := `{
+    "data": {
+        "result": [
+            1681919899.44,
+            "2"
+        ],
+        "resultType": "scalar"
+    },
+    "status": "success"
+}`
+		bodyJSON, _ := simplejson.NewJson([]byte(fakeResponse))
+		body, _ := bodyJSON.MarshalJSON()
+		return &http.Response{
+			Status:        "200",
+			StatusCode:    200,
+			Header:        nil,
+			Body:          io.NopCloser(bytes.NewReader(body)),
+			ContentLength: 0,
+			Request:       req,
+		}, nil
+	}
+
 }
 
 func (provider *healthCheckProvider[T]) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
@@ -82,8 +122,8 @@ func Test_healthcheck(t *testing.T) {
 	})
 
 	// /~/healthy endpoint will return 400 there is no healthcheck support
-	// so it will fall back to querying
-	t.Run("should fail back to make an instant query", func(t *testing.T) {
+	// it will fall back to querying and get a failed response
+	t.Run("should fail back to make an instant query and does not get any response", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
 			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
@@ -96,7 +136,25 @@ func Test_healthcheck(t *testing.T) {
 
 		res, err := s.CheckHealth(context.Background(), req)
 		assert.NoError(t, err)
-		assert.Equal(t, backend.HealthStatusOk, res.Status)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
+	})
+
+	// /~/healthy endpoint will return 400 there is no healthcheck support
+	// it will fall back to querying and get a successful response
+	t.Run("should fail back to make an instant query and gets the response", func(t *testing.T) {
+		httpProvider := getMockProvider[*healthCheckNotImplementedRoundTripper]()
+		s := &Service{
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+		}
+
+		req := &backend.CheckHealthRequest{
+			PluginContext: getPluginContext(),
+			Headers:       nil,
+		}
+
+		res, err := s.CheckHealth(context.Background(), req)
+		assert.NoError(t, err)
+		assert.Equal(t, backend.HealthStatusError, res.Status)
 	})
 }
 
