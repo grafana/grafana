@@ -191,10 +191,6 @@ const (
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
 
-	// FlagSecureSocksDatasourceProxy
-	// Enable secure socks tunneling for supported core datasources
-	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
-
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
@@ -238,10 +234,6 @@ const (
 	// FlagOnlyExternalOrgRoleSync
 	// Prohibits a user from changing organization roles synced with external auth providers
 	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
-
-	// FlagDrawerDataSourcePicker
-	// Changes the user experience for data source selection to a drawer.
-	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
 
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
@@ -322,4 +314,16 @@ const (
 	// FlagAuthenticationConfigUI
 	// Enables authentication configuration UI
 	FlagAuthenticationConfigUI = "authenticationConfigUI"
+
+	// FlagPluginsAPIManifestKey
+	// Use grafana.com API to retrieve the public manifest key
+	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
+
+	// FlagAdvancedDataSourcePicker
+	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
+
+	// FlagOpensearchDetectVersion
+	// Enable version detection in OpenSearch
+	FlagOpensearchDetectVersion = "opensearchDetectVersion"
 )

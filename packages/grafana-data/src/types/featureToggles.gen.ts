@@ -64,7 +64,6 @@ export interface FeatureToggles {
   showTraceId?: boolean;
   datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
-  secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -76,7 +75,6 @@ export interface FeatureToggles {
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
-  drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
@@ -97,4 +95,7 @@ export interface FeatureToggles {
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
+  pluginsAPIManifestKey?: boolean;
+  advancedDataSourcePicker?: boolean;
+  opensearchDetectVersion?: boolean;
 }

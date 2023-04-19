@@ -24,41 +24,43 @@ import (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	pluginFinder       finder.Finder
-	processManager     process.Service
-	pluginRegistry     registry.Service
-	roleRegistry       plugins.RoleRegistry
-	pluginInitializer  initializer.Initializer
-	signatureValidator signature.Validator
-	assetPath          *assetpath.Service
-	log                log.Logger
-	cfg                *config.Cfg
+	pluginFinder        finder.Finder
+	processManager      process.Service
+	pluginRegistry      registry.Service
+	roleRegistry        plugins.RoleRegistry
+	pluginInitializer   initializer.Initializer
+	signatureValidator  signature.Validator
+	signatureCalculator plugins.SignatureCalculator
+	assetPath           *assetpath.Service
+	log                 log.Logger
+	cfg                 *config.Cfg
 
 	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service) *Loader {
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return &Loader{
-		pluginFinder:       pluginFinder,
-		pluginRegistry:     pluginRegistry,
-		pluginInitializer:  initializer.New(cfg, backendProvider, license),
-		signatureValidator: signature.NewValidator(authorizer),
-		processManager:     processManager,
-		errs:               make(map[string]*plugins.SignatureError),
-		log:                log.New("plugin.loader"),
-		roleRegistry:       roleRegistry,
-		cfg:                cfg,
-		assetPath:          assetPath,
+		pluginFinder:        pluginFinder,
+		pluginRegistry:      pluginRegistry,
+		pluginInitializer:   initializer.New(cfg, backendProvider, license),
+		signatureValidator:  signature.NewValidator(authorizer),
+		signatureCalculator: signatureCalculator,
+		processManager:      processManager,
+		errs:                make(map[string]*plugins.SignatureError),
+		log:                 log.New("plugin.loader"),
+		roleRegistry:        roleRegistry,
+		cfg:                 cfg,
+		assetPath:           assetPath,
 	}
 }
 
@@ -73,13 +75,14 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 
 func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
+
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 			continue
 		}
 
-		sig, err := signature.Calculate(ctx, l.log, src, p.Primary)
+		sig, err := l.signatureCalculator.Calculate(ctx, src, p.Primary)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue

@@ -233,8 +233,9 @@ func DeclareFixedRoles(service Service) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 	authenticationConfigWriter := RoleRegistration{
-		Role:   authenticationConfigWriterRole,
-		Grants: []string{RoleGrafanaAdmin},
+		Role:                authenticationConfigWriterRole,
+		Grants:              []string{RoleGrafanaAdmin},
+		AllowGrantsOverride: true,
 	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,

@@ -57,6 +57,7 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated -- register the annotation support in the instance constructor */
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
     this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;
@@ -514,8 +515,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
-  /** @deprecate */
-  dashboardId?: number;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
 

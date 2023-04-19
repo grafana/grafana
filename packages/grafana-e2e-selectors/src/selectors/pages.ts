@@ -66,6 +66,11 @@ export const Pages = {
       submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
+      Annotations: {
+        annotationsWrapper: 'data-testid annotation-wrapper',
+        annotationLabel: (label: string) => `data-testid Dashboard annotations submenu Label ${label}`,
+        annotationToggle: (label: string) => `data-testid Dashboard annotations submenu Toggle ${label}`,
+      },
     },
     Settings: {
       Actions: {
@@ -92,6 +97,11 @@ export const Pages = {
         },
         Settings: {
           name: 'Annotations settings name input',
+        },
+        NewAnnotation: {
+          panelFilterSelect: 'data-testid annotations-panel-filter',
+          showInLabel: 'show-in-label',
+          previewInDashboard: 'data-testid annotations-preview',
         },
       },
       Variables: {
@@ -239,6 +249,9 @@ export const Pages = {
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
+    Annotations: {
+      marker: 'data-testid annotation-marker',
+    },
   },
   PluginsList: {
     page: 'Plugins list page',

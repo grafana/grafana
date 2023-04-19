@@ -23,7 +23,6 @@ const makeEmptyQueryResponse = (loadingState: LoadingState) => {
     requestId: '1',
     intervalMs: 0,
     interval: '1s',
-    dashboardId: 0,
     panelId: 1,
     range: baseEmptyResponse.timeRange,
     scopedVars: {
