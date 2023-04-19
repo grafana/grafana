@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -140,36 +139,6 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 
 	// strip nulls...
 	stripNulls(dto.Data)
-
-	if false {
-		schemaVersion := dto.Data.Get("schemaVersion").MustInt()
-		if schemaVersion < dashboard.HandoffSchemaVersion {
-			return nil, fmt.Errorf("dashboard %s can not be parsed by thema (schemaVersion:%d)", uid, schemaVersion)
-		}
-
-		dashbytes, err := dto.Data.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-
-		d, _, err := coreReg.Dashboard().JSONValueMux(dashbytes)
-		if err != nil {
-			fmt.Printf("-------- FAILED TO PARSE ---------")
-			fmt.Printf("%s", string(dashbytes))
-			return nil, fmt.Errorf("dashboard JSONValueMux failed: %w", err)
-		}
-
-		if d.Uid == nil {
-			d.Uid = &uid
-		}
-
-		if d.Title == nil {
-			d.Title = &dto.Title
-		}
-
-		//
-		// uObj, err := toUnstructured(d, meta)
-	}
 
 	if anno.CreatedAt < 1 {
 		anno.CreatedAt = time.Now().UnixMilli()
