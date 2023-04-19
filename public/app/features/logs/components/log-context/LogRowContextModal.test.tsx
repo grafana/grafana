@@ -37,12 +37,20 @@ describe('LogRowContextModal', () => {
     jest.clearAllMocks();
   });
 
-  it('should not render modal when it is closed', () => {
-    render(
-      <LogRowContextModal row={row} open={false} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
-    );
+  it('should not render modal when it is closed', async () => {
+    act(() => {
+      render(
+        <LogRowContextModal
+          row={row}
+          open={false}
+          onClose={() => {}}
+          getRowContext={getRowContext}
+          timeZone={timeZone}
+        />
+      );
+    });
 
-    expect(screen.queryByText('Log context')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Log context')).not.toBeInTheDocument());
   });
 
   it('should render modal when it is open', async () => {
@@ -61,12 +69,20 @@ describe('LogRowContextModal', () => {
     await waitFor(() => expect(screen.queryByText('Log context')).toBeInTheDocument());
   });
 
-  it('should call getRowContext on open and change of row', () => {
-    render(
-      <LogRowContextModal row={row} open={false} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
-    );
+  it('should call getRowContext on open and change of row', async () => {
+    act(() => {
+      render(
+        <LogRowContextModal
+          row={row}
+          open={false}
+          onClose={() => {}}
+          getRowContext={getRowContext}
+          timeZone={timeZone}
+        />
+      );
+    });
 
-    expect(getRowContext).not.toHaveBeenCalled();
+    await waitFor(() => expect(getRowContext).not.toHaveBeenCalled());
   });
   it('should call getRowContext on open', async () => {
     act(() => {
@@ -113,6 +129,7 @@ describe('LogRowContextModal', () => {
 
   it('should show a split view button', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
+
     render(
       <LogRowContextModal
         row={row}
@@ -124,11 +141,13 @@ describe('LogRowContextModal', () => {
       />
     );
 
-    expect(
-      screen.getByRole('button', {
-        name: /open in split view/i,
-      })
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /open in split view/i,
+        })
+      ).toBeInTheDocument()
+    );
   });
 
   it('should not show a split view button', async () => {
@@ -156,12 +175,6 @@ describe('LogRowContextModal', () => {
       />
     );
 
-    const splitViewButton = screen.getByRole('button', {
-      name: /open in split view/i,
-    });
-
-    await userEvent.click(splitViewButton);
-
     await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(1));
   });
 
@@ -179,7 +192,7 @@ describe('LogRowContextModal', () => {
       />
     );
 
-    const splitViewButton = screen.getByRole('button', {
+    const splitViewButton = await screen.findByRole('button', {
       name: /open in split view/i,
     });
 
@@ -191,6 +204,7 @@ describe('LogRowContextModal', () => {
   it('should dispatch splitOpen', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
     const onClose = jest.fn();
+
     render(
       <LogRowContextModal
         row={row}
@@ -202,12 +216,12 @@ describe('LogRowContextModal', () => {
       />
     );
 
-    const splitViewButton = screen.getByRole('button', {
+    const splitViewButton = await screen.findByRole('button', {
       name: /open in split view/i,
     });
 
     await userEvent.click(splitViewButton);
 
-    expect(dispatchMock).toHaveBeenCalledWith(splitOpen);
+    await waitFor(() => expect(dispatchMock).toHaveBeenCalledWith(splitOpen));
   });
 });
