@@ -147,7 +147,11 @@ export class PrometheusDatasource
       this.getPrometheusTargetSignature.bind(this),
       instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
       (request, targ) => {
-        return { interval: targ.interval ?? request.interval, expr: this.interpolateString(targ.expr) };
+        return {
+          interval: targ.interval ?? request.interval,
+          expr: this.interpolateString(targ.expr),
+          datasource: 'Prometheus',
+        };
       }
     );
 
@@ -475,7 +479,10 @@ export class PrometheusDatasource
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
       let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
-      if (this.hasIncrementalQuery) {
+      const hasInstantQuery = request.targets.some((target) => target.instant);
+
+      // Don't cache instant queries
+      if (this.hasIncrementalQuery && !hasInstantQuery) {
         requestInfo = this.cache.requestInfo(request);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {

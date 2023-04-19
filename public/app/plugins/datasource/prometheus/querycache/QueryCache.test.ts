@@ -102,6 +102,7 @@ const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): Datasou
   return {
     expr: targ.expr,
     interval: targ.interval ?? request.interval,
+    datasource: 'prom',
   };
 };
 
@@ -109,6 +110,7 @@ const getInfluxProfileData = (request: DataQueryRequest, targ: InfluxQuery): Dat
   return {
     expr: targ.rawQuery && targ.query ? targ.query : JSON.stringify(targ.select),
     interval: request.interval,
+    datasource: 'influx',
   };
 };
 

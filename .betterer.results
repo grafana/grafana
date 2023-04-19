@@ -4442,13 +4442,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Do not use any type assertions.", "16"],
+      [0, 0, 0, "Do not use any type assertions.", "15"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
-      [0, 0, 0, "Do not use any type assertions.", "21"],
+      [0, 0, 0, "Do not use any type assertions.", "20"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
@@ -4458,8 +4458,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "32"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "31"]
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

@@ -165,9 +165,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       this.getInfluxTargetSignature.bind(this),
       '30s', //@todo
       (request, targ) => {
-        const target: Record<string, InfluxQuery> = this.applyTemplateVariables(targ, request.scopedVars);
-        //@todo get profiling working with influx
-        return { interval: request.interval, expr: target.query.query ?? '' };
+        const target = this.applyTemplateVariables(targ, request.scopedVars);
+
+        return {
+          interval: request.interval,
+          expr: target.query ?? '',
+          datasource: settingsData.version === InfluxVersion.Flux ? 'Flux' : 'influxQL',
+        };
       }
     );
 
@@ -199,9 +203,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getInfluxTargetSignature(request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) {
-    const target: Record<string, InfluxQuery> = this.applyTemplateVariables(targ, request.scopedVars);
-
-    console.log('target', target);
+    const target = this.applyTemplateVariables(targ, request.scopedVars);
 
     if (targ?.rawQuery) {
       return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${target.query}`;
@@ -329,7 +331,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};
 

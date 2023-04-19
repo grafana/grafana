@@ -354,7 +354,7 @@ describe('InfluxDataSource', () => {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });
-        const value = query.tags[0].value;
+        const value = query?.tags?.length ? query?.tags[0].value : 'WRONG';
         const scopedVars = 'interpolationText|interpolationText2';
         expect(value).toBe(scopedVars);
       });

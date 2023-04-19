@@ -48,15 +48,16 @@ export interface CacheRequestInfo<T extends SupportedQueryTypes> {
 }
 
 export interface DatasourceProfileData {
-  [index: string]: number | string | null | undefined;
   interval?: string;
   expr: string;
+  datasource: string;
 }
 
 interface ProfileData extends DatasourceProfileData {
   identity: string;
   bytes: number | null;
   dashboardUID: string;
+  panelId?: number;
 }
 
 /**
@@ -97,6 +98,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       expr: string;
       interval: string;
       sent: boolean;
+      datasource: string;
     }
   >();
 
@@ -161,6 +163,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
                       const savedBytes = toInteger(value.bytes) - requestTransferSize;
 
                       this.pendingAccumulatedEvents.set(value.identity, {
+                        datasource: value.datasource ?? 'N/A',
                         requestCount: (previous?.requestCount ?? 0) + 1,
                         savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
                         initialRequestSize: value.bytes,
@@ -203,16 +206,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
     for (let [key, value] of entries) {
       if (!value.sent) {
         this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
-        faro.api.pushMeasurement({
-          type: 'custom',
-          values: {
-            thing: 0,
-            thing2: 1,
-          },
-        });
         faro.api.pushEvent(
-          'prometheus incremental query response size',
+          'incremental query response size',
           {
+            datasource: value.datasource.toString(),
             requestCount: value.requestCount.toString(),
             savedBytesTotal: value.savedBytesTotal.toString(),
             initialRequestSize: value.initialRequestSize.toString(),
@@ -239,7 +236,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     const newTo = request.range.to.valueOf();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
-    const shouldCache = request.rangeRaw?.to?.toString() === 'now' && !request.targets.some((targ) => targ.instant);
+    const shouldCache = request.rangeRaw?.to?.toString() === 'now';
 
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
