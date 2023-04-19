@@ -17,9 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var coreReg = corekind.NewBase(nil)
@@ -49,12 +47,12 @@ func (dashboardCRD *Dashboard) UnmarshalJSON(data []byte) error {
 	u := &unstructured.Unstructured{}
 	u.SetUnstructuredContent(m)
 
-	obj, err := fromUnstructured(u)
+	_, err := fromUnstructured(u)
 	if err != nil {
 		return err
 	}
 
-	*dashboardCRD = *obj
+//	*dashboardCRD = *obj
 	return nil
 }
 
@@ -65,38 +63,39 @@ type DashboardList struct {
 }
 
 // fromUnstructured converts an *unstructured.Unstructured object to a *Dashboard.
-func fromUnstructured(obj any) (*Dashboard, error) {
+func fromUnstructured(obj any) (*unstructured.Unstructured, error) {
 	uObj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var dashboard crd.Base[dashboard.Dashboard]
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &dashboard)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert to Dashboard: %w", err)
-	}
+	// var dashboard crd.Base[dashboard.Dashboard]
+	// err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &dashboard)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to convert to Dashboard: %w", err)
+	// }
 
-	return &Dashboard{dashboard}, nil
+	// return &Dashboard{dashboard}, nil
+	return uObj, nil
 }
 
-// toUnstructured converts a Dashboard to an *unstructured.Unstructured.
-func toUnstructured(obj *dashboard.Dashboard, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
-	dashboardObj := crd.Base[dashboard.Dashboard]{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       CRD.GVK().Kind,
-			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
-		},
-		ObjectMeta: metadata,
-		Spec:       *obj,
-	}
+// // toUnstructured converts a Dashboard to an *unstructured.Unstructured.
+// func toUnstructured(obj *dashboard.Dashboard, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
+// 	dashboardObj := crd.Base[dashboard.Dashboard]{
+// 		TypeMeta: metav1.TypeMeta{
+// 			Kind:       CRD.GVK().Kind,
+// 			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
+// 		},
+// 		ObjectMeta: metadata,
+// 		Spec:       *obj,
+// 	}
 
-	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&dashboardObj)
-	if err != nil {
-		return nil, err
-	}
+// 	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&dashboardObj)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return &unstructured.Unstructured{
-		Object: out,
-	}, nil
-}
+// 	return &unstructured.Unstructured{
+// 		Object: out,
+// 	}, nil
+// }
