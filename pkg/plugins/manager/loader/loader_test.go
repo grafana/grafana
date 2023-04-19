@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -1160,7 +1159,7 @@ func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
 					},
 					Backend: false,
 				},
-				FS:            plugins.NewLocalFS(filesInDir(t, pluginDir), pluginDir),
+				FS:            mustNewTestFSWithCollect(t, pluginDir),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaSignature,

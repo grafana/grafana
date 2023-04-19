@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,7 +29,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -311,7 +312,7 @@ func TestFinder_Find(t *testing.T) {
 
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	cfg := setting.NewCfg()
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
