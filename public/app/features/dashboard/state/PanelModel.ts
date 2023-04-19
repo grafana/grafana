@@ -416,18 +416,22 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
       const wasAngular = autoMigrateAngular[this.autoMigrateFrom] != null;
-      this.callPanelTypeChangeHandler(
-        plugin,
-        this.autoMigrateFrom,
-        this.getOptionsToRemember(), // old options
-        wasAngular
-      );
+      const oldOptions = this.getOptionsToRemember();
+      const prevPluginId = this.autoMigrateFrom;
+      const newPluginId = this.type;
 
-      delete this.autoMigrateFrom;
+      this.clearPropertiesBeforePluginChange();
+
+      // Need to set these again as they get cleared by the above function
+      this.type = newPluginId;
+      this.plugin = plugin;
+
+      this.callPanelTypeChangeHandler(plugin, prevPluginId, oldOptions, wasAngular);
     }
 
     if (plugin.onPanelMigration) {
