@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     sectionImg: css({
       margin: '6px 0',
-      width: 16,
+      width: theme.spacing(2),
     }),
     isSectionRoot: css({
       fontSize: theme.typography.h4.fontSize,
