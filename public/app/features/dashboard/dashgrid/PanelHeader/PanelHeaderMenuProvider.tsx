@@ -1,6 +1,7 @@
 import { ReactElement, useEffect, useState } from 'react';
 
 import { LoadingState, PanelMenuItem } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { useSelector } from 'app/types';
 
@@ -24,6 +25,7 @@ export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, childr
 
   useEffect(() => {
     setItems(getPanelMenu(dashboard, panel, angularComponent));
+    reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
   }, [dashboard, panel, angularComponent, loadingState, setItems]);
 
   return children({ items });
