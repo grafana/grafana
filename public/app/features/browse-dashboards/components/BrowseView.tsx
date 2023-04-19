@@ -1,3 +1,4 @@
+import produce from 'immer';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getFolderChildren } from 'app/features/search/service/folders';
@@ -28,15 +29,33 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
   // we keep track of children for each UID and then later combine them in the format required to display them
   const [childrenByUID, setChildrenByUID] = useState<Record<string, DashboardViewItem[] | undefined>>({});
 
-  async function loadChildrenForUID(uid: string | undefined) {
-    const folderKey = uid ?? '$$root';
+  const loadChildrenForUID = useCallback(
+    async (uid: string | undefined) => {
+      const folderKey = uid ?? '$$root';
 
-    const childItems = await getFolderChildren(uid, undefined, true);
-    setChildrenByUID((v) => ({ ...v, [folderKey]: childItems }));
-  }
+      const childItems = await getFolderChildren(uid, undefined, true);
+      setChildrenByUID((v) => ({ ...v, [folderKey]: childItems }));
+
+      // If the parent is already selected, mark these items as selected also
+      const parentIsSelected = selectedItems.folder[folderKey];
+      if (parentIsSelected) {
+        setSelectedItems((currentState) =>
+          produce(currentState, (draft) => {
+            for (const child of childItems) {
+              draft[child.kind][child.uid] = true;
+            }
+          })
+        );
+      }
+    },
+    [selectedItems]
+  );
 
   useEffect(() => {
     loadChildrenForUID(folderUID);
+    // No need to depend on loadChildrenForUID - we only want this to run
+    // when folderUID changes (initial page view)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderUID]);
 
   const flatTree = useMemo(
@@ -44,18 +63,40 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
     [folderUID, childrenByUID, openFolders]
   );
 
-  const handleFolderClick = useCallback((uid: string, newState: boolean) => {
-    if (newState) {
-      loadChildrenForUID(uid);
-    }
+  const handleFolderClick = useCallback(
+    (uid: string, newState: boolean) => {
+      if (newState) {
+        loadChildrenForUID(uid);
+      }
 
-    setOpenFolders((old) => ({ ...old, [uid]: newState }));
-  }, []);
+      setOpenFolders((old) => ({ ...old, [uid]: newState }));
+    },
+    [loadChildrenForUID]
+  );
 
-  const handleItemSelectionChange = useCallback((kind: DashboardViewItemKind, uid: string, newState: boolean) => {
-    console.log('setting', kind, uid, 'selection to', newState);
-    setSelectedItems((old) => ({ ...old, [kind]: { ...old[kind], [uid]: newState } }));
-  }, []);
+  const handleItemSelectionChange = useCallback(
+    (kind: DashboardViewItemKind, uid: string, newState: boolean) => {
+      // Recursively set selection state for this item and all descendants
+      setSelectedItems((old) =>
+        produce(old, (draft) => {
+          function markChildren(kind: DashboardViewItemKind, uid: string) {
+            draft[kind][uid] = newState;
+            if (kind !== 'folder') {
+              return;
+            }
+
+            let children = childrenByUID[uid] ?? [];
+            for (const child of children) {
+              markChildren(child.kind, child.uid);
+            }
+          }
+
+          markChildren(kind, uid);
+        })
+      );
+    },
+    [childrenByUID]
+  );
 
   return (
     <DashboardsTree

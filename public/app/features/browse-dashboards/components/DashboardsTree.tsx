@@ -7,7 +7,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 import { DashboardViewItemKind } from 'app/features/search/types';
 
-import { itemIsSelected } from '../selectionUtils';
 import { DashboardsTreeItem, DashboardTreeSelection, INDENT_AMOUNT_CSS_VAR } from '../types';
 
 import { NameCell } from './NameCell';
@@ -52,10 +51,10 @@ export function DashboardsTree({
           return <></>;
         }
 
-        const isSelected = itemIsSelected(items, selectedItems, row);
+        const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
         return (
           <Checkbox
-            value={isSelected === 'selected'}
+            value={isSelected}
             onChange={(ev) => onItemSelectionChange(item.kind, item.uid, ev.currentTarget.checked)}
           />
         );
@@ -75,7 +74,7 @@ export function DashboardsTree({
     };
 
     return [checkboxColumn, nameColumn, typeColumn];
-  }, [items, onItemSelectionChange, onFolderClick]);
+  }, [onItemSelectionChange, onFolderClick]);
 
   const table = useTable({ columns: tableColumns, data: items });
   const { getTableProps, getTableBodyProps, headerGroups } = table;
