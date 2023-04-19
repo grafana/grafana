@@ -771,6 +771,7 @@ export enum VariableFormatID {
   SQLString = 'sqlstring',
   SingleQuote = 'singlequote',
   Text = 'text',
+  UriEncode = 'uriencode',
 }
 
 export interface DataSourceRef {
