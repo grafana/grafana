@@ -41,6 +41,10 @@ const (
 	waitForMsgIdle          = time.Millisecond * 100
 	reasonBufferOverflow    = "buffer_overflow"
 	reasonRedisIssue        = "redis_issue"
+	heartbeatInterval       = time.Second * 5
+	heartbeatTimeout        = time.Minute
+	// The duration we want to return the members if the network is down.
+	membersValidFor = time.Minute
 )
 
 type redisPeer struct {
@@ -51,9 +55,6 @@ type redisPeer struct {
 	states    map[string]cluster.State
 	subs      map[string]*redis.PubSub
 	statesMtx sync.RWMutex
-
-	heartbeatInterval time.Duration
-	heartbeatTimeout  time.Duration
 
 	readyc    chan struct{}
 	shutdownc chan struct{}
@@ -73,8 +74,6 @@ type redisPeer struct {
 	membersMtx sync.Mutex
 	// The time when we fetched the members from redis the last time successfully.
 	membersFetchedAt time.Time
-	// The duration we want to return the members if the network is down.
-	membersValidFor time.Duration
 }
 
 func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
@@ -99,19 +98,16 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		cfg.prefix = cfg.prefix + ":"
 	}
 	p := &redisPeer{
-		name:              name,
-		redis:             rdb,
-		logger:            logger,
-		states:            map[string]cluster.State{},
-		subs:              map[string]*redis.PubSub{},
-		pushPullInterval:  pushPullInterval,
-		readyc:            make(chan struct{}),
-		shutdownc:         make(chan struct{}),
-		prefix:            cfg.prefix,
-		heartbeatInterval: time.Second * 5,
-		heartbeatTimeout:  time.Minute,
-		members:           make([]string, 0),
-		membersValidFor:   time.Minute,
+		name:             name,
+		redis:            rdb,
+		logger:           logger,
+		states:           map[string]cluster.State{},
+		subs:             map[string]*redis.PubSub{},
+		pushPullInterval: pushPullInterval,
+		readyc:           make(chan struct{}),
+		shutdownc:        make(chan struct{}),
+		prefix:           cfg.prefix,
+		members:          make([]string, 0),
 	}
 
 	// The metrics for the redis peer are exactly the same as for the official
@@ -208,7 +204,7 @@ func (p *redisPeer) withPrefix(str string) string {
 }
 
 func (p *redisPeer) heartbeatLoop() {
-	ticker := time.NewTicker(p.heartbeatInterval)
+	ticker := time.NewTicker(heartbeatInterval)
 	for {
 		select {
 		case <-ticker.C:
@@ -253,7 +249,7 @@ func (p *redisPeer) membersSync() {
 		// To prevent a spike of duplicate messages, we return for the duration of
 		// membersValidFor the last known members and only empty the list if we do
 		// not eventually recover.
-		if p.membersFetchedAt.Before(time.Now().Add(-p.membersValidFor)) {
+		if p.membersFetchedAt.Before(time.Now().Add(-membersValidFor)) {
 			p.membersMtx.Lock()
 			p.members = []string{}
 			p.membersMtx.Unlock()
@@ -300,7 +296,7 @@ func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{
 			continue
 		}
 		tm := time.Unix(ts, 0)
-		if tm.Before(time.Now().Add(-p.heartbeatTimeout)) {
+		if tm.Before(time.Now().Add(-heartbeatTimeout)) {
 			continue
 		}
 		peers = append(peers, peer)
