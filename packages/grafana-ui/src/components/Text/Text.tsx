@@ -1,23 +1,23 @@
 import { css, cx } from '@emotion/css';
 import React, { createElement, CSSProperties, useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
 interface TextProps {
   /** Defines what HTML element is defined underneath, also maps into a default typography variant */
-  as: keyof GrafanaTheme2['typography'];
+  as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined 'as' is not what is needed */
-  variant?: keyof GrafanaTheme2['typography'] | 'span' | undefined;
+  variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
-  weight: keyof GrafanaTheme2['typography'];
+  weight?: 'light' | 'regular' | 'medium' | 'bold';
   /** Color to use for text */
-  color?: keyof GrafanaTheme2['colors']['text'];
+  color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info';
   /** Use to cut the text off with ellipsis if there isn't space to show all of it. On hover shows the rest of the text */
   truncate?: boolean;
   /** Whether to align the text to left, center or right */
-  textAlignment: CSSProperties['textAlign'];
+  textAlignment?: CSSProperties['textAlign'];
   /** Margin to set on the component */
   margin?: string | number;
   className?: string;
@@ -25,7 +25,7 @@ interface TextProps {
 }
 
 export const Text = ({
-  as,
+  as = 'span',
   variant,
   weight,
   color,
@@ -41,19 +41,11 @@ export const Text = ({
       [color, margin, textAlignment, truncate, weight]
     )
   );
-  const element = variant || as;
 
   return createElement(
-    element,
+    as,
     {
       className: cx(className, styles),
-      as,
-      variant,
-      weight,
-      color,
-      truncate,
-      textAlignment,
-      margin,
     },
     children
   );
@@ -63,28 +55,43 @@ Text.displayName = 'Text';
 
 const getTextStyles = (
   theme: GrafanaTheme2,
-  color: TextProps['color'] | undefined,
-  weight: TextProps['weight'] | undefined,
-  truncate: TextProps['truncate'] | undefined,
-  textAlignment: TextProps['textAlignment'] | undefined,
-  margin: TextProps['margin'] | undefined
+  color?: TextProps['color'],
+  weight?: TextProps['weight'],
+  truncate?: TextProps['truncate'],
+  textAlignment?: TextProps['textAlignment'],
+  margin?: TextProps['margin']
 ) => {
   const customWeight = () => {
     switch (weight) {
-      case 'fontWeightBold':
+      case 'bold':
         return theme.typography.fontWeightBold;
-      case 'fontWeightMedium':
+      case 'medium':
         return theme.typography.fontWeightMedium;
-      case 'fontWeightLight':
+      case 'light':
         return theme.typography.fontWeightLight;
       default:
         return theme.typography.fontWeightRegular;
     }
   };
 
+  const customColor = () => {
+    switch (color) {
+      case 'error':
+        return theme.colors.error.text;
+      case 'success':
+        return theme.colors.success.text;
+      case 'info':
+        return theme.colors.info.text;
+      case 'warning':
+        return theme.colors.warning.text;
+      default:
+        return color ? theme.colors.text[color] : undefined;
+    }
+  };
+
   return css([
     color && {
-      color: theme.colors.text[color],
+      color: customColor(),
     },
     weight && {
       fontWeight: customWeight(),
@@ -96,6 +103,9 @@ const getTextStyles = (
     },
     margin && {
       margin,
+    },
+    textAlignment && {
+      textAlign: textAlignment,
     },
   ]);
 };
