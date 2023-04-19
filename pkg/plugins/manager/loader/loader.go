@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -153,6 +154,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 				if err := f.Close(); err != nil {
 					l.log.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
 				}
+			}
+		}
+
+		// Detect angular for external plugins
+		if plugin.IsExternalPlugin() {
+			var err error
+			plugin.Angular, err = angulardetector.Inspect(plugin)
+			if err != nil {
+				l.log.Warn("could not inspect plugin for angular", "pluginID", plugin.ID, "err", err)
 			}
 		}
 

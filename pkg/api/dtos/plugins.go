@@ -45,6 +45,7 @@ type PluginListItem struct {
 	SignatureType plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg  string                  `json:"signatureOrg"`
 	AccessControl accesscontrol.Metadata  `json:"accessControl,omitempty"`
+	Angular       bool                    `json:"angular"`
 }
 
 type PluginList []PluginListItem
