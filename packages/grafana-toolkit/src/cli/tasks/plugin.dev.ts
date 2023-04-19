@@ -1,7 +1,7 @@
 import { useSpinner } from '../utils/useSpinner';
 
-import { lintPlugin } from './plugin.build';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
+import { lintPlugin } from './plugin.build';
 import { Task, TaskRunner } from './task';
 
 const bundlePlugin = (options: PluginBundleOptions) =>

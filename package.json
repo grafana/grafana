@@ -415,6 +415,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   },
   "resolutions": {
+    "eslint-plugin-import": "npm:eslint-plugin-i@^2.25.3",
     "underscore": "1.13.6",
     "@types/slate": "0.47.11",
     "@rushstack/rig-package": "0.3.18",

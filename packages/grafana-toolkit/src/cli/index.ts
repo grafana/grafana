@@ -3,6 +3,7 @@ import { program } from 'commander';
 
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
+import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { pluginDevTask } from './tasks/plugin.dev';
@@ -10,7 +11,6 @@ import { pluginSignTask } from './tasks/plugin.sign';
 import { pluginTestTask } from './tasks/plugin.tests';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
-import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
