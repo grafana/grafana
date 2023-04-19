@@ -140,8 +140,9 @@ For more information about AWS authentication options, refer to [AWS authenticat
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-> **Note:** `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
-> We suggest to use `index` field in `jsonData`. Please see the examples below.
+> **Note:** The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+> You should now use the `index` field in `jsonData` to store the index name.
+> Please see the examples below.
 
 #### Provisioning examples
 
