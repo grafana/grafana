@@ -52,3 +52,12 @@ type ErrVersionNotFound struct {
 func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
+
+type ErrArcNotFound struct {
+	PluginID   string
+	SystemInfo string
+}
+
+func (e ErrArcNotFound) Error() string {
+	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.PluginID, e.SystemInfo)
+}

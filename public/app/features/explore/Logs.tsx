@@ -25,7 +25,6 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   EventBus,
-  DataSourceWithLogsContextSupport,
   LogRowContextOptions,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -80,7 +79,7 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<any>;
-  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
+  getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;

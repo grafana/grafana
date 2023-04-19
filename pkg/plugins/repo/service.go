@@ -9,10 +9,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
-
-const defaultBaseURL = "https://grafana.com/api/plugins"
 
 type Manager struct {
 	cfg    Cfg
@@ -21,11 +20,15 @@ type Manager struct {
 	log log.PrettyLogger
 }
 
-func ProvideService() *Manager {
+func ProvideService(cfg *config.Cfg) (*Manager, error) {
+	defaultBaseURL, err := url.JoinPath(cfg.GrafanaComURL, "/api/plugins")
+	if err != nil {
+		return nil, err
+	}
 	return New(Cfg{
 		BaseURL:       defaultBaseURL,
 		SkipTLSVerify: false,
-	}, log.NewPrettyLogger("plugin.repository"))
+	}, log.NewPrettyLogger("plugin.repository")), nil
 }
 
 func New(cfg Cfg, logger log.PrettyLogger) *Manager {
@@ -119,10 +122,9 @@ func (m *Manager) selectCompatibleVersion(versions []Version, pluginID, version 
 	var ver Version
 	latestForArch := latestSupportedVersion(versions, compatOpts)
 	if latestForArch == nil {
-		return nil, ErrVersionUnsupported{
-			PluginID:         pluginID,
-			RequestedVersion: version,
-			SystemInfo:       compatOpts.String(),
+		return nil, ErrArcNotFound{
+			PluginID:   pluginID,
+			SystemInfo: compatOpts.String(),
 		}
 	}
 
