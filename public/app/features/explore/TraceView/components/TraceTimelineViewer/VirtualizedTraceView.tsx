@@ -117,6 +117,7 @@ type TVirtualizedTraceViewOwnProps = {
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
+  headerHeight: number;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -204,7 +205,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidMount() {
-    this.scrollToSpan(this.props.focusedSpanId);
+    this.scrollToSpan(this.props.headerHeight, this.props.focusedSpanId);
   }
 
   shouldComponentUpdate(nextProps: VirtualizedTraceViewProps) {
@@ -226,7 +227,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors, trace } = prevProps;
+    const { registerAccessors, trace, headerHeight } = prevProps;
     const {
       shouldScrollToFirstUiFindMatch,
       clearShouldScrollToFirstUiFindMatch,
@@ -253,11 +254,11 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
 
     if (focusedSpanId !== prevProps.focusedSpanId) {
-      this.scrollToSpan(focusedSpanId);
+      this.scrollToSpan(headerHeight, focusedSpanId);
     }
 
     if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
-      this.scrollToSpan(focusedSpanIdForSearch);
+      this.scrollToSpan(headerHeight, focusedSpanIdForSearch);
     }
   }
 
@@ -368,13 +369,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
   };
 
-  scrollToSpan = (spanID?: string) => {
+  scrollToSpan = (headerHeight: number, spanID?: string) => {
     if (spanID == null) {
       return;
     }
     const i = this.getRowStates().findIndex((row) => row.span.spanID === spanID);
     if (i >= 0) {
-      this.listView?.scrollToIndex(i);
+      this.listView?.scrollToIndex(i, headerHeight);
     }
   };
 

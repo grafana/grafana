@@ -284,9 +284,6 @@
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
-# Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/grafana-app-platform-squad
-
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
 
@@ -304,7 +301,6 @@
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Logs/ @grafana/observability-logs
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
@@ -346,6 +342,7 @@ lerna.json @grafana/frontend-ops
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/grafana-authnz-team
+/public/app/features/auth-config/ @grafana/grafana-authnz-team
 /public/app/features/annotations/ @grafana/grafana-frontend-platform
 /public/app/features/api-keys/ @grafana/grafana-frontend-platform
 /public/app/features/canvas/ @grafana/dataviz-squad
@@ -356,7 +353,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
-/public/app/features/datasource-drawer/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
@@ -458,6 +454,8 @@ lerna.json @grafana/frontend-ops
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
 /scripts/ci-* @grafana/grafana-delivery
 /scripts/circle-* @grafana/grafana-delivery
+/scripts/publish-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
+/scripts/validate-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
@@ -480,8 +478,8 @@ lerna.json @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
-.betterer.results @joshhunt
-.betterer.ts @joshhunt
+.betterer.results @grafanabot
+.betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation
 *.mdx @grafana/plugins-platform-frontend
@@ -525,6 +523,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/anonymous/ @grafana/grafana-authnz-team
 /pkg/services/auth/ @grafana/grafana-authnz-team
 /pkg/services/authn/ @grafana/grafana-authnz-team
+/pkg/services/signingkeys/ @grafana/grafana-authnz-team
 /pkg/services/dashboards/accesscontrol.go @grafana/grafana-authnz-team
 /pkg/services/datasources/permissions/ @grafana/grafana-authnz-team
 /pkg/services/guardian/ @grafana/grafana-authnz-team
@@ -542,6 +541,7 @@ lerna.json @grafana/frontend-ops
 # Grafana Operator Experience Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
+/pkg/services/caching/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
@@ -603,6 +603,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
 
+# Generated files not requiring owner approval
+/packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
+/pkg/services/featuremgmt/toggles_gen.csv @grafanabot
+/pkg/services/featuremgmt/toggles_gen.go @grafanabot
 
 # Conf
 /conf/defaults.ini @torkelo

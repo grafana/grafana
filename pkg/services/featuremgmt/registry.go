@@ -28,12 +28,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			Name:        "dashboardPreviews",
-			Description: "Create and show thumbnails for dashboard search results",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -79,12 +73,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "lokiDataframeApi",
-			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
@@ -112,7 +100,7 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        grafanaExploreSquad,
 		},
@@ -126,7 +114,7 @@ var (
 		{
 			Name:        "correlations",
 			Description: "Correlations page",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
 		},
 		{
@@ -291,23 +279,16 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:            "nestedFolders",
-			Description:     "Enable folder nesting",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaBackendPlatformSquad,
+			Name:        "nestedFolders",
+			Description: "Enable folder nesting",
+			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			State:       FeatureStateStable,
 			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:        "elasticsearchBackendMigration",
-			Description: "Use Elasticsearch as backend data source",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "showTraceId",
@@ -328,12 +309,6 @@ var (
 			FrontendOnly: true,
 			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:        "secureSocksDatasourceProxy",
-			Description: "Enable secure socks tunneling for supported core datasources",
-			State:       FeatureStateAlpha,
-			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "authnService",
@@ -410,13 +385,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:         "drawerDataSourcePicker",
-			Description:  "Changes the user experience for data source selection to a drawer.",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
-		},
-		{
 			Name:         "traceqlSearch",
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
@@ -458,16 +426,16 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "disableElasticsearchBackendExploreQuery",
-			Description: "Disable executing of Elasticsearch Explore queries trough backend",
-			State:       FeatureStateBeta,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "lokiMetricDataplane",
+			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "alertStateHistoryLokiSecondary",
@@ -486,6 +454,12 @@ var (
 			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "unifiedRequestLog",
@@ -518,6 +492,45 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:            "useCachingService",
+			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
+			State:           FeatureStateStable,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "enableElasticsearchBackendQuerying",
+			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
+			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "authenticationConfigUI",
+			Description: "Enables authentication configuration UI",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:        "pluginsAPIManifestKey",
+			Description: "Use grafana.com API to retrieve the public manifest key",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "advancedDataSourcePicker",
+			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "opensearchDetectVersion",
+			Description:  "Enable version detection in OpenSearch",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "enableDatagridEditing",
