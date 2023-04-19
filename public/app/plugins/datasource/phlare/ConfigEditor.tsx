@@ -1,13 +1,7 @@
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import {
-  DataSourceHttpSettings,
-  EventsWithValidation,
-  LegacyForms,
-  regexValidation,
-  SecureSocksProxySettings,
-} from '@grafana/ui';
+import { DataSourceHttpSettings, EventsWithValidation, LegacyForms, regexValidation } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PhlareDataSourceOptions } from './types';
@@ -24,11 +18,9 @@ export const ConfigEditor = (props: Props) => {
         dataSourceConfig={options}
         showAccessOptions={false}
         onChange={onOptionsChange}
+        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
       <h3 className="page-heading">Querying</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">

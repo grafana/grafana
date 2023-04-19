@@ -419,7 +419,12 @@ export class LokiDatasource
     return res.data ?? (res || []);
   }
 
-  async getQueryStats(query: string): Promise<QueryStats> {
+  async getQueryStats(query: string): Promise<QueryStats | undefined> {
+    // if query is invalid, clear stats, and don't request
+    if (!isValidQuery(query)) {
+      return undefined;
+    }
+
     const { start, end } = this.getTimeRangeParams();
     const labelMatchers = getStreamSelectorsFromQuery(query);
 
