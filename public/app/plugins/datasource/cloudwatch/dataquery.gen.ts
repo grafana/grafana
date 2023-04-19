@@ -139,10 +139,7 @@ export enum QueryEditorPropertyType {
 }
 
 export interface QueryEditorArrayExpression {
-  /**
-   * TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-   */
-  expressions: unknown;
+  expressions: (Array<QueryEditorExpression> | Array<QueryEditorArrayExpression>);
   type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
 }
 

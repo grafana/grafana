@@ -3,7 +3,7 @@ import React from 'react';
 import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { NavModelItem, NavSection } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { TestProvider } from '../../../../../test/helpers/TestProvider';
@@ -14,7 +14,6 @@ const setup = () => {
   const navBarTree: NavModelItem[] = [
     {
       text: 'Section name',
-      section: NavSection.Core,
       id: 'section',
       url: 'section',
       children: [
@@ -25,7 +24,6 @@ const setup = () => {
     {
       text: 'Profile',
       id: 'profile',
-      section: NavSection.Config,
       url: 'profile',
     },
   ];

@@ -191,6 +191,9 @@ describe('combineResponses', () => {
           ],
           length: 4,
           meta: {
+            custom: {
+              frameType: 'LabeledTimeValues',
+            },
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -228,10 +231,14 @@ describe('combineResponses', () => {
               name: 'Value',
               type: 'number',
               values: new ArrayVector([6, 7, 5, 4]),
+              labels: {
+                level: 'debug',
+              },
             },
           ],
           length: 4,
           meta: {
+            type: 'timeseries-multi',
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -269,10 +276,14 @@ describe('combineResponses', () => {
               name: 'Value',
               type: 'number',
               values: new ArrayVector([6, 7, 5, 4]),
+              labels: {
+                level: 'debug',
+              },
             },
           ],
           length: 4,
           meta: {
+            type: 'timeseries-multi',
             stats: [
               {
                 displayName: 'Summary: total bytes processed',

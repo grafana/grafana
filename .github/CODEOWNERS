@@ -353,7 +353,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
-/public/app/features/datasource-drawer/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
@@ -455,6 +454,8 @@ lerna.json @grafana/frontend-ops
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
 /scripts/ci-* @grafana/grafana-delivery
 /scripts/circle-* @grafana/grafana-delivery
+/scripts/publish-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
+/scripts/validate-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code

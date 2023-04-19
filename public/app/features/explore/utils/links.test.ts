@@ -8,7 +8,7 @@ import {
   Field,
   FieldType,
   InterpolateFunction,
-  SupportedTransformationTypes,
+  SupportedTransformationType,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -57,15 +57,7 @@ describe('explore links utils', () => {
 
       expect(links[0].href).toBe('http://regionalhost');
       expect(links[0].title).toBe('external');
-      expect(links[0].onClick).toBeDefined();
-
-      links[0].onClick!({});
-
-      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: CoreApp.Explore,
-        internal: false,
-        origin: DataLinkConfigOrigin.Datasource,
-      });
+      expect(links[0].onClick).not.toBeDefined();
     });
 
     it('returns generates title for external link', () => {
@@ -285,8 +277,8 @@ describe('explore links utils', () => {
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
           transformations: [
-            { type: SupportedTransformationTypes.Logfmt },
-            { type: SupportedTransformationTypes.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
+            { type: SupportedTransformationType.Logfmt },
+            { type: SupportedTransformationType.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
           ],
         },
       };
@@ -334,8 +326,8 @@ describe('explore links utils', () => {
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
           transformations: [
-            { type: SupportedTransformationTypes.Regex, expression: 'fieldA=(asparagus|broccoli)' },
-            { type: SupportedTransformationTypes.Regex, expression: 'fieldB=(apple|banana)' },
+            { type: SupportedTransformationType.Regex, expression: 'fieldA=(asparagus|broccoli)' },
+            { type: SupportedTransformationType.Regex, expression: 'fieldB=(apple|banana)' },
           ],
         },
       };
@@ -375,7 +367,7 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} isOnline=${online}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
 
@@ -414,7 +406,7 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt, field: 'fieldNamedInTransformation' }],
+          transformations: [{ type: SupportedTransformationType.Logfmt, field: 'fieldNamedInTransformation' }],
         },
       };
 
@@ -468,7 +460,7 @@ describe('explore links utils', () => {
           datasourceName: 'test_ds',
           transformations: [
             {
-              type: SupportedTransformationTypes.Regex,
+              type: SupportedTransformationType.Regex,
               expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))',
             },
           ],
@@ -546,7 +538,7 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} env=${diffVar}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
 
@@ -571,7 +563,7 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=test}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
 

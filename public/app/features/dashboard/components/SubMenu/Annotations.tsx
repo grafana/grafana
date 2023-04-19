@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { AnnotationQuery, DataQuery, EventBus } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { AnnotationPicker } from './AnnotationPicker';
 
@@ -21,7 +22,7 @@ export const Annotations = ({ annotations, onAnnotationChanged, events }: Props)
   }
 
   return (
-    <>
+    <div data-testId={selectors.pages.Dashboard.SubMenu.Annotations.annotationsWrapper}>
       {visibleAnnotations.map((annotation) => (
         <AnnotationPicker
           events={events}
@@ -30,6 +31,6 @@ export const Annotations = ({ annotations, onAnnotationChanged, events }: Props)
           key={annotation.name}
         />
       ))}
-    </>
+    </div>
   );
 };

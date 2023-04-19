@@ -65,10 +65,13 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
-    const { datasourceInstance } = this.props;
+    const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextUiSupport(datasourceInstance) && datasourceInstance.getLogRowContextUi) {
-      return datasourceInstance.getLogRowContextUi(row, runContextQuery);
+      const query = (logsQueries ?? []).find(
+        (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
+      );
+      return datasourceInstance.getLogRowContextUi(row, runContextQuery, query);
     }
 
     return <></>;
