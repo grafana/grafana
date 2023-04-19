@@ -4,12 +4,13 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Label, LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, Label, LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { LogContextProvider } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
+import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
 import { ContextFilter, LokiQuery } from '../types';
 
@@ -56,11 +57,17 @@ function getStyles(theme: GrafanaTheme2) {
     query: css`
       text-align: start;
       line-break: anywhere;
-      margin-top: ${theme.spacing(0.5)};
+      margin-top: -${theme.spacing(0.25)};
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
       padding: ${theme.spacing(2)};
+    `,
+    rawQuery: css`
+      display: inline;
+    `,
+    queryDescription: css`
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
 }
@@ -155,6 +162,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, []);
 
+  // Currently we support adding of parser and showing parsed labels only if there is 1 parser
+  const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
+
   return (
     <div className={styles.wrapper}>
       <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
@@ -167,7 +177,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
         }}
         label={
           <div className={styles.query}>
-            <Label>Executed log context query:</Label>
             <RawQuery
               lang={{ grammar: lokiGrammar, name: 'loki' }}
               query={logContextProvider.processContextFiltersToExpr(
@@ -175,14 +184,18 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 contextFilters.filter(({ enabled }) => enabled),
                 origQuery
               )}
+              className={styles.rawQuery}
             />
+            <Tooltip content="Initially executed log context query is created from all labels defining the stream for the selected log line. Use editor bellow to customize log context query.">
+              <Icon name="info-circle" size="sm" className={styles.queryDescription} />
+            </Tooltip>
           </div>
         }
       >
         <div className={styles.ui}>
           <Tooltip
             content={
-              'This feature is experimental and only works on log queries containing no more than 1 parser (logfmt, json).'
+              'This feature is experimental and may change in the future. Currently it supports using parser and extracted labels for queries with no more than 1 parser (e.g. logfmt, json). Please report any issues in the Grafana GitHub repository.'
             }
             placement="top"
           >
@@ -190,9 +203,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
           </Tooltip>{' '}
           <Label
             className={styles.label}
-            description="Context query is created from all labels defining the stream for the selected log line. Select labels to be included in log context query."
+            description="By removing some of the selected label filters, you can broaden your search."
           >
-            1. Select labels
+            Widen the search
           </Label>
           <MultiSelect
             options={realLabels.map(contextFilterToSelectFilter)}
@@ -226,13 +239,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
               );
             }}
           />
-          {parsedLabels.length > 0 && (
+          {showParsedLabels && (
             <>
               <Label
                 className={styles.label}
-                description={`By using parser, you are able to filter for extracted labels. Select extracted labels to be included in log context query.`}
+                description={`By using parser in your original query, you are able to filter for extracted labels. Refine your search by applying extracted labels from selected log line.`}
               >
-                2. Add extracted label filters
+                Refine the search
               </Label>
               <MultiSelect
                 options={parsedLabels.map(contextFilterToSelectFilter)}

@@ -57,15 +57,7 @@ describe('explore links utils', () => {
 
       expect(links[0].href).toBe('http://regionalhost');
       expect(links[0].title).toBe('external');
-      expect(links[0].onClick).toBeDefined();
-
-      links[0].onClick!({});
-
-      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: CoreApp.Explore,
-        internal: false,
-        origin: DataLinkConfigOrigin.Datasource,
-      });
+      expect(links[0].onClick).not.toBeDefined();
     });
 
     it('returns generates title for external link', () => {
