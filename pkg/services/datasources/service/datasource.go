@@ -652,6 +652,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
+// CustomerHeaders returns the custom headers specified in the datasource. The context is used for the encryption operation, so consider setting an acceptable timeout for your use case. 
 func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
 	if err != nil {
