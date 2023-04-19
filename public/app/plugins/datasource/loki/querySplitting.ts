@@ -3,10 +3,12 @@ import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  ArrayDataFrame,
   ArrayVector,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
+  DataTopic,
   dateTime,
   durationToMilliseconds,
   Field,
@@ -181,40 +183,23 @@ function updateLoadingFrame(
 
   const progress = Math.round(((totalRequests - requestN) / totalRequests) * 100);
 
-  const loadingFrame: DataFrame = {
-    refId: loadingFrameName,
-    name: loadingFrameName,
-    length: 2,
-    fields: getLoadingFrameFields(partition.slice(0, requestN - 1), progress),
-    meta: {
-      preferredVisualisationType: 'graph',
+  const loadingFrame = new ArrayDataFrame([
+    {
+      time: partition[0].from.valueOf(),
+      timeEnd: partition[requestN - 2].to.valueOf(),
+      isRegion: true,
+      text: `Loading ${progress}%`,
+      color: 'rgba(120, 120, 120, 0.1)',
     },
+  ]);
+  loadingFrame.name = loadingFrameName;
+  loadingFrame.meta = {
+    dataTopic: DataTopic.Annotations,
   };
+
   response.data.push(loadingFrame);
 
   return response;
-}
-
-function getLoadingFrameFields(partition: TimeRange[], progress: number): Field[] {
-  const timeField: Field = {
-    name: 'Time',
-    type: FieldType.time,
-    config: {},
-    values: new ArrayVector([partition[0].from.valueOf(), partition[partition.length - 1].to.valueOf()]),
-  };
-  const valuesField: Field = {
-    name: 'Value',
-    type: FieldType.number,
-    config: {
-      displayNameFromDS: `Loading ${progress}%`,
-      color: {
-        mode: FieldColorModeId.Fixed,
-        fixedColor: '#888',
-      },
-    },
-    values: new ArrayVector([0, 0]),
-  };
-  return [timeField, valuesField];
 }
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
