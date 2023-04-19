@@ -18,7 +18,7 @@ import {
   DataSourceWithLogsContextSupport,
   DataSourceApi,
 } from '@grafana/data';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
