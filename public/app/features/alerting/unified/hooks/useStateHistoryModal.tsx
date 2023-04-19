@@ -10,8 +10,8 @@ const AnnotationsStateHistory = lazy(() => import('../components/rules/state-his
 const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
 
 enum StateHistoryImplementation {
-  Loki,
-  Annotations,
+  Loki = 'loki',
+  Annotations = 'annotations',
 }
 
 function useStateHistoryModal() {
@@ -21,7 +21,7 @@ function useStateHistoryModal() {
   const styles = useStyles2(getStyles);
 
   const implementation =
-    config.unifiedAlerting.alertStateHistoryBackend === 'loki'
+    config.unifiedAlerting.alertStateHistoryBackend === StateHistoryImplementation.Loki
       ? StateHistoryImplementation.Loki
       : StateHistoryImplementation.Annotations;
 
