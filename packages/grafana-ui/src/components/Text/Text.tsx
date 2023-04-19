@@ -35,6 +35,24 @@ export const Text = ({
   className,
   children,
 }: TextProps) => {
+  const variantStyles = useStyles2(
+    useCallback(
+      (theme) => {
+        if (variant === undefined) {
+          if (as === 'span' || as === 'legend') {
+            return theme.typography.bodySmall;
+          } else if (as === 'p') {
+            return theme.typography.body;
+          } else {
+            return theme.typography[as];
+          }
+        } else {
+          return variant;
+        }
+      },
+      [as, variant]
+    )
+  );
   const styles = useStyles2(
     useCallback(
       (theme) => getTextStyles(theme, color, weight, truncate, textAlignment, margin),
@@ -45,7 +63,7 @@ export const Text = ({
   return createElement(
     as,
     {
-      className: cx(className, styles),
+      className: cx(className, styles, variantStyles),
     },
     children
   );
@@ -59,7 +77,8 @@ const getTextStyles = (
   weight?: TextProps['weight'],
   truncate?: TextProps['truncate'],
   textAlignment?: TextProps['textAlignment'],
-  margin?: TextProps['margin']
+  margin?: TextProps['margin'],
+  variant?: keyof ThemeTypographyVariantTypes
 ) => {
   const customWeight = () => {
     switch (weight) {
@@ -89,6 +108,27 @@ const getTextStyles = (
     }
   };
 
+  const customVariant = () => {
+    switch (variant) {
+      case 'h1':
+        return theme.typography.h1;
+      case 'h2':
+        return theme.typography.h2;
+      case 'h3':
+        return theme.typography.h3;
+      case 'h4':
+        return theme.typography.h4;
+      case 'h5':
+        return theme.typography.h5;
+      case 'h6':
+        return theme.typography.h6;
+      case 'bodySmall':
+        return theme.typography.bodySmall;
+      default:
+        return theme.typography.body;
+    }
+  };
+
   return css([
     color && {
       color: customColor(),
@@ -106,6 +146,9 @@ const getTextStyles = (
     },
     textAlignment && {
       textAlign: textAlignment,
+    },
+    variant && {
+      ...customVariant(),
     },
   ]);
 };
