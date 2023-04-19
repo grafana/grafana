@@ -248,8 +248,8 @@ export interface AzureAPIResponse<T> {
     type: string;
     value: number;
   };
-  status: number;
-  statusText: string;
+  status?: number;
+  statusText?: string;
 }
 
 export interface Location {
