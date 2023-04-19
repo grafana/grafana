@@ -4,7 +4,6 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import {
-  ArrayVector,
   DataFrame,
   DataFrameJSON,
   dateTime,
@@ -12,7 +11,6 @@ import {
   FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
-  SortedVector,
   TimeRange,
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
@@ -73,7 +71,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   const onTimelinePointerMove = useCallback(
     (seriesIdx: number, pointIdx: number) => {
-      const uniqueTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values.toArray())));
+      const uniqueTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
 
       const timestamp = uniqueTimestamps[pointIdx];
 
@@ -127,9 +125,11 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
             id="instancesSearchInput"
             prefix={<Icon name="search" />}
             suffix={
-              <Button fill="text" icon="times" size="sm" onClick={onFilterCleared}>
-                Clear
-              </Button>
+              instancesFilter && (
+                <Button fill="text" icon="times" size="sm" onClick={onFilterCleared}>
+                  Clear
+                </Button>
+              )
             }
             placeholder="Filter instances"
           />
@@ -187,7 +187,7 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
     const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
     const lines = stateHistory?.data?.values[1] ?? [];
 
-    const linesWithTimestamp = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
       const line = lines[index];
       // values property can be undefined for some instance states (e.g. NoData)
       if (isLine(line)) {
@@ -198,13 +198,13 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
     }, []);
 
     // group all records by alert instance (unique set of labels)
-    const groupedLines = groupBy(linesWithTimestamp, (record: LogRecord) => {
+    const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
       return JSON.stringify(record.line.labels);
     });
 
     // CommonLabels should not be affected by the filter
     // find common labels so we can extract those from the instances
-    const groupLabels = Object.keys(groupedLines);
+    const groupLabels = Object.keys(logRecordsByInstance);
     const groupLabelsArray: Array<Array<[string, string]>> = groupLabels.map((label) => {
       return Object.entries(JSON.parse(label));
     });
@@ -212,7 +212,7 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
     const commonLabels = extractCommonLabels(groupLabelsArray);
 
     const filterMatchers = filter ? parseMatchers(filter) : [];
-    const filteredGroupedLines = Object.entries(groupedLines).filter(([key]) => {
+    const filteredGroupedLines = Object.entries(logRecordsByInstance).filter(([key]) => {
       const labels = JSON.parse(key);
       return labelsMatchMatchers(labels, filterMatchers);
     });
@@ -222,12 +222,10 @@ function useInstanceHistoryRecords(stateHistory?: DataFrameJSON, filter?: string
     });
 
     return {
-      historyRecords: linesWithTimestamp.filter(
-        ({ line }) => line.labels && labelsMatchMatchers(line.labels, filterMatchers)
-      ),
+      historyRecords: logRecords.filter(({ line }) => line.labels && labelsMatchMatchers(line.labels, filterMatchers)),
       dataFrames,
       commonLabels,
-      totalRecordsCount: linesWithTimestamp.length,
+      totalRecordsCount: logRecords.length,
     };
   }, [stateHistory, filter, theme]);
 }
@@ -255,25 +253,25 @@ export function logRecordsToDataFrame(
   const timeField: DataFrameField = {
     name: 'time',
     type: FieldType.time,
-    values: new ArrayVector([...records.map((record) => record.timestamp), Date.now()]),
+    values: [...records.map((record) => record.timestamp), Date.now()],
     config: { displayName: 'Time', custom: { fillOpacity: 100 } },
   };
 
   const timeIndex = timeField.values.map((_, index) => index);
   timeIndex.sort(fieldIndexComparer(timeField));
 
-  const stateValues = new ArrayVector([...records.map((record) => record.line.current), last(records)?.line.current]);
+  const stateValues = [...records.map((record) => record.line.current), last(records)?.line.current];
 
   const frame: DataFrame = {
     fields: [
       {
         ...timeField,
-        values: new SortedVector(timeField.values, timeIndex),
+        values: timeField.values.map((_, i) => timeField.values[timeIndex[i]]),
       },
       {
         name: 'state',
         type: FieldType.string,
-        values: new SortedVector(stateValues, timeIndex),
+        values: stateValues.map((_, i) => stateValues[timeIndex[i]]),
         config: {
           displayName: omitLabels(parsedInstanceLabels, commonLabels)
             .map(([key, label]) => `${key}=${label}`)

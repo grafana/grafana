@@ -12,8 +12,9 @@ interface Props {
   muted?: boolean;
 }
 
-export const AlertStateTag = ({ state, isPaused = false, size = 'md', muted = false }: Props) => (
+export const AlertStateTag = React.memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => (
   <StateTag state={alertStateToState(state)} size={size} muted={muted}>
     {alertStateToReadable(state)} {isPaused ? ' (Paused)' : ''}
   </StateTag>
-);
+));
+AlertStateTag.displayName = 'AlertStateTag';
