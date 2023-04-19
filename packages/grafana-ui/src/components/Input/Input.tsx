@@ -23,30 +23,16 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   addonBefore?: ReactNode;
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
-  /** Overrides the styling of a focused input */
-  focusStyles?: (theme: GrafanaTheme2) => string;
 }
 
 interface StyleDeps {
   theme: GrafanaTheme2;
   invalid?: boolean;
   width?: number;
-  focusStyles?: (theme: GrafanaTheme2) => string;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const {
-    className,
-    addonAfter,
-    addonBefore,
-    prefix,
-    suffix,
-    invalid,
-    loading,
-    width = 0,
-    focusStyles,
-    ...restProps
-  } = props;
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -56,7 +42,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
 
   const theme = useTheme2();
-  const styles = getInputStyles({ theme, invalid: !!invalid, width, focusStyles });
+  const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
     <div className={cx(styles.wrapper, className)} data-testid={'input-wrapper'}>
@@ -94,7 +80,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 
 Input.displayName = 'Input';
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false, width, focusStyles }: StyleDeps) => {
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
     position: absolute;
@@ -195,7 +181,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width, fo
     `,
 
     input: cx(
-      focusStyles ? focusStyles(theme) : getFocusStyle(theme),
+      getFocusStyle(theme),
       sharedInputStyle(theme, invalid),
       css`
         label: input-input;
