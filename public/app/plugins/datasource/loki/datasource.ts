@@ -755,7 +755,7 @@ export class LokiDatasource
   }
 
   showContextToggle(row?: LogRowModel): boolean {
-    return (row && row.searchWords && row.searchWords.length > 0) === true;
+    return true;
   }
 
   processError(err: FetchError, target: LokiQuery) {

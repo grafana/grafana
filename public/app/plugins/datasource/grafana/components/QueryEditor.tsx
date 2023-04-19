@@ -419,7 +419,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 accept: DFImport.acceptedFiles,
               }}
             >
-              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+              <FileDropzoneDefaultChildren
+                primaryText={this.props?.query?.file ? 'Replace file' : 'Drop file here or click to upload'}
+              />
             </FileDropzone>
             {file && (
               <div className={styles.file}>
