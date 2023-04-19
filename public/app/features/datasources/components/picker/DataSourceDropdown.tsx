@@ -112,7 +112,9 @@ function getStylesDropdown(theme: GrafanaTheme2) {
       cursor: pointer;
     `,
     input: css`
-      cursor: pointer;
+      input {
+        cursor: pointer;
+      }
     `,
   };
 }
