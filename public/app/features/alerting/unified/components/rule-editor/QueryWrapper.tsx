@@ -145,7 +145,6 @@ export const QueryWrapper = ({
         <QueryEditorRow<DataQuery>
           alerting
           dataSource={dsSettings}
-          // our datasource instance is loaded, now we update the query if the defaults aren't set yet
           onDataSourceLoaded={setDsInstance}
           onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
           id={query.refId}
