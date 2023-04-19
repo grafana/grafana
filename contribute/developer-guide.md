@@ -24,7 +24,11 @@ npm install -g yarn
 
 ### Windows
 
-If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
+If you are running Grafana on Windows 10 or higher, we recommend installing the Windows Subsystem for Linux (WSL). For WSL installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
+
+Please note that the Ubuntu version in the setup guide, Ubuntu 18.04, is no longer compatible with Grafana. To identify a compatible Linux distribution and version, investigate which ones support Grafana's dependencies and are available for use with WSL.
+
+When using WSL, follow the non-Windows instructions in this developer guide, since WSL functions as a Linux environment.
 
 ## Download Grafana
 
