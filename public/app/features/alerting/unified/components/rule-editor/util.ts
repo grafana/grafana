@@ -261,6 +261,9 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     // now also sort the threshold values, if we don't then they will look weird in the time series panel
     // TODO this doesn't work for negative values for now, those need to be sorted inverse
     thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
+
+    // also make sure we remove any "undefined" values from our steps in case the threshold config is incomplete
+    thresholds[refId].config.steps = thresholds[refId].config.steps.filter((step) => step.value !== undefined);
   }
 
   return thresholds;

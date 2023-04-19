@@ -334,6 +334,7 @@ function processFieldConfigValue(
 /**
  * This checks that all options on FieldConfig make sense.  It mutates any value that needs
  * fixed.  In particular this makes sure that the first threshold value is -Infinity (not valid in JSON)
+ * and does not contain invalid values.
  */
 export function validateFieldConfig(config: FieldConfig) {
   const { thresholds } = config;
