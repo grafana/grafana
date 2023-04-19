@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -460,7 +461,8 @@ func setup(t *testing.T) *testContext {
 		}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService),
 	)
-	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider, &featuremgmt.FeatureManager{}, nil)
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
+		&featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest())
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,

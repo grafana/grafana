@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -41,6 +42,7 @@ func TestService(t *testing.T) {
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
 		features:     &featuremgmt.FeatureManager{},
+		tracer:       tracing.InitializeTracerForTest(),
 		metrics:      newMetrics(nil),
 	}
 
