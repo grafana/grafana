@@ -6,16 +6,7 @@ import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '../../themes';
 import { Tooltip } from '../Tooltip';
 
-export interface UserView {
-  user: {
-    /** User's name, containing first + last name */
-    name: string;
-    /** URL to the user's avatar */
-    avatarUrl?: string;
-  };
-  /** Datetime string when the user was last active */
-  lastActiveAt: DateTimeInput;
-}
+import { UserView } from './types';
 
 export interface UserIconProps {
   /** An object that contains the user's details and 'lastActiveAt' status */

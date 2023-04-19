@@ -5,7 +5,7 @@ import { UserIcon } from './UserIcon';
 import mdx from './UserIcon.mdx';
 
 const meta: ComponentMeta<typeof UserIcon> = {
-  title: 'General/UserIcon',
+  title: 'General/UsersIndicator/UserIcon',
   component: UserIcon,
   argTypes: {},
   parameters: {
@@ -41,35 +41,6 @@ export const Basic: ComponentStory<typeof UserIcon> = (args) => {
 };
 Basic.args = {
   showTooltip: true,
-  onClick: undefined,
-};
-
-export const MultipleUsers: ComponentStory<typeof UserIcon> = (args) => {
-  const users = [
-    {
-      name: 'John Doe',
-      avatarUrl: 'https://picsum.photos/id/1/200/200',
-    },
-    {
-      name: 'Jane Smith',
-      avatarUrl: '',
-    },
-    {
-      name: 'Bob Johnson',
-      avatarUrl: 'https://picsum.photos/id/3/200/200',
-    },
-  ];
-
-  return (
-    <div style={{ display: 'flex' }}>
-      {users.map((user) => (
-        <UserIcon {...args} key={user.name} userView={{ user, lastActiveAt: new Date().toDateString() }} />
-      ))}
-    </div>
-  );
-};
-
-MultipleUsers.args = {
   onClick: undefined,
 };
 
