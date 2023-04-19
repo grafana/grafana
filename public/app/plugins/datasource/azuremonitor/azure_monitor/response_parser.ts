@@ -9,6 +9,7 @@ import {
   AzureMonitorOption,
   AzureAPIResponse,
   Location,
+  Subscription,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues(
@@ -111,7 +112,7 @@ export default class ResponseParser {
     });
   }
 
-  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
+  static parseSubscriptions(result: AzureAPIResponse<Subscription>): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
     if (!result) {

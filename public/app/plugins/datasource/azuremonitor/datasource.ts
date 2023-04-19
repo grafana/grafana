@@ -138,10 +138,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return !!subQuery && this.templateSrv.containsTemplate(subQuery);
   }
 
-  async annotationQuery(options: any) {
-    return this.azureLogAnalyticsDatasource.annotationQuery(options);
-  }
-
   /* Azure Monitor REST API methods */
   getResourceGroups(subscriptionId: string) {
     return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
