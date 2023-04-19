@@ -139,7 +139,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
 
-  const getFullTimerange = useCallback(() => {
+  const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
     const allRows = [...before, row, ...after].sort((a, b) => a.timeEpochMs - b.timeEpochMs);
     const first = allRows[0];
@@ -331,7 +331,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 dispatch(
                   splitOpen({
                     queries: [query],
-                    range: getFullTimerange(),
+                    range: getFullTimeRange(),
                     datasourceUid: query.datasource.uid,
                   })
                 );
