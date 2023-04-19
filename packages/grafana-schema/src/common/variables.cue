@@ -2,36 +2,38 @@ package common
 
 // Optional formats for the template variable replace functions
 // See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
-VariableFormatID: 
+VariableFormatID:
     // Values are lucene escaped and multi-valued variables generate an OR expression
-    "lucene" | 
+    "lucene" |
     // Raw values
-    "raw" | 
+    "raw" |
     // Values are regex escaped and multi-valued variables generate a (<value>|<value>) expression
-    "regex" | 
+    "regex" |
     // Values are separated by | character
-    "pipe" | 
+    "pipe" |
     // Multiple values are formatted like variable=value
-    "distributed" | 
+    "distributed" |
     // Comma seperated values
-    "csv" | 
+    "csv" |
     // HTML escaped
-    "html" | 
+    "html" |
     // JSON values
-    "json" | 
+    "json" |
     // Percent encode
-    "percentencode" | 
+    "percentencode" |
+    // Uri encode
+    "uriencode" |
     // Single quote
-    "singlequote" | 
+    "singlequote" |
     // Double quote
-    "doublequote" | 
+    "doublequote" |
     // SQL string quoting and commas for use in IN statements and other scenarios
-    "sqlstring" | 
+    "sqlstring" |
     // Date
-    "date" | 
+    "date" |
     // Format multi-valued variables using glob syntax, example {value1,value2}
-    "glob" | 
+    "glob" |
     // Format variables in their text representation. Example in multi-variable scenario A + B + C.
-    "text" | 
+    "text" |
     // Format variables as URL parameters. Example in multi-variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.
-    "queryparam"  @cuetsy(kind="enum",memberNames="Lucene|Raw|Regex|Pipe|Distributed|CSV|HTML|JSON|PercentEncode|SingleQuote|DoubleQuote|SQLString|Date|Glob|Text|QueryParam")
+    "queryparam"  @cuetsy(kind="enum",memberNames="Lucene|Raw|Regex|Pipe|Distributed|CSV|HTML|JSON|PercentEncode|UriEncode|SingleQuote|DoubleQuote|SQLString|Date|Glob|Text|QueryParam")
