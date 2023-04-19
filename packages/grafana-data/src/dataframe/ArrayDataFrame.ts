@@ -15,6 +15,7 @@ class ArrayPropertyVector<T = any> extends FunctionalVector<T> {
 
   constructor(private source: any[], private prop: string) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length(): number {
