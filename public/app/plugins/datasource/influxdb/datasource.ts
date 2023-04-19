@@ -30,8 +30,6 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { CacheRequestInfo, QueryCache } from '../prometheus/querycache/QueryCache';
-
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
@@ -131,8 +129,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   isFlux: boolean;
   isProxyAccess: boolean;
   retentionPolicies: string[];
-  cache: QueryCache<InfluxQuery>;
-  hasIncrementalQuery: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -159,21 +155,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.isFlux = settingsData.version === InfluxVersion.Flux;
     this.isProxyAccess = instanceSettings.access === 'proxy';
     this.retentionPolicies = [];
-    this.hasIncrementalQuery = true; // @todo
-
-    this.cache = new QueryCache<InfluxQuery>(
-      this.getInfluxTargetSignature.bind(this),
-      '30s', //@todo
-      (request, targ) => {
-        const target = this.applyTemplateVariables(targ, request.scopedVars);
-
-        return {
-          interval: request.interval,
-          expr: target.query ?? '',
-          datasource: settingsData.version === InfluxVersion.Flux ? 'Flux' : 'influxQL',
-        };
-      }
-    );
 
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -200,20 +181,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return Promise.resolve(this.retentionPolicies);
       });
     }
-  }
-
-  getInfluxTargetSignature(request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) {
-    const target = this.applyTemplateVariables(targ, request.scopedVars);
-
-    if (targ?.rawQuery) {
-      return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${target.query}`;
-    }
-
-    return `${request.interval}|${targ.orderByTime}|${target.alias}|${target.tz}|${target.slimit}|${target.limit}|${
-      targ.resultFormat
-    }|${JSON.stringify(request.rangeRaw ?? '')}|${JSON.stringify(target.select)}|${JSON.stringify(
-      target.groupBy
-    )}|${JSON.stringify(target.adhocFilters)}`;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
@@ -256,17 +223,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      let fullOrPartialRequest: DataQueryRequest<InfluxQuery>;
-      let requestInfo: CacheRequestInfo<InfluxQuery> | undefined = undefined;
-
-      if (this.hasIncrementalQuery) {
-        requestInfo = this.cache.requestInfo(filteredRequest);
-        fullOrPartialRequest = requestInfo.requests[0];
-      } else {
-        fullOrPartialRequest = request;
-      }
-
-      return super.query(fullOrPartialRequest).pipe(
+      return super.query(filteredRequest).pipe(
         map((res) => {
           if (res.error) {
             throw {
@@ -275,14 +232,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             };
           }
 
-          const amendedResponse = {
-            ...res,
-            data: this.cache.procFrames(request, requestInfo, res.data),
-          };
-
           const seriesList: any[] = [];
 
-          const groupedFrames = groupBy(amendedResponse.data, (x) => x.refId);
+          const groupedFrames = groupBy(res.data, (x) => x.refId);
           if (Object.keys(groupedFrames).length > 0) {
             filteredRequest.targets.forEach((target) => {
               const filteredFrames = groupedFrames[target.refId] ?? [];
@@ -331,7 +283,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery {
+  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
