@@ -15,14 +15,14 @@ import {
   PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import * as DFImport from 'app/features/dataframe-import';
-import { DataSourcePickerWithHistory } from 'app/features/datasource-drawer/DataSourcePickerWithHistory';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -214,32 +214,22 @@ export class QueryGroup extends PureComponent<Props, State> {
             Data source
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
-            {config.featureToggles.advancedDataSourcePicker ? (
-              <DataSourcePickerWithHistory
-                onChange={this.onChangeDataSource}
-                current={options.dataSource}
-                metrics={true}
-                mixed={true}
-                dashboard={true}
-                variables={true}
-                enableFileUpload={config.featureToggles.editPanelCSVDragAndDrop}
-                fileUploadOptions={{
-                  onDrop: this.onFileDrop,
-                  maxSize: DFImport.maxFileSize,
-                  multiple: false,
-                  accept: DFImport.acceptedFiles,
-                }}
-              ></DataSourcePickerWithHistory>
-            ) : (
-              <DataSourcePicker
-                onChange={this.onChangeDataSource}
-                current={options.dataSource}
-                metrics={true}
-                mixed={true}
-                dashboard={true}
-                variables={true}
-              ></DataSourcePicker>
-            )}
+            <DataSourcePicker
+              onChange={this.onChangeDataSource}
+              current={options.dataSource}
+              metrics={true}
+              mixed={true}
+              dashboard={true}
+              variables={true}
+              enableFileUpload={config.featureToggles.editPanelCSVDragAndDrop}
+              fileUploadOptions={{
+                onDrop: this.onFileDrop,
+                maxSize: DFImport.maxFileSize,
+                multiple: false,
+                accept: DFImport.acceptedFiles,
+              }}
+              onClickAddCSV={this.onClickAddCSV}
+            />
           </div>
           {dataSource && (
             <>
@@ -313,6 +303,24 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
+  };
+
+  onClickAddCSV = async () => {
+    const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
+    await this.onChangeDataSource(ds!);
+
+    this.onQueriesChange([
+      {
+        refId: 'A',
+        datasource: {
+          type: 'grafana',
+          uid: 'grafana',
+        },
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: [],
+      },
+    ]);
+    this.props.onRunQueries();
   };
 
   onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
