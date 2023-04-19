@@ -38,6 +38,8 @@ type Alertmanager interface {
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
+	AppURL() string
+	WorkingDirPath() string
 
 	// Silences
 	CreateSilence(ps *apimodels.PostableSilence) (string, error)

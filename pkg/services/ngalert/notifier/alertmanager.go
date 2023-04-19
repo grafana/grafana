@@ -314,6 +314,10 @@ func (am *Alertmanager) WorkingDirPath() string {
 	return filepath.Join(am.Settings.DataPath, workingDir, strconv.Itoa(int(am.orgID)))
 }
 
+func (am *Alertmanager) AppURL() string {
+	return am.Settings.AppURL
+}
+
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
 func (am *Alertmanager) buildIntegrationsMap(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error) {
 	integrationsMap := make(map[string][]*alertingNotify.Integration, len(receivers))
