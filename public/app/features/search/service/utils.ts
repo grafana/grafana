@@ -52,8 +52,7 @@ export function getIconForKind(kind: string): IconName {
 
 export function queryResultToViewItem(
   item: DashboardQueryResult,
-  view?: DataFrameView<DashboardQueryResult>,
-  index = -1
+  view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
   const meta = view?.dataFrame.meta?.custom as SearchResultMeta | undefined;
 
@@ -68,7 +67,6 @@ export function queryResultToViewItem(
   // Set enterprise sort value property
   const sortFieldName = meta?.sortBy;
   if (sortFieldName) {
-    console.log('have sortFieldName', sortFieldName);
     const sortFieldValue = item[sortFieldName];
     if (typeof sortFieldValue === 'string' || typeof sortFieldValue === 'number') {
       viewItem.sortMetaName = sortFieldName;

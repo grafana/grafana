@@ -136,3 +136,11 @@ type ClientMiddlewareFunc func(next Client) Client
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
 }
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+type SignatureCalculator interface {
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+}

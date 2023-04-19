@@ -1,5 +1,4 @@
-import { within } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -75,23 +74,11 @@ describe('AnnotationsSettings', () => {
   });
 
   beforeEach(() => {
+    // we have a default build-in annotation
     dashboard = createDashboardModelFixture({
       id: 74,
       version: 7,
-      annotations: {
-        list: [
-          {
-            builtIn: 1,
-            datasource: { uid: 'uid1', type: 'grafana' },
-            enable: true,
-            hide: true,
-            iconColor: 'rgba(0, 211, 255, 1)',
-            name: 'Annotations & Alerts',
-            type: 'dashboard',
-            showIn: 1,
-          },
-        ],
-      },
+      annotations: {},
       links: [],
     });
   });
@@ -100,7 +87,8 @@ describe('AnnotationsSettings', () => {
     setup(dashboard);
 
     expect(screen.queryByRole('grid')).toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /annotations & alerts \(built-in\) -- grafana --/i })).toBeInTheDocument();
+
     expect(
       screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
@@ -116,7 +104,7 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
   });
 
-  test('it renders the annotation names or uid if annotation doesnt exist', async () => {
+  test('it renders the annotation names or uid if annotation does not exist', async () => {
     dashboard.annotations.list = [
       ...dashboard.annotations.list,
       {

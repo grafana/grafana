@@ -187,7 +187,7 @@ export const generateColumns = (
       },
       id: `column-location`,
       field: access.location ?? access.url,
-      Header: () => t('search.results-table.location-header', 'Location'),
+      Header: t('search.results-table.location-header', 'Location'),
       width,
     });
   }
@@ -274,7 +274,7 @@ function makeDataSourceColumn(
   return {
     id: `column-datasource`,
     field,
-    Header: () => t('search.results-table.datasource-header', 'Data source'),
+    Header: t('search.results-table.datasource-header', 'Data source'),
     Cell: (p) => {
       const dslist = field.values.get(p.row.index);
       if (!dslist?.length) {
@@ -322,7 +322,7 @@ function makeTypeColumn(
   return {
     id: `column-type`,
     field: kindField ?? typeField,
-    Header: () => t('search.results-table.type-header', 'Type'),
+    Header: t('search.results-table.type-header', 'Type'),
     Cell: (p) => {
       const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
@@ -393,7 +393,7 @@ function makeTagsColumn(
     },
     id: `column-tags`,
     field: field,
-    Header: () => t('search.results-table.tags-header', 'Tags'),
+    Header: t('search.results-table.tags-header', 'Tags'),
     width,
   };
 }

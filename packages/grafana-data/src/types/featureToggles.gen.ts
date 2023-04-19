@@ -18,11 +18,9 @@
  * @public
  */
 export interface FeatureToggles {
-  alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
-  dashboardPreviews?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -30,7 +28,6 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
-  lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
@@ -64,10 +61,9 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
-  elasticsearchBackendMigration?: boolean;
+  showTraceId?: boolean;
   datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
-  secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -79,18 +75,27 @@ export interface FeatureToggles {
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
-  drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
-  disableElasticsearchBackendExploreQuery?: boolean;
   prometheusDataplane?: boolean;
+  lokiMetricDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
+  disableSSEDataplane?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
+  pyroscopeFlameGraph?: boolean;
+  externalServiceAuth?: boolean;
+  dataplaneFrontendFallback?: boolean;
+  useCachingService?: boolean;
+  enableElasticsearchBackendQuerying?: boolean;
+  authenticationConfigUI?: boolean;
+  pluginsAPIManifestKey?: boolean;
+  advancedDataSourcePicker?: boolean;
+  opensearchDetectVersion?: boolean;
 }

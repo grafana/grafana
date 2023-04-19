@@ -68,6 +68,7 @@ export interface DashboardLink {
 }
 
 export class DashboardModel implements TimeModel {
+  /** @deprecated use UID */
   id: any;
   // TODO: use propert type and fix all the places where uid is set to null
   uid: any;
@@ -576,7 +577,7 @@ export class DashboardModel implements TimeModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotTruthy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables() || this.panelInView) {
       return;
     }
 

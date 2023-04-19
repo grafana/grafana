@@ -1,15 +1,18 @@
 import {
   AlertmanagerAlert,
   AlertmanagerChoice,
+  AlertManagerCortexConfig,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagers,
   ExternalAlertmanagersResponse,
   Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { matcherToOperator } from '../utils/alertmanager';
-import { getDatasourceAPIUid } from '../utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
+
+const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 10;
 
 export interface AlertmanagersChoiceResponse {
   alertmanagersChoice: AlertmanagerChoice;
@@ -62,6 +65,25 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     saveExternalAlertmanagersConfig: build.mutation<{ message: string }, ExternalAlertmanagerConfig>({
       query: (config) => ({ url: '/api/v1/ngalert/admin_config', method: 'POST', data: config }),
       invalidatesTags: ['AlertmanagerChoice'],
+    }),
+
+    getValidAlertManagersConfig: build.query<AlertManagerCortexConfig[], void>({
+      //this is only available for the "grafana" alert manager
+      query: () => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(
+          GRAFANA_RULES_SOURCE_NAME
+        )}/config/history?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
+      }),
+    }),
+
+    resetAlertManagerConfigToOldVersion: build.mutation<{ message: string }, { id: number }>({
+      //this is only available for the "grafana" alert manager
+      query: (config) => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/history/${
+          config.id
+        }/_activate`,
+        method: 'POST',
+      }),
     }),
   }),
 });

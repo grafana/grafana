@@ -14,7 +14,7 @@ weight: 300
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log]({{< relref "#create-a-logs-query" >}}) and [metric]({{< relref "#create-a-metrics-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
 This topic explains querying specific to the Loki data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
@@ -54,44 +54,9 @@ Code mode's autocompletion feature works automatically while typing.
 The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-### Label browser
-
-You can use the Loki label browser to navigate through your labels and values, and build queries.
-
-**To navigate Loki and build a query:**
-
-1. Choose labels to locate.
-1. Search for the values of your selected labels.
-
-   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
-
-1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
-   You can also validate the selector.
-
-{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
-
-### Configure query settings
-
-| Name           | Description                                                                                                                                                                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                  |
-| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                 |
-| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                               |
-| **Resolution** | Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
-
 ## Builder mode
 
 Use Builder mode to visually construct queries, without needing to manually enter LogQL.
-
-### Review toolbar features
-
-In addition to the **Run query** button and mode switcher, Builder mode provides additional elements:
-
-| Name                      | Description                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------- |
-| **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
-| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
-| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
 
 ### Use the Labels selector
 
@@ -108,11 +73,11 @@ The query editor groups operations into related sections, and you can type while
 The query editor displays a query's operations as boxes in the operations section.
 Each operation's header displays its name, and additional action buttons appear when you hover your cursor over the header:
 
-| Button | Action                                                            |
-| ------ | ----------------------------------------------------------------- |
-| `v`    | Replaces the operation with different operation of the same type. |
-| `info` | Opens the operation's description tooltip.                        |
-| `x`    | Removes the operation.                                            |
+| Button                                                                                                                  | Action                                                            |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| {{< figure src="/static/img/docs/v95/loki_operation_replace.png" class="docs-image--no-shadow" max-width="30px" >}}     | Replaces the operation with different operation of the same type. |
+| {{< figure src="/static/img/docs/v95/loki_operation_description.png" class="docs-image--no-shadow" max-width="30px" >}} | Opens the operation's description tooltip.                        |
+| {{< figure src="/static/img/docs/v95/loki_operation_remove.png" class="docs-image--no-shadow" max-width="30px" >}}      | Removes the operation.                                            |
 
 Some operations have additional parameters under the operation header.
 For details about each operation, use the `info` button to view the operation's description, or refer to the [Loki documentation](/docs/loki/latest/operations/).
@@ -124,10 +89,6 @@ To re-order operations manually, drag the operation box by its name and drop it 
 #### Hints
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
-
-### Explain query
-
-This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
 ## Create a log query
 
@@ -146,9 +107,12 @@ log message you're interested in.
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore#loki-specific-features" >}}).
+Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
+
+To start tailing logs click the **Live** button in the top right corner of the Explore view.
+{{< figure src="/static/img/docs/v95/loki_tailing.png" class="docs-image--no-shadow" max-width="80px" >}}
 
 #### Proxying examples
 
@@ -204,6 +168,44 @@ In your `server` section, add the following configuration:
 You can use LogQL to wrap a log query with functions that create metrics from your logs.
 
 For more information about metric queries, refer to the [Loki metric queries documentation](/docs/loki/latest/logql/metric_queries/).
+
+## Review toolbar features
+
+In addition to the **Run query** button and mode switcher, Builder mode provides additional elements:
+
+| Name                      | Description                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
+| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
+| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
+
+### Label browser
+
+You can use the Loki label browser to navigate through your labels and values, and build queries.
+
+**To navigate Loki and build a query:**
+
+1. Choose labels to locate.
+1. Search for the values of your selected labels.
+
+   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
+
+1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button.
+
+{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+
+### Explain query
+
+This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
+
+## Configure query settings
+
+| Name           | Description                                                                                                                                                                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                  |
+| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                 |
+| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                               |
+| **Resolution** | Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
 
 ## Apply annotations
 

@@ -1,6 +1,6 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
@@ -13,7 +13,6 @@ import { usePageTitle } from '../Page/usePageTitle';
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
-import { SectionNav } from './SectionNav';
 
 export const Page: PageType = ({
   navId,
@@ -39,38 +38,36 @@ export const Page: PageType = ({
 
   const pageHeaderNav = pageNav ?? navModel?.node;
 
-  useEffect(() => {
+  // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
+  // This prevents flickering sectionNav when going from dashbaord to settings for example
+  useLayoutEffect(() => {
     if (navModel) {
       chrome.update({
-        sectionNav: navModel.node,
+        sectionNav: navModel,
         pageNav: pageNav,
+        layout: layout,
       });
     }
-  }, [navModel, pageNav, chrome]);
+  }, [navModel, pageNav, chrome, layout]);
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <div className={styles.panes}>
-          {navModel && <SectionNav model={navModel} />}
-          <div className={styles.pageContainer}>
-            <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-              <div className={styles.pageInner}>
-                {pageHeaderNav && (
-                  <PageHeader
-                    actions={actions}
-                    navItem={pageHeaderNav}
-                    renderTitle={renderTitle}
-                    info={info}
-                    subTitle={subTitle}
-                  />
-                )}
-                {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-                <div className={styles.pageContent}>{children}</div>
-              </div>
-            </CustomScrollbar>
+        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+          <div className={styles.pageInner}>
+            {pageHeaderNav && (
+              <PageHeader
+                actions={actions}
+                navItem={pageHeaderNav}
+                renderTitle={renderTitle}
+                info={info}
+                subTitle={subTitle}
+              />
+            )}
+            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+            <div className={styles.pageContent}>{children}</div>
           </div>
-        </div>
+        </CustomScrollbar>
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
@@ -92,10 +89,6 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-Page.OldNavOnly = function OldNavOnly() {
-  return null;
-};
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
@@ -106,22 +99,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       minHeight: 0,
     }),
-    panes: css({
-      label: 'page-panes',
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      flexDirection: 'column',
-      [theme.breakpoints.up('md')]: {
-        flexDirection: 'row',
-      },
-    }),
-    pageContainer: css({
-      label: 'page-container',
-      flexGrow: 1,
-    }),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
@@ -131,17 +108,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       borderRadius: theme.shape.borderRadius(1),
       border: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: 'none',
       background: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
       margin: theme.spacing(0, 0, 0, 0),
 
-      [theme.breakpoints.up('sm')]: {
-        margin: theme.spacing(0, 1, 1, 1),
-      },
       [theme.breakpoints.up('md')]: {
-        margin: theme.spacing(2, 2, 2, 1),
+        margin: theme.spacing(2, 2, 0, 1),
         padding: theme.spacing(3),
       },
     }),

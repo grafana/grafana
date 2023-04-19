@@ -15,25 +15,12 @@ func TestNavTreeRoot(t *testing.T) {
 			},
 		}
 
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(false)
+		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture()
 
 		require.Equal(t, 0, len(treeRoot.Children))
 	})
 
-	t.Run("Should not remove admin sections when they have children", func(t *testing.T) {
-		treeRoot := NavTreeRoot{
-			Children: []*NavLink{
-				{Id: NavIDCfg, Children: []*NavLink{{Id: "child"}}},
-				{Id: NavIDAdmin, Children: []*NavLink{{Id: "child"}}},
-			},
-		}
-
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(false)
-
-		require.Equal(t, 2, len(treeRoot.Children))
-	})
-
-	t.Run("Should create 3 new sections in the Admin node when topnav is enabled", func(t *testing.T) {
+	t.Run("Should create 3 new sections in the Admin node", func(t *testing.T) {
 		treeRoot := NavTreeRoot{
 			Children: []*NavLink{
 				{Id: NavIDCfg},
@@ -41,7 +28,7 @@ func TestNavTreeRoot(t *testing.T) {
 			},
 		}
 
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(true)
+		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture()
 
 		require.Equal(t, "Administration", treeRoot.Children[0].Text)
 	})
@@ -54,7 +41,7 @@ func TestNavTreeRoot(t *testing.T) {
 			},
 		}
 
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(true)
+		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture()
 
 		require.Equal(t, NavIDReporting, treeRoot.Children[0].Children[0].Id)
 	})

@@ -76,6 +76,7 @@ export const Components = {
       menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
+      loadingBar: () => `Panel loading bar`,
     },
     Visualization: {
       Graph: {
@@ -414,5 +415,9 @@ export const Components = {
   },
   Variables: {
     variableOption: 'data-testid variable-option',
+  },
+  Annotations: {
+    annotationsTypeInput: 'annotations-type-input',
+    annotationsChoosePanelInput: 'choose-panels-input',
   },
 };

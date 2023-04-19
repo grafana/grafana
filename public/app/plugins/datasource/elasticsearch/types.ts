@@ -13,10 +13,23 @@ import {
   ExtendedStats,
   MovingAverage as SchemaMovingAverage,
   BucketAggregation,
+  Logs as SchemaLogs,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
 export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
+
+// We want to extend the settings of the Logs query with additional properties that
+// are not part of the schema. This is a workaround, because exporting LogsSettings
+// from dataquery.gen.ts and extending that produces error in SettingKeyOf.
+type ExtendedLogsSettings = SchemaLogs['settings'] & {
+  searchAfter?: unknown[];
+  sortDirection?: 'asc' | 'desc';
+};
+
+export interface Logs extends SchemaLogs {
+  settings?: ExtendedLogsSettings;
+}
 
 export type MetricAggregationWithMeta = ExtendedStats;
 
@@ -49,6 +62,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
   includeFrozen?: boolean;
+  index?: string;
 }
 
 interface MetricConfiguration<T extends MetricAggregationType> {
