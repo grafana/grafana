@@ -15,21 +15,25 @@ var angularDetectionRegexes = []*regexp.Regexp{
 }
 
 // Inspect open module.js and checks if the plugin is using Angular by matching against its source code.
-func Inspect(p *plugins.Plugin) (bool, error) {
+func Inspect(p *plugins.Plugin) (isAngular bool, err error) {
 	f, err := p.FS.Open("module.js")
 	if err != nil {
 		return false, fmt.Errorf("module.js open: %w", err)
 	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("close module.js: %w", closeErr)
+		}
+	}()
 	b, err := io.ReadAll(f)
 	if err != nil {
 		return false, fmt.Errorf("module.js readall: %w", err)
 	}
-	var isAngular bool
 	for _, r := range angularDetectionRegexes {
 		if r.Match(b) {
 			isAngular = true
 			break
 		}
 	}
-	return isAngular, nil
+	return
 }
