@@ -6,7 +6,7 @@ var _ Watcher = (*watcher)(nil)
 
 type watcher struct{}
 
-func ProvideWatcher() *watcher {
+func ProvideWatcher() Watcher {
 	return &watcher{}
 }
 

@@ -12,7 +12,6 @@ var WireSet = wire.NewSet(
 	ProvideMutation,
 	wire.Bind(new(admission.MutatingAdmissionController), new(*pdMutation)),
 	ProvideWatcher,
-	wire.Bind(new(Watcher), new(*watcher)),
 	ProvideService,
 	wire.Bind(new(publicdashboards.Service), new(*ServiceWrapper)),
 )
