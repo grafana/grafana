@@ -50,6 +50,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
     timeout: 10000,
+    awaitHealth: true,
   });
 }
 
