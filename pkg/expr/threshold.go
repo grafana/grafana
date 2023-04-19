@@ -107,6 +107,17 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
 func createMathExpression(referenceVar string, thresholdFunc string, args []float64) (string, error) {
 	switch thresholdFunc {
+	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
+		if len(args) < 2 {
+			return "", fmt.Errorf("failed to evaluate threshold expression: incorrect number of arguments: got %d but need 2", len(args))
+		}
+	case ThresholdIsAbove, ThresholdIsBelow:
+		if len(args) < 1 {
+			return "", fmt.Errorf("failed to evaluate threshold expression: incorrect number of arguments: got %d but need 1", len(args))
+		}
+	}
+
+	switch thresholdFunc {
 	case ThresholdIsAbove:
 		return fmt.Sprintf("${%s} > %f", referenceVar, args[0]), nil
 	case ThresholdIsBelow:
