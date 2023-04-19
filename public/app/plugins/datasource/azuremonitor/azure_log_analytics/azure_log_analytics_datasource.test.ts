@@ -1,11 +1,12 @@
-import { toUtc } from '@grafana/data';
+import { AnnotationEvent, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { Context, createContext } from '../__mocks__/datasource';
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType } from '../types';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
@@ -26,31 +27,28 @@ const makeResourceURI = (
   `/subscriptions/${subscriptionID}/resourceGroups/${resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/${resourceName}`;
 
 describe('AzureLogAnalyticsDatasource', () => {
-  const ctx: any = {};
+  let ctx: Context;
 
   beforeEach(() => {
     templateSrv.init([singleVariable]);
     templateSrv.getVariables = jest.fn().mockReturnValue([singleVariable]);
-    ctx.instanceSettings = {
-      jsonData: { subscriptionId: 'xxx' },
-      url: 'http://azureloganalyticsapi',
-      templateSrv: templateSrv,
-    };
-
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+    ctx = createContext({
+      instanceSettings: { jsonData: { subscriptionId: 'xxx' }, url: 'http://azureloganalyticsapi' },
+    });
+    ctx.templateSrv = templateSrv;
   });
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      ctx.mockGetResource = jest.fn().mockImplementation((path: string) => {
+      ctx.getResource = jest.fn().mockImplementation((path: string) => {
         expect(path).toContain('metadata');
         return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
       });
-      ctx.ds.azureLogAnalyticsDatasource.getResource = ctx.mockGetResource;
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = ctx.getResource;
     });
 
     it('should return a schema to use with monaco-kusto', async () => {
-      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
 
       expect(result.database.tables).toHaveLength(2);
       expect(result.database.tables[0].name).toBe('Alert');
@@ -81,12 +79,12 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should interpolate variables when making a request for a schema with a uri that contains template variables', async () => {
-      await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
-      expect(ctx.mockGetResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
+      await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
+      expect(ctx.getResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
     });
 
     it('should include macros as suggested functions', async () => {
-      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
       expect(result.database.functions.map((f: { name: string }) => f.name)).toEqual([
         'Func1',
         '_AzureBackup_GetVaults',
@@ -99,7 +97,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should include template variables as global parameters', async () => {
-      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
       expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
   });
@@ -144,10 +142,10 @@ describe('AzureLogAnalyticsDatasource', () => {
       ],
     };
 
-    let annotationResults: any[];
+    let annotationResults: AnnotationEvent[];
 
     beforeEach(async () => {
-      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
         if (path.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           return Promise.resolve(workspaceResponse);
         } else {
@@ -155,7 +153,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         }
       });
 
-      annotationResults = await ctx.ds.annotationQuery({
+      annotationResults = await ctx.datasource.annotationQuery({
         annotation: {
           rawQuery: 'Heartbeat | where $__timeFilter()| project TimeGenerated, Text=Computer, tags="test"',
           workspace: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
@@ -176,46 +174,50 @@ describe('AzureLogAnalyticsDatasource', () => {
 
       expect(annotationResults[0].time).toBe(1527970800000);
       expect(annotationResults[0].text).toBe('Computer1');
-      expect(annotationResults[0].tags[0]).toBe('tag1');
-      expect(annotationResults[0].tags[1]).toBe('tag2');
+      expect(annotationResults[0].tags).toBeDefined();
+      expect(annotationResults[0].tags?.length).toBeGreaterThan(0);
+      expect(annotationResults[0].tags![0]).toBe('tag1');
+      expect(annotationResults[0].tags![1]).toBe('tag2');
 
       expect(annotationResults[1].time).toBe(1527971280000);
       expect(annotationResults[1].text).toBe('Computer2');
-      expect(annotationResults[1].tags[0]).toBe('tag2');
+      expect(annotationResults[1].tags).toBeDefined();
+      expect(annotationResults[1].tags?.length).toBeGreaterThan(0);
+      expect(annotationResults[1].tags![0]).toBe('tag2');
     });
   });
 
   describe('When performing getWorkspaces', () => {
     beforeEach(() => {
-      ctx.ds.azureLogAnalyticsDatasource.getWorkspaceList = jest
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = jest
         .fn()
         .mockResolvedValue({ value: [{ name: 'foobar', id: 'foo', properties: { customerId: 'bar' } }] });
     });
 
     it('should return the workspace id', async () => {
-      const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub');
+      const workspaces = await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
       expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
     });
   });
 
   describe('When performing getFirstWorkspace', () => {
     beforeEach(() => {
-      ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription = jest.fn().mockResolvedValue('foo');
-      ctx.ds.azureLogAnalyticsDatasource.getWorkspaces = jest
+      ctx.datasource.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription = jest.fn().mockResolvedValue('foo');
+      ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces = jest
         .fn()
         .mockResolvedValue([{ text: 'foobar', value: 'foo' }]);
-      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = undefined;
+      ctx.datasource.azureLogAnalyticsDatasource.firstWorkspace = undefined;
     });
 
     it('should return the stored workspace', async () => {
-      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'bar';
-      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      ctx.datasource.azureLogAnalyticsDatasource.firstWorkspace = 'bar';
+      const workspace = await ctx.datasource.azureLogAnalyticsDatasource.getFirstWorkspace();
       expect(workspace).toEqual('bar');
-      expect(ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription).not.toHaveBeenCalled();
+      expect(ctx.datasource.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription).not.toHaveBeenCalled();
     });
 
     it('should return the first workspace', async () => {
-      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      const workspace = await ctx.datasource.azureLogAnalyticsDatasource.getFirstWorkspace();
       expect(workspace).toEqual('foo');
     });
   });
@@ -252,15 +254,9 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing filterQuery', () => {
-    const ctx: any = {};
     let laDatasource: AzureLogAnalyticsDatasource;
 
     beforeEach(() => {
-      ctx.instanceSettings = {
-        jsonData: { subscriptionId: 'xxx' },
-        url: 'http://azureloganalyticsapi',
-      };
-
       laDatasource = new AzureLogAnalyticsDatasource(ctx.instanceSettings);
     });
 
@@ -340,7 +336,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return a query unchanged if no template variables are provided', () => {
       const query = createMockQuery();
       query.queryType = AzureQueryType.LogAnalytics;
-      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toEqual(query);
     });
 
@@ -349,7 +345,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       const templateVariables = createTemplateVariables(templateableProps);
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
-      const azureLogAnalytics: { [index: string]: any } = {};
+      const azureLogAnalytics: AzureLogsQuery = {};
       azureLogAnalytics.query = '$query';
       azureLogAnalytics.workspace = '$workspace';
       azureLogAnalytics.resources = ['$resource'];
@@ -358,7 +354,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         ...query.azureLogAnalytics,
         ...azureLogAnalytics,
       };
-      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
         query: templateVariables.get('query')?.templateVariable.current.value,
