@@ -22,6 +22,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
+  config: {
+    featureToggles: {
+      prometheusDataplane: true,
+    },
+  },
 }));
 
 const matrixResponse = {
@@ -102,6 +107,74 @@ describe('Prometheus Result Transformer', () => {
       const series = transformV2(response, request, {});
       expect(series).toEqual({
         data: [{ fields: [], length: 2, meta: { preferredVisualisationType: 'graph' }, name: 'ALERTS', refId: 'A' }],
+        state: 'Done',
+      });
+    });
+
+    it('dataplane handling, adds displayNameFromDs from calculateFieldDisplayName() when __name__ is the field name when legendFormat is auto', () => {
+      const request = {
+        targets: [
+          {
+            format: 'time_series',
+            refId: 'A',
+            legendFormat: '__auto',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                name: 'up',
+                labels: { __name__: 'up' },
+                config: {},
+                values: [1],
+              },
+            ],
+            length: 1,
+            refId: 'A',
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+            },
+          },
+        ],
+      } as unknown as DataQueryResponse;
+      const series = transformV2(response, request, {});
+      expect(series).toEqual({
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                config: { displayNameFromDS: 'up' },
+                labels: { __name__: 'up' },
+                name: 'up',
+                values: [1],
+              },
+            ],
+            length: 1,
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+              preferredVisualisationType: 'graph',
+            },
+            refId: 'A',
+          },
+        ],
         state: 'Done',
       });
     });

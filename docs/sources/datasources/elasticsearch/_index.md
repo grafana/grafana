@@ -140,6 +140,10 @@ For more information about AWS authentication options, refer to [AWS authenticat
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
+> **Note:** The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+> You should now use the `index` field in `jsonData` to store the index name.
+> Please see the examples below.
+
 #### Provisioning examples
 
 **Basic provisioning:**
@@ -151,9 +155,9 @@ datasources:
   - name: Elastic
     type: elasticsearch
     access: proxy
-    database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      index: '[metrics-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
 ```
@@ -167,9 +171,9 @@ datasources:
   - name: elasticsearch-v7-filebeat
     type: elasticsearch
     access: proxy
-    database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      index: '[filebeat-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
       logMessageField: message

@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame } from '@grafana/data';
-import { Collapse, Table, AdHocFilterItem } from '@grafana/ui';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
+import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
@@ -46,13 +45,12 @@ export class TableContainer extends PureComponent<Props> {
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, mainFrame.length * 35) + 35);
+    return Math.max(Math.min(600, mainFrame.length * 36) + 40 + 46);
   }
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
-    const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
     let dataFrames = tableResult;
 
@@ -89,21 +87,30 @@ export class TableContainer extends PureComponent<Props> {
     const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
 
     return (
-      <Collapse label="Table" loading={loading} isOpen>
-        {mainFrame?.length ? (
-          <Table
-            ariaLabel={ariaLabel}
-            data={mainFrame}
-            subData={subFrames}
-            width={tableWidth}
-            height={height}
-            maxHeight={600}
-            onCellFilterAdded={onCellFilterAdded}
-          />
-        ) : (
-          <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
+      <PanelChrome
+        title="Table"
+        width={width}
+        height={height}
+        loadingState={loading ? LoadingState.Loading : undefined}
+      >
+        {(innerWidth, innerHeight) => (
+          <>
+            {mainFrame?.length ? (
+              <Table
+                ariaLabel={ariaLabel}
+                data={mainFrame}
+                subData={subFrames}
+                width={innerWidth}
+                height={innerHeight}
+                maxHeight={600}
+                onCellFilterAdded={onCellFilterAdded}
+              />
+            ) : (
+              <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
+            )}
+          </>
         )}
-      </Collapse>
+      </PanelChrome>
     );
   }
 }

@@ -1,6 +1,7 @@
 package mathexp
 
 import (
+	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
@@ -128,8 +129,29 @@ func NewNumber(name string, labels data.Labels) Number {
 	return Number{
 		data.NewFrame("",
 			data.NewField(name, labels, make([]*float64, 1)),
-		),
+		).SetMeta(&data.FrameMeta{
+			Type:        data.FrameTypeNumericMulti,
+			TypeVersion: data.FrameTypeVersion{0, 1},
+		}),
 	}
+}
+
+// NewNumber returns a data that holds a float64Vector
+func NumberFromRef(refID string, nr numeric.MetricRef) (Number, error) {
+	f, _, err := nr.NullableFloat64Value()
+	if err != nil {
+		return Number{}, err
+	}
+
+	frame := data.NewFrame("",
+		data.NewField(nr.GetMetricName(), nr.GetLabels(), []*float64{f})).SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeNumericMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
+
+	frame.Fields[0].Config = nr.ValueField.Config
+
+	return Number{frame}, nil
 }
 
 func (n Number) GetMeta() interface{} {

@@ -1,6 +1,6 @@
 import { mergeMap, from } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
+import { DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
 import { createGeometryCollection, createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -64,7 +64,7 @@ async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptio
                   ...info.field,
                   name,
                   type: FieldType.geo,
-                  values: new ArrayVector([toLineString(info.field)]),
+                  values: [toLineString(info.field)],
                 },
               ],
             };

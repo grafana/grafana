@@ -10,13 +10,14 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
+  LogsVolumeType,
   PanelEvents,
   QueryFixAction,
+  ScopedVars,
   SupplementaryQueryType,
   toLegacyResponseData,
 } from '@grafana/data';
@@ -37,7 +38,14 @@ import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
-import { createAsyncThunk, ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  createAsyncThunk,
+  ExploreItemState,
+  ExplorePanelData,
+  QueryTransaction,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 import { ExploreId, ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 
 import { notifyApp } from '../../../core/actions';
@@ -338,7 +346,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<Promise<void>> => {
+): ThunkResult<Promise<DataQuery[] | void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
@@ -395,6 +403,7 @@ export const importQueries = (
     }
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
+    return nextQueries;
   };
 };
 
@@ -607,71 +616,112 @@ export const runQueries = (
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
-        for (const type of supplementaryQueryTypes) {
-          // We always prepare provider, even is supplementary query is disabled because when the user
-          // enables the query, we need to load the data, so we need the provider
-          const dataProvider = getSupplementaryQueryProvider(
+        dispatch(
+          handleSupplementaryQueries({
+            exploreId,
             datasourceInstance,
-            type,
-            {
-              ...transaction.request,
-              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
-            },
-            newQuerySource
-          );
-
-          if (dataProvider) {
-            dispatch(
-              storeSupplementaryQueryDataProviderAction({
-                exploreId,
-                type,
-                dataProvider,
-              })
-            );
-
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
-              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-              if (supplementaryQueries[type].enabled) {
-                dispatch(loadSupplementaryQueryData(exploreId, type));
-              }
-            }
-            // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
-            // TODO: Remove in next major version - v10 (https://github.com/grafana/grafana/issues/61845)
-          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
-            const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
-              ...transaction.request,
-              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
-            });
-            dispatch(
-              storeSupplementaryQueryDataProviderAction({
-                exploreId,
-                type,
-                dataProvider,
-              })
-            );
-
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
-              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-              if (supplementaryQueries[type].enabled) {
-                dispatch(loadSupplementaryQueryData(exploreId, type));
-              }
-            }
-          } else {
-            // If data source instance doesn't support this supplementary query, we clean the data provider
-            dispatch(
-              cleanSupplementaryQueryDataProviderAction({
-                exploreId,
-                type,
-              })
-            );
-          }
-        }
+            transaction,
+            newQuerySource,
+            supplementaryQueries,
+            queries,
+            absoluteRange,
+          })
+        );
       }
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
   };
 };
+
+const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars) => {
+  const nonMixedDataSources = datasources.filter((t) => {
+    return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
+  });
+  const sets: { [key: string]: DataQuery[] } = groupBy(nonMixedDataSources, 'datasource.uid');
+
+  return await Promise.all(
+    Object.values(sets).map(async (targets) => {
+      const datasource = await getDataSourceSrv().get(targets[0].datasource, scopedVars);
+      return {
+        datasource,
+        targets,
+      };
+    })
+  );
+};
+
+type HandleSupplementaryQueriesOptions = {
+  exploreId: ExploreId;
+  transaction: QueryTransaction;
+  datasourceInstance: DataSourceApi;
+  newQuerySource: Observable<ExplorePanelData>;
+  supplementaryQueries: SupplementaryQueries;
+  queries: DataQuery[];
+  absoluteRange: AbsoluteTimeRange;
+};
+
+const handleSupplementaryQueries = createAsyncThunk(
+  'explore/handleSupplementaryQueries',
+  async (
+    {
+      datasourceInstance,
+      exploreId,
+      transaction,
+      newQuerySource,
+      supplementaryQueries,
+      queries,
+      absoluteRange,
+    }: HandleSupplementaryQueriesOptions,
+    { dispatch }
+  ) => {
+    let groupedQueries;
+    if (datasourceInstance.meta.mixed) {
+      groupedQueries = await groupDataQueries(transaction.request.targets, transaction.request.scopedVars);
+    } else {
+      groupedQueries = [{ datasource: datasourceInstance, targets: transaction.request.targets }];
+    }
+
+    for (const type of supplementaryQueryTypes) {
+      // We always prepare provider, even is supplementary query is disabled because when the user
+      // enables the query, we need to load the data, so we need the provider
+      const dataProvider = getSupplementaryQueryProvider(
+        groupedQueries,
+        type,
+        {
+          ...transaction.request,
+          requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
+        },
+        newQuerySource
+      );
+
+      if (dataProvider) {
+        dispatch(
+          storeSupplementaryQueryDataProviderAction({
+            exploreId,
+            type,
+            dataProvider,
+          })
+        );
+
+        if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+          dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+          if (supplementaryQueries[type].enabled) {
+            dispatch(loadSupplementaryQueryData(exploreId, type));
+          }
+        }
+      } else {
+        // If data source instance doesn't support this supplementary query, we clean the data provider
+        dispatch(
+          cleanSupplementaryQueryDataProviderAction({
+            exploreId,
+            type,
+          })
+        );
+      }
+    }
+  }
+);
 
 /**
  * Checks if after changing the time range the existing data can be used to show supplementary query.
@@ -696,6 +746,12 @@ function canReuseSupplementaryQueryData(
     head
   );
 
+  const allSupportZoomingIn = supplementaryQueryData.data.every((data: DataFrame) => {
+    // If log volume is based on returned log lines (i.e. LogsVolumeType.Limited),
+    // zooming in may return different results, so we don't want to reuse the data
+    return data.meta?.custom?.logsVolumeType === LogsVolumeType.FullRange;
+  });
+
   const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
 
   const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
@@ -708,7 +764,7 @@ function canReuseSupplementaryQueryData(
     return hasWiderRange;
   });
 
-  return allQueriesAreTheSame && allResultsHaveWiderRange;
+  return allSupportZoomingIn && allQueriesAreTheSame && allResultsHaveWiderRange;
 }
 
 /**

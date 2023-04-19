@@ -3,6 +3,8 @@ import { map } from 'rxjs/operators';
 import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue, Vector } from '../../types';
+import { fieldMatchers } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 
@@ -17,6 +19,11 @@ const DEFAULT_COLUMN_FIELD = 'Time';
 const DEFAULT_ROW_FIELD = 'Time';
 const DEFAULT_VALUE_FIELD = 'Value';
 const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
+
+// grafana-data does not have access to runtime so we are accessing the window object
+// to get access to the feature toggle
+// eslint-disable-next-line
+const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
 
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
@@ -57,9 +64,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const matrixValues: { [key: string]: { [key: string]: any } } = {};
 
         for (let index = 0; index < valueField.values.length; index++) {
-          const columnName = keyColumnField.values.get(index);
-          const rowName = keyRowField.values.get(index);
-          const value = valueField.values.get(index);
+          const columnName = keyColumnField.values[index];
+          const rowName = keyRowField.values[index];
+          const value = valueField.values[index];
 
           if (!matrixValues[columnName]) {
             matrixValues[columnName] = {};
@@ -83,6 +90,14 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             values.push(value);
           }
 
+          // setting the displayNameFromDS in prometheus overrides
+          // the column name based on value fields that are numbers
+          // this prevents columns that should be named 1000190
+          // from becoming named {__name__: 'metricName'}
+          if (supportDataplaneFallback && typeof columnName === 'number') {
+            valueField.config = { ...valueField.config, displayNameFromDS: undefined };
+          }
+
           resultFrame.addField({
             name: columnName.toString(),
             values: values,
@@ -100,7 +115,7 @@ function uniqueValues(values: Vector): any[] {
   const unique = new Set();
 
   for (let index = 0; index < values.length; index++) {
-    unique.add(values.get(index));
+    unique.add(values[index]);
   }
 
   return Array.from(unique);
@@ -110,7 +125,16 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
     const field = frame.fields[fieldIndex];
 
-    if (matchTitle === getFieldDisplayName(field)) {
+    // support for dataplane contract with Prometheus and change in location of field name
+    let matches: boolean;
+    if (supportDataplaneFallback) {
+      const matcher = fieldMatchers.get(FieldMatcherID.byName).get(matchTitle);
+      matches = matcher(field, frame, [frame]);
+    } else {
+      matches = matchTitle === getFieldDisplayName(field);
+    }
+
+    if (matches) {
       return field;
     }
   }
