@@ -31,12 +31,16 @@ func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, nil
 	}
 
+	name := kind.Props().Common().MachineName
+	if name == "dashboard" {
+		return nil, nil
+	}
+
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("core_crd_watcher.tmpl").Execute(buf, kind); err != nil {
 		return nil, fmt.Errorf("failed executing crd watcher template: %w", err)
 	}
 
-	name := kind.Props().Common().MachineName
 	path := filepath.Join(j.parentpath, name, name+"_watcher_gen.go")
 	b, err := postprocessGoFile(genGoFile{
 		path: path,

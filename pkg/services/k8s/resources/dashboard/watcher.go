@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-var _ UnstructuredWatcher = (*watcher)(nil)
+var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
 	log            log.Logger
@@ -32,7 +32,7 @@ func ProvideWatcher(
 	userService user.Service,
 	accessControlService accesscontrol.Service,
 	folders folder.FolderStore,
-) (UnstructuredWatcher, error) {
+) (Watcher, error) {
 	c := watcher{
 		log:            log.New("k8s.dashboards.controller"),
 		dashboardStore: dashboardStore,
