@@ -111,10 +111,9 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	var ver Version
 	latestForArch := latestSupportedVersion(plugin, compatOpts)
 	if latestForArch == nil {
-		return nil, ErrVersionUnsupported{
-			PluginID:         plugin.ID,
-			RequestedVersion: version,
-			SystemInfo:       compatOpts.String(),
+		return nil, ErrArcNotFound{
+			PluginID:   plugin.ID,
+			SystemInfo: compatOpts.OSAndArch(),
 		}
 	}
 
