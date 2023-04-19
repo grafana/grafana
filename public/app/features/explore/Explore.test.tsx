@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId } from 'app/types';
 
 import { Explore, Props } from './Explore';
+import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
-import { createEmptyQueryResponse } from './state/utils';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
 const resizeWindow = (x: number, y: number) => {
   global.innerWidth = x;
@@ -118,13 +119,20 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 
 const setup = (overrideProps?: Partial<Props>) => {
-  const store = configureStore();
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState(),
+      },
+    },
+  });
   const exploreProps = { ...dummyProps, ...overrideProps };
 
   return render(
-    <Provider store={store}>
+    <TestProvider store={store}>
       <Explore {...exploreProps} />
-    </Provider>
+    </TestProvider>
   );
 };
 
@@ -133,17 +141,16 @@ describe('Explore', () => {
     setup();
 
     // Wait for the Explore component to render
-    await screen.findByText('Explore');
+    await screen.findByLabelText('Data source picker select container');
 
     expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
 
   it('should render no data with done loading state', async () => {
-    const queryResp = makeEmptyQueryResponse(LoadingState.Done);
-    setup({ queryResponse: queryResp });
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
 
     // Wait for the Explore component to render
-    await screen.findByText('Explore');
+    await screen.findByLabelText('Data source picker select container');
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
