@@ -9,6 +9,7 @@ import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
 import { getStats } from '../../components/stats';
 import { LokiQueryEditorProps } from '../../components/types';
+import { formatLogQL } from '../../formatterTS';
 import { QueryStats } from '../../types';
 
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
@@ -32,6 +33,7 @@ export function LokiQueryCodeEditor({
 }: Props) {
   const styles = useStyles2(getStyles);
   const onClickFormatQueryButton = async () => onChange({ ...query, expr: await datasource.formatQuery(query.expr) });
+  const onClickFormatQueryButtonTS = async () => onChange({ ...query, expr: formatLogQL(query.expr) });
 
   return (
     <div className={styles.wrapper}>
@@ -53,7 +55,18 @@ export function LokiQueryCodeEditor({
           <div className={styles.buttonGroup}>
             <div>
               <HorizontalGroup spacing="sm">
-                <IconButton onClick={onClickFormatQueryButton} name="brackets-curly" size="xs" tooltip="Format query" />
+                <IconButton
+                  onClick={onClickFormatQueryButtonTS}
+                  name="brackets-curly"
+                  size="xs"
+                  tooltip="Format query (TypeScript)"
+                />
+                <IconButton
+                  onClick={onClickFormatQueryButton}
+                  name="brackets-curly"
+                  size="xs"
+                  tooltip="Format query (API)"
+                />
                 <Tooltip content={`Use ${getModKey()}+z to undo`}>
                   <Icon className={styles.hint} name="keyboard" />
                 </Tooltip>
