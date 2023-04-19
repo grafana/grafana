@@ -25,6 +25,11 @@ export interface PublicDashboard extends PublicDashboardSettings {
   recipients?: Array<{ uid: string; recipient: string }>;
 }
 
+export interface SessionUser {
+  email: string;
+  sessionCreatedAt: string;
+}
+
 // Instance methods
 export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
   return variables.length > 0;

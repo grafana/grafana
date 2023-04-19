@@ -7,6 +7,7 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import {
   PublicDashboard,
   PublicDashboardSettings,
+  SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -116,7 +117,7 @@ export const publicDashboardApi = createApi({
         url: '',
       }),
     }),
-    getUsersWithActiveSessions: builder.query<string[], void>({
+    getUsersWithActiveSessions: builder.query<SessionUser[], void>({
       query: () => ({
         url: '/',
       }),
