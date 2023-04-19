@@ -78,9 +78,16 @@ export const AlertInstances = ({
   const limitStatus = limitInstances ? `Limiting the result to ${INSTANCES_DISPLAY_LIMIT} instances` : `Showing all`;
 
   const limitButtonLabel = limitInstances ? 'Remove limit' : `Limit the result to ${INSTANCES_DISPLAY_LIMIT} instances`;
+
+  const instancesLimitedAndOverflowed =
+    grafanaTotalInstances &&
+    INSTANCES_DISPLAY_LIMIT === filteredAlerts.length &&
+    grafanaTotalInstances > filteredAlerts.length;
+  const instancesNotLimitedAndoverflowed =
+    grafanaTotalInstances && INSTANCES_DISPLAY_LIMIT < filteredAlerts.length && !limitInstances;
+
   const footerRow =
-    (grafanaTotalInstances && grafanaTotalInstances > filteredAlerts.length) ||
-    (grafanaTotalInstances && grafanaTotalInstances === filteredAlerts.length && !limitInstances) ? (
+    instancesLimitedAndOverflowed || instancesNotLimitedAndoverflowed ? (
       <div className={styles.footerRow}>
         <div>{limitStatus}</div>
         {
