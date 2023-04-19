@@ -19,6 +19,8 @@ export const selectOption = (config: SelectOptionConfig): any => {
 
   container.within(() => {
     if (clickToOpen) {
+      // Add this wait to ensure the data source picker component has rendered.
+      e2e().wait(500);
       e2e().get('[class$="-input-suffix"]').click();
     }
   });
