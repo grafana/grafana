@@ -5,7 +5,6 @@ import { Router } from 'react-router-dom';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 
 import { wellFormedTree } from '../fixtures/dashboardsTreeItem.fixture';
 
