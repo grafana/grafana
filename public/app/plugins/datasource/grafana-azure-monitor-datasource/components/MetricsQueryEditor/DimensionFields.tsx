@@ -33,10 +33,11 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
       for (const label of labels) {
         // Labels only exist for series that have a dimension selected
         for (const [dimension, value] of Object.entries(label)) {
-          if (labelsObj[dimension]) {
-            labelsObj[dimension].add(value);
+          const dimensionLower = dimension.toLowerCase();
+          if (labelsObj[dimensionLower]) {
+            labelsObj[dimensionLower].add(value);
           } else {
-            labelsObj[dimension] = new Set([value]);
+            labelsObj[dimensionLower] = new Set([value]);
           }
         }
       }
