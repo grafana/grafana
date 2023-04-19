@@ -21,7 +21,7 @@ DRONE := $(GOBIN)/drone-v1.4.0
 $(DRONE): $(BINGO_DIR)/drone.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/drone-v1.4.0"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.4.0 "github.com/drone/drone-cli/drone"
+	@cd $(BINGO_DIR) && CGO_ENABLED=0 $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.4.0 "github.com/drone/drone-cli/drone"
 
 WIRE := $(GOBIN)/wire-v0.5.0
 $(WIRE): $(BINGO_DIR)/wire.mod
