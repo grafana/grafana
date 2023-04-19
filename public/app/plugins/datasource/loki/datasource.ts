@@ -825,7 +825,7 @@ export class LokiDatasource
     return getQueryHints(query.expr, result);
   }
 
-  getDefaultQuery(app: CoreApp) {
+  getDefaultQuery(app: CoreApp): Partial<LokiQuery> {
     if (app === CoreApp.UnifiedAlerting) {
       return { queryType: LokiQueryType.Instant };
     }

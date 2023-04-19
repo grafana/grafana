@@ -43,9 +43,8 @@ import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
-import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
-import { applyThresholdsConfig } from './utils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -117,22 +116,15 @@ export function ExploreGraph({
         drawStyle: GraphDrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
-        thresholdsStyle: thresholdsStyle,
       },
-      thresholds: thresholdsConfig,
     },
     overrides: [],
   });
 
-  useEffect(() => {
-    const updatedFieldConfig = applyThresholdsConfig(fieldConfig, thresholdsStyle, thresholdsConfig);
-    setFieldConfig(updatedFieldConfig);
-  }, [fieldConfig, thresholdsStyle, thresholdsConfig]);
-
-  const styledFieldConfig = useMemo(
-    () => applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum),
-    [fieldConfig, graphStyle, yAxisMaximum]
-  );
+  const styledFieldConfig = useMemo(() => {
+    const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);
+    return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
+  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({

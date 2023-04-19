@@ -1304,7 +1304,10 @@ export class PrometheusDatasource
 
   getDefaultQuery(app: CoreApp): Partial<PromQuery> {
     if (app === CoreApp.UnifiedAlerting) {
-      return { instant: true };
+      return {
+        instant: true,
+        range: false,
+      };
     }
 
     return {};
