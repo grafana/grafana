@@ -30,8 +30,10 @@ import {
   StackingMode,
   SortOrder,
   GraphTransform,
+  AnnotationQuery,
 } from '@grafana/schema';
-import { GrafanaQuery, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { GrafanaQuery, GrafanaQueryType, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { defaultGraphConfig } from './config';
@@ -48,18 +50,17 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const { fieldConfig, options, target } = graphToTimeseriesOptions({
+    const { fieldConfig, options, annotations } = graphToTimeseriesOptions({
       ...prevOptions.angular,
       fieldConfig: prevFieldConfig,
       panel: panel,
     });
 
-    if (target) {
-      panel.targets = panel.targets ? [target, ...panel.targets] : [target];
-
-      // TODO: should be at the dashboard annotation level
-      // Swith to a mixed datasource (not yet working!)
-      if (target.datasource?.uid !== panel.datasource?.uid) {
+    const dashboard = getDashboardSrv().getCurrent();
+    // @TODO constant uids/types
+    if (dashboard && annotations.length > 0) {
+      dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
+      if (panel?.datasource?.uid !== 'grafana') {
         panel.datasource = {
           uid: MIXED_DATASOURCE_NAME,
           type: 'mixed',
@@ -81,9 +82,9 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 export function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: PanelOptions;
-  target: GrafanaQuery | undefined;
+  annotations: AnnotationQuery[];
 } {
-  let target: GrafanaQuery | undefined = undefined;
+  let annotations: AnnotationQuery[] = [];
 
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
@@ -377,10 +378,11 @@ export function graphToTimeseriesOptions(angular: any): {
 
   // timeRegions migration
   if (angular.timeRegions?.length) {
-    let regions: TimeRegionConfig[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
+    let regions: any[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
       name: `T${idx + 1}`,
       color: old.fillColor,
       line: old.line,
+      fill: old.fill,
       fromDayOfWeek: old.fromDayOfWeek,
       toDayOfWeek: old.toDayOfWeek,
       from: old.from,
@@ -388,7 +390,33 @@ export function graphToTimeseriesOptions(angular: any): {
       timezone: 'utc',
     }));
 
-    console.log('TODO Add annotation queries', regions);
+    regions.forEach((region) => {
+      const queryTarget: GrafanaQuery = {
+        queryType: GrafanaQueryType.TimeRegions,
+        refId: 'Anno',
+        timeRegion: {
+          fromDayOfWeek: region.fromDayOfWeek,
+          toDayOfWeek: region.toDayOfWeek,
+          from: region.from,
+          to: region.to,
+        },
+      };
+
+      annotations.push({
+        datasource: {
+          type: 'datasource',
+          uid: 'grafana',
+        },
+        enable: region.fill,
+        filter: {
+          exclude: false,
+          ids: [angular.panel.id],
+        },
+        iconColor: region.color,
+        name: region.name,
+        target: queryTarget,
+      });
+    });
   }
 
   const tooltipConfig = angular.tooltip;
@@ -508,16 +536,14 @@ export function graphToTimeseriesOptions(angular: any): {
       overrides,
     },
     options,
-    target,
+    annotations,
   };
 }
 
 interface GraphTimeRegionConfig extends TimeRegionConfig {
   colorMode: string;
-
   fill: boolean;
   fillColor: string;
-
   line: boolean;
   lineColor: string;
 }
