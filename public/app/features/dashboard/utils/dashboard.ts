@@ -12,6 +12,7 @@ export function onCreateNewPanel(dashboard: DashboardModel): number | undefined 
     type: 'timeseries',
     title: 'Panel Title',
     gridPos: calculateNewPanelGridPos(dashboard),
+    isNew: true,
   };
 
   dashboard.addPanel(newPanel);
