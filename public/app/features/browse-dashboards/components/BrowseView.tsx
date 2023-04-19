@@ -75,7 +75,7 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
   );
 
   const handleItemSelectionChange = useCallback(
-    (kind: DashboardViewItemKind, uid: string, newState: boolean) => {
+    (item: DashboardViewItem, newState: boolean) => {
       // Recursively set selection state for this item and all descendants
       setSelectedItems((old) =>
         produce(old, (draft) => {
@@ -91,7 +91,22 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
             }
           }
 
-          markChildren(kind, uid);
+          markChildren(item.kind, item.uid);
+
+          // If we're unselecting an item, unselect all ancestors also
+          if (!newState) {
+            let nextParentUID = item.parentUID;
+
+            while (nextParentUID) {
+              const parent = findItem(childrenByUID, nextParentUID);
+              if (!parent) {
+                break;
+              }
+
+              draft[parent.kind][parent.uid] = false;
+              nextParentUID = parent.parentUID;
+            }
+          }
         })
       );
     },
@@ -141,4 +156,24 @@ function createFlatTree(
   const items = (isOpen && childrenByUID[folderKey]) || [];
 
   return items.flatMap((item) => mapItem(item, rootFolderUID, level));
+}
+
+function findItem(
+  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  uid: string
+): DashboardViewItem | undefined {
+  for (const parentUID in childrenByUID) {
+    const children = childrenByUID[parentUID];
+    if (!children) {
+      continue;
+    }
+
+    for (const child of children) {
+      if (child.uid === uid) {
+        return child;
+      }
+    }
+  }
+
+  return undefined;
 }

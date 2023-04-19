@@ -5,7 +5,7 @@ import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, useStyles2 } from '@grafana/ui';
-import { DashboardViewItemKind } from 'app/features/search/types';
+import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { DashboardsTreeItem, DashboardTreeSelection, INDENT_AMOUNT_CSS_VAR } from '../types';
 
@@ -18,7 +18,7 @@ interface DashboardsTreeProps {
   height: number;
   selectedItems: DashboardTreeSelection;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
-  onItemSelectionChange: (kind: DashboardViewItemKind, uid: string, newState: boolean) => void;
+  onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
 }
 
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
@@ -52,12 +52,7 @@ export function DashboardsTree({
         }
 
         const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
-        return (
-          <Checkbox
-            value={isSelected}
-            onChange={(ev) => onItemSelectionChange(item.kind, item.uid, ev.currentTarget.checked)}
-          />
-        );
+        return <Checkbox value={isSelected} onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)} />;
       },
     };
 
