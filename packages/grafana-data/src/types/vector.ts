@@ -108,17 +108,21 @@ export interface MutableVector<T = any> extends ReadWriteVector<T> {}
 export function makeArrayIndexableVector<T extends Vector>(v: T): T {
   return new Proxy(v, {
     get(target: Vector, property: string, receiver: Vector) {
-      const idx = +property;
-      if (String(idx) === property) {
-        return target.get(idx);
+      if (typeof property !== 'symbol') {
+        const idx = +property;
+        if (String(idx) === property) {
+          return target.get(idx);
+        }
       }
       return Reflect.get(target, property, receiver);
     },
     set(target: Vector, property: string, value: any, receiver: Vector) {
-      const idx = +property;
-      if (String(idx) === property) {
-        target.set(idx, value);
-        return true;
+      if (typeof property !== 'symbol') {
+        const idx = +property;
+        if (String(idx) === property) {
+          target.set(idx, value);
+          return true;
+        }
       }
       return Reflect.set(target, property, value, receiver);
     },
