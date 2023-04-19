@@ -2,7 +2,7 @@ import { concat, find, flattenDeep, forEach, get, map } from 'lodash';
 
 import { AnnotationEvent, dateTime, TimeSeries, VariableModel } from '@grafana/data';
 
-import { AzureLogsTableData, AzureLogsVariable } from '../types';
+import { AzureLogsTableData, AzureLogsVariable, AzureAPIResponse, Subscription } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class ResponseParser {
@@ -150,7 +150,7 @@ export default class ResponseParser {
     return dateTime(dateTimeValue).valueOf();
   }
 
-  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
+  static parseSubscriptions(result: AzureAPIResponse<Subscription>): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
     if (!result) {

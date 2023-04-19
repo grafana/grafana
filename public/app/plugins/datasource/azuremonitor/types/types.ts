@@ -284,11 +284,15 @@ export interface ProviderResourceType {
   capabilities: string;
 }
 
-export interface AzureMonitorLocationsResponse {
-  value: Location[];
+export interface AzureAPIResponse<T> {
+  value: T[];
+  count?: {
+    type: string;
+    value: number;
+  };
 }
 
-interface Location {
+export interface Location {
   id: string;
   name: string;
   displayName: string;
@@ -309,4 +313,38 @@ interface LocationMetadata {
 interface LocationPairedRegion {
   name: string;
   id: string;
+}
+
+export interface Subscription {
+  id: string;
+  authorizationSource: string;
+  subscriptionId: string;
+  tenantId: string;
+  displayName: string;
+  state: string;
+  subscriptionPolicies: {
+    locationPlacementId: string;
+    quotaId: string;
+    spendingLimit: string;
+  };
+}
+
+export interface Workspace {
+  properties: {
+    customerId: string;
+    provisioningState: string;
+    sku: {
+      name: string;
+    };
+    retentionInDays: number;
+    publicNetworkAccessForQuery: string;
+    publicNetworkAccessForIngestion: string;
+  };
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  tags: {
+    [key: string]: string;
+  };
 }

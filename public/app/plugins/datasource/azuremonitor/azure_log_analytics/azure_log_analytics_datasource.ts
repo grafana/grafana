@@ -7,11 +7,14 @@ import { isGUIDish } from '../components/ResourcePicker/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import {
+  AzureAPIResponse,
   AzureDataSourceJsonData,
   AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
   DatasourceValidationResult,
+  Subscription,
+  Workspace,
 } from '../types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
@@ -66,7 +69,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const path = `${this.azureMonitorPath}?api-version=2019-03-01`;
-    return await this.getResource(path).then((result: any) => {
+    return await this.getResource<AzureAPIResponse<Subscription>>(path).then((result) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -75,7 +78,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const response = await this.getWorkspaceList(subscription);
 
     return (
-      map(response.value, (val: any) => {
+      map(response.value, (val: Workspace) => {
         return {
           text: val.name,
           value: val.id,
@@ -84,13 +87,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     );
   }
 
-  private getWorkspaceList(subscription: string): Promise<any> {
+  private getWorkspaceList(subscription: string): Promise<AzureAPIResponse<Workspace>> {
     const subscriptionId = getTemplateSrv().replace(subscription || this.defaultSubscriptionId);
 
     const workspaceListUrl =
       this.azureMonitorPath +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.getResource(workspaceListUrl);
+    return this.getResource<AzureAPIResponse<Workspace>>(workspaceListUrl);
   }
 
   async getMetadata(resourceUri: string) {

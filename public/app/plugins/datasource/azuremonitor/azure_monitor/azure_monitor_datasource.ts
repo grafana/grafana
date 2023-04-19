@@ -21,8 +21,10 @@ import {
   AzureMetricQuery,
   AzureMonitorLocations,
   AzureMonitorProvidersResponse,
-  AzureMonitorLocationsResponse,
+  AzureAPIResponse,
   AzureGetResourceNamesQuery,
+  Subscription,
+  Location,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -151,7 +153,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return [];
     }
 
-    return this.getResource(`${this.resourcePath}/subscriptions?api-version=2019-03-01`).then((result: any) => {
+    return this.getResource<AzureAPIResponse<Subscription>>(
+      `${this.resourcePath}/subscriptions?api-version=2019-03-01`
+    ).then((result) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -355,7 +359,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const locationMap = new Map<string, AzureMonitorLocations>();
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
-        await this.getResource<AzureMonitorLocationsResponse>(
+        await this.getResource<AzureAPIResponse<Location>>(
           `${routeNames.azureMonitor}/subscriptions/${this.templateSrv.replace(subscription)}/locations?api-version=${
             this.locationsApiVersion
           }`
