@@ -49,21 +49,21 @@ To help you with dealing with potential user identity conflicts, we have built a
 
 Note that if you are running Grafana with MySQL as a database, this change does not have any impact as MySQL users were already treated as case-insensitive.
 
-## Nested folders
+## Creating subfolders
 
 _Available in preview in all editions of Grafana._
 
-You can now create nested folders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete nested folders, making it easier to sort resources by business units, departments, and teams.
+You can now create subfolders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
 
 You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions will cascade, being inherited from the parent folder, which simplifies access management.
 
-It's worth noting that the nested folders feature is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
+It's worth noting that the the ability to add subfolders is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
 
-To try out the nested folders feature, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To get started with creating subfolders, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Nested folders in Grafana" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Subfolders in Grafana" >}}
 
 ## Correlations
 
