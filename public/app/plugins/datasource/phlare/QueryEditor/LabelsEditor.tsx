@@ -1,27 +1,32 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
-import { useLatest } from 'react-use';
+import React, {useEffect, useMemo, useRef} from 'react';
+import { useAsync, useLatest } from 'react-use';
 
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
 
 import { languageDefinition } from '../phlareql';
-import { SeriesMessage } from '../types';
+import { BackendType } from '../types';
 
-import { CompletionProvider } from './autocomplete';
+import { ApiObject, CompletionProvider } from './autocomplete';
 
 interface Props {
   value: string;
   onChange: (val: string) => void;
   onRunQuery: (value: string) => void;
-  series?: SeriesMessage;
+  apiObject: ApiObject;
+  backendType: BackendType;
 }
 
 export function LabelsEditor(props: Props) {
-  const setupAutocompleteFn = useAutocomplete(props.series);
+  const setupAutocompleteFn = useAutocomplete(props.apiObject, props.backendType);
   const styles = useStyles2(getStyles);
 
   const onRunQueryRef = useLatest(props.onRunQuery);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  if (!setupAutocompleteFn) {
+    return null;
+  }
 
   return (
     <div
@@ -92,15 +97,14 @@ const EDITOR_HEIGHT_OFFSET = 2;
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
-function useAutocomplete(series?: SeriesMessage) {
-  const providerRef = useRef<CompletionProvider>(new CompletionProvider());
+function useAutocomplete(apiObject: ApiObject, backendType: BackendType) {
+  const provider = useMemo(() => new CompletionProvider(apiObject, backendType), [apiObject, backendType]);
 
-  useEffect(() => {
-    if (series) {
-      // When we have the value we will pass it to the CompletionProvider
-      providerRef.current.setSeries(series);
-    }
-  }, [series]);
+  const { loading } = useAsync(async () => {
+    await provider.init();
+  }, [provider]);
+
+  const providerRef = useRef<CompletionProvider>(provider);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
@@ -109,6 +113,10 @@ function useAutocomplete(series?: SeriesMessage) {
       autocompleteDisposeFun.current?.();
     };
   }, []);
+
+  if (loading) {
+    return;
+  }
 
   // This should be run in monaco onEditorDidMount
   return (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {

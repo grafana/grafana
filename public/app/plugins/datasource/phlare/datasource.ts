@@ -13,14 +13,17 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
 import { normalizeQuery } from './QueryEditor/QueryEditor';
-import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
+import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
+  backendType: BackendType;
+
   constructor(
     instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
   }
 
   query(request: DataQueryRequest<Query>): Observable<DataQueryResponse> {
@@ -49,13 +52,21 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('profileTypes');
   }
 
-  async getSeries(): Promise<SeriesMessage> {
+  async getAllLabelsAndValues(): Promise<Record<string, string[]>> {
     // For now, we send empty matcher to get all the series
-    return await super.getResource('series', { matchers: ['{}'] });
+    return await super.getResource('allLabelsAndValues', { matchers: ['{}'] });
   }
 
-  async getLabelNames(): Promise<string[]> {
-    return await super.getResource('labelNames');
+  async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
+    return await super.getResource('labelNames', {query, start, end});
+  }
+
+  async getLabelValues(label: string): Promise<string[]> {
+    return await super.getResource('labelValues', { label });
+  }
+
+  async getBackendType(): Promise<{ backendType: BackendType }> {
+    return await super.getResource('backendType');
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {

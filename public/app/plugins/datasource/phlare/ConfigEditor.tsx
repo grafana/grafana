@@ -1,6 +1,8 @@
 import React from 'react';
+import { useAsync } from 'react-use';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   DataSourceHttpSettings,
   EventsWithValidation,
@@ -10,12 +12,32 @@ import {
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
-import { PhlareDataSourceOptions } from './types';
+import { PhlareDataSource } from './datasource';
+import { BackendType, PhlareDataSourceOptions } from './types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<PhlareDataSourceOptions> {}
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  const dataSourceSrv = getDataSourceSrv();
+
+  const { value: datasource } = useAsync(async () => {
+    // If backend type is already set don't try to autodetect.
+    // TODO: maybe we should check anyway and show a warning if it does not match?
+    if (options.jsonData.backendType) {
+      return;
+    }
+    return (await dataSourceSrv.get({ type: options.type, uid: options.uid })) as PhlareDataSource;
+  }, [dataSourceSrv, options]);
+
+  useAsync(async () => {
+    if (!datasource || !options.url) {
+      return;
+    }
+    const { backendType } = await datasource.getBackendType();
+    onOptionsChange({ ...options, jsonData: { ...options.jsonData, backendType } });
+  }, [datasource]);
 
   return (
     <>
@@ -66,6 +88,44 @@ export const ConfigEditor = (props: Props) => {
           </div>
         </div>
       </div>
+
+      <div className="gf-form-group">
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <LegacyForms.FormField
+              label="Backend type"
+              labelWidth={13}
+              inputEl={
+                <LegacyForms.Select<BackendType>
+                  value={options.jsonData.backendType ? backendTypeOptions[options.jsonData.backendType] : undefined}
+                  options={Object.values(backendTypeOptions)}
+                  onChange={(option) => {
+                    onOptionsChange({
+                      ...options,
+                      jsonData: {
+                        ...options.jsonData,
+                        backendType: option.value,
+                      },
+                    });
+                  }}
+                />
+              }
+              tooltip="Select what type of backend you use. This datasource supports both Phlare and Pyroscope backends."
+            />
+          </div>
+        </div>
+      </div>
     </>
   );
+};
+
+const backendTypeOptions: Record<BackendType, SelectableValue<BackendType>> = {
+  phlare: {
+    label: 'Phlare',
+    value: 'phlare',
+  },
+  pyroscope: {
+    label: 'Pyroscope',
+    value: 'pyroscope',
+  },
 };

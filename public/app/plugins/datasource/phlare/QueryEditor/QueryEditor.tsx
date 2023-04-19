@@ -13,6 +13,7 @@ import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
 import { LabelsEditor } from './LabelsEditor';
 import { QueryOptions } from './QueryOptions';
+import { ApiObject } from './autocomplete';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
 
@@ -31,6 +32,7 @@ export function QueryEditor(props: Props) {
 
     const id = selectedOptions[selectedOptions.length - 1].value;
 
+    // Probably cannot happen but makes TS happy
     if (typeof id !== 'string') {
       throw new Error('id is not string');
     }
@@ -47,13 +49,31 @@ export function QueryEditor(props: Props) {
     props.onRunQuery();
   }
 
-  const seriesResult = useAsync(() => {
-    return props.datasource.getSeries();
-  }, [props.datasource]);
+  const labelsResult = useAsync(() => {
+    return props.datasource.getLabelNames(
+      props.query.profileTypeId + props.query.labelSelector,
+      props.range?.from.valueOf() || 0,
+      props.range?.to.valueOf() || 0
+    );
+  }, [props.datasource, props.query.profileTypeId, props.query.labelSelector, props.range]);
 
   const cascaderOptions = useCascaderOptions(profileTypes);
   const selectedProfileName = useProfileName(profileTypes, props.query.profileTypeId);
   let query = normalizeQuery(props.query, props.app);
+
+  const apiObject: ApiObject = useMemo(() => {
+    return {
+      getLabelValues: props.datasource.getLabelValues.bind(props.datasource),
+      getLabelNames: () => {
+        return props.datasource.getLabelNames(
+          props.query.profileTypeId + props.query.labelSelector,
+          props.range?.from.valueOf() || 0,
+          props.range?.to.valueOf() || 0
+        );
+      },
+      getAllLabelsAndValues: props.datasource.getAllLabelsAndValues.bind(props.datasource),
+    };
+  }, [props.datasource, props.range, props.query.labelSelector, props.query.profileTypeId]);
 
   return (
     <EditorRows>
@@ -65,11 +85,12 @@ export function QueryEditor(props: Props) {
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
           onRunQuery={handleRunQuery}
-          series={seriesResult.value}
+          apiObject={apiObject}
+          backendType={props.datasource.backendType}
         />
       </EditorRow>
       <EditorRow>
-        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} series={seriesResult.value} />
+        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} labels={labelsResult.value} />
       </EditorRow>
     </EditorRows>
   );
@@ -81,16 +102,26 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
     let mainTypes = new Map<string, CascaderOption>();
     // Classify profile types by name then sample type.
     for (let profileType of profileTypes) {
-      if (!mainTypes.has(profileType.name)) {
-        mainTypes.set(profileType.name, {
-          label: profileType.name,
-          value: profileType.ID,
+      let parts: string[];
+      // Phlare uses : as delimiter while Pyro uses .
+      if (profileType.id.indexOf(':')) {
+        parts = profileType.id.split(':');
+      } else {
+        parts = profileType.id.split('.');
+      }
+
+      const [name, type] = parts;
+
+      if (!mainTypes.has(name)) {
+        mainTypes.set(name, {
+          label: name,
+          value: profileType.id,
           children: [],
         });
       }
-      mainTypes.get(profileType.name)?.children?.push({
-        label: profileType.sample_type,
-        value: profileType.ID,
+      mainTypes.get(name)?.children?.push({
+        label: type,
+        value: profileType.id,
       });
     }
     return Array.from(mainTypes.values());
@@ -113,12 +144,12 @@ function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: strin
     if (!profileTypes) {
       return 'Loading';
     }
-    const profile = profileTypes.find((type) => type.ID === profileTypeId);
+    const profile = profileTypes.find((type) => type.id === profileTypeId);
     if (!profile) {
       return 'Select a profile type';
     }
 
-    return profile.name + ' - ' + profile.sample_type;
+    return profile.label;
   }, [profileTypeId, profileTypes]);
 }
 

@@ -1,6 +1,12 @@
 import { monacoTypes, Monaco } from '@grafana/ui';
 
-import { SeriesMessage } from '../types';
+import { BackendType } from '../types';
+
+export type ApiObject = {
+  getLabelValues: (label: string) => Promise<string[]>;
+  getLabelNames: () => Promise<string[]>;
+  getAllLabelsAndValues: () => Promise<Record<string, string[]>>;
+};
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
@@ -17,6 +23,25 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private labels: { [label: string]: Set<string> } = {};
+
+  constructor(private apiObject: ApiObject, private backendType: BackendType) {}
+
+  async init() {
+    if (this.backendType === 'pyroscope') {
+      const labels = await this.apiObject.getLabelNames();
+      for (const label of labels) {
+        if (!this.labels[label]) {
+          this.labels[label] = new Set();
+        }
+      }
+    } else {
+      // We try both of these because we don't know which one will be available.
+      const all = await this.apiObject.getAllLabelsAndValues();
+      for (const label of Object.keys(all)) {
+        this.labels[label] = new Set(all[label]);
+      }
+    }
+  }
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -35,39 +60,21 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
     const situation = getSituation(model.getValue(), offset);
-    const completionItems = this.getCompletions(situation);
 
-    // monaco by-default alphabetically orders the items.
-    // to stop it, we use a number-as-string sortkey,
-    // so that monaco keeps the order we use
-    const maxIndexDigits = completionItems.length.toString().length;
-    const suggestions: monacoTypes.languages.CompletionItem[] = completionItems.map((item, index) => ({
-      kind: getMonacoCompletionItemKind(item.type, this.monaco!),
-      label: item.label,
-      insertText: item.insertText,
-      sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-      range,
-    }));
-    return { suggestions };
-  }
-
-  /**
-   * We expect the data directly from the request and transform it here. We do some deduplication and turn them into
-   * object for quicker search as we usually need either a list of label names or values or particular label.
-   */
-  setSeries(series: SeriesMessage) {
-    this.labels = series.reduce<{ [label: string]: Set<string> }>((acc, serie) => {
-      const seriesLabels = serie.labels.reduce<{ [label: string]: Set<string> }>((acc, labelValue) => {
-        acc[labelValue.name] = acc[labelValue.name] || new Set();
-        acc[labelValue.name].add(labelValue.value);
-        return acc;
-      }, {});
-
-      for (const label of Object.keys(seriesLabels)) {
-        acc[label] = new Set([...(acc[label] || []), ...seriesLabels[label]]);
-      }
-      return acc;
-    }, {});
+    return this.getCompletions(situation).then((completionItems) => {
+      // monaco by-default alphabetically orders the items.
+      // to stop it, we use a number-as-string sortkey,
+      // so that monaco keeps the order we use
+      const maxIndexDigits = completionItems.length.toString().length;
+      const suggestions: monacoTypes.languages.CompletionItem[] = completionItems.map((item, index) => ({
+        kind: getMonacoCompletionItemKind(item.type, this.monaco!),
+        label: item.label,
+        insertText: item.insertText,
+        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+        range,
+      }));
+      return { suggestions };
+    });
   }
 
   /**
@@ -75,8 +82,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private getCompletions(situation: Situation): Completion[] {
-    if (!Object.keys(this.labels).length) {
+  private async getCompletions(situation: Situation): Promise<Completion[]> {
+    if (this.backendType === 'phlare' && !Object.keys(this.labels).length) {
+      // With phlare, if we don't have any labels or values we can't suggest anything.
       return [];
     }
     switch (situation.type) {
@@ -102,7 +110,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           };
         });
       case 'IN_LABEL_VALUE':
-        return Array.from(this.labels[situation.labelName].values()).map((key) => {
+        let values: string[] = []
+        if (this.labels[situation.labelName].size) {
+          values = Array.from(this.labels[situation.labelName].values())
+        } else if (this.backendType === 'pyroscope') {
+          values = await this.apiObject.getLabelValues(situation.labelName)
+        }
+        return values.map((key) => {
           return {
             label: key,
             insertText: situation.betweenQuotes ? key : `"${key}"`,

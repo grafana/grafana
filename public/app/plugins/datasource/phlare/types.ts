@@ -7,19 +7,16 @@ export interface Query extends PhlareBase {
 }
 
 export interface ProfileTypeMessage {
-  ID: string;
-  name: string;
-  period_type: string;
-  period_unit: string;
-  sample_type: string;
-  sample_unit: string;
+  id: string;
+  label: string;
 }
-
-export type SeriesMessage = Array<{ labels: Array<{ name: string; value: string }> }>;
 
 /**
  * These are options configured for each DataSource instance.
  */
 export interface PhlareDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
+  backendType?: BackendType; // if not set we assume it's phlare
 }
+
+export type BackendType = 'phlare' | 'pyroscope';
