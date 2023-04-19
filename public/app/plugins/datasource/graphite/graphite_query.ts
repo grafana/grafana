@@ -110,6 +110,10 @@ export default class GraphiteQuery {
         const innerFunc = this.datasource.createFuncInstance(astNode.name, {
           withDefaultParams: false,
         });
+
+        // bug fix for parsing multiple functions as params
+        handlemultipleSeriesByTagsParams(astNode, innerFunc);
+
         each(astNode.params, (param) => {
           this.parseTargetRecursive(param, innerFunc);
         });
@@ -325,4 +329,45 @@ export default class GraphiteQuery {
 
 function renderTagString(tag: { key: any; operator?: any; value?: any }) {
   return tag.key + tag.operator + tag.value;
+}
+
+/**
+ * mutates the second seriesByTag function into a string to fix a parsing bug
+ * @param astNode
+ * @param innerFunc
+ */
+// eslint-disable-next-line
+function handlemultipleSeriesByTagsParams(astNode: any, innerFunc: any) {
+  // if function is asPercent and has two params that are function seriesByTags keep the second as a string otherwise we have a parsing error
+  if (innerFunc.def.name === 'asPercent' && astNode.params.length >= 2) {
+    let count = 0;
+    // eslint-disable-next-line
+    astNode.params = astNode.params.map((p: any) => {
+      if (p.type === 'function') {
+        count += 1;
+      }
+
+      if (count === 2 && p.type === 'function' && p.name === 'seriesByTag') {
+        // convert second function to a string
+        // eslint-disable-next-line
+        const stringParams = p.params.reduce(
+          (acc: string, p: { type: string; value: string }, idx: number, paramsArr: any[]) => {
+            if (idx === 0 || idx !== paramsArr.length - 1) {
+              return `${acc}'${p.value}',`;
+            }
+
+            return `${acc}'${p.value}'`;
+          },
+          ''
+        );
+
+        return {
+          type: 'string',
+          value: `${p.name}(${stringParams})`,
+        };
+      }
+
+      return p;
+    });
+  }
 }
