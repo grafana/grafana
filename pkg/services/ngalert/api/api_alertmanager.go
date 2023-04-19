@@ -4,13 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	tmplhtml "html/template"
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
+	tmpltext "text/template"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/templates"
+	v2 "github.com/prometheus/alertmanager/api/v2"
+	"github.com/prometheus/alertmanager/template"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -343,8 +350,99 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 }
 
 func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
-	// TODO: Stub
-	return response.JSON(http.StatusOK, apimodels.TestTemplatesResults{})
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
+	if errResp != nil {
+		return errResp
+	}
+
+	paths := make([]string, 0)
+	for _, name := range am.GetStatus().Config.Templates {
+		if name == body.Name {
+			// Skip the existing template of the same name as we're going to parse the one for testing instead.
+			continue
+		}
+		paths = append(paths, filepath.Join(am.WorkingDirPath(), name))
+	}
+
+	res, err := TestTemplate(c.Req.Context(), am.AppURL(), body, paths, srv.log)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "", err)
+	}
+
+	return response.JSON(http.StatusOK, res)
+}
+
+func TestTemplate(ctx context.Context, appUrl string, c apimodels.TestTemplatesConfigBodyParams, paths []string, l log.Logger) (*apimodels.TestTemplatesResults, error) {
+
+	definitions := make([]string, 0)
+	var extractDefinitions template.Option = func(text *tmpltext.Template, html *tmplhtml.Template) {
+		for _, t := range text.Templates() {
+			if t.Tree == nil || t.Root == nil {
+				continue
+			}
+			definitions = append(definitions, t.Name())
+		}
+	}
+
+	var innerErr error
+	var parseRequestTemplate template.Option = func(text *tmpltext.Template, html *tmplhtml.Template) {
+		_, err := text.New(c.Name).Parse(c.Template)
+		if err != nil {
+			innerErr = err
+		}
+		return
+	}
+
+	tmpl, err := alertingNotify.FromGlobs(paths, parseRequestTemplate, extractDefinitions)
+	if err != nil {
+		return &apimodels.TestTemplatesResults{
+			Errors: []apimodels.TestTemplatesErrorResult{{
+				Kind:    apimodels.InvalidTemplate,
+				Message: err.Error(),
+			}},
+		}, nil
+	}
+	if innerErr != nil {
+		return &apimodels.TestTemplatesResults{
+			Errors: []apimodels.TestTemplatesErrorResult{{
+				Kind:    apimodels.InvalidTemplate,
+				Message: innerErr.Error(),
+			}},
+		}, nil
+	}
+
+	externalURL, err := url.Parse(appUrl)
+	if err != nil {
+		return nil, err
+	}
+	tmpl.ExternalURL = externalURL
+
+	// TODO: Are there any private/computed annotations / labels we need to add?
+	var tmplErr error
+	templater, _ := templates.TmplText(ctx, tmpl, v2.OpenAPIAlertsToAlerts(c.Alerts), notifier.NewLogger(l), &tmplErr)
+
+	// Iterate over each definition in the template and evaluate it.
+	var results apimodels.TestTemplatesResults
+	for _, def := range definitions {
+		s := fmt.Sprintf(`{{ template "%s" . }}`, def)
+		val := templater(s)
+		if tmplErr != nil {
+			results.Errors = append(results.Errors, apimodels.TestTemplatesErrorResult{
+				Name:    def,
+				Kind:    apimodels.ExecutionError,
+				Message: tmplErr.Error(),
+			})
+			tmplErr = nil
+			continue
+		}
+
+		results.Results = append(results.Results, apimodels.TestTemplatesResult{
+			Name: def,
+			Text: val,
+		})
+	}
+
+	return &results, nil
 }
 
 // contextWithTimeoutFromRequest returns a context with a deadline set from the

@@ -314,7 +314,7 @@ type TestTemplatesConfigParams struct {
 
 type TestTemplatesConfigBodyParams struct {
 	// Alerts to use as data when testing the template.
-	Alerts []amv2.PostableAlert `json:"alerts"`
+	Alerts []*amv2.PostableAlert `json:"alerts"`
 
 	// Template string to test.
 	Template string `json:"template"`
@@ -326,7 +326,7 @@ type TestTemplatesConfigBodyParams struct {
 // swagger:model
 type TestTemplatesResults struct {
 	Results []TestTemplatesResult      `json:"results"`
-	Errors  []TestTemplatesErrorResult `json:"errors"`
+	Errors  []TestTemplatesErrorResult `json:"errors,omitempty"`
 }
 
 type TestTemplatesResult struct {
