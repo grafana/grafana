@@ -21,6 +21,10 @@ load(
     "publish_packages_pipeline",
 )
 load(
+    "scripts/drone/rgm.star",
+    "rgm",
+)
+load(
     "scripts/drone/pipelines/publish_images.star",
     "publish_image_pipelines_public",
     "publish_image_pipelines_security",
@@ -51,6 +55,7 @@ def main(_ctx):
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
+        rgm() +
         artifacts_page_pipeline() +
         version_branch_pipelines() +
         integration_test_pipelines() +
