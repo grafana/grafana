@@ -12,16 +12,19 @@ import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyl
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { PickerContentProps, DataSourceDrawerProps } from './types';
-import { dataSourceName } from './utils';
+import { PickerContentProps, DataSourceDropdownProps } from './types';
+import { dataSourceName, useGetDatasource } from './utils';
 
-export function DataSourceDropdown(props: DataSourceDrawerProps) {
+export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
   const [isOpen, setOpen] = useState(false);
 
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
+
+  const getDataSource = useGetDatasource();
+  const currentDataSourceInstanceSettings = getDataSource(current);
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
@@ -49,9 +52,15 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
       {isOpen ? (
         <FocusScope contain autoFocus restoreFocus>
           <Input
-            prefix={filterTerm ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={current}></DataSourceLogo>}
+            prefix={
+              filterTerm ? (
+                <DataSourceLogoPlaceHolder />
+              ) : (
+                <DataSourceLogo dataSource={currentDataSourceInstanceSettings}></DataSourceLogo>
+              )
+            }
             suffix={<Icon name={filterTerm ? 'search' : 'angle-down'}></Icon>}
-            placeholder={dataSourceName(current)}
+            placeholder={dataSourceName(currentDataSourceInstanceSettings)}
             onChange={(e) => {
               setFilterTerm(e.currentTarget.value);
             }}
@@ -70,7 +79,7 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
                 onClose={() => {
                   setOpen(false);
                 }}
-                current={current}
+                current={currentDataSourceInstanceSettings}
                 style={popper.styles.popper}
                 ref={setSelectorElement}
                 {...restProps}
@@ -92,9 +101,9 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
           }}
         >
           <Input
-            prefix={<DataSourceLogo dataSource={current}></DataSourceLogo>}
+            prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings}></DataSourceLogo>}
             suffix={<Icon name="angle-down"></Icon>}
-            value={dataSourceName(current)}
+            value={dataSourceName(currentDataSourceInstanceSettings)}
             onFocus={() => {
               setOpen(true);
             }}
@@ -126,8 +135,9 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <div className={styles.dataSourceList}>
         <CustomScrollbar>
           <DataSourceList
+            current={current}
             onChange={changeCallback}
-            filter={(ds) => !ds.meta.builtIn && ds.name.includes(filterTerm ?? '')}
+            filter={(ds) => !ds.meta.builtIn && ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
           ></DataSourceList>
         </CustomScrollbar>
       </div>
@@ -147,8 +157,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
-                  datasources: props.datasources,
-                  recentlyUsed: props.recentlyUsed,
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
                   current,

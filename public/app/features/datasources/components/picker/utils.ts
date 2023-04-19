@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
+import { GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -36,4 +37,31 @@ export function dataSourceName(
   }
 
   return 'Unknown';
+}
+
+export function useGetDatasources(filters: GetDataSourceListFilters) {
+  const dataSourceSrv = getDataSourceSrv();
+
+  return (filters: GetDataSourceListFilters) => dataSourceSrv.getList(filters);
+}
+
+export function useGetDatasource() {
+  const dataSourceSrv = getDataSourceSrv();
+
+  const getDataSource = (dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) => {
+    if (!dataSource) {
+      return undefined;
+    }
+
+    if (typeof dataSource === 'string') {
+      return dataSourceSrv.getInstanceSettings(dataSource);
+    }
+
+    if ('uid' in dataSource) {
+      return dataSourceSrv.getInstanceSettings(dataSource);
+    }
+
+    return undefined;
+  };
+  return getDataSource;
 }
