@@ -36,9 +36,7 @@ describe('SqlQueryEditor', () => {
     runTestIf(sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled)(
       'should ONLY render the `no postgres database` alert',
       async () => {
-        render(
-          <SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { disableDatasetSelector: true } })} />
-        );
+        render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { isPostgresInstance: true } })} />);
 
         await waitFor(() => {
           const alert = screen.getByRole('alert', { name: 'Default datasource error' });
@@ -56,7 +54,7 @@ describe('DatasetSelector', () => {
   describe('should render with the correct default placeholder values', () => {
     runTestIf(sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled)(
       `should render with 'Select table' since no current dataset is chosen, no dataset has been preconfigured,
-        and the selector has not been disabled via 'disableDatasetSelector'`,
+        and the selector has not been disabled via 'isPostgresInstance'`,
       async () => {
         render(<DatasetSelector {...buildMockDataSelectorProps()} />);
 
@@ -67,10 +65,10 @@ describe('DatasetSelector', () => {
     );
 
     runTestIf(sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled)(
-      `should render with 'Unconfigured database' since a 'disableDatasetSelector' is truthy,
+      `should render with 'Unconfigured database' since a 'isPostgresInstance' is truthy,
         which means that the datasource is Postgres, and does not have a default configured database`,
       async () => {
-        render(<DatasetSelector {...buildMockDataSelectorProps({ disableDatasetSelector: true })} />);
+        render(<DatasetSelector {...buildMockDataSelectorProps({ isPostgresInstance: true })} />);
 
         await waitFor(() => {
           expect(screen.getByText(/unconfig/i).textContent).toBe('Unconfigured database');
@@ -98,14 +96,14 @@ describe('DatasetSelector', () => {
         expect(screen.getByLabelText('Dataset selector')).toHaveAttribute('disabled');
       });
     });
-    it('should be disabled if `disableDatasetSelector` is true', async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps({ disableDatasetSelector: true })} />);
+    it('should be disabled if `isPostgresInstance` is true', async () => {
+      render(<DatasetSelector {...buildMockDataSelectorProps({ isPostgresInstance: true })} />);
 
       await waitFor(() => {
         expect(screen.getByLabelText('Dataset selector')).toHaveProperty('disabled');
       });
     });
-    it('should be enabled if `disableDatasetSelector` is false, and there is no preconfigured dataset', async () => {
+    it('should be enabled if `isPostgresInstance` is false, and there is no preconfigured dataset', async () => {
       render(<DatasetSelector {...buildMockDataSelectorProps()} />);
 
       await waitFor(() => {
@@ -127,7 +125,7 @@ describe('DatasetSelector', () => {
     runTestIf(sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled)(
       'should not query the database if disabled',
       async () => {
-        const mockProps = buildMockDataSelectorProps({ disableDatasetSelector: true });
+        const mockProps = buildMockDataSelectorProps({ isPostgresInstance: true });
         render(<DatasetSelector {...mockProps} />);
 
         await waitFor(() => {

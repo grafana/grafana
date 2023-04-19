@@ -15,15 +15,15 @@ import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  query: QueryWithDefaults;
-  preconfiguredDataset: string;
-  onChange: (query: SQLQuery) => void;
-  onRunQuery: () => void;
-  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
-  queryRowFilter: QueryRowFilter;
+  hasConfigIssue?: boolean;
+  isPostgresInstance?: boolean;
   isQueryRunnable: boolean;
-  disableDatasetSelector?: boolean;
-  cascadeDisable?: boolean;
+  onChange: (query: SQLQuery) => void;
+  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
+  onRunQuery: () => void;
+  preconfiguredDataset: string;
+  query: QueryWithDefaults;
+  queryRowFilter: QueryRowFilter;
 }
 
 const editorModes = [
@@ -33,15 +33,15 @@ const editorModes = [
 
 export function QueryHeader({
   db,
-  query,
-  preconfiguredDataset,
-  queryRowFilter,
-  onChange,
-  onRunQuery,
-  onQueryRowChange,
+  hasConfigIssue,
+  isPostgresInstance,
   isQueryRunnable,
-  disableDatasetSelector,
-  cascadeDisable,
+  onChange,
+  onQueryRowChange,
+  onRunQuery,
+  preconfiguredDataset,
+  query,
+  queryRowFilter,
 }: QueryHeaderProps) {
   const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
 
@@ -97,9 +97,9 @@ export function QueryHeader({
   };
 
   const isDatasetDropdownEnabled = () => {
-    // If the feature flag is DISABLED, && the datasource is Postgres (disableDatasetSelector),
+    // If the feature flag is DISABLED, && the datasource is Postgres (disable),
     // we want to hide the dropdown - as per previous behavior.
-    if (!sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled && disableDatasetSelector) {
+    if (!sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled && isPostgresInstance) {
       return false;
     }
 
@@ -110,7 +110,6 @@ export function QueryHeader({
     <>
       <EditorHeader>
         <InlineSelect
-          // disabled={cascadeDisable}
           label="Format"
           value={query.format}
           placeholder="Select format"
@@ -122,7 +121,6 @@ export function QueryHeader({
         {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
-              // disabled={cascadeDisable}
               id="sql-filter"
               label="Filter"
               transparent={true}
@@ -135,7 +133,6 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              // disabled={cascadeDisable}
               id="sql-group"
               label="Group"
               transparent={true}
@@ -148,7 +145,6 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              // disabled={cascadeDisable}
               id="sql-order"
               label="Order"
               transparent={true}
@@ -161,7 +157,6 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              // disabled={cascadeDisable}
               id="sql-preview"
               label="Preview"
               transparent={true}
@@ -178,7 +173,7 @@ export function QueryHeader({
         <FlexItem grow={1} />
 
         {isQueryRunnable ? (
-          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()} disabled={cascadeDisable}>
+          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()} disabled={hasConfigIssue}>
             Run query
           </Button>
         ) : (
@@ -197,20 +192,14 @@ export function QueryHeader({
               variant="secondary"
               size="sm"
               onClick={() => onRunQuery()}
-              disabled={cascadeDisable}
+              disabled={hasConfigIssue}
             >
               Run query
             </Button>
           </Tooltip>
         )}
 
-        <RadioButtonGroup
-          options={editorModes}
-          size="sm"
-          value={editorMode}
-          onChange={onEditorModeChange}
-          // disabled={cascadeDisable}
-        />
+        <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
 
         <ConfirmModal
           isOpen={showConfirm}
@@ -244,7 +233,7 @@ export function QueryHeader({
                 <DatasetSelector
                   db={db}
                   dataset={query.dataset}
-                  disableDatasetSelector={disableDatasetSelector}
+                  isPostgresInstance={isPostgresInstance}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
                 />
@@ -253,11 +242,11 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                dataset={query.dataset}
+                dataset={query.dataset || preconfiguredDataset}
                 table={query.table}
                 onChange={onTableChange}
                 applyDefault
-                cascadeDisable={cascadeDisable}
+                cascadeDisable={hasConfigIssue}
               />
             </EditorField>
           </EditorRow>

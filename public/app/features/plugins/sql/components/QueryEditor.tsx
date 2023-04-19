@@ -16,7 +16,7 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 export interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'disableDatasetSelector'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance'>;
 }
 
 export function SqlQueryEditor({
@@ -28,6 +28,8 @@ export function SqlQueryEditor({
   queryHeaderProps,
 }: SqlQueryEditorProps) {
   console.log(query, 'query');
+  console.log(datasource, 'datasource');
+
   const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = !!config.featureToggles.sqlDatasourceDatabaseSelection;
 
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
@@ -37,6 +39,7 @@ export function SqlQueryEditor({
   const db = datasource.getDB();
 
   const { preconfiguredDatabase } = datasource;
+  const isPostgresInstance = !!queryHeaderProps?.isPostgresInstance;
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -48,25 +51,25 @@ export function SqlQueryEditor({
   useEffect(() => {
     if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
       /*
-      This checks if
-      1) there is a preconfigured database (freshly created MSSQL/MYSQL datasources may or may not have a preconfigured database)?
-      2) there is a previously-chosen database from the DatasetSelector (freshly created datasources will NOT have a previously-chosen database,
-        and we don't want this alert to be displayed on all newly created datasources)?
-        Iff yes to both,
-        3) is that preconfigured database different than they previously-chosen one?
-        If so, display the alert.
-        */
+        This checks if
+          1) there is a preconfigured database (freshly created MSSQL/MYSQL datasources may or may not have a preconfigured database),
+          2) there is a previously-chosen database from the DatasetSelector (freshly created datasources will NOT have a previously-chosen database,
+            and we don't want this alert to be displayed on all newly created datasources).
+        If yes to both,
+          3) is that preconfigured database different than they previously-chosen one, which means the preconfigured was added or updated?
+          If so, display the alert.
+      */
       if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
         setHasDatabaseConfigIssue(true);
       }
 
       // This tests the Postgres datasource - all Postgres datasources are passed a default prop of `disableDatasetSelector`.
-      // 1) Is it indeed a Posgres datasource, and 2) is it configured with a default database? If os, then display appropriate alert.
-      if (queryHeaderProps?.disableDatasetSelector && !preconfiguredDatabase) {
+      // 1) Is it indeed a Posgres datasource, and 2) is it configured with a default database? If so, then display appropriate alert.
+      if (isPostgresInstance && !preconfiguredDatabase) {
         setHasNoPostgresDefaultDatabaseConfig(true);
       }
     }
-  }, [preconfiguredDatabase, query, onChange, queryHeaderProps, sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled]);
+  }, [preconfiguredDatabase, query, isPostgresInstance, sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
@@ -94,18 +97,6 @@ export function SqlQueryEditor({
     [onRunQuery]
   );
 
-  const resetQuery = () => {
-    const updatedQuery = {
-      ...query,
-      dataset: preconfiguredDatabase,
-      table: undefined,
-      sql: undefined,
-      rawSql: '',
-    };
-    onChange(updatedQuery);
-    // onRunQuery();
-  };
-
   const onQueryChange = (q: SQLQuery, process = true) => {
     setQueryToValidate(q);
     onChange(q);
@@ -122,6 +113,17 @@ export function SqlQueryEditor({
   const onQueryHeaderChange = (q: SQLQuery) => {
     setQueryToValidate(q);
     onChange(q);
+  };
+
+  const resetQuery = () => {
+    const updatedQuery = {
+      ...query,
+      dataset: preconfiguredDatabase,
+      table: undefined,
+      sql: undefined,
+      rawSql: '',
+    };
+    onChange(updatedQuery);
   };
 
   if (loading || error) {
@@ -143,9 +145,10 @@ export function SqlQueryEditor({
           buttonContent="Update Query"
         >
           <span>
-            Your default database configuration has been changed or updated. The previous database is no longer
-            available. Make note of the query you have built before clicking <code>Update Query.</code>
-            Clicking <code>Update Query</code> will clear your previous query parameters.
+            Your default database configuration has been modified. The previous database {<code>{query.dataset}</code>}{' '}
+            is no longer available, and has been updated to {<code>{preconfiguredDatabase}</code>}. Make note of the
+            query you have built before clicking <code>Update Query.</code> Clicking <code>Update Query</code> will
+            clear your previous query parameters.
           </span>
         </Alert>
       )}
@@ -167,8 +170,8 @@ export function SqlQueryEditor({
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
-        cascadeDisable={hasDatabaseConfigIssue || hasNoPostgresDefaultDatabaseConfig}
-        {...queryHeaderProps}
+        isPostgresInstance={isPostgresInstance}
+        hasConfigIssue={hasDatabaseConfigIssue || hasNoPostgresDefaultDatabaseConfig}
       />
 
       <Space v={0.5} />
