@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -178,7 +179,7 @@ func TestSeriesExpr(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute("", tt.vars)
+				res, err := e.Execute("", tt.vars, tracing.NewFakeTracer())
 				tt.execErrIs(t, err)
 				if diff := cmp.Diff(tt.results, res, data.FrameTestCompareOptions()...); diff != "" {
 					t.Errorf("Result mismatch (-want +got):\n%s", diff)
