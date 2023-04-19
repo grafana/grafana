@@ -2,15 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  applyFieldOverrides,
-  ArrayVector,
-  CoreApp,
-  DataFrame,
-  DataLinkClickEvent,
-  Field,
-  FieldType,
-} from '@grafana/data';
+import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Table, useStyles2 } from '@grafana/ui';
 
@@ -93,10 +85,10 @@ function buildTableDataFrame(
     table[label].total = table[label].total ? table[label].total + value : value;
   }
 
-  const symbolField = {
+  const symbolField: Field = {
     type: FieldType.string,
     name: 'Symbol',
-    values: new ArrayVector(),
+    values: [],
     config: {
       custom: { width: width - TOP_TABLE_COLUMN_WIDTH * 2 },
       links: [
@@ -113,24 +105,24 @@ function buildTableDataFrame(
     },
   };
 
-  const selfField = {
+  const selfField: Field = {
     type: FieldType.number,
     name: 'Self',
-    values: new ArrayVector(),
+    values: [],
     config: { unit: data.selfField.config.unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
   };
 
-  const totalField = {
+  const totalField: Field = {
     type: FieldType.number,
     name: 'Total',
-    values: new ArrayVector(),
+    values: [],
     config: { unit: data.valueField.config.unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
   };
 
   for (let key in table) {
-    symbolField.values.add(key);
-    selfField.values.add(table[key].self);
-    totalField.values.add(table[key].total);
+    symbolField.values.push(key);
+    selfField.values.push(table[key].self);
+    totalField.values.push(table[key].total);
   }
 
   const frame = { fields: [symbolField, selfField, totalField], length: symbolField.values.length };

@@ -39,4 +39,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   azureAuthSettings?: AzureAuthSettings;
   /** If SIGV4 is enabled, provide an editor for SIGV4 connection config  **/
   renderSigV4Editor?: React.ReactNode;
+  /** Show the Secure Socks Datasource Proxy toggle option */
+  secureSocksDSProxyEnabled?: boolean;
 }

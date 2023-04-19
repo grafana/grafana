@@ -207,10 +207,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     }
 
     nullModes.push(nullModesFrame);
-    const a: AlignedData = [join.values.toArray()]; //
+    const a: AlignedData = [join.values]; //
 
     for (const field of fields) {
-      a.push(field.values.toArray());
+      a.push(field.values);
       originalFields.push(field);
       // clear field displayName state
       delete field.state?.displayName;

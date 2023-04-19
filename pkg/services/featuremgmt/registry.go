@@ -279,11 +279,10 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:            "nestedFolders",
-			Description:     "Enable folder nesting",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaBackendPlatformSquad,
+			Name:        "nestedFolders",
+			Description: "Enable folder nesting",
+			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
@@ -310,12 +309,6 @@ var (
 			FrontendOnly: true,
 			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:        "secureSocksDatasourceProxy",
-			Description: "Enable secure socks tunneling for supported core datasources",
-			State:       FeatureStateAlpha,
-			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "authnService",
@@ -518,6 +511,12 @@ var (
 			Description: "Enables authentication configuration UI",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
+		},
+		{
+			Name:        "pluginsAPIManifestKey",
+			Description: "Use grafana.com API to retrieve the public manifest key",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "advancedDataSourcePicker",
