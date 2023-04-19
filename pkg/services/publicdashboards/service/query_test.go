@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -743,21 +744,21 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: "dashboard",
+			Type: util.Pointer("dashboard"),
 		}
 		grafanaTagAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
@@ -816,8 +817,8 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
@@ -876,26 +877,26 @@ func TestFindAnnotations(t *testing.T) {
 		disabledGrafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     false,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 		}
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: true,
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: "dashboard",
+			Type: util.Pointer("dashboard"),
 		}
 		queryAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("prometheus", "abc123"),
 			Enable:     true,
-			Name:       &name,
+			Name:       name,
 		}
 		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
@@ -975,15 +976,15 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: "dashboard",
+			Type: util.Pointer("dashboard"),
 		}
 		annos := []DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
@@ -1010,8 +1011,8 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
@@ -1039,9 +1040,9 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
-			Type:       "dashboard",
+			Name:       name,
+			IconColor:  color,
+			Type:       util.Pointer("dashboard"),
 			Target:     nil,
 		}
 
