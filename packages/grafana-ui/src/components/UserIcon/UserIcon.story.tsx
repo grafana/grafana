@@ -16,7 +16,7 @@ const meta: ComponentMeta<typeof UserIcon> = {
       disabled: true,
     },
     controls: {
-      exclude: ['className'],
+      exclude: ['className', 'onClick'],
     },
     actions: {
       disabled: true,
@@ -40,6 +40,7 @@ export const Basic: ComponentStory<typeof UserIcon> = (args) => {
 };
 Basic.args = {
   showTooltip: true,
+  onClick: undefined,
 };
 
 export const MultipleUsers: ComponentStory<typeof UserIcon> = (args) => {
@@ -65,6 +66,10 @@ export const MultipleUsers: ComponentStory<typeof UserIcon> = (args) => {
       ))}
     </div>
   );
+};
+
+MultipleUsers.args = {
+  onClick: undefined,
 };
 
 export default meta;

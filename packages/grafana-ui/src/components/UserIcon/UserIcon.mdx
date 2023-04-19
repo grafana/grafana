@@ -14,23 +14,20 @@ import { UserIcon } from '@grafana/ui';
 
 const ExampleComponent = () => {
   const userView = {
-    user: {
-      id: 1,
-      name: 'John Smith',
-      avatarUrl: 'https://example.com/avatar.png',
-      login: 'jsmith',
-      email: 'jsmith@example.com',
-      hasCustomAvatar: true,
-    },
-    viewed: '2023-04-18T15:00:00.000Z',
+    user: { id: 1, name: 'John Smith', avatarUrl: 'https://example.com/avatar.png' },
+    lastActiveAt: '2023-04-18T15:00:00.000Z',
   };
 
   return (
     <div>
-      <UserIcon userView={userView} showTooltip={true} showBorder={false} className="custom-class" />
+      <UserIcon userView={userView} showTooltip={true} className={styles.custom} />
     </div>
   );
 };
 ```
+
+### Displaying a list of icons
+
+To display a list of
 
 <Props of={UserIcon} />

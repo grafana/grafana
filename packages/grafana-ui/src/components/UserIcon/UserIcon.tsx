@@ -4,7 +4,6 @@ import React, { useMemo, PropsWithChildren } from 'react';
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { Button } from '../Button';
 import { Tooltip } from '../Tooltip';
 
 export interface UserView {
@@ -63,23 +62,16 @@ export const UserIcon = ({
   const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
-
-  const content = user.avatarUrl ? (
-    <img
-      className={cx(styles.icon, className)}
-      src={user.avatarUrl}
-      aria-label="Avatar icon"
-      alt={`${user.name} avatar`}
-    />
-  ) : (
-    <Button
-      variant="secondary"
-      onClick={onClick}
-      className={cx(styles.textIcon, styles.icon, className)}
-      aria-label={`${user.name} icon`}
-    >
-      {children || getUserInitials(user.name)}
-    </Button>
+  const content = (
+    <div onClick={onClick} className={cx(styles.container, onClick && styles.pointer)} aria-label={`${user.name} icon`}>
+      {children ? (
+        <div className={cx(styles.content, styles.textContent, className)}>{children}</div>
+      ) : user.avatarUrl ? (
+        <img className={cx(styles.content, className)} src={user.avatarUrl} alt={`${user.name} avatar`} />
+      ) : (
+        <div className={cx(styles.content, styles.textContent, className)}>{getUserInitials(user.name)}</div>
+      )}
+    </div>
   );
 
   if (showTooltip) {
@@ -114,33 +106,31 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
   const shadowHoverColor = isActive ? theme.colors.primary.text : theme.colors.border.strong;
 
   return {
-    icon: css`
-      border-radius: 50%;
+    container: css`
+      padding: 0;
       width: 30px;
       height: 30px;
-      margin-left: -${theme.spacing(1)}; // Slightly overlay multiple icons on top of each other
+    `,
+    content: css`
+      border-radius: 50%;
+      line-height: 24px;
+      max-width: 100%;
       border: 3px ${theme.colors.background.primary} solid;
       box-shadow: ${getIconBorder(shadowColor)};
       background-clip: padding-box;
       &:hover {
-        background-clip: padding-box;
         box-shadow: ${getIconBorder(shadowHoverColor)};
       }
     `,
-    textIcon: css`
+    textContent: css`
+      background: ${theme.colors.background.primary};
       padding: 0;
-      text-align: center;
-      line-height: 22px;
-      justify-content: center;
       color: ${theme.colors.text.secondary};
-      cursor: auto;
+      text-align: center;
       font-size: ${theme.typography.size.sm};
       background: ${theme.colors.background.primary};
       &:focus {
         box-shadow: ${getIconBorder(shadowColor)};
-      }
-      &:hover {
-        background: ${theme.colors.background.primary};
       }
     `,
     tooltipContainer: css`
@@ -164,6 +154,9 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       border-radius: 50%;
       display: inline-block;
       margin-left: ${theme.spacing(1)};
+    `,
+    pointer: css`
+      cursor: pointer;
     `,
   };
 };
