@@ -10,7 +10,7 @@
 kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
-    name: accesspolicys.accesspolicy.core.grafana.com
+    name: accesspolicies.accesspolicy.core.grafana.com
 spec:
     group: accesspolicy.core.grafana.com
     versions:
@@ -60,5 +60,5 @@ spec:
                 type: object
     names:
         kind: AccessPolicy
-        plural: accesspolicys
+        plural: accesspolicies
     scope: Namespaced

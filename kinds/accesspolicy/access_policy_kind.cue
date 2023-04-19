@@ -1,8 +1,11 @@
 package kind
 
-name:        "AccessPolicy"
-maturity:    "merged"
-description: "Access rules for a scope+role.  NOTE there is a unique constraint on role+scope"
+name:              "AccessPolicy"
+maturity:          "merged"
+description:       "Access rules for a scope+role.  NOTE there is a unique constraint on role+scope"
+pluralName:        "AccessPolicies"
+machineName:       "accesspolicy"
+pluralMachineName: "accesspolicies"
 
 lineage: seqs: [
 	{
