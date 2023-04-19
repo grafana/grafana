@@ -152,3 +152,14 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
 function round(value: number) {
   return Math.round(value * 1e5) / 1e5;
 }
+
+export interface ThemeTypographyVariantTypes {
+  h1: ThemeTypographyVariant;
+  h2: ThemeTypographyVariant;
+  h3: ThemeTypographyVariant;
+  h4: ThemeTypographyVariant;
+  h5: ThemeTypographyVariant;
+  h6: ThemeTypographyVariant;
+  body: ThemeTypographyVariant;
+  bodySmall: ThemeTypographyVariant;
+}

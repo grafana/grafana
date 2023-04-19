@@ -5,7 +5,7 @@ export type { ThemeColors } from './createColors';
 export type { ThemeBreakpoints, ThemeBreakpointsKey } from './breakpoints';
 export type { ThemeShadows } from './createShadows';
 export type { ThemeShape } from './createShape';
-export type { ThemeTypography, ThemeTypographyVariant } from './createTypography';
+export type { ThemeTypography, ThemeTypographyVariant, ThemeTypographyVariantTypes } from './createTypography';
 export type { ThemeTransitions } from './createTransitions';
 export type { ThemeSpacing } from './createSpacing';
 export type { ThemeZIndices } from './zIndex';
