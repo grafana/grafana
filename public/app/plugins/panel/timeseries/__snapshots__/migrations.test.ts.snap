@@ -525,61 +525,8 @@ exports[`Graph Migrations time regions should migrate 1`] = `
 {
   "alert": undefined,
   "datasource": {
-    "type": "datasource",
-    "uid": "grafana",
-  },
-  "fieldConfig": {
-    "defaults": {
-      "custom": {
-        "drawStyle": "points",
-        "spanNulls": false,
-      },
-    },
-    "overrides": [],
-  },
-  "options": {
-    "legend": {
-      "calcs": [],
-      "displayMode": "list",
-      "placement": "bottom",
-      "showLegend": true,
-    },
-    "tooltip": {
-      "mode": "single",
-      "sort": "none",
-    },
-  },
-  "targets": [
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana",
-      },
-      "queryType": "timeRegions",
-      "refId": "A",
-      "timeRegions": [
-        {
-          "color": "rgba(234, 112, 112, 0.12)",
-          "from": undefined,
-          "fromDayOfWeek": 1,
-          "line": true,
-          "name": "T1",
-          "timezone": undefined,
-          "to": undefined,
-          "toDayOfWeek": undefined,
-        },
-      ],
-    },
-  ],
-}
-`;
-
-exports[`Graph Migrations time regions shouldn't migrate 1`] = `
-{
-  "alert": undefined,
-  "datasource": {
-    "type": "testdata",
-    "uid": "1234567891234",
+    "type": "mixed",
+    "uid": "-- Mixed --",
   },
   "fieldConfig": {
     "defaults": {
