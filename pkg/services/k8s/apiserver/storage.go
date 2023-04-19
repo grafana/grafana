@@ -276,9 +276,10 @@ func (s *entityStorage) Update(ctx context.Context,
 			return output, nil
 		}
 
-		if updateValidation != nil {
-			return nil, fmt.Errorf("update updateValidation not supported")
-		}
+		// TODO?
+		// if updateValidation != nil {
+		// 	//	return nil, fmt.Errorf("update updateValidation not supported")
+		// }
 
 		outputMeta, err := apimeta.Accessor(output)
 		if err != nil {

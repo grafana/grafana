@@ -3,7 +3,6 @@ package dashboard
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -67,10 +66,6 @@ func (c *watcher) Add(ctx context.Context, dash *unstructured.Unstructured) erro
 	if err != nil {
 		return err
 	}
-	rv, err := strconv.ParseInt(objMeta.GetResourceVersion(), 0, 64)
-	if err != nil {
-		return err
-	}
 
 	c.log.Debug("adding dashboard", "dash", uid)
 	wrap := simplejson.NewFromAny(dash.Object)
@@ -79,7 +74,7 @@ func (c *watcher) Add(ctx context.Context, dash *unstructured.Unstructured) erro
 	if err != nil {
 		return fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
 	}
-	data.Set("resourceVersion", rv)
+	data.Set("resourceVersion", objMeta.GetResourceVersion())
 
 	data.Del("id") // ignore any internal id
 	anno := CommonAnnotations{}
