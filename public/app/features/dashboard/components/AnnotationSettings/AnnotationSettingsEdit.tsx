@@ -142,6 +142,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
       dashboard?.panels
+        .filter((panel) => config.panels[panel.type])
         .map((panel) => ({
           value: panel.id,
           label: panel.title ?? `Panel ${panel.id}`,
