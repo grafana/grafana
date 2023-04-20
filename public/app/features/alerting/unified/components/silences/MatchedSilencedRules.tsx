@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert, Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -21,15 +21,21 @@ export const MatchedSilencedRules = ({ amSourceName, matchers }: Props) => {
   const styles = useStyles2(getStyles);
   const columns = useColumns();
 
-  const { currentData: alerts = [] } = useGetAlertmanagerAlertsQuery(
+  const {
+    currentData: alerts = [],
+    isFetching,
+    isError,
+  } = useGetAlertmanagerAlertsQuery(
     { amSourceName, filter: { matchers } },
-    { skip: matchers.length === 0 }
+    { skip: matchers.length === 0, refetchOnMountOrArgChange: true }
   );
 
   const tableItemAlerts = alerts.map<DynamicTableItemProps<AlertmanagerAlert>>((alert) => ({
     id: alert.fingerprint,
     data: alert,
   }));
+
+  const hasValidMatchers = matchers.some((matcher) => matcher.value && matcher.name);
 
   return (
     <div>
@@ -39,13 +45,27 @@ export const MatchedSilencedRules = ({ amSourceName, matchers }: Props) => {
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}
       </h4>
-      <div className={styles.table}>
-        {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
-          <span>Add a valid matcher to see affected alerts</span>
-        ) : (
-          <DynamicTable items={tableItemAlerts} isExpandable={false} cols={columns} pagination={{ itemsPerPage: 10 }} />
-        )}
-      </div>
+      {!hasValidMatchers && <span>Add a valid matcher to see affected alerts</span>}
+      {isError && (
+        <Alert title="Preview not available" severity="error">
+          Error occured when generating affected alerts preview. Are you matchers valid?
+        </Alert>
+      )}
+      {isFetching && <LoadingPlaceholder text="Loading..." />}
+      {!isFetching && !isError && (
+        <div className={styles.table}>
+          {tableItemAlerts.length > 0 ? (
+            <DynamicTable
+              items={tableItemAlerts}
+              isExpandable={false}
+              cols={columns}
+              pagination={{ itemsPerPage: 10 }}
+            />
+          ) : (
+            <span>No matching alert instances found</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };

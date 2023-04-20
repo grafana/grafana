@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { pickBy } from 'lodash';
+import { isEqual, pickBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDebounce } from 'react-use';
@@ -104,7 +104,9 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
   const formAPI = useForm({ defaultValues });
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const [matchersForPreview, setMatchersForPreview] = useState<Matcher[]>([]);
+  const [matchersForPreview, setMatchersForPreview] = useState<Matcher[]>(
+    defaultValues.matchers.map(matcherFieldToMatcher)
+  );
 
   const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
@@ -168,8 +170,14 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
   );
 
   useDebounce(
-    () => setMatchersForPreview(matcherFields.filter((m) => m.name && m.value).map(matcherFieldToMatcher)),
-    1000,
+    () => {
+      // React-hook-form watch does not return referentialy equal values so this trick is needed
+      const newMatchers = matcherFields.filter((m) => m.name && m.value).map(matcherFieldToMatcher);
+      if (!isEqual(matchersForPreview, newMatchers)) {
+        setMatchersForPreview(newMatchers);
+      }
+    },
+    700,
     [matcherFields]
   );
 
