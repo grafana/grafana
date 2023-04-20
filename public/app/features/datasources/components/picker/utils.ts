@@ -42,26 +42,19 @@ export function dataSourceName(
 export function useGetDatasources(filters: GetDataSourceListFilters) {
   const dataSourceSrv = getDataSourceSrv();
 
-  return (filters: GetDataSourceListFilters) => dataSourceSrv.getList(filters);
+  return dataSourceSrv.getList(filters);
 }
 
-export function useGetDatasource() {
+export function useGetDatasource(dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) {
   const dataSourceSrv = getDataSourceSrv();
 
-  const getDataSource = (dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) => {
-    if (!dataSource) {
-      return undefined;
-    }
-
-    if (typeof dataSource === 'string') {
-      return dataSourceSrv.getInstanceSettings(dataSource);
-    }
-
-    if ('uid' in dataSource) {
-      return dataSourceSrv.getInstanceSettings(dataSource);
-    }
-
+  if (!dataSource) {
     return undefined;
-  };
-  return getDataSource;
+  }
+
+  if (typeof dataSource === 'string') {
+    return dataSourceSrv.getInstanceSettings(dataSource);
+  }
+
+  return dataSourceSrv.getInstanceSettings(dataSource);
 }

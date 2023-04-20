@@ -14,6 +14,7 @@ export interface DataSourceListProps {
   className?: string;
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined;
+  /** Would be nicer if these parameters were part of a filtering object */
   tracing?: boolean;
   mixed?: boolean;
   dashboard?: boolean;
@@ -34,13 +35,31 @@ export interface DataSourceListProps {
 export function DataSourceList(props: DataSourceListProps) {
   const { className, current, onChange } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
-  const getDataSources = useGetDatasources({ ...props });
+  const dataSources = useGetDatasources({
+    alerting: props.alerting,
+    annotations: props.annotations,
+    dashboard: props.dashboard,
+    logs: props.logs,
+    metrics: props.metrics,
+    mixed: props.mixed,
+    pluginId: props.pluginId,
+    tracing: props.tracing,
+    type: props.type,
+    variables: props.variables,
+  });
 
   return (
     <div className={className}>
-      {getDataSources({ ...props }).map((ds) => (
-        <DataSourceCard key={ds.uid} ds={ds} onClick={() => onChange(ds)} selected={!!isDataSourceMatch(ds, current)} />
-      ))}
+      {dataSources
+        .filter((ds) => (props.filter ? props.filter(ds) : true))
+        .map((ds) => (
+          <DataSourceCard
+            key={ds.uid}
+            ds={ds}
+            onClick={() => onChange(ds)}
+            selected={!!isDataSourceMatch(ds, current)}
+          />
+        ))}
     </div>
   );
 }

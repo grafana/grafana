@@ -23,8 +23,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
 
-  const getDataSource = useGetDatasource();
-  const currentDataSourceInstanceSettings = getDataSource(current);
+  const currentDataSourceInstanceSettings = useGetDatasource(current);
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
