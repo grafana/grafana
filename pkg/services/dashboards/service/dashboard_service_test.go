@@ -236,7 +236,7 @@ func TestDashboardService(t *testing.T) {
 			usr := &user.SignedInUser{UserID: 1}
 			ctx := appcontext.WithUser(context.Background(), usr)
 
-			count, err := service.CountInFolder(ctx, 1, "i am a folder")
+			count, err := service.CountInFolder(ctx, 1, "i am a folder", usr)
 			require.NoError(t, err)
 			require.Equal(t, int64(3), count)
 		})

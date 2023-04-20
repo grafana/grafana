@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -625,8 +624,8 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 }
 
 func (s *Service) GetFolderChildrenCounts(ctx context.Context, cmd *folder.GetFolderChildrenCountsQuery) (folder.FolderChildrenCounts, error) {
-	if _, err := appcontext.User(ctx); err != nil {
-		return nil, folder.ErrBadRequest.Errorf("a SignedInUser was not found in the context")
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
 	if *cmd.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
@@ -637,7 +636,7 @@ func (s *Service) GetFolderChildrenCounts(ctx context.Context, cmd *folder.GetFo
 
 	countsMap := folder.FolderChildrenCounts{}
 	for _, v := range s.registry {
-		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID)
+		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
