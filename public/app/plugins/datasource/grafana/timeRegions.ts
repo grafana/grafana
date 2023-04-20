@@ -1,4 +1,4 @@
-import { TimeRange, DataFrame, FieldType, ArrayVector, getTimeZoneInfo, DataFrameType } from '@grafana/data';
+import { TimeRange, DataFrame, FieldType, ArrayVector, getTimeZoneInfo } from '@grafana/data';
 import { calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 import { TimeRegionConfig } from './types';
@@ -40,10 +40,6 @@ export function doTimeRegionQuery(
   }
 
   return {
-    meta: {
-      type: DataFrameType.TimeRanges,
-      //  dataTopic: DataTopic.Annotations,
-    },
     fields: [
       { name: 'time', type: FieldType.time, values: new ArrayVector(times), config: {} },
       { name: 'timeEnd', type: FieldType.time, values: new ArrayVector(timesEnd), config: {} },
