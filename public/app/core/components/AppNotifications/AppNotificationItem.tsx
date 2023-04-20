@@ -14,11 +14,11 @@ interface Props {
 export default function AppNotificationItem({ appNotification, onClearNotification }: Props) {
   const styles = useStyles2(getStyles);
 
-  // useEffectOnce(() => {
-  //   setTimeout(() => {
-  //     onClearNotification(appNotification.id);
-  //   }, timeoutMap[appNotification.severity]);
-  // });
+  useEffectOnce(() => {
+    setTimeout(() => {
+      onClearNotification(appNotification.id);
+    }, timeoutMap[appNotification.severity]);
+  });
 
   return (
     <Alert
