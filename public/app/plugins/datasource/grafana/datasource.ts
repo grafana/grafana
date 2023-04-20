@@ -193,7 +193,12 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const query = options.annotation.target as GrafanaQuery;
     if (query?.queryType === GrafanaQueryType.TimeRegions) {
-      const frame = doTimeRegionQuery(options.annotation.name, query.timeRegion!, options.range, 'utc'); // << dashboard timezone?
+      const frame = doTimeRegionQuery(
+        options.annotation.name,
+        query.timeRegion!,
+        options.range,
+        getDashboardSrv().getCurrent()?.timezone
+      );
       return Promise.resolve({ data: frame ? [frame] : [] });
     }
 
