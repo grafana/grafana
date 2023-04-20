@@ -49,6 +49,7 @@ const setup = (propOverrides = {}) => {
       logsFrames: [],
       tableFrames: [],
       traceFrames: [],
+      customFrames: [],
       nodeGraphFrames: [],
       flameGraphFrames: [],
       rawPrometheusFrames: [],

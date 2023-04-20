@@ -80,6 +80,9 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
     if (queryResponse.traceFrames.some(hasQueryRefId)) {
       return 'traces';
     }
+    if (queryResponse.customFrames.some(hasQueryRefId)) {
+      return queryResponse.customFrames[0].meta?.custom?.pluginID ?? 'table';
+    }
   }
 
   // falling back to table

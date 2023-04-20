@@ -29,6 +29,7 @@ export const preferredVisualizationTypes = [
   'nodeGraph',
   'flamegraph',
   'rawPrometheus',
+  'plugin',
 ] as const;
 export type PreferredVisualisationType = (typeof preferredVisualizationTypes)[number];
 
