@@ -18,7 +18,6 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   if (!data.request) {
     return null;
   }
-  const styles = getStyles();
   let stats: QueryResultMetaStat[] = [];
 
   const requestTime = data.request.endTime ? data.request.endTime - data.request.startTime : -1;
@@ -65,7 +64,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace IDs');
 
   return (
-    <div aria-label={selectors.components.PanelInspector.Stats.content} className={styles.container}>
+    <div aria-label={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
       {config.featureToggles.showTraceId && (
@@ -75,11 +74,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   );
 };
 
-const getStyles = () => {
-  return {
-    container: css`
-      height: 100%;
-      overflow-y: scroll;
-    `,
-  };
-};
+const containerStyles = css`
+  height: 100%;
+  overflow-y: scroll;
+`;
