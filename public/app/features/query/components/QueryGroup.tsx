@@ -94,6 +94,25 @@ export class QueryGroup extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
+    this.setDatasourceAndQueries(options);
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
+  }
+
+  async componentDidUpdate() {
+    const { options } = this.props;
+
+    if (this.state.dataSource && options.dataSource.uid !== this.state.dataSource?.uid) {
+      this.setDatasourceAndQueries(options);
+    }
+  }
+
+  async setDatasourceAndQueries(options: QueryGroupOptions) {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
@@ -122,18 +141,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     }
   }
 
-  componentWillUnmount() {
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-      this.querySubscription = null;
-    }
-  }
-
   onPanelDataUpdate(data: PanelData) {
-    this.setState({
-      queries: this.props.options.queries,
-      data,
-    });
+    this.setState({ data });
   }
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
