@@ -32,7 +32,15 @@ const formatViewed = (dateString: DateTimeInput): string => {
 /**
  * Output the initials of the first and last name (if given), capitalized and concatenated together.
  * If name is not provided, an empty string is returned.
- * @param name
+ * @param {string} [name] The name to extract initials from.
+ * @returns {string} The uppercase initials of the first and last name.
+ * @example
+ * // Returns 'JD'
+ * getUserInitials('John Doe');
+ * // Returns 'A'
+ * getUserInitials('Alice');
+ * // Returns ''
+ * getUserInitials();
  */
 const getUserInitials = (name?: string) => {
   if (!name) {
