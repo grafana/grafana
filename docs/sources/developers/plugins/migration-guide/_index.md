@@ -25,7 +25,6 @@ title: Migration guides
     "from-version-8x-to-9x": "./v8.x-v9.x/",
     "from-version-91x-to-92x": "./v9.1.x-v9.2.x/",
     "from-version-93x-to-94x": "./v9.3.x-9.4.x/",
-    "from-version-9x-to-10x": "./v9.x-v10.x/",
   };
   var hash = window.location.hash.substring(1);
   var redirectTo = anchorRedirects[hash];

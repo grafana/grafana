@@ -15,7 +15,7 @@ weight: 1900
 
 ## Verifying plugin behaviour with React 18
 
-One of the major changes in Grafana 10 is our upgrade to React 18 and use of the new React client rendering API. These changes were delivered to the core `grafana` repo with [PR 64428](https://github.com/grafana/grafana/pull/64428).
+Grafana 10 includes our upgrade to React 18 and use of the new React client rendering API. These changes were delivered to the core `grafana` repo with [PR 64428](https://github.com/grafana/grafana/pull/64428).
 
 Whilst this brings us many significant benefits, there's a potential for this to impact the way your plugin works. In particular, there could be unintended side effects caused by the changes around improving consistency with `useEffect` timings and automatic batching of state updates.
 
