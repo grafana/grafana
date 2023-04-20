@@ -28,9 +28,9 @@ import { parseQueryParamMatchers } from '../../utils/matchers';
 import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 
-import { MatchedSilencedRules } from './MatchedSilencedRules';
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
+import { SilencedInstancesPreview } from './SilencedInstancedPreview';
 
 interface Props {
   silence?: Silence;
@@ -238,7 +238,7 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
               />
             </Field>
           )}
-          <MatchedSilencedRules amSourceName={alertManagerSourceName} matchers={matchersForPreview} />
+          <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchersForPreview} />
         </FieldSet>
         <div className={styles.flexRow}>
           {loading && (

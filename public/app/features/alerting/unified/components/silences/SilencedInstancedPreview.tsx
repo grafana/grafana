@@ -16,7 +16,7 @@ interface Props {
   matchers: Matcher[];
 }
 
-export const MatchedSilencedRules = ({ amSourceName, matchers }: Props) => {
+export const SilencedInstancesPreview = ({ amSourceName, matchers }: Props) => {
   const { useGetAlertmanagerAlertsQuery } = alertmanagerApi;
   const styles = useStyles2(getStyles);
   const columns = useColumns();
