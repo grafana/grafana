@@ -15,7 +15,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -36,10 +36,10 @@ type ManifestVerifier struct {
 
 	lock sync.Mutex
 	cli  http.Client
-	kv   *kvstore.NamespacedKVStore
+	kv   plugins.KeyStore
 }
 
-func New(cfg *config.Cfg, mlog log.Logger, kv *kvstore.NamespacedKVStore) *ManifestVerifier {
+func New(cfg *config.Cfg, mlog log.Logger, kv plugins.KeyStore) *ManifestVerifier {
 	pmv := &ManifestVerifier{
 		cfg:  cfg,
 		mlog: mlog,
@@ -58,33 +58,11 @@ func (pmv *ManifestVerifier) featureEnabled() bool {
 	return pmv.cfg != nil && pmv.cfg.Features != nil && pmv.cfg.Features.IsEnabled("pluginsAPIManifestKey")
 }
 
-func (pmv *ManifestVerifier) getLastUpdated(ctx context.Context) time.Time {
-	lastUpdated := time.Time{}
-	// try to load last sent time from kv store
-	if val, ok, err := pmv.kv.Get(ctx, "last_updated"); err != nil {
-		pmv.mlog.Error("Failed to get last sent time", "error", err)
-	} else if ok {
-		if parsed, err := time.Parse(time.RFC3339, val); err != nil {
-			pmv.mlog.Error("Failed to parse last sent time", "error", err)
-		} else {
-			lastUpdated = parsed
-		}
-	}
-	return lastUpdated
-}
-
-func (pmv *ManifestVerifier) setLastUpdated(ctx context.Context) {
-	lastUpdated := time.Now()
-	if err := pmv.kv.Set(ctx, "last_updated", lastUpdated.Format(time.RFC3339)); err != nil {
-		pmv.mlog.Warn("Failed to update last sent time", "error", err)
-	}
-}
-
 func (pmv *ManifestVerifier) updateKeys(ctx context.Context) error {
 	pmv.lock.Lock()
 	defer pmv.lock.Unlock()
 
-	lastUpdated := pmv.getLastUpdated(ctx)
+	lastUpdated := pmv.kv.GetLastUpdated(ctx)
 	if time.Since(lastUpdated) < publicKeySyncInterval {
 		// Cache is still valid
 		return nil
@@ -103,7 +81,7 @@ func (pmv *ManifestVerifier) updateKeysPeriodically() {
 	}
 
 	// calculate initial send delay
-	lastUpdated := pmv.getLastUpdated(ctx)
+	lastUpdated := pmv.kv.GetLastUpdated(ctx)
 	nextSendInterval := time.Until(lastUpdated.Add(publicKeySyncInterval))
 	if nextSendInterval < time.Minute {
 		nextSendInterval = time.Minute
@@ -181,7 +159,7 @@ func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 		return errors.New("missing public key")
 	}
 
-	cachedKeys, err := pmv.kv.Keys(ctx, "")
+	cachedKeys, err := pmv.kv.ListKeys(ctx)
 	if err != nil {
 		return err
 	}
@@ -197,8 +175,8 @@ func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 
 	// Delete keys that are no longer in the API
 	for _, key := range cachedKeys {
-		if !shouldKeep[key.Key] {
-			err = pmv.kv.Del(ctx, key.Key)
+		if !shouldKeep[key] {
+			err = pmv.kv.Del(ctx, key)
 			if err != nil {
 				return err
 			}
@@ -206,7 +184,7 @@ func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 	}
 
 	// Update the last updated timestamp
-	pmv.setLastUpdated(ctx)
+	pmv.kv.GetLastUpdated(ctx)
 
 	return nil
 }
@@ -223,7 +201,7 @@ func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
 	defer pmv.lock.Unlock()
 
 	ctx := context.Background()
-	keys, err := pmv.kv.Keys(ctx, "")
+	keys, err := pmv.kv.ListKeys(ctx)
 	if err != nil {
 		return "", err
 	}

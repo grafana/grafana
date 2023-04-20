@@ -13,12 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_Verify(t *testing.T) {
 	t.Run("it should verify a manifest with the default key", func(t *testing.T) {
-		v := New(&config.Cfg{}, log.New("test"), kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, ""))
+		v := New(&config.Cfg{}, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
 
 		body, err := os.ReadFile("../../testdata/test-app/MANIFEST.txt")
 		if err != nil {
@@ -63,7 +64,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 			done <- true
 		}))
 		cfg.GrafanaComURL = s.URL
-		v := New(cfg, log.New("test"), kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, ""))
+		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
 
 		<-done
 		require.Equal(t, true, apiCalled)
