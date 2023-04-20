@@ -55,7 +55,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/ngalert/admin_config",
-				srv.RouteDeleteNGalertConfig,
+				api.Hooks.Wrap(srv.RouteDeleteNGalertConfig),
 				m,
 			),
 		)
@@ -65,7 +65,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/alertmanagers",
-				srv.RouteGetAlertmanagers,
+				api.Hooks.Wrap(srv.RouteGetAlertmanagers),
 				m,
 			),
 		)
@@ -75,7 +75,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/admin_config",
-				srv.RouteGetNGalertConfig,
+				api.Hooks.Wrap(srv.RouteGetNGalertConfig),
 				m,
 			),
 		)
@@ -85,7 +85,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert",
-				srv.RouteGetStatus,
+				api.Hooks.Wrap(srv.RouteGetStatus),
 				m,
 			),
 		)
@@ -95,7 +95,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/ngalert/admin_config",
-				srv.RoutePostNGalertConfig,
+				api.Hooks.Wrap(srv.RoutePostNGalertConfig),
 				m,
 			),
 		)
