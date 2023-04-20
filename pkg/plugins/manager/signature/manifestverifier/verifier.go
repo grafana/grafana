@@ -46,18 +46,80 @@ func New(cfg *config.Cfg, mlog log.Logger, kv *kvstore.NamespacedKVStore) *Manif
 		cli:  makeHttpClient(),
 		kv:   kv,
 	}
-	pmv.updatePeriodically()
+	if pmv.featureEnabled() {
+		go func() {
+			pmv.updateKeysPeriodically()
+		}()
+	}
 	return pmv
 }
 
-func (pmv *ManifestVerifier) updatePeriodically() {
-	for range time.NewTicker(publicKeySyncInterval).C {
-		pmv.lock.Lock()
-		err := pmv.downloadKeys(context.Background())
+func (pmv *ManifestVerifier) featureEnabled() bool {
+	return pmv.cfg != nil && pmv.cfg.Features != nil && pmv.cfg.Features.IsEnabled("pluginsAPIManifestKey")
+}
+
+func (pmv *ManifestVerifier) getLastUpdated(ctx context.Context) time.Time {
+	lastUpdated := time.Time{}
+	// try to load last sent time from kv store
+	if val, ok, err := pmv.kv.Get(ctx, "last_updated"); err != nil {
+		pmv.mlog.Error("Failed to get last sent time", "error", err)
+	} else if ok {
+		if parsed, err := time.Parse(time.RFC3339, val); err != nil {
+			pmv.mlog.Error("Failed to parse last sent time", "error", err)
+		} else {
+			lastUpdated = parsed
+		}
+	}
+	return lastUpdated
+}
+
+func (pmv *ManifestVerifier) setLastUpdated(ctx context.Context) {
+	lastUpdated := time.Now()
+	if err := pmv.kv.Set(ctx, "last_updated", lastUpdated.Format(time.RFC3339)); err != nil {
+		pmv.mlog.Warn("Failed to update last sent time", "error", err)
+	}
+}
+
+func (pmv *ManifestVerifier) updateKeys(ctx context.Context) error {
+	pmv.lock.Lock()
+	defer pmv.lock.Unlock()
+
+	lastUpdated := pmv.getLastUpdated(ctx)
+	if time.Since(lastUpdated) < publicKeySyncInterval {
+		// Cache is still valid
+		return nil
+	}
+
+	return pmv.downloadKeys(ctx)
+}
+
+func (pmv *ManifestVerifier) updateKeysPeriodically() {
+	ctx := context.Background()
+
+	// do an initial update if necessary
+	err := pmv.updateKeys(ctx)
+	if err != nil {
+		pmv.mlog.Error("Error downloading plugin manifest keys", "error", err)
+	}
+
+	// calculate initial send delay
+	lastUpdated := pmv.getLastUpdated(ctx)
+	nextSendInterval := time.Until(lastUpdated.Add(publicKeySyncInterval))
+	if nextSendInterval < time.Minute {
+		nextSendInterval = time.Minute
+	}
+
+	downloadKeysTicker := time.NewTicker(nextSendInterval)
+	for range downloadKeysTicker.C {
+		err = pmv.updateKeys(ctx)
 		if err != nil {
 			pmv.mlog.Error("Error downloading plugin manifest keys", "error", err)
 		}
-		pmv.lock.Unlock()
+
+		if nextSendInterval != publicKeySyncInterval {
+			nextSendInterval = publicKeySyncInterval
+			downloadKeysTicker.Reset(nextSendInterval)
+		}
 	}
 }
 
@@ -119,22 +181,41 @@ func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 		return errors.New("missing public key")
 	}
 
+	cachedKeys, err := pmv.kv.Keys(ctx, "")
+	if err != nil {
+		return err
+	}
+
+	shouldKeep := make(map[string]bool)
 	for _, key := range data.Items {
 		err = pmv.kv.Set(ctx, key.KeyID, key.PublicKey)
 		if err != nil {
 			return err
 		}
+		shouldKeep[key.KeyID] = true
 	}
+
+	// Delete keys that are no longer in the API
+	for _, key := range cachedKeys {
+		if !shouldKeep[key.Key] {
+			err = pmv.kv.Del(ctx, key.Key)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Update the last updated timestamp
+	pmv.setLastUpdated(ctx)
 
 	return nil
 }
 
 // getPublicKey loads public keys from:
 //   - The hard-coded value if the feature flag is not enabled.
-//   - A cached value from kv storage if it has been already retrieved.
-//   - The Grafana.com API if the database is empty.
+//   - A cached value from kv storage if it has been already retrieved. This cache is populated from the grafana.com API.
 func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
-	if pmv.cfg == nil || pmv.cfg.Features == nil || !pmv.cfg.Features.IsEnabled("pluginsAPIManifestKey") {
+	if !pmv.featureEnabled() {
 		return publicKeyText, nil
 	}
 
@@ -155,20 +236,6 @@ func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
 	}
 
 	key, exist, err := pmv.kv.Get(ctx, keyID)
-	if err != nil {
-		return "", err
-	}
-	if exist {
-		return key, nil
-	}
-
-	// Not in the cache, download keys
-	err = pmv.downloadKeys(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	key, exist, err = pmv.kv.Get(ctx, keyID)
 	if err != nil {
 		return "", err
 	}
