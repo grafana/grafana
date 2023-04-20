@@ -43,9 +43,9 @@
       "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
       "add-row-button": "Añadir fila",
       "add-row-header": "Añadir una fila",
-      "add-visualization-body": "Seleccione una fuente de datos y luego consulte y visualice sus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
+      "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
-      "add-visualization-header": "Comience su nuevo panel de control añadiendo una visualización"
+      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
     },
     "inspect": {
       "data-tab": "Datos",
@@ -186,7 +186,7 @@
       "title": "Reglas de alerta"
     },
     "alerting-receivers": {
-      "subtitle": "Elija cómo notificar sus puntos de contacto cuando se dispare la instancia de una alerta",
+      "subtitle": "Elige cómo notificar tus puntos de contacto cuando se dispara una instancia de alerta",
       "title": "Puntos de contacto"
     },
     "alerting-silences": {
