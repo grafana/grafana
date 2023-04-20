@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Icon, Label, LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, Label, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
@@ -33,12 +33,6 @@ function getStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       flex: 1;
       gap: ${theme.spacing(0.5)};
-    `,
-    loadingPlaceholder: css`
-      margin-bottom: 0px;
-      float: right;
-      display: inline;
-      margin-left: auto;
     `,
     textWrapper: css`
       display: flex;
