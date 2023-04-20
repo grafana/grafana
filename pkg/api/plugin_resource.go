@@ -129,7 +129,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 	var flushStreamErr error
 	go func() {
-		flushStreamErr = hs.flushStream(req.Context(), stream, w)
+		flushStreamErr = hs.flushStream(stream, w)
 		wg.Done()
 	}()
 
@@ -140,7 +140,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	return flushStreamErr
 }
 
-func (hs *HTTPServer) flushStream(ctx context.Context, stream callResourceClientResponseStream, w http.ResponseWriter) error {
+func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
 	for {
 		resp, err := stream.Recv()
