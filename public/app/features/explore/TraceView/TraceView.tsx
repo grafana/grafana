@@ -97,6 +97,7 @@ export function TraceView(props: Props) {
   const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp?.spans);
   const [newTraceViewFocusedSpanIdForSearch, setNewTraceViewFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
+  const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const styles = useStyles2(getStyles);
@@ -161,6 +162,8 @@ export function TraceView(props: Props) {
                 setSearch={setNewTraceViewSearch}
                 showSpanFilters={showSpanFilters}
                 setShowSpanFilters={setShowSpanFilters}
+                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+                setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
                 focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
                 setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
                 spanFilterMatches={spanFilterMatches}
@@ -222,6 +225,7 @@ export function TraceView(props: Props) {
             focusedSpanIdForSearch={
               config.featureToggles.newTraceView ? newTraceViewFocusedSpanIdForSearch : props.focusedSpanIdForSearch!
             }
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}

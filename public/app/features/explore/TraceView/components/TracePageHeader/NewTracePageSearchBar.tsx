@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import React, { memo, Dispatch, SetStateAction, useEffect, useMemo } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Switch, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
 import { convertTimeFilter } from '../utils/filter-spans';
@@ -25,6 +25,8 @@ export type TracePageSearchBarProps = {
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   spanFilterMatches: Set<string> | undefined;
+  showSpanFilterMatchesOnly: boolean;
+  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
@@ -32,7 +34,16 @@ export type TracePageSearchBarProps = {
 };
 
 export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
-  const { search, spanFilterMatches, focusedSpanIdForSearch, setFocusedSpanIdForSearch, datasourceType, reset } = props;
+  const {
+    search,
+    spanFilterMatches,
+    focusedSpanIdForSearch,
+    setFocusedSpanIdForSearch,
+    datasourceType,
+    reset,
+    showSpanFilterMatchesOnly,
+    setShowSpanFilterMatchesOnly,
+  } = props;
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -108,6 +119,14 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
             >
               Reset
             </Button>
+            <div className={styles.matchesOnly}>
+              <Switch
+                value={showSpanFilterMatchesOnly}
+                onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
+                label="Show matches only switch"
+              />
+              <span onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}>Show matches only</span>
+            </div>
           </div>
           <div className={styles.nextPrevButtons}>
             <Button
@@ -141,6 +160,16 @@ export const getStyles = () => {
   return {
     searchBar: css`
       display: inline;
+    `,
+    matchesOnly: css`
+      display: inline-flex;
+      margin: 0 0 0 10px;
+      vertical-align: middle;
+
+      span {
+        cursor: pointer;
+        margin: -3px 0 0 5px;
+      }
     `,
     buttons: css`
       display: flex;

@@ -38,7 +38,7 @@ const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
 const viewClassName = 'jaegerView';
 const nameColumnClassName = 'nameColumn';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
   const animations = {
     label: 'flash',
     flash: keyframes`
@@ -50,6 +50,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }
   `,
   };
+  const backgroundColor = showSpanFilterMatchesOnly ? '' : autoColor(theme, '#fffce4');
 
   return {
     nameWrapper: css`
@@ -60,7 +61,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     nameWrapperMatchingFilter: css`
       label: nameWrapperMatchingFilter;
-      background-color: ${autoColor(theme, '#fffce4')};
+      background-color: ${backgroundColor};
     `,
     nameColumn: css`
       label: nameColumn;
@@ -164,7 +165,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
-      background-color: ${autoColor(theme, '#fffbde')};
+      // background-color: ${autoColor(theme, '#fffbde')};
       &:hover .${nameWrapperClassName} {
         background: linear-gradient(
           90deg,
@@ -297,6 +298,7 @@ export type SpanBarRowProps = {
   isDetailExpanded: boolean;
   isMatchingFilter: boolean;
   isFocused: boolean;
+  showSpanFilterMatchesOnly: boolean;
   onDetailToggled: (spanID: string) => void;
   onChildrenToggled: (spanID: string) => void;
   numTicks: number;
@@ -360,6 +362,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isChildrenExpanded,
       isDetailExpanded,
       isMatchingFilter,
+      showSpanFilterMatchesOnly,
       isFocused,
       numTicks,
       rpc,
@@ -388,7 +391,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
-    const styles = getStyles(theme);
+    const styles = getStyles(theme, showSpanFilterMatchesOnly);
 
     const labelDetail = `${serviceName}::${operationName}`;
     let longLabel;

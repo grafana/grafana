@@ -22,6 +22,8 @@ import NewTracePageSearchBar, { TracePageSearchBarProps } from './NewTracePageSe
 const defaultProps = {
   search: defaultFilters,
   setFocusedSpanIdForSearch: jest.fn(),
+  showSpanFilterMatchesOnly: false,
+  setShowSpanFilterMatchesOnly: jest.fn(),
 };
 
 describe('<NewTracePageSearchBar>', () => {
@@ -50,5 +52,11 @@ describe('<NewTracePageSearchBar>', () => {
     expect(prevResButton).toBeInTheDocument();
     expect((nextResButton as HTMLButtonElement)['disabled']).toBe(false);
     expect((prevResButton as HTMLButtonElement)['disabled']).toBe(false);
+  });
+
+  it('renders show span filter matches only switch', async () => {
+    render(<NewTracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
+    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    expect(matchesSwitch).toBeInTheDocument();
   });
 });
