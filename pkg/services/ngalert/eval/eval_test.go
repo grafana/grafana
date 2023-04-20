@@ -573,6 +573,26 @@ func TestEvaluate(t *testing.T) {
 				"ref_id":         "A",
 			},
 		}},
+	}, {
+		name: "is no data for one frame with no fields",
+		cond: models.Condition{
+			Data: []models.AlertQuery{{
+				RefID:         "A",
+				DatasourceUID: "test",
+			}},
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {Frames: []*data.Frame{{Fields: nil}}},
+			},
+		},
+		expected: Results{{
+			State: NoData,
+			Instance: data.Labels{
+				"datasource_uid": "test",
+				"ref_id":         "A",
+			},
+		}},
 	}}
 
 	for _, tc := range cases {
