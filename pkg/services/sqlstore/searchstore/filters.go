@@ -92,11 +92,15 @@ func (f FolderFilter) Where() (string, []interface{}) {
 }
 
 type FolderUIDFilter struct {
-	UIDs []string
+	Dialect migrator.Dialect
+	OrgID   int64
+	UIDs    []string
 }
 
 func (f FolderUIDFilter) Where() (string, []interface{}) {
-	return sqlUIDin("folder_uid", f.UIDs)
+	innerSelect, params := sqlUIDin("folder_uid", f.UIDs)
+	params = append([]interface{}{f.OrgID}, params...)
+	return fmt.Sprintf("folder.id IN (SELECT id FROM dashboard WHERE is_folder = %s AND org_id = ? AND uid IN (%s))", f.Dialect.BooleanStr(true), innerSelect), params
 }
 
 type DashboardIDFilter struct {
