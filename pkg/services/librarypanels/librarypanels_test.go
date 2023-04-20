@@ -715,7 +715,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	return dashboard
 }
 
-func createFolder(t *testing.T, sqlStore db.DB, title string, user *user.SignedInUser) *folder.Folder {
+func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
 	t.Helper()
 
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -723,14 +723,14 @@ func createFolder(t *testing.T, sqlStore db.DB, title string, user *user.SignedI
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 
 	t.Logf("Creating folder with title and UID %q", title)
-	ctx := appcontext.WithUser(context.Background(), user)
-	folder, err := s.Create(ctx, &folder.CreateFolderCommand{OrgID: user.OrgID, Title: title, UID: title, SignedInUser: user})
+	ctx := appcontext.WithUser(context.Background(), sc.user)
+	folder, err := s.Create(ctx, &folder.CreateFolderCommand{OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: sc.user})
 	require.NoError(t, err)
 
 	return folder
@@ -824,6 +824,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
+			// Allow the user to create folders
 			Permissions: map[int64]map[string][]string{
 				orgID: {
 					dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll},
@@ -854,7 +855,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore:       sqlStore,
 		}
 
-		foldr := createFolder(t, sc.sqlStore, "ScenarioFolder", sc.user)
+		foldr := createFolder(t, sc, "ScenarioFolder")
 		sc.folder = &folder.Folder{
 			ID:        foldr.ID,
 			UID:       foldr.UID,

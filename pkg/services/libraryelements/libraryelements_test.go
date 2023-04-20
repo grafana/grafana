@@ -324,6 +324,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	})
 	require.NoError(t, err)
 
+	// Set user permissions on the newly created folder so that they can interact with library elements stored in it
 	sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
 	sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead] = append(sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
 	sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate] = append(sc.reqContext.SignedInUser.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
@@ -409,6 +410,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
+			// Allow user to create folders
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionFoldersCreate: {}},
 			},
