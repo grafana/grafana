@@ -44,63 +44,62 @@ export function DataSourceModal({
       closeOnBackdropClick={true}
       isOpen={true}
       className={styles.modal}
+      contentClassName={styles.modalContent}
       onClickBackdrop={onDismiss}
       onDismiss={onDismiss}
     >
-      <div className={styles.modalContent}>
-        <div className={styles.leftColumn}>
-          <Input
-            className={styles.searchInput}
-            value={search}
-            prefix={<Icon name="search" />}
-            placeholder="Search data source"
-            onChange={(e) => setSearch(e.currentTarget.value)}
+      <div className={styles.leftColumn}>
+        <Input
+          className={styles.searchInput}
+          value={search}
+          prefix={<Icon name="search" />}
+          placeholder="Search data source"
+          onChange={(e) => setSearch(e.currentTarget.value)}
+        />
+        <CustomScrollbar>
+          <DataSourceList
+            dashboard={false}
+            mixed={false}
+            // FIXME: Filter out the grafana data source in a hacky way
+            filter={(ds) => ds.name.includes(search)}
+            onChange={onChange}
+            current={current}
           />
-          <CustomScrollbar>
-            <DataSourceList
-              dashboard={false}
-              mixed={false}
-              // FIXME: Filter out the grafana data source in a hacky way
-              filter={(ds) => ds.name.includes(search) && ds.name !== '-- Grafana --'}
-              onChange={onChange}
-              current={current}
-            />
-          </CustomScrollbar>
+        </CustomScrollbar>
+      </div>
+      <div className={styles.rightColumn}>
+        <div className={styles.builtInDataSources}>
+          <DataSourceList
+            className={styles.builtInDataSourceList}
+            filter={(ds) => !!ds.meta.builtIn}
+            dashboard
+            mixed
+            onChange={onChange}
+            current={current}
+          />
+          {enableFileUpload && (
+            <FileDropzone
+              readAs="readAsArrayBuffer"
+              fileListRenderer={() => undefined}
+              options={{
+                maxSize: DFImport.maxFileSize,
+                multiple: false,
+                accept: DFImport.acceptedFiles,
+                ...fileUploadOptions,
+                onDrop: (...args) => {
+                  fileUploadOptions?.onDrop?.(...args);
+                  onDismiss();
+                },
+              }}
+            >
+              <FileDropzoneDefaultChildren />
+            </FileDropzone>
+          )}
         </div>
-        <div className={styles.rightColumn}>
-          <div className={styles.builtInDataSources}>
-            <DataSourceList
-              className={styles.builtInDataSourceList}
-              filter={(ds) => !!ds.meta.builtIn}
-              dashboard
-              mixed
-              onChange={onChange}
-              current={current}
-            />
-            {enableFileUpload && (
-              <FileDropzone
-                readAs="readAsArrayBuffer"
-                fileListRenderer={() => undefined}
-                options={{
-                  maxSize: DFImport.maxFileSize,
-                  multiple: false,
-                  accept: DFImport.acceptedFiles,
-                  ...fileUploadOptions,
-                  onDrop: (...args) => {
-                    fileUploadOptions?.onDrop?.(...args);
-                    onDismiss();
-                  },
-                }}
-              >
-                <FileDropzoneDefaultChildren />
-              </FileDropzone>
-            )}
-          </div>
-          <div className={styles.dsCTAs}>
-            <LinkButton variant="secondary" href={`datasources/new`}>
-              Configure a new data source
-            </LinkButton>
-          </div>
+        <div className={styles.dsCTAs}>
+          <LinkButton variant="secondary" href={`datasources/new`}>
+            Configure a new data source
+          </LinkButton>
         </div>
       </div>
     </Modal>
@@ -111,7 +110,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
   return {
     modal: css`
       width: 80%;
-      height: 560px;
+      height: 80%;
+      max-width: 1200px;
+      max-height: 900px;
     `,
     modalContent: css`
       display: flex;
