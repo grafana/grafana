@@ -39,10 +39,10 @@
     "empty": {
       "add-import-body": "",
       "add-import-button": "",
-      "add-import-header": "",
+      "add-import-header": "Importer un panneau",
       "add-row-body": "",
-      "add-row-button": "",
-      "add-row-header": "",
+      "add-row-button": "Ajouter ligne",
+      "add-row-header": "Ajouter une ligne",
       "add-visualization-body": "",
       "add-visualization-button": "",
       "add-visualization-header": ""
@@ -100,7 +100,7 @@
       "table-title": "Statistiques"
     },
     "toolbar": {
-      "add": "",
+      "add": "Ajouter",
       "add-panel": "Ajouter un panneau",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
@@ -186,7 +186,7 @@
       "title": "Règles d'alerte"
     },
     "alerting-receivers": {
-      "subtitle": "",
+      "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
     },
     "alerting-silences": {
@@ -195,7 +195,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Applications de gestion des incidents et des alertes",
-      "title": ""
+      "title": "Alertes et IRM"
     },
     "api-keys": {
       "subtitle": "Gérer et créer des clés API utilisées pour interagir avec les API HTTP de Grafana",
@@ -216,7 +216,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Créer une règle d'alerte"
+      "title": "Créer une règle d’alerte"
     },
     "create-dashboard": {
       "title": "Tableau de bord"
@@ -261,7 +261,7 @@
       "title": "Panneaux de bibliothèque"
     },
     "manage-folder": {
-      "subtitle": ""
+      "subtitle": "Gérer les tableaux de bord et les permissions des dossiers"
     },
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
@@ -355,9 +355,9 @@
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
     },
     "toolbar": {
-      "enable-kiosk": "",
-      "toggle-menu": "",
-      "toggle-search-bar": ""
+      "enable-kiosk": "Activer le mode kiosque",
+      "toggle-menu": "Afficher/Masquer le menu",
+      "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
   "news": {
@@ -407,12 +407,12 @@
   },
   "search": {
     "actions": {
-      "include-panels": "",
-      "remove-datasource-filter": "",
+      "include-panels": "Inclure des panneaux",
+      "remove-datasource-filter": "Source de données : {{datasource}}",
       "sort-placeholder": "Trier",
       "starred": "Favoris",
-      "view-as-folders": "",
-      "view-as-list": ""
+      "view-as-folders": "Voir par dossier",
+      "view-as-list": "Voir en tant que liste"
     },
     "dashboard-actions": {
       "import": "Importer",
@@ -427,19 +427,19 @@
     "result-kind": {
       "dashboard": "Tableau de bord",
       "folder": "Dossier",
-      "panel": ""
+      "panel": "Panneau"
     },
     "results-table": {
       "datasource-header": "Source de données",
       "location-header": "Emplacement",
       "name-header": "Nom",
-      "tags-header": "",
+      "tags-header": "Étiquettes",
       "type-dashboard": "Tableau de bord",
       "type-folder": "Dossier",
       "type-header": "Type"
     },
     "search-input": {
-      "include-panels-placeholder": "",
+      "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
       "placeholder": "Rechercher des tableaux de bord"
     }
   },
@@ -542,8 +542,8 @@
   },
   "tag-filter": {
     "loading": "Chargement en cours...",
-    "no-tags": "",
-    "placeholder": ""
+    "no-tags": "Aucune étiquette trouvée",
+    "placeholder": "Filtrer par tag"
   },
   "time-picker": {
     "absolute": {
