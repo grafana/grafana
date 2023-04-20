@@ -48,8 +48,8 @@ _Refer to [Add a Grafana Mimir or Loki managed alerting rule]({{< relref "#add-a
    - In the **For** text box, specify the duration for which the condition must be true before an alert fires. If you specify `5m`, the condition must be true for 5 minutes before the alert fires.
      > **Note:** Once a condition is met, the alert goes into the `Pending` state. If the condition remains active for the duration specified, the alert transitions to the `Firing` state, else it reverts to the `Normal` state.
 1. In Step 4, add the namespace, rule group, as well as additional metadata associated with the rule.
-   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, type the desired name and hit Enter to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}}).
-   - From the **Group** dropdown, select an existing group within the selected namespace. Otherwise, type the desired name and hit Enter to create a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
+   - From the **Namespace** dropdown, select an existing rule namespace or enter a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}}).
+   - From the **Group** dropdown, select an existing group within the selected namespace or enter a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
 1. In Step 5, add custom labels.
