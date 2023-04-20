@@ -186,7 +186,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               )}
               className={styles.rawQuery}
             />
-            <Tooltip content="Initially executed log context query is created from all labels defining the stream for the selected log line. Use editor bellow to customize log context query.">
+            <Tooltip content="Initially executed log context query is created from all labels defining the stream for the selected log line. Use editor below to customize log context query.">
               <Icon name="info-circle" size="sm" className={styles.queryDescription} />
             </Tooltip>
           </div>
@@ -203,7 +203,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           </Tooltip>{' '}
           <Label
             className={styles.label}
-            description="By removing some of the selected label filters, you can broaden your search."
+            description="Initially executed log context query is created from all labels defining the stream for the selected log line. By removing some of the selected label filters, you can broaden your search."
           >
             Widen the search
           </Label>
