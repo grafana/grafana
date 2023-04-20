@@ -3,8 +3,8 @@ import {
   QueryEditorOperator as QueryEditorOperatorBase,
   QueryEditorOperatorValueType,
   QueryEditorExpressionType,
-  QueryEditorArrayExpression as QueryEditorArrayExpressionBase,
   QueryEditorExpression as QueryEditorExpressionBase,
+  QueryEditorArrayExpression,
 } from './dataquery.gen';
 export {
   QueryEditorPropertyType,
@@ -13,6 +13,7 @@ export {
   QueryEditorGroupByExpression,
   QueryEditorFunctionExpression,
   QueryEditorFunctionParameterExpression,
+  QueryEditorArrayExpression,
 } from './dataquery.gen';
 
 export { QueryEditorExpressionType };
@@ -23,11 +24,6 @@ export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> ext
 
 export interface QueryEditorOperatorExpression extends QueryEditorOperatorExpressionBase {
   operator: QueryEditorOperator<QueryEditorOperatorValueType>;
-}
-
-export interface QueryEditorArrayExpression extends QueryEditorArrayExpressionBase {
-  type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or;
-  expressions: QueryEditorExpression[] | QueryEditorArrayExpression[];
 }
 
 export type QueryEditorExpression = QueryEditorArrayExpression | QueryEditorExpressionBase;

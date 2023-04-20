@@ -3,7 +3,6 @@ import { map } from 'rxjs/operators';
 import { dateTimeParse } from '../../datetime';
 import { SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -118,7 +117,7 @@ const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]
 export function fieldToTimeField(field: Field, dateFormat?: string): Field {
   let opts = dateFormat ? { format: dateFormat } : undefined;
 
-  const timeValues = field.values.toArray().slice();
+  const timeValues = field.values.slice();
 
   let firstDefined = timeValues.find((v) => v != null);
 
@@ -136,12 +135,12 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
   return {
     ...field,
     type: FieldType.time,
-    values: new ArrayVector(timeValues),
+    values: timeValues,
   };
 }
 
 function fieldToNumberField(field: Field): Field {
-  const numValues = field.values.toArray().slice();
+  const numValues = field.values.slice();
 
   const valuesAsStrings = numValues.some((v) => typeof v === 'string');
 
@@ -162,12 +161,12 @@ function fieldToNumberField(field: Field): Field {
   return {
     ...field,
     type: FieldType.number,
-    values: new ArrayVector(numValues),
+    values: numValues,
   };
 }
 
 function fieldToBooleanField(field: Field): Field {
-  const booleanValues = field.values.toArray().slice();
+  const booleanValues = field.values.slice();
 
   for (let b = 0; b < booleanValues.length; b++) {
     booleanValues[b] = Boolean(!!booleanValues[b]);
@@ -176,12 +175,12 @@ function fieldToBooleanField(field: Field): Field {
   return {
     ...field,
     type: FieldType.boolean,
-    values: new ArrayVector(booleanValues),
+    values: booleanValues,
   };
 }
 
 function fieldToStringField(field: Field, dateFormat?: string): Field {
-  let values = field.values.toArray();
+  let values = field.values;
 
   switch (field.type) {
     case FieldType.time:
@@ -199,12 +198,12 @@ function fieldToStringField(field: Field, dateFormat?: string): Field {
   return {
     ...field,
     type: FieldType.string,
-    values: new ArrayVector(values),
+    values: values,
   };
 }
 
 function fieldToComplexField(field: Field): Field {
-  const complexValues = field.values.toArray().slice();
+  const complexValues = field.values.slice();
 
   for (let s = 0; s < complexValues.length; s++) {
     try {
@@ -217,7 +216,7 @@ function fieldToComplexField(field: Field): Field {
   return {
     ...field,
     type: FieldType.other,
-    values: new ArrayVector(complexValues),
+    values: complexValues,
   };
 }
 
@@ -230,7 +229,7 @@ function fieldToComplexField(field: Field): Field {
  * @public
  */
 export function ensureTimeField(field: Field, dateFormat?: string): Field {
-  const firstValueTypeIsNumber = typeof field.values.get(0) === 'number';
+  const firstValueTypeIsNumber = typeof field.values[0] === 'number';
   if (field.type === FieldType.time && firstValueTypeIsNumber) {
     return field; //already time
   }
@@ -245,7 +244,7 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
 
 function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
   const enumConfig = { ...cfg };
-  const enumValues = field.values.toArray().slice();
+  const enumValues = field.values.slice();
   const lookup = new Map<unknown, number>();
   if (enumConfig.text) {
     for (let i = 0; i < enumConfig.text.length; i++) {
@@ -273,6 +272,6 @@ function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
       },
     },
     type: FieldType.enum,
-    values: new ArrayVector(enumValues),
+    values: enumValues,
   };
 }

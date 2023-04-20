@@ -11,7 +11,6 @@ import { Footer } from '../Footer/Footer';
 import { PageHeader } from '../PageHeader/PageHeader';
 import { Page as NewPage } from '../PageNew/Page';
 
-import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
 import { PageType } from './types';
 import { usePageNav } from './usePageNav';
@@ -45,7 +44,7 @@ export const OldPage: PageType = ({
     if (navModel) {
       // This is needed for chrome to update it's chromeless state
       chrome.update({
-        sectionNav: navModel.node,
+        sectionNav: navModel,
       });
     } else {
       // Need to trigger a chrome state update for the route change to be processed
@@ -93,7 +92,6 @@ export const OldPage: PageType = ({
 };
 
 OldPage.Contents = PageContents;
-OldPage.OldNavOnly = OldNavOnly;
 
 export const Page: PageType = config.featureToggles.topnav ? NewPage : OldPage;
 

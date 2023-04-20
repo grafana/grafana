@@ -16,9 +16,6 @@ import (
 const update = true
 
 func TestReadPromFrames(t *testing.T) {
-	// FIXME:
-	// skipping test due to flaky behavior
-	t.Skip()
 	files := []string{
 		"prom-labels",
 		"prom-matrix",

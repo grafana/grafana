@@ -194,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: theme.flags.topnav ? defaultTopNav : defaultOld,
+    default: defaultTopNav,
     canvas: defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};

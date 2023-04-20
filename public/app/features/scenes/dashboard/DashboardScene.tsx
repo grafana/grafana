@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { UrlSyncManager, SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectState } from '@grafana/scenes';
-import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -48,11 +48,7 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
       />
     );
   }
-  const pageToolbar = config.featureToggles.topnav ? (
-    <AppChromeUpdate actions={toolbarActions} />
-  ) : (
-    <PageToolbar title={title}>{toolbarActions}</PageToolbar>
-  );
+  const pageToolbar = <AppChromeUpdate actions={toolbarActions} />;
 
   return (
     <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>

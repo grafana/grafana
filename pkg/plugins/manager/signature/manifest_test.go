@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -49,7 +49,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest([]byte(txt))
+		s := ProvideService(&config.Cfg{})
+		manifest, err := s.readPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -65,7 +66,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		_, err := ReadPluginManifest([]byte(modified))
+		s := ProvideService(&config.Cfg{})
+		_, err := s.readPluginManifest([]byte(modified))
 		require.Error(t, err)
 	})
 }
@@ -102,7 +104,8 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := ReadPluginManifest([]byte(txt))
+		s := ProvideService(&config.Cfg{})
+		manifest, err := s.readPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -155,7 +158,8 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+			s := ProvideService(&config.Cfg{})
+			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.External
 				},
@@ -185,7 +189,8 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		sig, err := Calculate(context.Background(), log.NewTestLogger(), &fakes.FakePluginSource{
+		s := ProvideService(&config.Cfg{})
+		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.External
 			},
@@ -210,6 +215,137 @@ func TestCalculate(t *testing.T) {
 			SigningOrg: "Grafana Labs",
 		}, sig)
 	})
+
+	t.Run("Signature verification should work with any path separator", func(t *testing.T) {
+		var toSlashUnix = newToSlash('/')
+		var toSlashWindows = newToSlash('\\')
+
+		for _, tc := range []struct {
+			name    string
+			sep     string
+			toSlash func(string) string
+		}{
+			{"unix", "/", toSlashUnix},
+			{"windows", "\\", toSlashWindows},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				// Replace toSlash for cross-platform testing
+				oldToSlash := toSlash
+				t.Cleanup(func() {
+					toSlash = oldToSlash
+				})
+				toSlash = tc.toSlash
+
+				basePath := "../testdata/app-with-child/dist"
+
+				s := ProvideService(&config.Cfg{})
+				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return plugins.External
+					},
+				}, plugins.FoundPlugin{
+					JSONData: plugins.JSONData{
+						ID:   "myorgid-simple-app",
+						Type: plugins.App,
+						Info: plugins.Info{
+							Version: "%VERSION%",
+						},
+					},
+					FS: newPathSeparatorOverrideFS(tc.sep, map[string]struct{}{
+						filepath.Join(basePath, "MANIFEST.txt"):      {},
+						filepath.Join(basePath, "plugin.json"):       {},
+						filepath.Join(basePath, "child/plugin.json"): {},
+					}, basePath),
+				})
+				require.NoError(t, err)
+				require.Equal(t, plugins.Signature{
+					Status:     plugins.SignatureValid,
+					Type:       plugins.GrafanaSignature,
+					SigningOrg: "Grafana Labs",
+				}, sig)
+			})
+		}
+	})
+}
+
+// newToSlash returns a new function that acts as filepath.ToSlash but for the specified os-separator.
+// This can be used to test filepath.ToSlash-dependant code cross-platform.
+func newToSlash(sep rune) func(string) string {
+	return func(path string) string {
+		if sep == '/' {
+			return path
+		}
+		return strings.ReplaceAll(path, string(sep), "/")
+	}
+}
+
+func TestNewToSlash(t *testing.T) {
+	t.Run("unix", func(t *testing.T) {
+		toSlashUnix := newToSlash('/')
+		require.Equal(t, "folder", toSlashUnix("folder"))
+		require.Equal(t, "/folder", toSlashUnix("/folder"))
+		require.Equal(t, "/folder/file", toSlashUnix("/folder/file"))
+		require.Equal(t, "/folder/other\\file", toSlashUnix("/folder/other\\file"))
+	})
+
+	t.Run("windows", func(t *testing.T) {
+		toSlashWindows := newToSlash('\\')
+		require.Equal(t, "folder", toSlashWindows("folder"))
+		require.Equal(t, "C:/folder", toSlashWindows("C:\\folder"))
+		require.Equal(t, "folder/file.exe", toSlashWindows("folder\\file.exe"))
+	})
+}
+
+// fsPathSeparatorFiles embeds plugins.LocalFS and overrides the Files() behaviour so all the returned elements
+// have the specified path separator. This can be used to test Files() behaviour cross-platform.
+type fsPathSeparatorFiles struct {
+	plugins.LocalFS
+
+	separator string
+}
+
+// newPathSeparatorOverrideFS returns a new fsPathSeparatorFiles. Sep is the separator that will be used ONLY for
+// the elements returned by Files(). Files and basePath MUST use the os-specific path separator (filepath.Separator)
+// if Open() is required to work for the test case.
+func newPathSeparatorOverrideFS(sep string, files map[string]struct{}, basePath string) fsPathSeparatorFiles {
+	return fsPathSeparatorFiles{
+		LocalFS:   plugins.NewLocalFS(files, basePath),
+		separator: sep,
+	}
+}
+
+// Files returns LocalFS.Files(), but all path separators (filepath.Separator) are replaced with f.separator.
+func (f fsPathSeparatorFiles) Files() []string {
+	files := f.LocalFS.Files()
+	const osSepStr = string(filepath.Separator)
+	for i := 0; i < len(files); i++ {
+		files[i] = strings.ReplaceAll(files[i], osSepStr, f.separator)
+	}
+	return files
+}
+
+func TestFSPathSeparatorFiles(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		sep  string
+	}{
+		{"unix", "/"},
+		{"windows", "\\"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fs := newPathSeparatorOverrideFS("/", map[string]struct{}{
+				"a": {},
+				strings.Join([]string{"a", "b", "c"}, tc.sep): {},
+			}, ".")
+			files := fs.Files()
+			filesMap := make(map[string]struct{}, len(files))
+			// Re-convert to map as the key order is not stable
+			for _, f := range files {
+				filesMap[f] = struct{}{}
+			}
+			require.Equal(t, filesMap, map[string]struct{}{"a": {}, strings.Join([]string{"a", "b", "c"}, tc.sep): {}})
+		})
+	}
 }
 
 func fileList(manifest *PluginManifest) []string {
@@ -547,7 +683,8 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateManifest(*tc.manifest, nil)
+			s := ProvideService(&config.Cfg{})
+			err := s.validateManifest(*tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})
 	}
