@@ -85,38 +85,35 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 
 // pluginVersion will return plugin version based on the requested information
 func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts) (*Version, error) {
-	var err error
-	if !compatOpts.AnyGrafanaVersion() {
-		versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
+	if compatOpts.AnyGrafanaVersion() {
+		if version == "" {
+			v, err := m.latestPluginVersion(pluginID)
+			if err != nil {
+				return nil, err
+			}
+			return m.selectSystemCompatibleVersion([]Version{v}, pluginID, version, compatOpts)
+		}
+		v, err := m.specificPluginVersion(pluginID, version)
 		if err != nil {
 			return nil, err
 		}
-		return m.selectCompatibleVersion(versions, pluginID, version, compatOpts)
+		return m.selectSystemCompatibleVersion([]Version{v}, pluginID, version, compatOpts)
 	}
 
-	var v Version
-	if version == "" {
-		v, err = m.latestPluginVersion(pluginID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		v, err = m.specificPluginVersion(pluginID, version)
-		if err != nil {
-			return nil, err
-		}
+	versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
+	if err != nil {
+		return nil, err
 	}
-
-	return m.selectCompatibleVersion([]Version{v}, pluginID, version, compatOpts)
+	return m.selectSystemCompatibleVersion(versions, pluginID, version, compatOpts)
 }
 
-// selectCompatibleVersion selects the most appropriate plugin version
+// selectSystemCompatibleVersion selects the most appropriate plugin version based on os + architecture
 // returns the specified version if supported.
 // returns the latest version if no specific version is specified.
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (m *Manager) selectCompatibleVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (*Version, error) {
+func (m *Manager) selectSystemCompatibleVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (*Version, error) {
 	version = normalizeVersion(version)
 
 	var ver Version
