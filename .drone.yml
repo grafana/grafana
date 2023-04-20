@@ -4567,7 +4567,16 @@ steps:
   name: clone-rgm
 - commands:
   - apk update && apk add docker
-  - cd rgm && go run ./cmd --help
+  - cd rgm && go run ./cmd --build-id=${DRONE_BUILD_ID} --grafana-dir=../ --github_token=${GITHUB_TOKEN}
+    package --distros=linux/amd64,linux/arm64 publish --destination=${DESTINATION}
+    --gcp-service-account-key-base64=${GCP_KEY_BASE64}
+  environment:
+    DESTINATION:
+      from_secret: rgm_destination
+    GCP_KEY_BASE64:
+      from_secret: rgm_gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: rgm_github_token
   failure: ignore
   image: golang:1.20.3-alpine
   name: rgm-build
@@ -4605,7 +4614,16 @@ steps:
   name: clone-rgm
 - commands:
   - apk update && apk add docker
-  - cd rgm && go run ./cmd --help
+  - cd rgm && go run ./cmd --build-id=${DRONE_BUILD_ID} --grafana-dir=../ --github_token=${GITHUB_TOKEN}
+    package --distros=linux/amd64,linux/arm64 publish --destination=${DESTINATION}
+    --gcp-service-account-key-base64=${GCP_KEY_BASE64}
+  environment:
+    DESTINATION:
+      from_secret: rgm_destination
+    GCP_KEY_BASE64:
+      from_secret: rgm_gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: rgm_github_token
   failure: ignore
   image: golang:1.20.3-alpine
   name: rgm-build
@@ -6903,7 +6921,25 @@ get:
 kind: secret
 name: enterprise2_security_prefix
 ---
+get:
+  name: gcp_service_account_base64
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_gcp_key_base64
+---
+get:
+  name: destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_destination
+---
+get:
+  name: pat
+  path: infra/data/ci/github/grafanabot
+kind: secret
+name: rgm_github_token
+---
 kind: signature
-hmac: e47128bee75ddf6702077004a05da5add3f84aeebc4ba4998a7c7398c047f353
+hmac: e966503184ead261d4adb14e9894a4443412bc7bd7e7d644e68227b00a6ae2a1
 
 ...

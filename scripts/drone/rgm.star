@@ -9,6 +9,20 @@ load(
     "pipeline",
 )
 
+load("scripts/drone/vault.star",
+  "from_secret",
+  "vault_secret",
+  "rgm_gcp_key_base64",
+  "rgm_destination",
+  "rgm_github_token",
+)
+
+rgm_env_secrets = {
+  "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
+  "DESTINATION": from_secret(rgm_destination),
+  "GITHUB_TOKEN": from_secret(rgm_github_token),
+}
+
 def rgm_build(distros=["linux/amd64", "linux/arm64"]):
   clone_step = {
     "name": "clone-rgm",
@@ -19,14 +33,17 @@ def rgm_build(distros=["linux/amd64", "linux/arm64"]):
     "failure": "ignore",
   }
 
+  distroStr = ",".join(distros)
+
   rgm_build_step = {
     "name": "rgm-build",
     "image": "golang:1.20.3-alpine",
     "commands": [
       # the docker program is a requirement for running dagger programs
       "apk update && apk add docker",
-      "cd rgm && go run ./cmd --help",
+      "cd rgm && go run ./cmd --build-id=${{DRONE_BUILD_ID}} --grafana-dir=../ --github_token=${{GITHUB_TOKEN}} package --distros={} publish --destination=${{DESTINATION}} --gcp-service-account-key-base64=${{GCP_KEY_BASE64}}".format(distroStr),
     ],
+    "environment": rgm_env_secrets,
     # The docker socket is a requirement for running dagger programs
     # In the future we should find a way to use dagger without mounting the docker socket.
     "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
@@ -37,6 +54,7 @@ def rgm_build(distros=["linux/amd64", "linux/arm64"]):
     clone_step,
     rgm_build_step,
   ]
+
 
 def rgm_main():
   trigger = {
