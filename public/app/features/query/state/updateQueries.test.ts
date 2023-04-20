@@ -215,6 +215,67 @@ describe('updateQueries', () => {
     expect(updated[0].datasource).toEqual({ type: 'old-type', uid: 'old-uid' });
     expect(updated[1].datasource).toEqual({ type: 'other-type', uid: 'other-uid' });
   });
+
+  it('should preserve query when switching from mixed to a datasource where a query has been saved', async () => {
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    expect(updated.length).toEqual(1);
+  });
+
+  it('should return a default query if switching from mixed to a datasource where a query is not saved', async () => {
+    newUidDS.getDefaultQuery = jest.fn().mockReturnValue({ test: 'default-query' } as Partial<TestQuery>);
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'other-uid-1',
+            type: 'other-type-1',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid-2',
+            type: 'other-type-2',
+          },
+        },
+      ],
+      mixedDS
+    );
+    expect(newUidDS.getDefaultQuery).toHaveBeenCalled();
+    expect(updated as TestQuery[]).toEqual([
+      {
+        datasource: { type: 'new-type', uid: 'new-uid' },
+        refId: 'A',
+        test: 'default-query',
+      },
+    ]);
+    expect(updated.length).toEqual(1);
+  });
 });
 
 describe('updateQueries with import', () => {

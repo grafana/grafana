@@ -26,9 +26,15 @@ export async function updateQueries(
     else if (currentDS && nextDS.importQueries) {
       nextQueries = await nextDS.importQueries(queries, currentDS);
     }
-    // Otherwise clear queries
+    // check to see if an existing query for that datasource exists in nextQueries and preserve it if it exists
     else {
-      return [DEFAULT_QUERY];
+      const savedQuery = nextQueries.find((query) => query.datasource?.type === nextDS.type);
+
+      if (savedQuery) {
+        return [{ ...savedQuery, refId: 'A' }];
+      } else {
+        return [DEFAULT_QUERY];
+      }
     }
   }
 
