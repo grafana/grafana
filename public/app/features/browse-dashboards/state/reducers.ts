@@ -57,12 +57,18 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // If we're unselecting an item, unselect all ancestors also
+  // If we're unselecting an item, unselect all ancestors (parent, grandparent, etc) also
+  // so we can later show a UI-only 'mixed' checkbox
   if (!isSelected) {
     let nextParentUID = item.parentUID;
 
+    // this is like a recursive climb up the parents of the tree while we have a
+    // parentUID (we've hit a root dashboard/folder)
     while (nextParentUID) {
       const parent = findItem(state.rootItems, state.childrenByParentUID, nextParentUID);
+
+      // This case should not happen, but a find can theortically return undefined, and it
+      // helps limit infinite loops
       if (!parent) {
         break;
       }
