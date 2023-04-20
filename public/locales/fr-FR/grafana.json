@@ -12,7 +12,7 @@
       "light-theme": "Clair"
     },
     "search-box": {
-      "placeholder": "Rechercher ou aller vers..."
+      "placeholder": "Rechercher ou aller à..."
     },
     "section": {
       "actions": "Actions",
@@ -32,19 +32,19 @@
   "dashboard": {
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
-      "paste-panel": "Coller panneau",
+      "paste-panel": "Coller le panneau",
       "row": "Ligne",
       "visualization": "Visualisation"
     },
     "empty": {
       "add-import-body": "Importer des visualisations partagées avec d'autres tableaux de bord.",
-      "add-import-button": "Importer panneau de bibliothèque",
+      "add-import-button": "Importer un panneau de la bibliothèque",
       "add-import-header": "Importer un panneau",
       "add-row-body": "Regroupez vos visualisations en sections extensibles.",
-      "add-row-button": "Ajouter ligne",
+      "add-row-button": "Ajouter une ligne",
       "add-row-header": "Ajouter une ligne",
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
-      "add-visualization-button": "Ajouter visualisation",
+      "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation"
     },
     "inspect": {
@@ -225,7 +225,7 @@
       "title": "Dossier"
     },
     "create-import": {
-      "title": "Importer tableau de bord"
+      "title": "Importer un tableau de bord"
     },
     "dashboards": {
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
@@ -261,7 +261,7 @@
       "title": "Panneaux de bibliothèque"
     },
     "manage-folder": {
-      "subtitle": "Gérer les tableaux de bord et les permissions des dossiers"
+      "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
     },
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
@@ -304,7 +304,7 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholderCommandPalette": "Rechercher ou aller vers..."
+      "placeholderCommandPalette": "Rechercher ou aller à..."
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
@@ -543,7 +543,7 @@
   "tag-filter": {
     "loading": "Chargement en cours...",
     "no-tags": "Aucune étiquette trouvée",
-    "placeholder": "Filtrer par tag"
+    "placeholder": "Filtrer par étiquette"
   },
   "time-picker": {
     "absolute": {
