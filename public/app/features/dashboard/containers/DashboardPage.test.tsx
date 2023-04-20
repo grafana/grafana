@@ -98,6 +98,10 @@ function setup(propOverrides?: Partial<Props>) {
   config.bootData.navTree = [
     { text: 'Dashboards', id: 'dashboards/browse' },
     { text: 'Home', id: HOME_NAV_ID },
+    {
+      text: 'Help',
+      id: 'help',
+    },
   ];
 
   const store = configureStore();
