@@ -183,5 +183,5 @@ can make older plugins stop working properly.
 Run the following command to update plugins:
 
 ```bash
-grafana-cli plugins update-all
+grafana cli plugins update-all
 ```
