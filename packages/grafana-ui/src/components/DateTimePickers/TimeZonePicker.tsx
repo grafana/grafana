@@ -28,6 +28,7 @@ export interface Props {
   disabled?: boolean;
   inputId?: string;
   menuShouldPortal?: boolean;
+  openMenuOnFocus?: boolean;
 }
 
 export const TimeZonePicker = (props: Props) => {
@@ -41,6 +42,7 @@ export const TimeZonePicker = (props: Props) => {
     disabled = false,
     inputId,
     menuShouldPortal = false,
+    openMenuOnFocus = true,
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
@@ -64,7 +66,7 @@ export const TimeZonePicker = (props: Props) => {
       placeholder={t('time-picker.zone.select-search-input', 'Type to search (country, city, abbreviation)')}
       autoFocus={autoFocus}
       menuShouldPortal={menuShouldPortal}
-      openMenuOnFocus={true}
+      openMenuOnFocus={openMenuOnFocus}
       width={width}
       filterOption={filterBySearchIndex}
       options={groupedTimeZones}
