@@ -329,24 +329,23 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           </tbody>
         </table>
       </div>
-      <div className={styles.flexRow}>
+      <div>
         <div className={cx(styles.paddingTop, loading ? styles.hidden : '')}>
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
-        <div>
-          <a
-            href="https://forms.gle/Tsk4pN7vD95aBRbb7"
-            className={styles.link}
-            title="We recently reworked the Log Context UI, please let us know how we can further improve it."
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            <Icon name="comment-alt-message" /> Give feedback
-          </a>
-        </div>
       </div>
-      {contextQuery?.datasource?.uid && (
-        <Modal.ButtonRow>
+
+      <Modal.ButtonRow>
+        <a
+          href="https://forms.gle/Tsk4pN7vD95aBRbb7"
+          className={styles.link}
+          title="We recently reworked the Log Context UI, please let us know how we can further improve it."
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          <Icon name="comment-alt-message" /> Give feedback
+        </a>
+        {contextQuery?.datasource?.uid && (
           <Button
             variant="secondary"
             onClick={async () => {
@@ -362,8 +361,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           >
             Open in split view
           </Button>
-        </Modal.ButtonRow>
-      )}
+        )}
+      </Modal.ButtonRow>
     </Modal>
   );
 };
