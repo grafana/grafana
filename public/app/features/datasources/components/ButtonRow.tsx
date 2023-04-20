@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { Button, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -15,7 +14,7 @@ export interface Props {
   onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
-export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, exploreUrl }: Props) {
+export function ButtonRow({ canSave, onSubmit, onTest, exploreUrl }: Props) {
   const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (

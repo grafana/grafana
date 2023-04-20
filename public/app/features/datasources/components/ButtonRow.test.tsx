@@ -24,7 +24,7 @@ describe('<ButtonRow>', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByRole('button', { name: selectors.pages.DataSource.delete })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Explore' })).toBeInTheDocument();
   });
   it('should render save & test', () => {
     setup({ canSave: true });
