@@ -30,6 +30,23 @@
     "save": "Guardar"
   },
   "dashboard": {
+    "add-menu": {
+      "import": "",
+      "paste-panel": "",
+      "row": "",
+      "visualization": ""
+    },
+    "empty": {
+      "add-import-body": "",
+      "add-import-button": "",
+      "add-import-header": "",
+      "add-row-body": "",
+      "add-row-button": "",
+      "add-row-header": "",
+      "add-visualization-body": "",
+      "add-visualization-button": "",
+      "add-visualization-header": ""
+    },
     "inspect": {
       "data-tab": "Datos",
       "error-tab": "Error",
@@ -75,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Estadísticas de origen de datos",
+      "data-traceids": "",
       "processing-time": "Tiempo de procesamiento de datos",
       "queries": "Número de consultas",
       "request-time": "Tiempo total de solicitud",
@@ -82,6 +100,7 @@
       "table-title": "Estadísticas"
     },
     "toolbar": {
+      "add": "",
       "add-panel": "Añadir panel",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
@@ -92,7 +111,6 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
-      "tv-button": "Alternar entre los modos de vista",
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
@@ -123,6 +141,9 @@
       "folder": "Guardar en carpeta",
       "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
       "name": "Nombre del panel de librería"
+    },
+    "add-widget": {
+      "title": ""
     }
   },
   "library-panels": {
@@ -185,8 +206,7 @@
       "title": "Aplicaciones"
     },
     "config": {
-      "title": "Administración",
-      "titleBeforeTopnav": "Configuración"
+      "title": "Administración"
     },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
@@ -224,8 +244,7 @@
     },
     "global-users": {
       "subtitle": "Gestionar usuarios de Grafana",
-      "title": "Usuarios",
-      "titleBeforeTopnav": "Usuarios"
+      "title": "Usuarios"
     },
     "help": {
       "title": "Ayuda"
@@ -240,9 +259,6 @@
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
-    },
-    "manage-dashboards": {
-      "title": "Navegar"
     },
     "manage-folder": {
       "subtitle": ""
@@ -262,8 +278,7 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias por defecto",
-      "titleBeforeTopnav": "Preferencias"
+      "title": "Preferencias por defecto"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -282,7 +297,6 @@
     "profile/settings": {
       "title": "Perfil"
     },
-    "profile/switch-org": "Cambiar de organización",
     "public": {
       "title": ""
     },
@@ -303,7 +317,6 @@
       "subtitle": "Use cuentas de servicio para ejecutar cargas de trabajo automatizadas en Grafana",
       "title": "Cuentas de servicios"
     },
-    "sign-in": "Iniciar sesión",
     "sign-out": {
       "title": "Cerrar sesión"
     },
@@ -399,7 +412,6 @@
       "sort-placeholder": "",
       "starred": "Destacado",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {
