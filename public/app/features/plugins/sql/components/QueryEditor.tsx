@@ -59,7 +59,7 @@ export function SqlQueryEditor({
       }
 
       /*
-        If the data source is Postgres (all Postgres datasources are passed a default prop of `isPostgresInstance`),
+        If the data source is Postgres (all Postgres data source query editors are passed a default prop of `isPostgresInstance`),
         then test for a preconfigured database (either through provisioning or the GUI). Postgres REQUIRES a default database,
         so throw the appropriate warning.
       */
