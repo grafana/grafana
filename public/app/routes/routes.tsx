@@ -2,9 +2,9 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
-import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
+import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -511,10 +511,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getDataConnectionsRoutes(),
     {
       path: '/*',
-      component: ErrorPage,
+      component: PageNotFound,
     },
-    // TODO[Router]
-    // ...playlistRoutes,
   ].filter(isTruthy);
 }
 

@@ -202,12 +202,15 @@ const getFigureStyles = (theme: GrafanaTheme2) => ({
   media: css({
     position: 'relative',
     gridArea: 'Figure',
+    display: 'flex',
+    alignItems: 'center',
+    height: '100%',
 
     marginRight: theme.spacing(2),
-    width: '40px',
 
     '> img': {
-      width: '100%',
+      width: '40px',
+      height: 'auto',
     },
 
     '&:empty': {

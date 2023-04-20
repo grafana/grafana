@@ -210,7 +210,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     `,
     dataSourceList: css`
       height: 423px;
-      padding: 0 ${theme.spacing(2)};
+      padding: 0 ${theme.spacing(0)};
     `,
     footer: css`
       display: flex;
