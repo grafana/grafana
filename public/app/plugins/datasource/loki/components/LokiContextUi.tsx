@@ -195,7 +195,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         <div className={styles.ui}>
           <Tooltip
             content={
-              'This feature is experimental and may change in the future. Currently it supports using parser and extracted labels for queries with no more than 1 parser (e.g. logfmt, json). Please report any issues in the Grafana GitHub repository.'
+              'This feature is experimental and may change in the future. Currently it supports using a parser and extracted labels for queries with no more than 1 parser (e.g. logfmt, json). Please report any issues in the Grafana GitHub repository.'
             }
             placement="top"
           >
@@ -243,7 +243,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             <>
               <Label
                 className={styles.label}
-                description={`By using parser in your original query, you are able to filter for extracted labels. Refine your search by applying extracted labels from selected log line.`}
+                description={`By using a parser in your original query, you are able to use filter for extracted labels. Refine your search by applying extracted labels created from the selected log line.`}
               >
                 Refine the search
               </Label>
