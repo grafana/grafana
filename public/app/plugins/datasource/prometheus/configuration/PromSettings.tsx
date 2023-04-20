@@ -119,7 +119,7 @@ const setPrometheusVersion = (
   // This will save the current state of the form, as the url is needed for this API call to function
   onUpdate(options)
     .then((updatedOptions) => {
-      // Not seeing version info in buildinfo response from victoria metrics, users will need to manually select version
+      // Not seeing version info in buildinfo response from VictoriaMetrics, users will need to manually select version
       if (updatedOptions.jsonData.prometheusType !== PromApplication.VictoriaMetrics) {
         getBackendSrv()
           .get(`/api/datasources/uid/${updatedOptions.uid}/resources/version-detect`)
