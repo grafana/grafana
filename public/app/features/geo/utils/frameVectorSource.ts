@@ -44,7 +44,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
     }
 
     //eslint-disable-next-line
-    const field = info.field as Field<Point>;
+    const field = info.field as unknown as Field<Point>;
     const geometry = new LineString(field.values.toArray().map((p) => p.getCoordinates())) as Geometry;
     this.addFeatureInternal(
       new Feature({

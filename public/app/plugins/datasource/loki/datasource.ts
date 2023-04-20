@@ -32,7 +32,6 @@ import {
   ScopedVars,
   TimeRange,
   LogRowContextOptions,
-  LogRowContextQueryDirection,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -76,7 +75,6 @@ import {
   isValidQuery,
   requestSupportsSplitting,
 } from './queryUtils';
-import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -100,7 +98,7 @@ export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
 const NS_IN_MS = 1000000;
 
-function makeRequest(
+export function makeRequest(
   query: LokiQuery,
   range: TimeRange,
   app: CoreApp,
@@ -149,7 +147,7 @@ export class LokiDatasource
       QueryEditor: LokiAnnotationsQueryEditor,
     };
     this.variables = new LokiVariableSupport(this);
-    this.logContextProvider = new LogContextProvider(this.languageProvider);
+    this.logContextProvider = new LogContextProvider(this);
   }
 
   getDataProvider(
@@ -650,74 +648,7 @@ export class LokiDatasource
     options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
-    const limit = (options && options.limit) || 10;
-    const { query, range } = await this.logContextProvider.prepareLogRowContextQueryTarget(
-      row,
-      limit,
-      direction,
-      origQuery
-    );
-
-    const processDataFrame = (frame: DataFrame): DataFrame => {
-      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-      const cache = new FieldCache(frame);
-      const timestampField = cache.getFirstFieldOfType(FieldType.time);
-      const lineField = cache.getFirstFieldOfType(FieldType.string);
-      const idField = cache.getFieldByName('id');
-
-      if (timestampField === undefined || lineField === undefined || idField === undefined) {
-        // this should never really happen, but i want to keep typescript happy
-        return { ...frame, fields: [] };
-      }
-
-      return {
-        ...frame,
-        fields: [
-          {
-            ...timestampField,
-            name: 'ts',
-          },
-          {
-            ...lineField,
-            name: 'line',
-          },
-          {
-            ...idField,
-            name: 'id',
-          },
-        ],
-      };
-    };
-
-    const processResults = (result: DataQueryResponse): DataQueryResponse => {
-      const frames: DataFrame[] = result.data;
-      const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, SortDirection.Descending))
-        .map((frame) => processDataFrame(frame)); // rename fields if needed
-
-      return {
-        ...result,
-        data: processedFrames,
-      };
-    };
-
-    // this can only be called from explore currently
-    const app = CoreApp.Explore;
-
-    return lastValueFrom(
-      this.query(makeRequest(query, range, app, `${REF_ID_STARTER_LOG_ROW_CONTEXT}${direction}`)).pipe(
-        catchError((err) => {
-          const error: DataQueryError = {
-            message: 'Error during context query. Please check JS console logs.',
-            status: err.status,
-            statusText: err.statusText,
-          };
-          throw error;
-        }),
-        switchMap((res) => of(processResults(res)))
-      )
-    );
+    return await this.logContextProvider.getLogRowContext(row, options, origQuery);
   };
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
