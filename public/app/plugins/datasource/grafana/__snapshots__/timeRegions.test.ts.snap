@@ -40,9 +40,7 @@ exports[`grafana data source supports time region query 1`] = `
       ],
     },
   ],
-  "meta": {
-    "type": "timeranges",
-  },
+  "meta": undefined,
   "name": undefined,
   "refId": undefined,
 }
