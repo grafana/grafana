@@ -8,6 +8,7 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
+import { getSvgSize } from '../Icon/utils';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
@@ -95,6 +96,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
     }
   };
 
+  // overall size of the IconButton on hover
+  const hoverSize = getSvgSize(size) + 2 * padding(size);
+
   let iconColor = theme.colors.text.primary;
 
   if (variant === 'primary') {
@@ -106,6 +110,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
   return {
     button: css`
       z-index: 0;
+      position: relative;
       margin: 0 ${theme.spacing(0.5)} 0 0;
       box-shadow: none;
       border: none;
@@ -113,17 +118,26 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
       background: transparent;
       justify-content: center;
       align-items: center;
-      padding: ${padding(size)}px;
+      padding: 0;
       color: ${iconColor};
-      transition-duration: 0.2s;
-      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-      transition-property: transform, opacity;
 
       &[disabled],
       &:disabled {
         cursor: not-allowed;
         color: ${theme.colors.action.disabledText};
         opacity: 0.65;
+      }
+
+      &:before {
+        z-index: -1;
+        position: absolute;
+        width: ${hoverSize}px;
+        height: ${hoverSize}px;
+        border-radius: ${theme.shape.radius.default};
+        content: '';
+        transition-duration: 0.2s;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-property: transform, opacity;
       }
 
       &:focus,
@@ -136,10 +150,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
       }
 
       &:hover {
-        border-radius: ${theme.shape.radius.default};
-        background-color: ${variant === 'secondary'
-          ? theme.colors.action.hover
-          : colorManipulator.alpha(iconColor, 0.12)};
+        &:before {
+          background-color: ${variant === 'secondary'
+            ? theme.colors.action.hover
+            : colorManipulator.alpha(iconColor, 0.12)};
+        }
       }
     `,
     icon: css`
