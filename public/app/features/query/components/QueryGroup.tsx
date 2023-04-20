@@ -121,7 +121,9 @@ export class QueryGroup extends PureComponent<Props, State> {
         },
         // TODO: Detect the first panel added into a new dashboard better.
         // This is flaky in case the UID is generated differently
-        isDataSourceModalOpen: locationService.getSearchObject().editPanel === '1',
+        isDataSourceModalOpen:
+          locationService.getLocation().pathname === '/dashboard/new' &&
+          locationService.getSearchObject().editPanel === '1',
       });
     } catch (error) {
       console.log('failed to load data source', error);
