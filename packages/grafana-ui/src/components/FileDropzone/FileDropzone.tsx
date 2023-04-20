@@ -259,9 +259,9 @@ export function FileDropzoneDefaultChildren({ primaryText = 'Drop file here or c
   const styles = getStyles(theme);
 
   return (
-    <div className={cx(styles.iconWrapper)}>
-      <Icon name="upload" size="xl" />
-      <h4>{primaryText}</h4>
+    <div className={cx(styles.defaultDropZone)}>
+      <Icon className={cx(styles.icon)} name="upload" size="xl" />
+      <h6 className={cx(styles.primaryText)}>{primaryText}</h6>
       <small className={styles.small}>{secondaryText}</small>
     </div>
   );
@@ -308,19 +308,23 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       background-color: ${isDragActive ? theme.colors.background.secondary : theme.colors.background.primary};
       cursor: pointer;
       align-items: center;
+      justify-content: center;
     `,
     dropzone: css`
       display: flex;
-      flex: 1;
       flex-direction: column;
     `,
-    iconWrapper: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    defaultDropZone: css`
+      text-align: center;
+    `,
+    icon: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
+    primaryText: css`
+      margin-bottom: ${theme.spacing(1)};
     `,
     acceptContainer: css`
-      display: flex;
+      text-align: center;
       margin: 0;
     `,
     acceptSeparator: css`

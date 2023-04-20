@@ -13,7 +13,7 @@ import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
-import { dataSourceName, useGetDatasource } from './utils';
+import { dataSourceLabel, useGetDatasource } from './utils';
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
@@ -61,7 +61,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               )
             }
             suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
-            placeholder={dataSourceName(currentDataSourceInstanceSettings)}
+            placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
             onChange={(e) => {
               setFilterTerm(e.currentTarget.value);
             }}
@@ -100,7 +100,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             className={styles.input}
             prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
             suffix={<Icon name="angle-down" />}
-            value={dataSourceName(currentDataSourceInstanceSettings)}
+            value={dataSourceLabel(currentDataSourceInstanceSettings)}
             onFocus={() => {
               setOpen(true);
             }}
@@ -120,7 +120,9 @@ function getStylesDropdown(theme: GrafanaTheme2) {
       cursor: pointer;
     `,
     input: css`
-      cursor: pointer;
+      input {
+        cursor: pointer;
+      }
     `,
   };
 }
@@ -148,6 +150,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           <DataSourceList
             current={current}
             onChange={changeCallback}
+            mixed
+            dashboard
             filter={(ds) => !ds.meta.builtIn && ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
           ></DataSourceList>
         </CustomScrollbar>

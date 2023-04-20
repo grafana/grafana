@@ -139,6 +139,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     `,
     builtInDataSources: css`
       flex: 1;
+      margin-bottom: ${theme.spacing(4)};
     `,
     builtInDataSourceList: css`
       margin-bottom: ${theme.spacing(4)};

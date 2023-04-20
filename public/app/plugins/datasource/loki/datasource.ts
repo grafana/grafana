@@ -30,6 +30,7 @@ import {
   QueryHint,
   rangeUtil,
   ScopedVars,
+  SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
 } from '@grafana/data';
@@ -171,8 +172,8 @@ export class LokiDatasource
     return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: LokiQuery): LokiQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
       return undefined;
     }
 
@@ -180,7 +181,7 @@ export class LokiDatasource
     const expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
 
-    switch (type) {
+    switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
@@ -206,7 +207,7 @@ export class LokiDatasource
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
-          maxLines: 100,
+          maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
         };
 
       default:
@@ -217,7 +218,7 @@ export class LokiDatasource
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, query))
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
@@ -238,7 +239,7 @@ export class LokiDatasource
   getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets
-      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsSample, query))
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
@@ -419,7 +420,12 @@ export class LokiDatasource
     return res.data ?? (res || []);
   }
 
-  async getQueryStats(query: string): Promise<QueryStats> {
+  async getQueryStats(query: string): Promise<QueryStats | undefined> {
+    // if query is invalid, clear stats, and don't request
+    if (!isValidQuery(query)) {
+      return undefined;
+    }
+
     const { start, end } = this.getTimeRangeParams();
     const labelMatchers = getStreamSelectorsFromQuery(query);
 
@@ -651,8 +657,8 @@ export class LokiDatasource
     return await this.logContextProvider.getLogRowContext(row, options, origQuery);
   };
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery);
+  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, origQuery);
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
@@ -750,7 +756,7 @@ export class LokiDatasource
   }
 
   showContextToggle(row?: LogRowModel): boolean {
-    return (row && row.searchWords && row.searchWords.length > 0) === true;
+    return true;
   }
 
   processError(err: FetchError, target: LokiQuery) {

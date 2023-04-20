@@ -3,13 +3,18 @@ import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { QueryStats } from '../types';
 
-export async function getStats(datasource: LokiDatasource, query: string): Promise<QueryStats | undefined> {
+export async function getStats(datasource: LokiDatasource, query: string): Promise<QueryStats | null> {
   if (!query) {
-    return undefined;
+    return null;
   }
 
   const response = await datasource.getQueryStats(query);
-  return Object.values(response).every((v) => v === 0) ? undefined : response;
+
+  if (!response) {
+    return null;
+  }
+
+  return Object.values(response).every((v) => v === 0) ? null : response;
 }
 
 /**

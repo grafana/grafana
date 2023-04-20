@@ -1,101 +1,183 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import produce from 'immer';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Icon, IconButton, Link } from '@grafana/ui';
 import { getFolderChildren } from 'app/features/search/service/folders';
-import { DashboardViewItem } from 'app/features/search/types';
+import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
-type NestedData = Record<string, DashboardViewItem[] | undefined>;
+import { DashboardsTreeItem } from '../types';
+
+import { DashboardsTree } from './DashboardsTree';
 
 interface BrowseViewProps {
+  height: number;
+  width: number;
   folderUID: string | undefined;
 }
 
-export function BrowseView({ folderUID }: BrowseViewProps) {
-  const [nestedData, setNestedData] = useState<NestedData>({});
+export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({ [folderUID ?? '$$root']: true });
 
-  // Note: entire implementation of this component must be replaced.
-  // This is just to show proof of concept for fetching and showing the data
+  const [selectedItems, setSelectedItems] = useState<
+    Record<DashboardViewItemKind, Record<string, boolean | undefined>>
+  >({
+    folder: {},
+    dashboard: {},
+    panel: {},
+  });
+
+  // Rather than storing an actual tree structure (requiring traversing the tree to update children), instead
+  // we keep track of children for each UID and then later combine them in the format required to display them
+  const [childrenByUID, setChildrenByUID] = useState<Record<string, DashboardViewItem[] | undefined>>({});
+
+  const loadChildrenForUID = useCallback(
+    async (uid: string | undefined) => {
+      const folderKey = uid ?? '$$root';
+
+      const childItems = await getFolderChildren(uid, undefined, true);
+      setChildrenByUID((v) => ({ ...v, [folderKey]: childItems }));
+
+      // If the parent is already selected, mark these items as selected also
+      const parentIsSelected = selectedItems.folder[folderKey];
+      if (parentIsSelected) {
+        setSelectedItems((currentState) =>
+          produce(currentState, (draft) => {
+            for (const child of childItems) {
+              draft[child.kind][child.uid] = true;
+            }
+          })
+        );
+      }
+    },
+    [selectedItems]
+  );
 
   useEffect(() => {
-    const folderKey = folderUID ?? '$$root';
-
-    getFolderChildren(folderUID, undefined, true).then((children) => {
-      setNestedData((v) => ({ ...v, [folderKey]: children }));
-    });
+    loadChildrenForUID(folderUID);
+    // No need to depend on loadChildrenForUID - we only want this to run
+    // when folderUID changes (initial page view)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderUID]);
 
-  const items = nestedData[folderUID ?? '$$root'] ?? [];
+  const flatTree = useMemo(
+    () => createFlatTree(folderUID, childrenByUID, openFolders),
+    [folderUID, childrenByUID, openFolders]
+  );
 
-  const handleNodeClick = useCallback(
-    (uid: string) => {
-      if (nestedData[uid]) {
-        setNestedData((v) => ({ ...v, [uid]: undefined }));
-        return;
+  const handleFolderClick = useCallback(
+    (uid: string, newState: boolean) => {
+      if (newState) {
+        loadChildrenForUID(uid);
       }
 
-      getFolderChildren(uid).then((children) => {
-        setNestedData((v) => ({ ...v, [uid]: children }));
-      });
+      setOpenFolders((old) => ({ ...old, [uid]: newState }));
     },
-    [nestedData]
+    [loadChildrenForUID]
+  );
+
+  const handleItemSelectionChange = useCallback(
+    (item: DashboardViewItem, newState: boolean) => {
+      // Recursively set selection state for this item and all descendants
+      setSelectedItems((old) =>
+        produce(old, (draft) => {
+          function markChildren(kind: DashboardViewItemKind, uid: string) {
+            draft[kind][uid] = newState;
+            if (kind !== 'folder') {
+              return;
+            }
+
+            let children = childrenByUID[uid] ?? [];
+            for (const child of children) {
+              markChildren(child.kind, child.uid);
+            }
+          }
+
+          markChildren(item.kind, item.uid);
+
+          // If we're unselecting an item, unselect all ancestors also
+          if (!newState) {
+            let nextParentUID = item.parentUID;
+
+            while (nextParentUID) {
+              const parent = findItem(childrenByUID, nextParentUID);
+              if (!parent) {
+                break;
+              }
+
+              draft[parent.kind][parent.uid] = false;
+              nextParentUID = parent.parentUID;
+            }
+          }
+        })
+      );
+    },
+    [childrenByUID]
   );
 
   return (
-    <div>
-      <p>Browse view</p>
-
-      <ul style={{ marginLeft: 16 }}>
-        {items.map((item) => {
-          return (
-            <li key={item.uid}>
-              <BrowseItem item={item} nestedData={nestedData} onFolderClick={handleNodeClick} />
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <DashboardsTree
+      items={flatTree}
+      width={width}
+      height={height}
+      selectedItems={selectedItems}
+      onFolderClick={handleFolderClick}
+      onItemSelectionChange={handleItemSelectionChange}
+    />
   );
 }
 
-function BrowseItem({
-  item,
-  nestedData,
-  onFolderClick,
-}: {
-  item: DashboardViewItem;
-  nestedData: NestedData;
-  onFolderClick: (uid: string) => void;
-}) {
-  const childItems = nestedData[item.uid];
+// Creates a flat list of items, with nested children indicated by its increasing level
+function createFlatTree(
+  rootFolderUID: string | undefined,
+  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  openFolders: Record<string, boolean>,
+  level = 0
+): DashboardsTreeItem[] {
+  function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
+    const mappedChildren = createFlatTree(item.uid, childrenByUID, openFolders, level + 1);
 
-  return (
-    <>
-      <div>
-        {item.kind === 'folder' ? (
-          <IconButton onClick={() => onFolderClick(item.uid)} name={childItems ? 'angle-down' : 'angle-right'} />
-        ) : (
-          <span style={{ paddingRight: 20 }} />
-        )}
-        <Icon name={item.kind === 'folder' ? (childItems ? 'folder-open' : 'folder') : 'apps'} />{' '}
-        <Link href={item.kind === 'folder' ? `/nested-dashboards/f/${item.uid}` : `/d/${item.uid}`}>{item.title}</Link>
-      </div>
+    const isOpen = Boolean(openFolders[item.uid]);
+    const emptyFolder = childrenByUID[item.uid]?.length === 0;
+    if (isOpen && emptyFolder) {
+      mappedChildren.push({
+        isOpen: false,
+        level: level + 1,
+        item: { kind: 'ui-empty-folder', uid: item.uid + '-empty-folder' },
+      });
+    }
 
-      {childItems && (
-        <ul style={{ marginLeft: 16 }}>
-          {childItems.length === 0 && (
-            <li>
-              <em>Empty folder</em>
-            </li>
-          )}
-          {childItems.map((childItem) => {
-            return (
-              <li key={childItem.uid}>
-                <BrowseItem item={childItem} nestedData={nestedData} onFolderClick={onFolderClick} />{' '}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </>
-  );
+    const thisItem = {
+      item,
+      parentUID,
+      level,
+      isOpen,
+    };
+
+    return [thisItem, ...mappedChildren];
+  }
+
+  const folderKey = rootFolderUID ?? '$$root';
+  const isOpen = Boolean(openFolders[folderKey]);
+  const items = (isOpen && childrenByUID[folderKey]) || [];
+
+  return items.flatMap((item) => mapItem(item, rootFolderUID, level));
+}
+
+function findItem(
+  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  uid: string
+): DashboardViewItem | undefined {
+  for (const parentUID in childrenByUID) {
+    const children = childrenByUID[parentUID];
+    if (!children) {
+      continue;
+    }
+
+    for (const child of children) {
+      if (child.uid === uid) {
+        return child;
+      }
+    }
+  }
+
+  return undefined;
 }

@@ -17,7 +17,7 @@ export function isDataSourceMatch(
   return ds.uid === current.uid;
 }
 
-export function dataSourceName(
+export function dataSourceLabel(
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined
 ) {
   if (!dataSource) {

@@ -1,7 +1,7 @@
 import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
-import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
+import { FieldSparkline, FieldType } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -74,7 +74,7 @@ export const Basic: Story<StoryProps> = ({
   const sparkline: FieldSparkline = {
     y: {
       name: '',
-      values: new ArrayVector([1, 2, 3, 4, 3]),
+      values: [1, 2, 3, 4, 3],
       type: FieldType.number,
       state: { range: { min: 1, max: 4, delta: 3 } },
       config: {},

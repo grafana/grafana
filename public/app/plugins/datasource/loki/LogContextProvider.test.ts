@@ -42,7 +42,7 @@ describe('LogContextProvider', () => {
   beforeEach(() => {
     logContextProvider = new LogContextProvider(defaultDatasourceMock);
     logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
-      Promise.resolve([{ value: 'bar', enabled: true, fromParser: false, label: 'bar' }])
+      Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
     );
   });
 
@@ -59,8 +59,8 @@ describe('LogContextProvider', () => {
 
     it('should not call getInitContextFilters if appliedContextFilters', async () => {
       logContextProvider.appliedContextFilters = [
-        { value: 'bar', enabled: true, fromParser: false, label: 'bar' },
-        { value: 'xyz', enabled: true, fromParser: false, label: 'xyz' },
+        { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
+        { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
       ];
       await logContextProvider.getLogRowContext(defaultLogRow, {
         limit: 10,
@@ -89,9 +89,9 @@ describe('LogContextProvider', () => {
 
       it('should not apply parsed labels', async () => {
         logContextProvider.appliedContextFilters = [
-          { value: 'bar', enabled: true, fromParser: false, label: 'bar' },
-          { value: 'xyz', enabled: true, fromParser: false, label: 'xyz' },
-          { value: 'foo', enabled: true, fromParser: true, label: 'foo' },
+          { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
+          { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
+          { value: 'uniqueParsedLabel', enabled: true, fromParser: true, label: 'foo' },
         ];
         const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
           defaultLogRow,
@@ -107,8 +107,8 @@ describe('LogContextProvider', () => {
     describe('query with parser', () => {
       it('should apply parser', async () => {
         logContextProvider.appliedContextFilters = [
-          { value: 'bar', enabled: true, fromParser: false, label: 'bar' },
-          { value: 'xyz', enabled: true, fromParser: false, label: 'xyz' },
+          { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
+          { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
         ];
         const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
           defaultLogRow,
@@ -124,9 +124,9 @@ describe('LogContextProvider', () => {
 
       it('should apply parser and parsed labels', async () => {
         logContextProvider.appliedContextFilters = [
-          { value: 'bar', enabled: true, fromParser: false, label: 'bar' },
-          { value: 'xyz', enabled: true, fromParser: false, label: 'xyz' },
-          { value: 'foo', enabled: true, fromParser: true, label: 'foo' },
+          { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
+          { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
+          { value: 'uniqueParsedLabel', enabled: true, fromParser: true, label: 'foo' },
         ];
         const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
           defaultLogRow,
@@ -143,8 +143,8 @@ describe('LogContextProvider', () => {
 
     it('should not apply parser and parsed labels if more parsers in original query', async () => {
       logContextProvider.appliedContextFilters = [
-        { value: 'bar', enabled: true, fromParser: false, label: 'bar' },
-        { value: 'foo', enabled: true, fromParser: true, label: 'foo' },
+        { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
+        { value: 'uniqueParsedLabel', enabled: true, fromParser: true, label: 'foo' },
       ];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,

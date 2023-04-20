@@ -141,7 +141,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * @alpha
    * @internal
    */
-  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -162,6 +162,26 @@ export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
 }
+
+/**
+ * @internal
+ */
+export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
+
+/**
+ * @internal
+ */
+export type LogsVolumeOption = {
+  type: SupplementaryQueryType.LogsVolume;
+};
+
+/**
+ * @internal
+ */
+export type LogsSampleOptions = {
+  type: SupplementaryQueryType.LogsSample;
+  limit?: number;
+};
 
 /**
  * Types of logs volume responses. A data source may return full range histogram (based on selected range)
@@ -206,7 +226,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If provided query is not suitable for provided supplementary query type, undefined should be returned.
    */
-  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+  getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
