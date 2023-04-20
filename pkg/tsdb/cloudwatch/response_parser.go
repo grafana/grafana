@@ -3,14 +3,12 @@ package cloudwatch
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -32,7 +30,7 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 		}
 
 		var err error
-		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
+		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow)
 		if err != nil {
 			return nil, err
 		}
@@ -110,12 +108,12 @@ func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Label
 }
 
 func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
-	query *models.CloudWatchQuery, dynamicLabelEnabled bool) (data.Frames, error) {
+	query *models.CloudWatchQuery) (data.Frames, error) {
 	frames := data.Frames{}
 	for _, metric := range aggregatedResponse.Metrics {
 		label := *metric.Label
 
-		deepLink, err := query.BuildDeepLink(startTime, endTime, dynamicLabelEnabled)
+		deepLink, err := query.BuildDeepLink(startTime, endTime)
 		if err != nil {
 			return nil, err
 		}
@@ -144,9 +142,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
 
 				frameName := label
-				if !dynamicLabelEnabled {
-					frameName = formatAlias(query, query.Statistic, labels, label)
-				}
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
@@ -176,9 +171,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
 		frameName := label
-		if !dynamicLabelEnabled {
-			frameName = formatAlias(query, query.Statistic, labels, label)
-		}
 		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{
@@ -211,66 +203,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 	}
 
 	return frames, nil
-}
-
-func formatAlias(query *models.CloudWatchQuery, stat string, dimensions map[string]string, label string) string {
-	region := query.Region
-	namespace := query.Namespace
-	metricName := query.MetricName
-	period := strconv.Itoa(query.Period)
-
-	if query.IsUserDefinedSearchExpression() {
-		pIndex := strings.LastIndex(query.Expression, ",")
-		period = strings.Trim(query.Expression[pIndex+1:], " )")
-		sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
-		stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
-	}
-
-	if len(query.Alias) == 0 && query.IsMathExpression() {
-		return query.Id
-	}
-	if len(query.Alias) == 0 && query.IsInferredSearchExpression() && !query.IsMultiValuedDimensionExpression() {
-		return label
-	}
-	if len(query.Alias) == 0 && query.MetricQueryType == models.MetricQueryTypeQuery {
-		return label
-	}
-
-	// common fields
-	commonFields := map[string]string{
-		"region": region,
-		"period": period,
-	}
-	if len(label) != 0 {
-		commonFields["label"] = label
-	}
-
-	// since the SQL query string is not (yet) parsed, we don't know what namespace, metric, statistic and labels it's using at this point
-	if query.MetricQueryType != models.MetricQueryTypeQuery {
-		commonFields["namespace"] = namespace
-		commonFields["metric"] = metricName
-		commonFields["stat"] = stat
-		for k, v := range dimensions {
-			commonFields[k] = v
-		}
-	}
-
-	result := aliasFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
-		if val, exists := commonFields[labelName]; exists {
-			return []byte(val)
-		}
-
-		return in
-	})
-
-	if string(result) == "" {
-		return metricName + "_" + stat
-	}
-
-	return string(result)
 }
 
 func createDataLinks(link string) []data.DataLink {

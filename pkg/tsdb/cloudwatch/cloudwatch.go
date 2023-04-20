@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -51,7 +50,6 @@ const (
 )
 
 var logger = log.New("tsdb.cloudwatch")
-var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	logger.Debug("Initializing")
