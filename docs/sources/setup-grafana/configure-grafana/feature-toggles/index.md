@@ -52,6 +52,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
 | `renderAuthJWT`                           | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
+| `refactorVariablesTimeRange`              | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                                       |
 
 ## Alpha feature toggles
 

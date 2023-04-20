@@ -9,7 +9,7 @@ import {
   UrlQueryMap,
   UrlQueryValue,
 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -669,6 +669,21 @@ const dfs = (node: Node, visited: string[], variables: VariableModel[], variable
   return variablesRefreshTimeRange;
 };
 
+/**
+ * This function returns a list of variables that need to be refreshed when the time range changes
+ * It follows this logic
+ * Create a graph based on all template variables.
+ * Loop through all the variables and perform the following checks for each variable:
+ *
+ * -- a) If a variable A is a query variable, it’s time range, and has no dependent nodes
+ * ----- it should be added to the variablesRefreshTimeRange.
+ *
+ * -- b) If a variable A is a query variable, it’s time range, and has dependent nodes (B, C)
+ * ----- 1. add the variable A to variablesRefreshTimeRange
+ * ----- 2. skip all the dependent nodes (B, C).
+ *       Here, we should traverse the tree using DFS (Depth First Search), as the dependent nodes will be updated in cascade when the parent variable is updated.
+ */
+
 const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): VariableWithOptions[] => {
   const allVariables = getVariablesByKey(key, state);
 
@@ -740,11 +755,14 @@ export const onTimeRangeUpdated =
     dependencies.templateSrv.updateTimeRange(timeRange);
 
     // approach # 2, get variables that need refresh but use the dependency graph to only update the ones that are affected
-    // const variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
-    const variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
-    const variablesThatNeedRefreshOld = getVariablesThatNeedRefreshOld(key, getState());
-    console.log('variablesThatNeedRefresh', variablesThatNeedRefresh);
-    console.log('variablesThatNeedRefreshOld', variablesThatNeedRefreshOld);
+    let variablesThatNeedRefresh: VariableWithOptions[] = [];
+    if (config.featureToggles.refactorVariablesTimeRange) {
+      variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
+    } else {
+      variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
+    }
+
+    console.log('variables that need refresh', variablesThatNeedRefresh);
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable) =>

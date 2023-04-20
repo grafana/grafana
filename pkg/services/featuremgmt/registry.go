@@ -519,5 +519,11 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "refactorVariablesTimeRange",
+			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			State:       FeatureStateBeta,
+			Owner:       grafanaDashboardsSquad,
+		},
 	}
 )
