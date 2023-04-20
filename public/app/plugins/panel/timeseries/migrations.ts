@@ -387,7 +387,6 @@ export function graphToTimeseriesOptions(angular: any): {
       toDayOfWeek: old.toDayOfWeek,
       from: old.from,
       to: old.to,
-      timezone: 'utc',
     }));
 
     regions.forEach((region) => {
@@ -399,6 +398,7 @@ export function graphToTimeseriesOptions(angular: any): {
           toDayOfWeek: region.toDayOfWeek,
           from: region.from,
           to: region.to,
+          timezone: getDashboardSrv().getCurrent()?.getTimezone(),
         },
       };
 
