@@ -8772,6 +8772,15 @@
             "in": "query"
           },
           {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of folder UID’s to search in for dashboards",
+            "name": "FolderUIDs",
+            "in": "query"
+          },
+          {
             "type": "boolean",
             "description": "Flag indicating if only starred Dashboards should be returned",
             "name": "starred",

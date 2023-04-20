@@ -20601,6 +20601,17 @@
             }
           },
           {
+            "description": "List of folder UID’s to search in for dashboards",
+            "in": "query",
+            "name": "FolderUIDs",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
             "description": "Flag indicating if only starred Dashboards should be returned",
             "in": "query",
             "name": "starred",
