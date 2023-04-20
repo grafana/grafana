@@ -47,7 +47,7 @@ def rgm_main():
   }
 
   return pipeline(
-    name="rgm-tag-build",
+    name="rgm-main-build",
     edition="all",
     trigger=trigger,
     steps=rgm_build(),

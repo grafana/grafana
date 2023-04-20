@@ -4552,7 +4552,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-build
+name: rgm-main-build
 node:
   type: no-parallel
 platform:
@@ -6904,6 +6904,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: c1db134962f99c16ceab6d15c151e78d5d98600a6160e21ed10ab551216d2d68
+hmac: ad01fe8ef0c6e54806c054a613b379d3cd64cf7365f14b07a5c5b42ba42869d6
 
 ...
