@@ -7,13 +7,17 @@ import { getGrafanaSearcher } from './searcher';
 import { NestedFolderDTO } from './types';
 import { queryResultToViewItem } from './utils';
 
-export async function getFolderChildren(parentUid?: string, parentTitle?: string): Promise<DashboardViewItem[]> {
+export async function getFolderChildren(
+  parentUid?: string,
+  parentTitle?: string,
+  dashboardsAtRoot = false
+): Promise<DashboardViewItem[]> {
   if (!config.featureToggles.nestedFolders) {
     console.error('getFolderChildren requires nestedFolders feature toggle');
     return [];
   }
 
-  if (!parentUid) {
+  if (!dashboardsAtRoot && !parentUid) {
     // We don't show dashboards at root in folder view yet - they're shown under a dummy 'general'
     // folder that FolderView adds in
     const folders = await getChildFolders();
@@ -24,7 +28,7 @@ export async function getFolderChildren(parentUid?: string, parentTitle?: string
   const dashboardsResults = await searcher.search({
     kind: ['dashboard'],
     query: '*',
-    location: parentUid,
+    location: parentUid ?? 'general',
     limit: 1000,
   });
 
@@ -47,6 +51,7 @@ async function getChildFolders(parentUid?: string, parentTitle?: string): Promis
     uid: item.uid,
     title: item.title,
     parentTitle,
+    parentUID: parentUid,
     url: `/dashboards/f/${item.uid}/`,
   }));
 }

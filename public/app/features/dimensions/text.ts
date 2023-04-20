@@ -42,7 +42,7 @@ export function getTextDimensionForField(
     }
     return {
       field,
-      get: (i) => disp(field.values.get(i)),
+      get: (i) => disp(field.values[i]),
       value: () => disp(getLastNotNullFieldValue(field)),
     };
   }
@@ -59,7 +59,7 @@ export function getTextDimensionForField(
   let disp = (v: unknown) => formattedValueToString(field.display!(v));
   return {
     field,
-    get: (i) => disp(field.values.get(i)),
+    get: (i) => disp(field.values[i]),
     value: () => disp(getLastNotNullFieldValue(field)),
   };
 }

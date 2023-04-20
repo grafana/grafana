@@ -13,8 +13,6 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  LogRowModel,
-  MutableDataFrame,
   SupplementaryQueryType,
 } from '@grafana/data';
 import {
@@ -338,7 +336,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'success',
-        message: 'Data source connected and labels found.',
+        message: 'Data source successfully connected.',
       });
     });
 
@@ -349,7 +347,8 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'error',
-        message: 'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+        message:
+          'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
       });
     });
 
@@ -360,7 +359,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'error',
-        message: 'Unable to fetch labels from Loki, please check the server logs for more details',
+        message: 'Unable to connect with Loki. Please check the server logs for more details.',
       });
     });
 
@@ -376,7 +375,7 @@ describe('LokiDatasource', () => {
 
       expect(result).toStrictEqual({
         status: 'error',
-        message: 'Unable to fetch labels from Loki (error42), please check the server logs for more details',
+        message: 'Unable to connect with Loki (error42). Please check the server logs for more details.',
       });
     });
   });
@@ -839,57 +838,6 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('prepareLogRowContextQueryTarget', () => {
-    const ds = createLokiDatasource(templateSrvStub);
-    it('creates query with only labels from /labels API', async () => {
-      const row: LogRowModel = {
-        rowIndex: 0,
-        dataFrame: new MutableDataFrame({
-          fields: [
-            {
-              name: 'ts',
-              type: FieldType.time,
-              values: [0],
-            },
-          ],
-        }),
-        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-        uid: '1',
-      } as unknown as LogRowModel;
-
-      //Mock stored labels to only include "bar" label
-      jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-      jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
-      const contextQuery = await ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
-
-      expect(contextQuery.query.expr).toContain('baz');
-      expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
-    });
-
-    it('should call languageProvider.start to fetch labels', async () => {
-      const row: LogRowModel = {
-        rowIndex: 0,
-        dataFrame: new MutableDataFrame({
-          fields: [
-            {
-              name: 'ts',
-              type: FieldType.time,
-              values: [0],
-            },
-          ],
-        }),
-        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-        uid: '1',
-      } as unknown as LogRowModel;
-
-      //Mock stored labels to only include "bar" label
-      jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-      await ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
-
-      expect(ds.languageProvider.start).toBeCalled();
-    });
-  });
-
   describe('logs volume data provider', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
@@ -975,11 +923,14 @@ describe('LokiDatasource', () => {
     describe('logs volume', () => {
       it('returns logs volume query for range log query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-            expr: '{label=value}',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label=value}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual({
           expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
           instant: false,
@@ -991,21 +942,27 @@ describe('LokiDatasource', () => {
 
       it('does not return logs volume query for instant log query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-            expr: '{label=value}',
-            queryType: LokiQueryType.Instant,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label=value}',
+              queryType: LokiQueryType.Instant,
+              refId: 'A',
+            }
+          )
         ).toEqual(undefined);
       });
 
       it('does not return logs volume query for metric query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-            expr: 'rate({label=value}[5m]',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual(undefined);
       });
     });
@@ -1013,41 +970,68 @@ describe('LokiDatasource', () => {
     describe('logs sample', () => {
       it('returns logs sample query for range metric query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
-            expr: 'rate({label=value}[5m]',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual({
           expr: '{label=value}',
           queryType: 'range',
           refId: 'log-sample-A',
-          maxLines: 100,
+          maxLines: 20,
         });
       });
 
       it('returns logs sample query for instant metric query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
-            expr: 'rate({label=value}[5m]',
-            queryType: LokiQueryType.Instant,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Instant,
+              refId: 'A',
+            }
+          )
         ).toEqual({
           expr: '{label=value}',
           queryType: 'instant',
           refId: 'log-sample-A',
-          maxLines: 100,
+          maxLines: 20,
+        });
+      });
+
+      it('correctly overrides maxLines if limit is set', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample, limit: 5 },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Instant,
+              refId: 'A',
+            }
+          )
+        ).toEqual({
+          expr: '{label=value}',
+          queryType: 'instant',
+          refId: 'log-sample-A',
+          maxLines: 5,
         });
       });
 
       it('does not return logs sample query for log query query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
-            expr: '{label=value}',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: '{label=value}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual(undefined);
       });
     });
@@ -1194,6 +1178,14 @@ describe('Variable support', () => {
   });
 });
 
+describe('showContextToggle()', () => {
+  it('always displays logs context', () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    expect(ds.showContextToggle()).toBe(true);
+  });
+});
+
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
   const lokiQuery: LokiQuery = { refId: 'A', expr: query };
   const result = ds.addAdHocFilters(lokiQuery.expr);
@@ -1228,57 +1220,3 @@ function makeAnnotationQueryRequest(options = {}): AnnotationQueryRequest<LokiQu
     rangeRaw: timeRange,
   };
 }
-
-describe('new context ui', () => {
-  it('returns expression with 1 label', async () => {
-    const ds = createLokiDatasource(templateSrvStub);
-
-    const row: LogRowModel = {
-      rowIndex: 0,
-      dataFrame: new MutableDataFrame({
-        fields: [
-          {
-            name: 'ts',
-            type: FieldType.time,
-            values: [0],
-          },
-        ],
-      }),
-      labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-      uid: '1',
-    } as unknown as LogRowModel;
-
-    jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-    jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['foo']);
-
-    const result = await ds.prepareContextExpr(row);
-
-    expect(result).toEqual('{foo="uniqueParsedLabel"}');
-  });
-
-  it('returns empty expression for parsed labels', async () => {
-    const ds = createLokiDatasource(templateSrvStub);
-
-    const row: LogRowModel = {
-      rowIndex: 0,
-      dataFrame: new MutableDataFrame({
-        fields: [
-          {
-            name: 'ts',
-            type: FieldType.time,
-            values: [0],
-          },
-        ],
-      }),
-      labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
-      uid: '1',
-    } as unknown as LogRowModel;
-
-    jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
-    jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => []);
-
-    const result = await ds.prepareContextExpr(row);
-
-    expect(result).toEqual('{}');
-  });
-});

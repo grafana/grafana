@@ -63,10 +63,10 @@ func notServiceAccount(dialect migrator.Dialect) string {
 }
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
+	dialect := ss.db.GetDialect()
 	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
-		dialect := ss.db.GetDialect()
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
@@ -89,6 +89,8 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
+		sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
+		sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
 		sb.Write(`(
@@ -124,9 +126,8 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, model.VariableElement)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
-
-		// TODO: table name will change and filter should check only for is_enabled = true
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `WHERE is_enabled = true) AS public_dashboards,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
+		sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -138,8 +139,11 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 
 		result = &stats
 
+		result.DatabaseDriver = dialect.DriverName()
+
 		return nil
 	})
+
 	return result, err
 }
 

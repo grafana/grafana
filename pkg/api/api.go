@@ -104,12 +104,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqOrgAdmin, hs.Index)
 	r.Get("/admin/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Index)
-	// Show the combined users page for org admins if topnav is enabled
-	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-		r.Get("/admin/users", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))), hs.Index)
-	} else {
-		r.Get("/admin/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), hs.Index)
-	}
+	r.Get("/admin/users", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))), hs.Index)
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), hs.Index)
 	r.Get("/admin/orgs", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
@@ -156,6 +151,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	// Temporary routes for the work-in-progress new Browse Dashboards views
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		r.Get("/nested-dashboards/", reqSignedIn, hs.Index)
+		r.Get("/nested-dashboards/*", reqSignedIn, hs.Index)
+	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
@@ -392,7 +393,7 @@ func (hs *HTTPServer) registerRoutes() {
 			idScope := datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
 			uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 			nameScope := datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name"))
-			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Get("/", authorize(reqEditorRole, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionCreate)), quota(string(datasources.QuotaTargetSrv)), routing.Wrap(hs.AddDataSource))
 			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
 			datasourceRoute.Put("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(hs.UpdateDataSourceByUID))
@@ -477,12 +478,6 @@ func (hs *HTTPServer) registerRoutes() {
 					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
-			})
-
-			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
-				if hs.ThumbService != nil {
-					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
-				}
 			})
 
 			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
@@ -605,6 +600,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
+		adminRoute.Get("/settings-verbose", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetVerboseSettings))
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(setting.AlertingEnabled)))
 

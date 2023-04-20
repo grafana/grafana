@@ -8,30 +8,45 @@ keywords:
   - guide
   - rules
   - create
-title: Create Grafana managed alert rules
+title: Create Grafana-managed alert rules
 weight: 400
 ---
 
-# Create a Grafana managed alerting rule
+# Create Grafana-managed alert rules
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fixed thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
+Grafana-managed rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of our supported data sources. In addition to supporting multiple data sources, you can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported. This is the only type of rule that allows alerting from multiple data sources in a single rule definition.
+
+Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
+
+For information on Grafana Alerting, see [Introduction to Grafana Alerting](/docs/grafana/next/alerting/fundamentals/), which explains the key concepts and features of Grafana Alerting.
 
 Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
-## Add Grafana managed rule
+_Refer to [Add Grafana managed rule]({{< relref "#add-grafana-managed-rule" >}}) (following) for current instructions._
+
+To create a Grafana-managed alert rule, complete the following steps.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Alert rules**.
-1. Click **+ Create alert rule**. The new alerting rule page opens where the **Grafana managed alerts** option is selected by default.
-1. In Step 1, add the rule name.
+2. Click **Alert rules**.
+3. Click **+ Create alert rule**. The new alert rule page opens where the **Grafana managed alerts** option is selected by default.
+4. In Step 1, add the rule name.
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
-1. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
+5. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
+
    - For queries, select a data source from the dropdown.
+   - Specify a [time range](/docs/grafana/latest/dashboards/use-dashboards/?pg=blog&plcmt=body-txt#time-units-and-relative-ranges).
+
+     **Note:**
+     Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
+
+     It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+
    - Add one or more [queries]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
-1. In Step 3, specify the alert evaluation interval.
+
+6. In Step 3, specify the alert evaluation interval.
 
    - From the **Condition** dropdown, select the query or expression to trigger the alert rule.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
@@ -44,17 +59,17 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
      You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
 
-1. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
+7. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
    - From the **Folder** dropdown, select the folder where you want to store the rule.
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
-1. In Step 5, add custom labels.
+8. In Step 5, add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
-1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a for the rule.
+9. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
+10. Next, create a for the rule.
 
-### Single and multi dimensional rule
+### Single and multi-dimensional rule
 
 For Grafana managed alerts, you can create a rule with a classic condition or you can create a multi-dimensional rule.
 
@@ -62,7 +77,9 @@ For Grafana managed alerts, you can create a rule with a classic condition or yo
 
 Use the classic condition expression to create a rule that triggers a single alert when its condition is met. For a query that returns multiple series, Grafana does not track the alert state of each series. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
 
-**Multi dimensional rule**
+For more information, see [expressions documentation]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
+
+**Multi-dimensional rule**
 
 To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
 
@@ -72,10 +89,6 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 ![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
 
 > **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
-
-#### Rule with classic condition
-
-For more information, see [expressions documentation]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
 
 ### Configure no data and error handling
 

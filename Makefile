@@ -18,6 +18,8 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
+GO_INTEGRATION_TESTS := $(shell find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+
 all: deps build
 
 ##@ Dependencies
@@ -129,31 +131,32 @@ test-go-unit: ## Run unit tests for backend with flags.
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+	$(GO) test -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
 	$(GO) clean -testcache
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=2m {}'
+	GRAFANA_TEST_DB=postgres \
+	$(GO) test -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
-	$(GO) clean -testcache
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=2m {}'
+	GRAFANA_TEST_DB=mysql \
+	$(GO) test -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-redis
 test-go-integration-redis: ## Run integration tests for redis cache.
 	@echo "test backend integration redis tests"
 	$(GO) clean -testcache
-	REDIS_URL=localhost:6379 $(GO) test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
+	REDIS_URL=localhost:6379 $(GO) test -run IntegrationRedis -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-memcached
 test-go-integration-memcached: ## Run integration tests for memcached cache.
 	@echo "test backend integration memcached tests"
 	$(GO) clean -testcache
-	MEMCACHED_HOSTS=localhost:11211 $(GO) test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
+	MEMCACHED_HOSTS=localhost:11211 $(GO) test -run IntegrationMemcached -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
@@ -188,6 +191,8 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS)
 
@@ -199,8 +204,10 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.20.1 \
+	--build-arg GO_IMAGE=golang:1.20.3 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
