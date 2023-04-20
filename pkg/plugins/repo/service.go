@@ -43,7 +43,7 @@ type Cfg struct {
 
 // GetPluginArchive fetches the requested plugin archive
 func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchive, error) {
-	dlOpts, err := m.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
+	dlOpts, err := m.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +57,13 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 }
 
 // GetPluginDownloadOptions returns the options for downloading the requested plugin (with optional `version`)
+<<<<<<< Updated upstream
 func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
 	v, err := m.pluginVersion(pluginID, version, compatOpts)
+=======
+func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
+	plugin, err := m.pluginMetadata(pluginID, compatOpts)
+>>>>>>> Stashed changes
 	if err != nil {
 		return nil, err
 	}

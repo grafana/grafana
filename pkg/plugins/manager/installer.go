@@ -17,26 +17,29 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginRepo     repo.Service
-	pluginStorage  storage.ZipExtractor
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	log            log.Logger
+	pluginArchiveGetter     repo.PluginArchiveGetter
+	pluginArchiveInfoGetter repo.PluginArchiveInfoGetter
+	pluginStorage           storage.ZipExtractor
+	pluginRegistry          registry.Service
+	pluginLoader            loader.Service
+	log                     log.Logger
 }
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
+	pluginArchiveGetter repo.PluginArchiveGetter, pluginArchiveInfoGetter repo.PluginArchiveInfoGetter) *PluginInstaller {
+	return New(pluginRegistry, pluginLoader, pluginArchiveGetter, pluginArchiveInfoGetter,
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor) *PluginInstaller {
+func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginArchiveGetter repo.PluginArchiveGetter,
+	pluginArchiveInfoGetter repo.PluginArchiveInfoGetter, pluginStorage storage.ZipExtractor) *PluginInstaller {
 	return &PluginInstaller{
-		pluginLoader:   pluginLoader,
-		pluginRegistry: pluginRegistry,
-		pluginRepo:     pluginRepo,
-		pluginStorage:  pluginStorage,
-		log:            log.New("plugin.installer"),
+		pluginLoader:            pluginLoader,
+		pluginRegistry:          pluginRegistry,
+		pluginArchiveGetter:     pluginArchiveGetter,
+		pluginArchiveInfoGetter: pluginArchiveInfoGetter,
+		pluginStorage:           pluginStorage,
+		log:                     log.New("plugin.installer"),
 	}
 }
 
@@ -56,7 +59,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// get plugin update information to confirm if target update is possible
-		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
+		dlOpts, err := m.pluginArchiveInfoGetter.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
@@ -79,19 +82,19 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		if dlOpts.PluginZipURL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL)
+			pluginArchive, err = m.pluginArchiveGetter.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL)
 			if err != nil {
 				return err
 			}
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
+			pluginArchive, err = m.pluginArchiveGetter.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		var err error
-		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		pluginArchive, err = m.pluginArchiveGetter.GetPluginArchive(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
@@ -106,7 +109,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	pathsToScan := []string{extractedArchive.Path}
 	for _, dep := range extractedArchive.Dependencies {
 		m.log.Info("Fetching %s dependencies...", dep.ID)
-		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		d, err := m.pluginArchiveGetter.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}

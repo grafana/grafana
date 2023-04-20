@@ -224,7 +224,7 @@ func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL s
 }
 
 // GetPluginDownloadOptions fetches information for downloading the requested plugin.
-func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
 	if r.GetPluginDownloadOptionsFunc != nil {
 		return r.GetPluginDownloadOptionsFunc(ctx, pluginID, version, opts)
 	}
