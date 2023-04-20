@@ -12,7 +12,7 @@ export interface UsersIndicatorProps {
   /** An object that contains the user's details and 'lastActiveAt' status */
   users: UserView[];
   /** A limit of how many user icons to show before collapsing them and showing a number of users instead */
-  limit: number;
+  limit?: number;
   /** onClick handler for the user number indicator */
   onClick?: () => void;
 }
@@ -24,7 +24,8 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
 
   const limitReached = users.length > limit;
   const extraUsers = users.length - limit;
-  const tooManyUsers = extraUsers > 9;
+  // Prevent breaking the layout when there's more than 99 users
+  const tooManyUsers = extraUsers > 99;
 
   return (
     <div className={styles.container} aria-label="Users indicator container">
@@ -54,6 +55,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       & > button {
         margin-left: -${theme.spacing(1)}; // Overlay the elements a bit on top of each other
       }
+    `,
+    dots: css`
+      margin-bottom: 3px;
     `,
   };
 };
