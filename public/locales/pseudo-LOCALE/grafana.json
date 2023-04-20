@@ -75,6 +75,7 @@
     },
     "inspect-stats": {
       "data-title": "Đäŧä şőūřčę şŧäŧş",
+      "data-traceids": "Ŧřäčę ĨĐş",
       "processing-time": "Đäŧä přőčęşşįŉģ ŧįmę",
       "queries": "Ńūmþęř őƒ qūęřįęş",
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
@@ -92,7 +93,6 @@
       "save": "Ŝävę đäşĥþőäřđ",
       "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
       "share": "Ŝĥäřę đäşĥþőäřđ őř päŉęľ",
-      "tv-button": "Cyčľę vįęŵ mőđę",
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
@@ -185,8 +185,7 @@
       "title": "Åppş"
     },
     "config": {
-      "title": "Åđmįŉįşŧřäŧįőŉ",
-      "titleBeforeTopnav": "Cőŉƒįģūřäŧįőŉ"
+      "title": "Åđmįŉįşŧřäŧįőŉ"
     },
     "correlations": {
       "subtitle": "Åđđ äŉđ čőŉƒįģūřę čőřřęľäŧįőŉş",
@@ -224,8 +223,7 @@
     },
     "global-users": {
       "subtitle": "Mäŉäģę ūşęřş įŉ Ğřäƒäŉä",
-      "title": "Ůşęřş",
-      "titleBeforeTopnav": "Ůşęřş"
+      "title": "Ůşęřş"
     },
     "help": {
       "title": "Ħęľp"
@@ -241,15 +239,12 @@
       "subtitle": "Ŗęūşäþľę päŉęľş ŧĥäŧ čäŉ þę äđđęđ ŧő mūľŧįpľę đäşĥþőäřđş",
       "title": "Ŀįþřäřy päŉęľş"
     },
-    "manage-dashboards": {
-      "title": "ßřőŵşę"
-    },
     "manage-folder": {
       "subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
     },
     "monitoring": {
       "subtitle": "Mőŉįŧőřįŉģ äŉđ įŉƒřäşŧřūčŧūřę äppş",
-      "title": "Mőŉįŧőřįŉģ"
+      "title": "Øþşęřväþįľįŧy"
     },
     "new": {
       "title": "Ńęŵ"
@@ -262,8 +257,7 @@
     },
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
-      "title": "Đęƒäūľŧ přęƒęřęŉčęş",
-      "titleBeforeTopnav": "Přęƒęřęŉčęş"
+      "title": "Đęƒäūľŧ přęƒęřęŉčęş"
     },
     "playlists": {
       "subtitle": "Ğřőūpş őƒ đäşĥþőäřđş ŧĥäŧ äřę đįşpľäyęđ įŉ ä şęqūęŉčę",
@@ -282,7 +276,6 @@
     "profile/settings": {
       "title": "Přőƒįľę"
     },
-    "profile/switch-org": "Ŝŵįŧčĥ őřģäŉįžäŧįőŉ",
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
     },
@@ -303,7 +296,6 @@
       "subtitle": "Ůşę şęřvįčę äččőūŉŧş ŧő řūŉ äūŧőmäŧęđ ŵőřĸľőäđş įŉ Ğřäƒäŉä",
       "title": "Ŝęřvįčę äččőūŉŧş"
     },
-    "sign-in": "Ŝįģŉ įŉ",
     "sign-out": {
       "title": "Ŝįģŉ őūŧ"
     },
@@ -399,7 +391,6 @@
       "sort-placeholder": "Ŝőřŧ",
       "starred": "Ŝŧäřřęđ",
       "view-as-folders": "Vįęŵ þy ƒőľđęřş",
-      "view-as-grid": "Ğřįđ vįęŵ",
       "view-as-list": "Vįęŵ äş ľįşŧ"
     },
     "dashboard-actions": {

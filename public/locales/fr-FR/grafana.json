@@ -75,6 +75,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiques de source de données",
+      "data-traceids": "",
       "processing-time": "Durée de traitement des données",
       "queries": "Nombre de requêtes",
       "request-time": "Durée totale de la requête",
@@ -92,7 +93,6 @@
       "save": "Enregistrer le tableau de bord",
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
-      "tv-button": "Mode de vue par cycle",
       "unmark-favorite": "Supprimer des favoris"
     }
   },
@@ -185,8 +185,7 @@
       "title": "Applications"
     },
     "config": {
-      "title": "Administration",
-      "titleBeforeTopnav": "Configuration"
+      "title": "Administration"
     },
     "correlations": {
       "subtitle": "Ajouter et configurer des corrélations",
@@ -224,8 +223,7 @@
     },
     "global-users": {
       "subtitle": "Gérer les utilisateurs dans Grafana",
-      "title": "Utilisateurs",
-      "titleBeforeTopnav": "Utilisateurs"
+      "title": "Utilisateurs"
     },
     "help": {
       "title": "Aide"
@@ -240,9 +238,6 @@
     "library-panels": {
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
-    },
-    "manage-dashboards": {
-      "title": "Parcourir"
     },
     "manage-folder": {
       "subtitle": ""
@@ -262,8 +257,7 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences par défaut",
-      "titleBeforeTopnav": "Préférences"
+      "title": "Préférences par défaut"
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -282,7 +276,6 @@
     "profile/settings": {
       "title": "Profil"
     },
-    "profile/switch-org": "Passer à une autre organisation",
     "public": {
       "title": ""
     },
@@ -303,7 +296,6 @@
       "subtitle": "Utiliser des comptes de service pour exécuter des charges de travail automatisées dans Grafana",
       "title": "Comptes de service"
     },
-    "sign-in": "Se connecter",
     "sign-out": {
       "title": "Se déconnecter"
     },
@@ -399,7 +391,6 @@
       "sort-placeholder": "",
       "starred": "Favoris",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {

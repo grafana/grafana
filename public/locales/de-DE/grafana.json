@@ -75,6 +75,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiken zu Datenquellen",
+      "data-traceids": "",
       "processing-time": "Datenverarbeitungszeit",
       "queries": "Anzahl der Abfragen",
       "request-time": "Gesamte Anfragezeit",
@@ -92,7 +93,6 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
-      "tv-button": "Zyklus-Ansichtsmodus",
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
@@ -185,8 +185,7 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Verwaltung",
-      "titleBeforeTopnav": "Konfiguration"
+      "title": "Verwaltung"
     },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
@@ -224,8 +223,7 @@
     },
     "global-users": {
       "subtitle": "Benutzer in Grafana verwalten",
-      "title": "Benutzer",
-      "titleBeforeTopnav": "Benutzer"
+      "title": "Benutzer"
     },
     "help": {
       "title": "Hilfe"
@@ -240,9 +238,6 @@
     "library-panels": {
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
-    },
-    "manage-dashboards": {
-      "title": "Durchsuchen"
     },
     "manage-folder": {
       "subtitle": ""
@@ -262,8 +257,7 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "Standardeinstellungen",
-      "titleBeforeTopnav": "Einstellungen"
+      "title": "Standardeinstellungen"
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -282,7 +276,6 @@
     "profile/settings": {
       "title": "Profil"
     },
-    "profile/switch-org": "Organisation wechseln",
     "public": {
       "title": ""
     },
@@ -303,7 +296,6 @@
       "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
       "title": "Servicekonten"
     },
-    "sign-in": "Anmelden",
     "sign-out": {
       "title": "Abmelden"
     },
@@ -399,7 +391,6 @@
       "sort-placeholder": "",
       "starred": "Hervorgehoben",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {

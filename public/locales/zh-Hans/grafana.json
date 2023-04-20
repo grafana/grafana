@@ -75,6 +75,7 @@
     },
     "inspect-stats": {
       "data-title": "数据源统计信息",
+      "data-traceids": "",
       "processing-time": "数据处理时间",
       "queries": "查询数",
       "request-time": "总请求时间",
@@ -92,7 +93,6 @@
       "save": "保存仪表板",
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
-      "tv-button": "循环视图模式",
       "unmark-favorite": "取消标记为收藏"
     }
   },
@@ -185,8 +185,7 @@
       "title": "应用"
     },
     "config": {
-      "title": "管理",
-      "titleBeforeTopnav": "配置"
+      "title": "管理"
     },
     "correlations": {
       "subtitle": "添加并配置相关性",
@@ -224,8 +223,7 @@
     },
     "global-users": {
       "subtitle": "在 Grafana 中管理用户",
-      "title": "用户",
-      "titleBeforeTopnav": "用户"
+      "title": "用户"
     },
     "help": {
       "title": "帮助"
@@ -240,9 +238,6 @@
     "library-panels": {
       "subtitle": "可重复使用的面板，可以添加到多个仪表板",
       "title": "库面板"
-    },
-    "manage-dashboards": {
-      "title": "浏览"
     },
     "manage-folder": {
       "subtitle": ""
@@ -262,8 +257,7 @@
     },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
-      "title": "默认首选项",
-      "titleBeforeTopnav": "首选项"
+      "title": "默认首选项"
     },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
@@ -282,7 +276,6 @@
     "profile/settings": {
       "title": "个人资料"
     },
-    "profile/switch-org": "切换组织",
     "public": {
       "title": ""
     },
@@ -303,7 +296,6 @@
       "subtitle": "使用服务帐户在 Grafana 中运行自动化工作负载",
       "title": "服务帐户"
     },
-    "sign-in": "登录",
     "sign-out": {
       "title": "退出登录"
     },
@@ -399,7 +391,6 @@
       "sort-placeholder": "",
       "starred": "已加星标",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {

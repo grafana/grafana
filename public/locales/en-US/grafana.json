@@ -75,6 +75,7 @@
     },
     "inspect-stats": {
       "data-title": "Data source stats",
+      "data-traceids": "Trace IDs",
       "processing-time": "Data processing time",
       "queries": "Number of queries",
       "request-time": "Total request time",
@@ -92,7 +93,6 @@
       "save": "Save dashboard",
       "settings": "Dashboard settings",
       "share": "Share dashboard or panel",
-      "tv-button": "Cycle view mode",
       "unmark-favorite": "Unmark as favorite"
     }
   },
@@ -185,8 +185,7 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Administration",
-      "titleBeforeTopnav": "Configuration"
+      "title": "Administration"
     },
     "correlations": {
       "subtitle": "Add and configure correlations",
@@ -224,8 +223,7 @@
     },
     "global-users": {
       "subtitle": "Manage users in Grafana",
-      "title": "Users",
-      "titleBeforeTopnav": "Users"
+      "title": "Users"
     },
     "help": {
       "title": "Help"
@@ -241,15 +239,12 @@
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
     },
-    "manage-dashboards": {
-      "title": "Browse"
-    },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
     },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
-      "title": "Monitoring"
+      "title": "Observability"
     },
     "new": {
       "title": "New"
@@ -262,8 +257,7 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Default preferences",
-      "titleBeforeTopnav": "Preferences"
+      "title": "Default preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -282,7 +276,6 @@
     "profile/settings": {
       "title": "Profile"
     },
-    "profile/switch-org": "Switch organization",
     "public": {
       "title": "Public dashboards"
     },
@@ -303,7 +296,6 @@
       "subtitle": "Use service accounts to run automated workloads in Grafana",
       "title": "Service accounts"
     },
-    "sign-in": "Sign in",
     "sign-out": {
       "title": "Sign out"
     },
@@ -399,7 +391,6 @@
       "sort-placeholder": "Sort",
       "starred": "Starred",
       "view-as-folders": "View by folders",
-      "view-as-grid": "Grid view",
       "view-as-list": "View as list"
     },
     "dashboard-actions": {
