@@ -60,6 +60,7 @@ export function DataSourceModal({
             <DataSourceList
               dashboard={false}
               mixed={false}
+              variables
               // FIXME: Filter out the grafana data source in a hacky way
               filter={(ds) => ds.name.includes(search) && ds.name !== '-- Grafana --'}
               onChange={onChange}

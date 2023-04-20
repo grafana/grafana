@@ -81,6 +81,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     return (
       <div>
         <DataSourceDropdown
+          {...this.props}
           datasources={this.getDatasources()}
           onChange={this.onChange}
           recentlyUsed={recentlyUsed}
