@@ -111,14 +111,11 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
   return {
     modal: css`
       width: 80%;
-      height: 80%;
-      max-height: 600px;
+      height: 560px;
     `,
     modalContent: css`
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
-      align-items: stretch;
       height: 100%;
     `,
     leftColumn: css`
@@ -134,7 +131,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       width: 50%;
       height: 100%;
-      padding: ${theme.spacing(1)};
       justify-items: space-evenly;
       align-items: stretch;
       padding-left: ${theme.spacing(1)};
