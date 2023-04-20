@@ -124,6 +124,55 @@ func TestResponseParser(t *testing.T) {
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average value")
 		})
 
+		t.Run("Query with duplicated avg metric creates unique field name", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"metrics": [{"type": "avg", "field": "value", "id": "1" }, {"type": "avg", "field": "value", "id": "4" }],
+          "bucketAggs": [{ "type": "terms", "field": "label", "id": "3" }]
+				}`,
+			}
+			response := `{
+        "responses": [
+          {
+            "aggregations": {
+              "3": {
+                "buckets": [
+                  {
+                    "1": { "value": 88 },
+										"4": { "value": 88 },
+                    "doc_count": 10,
+                    "key": "val1"
+                  },
+                  {
+                    "1": { "value": 99 },
+										"4": { "value": 99 },
+                    "doc_count": 15,
+                    "key": "val2"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+			}`
+			result, err := parseTestResponse(targets, response)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
+
+			frame := dataframes[0]
+			require.Len(t, frame.Fields, 3)
+			require.Equal(t, frame.Fields[0].Name, "label")
+			require.Equal(t, frame.Fields[1].Name, "Average value 1")
+			require.Equal(t, frame.Fields[2].Name, "Average value 4")
+
+		})
+
 		t.Run("Single group by query one metric", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
