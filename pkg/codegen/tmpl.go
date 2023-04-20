@@ -46,8 +46,10 @@ type (
 	tvars_coremodel_imports struct {
 		PackageName string
 	}
-	tvars_resource_parts struct {
-		PackageName string
+	tvars_resource struct {
+		PackageName      string
+		KindName         string
+		SubresourceNames []string
 	}
 )
 

@@ -16,9 +16,9 @@ lineage: seqs: [
 		schemas: [
 			// 0.0
 			{
-				@grafana(TSVeneer="type")
-
 				spec: {
+					@grafana(TSVeneer="type")
+
 					// Unique numeric identifier for the dashboard.
 					// TODO must isolate or remove identifiers local to a Grafana instance...?
 					id?: int64

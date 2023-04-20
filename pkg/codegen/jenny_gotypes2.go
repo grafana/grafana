@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -22,22 +23,39 @@ func (*ResourceGoTypesJenny) JennyName() string {
 	return "GoTypesJenny"
 }
 
-func (ag *ResourceGoTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
+func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	comm := kind.Props().Common()
+	sfg := SchemaForGen{
+		Name:    comm.Name,
+		Schema:  kind.Lineage().Latest(),
+		IsGroup: comm.LineageIsGroup,
+	}
 	sch := sfg.Schema
 
-	b, err := gocode.GenerateTypesOpenAPI(sch, &gocode.TypeConfigOpenAPI{
-		// TODO will need to account for sanitizing e.g. dashes here at some point
-		Config: &openapi.Config{
-			Group:    false, // TODO: better
-			RootName: typeNameFromKey(sch.Lineage().Name()),
-		},
-		PackageName: sfg.Schema.Lineage().Name(),
-		ApplyFuncs:  append(ag.ApplyFuncs, PrefixDropper(sfg.Name)),
-	})
+	iter, err := sch.Underlying().Fields()
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile(sfg.Schema.Lineage().Name()+"_gen.go", b, ag), nil
+
+	var subr []string
+	for iter.Next() {
+		subr = append(subr, typeNameFromKey(iter.Selector().String()))
+	}
+
+	buf := new(bytes.Buffer)
+	mname := kind.Props().Common().MachineName
+	if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
+		PackageName:      mname,
+		KindName:         kind.Props().Common().Name,
+		SubresourceNames: subr,
+	}); err != nil {
+		return nil, fmt.Errorf("failed executing core resource template: %w", err)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), buf.Bytes(), ag), nil
 }
 
 type SubresourceGoTypesJenny struct {
