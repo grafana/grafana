@@ -15,7 +15,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var store store
+	var store *xormStore
 	var tempUser *tempuser.TempUser
 	var err error
 	cmd := tempuser.CreateTempUserCommand{
@@ -27,7 +27,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 	}
 	setup := func(t *testing.T) {
 		db := db.InitTestDB(t)
-		store = &xormStore{db: db}
+		store = &xormStore{db: db, cfg: db.Cfg}
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)
 	}
@@ -55,6 +55,26 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 
 		require.Nil(t, err)
 		require.Equal(t, 1, len(queryResult))
+	})
+	t.Run("Should not be able to get temp users by case-insentive email - case sensitive", func(t *testing.T) {
+		setup(t)
+		store.cfg.CaseInsensitiveLogin = false
+		query := tempuser.GetTempUsersQuery{Email: "E@as.co", Status: tempuser.TmpUserInvitePending}
+		queryResult, err := store.GetTempUsersQuery(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Equal(t, 0, len(queryResult))
+	})
+
+	t.Run("Should be able to get temp users by email - case insensitive", func(t *testing.T) {
+		setup(t)
+		store.cfg.CaseInsensitiveLogin = true
+		query := tempuser.GetTempUsersQuery{Email: "E@as.co", Status: tempuser.TmpUserInvitePending}
+		queryResult, err := store.GetTempUsersQuery(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Equal(t, 1, len(queryResult))
+		store.cfg.CaseInsensitiveLogin = false
 	})
 
 	t.Run("Should be able to get temp users by code", func(t *testing.T) {
