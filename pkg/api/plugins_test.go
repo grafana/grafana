@@ -298,7 +298,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewInMemoryFS(nil))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewFakeFS())
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -334,7 +334,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewInMemoryFS(nil))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewFakeFS())
 		service := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -656,13 +656,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.External, plugins.NewInMemoryFS(nil))
+		}}, plugins.External, plugins.NewFakeFS())
 	p2 := createPlugin(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
-			}}, plugins.Core, plugins.NewInMemoryFS(nil))
+			}}, plugins.Core, plugins.NewFakeFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{

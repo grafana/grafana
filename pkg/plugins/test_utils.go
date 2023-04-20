@@ -19,6 +19,10 @@ func NewInMemoryFS(files map[string][]byte) FS {
 	return &inMemoryFS{files: files}
 }
 
+func NewFakeFS() FS {
+	return NewInMemoryFS(nil)
+}
+
 func (f inMemoryFS) Base() string {
 	return ""
 }

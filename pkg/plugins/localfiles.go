@@ -33,7 +33,7 @@ func NewLocalFS(basePath string) LocalFS {
 // fileIsAllowed takes an absolute path to a file and an os.FileInfo for that file, and it checks if access to that
 // file is allowed or not. Access to a file is allowed if the file is in the FS's Base() directory, and if it's a
 // symbolic link it should not end up outside the plugin's directory.
-func (f LocalFS) fileIsAllowed(absolutePath string, info os.FileInfo) (bool, error) {
+func (f LocalFS) fileIsAllowed(basePath string, absolutePath string, info os.FileInfo) (bool, error) {
 	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 		symlinkPath, err := filepath.EvalSymlinks(absolutePath)
 		if err != nil {
@@ -46,7 +46,7 @@ func (f LocalFS) fileIsAllowed(absolutePath string, info os.FileInfo) (bool, err
 		}
 
 		// verify that symlinked file is within plugin directory
-		p, err := filepath.Rel(absolutePath, symlinkPath)
+		p, err := filepath.Rel(basePath, symlinkPath)
 		if err != nil {
 			return false, err
 		}
@@ -78,12 +78,12 @@ func (f LocalFS) fileIsAllowed(absolutePath string, info os.FileInfo) (bool, err
 
 // walkFunc returns a filepath.WalkFunc that accumulates absolute file paths into acc by walking over f.Base().
 // f.fileIsAllowed is used as WalkFunc, see its documentation for more information on which files are collected.
-func (f LocalFS) walkFunc(acc map[string]struct{}) filepath.WalkFunc {
+func (f LocalFS) walkFunc(basePath string, acc map[string]struct{}) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		ok, err := f.fileIsAllowed(path, info)
+		ok, err := f.fileIsAllowed(basePath, path, info)
 		if err != nil {
 			return err
 		}
@@ -110,14 +110,14 @@ func (f LocalFS) Open(name string) (fs.File, error) {
 	//if strings.Contains(cleanPath, "..") {
 	//	return nil, ErrFileNotExist
 	//}
-
-	absFn := filepath.Join(f.basePath, cleanPath)
+	basePath := f.Base()
+	absFn := filepath.Join(basePath, cleanPath)
 	finfo, err := os.Stat(absFn)
 	if err != nil {
 		return nil, ErrFileNotExist
 	}
 	// Make sure access to the file is allowed (symlink check, etc)
-	ok, err := f.fileIsAllowed(absFn, finfo)
+	ok, err := f.fileIsAllowed(basePath, absFn, finfo)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (f LocalFS) Files() ([]string, error) {
 	// Accumulate all files into filesMap by calling f.collectFilesFunc, which will write into the accumulator.
 	// Those are absolute because filepath.Walk uses absolute file paths.
 	absFilePaths := make(map[string]struct{})
-	if err := filepath.Walk(f.basePath, f.walkFunc(absFilePaths)); err != nil {
+	if err := filepath.Walk(f.basePath, f.walkFunc(f.Base(), absFilePaths)); err != nil {
 		return nil, fmt.Errorf("walk: %w", err)
 	}
 	// Convert the accumulator into a slice of relative path strings
