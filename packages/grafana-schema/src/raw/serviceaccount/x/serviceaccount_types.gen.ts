@@ -23,10 +23,6 @@ export interface ServiceAccount {
    */
   avatarUrl: string;
   /**
-   * Created indicates when the service account was created.
-   */
-  created?: string;
-  /**
    * ID is the unique identifier of the service account in the database.
    */
   id: number;
@@ -59,10 +55,6 @@ export interface ServiceAccount {
    * Tokens are used to authenticate the service account against Grafana.
    */
   tokens: number;
-  /**
-   * Updated indicates when the service account was updated.
-   */
-  updated?: string;
 }
 
 export const defaultServiceAccount: Partial<ServiceAccount> = {

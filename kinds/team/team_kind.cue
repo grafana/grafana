@@ -1,7 +1,5 @@
 package kind
 
-import "time"
-
 name:        "Team"
 maturity:    "merged"
 description: "A team is a named grouping of Grafana users to which access control rules may be assigned."
@@ -28,10 +26,6 @@ lineage: seqs: [
 					accessControl?: {
 						[string]: bool @grafanamaturity(ToMetadata="sys")
 					}
-					// Created indicates when the team was created.
-					created: string & time.Time
-					// Updated indicates when the team was updated.
-					updated: string & time.Time
 
 					#Permission: 0 | 1 | 2 | 4 @cuetsy(kind="enum",memberNames="Member|Viewer|Editor|Admin")
 				}

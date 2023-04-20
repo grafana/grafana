@@ -9,10 +9,6 @@
 
 package serviceaccount
 
-import (
-	"time"
-)
-
 // Defines values for OrgRole.
 const (
 	OrgRoleAdmin  OrgRole = "Admin"
@@ -31,9 +27,6 @@ type Spec struct {
 	// AvatarUrl is the service account's avatar URL. It allows the frontend to display a picture in front
 	// of the service account.
 	AvatarUrl string `json:"avatarUrl"`
-
-	// Created indicates when the service account was created.
-	Created *time.Time `json:"created,omitempty"`
 
 	// ID is the unique identifier of the service account in the database.
 	Id int64 `json:"id"`
@@ -59,7 +52,4 @@ type Spec struct {
 	// Tokens is the number of active tokens for the service account.
 	// Tokens are used to authenticate the service account against Grafana.
 	Tokens int64 `json:"tokens"`
-
-	// Updated indicates when the service account was updated.
-	Updated *time.Time `json:"updated,omitempty"`
 }

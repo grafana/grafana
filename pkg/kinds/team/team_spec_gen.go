@@ -9,10 +9,6 @@
 
 package team
 
-import (
-	"time"
-)
-
 // Defines values for Permission.
 const (
 	PermissionN0 Permission = 0
@@ -32,9 +28,6 @@ type Spec struct {
 	// AvatarUrl is the team's avatar URL.
 	AvatarUrl *string `json:"avatarUrl,omitempty"`
 
-	// Created indicates when the team was created.
-	Created time.Time `json:"created"`
-
 	// Email of the team.
 	Email *string `json:"email,omitempty"`
 
@@ -47,7 +40,4 @@ type Spec struct {
 	// OrgId is the ID of an organisation the team belongs to.
 	OrgId      int64      `json:"orgId"`
 	Permission Permission `json:"permission"`
-
-	// Updated indicates when the team was updated.
-	Updated time.Time `json:"updated"`
 }
