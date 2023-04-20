@@ -243,7 +243,17 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query;
+
+    // the `target.query` is the "new" location for the query.
+    // normally we would write this code as
+    // try-the-new-place-then-try-the-old-place,
+    // but we had the bug at
+    // https://github.com/grafana/grafana/issues/61107
+    // that may have stored annotations where
+    // both the old and the new place are set,
+    // and in that scenario the old place needs
+    // to have priority.
+    const queryString = annotation.query ?? annotation.target?.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
