@@ -95,12 +95,12 @@ sudo service grafana-server restart
 
 ### Start the server using the binary
 
-The `grafana-server` binary .tar.gz needs the working directory to be the root install directory where the binary and the `public` folder are located.
+The `grafana` binary .tar.gz needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
 To start the Grafana server, run the following command:
 
 ```bash
-./bin/grafana-server
+./bin/grafana server
 ```
 
 ## Docker
@@ -139,9 +139,9 @@ To restart the running container, use this command:
 
 Complete the following steps to start the Grafana server on Windows:
 
-1. Execute `grafana-server.exe`, which is located in the `bin` directory.
+1. Execute `grafana.exe server`; the `grafana` binary is located in the `bin` directory.
 
-   We recommend that you run `grafana-server.exe` from the command line.
+   We recommend that you run `grafana.exe server` from the command line.
 
    If you want to run Grafana as a Windows service, you can download [NSSM](https://nssm.cc/).
 
@@ -183,7 +183,7 @@ To restart Grafana:
 1. Run the command:
 
 ```bash
-./bin/grafana-server
+./bin/grafana server
 ```
 
 ## Next steps
