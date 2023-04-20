@@ -129,16 +129,26 @@ const getStyles = (
       border: 1px solid ${tinycolor2(color.border).setAlpha(0.2).toString()};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
       margin-top: ${theme.spacing(topSpacing ?? 0)};
+
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: ${theme.colors.background.primary};
+        z-index: -1;
+      }
     `,
     icon: css`
       padding: ${theme.spacing(1, 2, 0, 0)};
       color: ${color.text};
       display: flex;
     `,
-    title: css`
-      //font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.text.primary};
-    `,
+    title: css({
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
     body: css`
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1, 0)};
@@ -162,7 +172,7 @@ const getStyles = (
       align-items: center;
     `,
     close: css`
-      padding: ${theme.spacing(2, 1)};
+      padding: ${theme.spacing(1, 0)};
       color: ${theme.colors.text.secondary};
       background: none;
       display: flex;

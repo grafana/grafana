@@ -14,11 +14,11 @@ interface Props {
 export default function AppNotificationItem({ appNotification, onClearNotification }: Props) {
   const styles = useStyles2(getStyles);
 
-  useEffectOnce(() => {
-    setTimeout(() => {
-      onClearNotification(appNotification.id);
-    }, timeoutMap[appNotification.severity]);
-  });
+  // useEffectOnce(() => {
+  //   setTimeout(() => {
+  //     onClearNotification(appNotification.id);
+  //   }, timeoutMap[appNotification.severity]);
+  // });
 
   return (
     <Alert
@@ -27,10 +27,14 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
       onRemove={() => onClearNotification(appNotification.id)}
       elevated
     >
-      <div className={styles.wrapper}>
-        <span>{appNotification.component || appNotification.text}</span>
-        {appNotification.traceId && <span className={styles.trace}>Trace ID: {appNotification.traceId}</span>}
-      </div>
+      {appNotification.component ||
+        appNotification.text ||
+        (appNotification.traceId && (
+          <div className={styles.wrapper}>
+            <span>{appNotification.component || appNotification.text}</span>
+            {appNotification.traceId && <span className={styles.trace}>Trace ID: {appNotification.traceId}</span>}
+          </div>
+        ))}
     </Alert>
   );
 }
