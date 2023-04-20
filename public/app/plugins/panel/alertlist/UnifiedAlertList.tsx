@@ -13,7 +13,7 @@ import {
   BigValueTextMode,
   CustomScrollbar,
   LoadingPlaceholder,
-  useStyles2
+  useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,12 +22,12 @@ import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/component
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
-import { getMatcherListFromString } from 'app/features/alerting/unified/utils/alertmanager';
+import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
   GRAFANA_DATASOURCE_NAME,
-  GRAFANA_RULES_SOURCE_NAME
+  GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
@@ -76,9 +76,15 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   });
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
+  const { options, replaceVariables } = props;
+  const parsedOptions: UnifiedAlertListOptions = {
+    ...props.options,
+    alertName: replaceVariables(options.alertName),
+    alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+  };
 
   const matcherList = useMemo(
-    () => getMatcherListFromString(props.options.alertInstanceLabelFilter),
+    () => parseMatchers(props.options.alertInstanceLabelFilter),
     [props.options.alertInstanceLabelFilter]
   );
 
@@ -177,13 +183,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     );
   }
 
-  const { options, replaceVariables } = props;
-  const parsedOptions: UnifiedAlertListOptions = {
-    ...props.options,
-    alertName: replaceVariables(options.alertName),
-    alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
-  };
-
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
@@ -207,7 +206,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
             <UngroupedModeView
               rules={rules}
-              options={props.options}
+              options={parsedOptions}
               handleInstancesLimit={handleInstancesLimit}
               limitInstances={limitInstances}
             />
@@ -294,12 +293,12 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     const alertingRule = getAlertingRule(rule);
     const filteredAlerts = alertingRule
       ? filterAlerts(
-        {
-          stateFilter: options.stateFilter,
-          alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
-        },
-        alertingRule.alerts ?? []
-      )
+          {
+            stateFilter: options.stateFilter,
+            alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+          },
+          alertingRule.alerts ?? []
+        )
       : [];
     if (filteredAlerts.length) {
       // We intentionally don't set alerts to filteredAlerts

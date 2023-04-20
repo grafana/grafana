@@ -524,6 +524,7 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   promRule: mockPromAlertingRule(),
   rulerRule: mockRulerAlertingRule(),
   instanceTotals: {},
+  filteredInstanceTotals: {},
   ...partial,
 });
 

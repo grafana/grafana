@@ -4,8 +4,8 @@ import { useMemo, useRef } from 'react';
 import {
   AlertGroupTotals,
   AlertingRule,
-  AlertInstanceTotalState,
   AlertInstanceTotals,
+  AlertInstanceTotalState,
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -184,6 +184,7 @@ function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, grou
       if (existingRule) {
         existingRule.promRule = rule;
         existingRule.instanceTotals = isAlertingRule(rule) ? calculateRuleTotals(rule) : {};
+        existingRule.filteredInstanceTotals = isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {};
       } else {
         combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
       }
@@ -206,6 +207,16 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
     nodata: result[AlertInstanceTotalState.NoData],
     error: result[AlertInstanceTotalState.Error] + result['err'], // Prometheus uses "err" instead of "error"
   };
+}
+
+export function calculateRuleFilteredTotals(
+  rule: Pick<AlertingRule, 'alerts' | 'totalsFiltered'>
+): AlertInstanceTotals {
+  if (rule.totalsFiltered) {
+    const { normal, ...totals } = rule.totalsFiltered;
+    return { ...totals, inactive: normal };
+  }
+  return {};
 }
 
 export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>): AlertGroupTotals {
@@ -259,6 +270,7 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     namespace: namespace,
     group,
     instanceTotals: isAlertingRule(rule) ? calculateRuleTotals(rule) : {},
+    filteredInstanceTotals: {},
   };
 }
 
@@ -277,6 +289,7 @@ function rulerRuleToCombinedRule(
         namespace,
         group,
         instanceTotals: {},
+        filteredInstanceTotals: {},
       }
     : isRecordingRulerRule(rule)
     ? {
@@ -288,6 +301,7 @@ function rulerRuleToCombinedRule(
         namespace,
         group,
         instanceTotals: {},
+        filteredInstanceTotals: {},
       }
     : {
         name: rule.grafana_alert.title,
@@ -298,6 +312,7 @@ function rulerRuleToCombinedRule(
         namespace,
         group,
         instanceTotals: {},
+        filteredInstanceTotals: {},
       };
 }
 

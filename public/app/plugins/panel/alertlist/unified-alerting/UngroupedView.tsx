@@ -59,6 +59,10 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
             ruleWithLocation.dataSourceName === GRAFANA_RULES_SOURCE_NAME
               ? getGrafanaInstancesTotal(ruleWithLocation.instanceTotals)
               : undefined;
+          const grafanaFilteredInstancesTotal =
+            ruleWithLocation.dataSourceName === GRAFANA_RULES_SOURCE_NAME
+              ? getGrafanaInstancesTotal(ruleWithLocation.filteredInstanceTotals)
+              : undefined;
 
           const href = createUrl(
             `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
@@ -114,6 +118,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                     alerts={alertingRule.alerts ?? []}
                     options={options}
                     grafanaTotalInstances={grafanaInstancesTotal}
+                    grafanaFilteredInstancesTotal={grafanaFilteredInstancesTotal}
                     handleInstancesLimit={handleInstancesLimit}
                     limitInstances={limitInstances}
                   />

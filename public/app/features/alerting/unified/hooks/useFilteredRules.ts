@@ -13,7 +13,7 @@ import { labelsMatchMatchers, matcherToMatcherField, parseMatcher, parseMatchers
 import { isCloudRulesSource } from '../utils/datasource';
 import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
 
-import { calculateRuleTotals, calculateGroupTotals } from './useCombinedRuleNamespaces';
+import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
 
 export function useRulesFilter() {
@@ -84,6 +84,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
         group.rules.forEach((rule) => {
           if (isAlertingRule(rule.promRule)) {
             rule.instanceTotals = calculateRuleTotals(rule.promRule);
+            rule.filteredInstanceTotals = calculateRuleFilteredTotals(rule.promRule);
           }
         });
 

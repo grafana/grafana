@@ -46,6 +46,7 @@ export interface AlertingRule extends RuleBase {
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
   totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
+  totalsFiltered?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   activeAt?: string; // ISO timestamp
 }
 
@@ -98,6 +99,7 @@ export interface CombinedRule {
   group: CombinedRuleGroup;
   namespace: CombinedRuleNamespace;
   instanceTotals: AlertInstanceTotals;
+  filteredInstanceTotals: AlertInstanceTotals;
 }
 
 // export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
