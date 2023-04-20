@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -629,7 +630,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{})
+	mg := migrator.NewMigrator(x, &setting.Cfg{Raw: ini.Empty()})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 
