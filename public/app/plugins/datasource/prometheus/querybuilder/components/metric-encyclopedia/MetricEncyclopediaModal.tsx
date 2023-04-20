@@ -22,36 +22,22 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../datasource';
-import { getMetadataHelp, getMetadataType } from '../../language_provider';
-import { promQueryModeller } from '../PromQueryModeller';
-import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
-import { PromVisualQuery } from '../types';
+import { getMetadataHelp, getMetadataType } from '../../../language_provider';
+import { promQueryModeller } from '../../PromQueryModeller';
+import { regexifyLabelValuesQueryString } from '../../shared/parsingUtils';
+import { FeedbackLink } from '.././FeedbackLink';
 
-import { FeedbackLink } from './FeedbackLink';
+import { alphabet, alphabetCheck } from './helpers';
+import {
+  PromFilterOption,
+  UFuzzyInfo,
+  MetricsData,
+  MetricEncyclopediaProps,
+  HaystackDictionary,
+  MetricData,
+} from './types';
 
-type Props = {
-  datasource: PrometheusDatasource;
-  isOpen: boolean;
-  query: PromVisualQuery;
-  onClose: () => void;
-  onChange: (query: PromVisualQuery) => void;
-};
-
-type MetricsData = MetricData[];
-
-type MetricData = {
-  value: string;
-  type?: string;
-  description?: string;
-};
-
-type PromFilterOption = {
-  value: string;
-  description: string;
-};
-
-const promTypes: PromFilterOption[] = [
+export const promTypes: PromFilterOption[] = [
   {
     value: 'counter',
     description:
@@ -92,14 +78,26 @@ const uf = new uFuzzy({
   intraDel: 1,
 });
 
-function fuzzySearch(haystack: string[], query: string, setter: React.Dispatch<React.SetStateAction<number[]>>) {
-  const idxs = uf.filter(haystack, query);
-  idxs && setter(idxs);
+function fuzzySearch(haystack: string[], query: string, orderSetter: React.Dispatch<React.SetStateAction<string[]>>) {
+  let idxs = uf.filter(haystack, query);
+  idxs = idxs ?? [];
+  // let idxs = u.filter(haystack, needle);
+  let info: UFuzzyInfo = uf.info(idxs, haystack, query);
+  let order = uf.sort(info, haystack, query);
+
+  let haystackOrder: string[] = [];
+  for (let i = 0; i < order.length; i++) {
+    let infoIdx = order[i];
+
+    haystackOrder.push(haystack[info.idx[infoIdx]]);
+  }
+
+  idxs && orderSetter(haystackOrder);
 }
 
 const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
 
-export const MetricEncyclopediaModal = (props: Props) => {
+export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
   const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
@@ -118,8 +116,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
   // filters
   const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
-  const [fuzzyMetaSearchResults, setFuzzyMetaSearchResults] = useState<number[]>([]);
-  const [fuzzyNameSearchResults, setFuzzyNameSearchResults] = useState<number[]>([]);
+  const [nameHaystackDictionary, setNameHaystackDictionary] = useState<HaystackDictionary>({});
+  const [nameHaystackOrder, setNameHaystackOrder] = useState<string[]>([]);
+  const [metaHaystackDictionary, setMetaHaystackDictionary] = useState<HaystackDictionary>({});
+  const [metaHaystackOrder, setMetaHaystackOrder] = useState<string[]>([]);
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
@@ -159,29 +159,44 @@ export const MetricEncyclopediaModal = (props: Props) => {
       metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
     }
 
-    let haystackMetaData: string[] = [];
-    let haystackNameData: string[] = [];
-    let metricsData: MetricsData = metrics.map((m) => {
+    let metaHaystackData: string[] = [];
+    let nameHaystackData: string[] = [];
+
+    let nameHaystackDictionaryData: HaystackDictionary = {};
+    let metaHaystackDictionaryData: HaystackDictionary = {};
+
+    let metricsData: MetricsData = metrics.map((m: string) => {
       const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
       const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
 
       // string[] = name + type + description
-      haystackMetaData.push(`${m} ${type} ${description}`);
-      haystackNameData.push(m);
-      return {
+      const metaDataString = `${m} ${type} ${description}`;
+      metaHaystackData.push(metaDataString);
+      nameHaystackData.push(m);
+
+      const metricData: MetricData = {
         value: m,
         type: type,
         description: description,
       };
+
+      nameHaystackDictionaryData[m] = metricData;
+      metaHaystackDictionaryData[metaDataString] = metricData;
+
+      return metricData;
     });
 
     // setting this by the backend if useBackend is true
     setMetrics(metricsData);
-    setMetaHaystack(haystackMetaData);
-    setNameHaystack(haystackNameData);
+    setMetaHaystack(metaHaystackData);
+    setNameHaystack(nameHaystackData);
+
+    // when choosing a fuzzy filtering option, have the list generated by uFuzzy
+    setMetaHaystackDictionary(metaHaystackDictionaryData);
+    setNameHaystackDictionary(nameHaystackDictionaryData);
 
     setVariables(
-      datasource.getVariables().map((v) => {
+      datasource.getVariables().map((v: string) => {
         return {
           value: v,
           label: v,
@@ -228,10 +243,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return metrics.slice(start, end);
   }
 
-  function hasMetaDataFilters() {
-    return selectedTypes.length > 0;
-  }
-
   /**
    * Filter
    *
@@ -243,16 +254,11 @@ export const MetricEncyclopediaModal = (props: Props) => {
     let filteredMetrics: MetricsData = metrics;
 
     if (fuzzySearchQuery) {
-      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-        if (useBackend) {
-          // skip for backend!
-          return true;
-        } else if (fullMetaSearch) {
-          return fuzzyMetaSearchResults.includes(idx);
-        } else {
-          return fuzzyNameSearchResults.includes(idx);
-        }
-      });
+      if (fullMetaSearch) {
+        filteredMetrics = metaHaystackOrder.map((needle: string) => metaHaystackDictionary[needle]);
+      } else {
+        filteredMetrics = nameHaystackOrder.map((needle: string) => nameHaystackDictionary[needle]);
+      }
     }
 
     if (letterSearch && !skipLetterSearch) {
@@ -287,15 +293,13 @@ export const MetricEncyclopediaModal = (props: Props) => {
    * The filtered and paginated metrics displayed in the modal
    * */
   function displayedMetrics(metrics: MetricsData) {
-    const filteredSorted: MetricsData = filterMetrics(metrics).sort(alphabetically(true, hasMetaDataFilters()));
+    const filteredSorted: MetricsData = filterMetrics(metrics); //.sort(alphabetically(true, hasMetaDataFilters()));
 
     if (filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
       setFilteredMetricCount(filteredSorted.length);
     }
 
-    const displayedMetrics: MetricsData = sliceMetrics(filteredSorted, pageNum, resultsPerPage);
-
-    return displayedMetrics;
+    return sliceMetrics(filteredSorted, pageNum, resultsPerPage);
   }
   /**
    * The backend debounced search
@@ -331,50 +335,20 @@ export const MetricEncyclopediaModal = (props: Props) => {
     [datasource, query.labels]
   );
 
-  function letterSearchComponent() {
-    const alphabetCheck: { [char: string]: number } = {
-      A: 0,
-      B: 0,
-      C: 0,
-      D: 0,
-      E: 0,
-      F: 0,
-      G: 0,
-      H: 0,
-      I: 0,
-      J: 0,
-      K: 0,
-      L: 0,
-      M: 0,
-      N: 0,
-      O: 0,
-      P: 0,
-      Q: 0,
-      R: 0,
-      S: 0,
-      T: 0,
-      U: 0,
-      V: 0,
-      W: 0,
-      X: 0,
-      Y: 0,
-      Z: 0,
-    };
+  function letterSearchComponent(metrics: MetricsData) {
+    const alphabetDictionary = alphabetCheck();
 
     filterMetrics(metrics, true).forEach((m: MetricData, idx) => {
       const metricFirstLetter = m.value[0].toUpperCase();
 
-      if (alphabet.includes(metricFirstLetter) && !alphabetCheck[metricFirstLetter]) {
-        alphabetCheck[metricFirstLetter] += 1;
+      if (alphabet.includes(metricFirstLetter) && !alphabetDictionary[metricFirstLetter]) {
+        alphabetDictionary[metricFirstLetter] += 1;
       }
     });
 
     // return the alphabet components with the correct style and behavior
-    return Object.keys(alphabetCheck).map((letter: string) => {
-      // const active: boolean = .some((m: MetricData) => {
-      //   return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
-      // });
-      const active: boolean = alphabetCheck[letter] > 0;
+    return Object.keys(alphabetDictionary).map((letter: string) => {
+      const active: boolean = alphabetDictionary[letter] > 0;
       // starts with letter search
       // filter by starts with letter
       // if same letter searched null out remove letter search
@@ -474,9 +448,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
       // fuzzy search go!
 
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(metaHaystack, query, setFuzzyMetaSearchResults);
+        debouncedFuzzySearch(metaHaystack, query, setMetaHaystackOrder);
       } else {
-        debouncedFuzzySearch(nameHaystack, query, setFuzzyNameSearchResults);
+        debouncedFuzzySearch(nameHaystack, query, setNameHaystackOrder);
       }
     }
   }
@@ -500,7 +474,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
               onInput={(e) => {
                 const value = e.currentTarget.value ?? '';
                 setFuzzySearchQuery(value);
-
+                setLetterSearch(null);
                 fuzzySearchCallback(value, fullMetaSearch);
 
                 setPageNum(1);
@@ -603,7 +577,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       </div>
 
       <div className={styles.alphabetRow}>
-        <div>{letterSearchComponent()}</div>
+        <div>{letterSearchComponent(metrics)}</div>
         <div className={styles.alphabetRowToggles}>
           <div className={styles.selectItem}>
             <Switch value={disableTextWrap} onChange={() => setDisableTextWrap((p) => !p)} />
@@ -671,35 +645,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
     </Modal>
   );
 };
-
-function alphabetically(ascending: boolean, metadataFilters: boolean) {
-  return function (a: MetricData, b: MetricData) {
-    // equal items sort equally
-    if (a.value === b.value) {
-      return 0;
-    }
-
-    // *** NO METADATA? SORT LAST
-    // undefined metadata sort after anything else
-    // if filters are on
-    if (metadataFilters) {
-      if (a.type === undefined) {
-        return 1;
-      }
-      if (b.type === undefined) {
-        return -1;
-      }
-    }
-
-    // otherwise, if we're ascending, lowest sorts first
-    if (ascending) {
-      return a.value < b.value ? -1 : 1;
-    }
-
-    // if descending, highest sorts first
-    return a.value < b.value ? 1 : -1;
-  };
-}
 
 const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
@@ -819,32 +764,3 @@ export const testIds = {
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
 };
-
-const alphabet = [
-  'A',
-  'B',
-  'C',
-  'D',
-  'E',
-  'F',
-  'G',
-  'H',
-  'I',
-  'J',
-  'K',
-  'L',
-  'M',
-  'N',
-  'O',
-  'P',
-  'Q',
-  'R',
-  'S',
-  'T',
-  'U',
-  'V',
-  'W',
-  'X',
-  'Y',
-  'Z',
-];

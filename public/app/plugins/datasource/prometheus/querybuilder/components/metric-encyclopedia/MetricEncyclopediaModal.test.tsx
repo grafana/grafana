@@ -4,11 +4,11 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
-import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import { PromOptions } from '../../types';
-import { PromVisualQuery } from '../types';
+import { PrometheusDatasource } from '../../../datasource';
+import PromQlLanguageProvider from '../../../language_provider';
+import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
+import { PromOptions } from '../../../types';
+import { PromVisualQuery } from '../../types';
 
 import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
 

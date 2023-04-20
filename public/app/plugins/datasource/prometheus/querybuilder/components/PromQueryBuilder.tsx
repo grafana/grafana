@@ -22,10 +22,10 @@ import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types'
 import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
-import { MetricEncyclopediaModal } from './MetricEncyclopediaModal';
 import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
+import { MetricEncyclopediaModal } from './metric-encyclopedia/MetricEncyclopediaModal';
 
 export interface Props {
   query: PromVisualQuery;
