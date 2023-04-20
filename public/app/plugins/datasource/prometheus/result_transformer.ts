@@ -3,7 +3,6 @@ import { flatten, forOwn, groupBy, partition } from 'lodash';
 
 import {
   ArrayDataFrame,
-  ArrayVector,
   CoreApp,
   DataFrame,
   DataFrameType,
@@ -22,7 +21,8 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
+import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { renderLegendFormat } from './legend';
 import {
@@ -71,6 +71,23 @@ export function transformV2(
   request: DataQueryRequest<PromQuery>,
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
+  // migration for dataplane field name issue
+  if (config.featureToggles.prometheusDataplane) {
+    // update displayNameFromDS in the field config
+    response.data.forEach((f: DataFrame) => {
+      const target = request.targets.find((t) => t.refId === f.refId);
+      // check that the legend is selected as auto
+      if (target && target.legendFormat === '__auto') {
+        f.fields.forEach((field) => {
+          if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
+            const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
+            field.config.displayNameFromDS = calculateFieldDisplayName(fieldCopy, f, response.data);
+          }
+        });
+      }
+    });
+  }
+
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
@@ -208,7 +225,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
               name: label,
               config: { filterable: true },
               type: numberField ? FieldType.number : FieldType.string,
-              values: new ArrayVector(),
+              values: [],
             });
           }
         });
@@ -216,10 +233,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
-      const timeFields = df.fields[0]?.values ?? new ArrayVector();
-      const dataFields = df.fields[1]?.values ?? new ArrayVector();
-      timeFields.toArray().forEach((value) => timeField.values.add(value));
-      dataFields.toArray().forEach((value) => {
+      const timeFields = df.fields[0]?.values ?? [];
+      const dataFields = df.fields[1]?.values ?? [];
+      timeFields.forEach((value) => timeField.values.add(value));
+      dataFields.forEach((value) => {
         valueField.values.add(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
         labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
@@ -497,12 +514,13 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
       // Labels have string field type, otherwise table tries to figure out the type which can result in unexpected results
       // Only "le" label has a number field type
       const numberField = label === HISTOGRAM_QUANTILE_LABEL_NAME;
-      return {
+      const field: Field = {
         name: label,
         config: { filterable: true },
         type: numberField ? FieldType.number : FieldType.string,
-        values: new ArrayVector(),
+        values: [],
       };
+      return field;
     });
   const valueField = getValueField({ data: [], valueName: valueText });
 
@@ -510,12 +528,12 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
     if (isMatrixData(d)) {
       d.values.forEach((val) => {
         timeField.values.add(val[0] * 1000);
-        metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+        metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
         valueField.values.add(parseSampleValue(val[1]));
       });
     } else {
       timeField.values.add(d.value[0] * 1000);
-      metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+      metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
       valueField.values.add(parseSampleValue(d.value[1]));
     }
   });
@@ -543,7 +561,7 @@ function getTimeField(data: PromValue[], isMs = false): MutableField {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
     config: {},
-    values: new ArrayVector<number>(data.map((val) => (isMs ? val[0] : val[0] * 1000))),
+    values: data.map((val) => (isMs ? val[0] : val[0] * 1000)),
   };
 }
 
@@ -570,7 +588,7 @@ function getValueField({
       displayNameFromDS,
     },
     labels,
-    values: new ArrayVector<number | null>(data.map((val) => (parseValue ? parseSampleValue(val[1]) : val[1]))),
+    values: data.map((val) => (parseValue ? parseSampleValue(val[1]) : val[1])),
   };
 }
 
@@ -642,8 +660,8 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     }
 
     for (let j = 0; j < topSeries.values.length; j++) {
-      const bottomPoint = bottomSeries.values.get(j) || [0];
-      topSeries.values.toArray()[j] -= bottomPoint;
+      const bottomPoint = bottomSeries.values[j] || [0];
+      topSeries.values[j] -= bottomPoint;
     }
   }
 

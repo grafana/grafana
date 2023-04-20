@@ -109,7 +109,7 @@ describe('BarChart utils', () => {
         valueSize: 10,
       },
       fullHighlight: false,
-      rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
+      rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values[valueIdx],
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
@@ -202,7 +202,7 @@ describe('BarChart utils', () => {
       const displayValues = assertIsDefined('viz' in result ? result : null);
 
       const field = displayValues.viz[0].fields[1];
-      expect(field.values.toArray()).toMatchInlineSnapshot(`
+      expect(field.values).toMatchInlineSnapshot(`
         [
           -10,
           null,
@@ -215,7 +215,7 @@ describe('BarChart utils', () => {
       const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
       const legendField = displayLegendValuesAsc.fields[1];
 
-      expect(legendField.values.toArray()).toMatchInlineSnapshot(`
+      expect(legendField.values).toMatchInlineSnapshot(`
       [
         -10,
         null,

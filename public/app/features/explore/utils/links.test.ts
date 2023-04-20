@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   CoreApp,
   DataFrame,
   DataLink,
@@ -8,7 +7,7 @@ import {
   Field,
   FieldType,
   InterpolateFunction,
-  SupportedTransformationTypes,
+  SupportedTransformationType,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -57,15 +56,7 @@ describe('explore links utils', () => {
 
       expect(links[0].href).toBe('http://regionalhost');
       expect(links[0].title).toBe('external');
-      expect(links[0].onClick).toBeDefined();
-
-      links[0].onClick!({});
-
-      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: CoreApp.Explore,
-        internal: false,
-        origin: DataLinkConfigOrigin.Datasource,
-      });
+      expect(links[0].onClick).not.toBeDefined();
     });
 
     it('returns generates title for external link', () => {
@@ -219,7 +210,7 @@ describe('explore links utils', () => {
       const { field, range, dataFrame } = setup(noHyphenLink, true, {
         name: 'fluxDimensions',
         type: FieldType.string,
-        values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+        values: [ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value],
         config: {
           links: [noHyphenLink],
         },
@@ -250,7 +241,7 @@ describe('explore links utils', () => {
         {
           name: 'fluxDimensions',
           type: FieldType.string,
-          values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+          values: [ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value],
           config: {
             links: [noHyphenLink],
           },
@@ -259,7 +250,7 @@ describe('explore links utils', () => {
           {
             name: 'fluxDimension2',
             type: FieldType.string,
-            values: new ArrayVector(['foo2', ROW_WITH_NULL_VALUE.value]),
+            values: ['foo2', ROW_WITH_NULL_VALUE.value],
             config: {
               links: [noHyphenLink],
             },
@@ -285,8 +276,8 @@ describe('explore links utils', () => {
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
           transformations: [
-            { type: SupportedTransformationTypes.Logfmt },
-            { type: SupportedTransformationTypes.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
+            { type: SupportedTransformationType.Logfmt },
+            { type: SupportedTransformationType.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
           ],
         },
       };
@@ -294,7 +285,7 @@ describe('explore links utils', () => {
       const { field, range, dataFrame } = setup(transformationLink, true, {
         name: 'msg',
         type: FieldType.string,
-        values: new ArrayVector(['application=foo host=dev-001', 'application=bar host=prod-003']),
+        values: ['application=foo host=dev-001', 'application=bar host=prod-003'],
         config: {
           links: [transformationLink],
         },
@@ -315,11 +306,7 @@ describe('explore links utils', () => {
         links[0][0].onClick({});
       }
 
-      expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
-        app: CoreApp.Explore,
-        internal: true,
-        origin: DataLinkConfigOrigin.Correlations,
-      });
+      expect(reportInteraction).not.toBeCalled();
 
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
@@ -338,8 +325,8 @@ describe('explore links utils', () => {
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
           transformations: [
-            { type: SupportedTransformationTypes.Regex, expression: 'fieldA=(asparagus|broccoli)' },
-            { type: SupportedTransformationTypes.Regex, expression: 'fieldB=(apple|banana)' },
+            { type: SupportedTransformationType.Regex, expression: 'fieldA=(asparagus|broccoli)' },
+            { type: SupportedTransformationType.Regex, expression: 'fieldB=(apple|banana)' },
           ],
         },
       };
@@ -347,7 +334,7 @@ describe('explore links utils', () => {
       const { field, range, dataFrame } = setup(transformationLink, true, {
         name: 'msg',
         type: FieldType.string,
-        values: new ArrayVector(['fieldA=asparagus fieldB=banana', 'fieldA=broccoli fieldB=apple']),
+        values: ['fieldA=asparagus fieldB=banana', 'fieldA=broccoli fieldB=apple'],
         config: {
           links: [transformationLink],
         },
@@ -379,14 +366,14 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} isOnline=${online}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
 
       const { field, range, dataFrame } = setup(transformationLink, true, {
         name: 'msg',
         type: FieldType.string,
-        values: new ArrayVector(['application=foo online=true', 'application=bar online=false']),
+        values: ['application=foo online=true', 'application=bar online=false'],
         config: {
           links: [transformationLink],
         },
@@ -418,7 +405,7 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt, field: 'fieldNamedInTransformation' }],
+          transformations: [{ type: SupportedTransformationType.Logfmt, field: 'fieldNamedInTransformation' }],
         },
       };
 
@@ -429,7 +416,7 @@ describe('explore links utils', () => {
         {
           name: 'fieldWithLink',
           type: FieldType.string,
-          values: new ArrayVector(['application=link', 'application=link2']),
+          values: ['application=link', 'application=link2'],
           config: {
             links: [transformationLink],
           },
@@ -438,7 +425,7 @@ describe('explore links utils', () => {
           {
             name: 'fieldNamedInTransformation',
             type: FieldType.string,
-            values: new ArrayVector(['application=transform', 'application=transform2']),
+            values: ['application=transform', 'application=transform2'],
             config: {},
           },
         ]
@@ -472,7 +459,7 @@ describe('explore links utils', () => {
           datasourceName: 'test_ds',
           transformations: [
             {
-              type: SupportedTransformationTypes.Regex,
+              type: SupportedTransformationType.Regex,
               expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))',
             },
           ],
@@ -482,7 +469,7 @@ describe('explore links utils', () => {
       const { field, range, dataFrame } = setup(transformationLink, true, {
         name: 'msg',
         type: FieldType.string,
-        values: new ArrayVector(['foo loki prod', 'dev bar grafana', 'prod grafana foo']),
+        values: ['foo loki prod', 'dev bar grafana', 'prod grafana foo'],
         config: {
           links: [transformationLink],
         },
@@ -550,14 +537,14 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} env=${diffVar}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
 
       const { field, range, dataFrame } = setup(transformationLink, true, {
         name: 'msg',
         type: FieldType.string,
-        values: new ArrayVector(['application=foo host=dev-001']),
+        values: ['application=foo host=dev-001'],
         config: {
           links: [transformationLink],
         },
@@ -575,14 +562,14 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=test}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
 
       const { field, range, dataFrame } = setup(transformationLink, true, {
         name: 'msg',
         type: FieldType.string,
-        values: new ArrayVector(['application=foo host=dev-001']),
+        values: ['application=foo host=dev-001'],
         config: {
           links: [transformationLink],
         },
@@ -671,6 +658,23 @@ describe('explore links utils', () => {
       const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(true);
     });
+
+    it('returns deduplicated list of variables', () => {
+      const dataLink = {
+        url: '',
+        title: '',
+        internal: {
+          datasourceUid: 'uid',
+          datasourceName: 'dsName',
+          query: { query: 'test ${test} ${foo} ${test:raw} $test' },
+        },
+      };
+      const scopedVars = {
+        testVal: { text: '', value: 'val1' },
+      };
+      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
+      expect(variables).toHaveLength(2);
+    });
   });
 });
 
@@ -707,7 +711,7 @@ function setup(
   const field: Field<string | null> = {
     name: 'flux-dimensions',
     type: FieldType.string,
-    values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+    values: [ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value],
     config: {
       links: [link],
     },

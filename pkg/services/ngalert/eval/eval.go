@@ -29,7 +29,7 @@ var logger = log.New("ngalert.eval")
 type EvaluatorFactory interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx EvaluationContext, condition models.Condition) error
-	// BuildRuleEvaluator build an evaluator pipeline ready to evaluate a rule's query
+	// Create builds an evaluator pipeline ready to evaluate a rule's query
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
 }
 
@@ -220,7 +220,7 @@ func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
-func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
+func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
 		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
@@ -233,7 +233,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		models.CacheSkipHeaderName: "true",
 	}
 
-	key, ok := models.RuleKeyFromContext(ctx.Ctx)
+	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
 		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
@@ -246,7 +246,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.OrgID,
-		Headers: buildDatasourceHeaders(ctx),
+		Headers: buildDatasourceHeaders(ctx.Ctx),
 	}
 
 	datasources := make(map[string]*datasources.DataSource, len(data))
@@ -295,7 +295,8 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 type NumberValueCapture struct {
 	Var    string // RefID
 	Labels data.Labels
-	Value  *float64
+
+	Value *float64
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
@@ -320,14 +321,27 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
-		if len(res.Frames) == 0 {
-			// to ensure that NoData is consistent with Results we do not initialize NoData
-			// unless there is at least one RefID that returned no data
+		// There are two possible frame formats for No Data:
+		//
+		// 1. A response with no frames
+		// 2. A response with 1 frame but no fields
+		//
+		// The first format is not documented in the data plane contract but needs to be
+		// supported for older datasource plugins. The second format is documented in
+		// https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/contract.md
+		// and is what datasource plugins should use going forward.
+		if len(res.Frames) <= 1 {
+			// To make sure NoData is nil when Results are also nil we wait to initialize
+			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
 				result.NoData = make(map[string]string)
 			}
-			if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
-				result.NoData[refID] = s
+			hasNoFrames := len(res.Frames) == 0
+			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
+			if hasNoFrames || hasNoFields {
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
+					result.NoData[refID] = s
+				}
 			}
 		}
 

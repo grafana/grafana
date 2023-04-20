@@ -77,7 +77,7 @@ export function createTableFrame(
   for (let field of logsFrame.fields) {
     let hasMatch = false;
     if (field.type === FieldType.string) {
-      const values = field.values.toArray();
+      const values = field.values;
       for (let i = 0; i < values.length; i++) {
         const line = values[i];
         if (line) {
@@ -85,7 +85,7 @@ export function createTableFrame(
             const match = (line as string).match(traceRegex);
             if (match) {
               const traceId = match[1];
-              const time = timeField ? timeField.values.get(i) : null;
+              const time = timeField ? timeField.values[i] : null;
               tableFrame.fields[0].values.add(time);
               tableFrame.fields[1].values.add(traceId);
               tableFrame.fields[2].values.add(line);
@@ -114,29 +114,6 @@ export function transformTraceList(
     response.data[index] = frame;
   });
   return response;
-}
-
-// Don't forget to change the backend code when the id representation changed
-function transformBase64IDToHexString(base64: string) {
-  const raw = atob(base64);
-  let result = '';
-  for (let i = 0; i < raw.length; i++) {
-    const hex = raw.charCodeAt(i).toString(16);
-    result += hex.length === 2 ? hex : '0' + hex;
-  }
-
-  return result.length > 16 ? result.slice(16) : result;
-}
-
-function transformHexStringToBase64ID(hex: string) {
-  const hexArray = hex.match(/\w{2}/g) || [];
-  return btoa(
-    hexArray
-      .map(function (a) {
-        return String.fromCharCode(parseInt(a, 16));
-      })
-      .join('')
-  );
 }
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
@@ -297,9 +274,9 @@ export function transformFromOTLP(
       for (const librarySpan of data.instrumentationLibrarySpans) {
         for (const span of librarySpan.spans) {
           frame.add({
-            traceID: transformBase64IDToHexString(span.traceId),
-            spanID: transformBase64IDToHexString(span.spanId),
-            parentSpanID: transformBase64IDToHexString(span.parentSpanId || ''),
+            traceID: span.traceId.length > 16 ? span.traceId.slice(16) : span.traceId,
+            spanID: span.spanId,
+            parentSpanID: span.parentSpanId || '',
             operationName: span.name || '',
             serviceName,
             serviceTags,
@@ -376,10 +353,10 @@ export function transformToOTLP(data: MutableDataFrame): {
     }
 
     result.batches[batchIndex].instrumentationLibrarySpans[0].spans.push({
-      traceId: transformHexStringToBase64ID(span.traceID.padStart(32, '0')),
-      spanId: transformHexStringToBase64ID(span.spanID),
+      traceId: span.traceID.padStart(32, '0'),
+      spanId: span.spanID,
+      parentSpanId: span.parentSpanID || '',
       traceState: '',
-      parentSpanId: transformHexStringToBase64ID(span.parentSpanID || ''),
       name: span.operationName,
       kind: getOTLPSpanKind(span.tags) as any,
       startTimeUnixNano: span.startTime * 1000000,

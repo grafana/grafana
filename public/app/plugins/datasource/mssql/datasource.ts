@@ -23,13 +23,13 @@ export class MssqlDatasource extends SqlDatasource {
 
   async fetchDatasets(): Promise<string[]> {
     const datasets = await this.runSql<{ name: string[] }>(showDatabases(), { refId: 'datasets' });
-    return datasets.fields.name.values.toArray().flat();
+    return datasets.fields.name?.values.flat() ?? [];
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
     // We get back the table name with the schema as well. like dbo.table
     const tables = await this.runSql<{ schemaAndName: string[] }>(getSchemaAndName(dataset), { refId: 'tables' });
-    return tables.fields.schemaAndName.values.toArray().flat();
+    return tables.fields.schemaAndName?.values.flat() ?? [];
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
@@ -42,8 +42,8 @@ export class MssqlDatasource extends SqlDatasource {
     });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
-      const column = schema.fields.column.values.get(i);
-      const type = schema.fields.type.values.get(i);
+      const column = schema.fields.column.values[i];
+      const type = schema.fields.type.values[i];
       result.push({ label: column, value: column, type, icon: getIcon(type), raqbFieldType: getRAQBType(type) });
     }
     return result;

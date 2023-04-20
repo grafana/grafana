@@ -53,11 +53,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardPreviews) {
-			addDashboardThumbsMigrations(mg)
-		}
-	}
 
 	ualert.RerunDashAlertMigration(mg)
 	addSecretsMigration(mg)
@@ -66,6 +61,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 
+	accesscontrol.AddDisabledMigrator(mg)
 	accesscontrol.AddTeamMembershipMigrations(mg)
 	accesscontrol.AddDashboardPermissionsMigrator(mg)
 	accesscontrol.AddAlertingPermissionsMigrator(mg)
