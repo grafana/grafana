@@ -3,7 +3,7 @@ import { cloneDeep } from 'lodash';
 import { PanelModel, FieldConfigSource, FieldMatcherID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel as PanelModelState } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -117,7 +117,7 @@ describe('Graph Migrations', () => {
       };
 
       const panel = { datasource: { type: 'datasource', uid: 'gdev-testdata' } } as PanelModel;
-      dashboard.panels.push(panel);
+      dashboard.panels.push(new PanelModelState(panel));
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(dashboard.panels).toHaveLength(1);
       expect(dashboard.annotations.list).toHaveLength(2); // built-in + time region

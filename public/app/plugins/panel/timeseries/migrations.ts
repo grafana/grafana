@@ -390,8 +390,6 @@ export function graphToTimeseriesOptions(angular: any): {
       timezone: 'utc',
     }));
 
-    console.log(regions);
-
     regions.forEach((region) => {
       const queryTarget: GrafanaQuery = {
         queryType: GrafanaQueryType.TimeRegions,
@@ -409,7 +407,7 @@ export function graphToTimeseriesOptions(angular: any): {
           type: 'datasource',
           uid: 'grafana',
         },
-        enable: region.fill,
+        enable: true,
         filter: {
           exclude: false,
           ids: [angular.panel.id],
