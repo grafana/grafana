@@ -8,6 +8,7 @@ import { usePopper } from 'react-popper';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
@@ -157,7 +158,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       </div>
 
       <div className={styles.footer}>
-        {onClickAddCSV && (
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
           <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
             Add csv or spreadsheet
           </Button>
