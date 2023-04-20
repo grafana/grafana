@@ -65,10 +65,8 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
-	repository := repo.New(repo.Cfg{
-		BaseURL:       c.PluginRepoURL(),
-		SkipTLSVerify: c.Bool("insecure"),
-	}, services.Logger)
+	client := repo.NewClient(c.Bool("insecure"), services.Logger)
+	repository := repo.New(c.PluginRepoURL(), client, services.Logger)
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 

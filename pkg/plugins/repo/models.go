@@ -42,4 +42,5 @@ type PluginVersion struct {
 type Package struct {
 	Sha256      string `json:"sha256"`
 	PackageName string `json:"packageName"`
+	DownloadURL string `json:"downloadUrl"`
 }

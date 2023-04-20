@@ -26,12 +26,34 @@ type Client struct {
 	log log.PrettyLogger
 }
 
-func newClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
+func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 	}
+}
+
+func (c *Client) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+	req, err := c.createReq(url, compatOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader, err := c.handleResp(res, compatOpts...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = bodyReader.Close(); err != nil {
+			c.log.Warn("Failed to close stream", "err", err)
+		}
+	}()
+	return io.ReadAll(bodyReader)
 }
 
 func (c *Client) download(_ context.Context, pluginZipURL, checksum string) (*PluginArchive, error) {
@@ -146,28 +168,6 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string) (err
 		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
 	return nil
-}
-
-func (c *Client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader, err := c.handleResp(res, compatOpts...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := bodyReader.Close(); err != nil {
-			c.log.Warn("Failed to close stream", "err", err)
-		}
-	}()
-	return io.ReadAll(bodyReader)
 }
 
 func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts ...CompatOpts) (io.ReadCloser, error) {

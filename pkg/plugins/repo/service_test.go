@@ -68,7 +68,8 @@ func TestGetPluginArchive(t *testing.T) {
 				},
 			)
 
-			m := New(Cfg{BaseURL: srv.URL}, &fakeLogger{})
+			logger := &fakeLogger{}
+			m := New(srv.URL, NewClient(false, logger), logger)
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
 				GrafanaVersion: grafanaVersion,
 				OS:             opSys,
@@ -82,90 +83,23 @@ func TestGetPluginArchive(t *testing.T) {
 			verifyArchive(t, archive)
 		})
 	}
-
-	t.Run("Wildcard Grafana version without specific requested plugin version", func(t *testing.T) {
-		const (
-			pluginID       = "grafana-test-datasource"
-			version        = ""
-			opSys          = "custom-os"
-			arch           = "amd64"
-			grafanaVersion = "*"
-			sha            = "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1"
-		)
-
-		srv := mockLatestVersionAPI(t,
-			srvData{
-				pluginID:       pluginID,
-				opSys:          opSys,
-				arch:           arch,
-				sha:            sha,
-				grafanaVersion: grafanaVersion,
-				version:        "1.4.3", // mock latest version
-				archive:        d,
-			},
-		)
-
-		m := New(Cfg{BaseURL: srv.URL}, &fakeLogger{})
-		archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
-			GrafanaVersion: grafanaVersion,
-			OS:             opSys,
-			Arch:           arch,
-		})
-
-		require.NoError(t, err)
-		verifyArchive(t, archive)
-	})
-
-	t.Run("Wildcard Grafana version with specific requested plugin version", func(t *testing.T) {
-		const (
-			pluginID       = "grafana-test-datasource"
-			version        = "1.3.0"
-			opSys          = "windows"
-			arch           = "amd64"
-			grafanaVersion = "*"
-			sha            = "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1"
-		)
-
-		srv := mockSinglePluginVersionAPI(t,
-			srvData{
-				pluginID:       pluginID,
-				version:        version,
-				opSys:          opSys,
-				arch:           arch,
-				sha:            sha,
-				grafanaVersion: grafanaVersion,
-				archive:        d,
-			},
-		)
-
-		m := New(Cfg{BaseURL: srv.URL}, &fakeLogger{})
-		archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
-			GrafanaVersion: grafanaVersion,
-			OS:             opSys,
-			Arch:           arch,
-		})
-
-		require.NoError(t, err)
-		require.NotNil(t, archive)
-		verifyArchive(t, archive)
-	})
 }
 
 func TestSelectVersion(t *testing.T) {
 	i := &Manager{log: &fakeLogger{}}
 
 	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
-		_, err := i.selectSystemCompatibleVersion(createPluginVersions(versionArg{version: "version"}), "test", "1.1.1", CompatOpts{})
+		_, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "version"}), "test", "1.1.1", CompatOpts{})
 		require.Error(t, err)
 	})
 
 	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
-		_, err := i.selectSystemCompatibleVersion(createPluginVersions(versionArg{version: "version", arch: []string{"non-existent"}}), "test", "", CompatOpts{})
+		_, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "version", arch: []string{"non-existent"}}), "test", "", CompatOpts{})
 		require.Error(t, err)
 	})
 
 	t.Run("Should return error when requested version does not support current arch", func(t *testing.T) {
-		_, err := i.selectSystemCompatibleVersion(createPluginVersions(
+		_, err := i.SelectSystemCompatibleVersion(createPluginVersions(
 			versionArg{version: "2.0.0"},
 			versionArg{version: "1.1.1", arch: []string{"non-existent"}},
 		), "test", "1.1.1", CompatOpts{})
@@ -173,7 +107,7 @@ func TestSelectVersion(t *testing.T) {
 	})
 
 	t.Run("Should return latest available for arch when no version specified", func(t *testing.T) {
-		ver, err := i.selectSystemCompatibleVersion(createPluginVersions(
+		ver, err := i.SelectSystemCompatibleVersion(createPluginVersions(
 			versionArg{version: "2.0.0", arch: []string{"non-existent"}},
 			versionArg{version: "1.0.0"},
 		), "test", "", CompatOpts{})
@@ -182,13 +116,13 @@ func TestSelectVersion(t *testing.T) {
 	})
 
 	t.Run("Should return latest version when no version specified", func(t *testing.T) {
-		ver, err := i.selectSystemCompatibleVersion(createPluginVersions(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "test", "", CompatOpts{})
+		ver, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "test", "", CompatOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "2.0.0", ver.Version)
 	})
 
 	t.Run("Should return requested version", func(t *testing.T) {
-		ver, err := i.selectSystemCompatibleVersion(createPluginVersions(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "test", "1.0.0", CompatOpts{})
+		ver, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "test", "1.0.0", CompatOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "1.0.0", ver.Version)
 	})
@@ -237,7 +171,6 @@ func mockPluginRepoAPI(t *testing.T, data srvData) *httptest.Server {
 	t.Helper()
 
 	mux := http.NewServeMux()
-
 	// mock plugin version data
 	mux.HandleFunc(fmt.Sprintf("/repo/%s", data.pluginID), func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, data.grafanaVersion, r.Header.Get("grafana-version"))
@@ -260,84 +193,6 @@ func mockPluginRepoAPI(t *testing.T, data srvData) *httptest.Server {
 					}]
 				}
 			`, data.version, data.opSys, data.arch, data.sha),
-		))
-	})
-
-	// mock plugin archive
-	mux.HandleFunc(fmt.Sprintf("/%s/version/%s/download", data.pluginID, data.version), func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/zip")
-		_, _ = w.Write(data.archive)
-	})
-
-	return httptest.NewServer(mux)
-}
-
-func mockLatestVersionAPI(t *testing.T, data srvData) *httptest.Server {
-	t.Helper()
-
-	mux := http.NewServeMux()
-
-	// mock plugin data
-	mux.HandleFunc(fmt.Sprintf("/%s", data.pluginID), func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-
-		osArch := fmt.Sprintf("%s-%s", data.opSys, data.arch)
-		_, _ = w.Write([]byte(fmt.Sprintf(`
-				{
-					"status": "active",
-					"version": "%s",
-					"versionStatus": "active",
-					"packages": {
-						"linux-amd64": {
-							"sha256": "08fa6bf89385515b0dab3b0e04dbd68e68486d47891f32a214ac6b55e1ac1097",
-							"packageName": "linux-amd64"
-						},
-						"%s": {
-							"sha256": "%s",
-							"packageName": "%s"
-						}
-					}
-				}
-			`, data.version, osArch, data.sha, osArch),
-		))
-	})
-
-	// mock plugin archive
-	mux.HandleFunc(fmt.Sprintf("/%s/version/%s/download", data.pluginID, data.version), func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/zip")
-		_, _ = w.Write(data.archive)
-	})
-
-	return httptest.NewServer(mux)
-}
-
-func mockSinglePluginVersionAPI(t *testing.T, data srvData) *httptest.Server {
-	t.Helper()
-
-	mux := http.NewServeMux()
-	// mock plugin version data
-	mux.HandleFunc(fmt.Sprintf("/%s/version/%s", data.pluginID, data.version), func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-
-		osArch := fmt.Sprintf("%s-%s", data.opSys, data.arch)
-		_, _ = w.Write([]byte(fmt.Sprintf(`
-				{
-					"packages": {
-						"%s": {
-							"sha256": "%s",
-							"packageName": "%s"
-						},
-						"linux-arm": {
-							"sha256": "c4ce6f36d769482d5c5e777efa4f33752ceee51f9ae3b4fe8c249ee94bfaca87",
-							"packageName": "linux-arm"
-						}
-					}
-				}
-			`, osArch, data.sha, osArch),
 		))
 	})
 

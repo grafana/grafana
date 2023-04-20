@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -14,8 +13,8 @@ import (
 )
 
 type Manager struct {
-	cfg    Cfg
-	client *Client
+	baseURL string
+	client  *Client
 
 	log log.PrettyLogger
 }
@@ -25,23 +24,21 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return New(Cfg{
-		BaseURL:       defaultBaseURL,
-		SkipTLSVerify: false,
-	}, log.NewPrettyLogger("plugin.repository")), nil
+
+	logger := log.NewPrettyLogger("plugin.repository")
+	return New(defaultBaseURL, NewClient(false, logger), logger), nil
 }
 
-func New(cfg Cfg, logger log.PrettyLogger) *Manager {
+func New(baseURL string, client *Client, logger log.PrettyLogger) *Manager {
 	return &Manager{
-		cfg:    cfg,
-		client: newClient(cfg.SkipTLSVerify, logger),
-		log:    logger,
+		baseURL: baseURL,
+		client:  client,
+		log:     logger,
 	}
 }
 
 type Cfg struct {
-	BaseURL       string
-	SkipTLSVerify bool
+	BaseURL string
 }
 
 // GetPluginArchive fetches the requested plugin archive
@@ -66,67 +63,51 @@ func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version 
 		return nil, err
 	}
 
-	// Plugins which are downloaded just as sourcecode zipball from GitHub do not have checksum
-	var checksum string
-	if v.Arch != nil {
-		archMeta, exists := v.Arch[compatOpts.OSAndArch()]
-		if !exists {
-			archMeta = v.Arch["any"]
-		}
-		checksum = archMeta.SHA256
-	}
-
 	return &PluginDownloadOptions{
 		Version:      v.Version,
-		Checksum:     checksum,
+		Checksum:     v.Checksum,
 		PluginZipURL: m.downloadURL(pluginID, v.Version),
 	}, nil
 }
 
-// pluginVersion will return plugin version based on the requested information
-func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts) (*Version, error) {
-	if compatOpts.AnyGrafanaVersion() {
-		if version == "" {
-			v, err := m.latestPluginVersion(pluginID)
-			if err != nil {
-				return nil, err
-			}
-			return m.selectSystemCompatibleVersion([]Version{v}, pluginID, version, compatOpts)
-		}
-		v, err := m.specificPluginVersion(pluginID, version)
-		if err != nil {
-			return nil, err
-		}
-		return m.selectSystemCompatibleVersion([]Version{v}, pluginID, version, compatOpts)
-	}
-
-	versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
-	if err != nil {
-		return nil, err
-	}
-	return m.selectSystemCompatibleVersion(versions, pluginID, version, compatOpts)
+type VersionData struct {
+	Version     string
+	Checksum    string
+	DownloadURL string
 }
 
-// selectSystemCompatibleVersion selects the most appropriate plugin version based on os + architecture
+// pluginVersion will return plugin version based on the requested information
+func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
+	versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
+	if err != nil {
+		return VersionData{}, err
+	}
+	return m.SelectSystemCompatibleVersion(versions, pluginID, version, compatOpts)
+}
+
+// SelectSystemCompatibleVersion selects the most appropriate plugin version based on os + architecture
 // returns the specified version if supported.
 // returns the latest version if no specific version is specified.
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func (m *Manager) selectSystemCompatibleVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (*Version, error) {
+func (m *Manager) SelectSystemCompatibleVersion(versions []Version, pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
 	version = normalizeVersion(version)
 
 	var ver Version
-	latestForArch := latestSupportedVersion(versions, compatOpts)
-	if latestForArch == nil {
-		return nil, ErrArcNotFound{
+	latestForArch, exists := latestSupportedVersion(versions, compatOpts)
+	if !exists {
+		return VersionData{}, ErrArcNotFound{
 			PluginID:   pluginID,
 			SystemInfo: compatOpts.String(),
 		}
 	}
 
 	if version == "" {
-		return latestForArch, nil
+		return VersionData{
+			Version:  latestForArch.Version,
+			Checksum: checksum(latestForArch, compatOpts),
+		}, nil
 	}
 	for _, v := range versions {
 		if v.Version == version {
@@ -138,27 +119,42 @@ func (m *Manager) selectSystemCompatibleVersion(versions []Version, pluginID, ve
 	if len(ver.Version) == 0 {
 		m.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
 			pluginID, version, latestForArch.Version)
-		return nil, ErrVersionNotFound{
+		return VersionData{}, ErrVersionNotFound{
 			PluginID:         pluginID,
 			RequestedVersion: version,
 			SystemInfo:       compatOpts.String(),
 		}
 	}
 
-	if !supportsCurrentArch(&ver, compatOpts) {
+	if !supportsCurrentArch(ver, compatOpts) {
 		m.log.Debugf("Requested plugin version %s v%s is not supported on your system but potential fallback version '%s' was found",
 			pluginID, version, latestForArch.Version)
-		return nil, ErrVersionUnsupported{
+		return VersionData{}, ErrVersionUnsupported{
 			PluginID:         pluginID,
 			RequestedVersion: version,
 			SystemInfo:       compatOpts.String(),
 		}
 	}
 
-	return &ver, nil
+	return VersionData{
+		Version:     ver.Version,
+		Checksum:    checksum(ver, compatOpts),
+		DownloadURL: m.downloadURL(pluginID, ver.Version),
+	}, nil
 }
 
-func supportsCurrentArch(version *Version, compatOpts CompatOpts) bool {
+func checksum(v Version, compatOpts CompatOpts) string {
+	if v.Arch != nil {
+		archMeta, exists := v.Arch[compatOpts.OSAndArch()]
+		if !exists {
+			archMeta = v.Arch["any"]
+		}
+		return archMeta.SHA256
+	}
+	return ""
+}
+
+func supportsCurrentArch(version Version, compatOpts CompatOpts) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -170,14 +166,13 @@ func supportsCurrentArch(version *Version, compatOpts CompatOpts) bool {
 	return false
 }
 
-func latestSupportedVersion(versions []Version, compatOpts CompatOpts) *Version {
+func latestSupportedVersion(versions []Version, compatOpts CompatOpts) (Version, bool) {
 	for _, v := range versions {
-		ver := v
-		if supportsCurrentArch(&ver, compatOpts) {
-			return &ver
+		if supportsCurrentArch(v, compatOpts) {
+			return v, true
 		}
 	}
-	return nil
+	return Version{}, false
 }
 
 func normalizeVersion(version string) string {
@@ -190,81 +185,20 @@ func normalizeVersion(version string) string {
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {
-	return fmt.Sprintf("%s/%s/version/%s/download", m.cfg.BaseURL, pluginID, version)
-}
-
-// specificPluginVersion returns specific plugin version information from /api/plugins/$pluginID/version/$version
-// regardless of the Grafana version
-func (m *Manager) specificPluginVersion(pluginID, version string) (Version, error) {
-	u, err := url.Parse(m.cfg.BaseURL)
-	if err != nil {
-		return Version{}, err
-	}
-	u.Path = path.Join(u.Path, pluginID, "version", version)
-
-	body, err := m.client.sendReq(u)
-	if err != nil {
-		return Version{}, err
-	}
-
-	var pv PluginVersion
-	err = json.Unmarshal(body, &pv)
-	if err != nil {
-		m.log.Error("Failed to unmarshal plugin version response", err)
-		return Version{}, err
-	}
-
-	archMeta := make(map[string]ArchMeta)
-	for _, p := range pv.Packages {
-		archMeta[p.PackageName] = ArchMeta{SHA256: p.Sha256}
-	}
-
-	return Version{Version: version, Arch: archMeta}, nil
-}
-
-// latestPluginVersionNumber will get latest version from /api/plugins/$pluginID
-// regardless of the Grafana version
-func (m *Manager) latestPluginVersion(pluginID string) (Version, error) {
-	u, err := url.Parse(m.cfg.BaseURL)
-	if err != nil {
-		return Version{}, err
-	}
-	u.Path = path.Join(u.Path, pluginID)
-
-	body, err := m.client.sendReq(u)
-	if err != nil {
-		return Version{}, err
-	}
-	var pv Plugin
-	err = json.Unmarshal(body, &pv)
-	if err != nil {
-		m.log.Error("Failed to unmarshal plugin version response", err)
-		return Version{}, err
-	}
-
-	if pv.Status != "active" || pv.VersionStatus != "active" {
-		return Version{}, errors.New("plugin is not active")
-	}
-
-	archMeta := make(map[string]ArchMeta)
-	for _, p := range pv.Packages {
-		archMeta[p.PackageName] = ArchMeta{SHA256: p.Sha256}
-	}
-
-	return Version{Version: pv.Version, Arch: archMeta}, nil
+	return fmt.Sprintf("%s/%s/version/%s/download", m.baseURL, pluginID, version)
 }
 
 // grafanaCompatiblePluginVersions will get version info from /api/plugins/repo/$pluginID based on
 // the provided compatibility information (sent via HTTP headers)
 func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts CompatOpts) ([]Version, error) {
-	u, err := url.Parse(m.cfg.BaseURL)
+	u, err := url.Parse(m.baseURL)
 	if err != nil {
 		return nil, err
 	}
 
 	u.Path = path.Join(u.Path, "repo", pluginID)
 
-	body, err := m.client.sendReq(u, compatOpts)
+	body, err := m.client.SendReq(u, compatOpts)
 	if err != nil {
 		return nil, err
 	}
