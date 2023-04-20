@@ -61,7 +61,7 @@ import {
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache, filterLogRowsByIndex } from './utils';
 
 //
 // Actions and Payloads
@@ -191,6 +191,10 @@ export interface SetPausedStatePayload {
 }
 export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
 
+export interface ClearLogsPayload {
+  exploreId: ExploreId;
+}
+export const clearLogs = createAction<ClearLogsPayload>('explore/clearLogs');
 /**
  * Start a scan for more results using the given scanner.
  * @param exploreId Explore area
@@ -1089,6 +1093,41 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
+  if (clearLogs.match(action)) {
+    if (!state.logsResult) {
+      return {
+        ...state,
+        clearedAtIndex: null,
+      };
+    }
+
+    // When in loading state, clear logs and set clearedAtIndex as null.
+    // Initially loaded logs will be fully replaced by incoming streamed logs, which may have a different length.
+    if (state.queryResponse.state === LoadingState.Loading) {
+      return {
+        ...state,
+        clearedAtIndex: null,
+        logsResult: {
+          ...state.logsResult,
+          rows: [],
+        },
+      };
+    }
+
+    const lastItemIndex = state.clearedAtIndex
+      ? state.clearedAtIndex + state.logsResult.rows.length
+      : state.logsResult.rows.length - 1;
+
+    return {
+      ...state,
+      clearedAtIndex: lastItemIndex,
+      logsResult: {
+        ...state.logsResult,
+        rows: [],
+      },
+    };
+  }
+
   return state;
 };
 
@@ -1113,7 +1152,6 @@ const getCorrelations = () => {
     }
   });
 };
-
 export const processQueryResponse = (
   state: ExploreItemState,
   action: PayloadAction<QueryEndedPayload>
@@ -1169,7 +1207,10 @@ export const processQueryResponse = (
     graphResult,
     tableResult,
     rawPrometheusResult,
-    logsResult,
+    logsResult:
+      state.isLive && logsResult
+        ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
+        : logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
@@ -1178,5 +1219,6 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
+    clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };
