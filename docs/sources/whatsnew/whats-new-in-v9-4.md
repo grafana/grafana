@@ -40,7 +40,7 @@ The new navigation is gradually rolling out to all users on Grafana Cloud. If yo
 
 > **Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
 
-> **Note:** Plugin developers should refer to [the migration guide]({{< relref "../developers/plugins/migration-guide.md#supporting-new-navigation-layout" >}}) to upgrade their plugins to work seamlessly with the new navigation layout.
+> **Note:** Plugin developers should refer to [the migration guide]({{< relref "../developers/plugins/migration-guide/v9.3.x-9.4.x/_index.md#supporting-new-navigation-layout" >}}) to upgrade their plugins to work seamlessly with the new navigation layout.
 
 {{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
 
@@ -295,6 +295,10 @@ We've added support for JWT authentication.
 ### Snowflake Datasource
 
 We've added support for custom session parameters.
+
+## Postgres, MySQL, and MSSQL data sources
+
+The `database` property is now under the `jsonData` key in the data source configuration. This change is backward compatible, and existing configurations will continue to work.
 
 ## Before you upgrade
 

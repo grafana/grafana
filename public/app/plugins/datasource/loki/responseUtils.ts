@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameType,
   DataQueryResponse,
   DataQueryResponseData,
   Field,
@@ -8,6 +9,7 @@ import {
   isValidGoDuration,
   Labels,
   QueryResultMetaStat,
+  shallowCompare,
 } from '@grafana/data';
 
 import { isBytesString } from './languageUtils';
@@ -123,7 +125,38 @@ function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
     return false;
   }
 
-  return frame1.name === frame2.name;
+  const frameType1 = frame1.meta?.type;
+  const frameType2 = frame2.meta?.type;
+
+  if (frameType1 !== frameType2) {
+    // we do not join things that have a different type
+    return false;
+  }
+
+  // metric range query data
+  if (frameType1 === DataFrameType.TimeSeriesMulti) {
+    const field1 = frame1.fields.find((f) => f.type === FieldType.number);
+    const field2 = frame2.fields.find((f) => f.type === FieldType.number);
+    if (field1 === undefined || field2 === undefined) {
+      // should never happen
+      return false;
+    }
+
+    return shallowCompare(field1.labels ?? {}, field2.labels ?? {});
+  }
+
+  // logs query data
+  // logs use a special attribute in the dataframe's "custom" section
+  // because we do not have a good "frametype" value for them yet.
+  const customType1 = frame1.meta?.custom?.frameType;
+  const customType2 = frame2.meta?.custom?.frameType;
+
+  if (customType1 === 'LabeledTimeValues' && customType2 === 'LabeledTimeValues') {
+    return true;
+  }
+
+  // should never reach here
+  return false;
 }
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
@@ -220,7 +253,7 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
     ...frame,
     fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
       ...field,
-      values: new ArrayVector(field.values.buffer),
+      values: new ArrayVector(field.values.toArray()),
     })),
   };
 }

@@ -259,10 +259,16 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, string(b))
 	}
@@ -311,10 +317,16 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, string(b))
 			return true
@@ -454,10 +466,16 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, dashboardUID)
 	expectedFilteredByJSON := fmt.Sprintf(`
@@ -481,10 +499,16 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 1
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 1
+		}
 	}
 }`, dashboardUID)
 	expectedNoneJSON := `

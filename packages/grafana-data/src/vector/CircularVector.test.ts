@@ -5,6 +5,10 @@ describe('Check Circular Vector', () => {
     const buffer = [1, 2, 3];
     const v = new CircularVector({ buffer }); // tail is default option
     expect(v.toArray()).toEqual([1, 2, 3]);
+    expect(v[0]).toEqual(1);
+    expect(v[1]).toEqual(2);
+    expect(v[2]).toEqual(3);
+    expect(v[3]).toEqual(1); // loops back to one
 
     v.add(4);
     expect(v.toArray()).toEqual([2, 3, 4]);
@@ -20,6 +24,9 @@ describe('Check Circular Vector', () => {
 
     v.add(8);
     expect(v.toArray()).toEqual([6, 7, 8]);
+
+    v.push(9, 10);
+    expect(v.toArray()).toEqual([8, 9, 10]);
   });
 
   it('should grow buffer until it hits capacity (append)', () => {

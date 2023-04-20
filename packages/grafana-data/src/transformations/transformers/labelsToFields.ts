@@ -2,7 +2,6 @@ import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../..';
 import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
-import { ArrayVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
 
@@ -83,7 +82,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
           newFields.push({
             name: name,
             type: FieldType.string,
-            values: new ArrayVector(values),
+            values: values,
             config: {},
           });
         }
@@ -123,8 +122,8 @@ function convertLabelsToRows(data: DataFrame[], keepLabels?: string[]): DataFram
             ...frame,
             name: getFieldDisplayName(field, frame, data),
             fields: [
-              { name: 'label', type: FieldType.string, config: {}, values: new ArrayVector(keys) },
-              { name: 'value', type: FieldType.string, config: {}, values: new ArrayVector(vals) },
+              { name: 'label', type: FieldType.string, config: {}, values: keys },
+              { name: 'value', type: FieldType.string, config: {}, values: vals },
             ],
             length: vals.length,
           });

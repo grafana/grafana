@@ -50,7 +50,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
-    chrome.update({ sectionNav: navModel.node });
+    chrome.update({ sectionNav: navModel });
   }, [chrome, navModel]);
 
   useEffect(() => {

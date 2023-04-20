@@ -12,7 +12,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: collapse;
     margin-bottom: ${theme.spacing(1)};
     background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     position: relative;
     border-radius: ${theme.shape.radius.default};
     width: 100%;
