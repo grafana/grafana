@@ -87,7 +87,7 @@ export function buildMockDataSelectorProps(overrides?: Partial<DatasetSelectorPr
   return {
     dataset: '',
     db: buildMockDB(),
-    disableDatasetSelector: false,
+    isPostgresInstance: false,
     onChange: jest.fn(),
     preconfiguredDataset: '',
     ...overrides,

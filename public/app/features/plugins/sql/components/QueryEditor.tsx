@@ -27,9 +27,6 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
-  console.log(query, 'query');
-  console.log(datasource, 'datasource');
-
   const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = !!config.featureToggles.sqlDatasourceDatabaseSelection;
 
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
@@ -51,20 +48,21 @@ export function SqlQueryEditor({
   useEffect(() => {
     if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
       /*
-        This checks if
-          1) there is a preconfigured database (freshly created MSSQL/MYSQL datasources may or may not have a preconfigured database),
-          2) there is a previously-chosen database from the DatasetSelector (freshly created datasources will NOT have a previously-chosen database,
-            and we don't want this alert to be displayed on all newly created datasources).
-        If yes to both,
-          3) is that preconfigured database different than they previously-chosen one, which means the preconfigured was added or updated?
-          If so, display the alert.
+        If there is a preconfigured database (either through the provisioning config, or the data source configuration component),
+        AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
+        that means either 1) the preconfigured database changed/updated (updated either through provisioning or the GUI),
+        OR 2) there WASN'T a preconfigred database before, but there IS now (updated either through provisioning or the GUI).
+        In either case, we need to throw a warning to alert the user that something has changed.
       */
       if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
         setHasDatabaseConfigIssue(true);
       }
 
-      // This tests the Postgres datasource - all Postgres datasources are passed a default prop of `disableDatasetSelector`.
-      // 1) Is it indeed a Posgres datasource, and 2) is it configured with a default database? If so, then display appropriate alert.
+      /*
+        If the data source is Postgres (all Postgres datasources are passed a default prop of `isPostgresInstance`),
+        then test for a preconfigured database (either through provisioning or the GUI). Postgres REQUIRES a default database,
+        so throw the appropriate warning.
+      */
       if (isPostgresInstance && !preconfiguredDatabase) {
         setHasNoPostgresDefaultDatabaseConfig(true);
       }
@@ -155,9 +153,9 @@ export function SqlQueryEditor({
 
       {hasNoPostgresDefaultDatabaseConfig && (
         <Alert severity="error" title="Default datasource error" elevated={true}>
-          You do not currently have a default database configured for this data source. Please configure one through the
-          Data Sources Configuration page, or if you are using a provisioned data source, update you configuration file
-          with a default database name.
+          You do not currently have a default database configured for this data source. Postgres requires a default
+          database with which to connect. Please configure one through the Data Sources Configuration page, or if you
+          are using a provisioned data source, update you configuration file with a default database name.
         </Alert>
       )}
 

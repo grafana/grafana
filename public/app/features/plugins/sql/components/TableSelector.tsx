@@ -15,8 +15,8 @@ interface TableSelectorProps extends ResourceSelectorProps {
 }
 
 export const TableSelector = ({ db, dataset, table, className, onChange, cascadeDisable }: TableSelectorProps) => {
-  console.log(table, 'table');
   const state = useAsync(async () => {
+    // No need to attempt to fetch tables for an unknown dataset.
     if (!dataset) {
       return [];
     }
