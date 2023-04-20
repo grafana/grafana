@@ -9,12 +9,40 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 /**
- * TODO docs
+ * TODO -- should not be a public interface on its own, but required for Veneer
+ */
+export interface AnnotationContainer {
+  list?: Array<AnnotationQuery>;
+}
+
+export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
+  list: [],
+};
+
+/**
+ * TODO: this should be a regular DataQuery that depends on the selected dashboard
+ * these match the properties of the "grafana" datasouce that is default in most dashboards
  */
 export interface AnnotationTarget {
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   limit: number;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   matchAny: boolean;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   tags: Array<string>;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   type: string;
 }
 
@@ -22,51 +50,77 @@ export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
   tags: [],
 };
 
+export interface AnnotationPanelFilter {
+  /**
+   * Should the specified panels be included or excluded
+   */
+  exclude?: boolean;
+  /**
+   * Panel IDs that should be included or excluded
+   */
+  ids: Array<number>;
+}
+
+export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
+  exclude: false,
+  ids: [],
+};
+
 /**
  * TODO docs
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
  */
 export interface AnnotationQuery {
-  builtIn: number; // TODO should this be persisted at all?
   /**
-   * Datasource to use for annotation.
+   * TODO: Should be DataSourceRef
    */
   datasource: {
     type?: string;
     uid?: string;
   };
   /**
-   * Whether annotation is enabled.
+   * When enabled the annotation query is issued with every dashboard refresh
    */
   enable: boolean;
   /**
-   * Whether to hide annotation.
+   * Optionally
+   */
+  filter?: AnnotationPanelFilter;
+  /**
+   * Annotation queries can be toggled on or off at the top of the dashboard.
+   * When hide is true, the toggle is not shown in the dashboard.
    */
   hide?: boolean;
   /**
-   * Annotation icon color.
+   * Color to use for the annotation event markers
    */
-  iconColor?: string;
+  iconColor: string;
   /**
    * Name of annotation.
    */
-  name?: string;
+  name: string;
   /**
-   * Query for annotation data.
+   * TODO.. this should just be a normal query target
    */
-  rawQuery?: string;
-  showIn: number;
   target?: AnnotationTarget;
-  type: string;
+  /**
+   * TODO -- this should not exist here, it is based on the --grafana-- datasource
+   */
+  type?: string;
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
-  builtIn: 0,
   enable: true,
   hide: false,
-  showIn: 0,
-  type: 'dashboard',
 };
+
+export enum LoadingState {
+  Done = 'Done',
+  Error = 'Error',
+  Loading = 'Loading',
+  NotStarted = 'NotStarted',
+  Streaming = 'Streaming',
+}
 
 /**
  * FROM: packages/grafana-data/src/types/templateVars.ts
@@ -105,14 +159,6 @@ export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
-}
-
-export enum LoadingState {
-  Done = 'Done',
-  Error = 'Error',
-  Loading = 'Loading',
-  NotStarted = 'NotStarted',
-  Streaming = 'Streaming',
 }
 
 /**
@@ -662,9 +708,7 @@ export interface Dashboard {
   /**
    * TODO docs
    */
-  annotations?: {
-    list?: Array<AnnotationQuery>;
-  };
+  annotations?: AnnotationContainer;
   /**
    * Description of dashboard.
    */

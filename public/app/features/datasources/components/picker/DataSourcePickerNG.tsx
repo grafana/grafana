@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings, DataSourceRef, getDataSourceUID } from '@gr
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 
-import { DataSourceDrawer } from './DataSourceDrawer';
+import { DataSourceDropdown } from './DataSourceDropdown';
 import { DataSourcePickerProps } from './types';
 
 /**
@@ -37,13 +37,9 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
   }
 
-  onChange = (ds?: string) => {
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(ds);
-
-    if (dsSettings) {
-      this.props.onChange(dsSettings);
-      this.setState({ error: undefined });
-    }
+  onChange = (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+    this.props.onChange(ds);
+    this.setState({ error: undefined });
   };
 
   private getCurrentDs(): DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined {
@@ -80,17 +76,18 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { recentlyUsed, fileUploadOptions, enableFileUpload } = this.props;
+    const { recentlyUsed, fileUploadOptions, enableFileUpload, onClickAddCSV } = this.props;
 
     return (
       <div>
-        <DataSourceDrawer
+        <DataSourceDropdown
           datasources={this.getDatasources()}
           onChange={this.onChange}
           recentlyUsed={recentlyUsed}
           current={this.getCurrentDs()}
           fileUploadOptions={fileUploadOptions}
           enableFileUpload={enableFileUpload}
+          onClickAddCSV={onClickAddCSV}
         />
       </div>
     );

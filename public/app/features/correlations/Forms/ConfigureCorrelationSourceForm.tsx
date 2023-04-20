@@ -9,6 +9,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
 
+import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { getInputId } from './utils';
 
@@ -33,12 +34,11 @@ export const ConfigureCorrelationSourceForm = () => {
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
-
   return (
     <>
       <FieldSet label="Configure source data source (3/3)">
         <p>
-          Links are displayed with results of the selected origin source data. They shown along with the value of the
+          Links are displayed with results of the selected origin source data. They show along with the value of the
           provided <em>results field</em>.
         </p>
         <Controller
@@ -84,27 +84,26 @@ export const ConfigureCorrelationSourceForm = () => {
             readOnly={readOnly}
           />
         </Field>
-
         {variables.length > 0 && (
           <Card>
             <Card.Heading>Variables used in the target query</Card.Heading>
             <Card.Description>
-              <div>
-                You have used following variables in the target query:{' '}
-                {variables.map((name, i) => (
-                  <span className={styles.variable} key={i}>
-                    {name}
-                    {i < variables.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
-              </div>
-              <div>
-                A data point needs to provide values to all variables as fields or as transformations output to make the
-                correlation button appear in the visualization.
-              </div>
+              You have used following variables in the target query:{' '}
+              {variables.map((name, i) => (
+                <span className={styles.variable} key={i}>
+                  {name}
+                  {i < variables.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+              <br />A data point needs to provide values to all variables as fields or as transformations output to make
+              the correlation button appear in the visualization.
+              <br />
+              Note: Not every variable needs to be explicitly defined below. A transformation such as{' '}
+              <span className={styles.variable}>logfmt</span> will create variables for every key/value pair.
             </Card.Description>
           </Card>
         )}
+        <TransformationsEditor readOnly={readOnly} />
       </FieldSet>
     </>
   );
