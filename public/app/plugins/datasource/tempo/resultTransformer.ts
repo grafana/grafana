@@ -85,7 +85,7 @@ export function createTableFrame(
             const match = (line as string).match(traceRegex);
             if (match) {
               const traceId = match[1];
-              const time = timeField ? timeField.values.get(i) : null;
+              const time = timeField ? timeField.values[i] : null;
               tableFrame.fields[0].values.add(time);
               tableFrame.fields[1].values.add(traceId);
               tableFrame.fields[2].values.add(line);

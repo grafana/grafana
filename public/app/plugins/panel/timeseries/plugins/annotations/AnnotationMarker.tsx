@@ -102,7 +102,6 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
       />
     );
   }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
-
   const isRegionAnnotation = Boolean(annotation.isRegion) && width > MIN_REGION_ANNOTATION_WIDTH;
 
   let left = `${width / 2}px`;

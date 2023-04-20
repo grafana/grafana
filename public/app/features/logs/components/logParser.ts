@@ -71,7 +71,7 @@ export const getDataframeFields = memoizeOne(
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
         return {
           keys: [field.name],
-          values: [field.values.get(row.rowIndex).toString()],
+          values: [field.values[row.rowIndex].toString()],
           links: links,
           fieldIndex: field.index,
         };
@@ -93,7 +93,7 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (
     field.name === firstTimeField?.name &&
     field.type === FieldType.time &&
-    field.values.get(0) === firstTimeField.values.get(0)
+    field.values[0] === firstTimeField.values[0]
   ) {
     return true;
   }
@@ -102,7 +102,7 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
     return true;
   }
   // field that has empty value (we want to keep 0 or empty string)
-  if (field.values.get(row.rowIndex) == null) {
+  if (field.values[row.rowIndex] == null) {
     return true;
   }
   return false;
