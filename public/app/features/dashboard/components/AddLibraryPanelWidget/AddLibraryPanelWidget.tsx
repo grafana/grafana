@@ -5,6 +5,7 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import {
   LibraryPanelsSearch,
@@ -42,7 +43,9 @@ export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
     <div className={styles.wrapper}>
       <div className={cx('panel-container', styles.callToAction)}>
         <div className={cx(styles.headerRow, 'grid-drag-handle')}>
-          <span>Add panel from panel library</span>
+          <span>
+            <Trans i18nKey="library-panel.add-widget.title">Add panel from panel library</Trans>
+          </span>
           <div className="flex-grow-1" />
           <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancelAddPanel} />
         </div>

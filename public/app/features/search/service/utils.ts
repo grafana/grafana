@@ -81,6 +81,7 @@ export function queryResultToViewItem(
     if (parentInfo) {
       viewItem.parentTitle = parentInfo.name;
       viewItem.parentKind = parentInfo.kind;
+      viewItem.parentUID = parentUid;
     }
   }
 
