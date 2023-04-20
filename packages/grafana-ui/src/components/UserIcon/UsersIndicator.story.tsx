@@ -43,13 +43,11 @@ export const Basic: ComponentStory<typeof UsersIndicator> = (args) => {
     },
   ];
 
-  return (
-    <UsersIndicator
-      {...args}
-      users={users.map((user) => ({ user, lastActiveAt: new Date().toDateString() }))}
-      limit={4}
-    />
-  );
+  return <UsersIndicator {...args} users={users.map((user) => ({ user, lastActiveAt: new Date().toDateString() }))} />;
+};
+
+Basic.args = {
+  limit: 4,
 };
 
 export const WithManyUsers: ComponentStory<typeof UsersIndicator> = (args) => {
@@ -76,13 +74,11 @@ export const WithManyUsers: ComponentStory<typeof UsersIndicator> = (args) => {
     },
   ];
 
-  return (
-    <UsersIndicator
-      {...args}
-      users={users.map((user) => ({ user, lastActiveAt: new Date().toDateString() }))}
-      limit={4}
-    />
-  );
+  return <UsersIndicator {...args} users={users.map((user) => ({ user, lastActiveAt: new Date().toDateString() }))} />;
+};
+
+WithManyUsers.args = {
+  limit: 4,
 };
 
 export default meta;
