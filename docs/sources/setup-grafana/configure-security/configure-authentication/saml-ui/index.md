@@ -13,7 +13,8 @@ You can configure SAML authentication in Grafana through the user interface (UI)
 
 The Grafana SAML UI provides the following advantages over configuring SAML in the Grafana configuration file:
 
-- It is accessible by hosted Grafana users
+- It is accessible by Grafana Cloud users
+- SAML UI carries out input validation and provides useful feedback on the correctness of the configuration, making SAML setup easier
 - It doesn't require Grafana to be restarted after a configuration update
 - Access to the SAML UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
 
@@ -25,7 +26,7 @@ To follow this guide, you need:
 
 - Knowledge of SAML authentication. Refer to [SAML authentication in Grafana]({{< relref "../saml/" >}}) for an overview of Grafana's SAML integration.
 - Permissions that allow you to read and update authentication settings. These permissions are granted by `fixed:authentication.config:writer` role.
-  By default, this role is granted to Grafana server administrator in self-hosted instances and to Organization admins in hosted Grafana instances.
+  By default, this role is granted to Grafana server administrator in self-hosted instances and to Organization admins in Grafana Cloud instances.
 - Grafana instance running Grafana version 10.0 or later with [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) or [Grafana Cloud Pro or Advanced](/docs/grafana-cloud/) license.
 
 ## Steps
@@ -52,6 +53,9 @@ Follow these steps to configure and enable SAML integration:
    For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml/#example-of-how-to-generate-saml-credentials" >}}).
 
 1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, which signature algorithm should be used.
+
+   The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
+
 1. Click **Next: Connect Grafana with Identity Provider** and complete the section.
 1. Click **Next: User mapping**.
 1. If you wish to [map user information from SAML assertions]({{< relref "../saml/#assertion-mapping" >}}), complete the **Assertion attributes mappings** section.
