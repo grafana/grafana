@@ -81,10 +81,10 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     const labels = frame.fields[1].labels;
     for (const labelKey of Object.keys(labelFields)) {
       const labelValue = labels?.[labelKey] ?? null;
-      labelFields[labelKey].values.add(labelValue!);
+      labelFields[labelKey].values.push(labelValue!);
     }
 
-    frameField.values.add(frame);
+    frameField.values.push(frame);
   }
   return result;
 }
