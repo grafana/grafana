@@ -1,11 +1,9 @@
 package plugins
 
 import (
-	"errors"
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,14 +17,7 @@ func TestLocalFS_Remove(t *testing.T) {
 	require.NoError(t, err)
 	err = f.Close()
 	require.NoError(t, err)
-
-	fs := NewLocalFS(
-		map[string]struct{}{
-			"plugin.json": {},
-		},
-		pluginDir,
-	)
-
+	fs := NewLocalFS(pluginDir)
 	err = fs.Remove()
 	require.NoError(t, err)
 
@@ -51,12 +42,7 @@ func TestLocalFS_Remove(t *testing.T) {
 
 		pluginDir = filepath.Dir(pluginDistDir)
 
-		fs = NewLocalFS(
-			map[string]struct{}{
-				"dist/plugin.json": {},
-			},
-			pluginDir,
-		)
+		fs = NewLocalFS(pluginDir)
 
 		err = fs.Remove()
 		require.NoError(t, err)
@@ -80,12 +66,7 @@ func TestLocalFS_Remove(t *testing.T) {
 		err = f.Close()
 		require.NoError(t, err)
 
-		fs = NewLocalFS(
-			map[string]struct{}{
-				"system32/important.exe": {},
-			},
-			pluginDir,
-		)
+		fs = NewLocalFS(pluginDir)
 
 		err = fs.Remove()
 		require.ErrorIs(t, err, ErrUninstallInvalidPluginDir)
