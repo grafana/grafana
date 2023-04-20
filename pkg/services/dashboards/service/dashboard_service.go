@@ -633,13 +633,13 @@ func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int6
 	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }
 
-func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, UID string) (int64, error) {
+func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, uid string) (int64, error) {
 	u, err := appcontext.User(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &UID, OrgID: orgID, SignedInUser: u})
+	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &uid, OrgID: orgID, SignedInUser: u})
 	if err != nil {
 		return 0, err
 	}

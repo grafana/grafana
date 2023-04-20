@@ -305,12 +305,13 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 
 // swagger:route GET /folders/{folder_uid}/counts folders getFolderChildrenCounts
 //
-// Gets the count of each descendant kind of a folder. The folder is identified by UID.
+// Gets the count of each descendant of a folder by kind. The folder is identified by UID.
 //
 // Responses:
 // 200: getFolderChildrenCountsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderChildrenCounts(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]

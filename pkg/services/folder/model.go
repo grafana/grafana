@@ -169,5 +169,4 @@ type GetFolderChildrenCountsQuery struct {
 	SignedInUser *user.SignedInUser `json:"-"`
 }
 
-// #TODO: figure out where to put this
 type FolderChildrenCounts map[string]int64
