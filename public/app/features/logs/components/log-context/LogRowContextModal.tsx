@@ -14,7 +14,7 @@ import {
   SelectableValue,
   rangeUtil,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
@@ -342,6 +342,12 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           title="We recently reworked the Log Context UI, please let us know how we can further improve it."
           target="_blank"
           rel="noreferrer noopener"
+          onClick={() => {
+            reportInteraction('grafana_explore_logs_log_context_give_feedback_clicked', {
+              datasourceType: row.datasourceType,
+              logRowUid: row.uid,
+            });
+          }}
         >
           <Icon name="comment-alt-message" /> Give feedback
         </a>
@@ -357,6 +363,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 })
               );
               onClose();
+              reportInteraction('grafana_explore_logs_log_context_open_split_view_clicked', {
+                datasourceType: row.datasourceType,
+                logRowUid: row.uid,
+              });
             }}
           >
             Open in split view
