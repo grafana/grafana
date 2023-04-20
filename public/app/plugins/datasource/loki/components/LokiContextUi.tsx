@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Icon, Label, LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, Label, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
@@ -33,12 +33,6 @@ function getStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       flex: 1;
       gap: ${theme.spacing(0.5)};
-    `,
-    loadingPlaceholder: css`
-      margin-bottom: 0px;
-      float: right;
-      display: inline;
-      margin-left: auto;
     `,
     textWrapper: css`
       display: flex;
@@ -167,7 +161,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
-      <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
       <Collapse
         collapsible={true}
         isOpen={isOpen}
@@ -208,6 +201,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             Widen the search
           </Label>
           <MultiSelect
+            isLoading={loading}
             options={realLabels.map(contextFilterToSelectFilter)}
             value={realLabelsEnabled.map(contextFilterToSelectFilter)}
             closeMenuOnSelect={true}
@@ -248,6 +242,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 Refine the search
               </Label>
               <MultiSelect
+                isLoading={loading}
                 options={parsedLabels.map(contextFilterToSelectFilter)}
                 value={parsedLabelsEnabled.map(contextFilterToSelectFilter)}
                 closeMenuOnSelect={true}
