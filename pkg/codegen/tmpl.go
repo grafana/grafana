@@ -46,6 +46,9 @@ type (
 	tvars_coremodel_imports struct {
 		PackageName string
 	}
+	tvars_resource_parts struct {
+		PackageName string
+	}
 )
 
 type HeaderVars = tvars_autogen_header

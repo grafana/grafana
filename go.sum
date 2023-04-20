@@ -1296,8 +1296,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.159.0 h1:tjqzTe/wz+1zzaeHpOJvBvSvZFx/bJUSHj6WA8HJqhE=
 github.com/grafana/grafana-plugin-sdk-go v0.159.0/go.mod h1:7/F3lL/w3MGuZTwu0jam5oL/4zNOQmhs2k8WZ9VlzhI=
-github.com/grafana/kindsys v0.0.0-20230414093523-5df3e256ebc0 h1:Or8DllkxKq3+kLXAS/tkr5K2Yv745c6K2rRvslGWGd4=
-github.com/grafana/kindsys v0.0.0-20230414093523-5df3e256ebc0/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/phlare/api v0.1.3 h1:mYTaE9mLsAW/uzPXlW/PQSLsZ4ojBFA+oAMfR/PDdw8=
 github.com/grafana/phlare/api v0.1.3/go.mod h1:29vcLwFDmZBDce2jwFIMtzvof7fzPadT8VMKw9ks7FU=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230308154952-78fedf89728b h1:VQOGGGJ2lKcVPANyzIESKYhSeA0QIvUQwfA3CbrkDfA=
