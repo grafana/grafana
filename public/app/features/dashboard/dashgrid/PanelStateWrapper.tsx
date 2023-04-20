@@ -8,6 +8,9 @@ import {
   AnnotationEventUIModel,
   CoreApp,
   DashboardCursorSync,
+  DataFrame,
+  DataFrameJSON,
+  dataFrameToJSON,
   EventFilterOptions,
   FieldConfigSource,
   getDataSourceRef,
@@ -37,11 +40,13 @@ import {
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
+import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
@@ -117,6 +122,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
         onUpdateQueries: this.onUpdateQueries,
+        onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -146,6 +152,21 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return CoreApp.Dashboard;
   }
+
+  onUpdateData = (frames: DataFrame[]) => {
+    const snapshot: DataFrameJSON[] = frames.map((f) => dataFrameToJSON(f));
+    const query: GrafanaQuery = {
+      refId: 'A',
+      queryType: GrafanaQueryType.Snapshot,
+      snapshot,
+      datasource: { uid: GRAFANA_DATASOURCE_NAME },
+    };
+
+    this.props.panel.updateQueries({
+      dataSource: { uid: GRAFANA_DATASOURCE_NAME },
+      queries: [query],
+    });
+  };
 
   onUpdateQueries = (queries: DataQuery[]) => {
     const { panel } = this.props;

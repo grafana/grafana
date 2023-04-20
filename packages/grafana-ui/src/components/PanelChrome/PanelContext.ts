@@ -8,6 +8,7 @@ import {
   ThresholdsConfig,
   SplitOpen,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
@@ -89,6 +90,11 @@ export interface PanelContext {
    * This optional and not always available in all contexts.
    */
   onUpdateQueries?: (queries: DataQuery[]) => void;
+
+  /**
+   * Optional, only some contexts support this. This can fail / be cancelled. Which is why it returns a promise.
+   */
+  onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
