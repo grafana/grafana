@@ -35,7 +35,7 @@ export interface DataSourceListProps {
 export function DataSourceList(props: DataSourceListProps) {
   const { className, current, onChange } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
-  const dataSources = useGetDatasources({
+  const { dataSources, updateStorage } = useGetDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
     dashboard: props.dashboard,
@@ -56,7 +56,10 @@ export function DataSourceList(props: DataSourceListProps) {
           <DataSourceCard
             key={ds.uid}
             ds={ds}
-            onClick={() => onChange(ds)}
+            onClick={() => {
+              updateStorage(ds);
+              onChange(ds);
+            }}
             selected={!!isDataSourceMatch(ds, current)}
           />
         ))}

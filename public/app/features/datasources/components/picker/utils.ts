@@ -1,5 +1,9 @@
+import { useLocalStorage } from 'react-use';
+
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
 import { GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+
+const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -40,9 +44,25 @@ export function dataSourceLabel(
 }
 
 export function useGetDatasources(filters: GetDataSourceListFilters) {
+  const [value = [], setStorage] = useLocalStorage<string[]>(LOCAL_STORAGE_KEY, []);
+
   const dataSourceSrv = getDataSourceSrv();
 
-  return dataSourceSrv.getList(filters);
+  const dataSources = dataSourceSrv.getList(filters);
+
+  const updateStorage = (ds: DataSourceInstanceSettings) => {
+    if (ds.meta.builtIn) {
+      return; //Prevent storing the built in datasources (-- Grafana --, -- Mixed --,  -- Dashboard --)
+    }
+    setStorage([ds.uid, ...value].slice(0, 5));
+  };
+
+  const recentlyUsed = value
+    .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
+    .filter((ds): ds is DataSourceInstanceSettings => !!ds); //Custom typeguard to make sure ds is not undefined
+  const otherDataSources = dataSources.filter((ds) => !value.includes(ds.uid));
+
+  return { dataSources: [...recentlyUsed, ...otherDataSources], updateStorage };
 }
 
 export function useGetDatasource(dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) {
