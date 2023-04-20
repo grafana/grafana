@@ -75,7 +75,7 @@ To navigate to the dashboard folder page, click the cog that appears when you ho
 
 ### Dashboard permissions
 
-You can assign permissions to a folder that are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team** and a **User** can be assigned permissions.
+You can assign permissions to a folder, and those permissions are inherited by the dashboards in that folder. An Access Control List (ACL) is used where **Organization Role**, **Team** and a **User** can be assigned permissions.
 
 For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
 
