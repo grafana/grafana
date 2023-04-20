@@ -152,6 +152,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
+	// Temporary routes for the work-in-progress new Browse Dashboards views
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		r.Get("/nested-dashboards/", reqSignedIn, hs.Index)
+		r.Get("/nested-dashboards/*", reqSignedIn, hs.Index)
+	}
+
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
