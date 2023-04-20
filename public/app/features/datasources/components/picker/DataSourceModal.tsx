@@ -21,7 +21,6 @@ interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
-  datasources?: DataSourceInstanceSettings[];
   recentlyUsed?: string[];
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
@@ -61,7 +60,7 @@ export function DataSourceModal({
             dashboard={false}
             mixed={false}
             variables
-            filter={(ds) => ds.name.includes(search)}
+            filter={(ds) => ds.name.includes(search) && !ds.meta.builtIn}
             onChange={onChange}
             current={current}
           />

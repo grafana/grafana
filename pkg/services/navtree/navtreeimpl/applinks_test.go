@@ -178,19 +178,19 @@ func TestAddAppLinks(t *testing.T) {
 	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app1": {SectionID: navtree.NavIDAdmin},
+			"test-app1": {SectionID: navtree.NavIDCfg},
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
 		treeRoot.AddSection(&navtree.NavLink{
-			Id: navtree.NavIDAdmin,
+			Id: navtree.NavIDCfg,
 		})
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
 		// Check if the plugin gets moved over to the "Admin" section
-		adminNode := treeRoot.FindById(navtree.NavIDAdmin)
+		adminNode := treeRoot.FindById(navtree.NavIDCfg)
 		require.NotNil(t, adminNode)
 		require.Len(t, adminNode.Children, 1)
 		require.Equal(t, "plugin-page-test-app1", adminNode.Children[0].Id)

@@ -113,6 +113,13 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
+      e2e.components.DataSourcePicker.container().within(() => {
+        e2e()
+          .get('[class$="-input-suffix"]')
+          .then((element) => {
+            Cypress.dom.isAttached(element);
+          });
+      });
       selectOption({
         container: e2e.components.DataSourcePicker.container(),
         optionText: dataSourceName,
