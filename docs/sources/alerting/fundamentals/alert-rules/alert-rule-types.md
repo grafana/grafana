@@ -18,7 +18,7 @@ Grafana-managed alert rules are the most flexible alert rule type. They allow yo
 
 In addition to supporting multiple data sources, you can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported. This is the only type of rule that allows alerting from multiple data sources in a single rule definition.
 
-## Mimir, Loki and Cortex rules
+## Grafana Mimir or Loki-managed alert rules
 
 To create Grafana Mimir or Grafana Loki-managed alert rules, you must have a compatible Prometheus or Loki data source.
 
