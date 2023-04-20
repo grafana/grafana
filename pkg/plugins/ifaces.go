@@ -58,6 +58,10 @@ type FS interface {
 	Files() ([]string, error)
 }
 
+type FSRemover interface {
+	Remove() error
+}
+
 type FoundBundle struct {
 	Primary  FoundPlugin
 	Children []*FoundPlugin

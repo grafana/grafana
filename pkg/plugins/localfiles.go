@@ -160,6 +160,16 @@ func (f LocalFS) Files() ([]string, error) {
 	return relFiles, nil
 }
 
+func (f LocalFS) Remove() error {
+	// extra security check to ensure we only remove a directory that looks like a plugin
+	if _, err := os.Stat(filepath.Join(f.basePath, "plugin.json")); os.IsNotExist(err) {
+		if _, err = os.Stat(filepath.Join(f.basePath, "dist/plugin.json")); os.IsNotExist(err) {
+			return ErrUninstallInvalidPluginDir
+		}
+	}
+	return os.RemoveAll(f.basePath)
+}
+
 // staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.
 type staticFilesMap map[string]struct{}
 
@@ -233,6 +243,8 @@ func (f StaticFS) Files() ([]string, error) {
 	}
 	return files, nil
 }
+
+var _ fs.File = (*LocalFile)(nil)
 
 // LocalFile implements a fs.File for accessing the local filesystem.
 type LocalFile struct {

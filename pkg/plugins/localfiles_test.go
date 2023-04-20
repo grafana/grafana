@@ -11,39 +11,91 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type tempFileScenario struct {
-	filePath string
-}
-
-func (s tempFileScenario) cleanup() error {
-	return os.Remove(s.filePath)
-}
-
-func (s tempFileScenario) newLocalFile() LocalFile {
-	return LocalFile{path: s.filePath}
-}
-
-func newTempFileScenario() (tempFileScenario, error) {
-	tf, err := os.CreateTemp(os.TempDir(), "*")
-	if err != nil {
-		return tempFileScenario{}, err
-	}
-	defer tf.Close() //nolint
-	if _, err := tf.Write([]byte("hello\n")); err != nil {
-		return tempFileScenario{}, err
-	}
-	return tempFileScenario{
-		filePath: tf.Name(),
-	}, nil
-}
-
-func newTempFileScenarioForTest(t *testing.T) tempFileScenario {
-	s, err := newTempFileScenario()
+func TestLocalFS_Remove(t *testing.T) {
+	pluginDir := t.TempDir()
+	pluginJSON := filepath.Join(pluginDir, "plugin.json")
+	//nolint:gosec
+	f, err := os.Create(pluginJSON)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, s.cleanup())
+	err = f.Close()
+	require.NoError(t, err)
+
+	fs := NewLocalFS(
+		map[string]struct{}{
+			"plugin.json": {},
+		},
+		pluginDir,
+	)
+
+	err = fs.Remove()
+	require.NoError(t, err)
+
+	_, err = os.Stat(pluginDir)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+
+	_, err = os.Stat(pluginJSON)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+
+	t.Run("Uninstall will search in nested dist folder for plugin.json", func(t *testing.T) {
+		pluginDistDir := filepath.Join(t.TempDir(), "dist")
+		err = os.Mkdir(pluginDistDir, os.ModePerm)
+		require.NoError(t, err)
+		pluginJSON = filepath.Join(pluginDistDir, "plugin.json")
+		//nolint:gosec
+		f, err = os.Create(pluginJSON)
+		require.NoError(t, err)
+		err = f.Close()
+		require.NoError(t, err)
+
+		pluginDir = filepath.Dir(pluginDistDir)
+
+		fs = NewLocalFS(
+			map[string]struct{}{
+				"dist/plugin.json": {},
+			},
+			pluginDir,
+		)
+
+		err = fs.Remove()
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.True(t, os.IsNotExist(err))
+
+		_, err = os.Stat(pluginJSON)
+		require.Error(t, err)
+		require.True(t, os.IsNotExist(err))
 	})
-	return s
+
+	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
+		pluginDir = filepath.Join(t.TempDir(), "system32")
+		err = os.Mkdir(pluginDir, os.ModePerm)
+		require.NoError(t, err)
+		testFile := filepath.Join(pluginDir, "important.exe")
+		//nolint:gosec
+		f, err = os.Create(testFile)
+		require.NoError(t, err)
+		err = f.Close()
+		require.NoError(t, err)
+
+		fs = NewLocalFS(
+			map[string]struct{}{
+				"system32/important.exe": {},
+			},
+			pluginDir,
+		)
+
+		err = fs.Remove()
+		require.ErrorIs(t, err, ErrUninstallInvalidPluginDir)
+
+		_, err = os.Stat(pluginDir)
+		require.NoError(t, err)
+
+		_, err = os.Stat(testFile)
+		require.NoError(t, err)
+	})
 }
 
 func TestLocalFile_Read(t *testing.T) {
@@ -145,72 +197,30 @@ func TestLocalFile_Close(t *testing.T) {
 	})
 }
 
-func createDummyTempFile(dir, fn string) (err error) {
-	f, err := os.Create(filepath.Join(dir, fn)) // nolint: gosec
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := f.Close(); closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
-	_, err = f.WriteString(fn)
-	return
+type tempFileScenario struct {
+	filePath string
 }
 
-func TestStaticFS(t *testing.T) {
-	tmp := t.TempDir()
-	const allowedFn, deniedFn = "allowed.txt", "denied.txt"
-	require.NoError(t, createDummyTempFile(tmp, allowedFn))
+func (s tempFileScenario) newLocalFile() LocalFile {
+	return LocalFile{path: s.filePath}
+}
 
-	localFS := NewLocalFS(tmp)
-	staticFS, err := NewStaticFS(localFS)
+func newTempFileScenario(t *testing.T) (tempFileScenario, error) {
+	tf, err := os.CreateTemp(t.TempDir(), "*")
+	if err != nil {
+		return tempFileScenario{}, err
+	}
+	defer tf.Close() //nolint
+	if _, err := tf.Write([]byte("hello\n")); err != nil {
+		return tempFileScenario{}, err
+	}
+	return tempFileScenario{
+		filePath: tf.Name(),
+	}, nil
+}
+
+func newTempFileScenarioForTest(t *testing.T) tempFileScenario {
+	s, err := newTempFileScenario(t)
 	require.NoError(t, err)
-
-	t.Run("open allowed", func(t *testing.T) {
-		f, err := staticFS.Open(allowedFn)
-		require.NoError(t, err)
-		t.Cleanup(func() { require.NoError(t, f.Close()) })
-		b, err := io.ReadAll(f)
-		require.NoError(t, err)
-		require.Equal(t, []byte(allowedFn), b)
-	})
-
-	t.Run("open denied", func(t *testing.T) {
-		// Add file after initialization
-		require.NoError(t, createDummyTempFile(tmp, deniedFn))
-
-		// StaticFS should fail
-		_, err := staticFS.Open(deniedFn)
-		require.True(t, errors.Is(err, ErrFileNotExist))
-
-		// Underlying FS should succeed
-		f, err := localFS.Open(deniedFn)
-		require.NoError(t, err)
-		t.Cleanup(func() { require.NoError(t, f.Close()) })
-		b, err := io.ReadAll(f)
-		require.NoError(t, err)
-		require.Equal(t, []byte("denied.txt"), b)
-	})
-
-	t.Run("open not existing", func(t *testing.T) {
-		_, err := staticFS.Open("unknown.txt")
-		require.True(t, errors.Is(err, ErrFileNotExist))
-	})
-
-	t.Run("list files", func(t *testing.T) {
-		t.Run("underlying fs has extra files", func(t *testing.T) {
-			files, err := localFS.Files()
-			require.NoError(t, err)
-			sort.Strings(files)
-			require.Equal(t, []string{allowedFn, deniedFn}, files)
-		})
-
-		t.Run("staticfs filters underelying fs's files", func(t *testing.T) {
-			files, err := staticFS.Files()
-			require.NoError(t, err)
-			require.Equal(t, []string{allowedFn}, files)
-		})
-	})
+	return s
 }

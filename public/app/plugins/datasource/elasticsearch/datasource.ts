@@ -25,6 +25,7 @@ import {
   QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
+  SupplementaryQueryOptions,
   DataQueryError,
   rangeUtil,
   Field,
@@ -256,7 +257,17 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query;
+
+    // the `target.query` is the "new" location for the query.
+    // normally we would write this code as
+    // try-the-new-place-then-try-the-old-place,
+    // but we had the bug at
+    // https://github.com/grafana/grafana/issues/61107
+    // that may have stored annotations where
+    // both the old and the new place are set,
+    // and in that scenario the old place needs
+    // to have priority.
+    const queryString = annotation.query ?? annotation.target?.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
@@ -597,14 +608,14 @@ export class ElasticDatasource
     return [SupplementaryQueryType.LogsVolume];
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
       return undefined;
     }
 
     let isQuerySuitable = false;
 
-    switch (type) {
+    switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
@@ -655,7 +666,7 @@ export class ElasticDatasource
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((target) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, target))
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
       .filter((query): query is ElasticsearchQuery => !!query);
 
     if (!targets.length) {
