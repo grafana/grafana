@@ -170,7 +170,7 @@ function updateLoadingFrame(
   partition: TimeRange[],
   requestN: number
 ): DataQueryResponse {
-  if (isLogsQuery(request.targets[0].expr)) {
+  if (isLogsQuery(request.targets[0].expr) || isLogsVolumeRequest(request)) {
     return response;
   }
   const loadingFrameName = 'loki-splitting-progress';
@@ -196,6 +196,10 @@ function updateLoadingFrame(
   response.data.push(loadingFrame);
 
   return response;
+}
+
+function isLogsVolumeRequest(request: DataQueryRequest<LokiQuery>): boolean {
+  return request.targets.some((target) => target.refId.startsWith('log-volume'));
 }
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
