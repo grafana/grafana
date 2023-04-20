@@ -167,7 +167,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
-      <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
       <Collapse
         collapsible={true}
         isOpen={isOpen}
@@ -208,6 +207,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             Widen the search
           </Label>
           <MultiSelect
+            isLoading={loading}
             options={realLabels.map(contextFilterToSelectFilter)}
             value={realLabelsEnabled.map(contextFilterToSelectFilter)}
             closeMenuOnSelect={true}
@@ -248,6 +248,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 Refine the search
               </Label>
               <MultiSelect
+                isLoading={loading}
                 options={parsedLabels.map(contextFilterToSelectFilter)}
                 value={parsedLabelsEnabled.map(contextFilterToSelectFilter)}
                 closeMenuOnSelect={true}
