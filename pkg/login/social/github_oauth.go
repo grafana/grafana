@@ -68,7 +68,7 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUr
 
 	for _, allowedOrganization := range s.allowedOrganizations {
 		for _, organization := range organizations {
-			if strings.ToLower(organization) == strings.ToLower(allowedOrganization) {
+			if strings.EqualFold(organization, allowedOrganization) {
 				return true
 			}
 		}
