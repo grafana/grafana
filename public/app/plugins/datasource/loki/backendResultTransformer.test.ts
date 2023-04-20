@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { ArrayVector, DataFrame, DataQueryResponse, Field, FieldType } from '@grafana/data';
+import { DataFrame, DataQueryResponse, Field, FieldType } from '@grafana/data';
 
 import { transformBackendResult } from './backendResultTransformer';
 
@@ -31,34 +31,34 @@ const inputFrame: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1645030244810, 1645030247027]),
+      values: [1645030244810, 1645030247027],
     },
     {
       name: 'Line',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['line1', 'line2']),
+      values: ['line1', 'line2'],
     },
     {
       name: 'labels',
       type: FieldType.other,
       config: {},
-      values: new ArrayVector([
+      values: [
         { level: 'info', code: '41🌙' },
         { level: 'error', code: '41🌙' },
-      ]),
+      ],
     },
     {
       name: 'tsNs',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['1645030244810757120', '1645030247027735040']),
+      values: ['1645030244810757120', '1645030247027735040'],
     },
     {
       name: 'id',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['id1', 'id2']),
+      values: ['id1', 'id2'],
     },
   ],
   length: 5,
@@ -132,13 +132,13 @@ describe('loki backendResultTransformer', () => {
         {
           name: 'time',
           config: {},
-          values: new ArrayVector([1]),
+          values: [1],
           type: FieldType.time,
         },
         {
           name: 'line',
           config: {},
-          values: new ArrayVector(['line1']),
+          values: ['line1'],
           type: FieldType.string,
         },
       ],
@@ -167,10 +167,10 @@ describe('loki backendResultTransformer', () => {
       name: 'labels',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector([
+      values: [
         { level: 'info', code: '41🌙', __error__: 'LogfmtParserErr' },
         { level: 'error', code: '41🌙' },
-      ]),
+      ],
     };
     const response: DataQueryResponse = { data: [clonedFrame] };
 

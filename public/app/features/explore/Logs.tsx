@@ -79,6 +79,7 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<any>;
+  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
@@ -312,10 +313,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextOpen: true,
       contextRow: row,
     });
+    reportInteraction('grafana_explore_logs_log_context_opened', {
+      datasourceType: row.datasourceType,
+      logRowUid: row.uid,
+    });
     this.onCloseContext = () => {
       this.setState({
         contextOpen: false,
         contextRow: undefined,
+      });
+      reportInteraction('grafana_explore_logs_log_context_closed', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
       });
       onClose();
     };
@@ -377,6 +386,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       exploreId,
       getRowContext,
       getLogRowContextUi,
+      getRowContextQuery,
     } = this.props;
 
     const {
@@ -412,6 +422,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             row={contextRow}
             onClose={this.onCloseContext}
             getRowContext={getRowContext}
+            getRowContextQuery={getRowContextQuery}
             getLogRowContextUi={getLogRowContextUi}
             logsSortOrder={logsSortOrder}
             timeZone={timeZone}
