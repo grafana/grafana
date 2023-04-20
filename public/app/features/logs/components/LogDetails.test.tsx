@@ -98,7 +98,7 @@ describe('LogDetails', () => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
-                href: link.url.replace('${__value.text}', field.values.get(rowIndex)),
+                href: link.url.replace('${__value.text}', field.values[rowIndex]),
                 title: link.title,
                 target: '_blank',
                 origin: field,
