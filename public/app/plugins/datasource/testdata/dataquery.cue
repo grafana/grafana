@@ -32,7 +32,7 @@ composableKinds: DataQuery: {
 					{
 						common.DataQuery
 						alias?:       string
-						scenarioId?:  #TestDataQueryType | *"random_walk"
+						scenarioId?:  #TestDataQueryType & (*"random_walk" | _)
 						stringInput?: string
 						stream?:      #StreamingQuery
 						pulseWave?:   #PulseWaveQuery

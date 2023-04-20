@@ -9,12 +9,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -532,7 +535,7 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), store)
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), store)
 			evalCtx := NewContext(context.Background(), u)
 
 			err := evaluator.Validate(evalCtx, condition)
@@ -540,6 +543,62 @@ func TestValidate(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestEvaluate(t *testing.T) {
+	cases := []struct {
+		name     string
+		cond     models.Condition
+		resp     backend.QueryDataResponse
+		expected Results
+		error    string
+	}{{
+		name: "is no data with no frames",
+		cond: models.Condition{
+			Data: []models.AlertQuery{{
+				RefID:         "A",
+				DatasourceUID: "test",
+			}},
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {Frames: nil},
+			},
+		},
+		expected: Results{{
+			State: NoData,
+			Instance: data.Labels{
+				"datasource_uid": "test",
+				"ref_id":         "A",
+			},
+		}},
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ev := conditionEvaluator{
+				pipeline: nil,
+				expressionService: &fakeExpressionService{
+					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+						return &tc.resp, nil
+					},
+				},
+				condition: tc.cond,
+			}
+			results, err := ev.Evaluate(context.Background(), time.Now())
+			if tc.error != "" {
+				require.EqualError(t, err, tc.error)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, results, len(tc.expected))
+				for i := range results {
+					tc.expected[i].EvaluatedAt = results[i].EvaluatedAt
+					tc.expected[i].EvaluationDuration = results[i].EvaluationDuration
+					assert.Equal(t, tc.expected[i], results[i])
+				}
 			}
 		})
 	}
