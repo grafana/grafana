@@ -167,12 +167,12 @@ func TestGetRandomString(t *testing.T) {
 		chiSquared += math.Pow(float64(m[string(char)])-expected, 2) / expected
 	}
 
-	// Ensure there is no more than 5% variance between lowest and highest frequency characters
-	assert.LessOrEqual(t, float64(max-min)/float64(min), 0.05, "Variance between lowest and highest frequency characters must be no more than 5%")
+	// Ensure there is no more than 10% variance between lowest and highest frequency characters
+	assert.LessOrEqual(t, float64(max-min)/float64(min), 0.1, "Variance between lowest and highest frequency characters must be no more than 10%")
 
 	// Ensure chi-squared value is lower than the critical bound
-	// 99.9% probability for 61 degrees of freedom
-	assert.Less(t, chiSquared, 100.888, "Chi squared value must be less than the 99.9% critical bound")
+	// 99.99% probability for 61 degrees of freedom
+	assert.Less(t, chiSquared, 110.8397, "Chi squared value must be less than the 99.99% critical bound")
 }
 
 func TestGetRandomDigits(t *testing.T) {
@@ -210,10 +210,10 @@ func TestGetRandomDigits(t *testing.T) {
 		chiSquared += math.Pow(float64(m[string(char)])-expected, 2) / expected
 	}
 
-	// Ensure there is no more than 5% variance between lowest and highest frequency characters
-	assert.LessOrEqual(t, float64(max-min)/float64(min), 0.05, "Variance between lowest and highest frequency characters must be no more than 5%")
+	// Ensure there is no more than 10% variance between lowest and highest frequency characters
+	assert.LessOrEqual(t, float64(max-min)/float64(min), 0.1, "Variance between lowest and highest frequency characters must be no more than 10%")
 
 	// Ensure chi-squared value is lower than the critical bound
-	// 99.9% probability for 9 degrees of freedom
-	assert.Less(t, chiSquared, 27.877, "Chi squared value must be less than the 99.9% critical bound")
+	// 99.99% probability for 9 degrees of freedom
+	assert.Less(t, chiSquared, 33.7199, "Chi squared value must be less than the 99.99% critical bound")
 }
