@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Field, FieldSet, Icon, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Icon, Input, LinkButton, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -338,7 +338,7 @@ export function TemplatePreview({
   const { watch } = useFormContext<TemplateFormValues>();
 
   const templateContent = watch('content');
-  const [trigger, { data, isError: isPreviewError }] = usePreviewPayloadMutation();
+  const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewPayloadMutation();
 
   const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
 
@@ -360,6 +360,11 @@ export function TemplatePreview({
 
       <Stack direction="column">
         <div className={styles.preview.title}> Preview</div>
+        {isLoading && (
+          <>
+            <Spinner inline={true} /> Loading preview...
+          </>
+        )}
         <TextArea
           required={true}
           value={previewToRender}
