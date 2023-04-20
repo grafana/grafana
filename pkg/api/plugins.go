@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -470,6 +469,10 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
 		}
+		var archError repo.ErrArcNotFound
+		if errors.As(err, &archError) {
+			return response.Error(http.StatusNotFound, archError.Error(), nil)
+		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
@@ -488,10 +491,6 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
-			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
-		}
-
 		return response.Error(http.StatusInternalServerError, "Failed to uninstall plugin", err)
 	}
 	return response.JSON(http.StatusOK, []byte{})

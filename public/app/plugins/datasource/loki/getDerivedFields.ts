@@ -49,7 +49,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
-          query: { query: derivedFieldConfig.url },
+          query: { query: derivedFieldConfig.url, queryType: dsSettings?.type === 'tempo' ? 'traceql' : undefined },
           datasourceUid: derivedFieldConfig.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },

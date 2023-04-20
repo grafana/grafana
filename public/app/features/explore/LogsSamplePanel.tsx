@@ -50,7 +50,7 @@ export function LogsSamplePanel(props: Props) {
     }
 
     const logSampleQueries = queries
-      .map((query) => datasourceInstance.getSupplementaryQuery(SupplementaryQueryType.LogsSample, query))
+      .map((query) => datasourceInstance.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample }, query))
       .filter((query): query is DataQuery => !!query);
 
     if (!logSampleQueries.length) {

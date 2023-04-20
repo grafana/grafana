@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -33,24 +32,23 @@ type Loader struct {
 	pluginInitializer   initializer.Initializer
 	signatureValidator  signature.Validator
 	signatureCalculator plugins.SignatureCalculator
-	pluginStorage       storage.Manager
 	assetPath           *assetpath.Service
 	log                 log.Logger
 	cfg                 *config.Cfg
-	errs                map[string]*plugins.SignatureError
+
+	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(log.NewPrettyLogger("loader.fs"), cfg.PluginsPath), roleRegistry, assetPath,
-		pluginFinder, signatureCalculator)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
+	processManager process.Service, roleRegistry plugins.RoleRegistry,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return &Loader{
 		pluginFinder:        pluginFinder,
@@ -59,7 +57,6 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		signatureValidator:  signature.NewValidator(authorizer),
 		signatureCalculator: signatureCalculator,
 		processManager:      processManager,
-		pluginStorage:       pluginStorage,
 		errs:                make(map[string]*plugins.SignatureError),
 		log:                 log.New("plugin.loader"),
 		roleRegistry:        roleRegistry,
@@ -211,7 +208,7 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if !plugin.IsExternalPlugin() {
+	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 
@@ -230,12 +227,6 @@ func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 		l.log.Info("Plugin registered", "pluginID", p.ID)
 	}
 
-	if p.IsExternalPlugin() {
-		if err := l.pluginStorage.Register(ctx, p.ID, p.FS.Base()); err != nil {
-			return err
-		}
-	}
-
 	return l.processManager.Start(ctx, p.ID)
 }
 
@@ -251,9 +242,12 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	}
 	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
 
-	if err := l.pluginStorage.Remove(ctx, p.ID); err != nil {
-		return err
+	if remover, ok := p.FS.(plugins.FSRemover); ok {
+		if err := remover.Remove(); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
