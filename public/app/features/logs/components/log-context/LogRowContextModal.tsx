@@ -330,7 +330,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       {contextQuery?.datasource?.uid && (
         <Modal.ButtonRow>
           <Button
-            variant="primary"
+            variant="secondary"
             onClick={async () => {
               dispatch(
                 splitOpen({
