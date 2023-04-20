@@ -56,8 +56,8 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 400,
       maxWidth: 600,
       position: 'fixed',
-      right: 10,
-      top: 60,
+      right: 6,
+      top: 88,
     }),
   };
 }
