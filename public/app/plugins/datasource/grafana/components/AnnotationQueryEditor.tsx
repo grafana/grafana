@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Field, FieldSet, Select, Switch } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -64,7 +64,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
   const { limit, matchAny, tags, type, queryType } = annotationQuery;
   let grafanaQueryType = queryType ?? GrafanaQueryType.Annotations;
   const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
     onChange({
@@ -119,7 +119,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           options={queryTypes}
           value={grafanaQueryType}
           onChange={onQueryTypeChange}
-          width={50}
         />
       </Field>
       {grafanaQueryType === GrafanaQueryType.Annotations && (
@@ -130,7 +129,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
               options={annotationTypes}
               value={type}
               onChange={onFilterByChange}
-              width={50}
             />
           </Field>
           <Field label="Max limit">
@@ -167,10 +165,11 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      max-width: 1200px;
-    `,
+    container: css({
+      maxWidth: theme.spacing(60),
+      marginBottom: theme.spacing(2),
+    }),
   };
 };
