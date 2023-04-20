@@ -45,7 +45,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const linkLookup = new Set<string>();
 
   for (const f of orderedVisibleFields) {
-    const v = f.values.get(rowIndex);
+    const v = f.values[rowIndex];
     const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
     if (f.getLinks) {
       f.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).forEach((link) => {

@@ -220,7 +220,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
-    return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
+    return frame0Ref.current!.fields[seriesIdx].values[valueIdx];
   };
 
   // Color by value
@@ -233,7 +233,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values[valueIdx]).color!;
   } else {
     const hasPerBarColor = frame0Ref.current!.fields.some((f) => {
       const fromThresholds =
@@ -261,7 +261,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame0Ref.current!.fields[seriesIdx];
-        return field.display!(field.values.get(valueIdx)).color!;
+        return field.display!(field.values[valueIdx]).color!;
       };
     }
   }
