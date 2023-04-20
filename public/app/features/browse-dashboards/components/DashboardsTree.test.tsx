@@ -1,18 +1,14 @@
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Router } from 'react-router-dom';
-
-import { locationService } from '@grafana/runtime';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { wellFormedDashboard, wellFormedEmptyFolder, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 
 import { DashboardsTree } from './DashboardsTree';
 
-function render(...args: Parameters<typeof rtlRender>) {
-  const [ui, options] = args;
-
-  rtlRender(<Router history={locationService.getHistory()}>{ui}</Router>, options);
+function render(...[ui, options]: Parameters<typeof rtlRender>) {
+  rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
 
 describe('browse-dashboards DashboardsTree', () => {

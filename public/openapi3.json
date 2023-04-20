@@ -1,6 +1,19 @@
 {
   "components": {
     "responses": {
+      "GettableHistoricUserConfigs": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableHistoricUserConfig"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "SMTPNotEnabledError": {
         "description": "(empty)"
       },
@@ -2447,9 +2460,9 @@
           },
           "execErrState": {
             "enum": [
+              "OK",
               "Alerting",
-              "Error",
-              "OK"
+              "Error"
             ],
             "type": "string"
           },
@@ -3878,6 +3891,9 @@
       "DataLink": {
         "description": "DataLink define what",
         "properties": {
+          "internal": {
+            "$ref": "#/components/schemas/InternalDataLink"
+          },
           "targetBlank": {
             "type": "boolean"
           },
@@ -4179,8 +4195,8 @@
         "type": "integer"
       },
       "Duration": {
+        "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
         "format": "int64",
-        "title": "Duration is a type used for marshalling durations.",
         "type": "integer"
       },
       "EmailConfig": {
@@ -4403,6 +4419,9 @@
         "type": "object"
       },
       "EvalQueriesResponse": {},
+      "ExplorePanelsState": {
+        "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+      },
       "ExtendedReceiver": {
         "properties": {
           "email_configs": {
@@ -5067,6 +5086,34 @@
         },
         "type": "object"
       },
+      "GettableHistoricUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/GettableApiAlertingConfig"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_applied": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "template_file_provenances": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "type": "object"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "GettableNGalertConfig": {
         "properties": {
           "alertmanagersChoice": {
@@ -5498,6 +5545,31 @@
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
       },
+      "InternalDataLink": {
+        "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+        "properties": {
+          "datasourceName": {
+            "type": "string"
+          },
+          "datasourceUid": {
+            "type": "string"
+          },
+          "panelsState": {
+            "$ref": "#/components/schemas/ExplorePanelsState"
+          },
+          "query": {},
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRange"
+          },
+          "transformations": {
+            "items": {
+              "$ref": "#/components/schemas/LinkTransformationConfig"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Item": {
         "properties": {
           "title": {
@@ -5891,6 +5963,23 @@
           }
         },
         "title": "LibraryElementSearchResult is the search result for entities.",
+        "type": "object"
+      },
+      "LinkTransformationConfig": {
+        "properties": {
+          "expression": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "mapValue": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SupportedTransformationTypes"
+          }
+        },
         "type": "object"
       },
       "MassDeleteAnnotationsCmd": {
@@ -7176,9 +7265,9 @@
           },
           "execErrState": {
             "enum": [
+              "OK",
               "Alerting",
-              "Error",
-              "OK"
+              "Error"
             ],
             "type": "string"
           },
@@ -8686,6 +8775,9 @@
         },
         "type": "object"
       },
+      "SupportedTransformationTypes": {
+        "type": "string"
+      },
       "SyncResult": {
         "properties": {
           "Elapsed": {
@@ -9130,18 +9222,17 @@
         "type": "object"
       },
       "TimeRange": {
-        "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+        "description": "Redefining this to avoid an import cycle",
         "properties": {
-          "EndMinute": {
-            "format": "int64",
-            "type": "integer"
+          "from": {
+            "format": "date-time",
+            "type": "string"
           },
-          "StartMinute": {
-            "format": "int64",
-            "type": "integer"
+          "to": {
+            "format": "date-time",
+            "type": "string"
           }
         },
-        "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
         "type": "object"
       },
       "TimeRangeDTO": {
@@ -9341,7 +9432,6 @@
         "type": "string"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9377,7 +9467,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "A URL represents a parsed URL (technically, a URI reference).",
+        "title": "URL is a custom URL type that allows validation at configuration load time.",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -10181,6 +10271,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10309,6 +10400,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -10364,13 +10456,13 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10419,12 +10511,14 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10568,6 +10662,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -14352,7 +14447,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "operationId": "getAPIkeys",
         "parameters": [
           {
@@ -14388,6 +14483,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "Will return details of the created API key.",
         "operationId": "addAPIkey",
         "requestBody": {
@@ -14429,6 +14525,8 @@
     },
     "/auth/keys/{id}": {
       "delete": {
+        "deprecated": true,
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "operationId": "deleteAPIkey",
         "parameters": [
           {
@@ -20912,6 +21010,52 @@
       }
     },
     "/teams/{teamId}/groups": {
+      "delete": {
+        "operationId": "removeTeamGroupApiQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove External Group.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ]
+      },
       "get": {
         "operationId": "getTeamGroupsApi",
         "parameters": [
@@ -21004,6 +21148,7 @@
     },
     "/teams/{teamId}/groups/{groupId}": {
       "delete": {
+        "deprecated": true,
         "operationId": "removeTeamGroupApi",
         "parameters": [
           {

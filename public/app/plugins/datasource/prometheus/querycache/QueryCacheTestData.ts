@@ -1,20 +1,18 @@
 import { clone } from 'lodash';
 
-import { ArrayVector } from '@grafana/data/src';
-
 /**
  *
  * @param length - Number of values to add
  * @param start - First timestamp (ms)
  * @param step - step duration (ms)
  */
-export const getMockTimeFrameArray = (length: number, start: number, step: number): ArrayVector => {
-  let timeValues = [];
+export const getMockTimeFrameArray = (length: number, start: number, step: number) => {
+  let timeValues: number[] = [];
   for (let i = 0; i < length; i++) {
     timeValues.push(start + i * step);
   }
 
-  return new ArrayVector(timeValues);
+  return timeValues;
 };
 
 /**
@@ -22,8 +20,8 @@ export const getMockTimeFrameArray = (length: number, start: number, step: numbe
  * @param values
  * @param high
  */
-export const getMockValueFrameArray = (length: number, values = 0): ArrayVector => {
-  return new ArrayVector(Array(length).fill(values));
+export const getMockValueFrameArray = (length: number, values = 0): number[] => {
+  return Array(length).fill(values);
 };
 
 const timeFrameWithMissingValuesInMiddle = getMockTimeFrameArray(721, 1675262550000, 30000);
@@ -31,9 +29,9 @@ const timeFrameWithMissingValuesAtStart = getMockTimeFrameArray(721, 16752625500
 const timeFrameWithMissingValuesAtEnd = getMockTimeFrameArray(721, 1675262550000, 30000);
 
 // Deleting some out the middle
-timeFrameWithMissingValuesInMiddle.toArray().splice(360, 721 - 684);
-timeFrameWithMissingValuesAtStart.toArray().splice(0, 721 - 684);
-timeFrameWithMissingValuesAtEnd.toArray().splice(721 - 684, 721 - 684);
+timeFrameWithMissingValuesInMiddle.splice(360, 721 - 684);
+timeFrameWithMissingValuesAtStart.splice(0, 721 - 684);
+timeFrameWithMissingValuesAtEnd.splice(721 - 684, 721 - 684);
 
 const mockLabels = {
   __name__: 'cortex_request_duration_seconds_bucket',

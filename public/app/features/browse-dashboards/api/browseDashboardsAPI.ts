@@ -29,7 +29,7 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 }
 
 export const browseDashboardsAPI = createApi({
-  reducerPath: 'browse-dashboards',
+  reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     getFolder: builder.query<FolderDTO, string>({
