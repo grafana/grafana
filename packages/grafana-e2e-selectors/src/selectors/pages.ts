@@ -270,11 +270,20 @@ export const Pages = {
     },
   },
   UserListPage: {
+    tabs: {
+      allUsers: 'all-users-tab',
+      orgUsers: 'org-users-tab',
+      publicDashboardsUsers: 'public-dashboards-users-tab',
+      users: 'users-tab',
+    },
     org: {
       url: '/org/users',
     },
     admin: {
       url: '/admin/users',
+    },
+    publicDashboards: {
+      container: 'public-dashboards-users-list',
     },
   },
 };

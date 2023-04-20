@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, ConfirmModal } from '@grafana/ui/src';
 import { Page } from 'app/core/components/PageNew/Page';
 
 import { useGetUsersWithActiveSessionsQuery } from '../dashboard/api/publicDashboardApi';
 import { SessionUser } from '../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+
+const selectors = e2eSelectors.pages.UserListPage.publicDashboards;
 
 export const UserListPublicDashboardPage = () => {
   const [userToRemove, setUserToRemove] = useState<SessionUser | null>(null);
@@ -13,7 +16,7 @@ export const UserListPublicDashboardPage = () => {
 
   return (
     <Page.Contents isLoading={isLoading}>
-      <table className="filter-table form-inline">
+      <table className="filter-table form-inline" data-testid={selectors.container}>
         <thead>
           <tr>
             <th>Email</th>

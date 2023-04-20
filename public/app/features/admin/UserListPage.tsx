@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { config, featureEnabled } from '@grafana/runtime/src';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,13 +20,26 @@ enum TabView {
   PUBLIC_DASHBOARDS,
 }
 
+const selectors = e2eSelectors.pages.UserListPage;
+
+const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView: (v: TabView | null) => void }) => (
+  <Tab
+    label="Public dashboard users"
+    active={view === TabView.PUBLIC_DASHBOARDS}
+    onChangeTab={() => setView(TabView.PUBLIC_DASHBOARDS)}
+    data-testid={selectors.tabs.publicDashboardsUsers}
+  />
+);
+
 export default function UserListPage() {
   const styles = useStyles2(getStyles);
 
   const hasAccessToAdminUsers = contextSrv.hasAccess(AccessControlAction.UsersRead, contextSrv.isGrafanaAdmin);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const hasEmailSharingEnabled =
-    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
+    Boolean(config.featureToggles.publicDashboards) &&
+    Boolean(config.featureToggles.publicDashboardsEmailSharing) &&
+    featureEnabled('publicDashboardsEmailSharing');
 
   const [view, setView] = useState(() => {
     if (hasAccessToAdminUsers) {
@@ -55,25 +69,30 @@ export default function UserListPage() {
     <Page navId={'global-users'}>
       {showToggle ? (
         <TabsBar className={styles.tabsMargin}>
-          <Tab label="All users" active={view === TabView.ADMIN} onChangeTab={() => setView(TabView.ADMIN)} />
-          <Tab label="Organization users" active={view === TabView.ORG} onChangeTab={() => setView(TabView.ORG)} />
-          {hasEmailSharingEnabled && (
-            <Tab
-              label="Public dashboard users"
-              active={view === TabView.PUBLIC_DASHBOARDS}
-              onChangeTab={() => setView(TabView.PUBLIC_DASHBOARDS)}
-            />
-          )}
+          <Tab
+            label="All users"
+            active={view === TabView.ADMIN}
+            onChangeTab={() => setView(TabView.ADMIN)}
+            data-testid={selectors.tabs.allUsers}
+          />
+          <Tab
+            label="Organization users"
+            active={view === TabView.ORG}
+            onChangeTab={() => setView(TabView.ORG)}
+            data-testid={selectors.tabs.orgUsers}
+          />
+          {hasEmailSharingEnabled && <PublicDashboardsTab view={view} setView={setView} />}
         </TabsBar>
       ) : (
         hasEmailSharingEnabled && (
           <TabsBar className={styles.tabsMargin}>
-            <Tab label="Users" active={view === null} onChangeTab={() => setView(null)} />
             <Tab
-              label="Public dashboard users"
-              active={view === TabView.PUBLIC_DASHBOARDS}
-              onChangeTab={() => setView(TabView.PUBLIC_DASHBOARDS)}
+              label="Users"
+              active={view === null}
+              onChangeTab={() => setView(null)}
+              data-testid={selectors.tabs.users}
             />
+            <PublicDashboardsTab view={view} setView={setView} />
           </TabsBar>
         )
       )}
