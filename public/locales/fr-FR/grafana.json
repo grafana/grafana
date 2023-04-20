@@ -31,21 +31,21 @@
   },
   "dashboard": {
     "add-menu": {
-      "import": "",
-      "paste-panel": "",
-      "row": "",
-      "visualization": ""
+      "import": "Importer depuis la bibliothèque",
+      "paste-panel": "Coller panneau",
+      "row": "Ligne",
+      "visualization": "Visualisation"
     },
     "empty": {
-      "add-import-body": "",
-      "add-import-button": "",
+      "add-import-body": "Importer des visualisations partagées avec d'autres tableaux de bord.",
+      "add-import-button": "Importer panneau de bibliothèque",
       "add-import-header": "Importer un panneau",
-      "add-row-body": "",
+      "add-row-body": "Regroupez vos visualisations en sections extensibles.",
       "add-row-button": "Ajouter ligne",
       "add-row-header": "Ajouter une ligne",
-      "add-visualization-body": "",
-      "add-visualization-button": "",
-      "add-visualization-header": ""
+      "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
+      "add-visualization-button": "Ajouter visualisation",
+      "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation"
     },
     "inspect": {
       "data-tab": "Données",
@@ -92,7 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiques de source de données",
-      "data-traceids": "",
+      "data-traceids": "ID de suivi",
       "processing-time": "Durée de traitement des données",
       "queries": "Nombre de requêtes",
       "request-time": "Durée totale de la requête",
@@ -143,7 +143,7 @@
       "name": "Nom du panneau de bibliothèque"
     },
     "add-widget": {
-      "title": ""
+      "title": "Ajouter un panneau depuis la bibliothèque de panneau"
     }
   },
   "library-panels": {
