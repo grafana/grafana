@@ -25,7 +25,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, config, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
-import { VizLegendOptions } from '@grafana/schema';
+import { DataQuery, VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
   PanelChrome,
@@ -116,6 +116,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
+        onUpdateQueries: this.onUpdateQueries,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -145,6 +146,20 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return CoreApp.Dashboard;
   }
+
+  onUpdateQueries = (queries: DataQuery[]) => {
+    const { panel } = this.props;
+
+    if (!queries.length) {
+      return;
+    }
+
+    const ds = queries[0].datasource;
+    panel.updateQueries({
+      dataSource: ds!,
+      queries,
+    });
+  };
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));

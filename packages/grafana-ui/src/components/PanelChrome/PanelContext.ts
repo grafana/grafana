@@ -9,6 +9,7 @@ import {
   SplitOpen,
   CoreApp,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { AdHocFilterItem } from '../Table/types';
 
@@ -82,6 +83,12 @@ export interface PanelContext {
    * Called when a panel is changing the sort order of the legends.
    */
   onToggleLegendSort?: (sortBy: string) => void;
+
+  /**
+   * Some panels could be interested in updating the queries.
+   * This optional and not always available in all contexts.
+   */
+  onUpdateQueries?: (queries: DataQuery[]) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
