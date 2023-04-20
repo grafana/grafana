@@ -49,13 +49,20 @@ export function QueryEditor(props: Props) {
     props.onRunQuery();
   }
 
+  // Round to nearest 5 seconds. If the range is something like last 1h then every render the range values change slightly
+  // and what ever has range as dependency is rerun. So this effectively debounces the queries.
+  const unpreciseRange = {
+    to: Math.ceil((props.range?.to.valueOf() || 0) / 5000) * 5000,
+    from: Math.floor((props.range?.from.valueOf() || 0) / 5000) * 5000,
+  };
+
   const labelsResult = useAsync(() => {
     return props.datasource.getLabelNames(
       props.query.profileTypeId + props.query.labelSelector,
-      props.range?.from.valueOf() || 0,
-      props.range?.to.valueOf() || 0
+      unpreciseRange.from,
+      unpreciseRange.to
     );
-  }, [props.datasource, props.query.profileTypeId, props.query.labelSelector, props.range]);
+  }, [props.datasource, props.query.profileTypeId, props.query.labelSelector, unpreciseRange.to, unpreciseRange.from]);
 
   const cascaderOptions = useCascaderOptions(profileTypes);
   const selectedProfileName = useProfileName(profileTypes, props.query.profileTypeId);
@@ -67,13 +74,13 @@ export function QueryEditor(props: Props) {
       getLabelNames: () => {
         return props.datasource.getLabelNames(
           props.query.profileTypeId + props.query.labelSelector,
-          props.range?.from.valueOf() || 0,
-          props.range?.to.valueOf() || 0
+          unpreciseRange.from,
+          unpreciseRange.to
         );
       },
       getAllLabelsAndValues: props.datasource.getAllLabelsAndValues.bind(props.datasource),
     };
-  }, [props.datasource, props.range, props.query.labelSelector, props.query.profileTypeId]);
+  }, [props.datasource, unpreciseRange.to, unpreciseRange.from, props.query.labelSelector, props.query.profileTypeId]);
 
   return (
     <EditorRows>
@@ -104,10 +111,12 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
     for (let profileType of profileTypes) {
       let parts: string[];
       // Phlare uses : as delimiter while Pyro uses .
-      if (profileType.id.indexOf(':')) {
+      if (profileType.id.indexOf(':') > -1) {
         parts = profileType.id.split(':');
       } else {
         parts = profileType.id.split('.');
+        const last = parts.pop()!;
+        parts = [parts.join('.'), last]
       }
 
       const [name, type] = parts;

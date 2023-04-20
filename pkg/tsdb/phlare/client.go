@@ -10,8 +10,8 @@ type ProfilingClient interface {
 	LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error)
 	AllLabelsAndValues(ctx context.Context, matchers []string) (map[string][]string, error)
-	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) ([]*Series, error)
-	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*FlameGraph, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
+	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error)
 }
 
 type ProfileType struct {
@@ -28,7 +28,7 @@ func getClient(backendType string, httpClient *http.Client, url string) Profilin
 	return NewPhlareClient(httpClient, url)
 }
 
-type FlameGraph struct {
+type Flamebearer struct {
 	Names   []string
 	Levels  []*Level
 	Total   int64
@@ -53,4 +53,15 @@ type Point struct {
 	Value float64
 	// Milliseconds unix timestamp
 	Timestamp int64
+}
+
+type ProfileResponse struct {
+	Flamebearer *Flamebearer
+	Units       string
+}
+
+type SeriesResponse struct {
+	Series []*Series
+	Units  string
+	Label  string
 }

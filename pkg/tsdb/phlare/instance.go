@@ -7,14 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 var (
@@ -322,14 +320,4 @@ func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishSt
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
-}
-
-func withoutPrivateLabels(labels []*typesv1.LabelPair) []*typesv1.LabelPair {
-	res := make([]*typesv1.LabelPair, 0, len(labels))
-	for _, l := range labels {
-		if !strings.HasPrefix(l.Name, "__") {
-			res = append(res, l)
-		}
-	}
-	return res
 }

@@ -3,6 +3,7 @@ package phlare
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
@@ -40,7 +41,7 @@ func (c *PhlareClient) ProfileTypes(ctx context.Context) ([]ProfileType, error) 
 	}
 }
 
-func (c *PhlareClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) ([]*Series, error) {
+func (c *PhlareClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
 	req := connect.NewRequest(&querierv1.SelectSeriesRequest{
 		ProfileTypeID: profileTypeID,
 		LabelSelector: labelSelector,
@@ -80,10 +81,16 @@ func (c *PhlareClient) GetSeries(ctx context.Context, profileTypeID string, labe
 		}
 	}
 
-	return series, nil
+	parts := strings.Split(profileTypeID, ":")
+
+	return &SeriesResponse{
+		Series: series,
+		Units:  getUnits(profileTypeID),
+		Label:  parts[1],
+	}, nil
 }
 
-func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*FlameGraph, error) {
+func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
 	req := &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
 			ProfileTypeID: profileTypeID,
@@ -105,12 +112,27 @@ func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID string, lab
 		}
 	}
 
-	return &FlameGraph{
-		Names:   resp.Msg.Flamegraph.Names,
-		Levels:  levels,
-		Total:   resp.Msg.Flamegraph.Total,
-		MaxSelf: resp.Msg.Flamegraph.MaxSelf,
+	return &ProfileResponse{
+		Flamebearer: &Flamebearer{
+			Names:   resp.Msg.Flamegraph.Names,
+			Levels:  levels,
+			Total:   resp.Msg.Flamegraph.Total,
+			MaxSelf: resp.Msg.Flamegraph.MaxSelf,
+		},
+		Units: getUnits(profileTypeID),
 	}, nil
+}
+
+func getUnits(profileTypeID string) string {
+	parts := strings.Split(profileTypeID, ":")
+	unit := parts[2]
+	if unit == "nanoseconds" {
+		return "ns"
+	}
+	if unit == "count" {
+		return "short"
+	}
+	return unit
 }
 
 func (c *PhlareClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
@@ -119,7 +141,14 @@ func (c *PhlareClient) LabelNames(ctx context.Context, query string, start int64
 		return nil, err
 	}
 
-	return resp.Msg.Names, nil
+	var filtered []string
+	for _, label := range resp.Msg.Names {
+		if !isPrivateLabel(label) {
+			filtered = append(filtered, label)
+		}
+	}
+
+	return filtered, nil
 }
 
 func (c *PhlareClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
@@ -134,18 +163,40 @@ func (c *PhlareClient) AllLabelsAndValues(ctx context.Context, matchers []string
 		return nil, err
 	}
 
-	result := make(map[string][]string)
+	result := make(map[string]map[string]bool)
 
 	for _, val := range res.Msg.LabelsSet {
-		withoutPrivate := withoutPrivateLabels(val.Labels)
-
-		for _, label := range withoutPrivate {
+		for _, label := range val.Labels {
+			if isPrivateLabel(label.Name) {
+				continue
+			}
 			if _, ok := result[label.Name]; ok {
-				result[label.Name] = append(result[label.Name], label.Value)
+				// Make sure we deduplicate the values
+				if _, ok := result[label.Name][label.Value]; !ok {
+					result[label.Name][label.Value] = true
+				}
 			} else {
-				result[label.Name] = []string{label.Value}
+				valueSet := make(map[string]bool)
+				valueSet[label.Value] = true
+				result[label.Name] = valueSet
 			}
 		}
 	}
-	return result, nil
+
+	final := make(map[string][]string)
+
+	for key, val := range result {
+		final[key] = make([]string, len(val))
+		i := 0
+		for k := range val {
+			final[key][i] = k
+			i++
+		}
+	}
+
+	return final, nil
+}
+
+func isPrivateLabel(label string) bool {
+	return strings.HasPrefix(label, "__")
 }

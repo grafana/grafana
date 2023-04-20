@@ -43,6 +43,10 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
+  setApiObject(apiObject: ApiObject) {
+    this.apiObject = apiObject;
+  }
+
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
     position: monacoTypes.Position
@@ -110,11 +114,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           };
         });
       case 'IN_LABEL_VALUE':
-        let values: string[] = []
+        let values: string[] = [];
         if (this.labels[situation.labelName].size) {
-          values = Array.from(this.labels[situation.labelName].values())
+          values = Array.from(this.labels[situation.labelName].values());
         } else if (this.backendType === 'pyroscope') {
-          values = await this.apiObject.getLabelValues(situation.labelName)
+          values = await this.apiObject.getLabelValues(situation.labelName);
         }
         return values.map((key) => {
           return {

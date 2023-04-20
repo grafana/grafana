@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, {useEffect, useMemo, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import { useAsync, useLatest } from 'react-use';
 
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
@@ -23,10 +23,6 @@ export function LabelsEditor(props: Props) {
 
   const onRunQueryRef = useLatest(props.onRunQuery);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  if (!setupAutocompleteFn) {
-    return null;
-  }
 
   return (
     <div
@@ -98,13 +94,20 @@ const EDITOR_HEIGHT_OFFSET = 2;
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
 function useAutocomplete(apiObject: ApiObject, backendType: BackendType) {
-  const provider = useMemo(() => new CompletionProvider(apiObject, backendType), [apiObject, backendType]);
+  const providerRef = useRef<CompletionProvider>();
+  if (providerRef.current === undefined) {
+    providerRef.current = new CompletionProvider(apiObject, backendType);
+  }
 
-  const { loading } = useAsync(async () => {
-    await provider.init();
-  }, [provider]);
-
-  const providerRef = useRef<CompletionProvider>(provider);
+  useAsync(async () => {
+    if (providerRef.current) {
+      // This is a bit weird but to simplify the API this depends on the apiObject changes with time range change
+      // as that is baked in. So if that object changes we have to reinit the provider. For phlare this does not do
+      // much but for Pyro it can pull different labels based on the time range.
+      providerRef.current.setApiObject(apiObject);
+      await providerRef.current.init();
+    }
+  }, [apiObject]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
@@ -114,17 +117,15 @@ function useAutocomplete(apiObject: ApiObject, backendType: BackendType) {
     };
   }, []);
 
-  if (loading) {
-    return;
-  }
-
   // This should be run in monaco onEditorDidMount
   return (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    providerRef.current.editor = editor;
-    providerRef.current.monaco = monaco;
+    if (providerRef.current) {
+      providerRef.current.editor = editor;
+      providerRef.current.monaco = monaco;
 
-    const { dispose } = monaco.languages.registerCompletionItemProvider(langId, providerRef.current);
-    autocompleteDisposeFun.current = dispose;
+      const { dispose } = monaco.languages.registerCompletionItemProvider(langId, providerRef.current);
+      autocompleteDisposeFun.current = dispose;
+    }
   };
 }
 

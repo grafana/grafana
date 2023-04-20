@@ -3,6 +3,7 @@ package phlare
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -54,46 +55,80 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]ProfileType, erro
 }
 
 type PyroscopeProfileResponse struct {
-	Flamebearer *Flamebearer `json:"flamebearer"`
+	Flamebearer *PyroFlamebearer `json:"flamebearer"`
+	Metadata    *Metadata        `json:"metadata"`
 }
 
-type Flamebearer struct {
-	Levels   []*Level `json:"levels"`
-	MaxSelf  int64    `json:"maxSelf"`
-	NumTicks int64    `json:"numTicks"`
-	Names    []string `json:"names"`
+type Metadata struct {
+	Units string `json:"units"`
 }
 
-func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*FlameGraph, error) {
+type PyroFlamebearer struct {
+	Levels   [][]int64 `json:"levels"`
+	MaxSelf  int64     `json:"maxSelf"`
+	NumTicks int64     `json:"numTicks"`
+	Names    []string  `json:"names"`
+}
+
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
 	params := url.Values{}
 	params.Add("from", strconv.FormatInt(start, 10))
 	params.Add("until", strconv.FormatInt(end, 10))
 	params.Add("query", profileTypeID+labelSelector)
 	params.Add("format", "json")
-	resp, err := c.httpClient.Get(c.URL + "/api/flamegraph?" + params.Encode())
 
+	url := c.URL + "/render?" + params.Encode()
+	logger.Debug("calling /render", "url", url)
+
+	resp, err := c.httpClient.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error calling /render api: %v", err)
 	}
 
 	var respData *PyroscopeProfileResponse
 
-	err = json.NewDecoder(resp.Body).Decode(&respData)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading response body: %v", err)
 	}
 
-	return &FlameGraph{
-		Names:   respData.Flamebearer.Names,
-		Levels:  respData.Flamebearer.Levels,
-		Total:   respData.Flamebearer.NumTicks,
-		MaxSelf: respData.Flamebearer.MaxSelf,
+	err = json.Unmarshal(body, &respData)
+	if err != nil {
+		logger.Debug("flamegraph data", "body", string(body))
+		return nil, fmt.Errorf("error decoding flamegraph data: %v", err)
+	}
+
+	mappedLevels := make([]*Level, len(respData.Flamebearer.Levels))
+	for i, level := range respData.Flamebearer.Levels {
+		mappedLevels[i] = &Level{
+			Values: level,
+		}
+	}
+
+	units := "short"
+	if respData.Metadata.Units == "bytes" {
+		units = "bytes"
+	}
+	if respData.Metadata.Units == "samples" {
+		units = "ms"
+	}
+
+	return &ProfileResponse{
+		Flamebearer: &Flamebearer{
+			Names:   respData.Flamebearer.Names,
+			Levels:  mappedLevels,
+			Total:   respData.Flamebearer.NumTicks,
+			MaxSelf: respData.Flamebearer.MaxSelf,
+		},
+		Units: units,
 	}, nil
 }
 
-func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) ([]*Series, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
 	// TODO implement
-	return []*Series{}, nil
+	return &SeriesResponse{
+		Series: []*Series{},
+	}, nil
 }
 
 func (c *PyroscopeClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
@@ -111,6 +146,14 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, query string, start in
 	err = json.NewDecoder(resp.Body).Decode(&names)
 	if err != nil {
 		return nil, err
+	}
+
+	var filtered []string
+	for _, label := range names {
+		// Using the same func from Phlare client, works but should do separate one probably
+		if !isPrivateLabel(label) {
+			filtered = append(filtered, label)
+		}
 	}
 
 	return names, nil

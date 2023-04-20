@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -76,18 +75,18 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			return response
 		}
 		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeId)...)
+		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		logger.Debug("Sending SelectMergeStacktracesRequest", "queryModel", qm)
+		logger.Debug("Calling GetProfile", "queryModel", qm)
 		prof, err := d.client.GetProfile(ctx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli())
 		if err != nil {
-			logger.Error("Querying SelectMergeStacktraces()", "err", err)
+			logger.Error("Error GetProfile()", "err", err)
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(prof, qm.ProfileTypeId)
+		frame := responseToDataFrames(prof)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -120,9 +119,9 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(flamegraph *FlameGraph, profileTypeID string) *data.Frame {
-	tree := levelsToTree(flamegraph.Levels, flamegraph.Names)
-	return treeToNestedSetDataFrame(tree, profileTypeID)
+func responseToDataFrames(resp *ProfileResponse) *data.Frame {
+	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
+	return treeToNestedSetDataFrame(tree, resp.Units)
 }
 
 // START_OFFSET is offset of the bar relative to previous sibling
@@ -280,7 +279,7 @@ type CustomMeta struct {
 // where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
 // parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
+func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 	frame := data.NewFrame("response")
 	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
@@ -289,9 +288,8 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	selfField := data.NewField("self", nil, []int64{})
 
 	// profileTypeID should encode the type of the profile with unit being the 3rd part
-	parts := strings.Split(profileTypeID, ":")
-	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
+	valueField.Config = &data.FieldConfig{Unit: unit}
+	selfField.Config = &data.FieldConfig{Unit: unit}
 	frame.Fields = data.Fields{levelField, valueField, selfField}
 
 	labelField := NewEnumField("label", nil)
@@ -368,10 +366,10 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(series []*Series, profileTypeID string) []*data.Frame {
-	frames := make([]*data.Frame, 0, len(series))
+func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+	frames := make([]*data.Frame, 0, len(resp.Series))
 
-	for _, series := range series {
+	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
@@ -380,21 +378,13 @@ func seriesToDataFrames(series []*Series, profileTypeID string) []*data.Frame {
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 
-		label := ""
-		unit := ""
-		parts := strings.Split(profileTypeID, ":")
-		if len(parts) == 5 {
-			label = parts[1] // sample type e.g. cpu, goroutine, alloc_objects
-			unit = normalizeUnit(parts[2])
-		}
-
 		labels := make(map[string]string)
 		for _, label := range series.Labels {
 			labels[label.Name] = label.Value
 		}
 
-		valueField := data.NewField(label, labels, []float64{})
-		valueField.Config = &data.FieldConfig{Unit: unit}
+		valueField := data.NewField(resp.Label, labels, []float64{})
+		valueField.Config = &data.FieldConfig{Unit: resp.Units}
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
@@ -406,14 +396,4 @@ func seriesToDataFrames(series []*Series, profileTypeID string) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
-}
-
-func normalizeUnit(unit string) string {
-	if unit == "nanoseconds" {
-		return "ns"
-	}
-	if unit == "count" {
-		return "short"
-	}
-	return unit
 }
