@@ -131,13 +131,9 @@ const getStyles = (
       margin-top: ${theme.spacing(topSpacing ?? 0)};
     `,
     icon: css`
-      padding-right: ${theme.spacing(2)};
-      //background: ${color.main};
-      //border-radius: ${borderRadius} 0 0 ${borderRadius};
+      padding: ${theme.spacing(1, 2, 0, 0)};
       color: ${color.text};
       display: flex;
-      align-items: center;
-      justify-content: center;
     `,
     title: css`
       //font-weight: ${theme.typography.fontWeightMedium};
