@@ -21,9 +21,9 @@ func RunGrafanaCmd(subCmd string) int {
 
 	switch filepath.Base(curr) {
 	case "grafana-server":
-		fmt.Printf("%s: %s\n", color.RedString("Deprecation warning:"), "The standalone 'grafana-server' program is deprecated and will be removed in the future. Please update all uses of 'grafana-server' to 'grafana server'")
+		fmt.Printf("%s: %s\n", color.RedString("Deprecation warning"), "The standalone 'grafana-server' program is deprecated and will be removed in the future. Please update all uses of 'grafana-server' to 'grafana server'")
 	case "grafana-cli":
-		fmt.Printf("%s: %s\n", color.RedString("Deprecation warning:"), "The standalone 'grafana-cli' program is deprecated and will be removed in the future. Please update all uses of 'grafana-cli' to 'grafana cli'")
+		fmt.Printf("%s: %s\n", color.RedString("Deprecation warning"), "The standalone 'grafana-cli' program is deprecated and will be removed in the future. Please update all uses of 'grafana-cli' to 'grafana cli'")
 	}
 
 	executable := "grafana"
