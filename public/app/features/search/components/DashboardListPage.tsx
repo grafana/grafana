@@ -47,7 +47,7 @@ export const DashboardListPage = memo(({ match, location }: Props) => {
       actions={
         config.featureToggles.nestedFolders && (
           <Link href="/nested-dashboards">
-            <Tooltip content="New Browse Dashboards for nested folders is still a work in progress and may be missing features">
+            <Tooltip content="New Browse Dashboards for nested folders is still under development and may be missing features">
               <span>
                 <Badge icon="folder" color="blue" text="Preview new Browse Dashboards" />
               </span>
