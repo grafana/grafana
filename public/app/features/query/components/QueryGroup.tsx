@@ -52,7 +52,7 @@ interface State {
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
-  isModalOpen: boolean;
+  isDataSourceModalOpen: boolean;
   data: PanelData;
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
@@ -71,7 +71,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   querySubscription: Unsubscribable | null = null;
 
   state: State = {
-    isModalOpen: false,
+    isDataSourceModalOpen: false,
     isLoadingHelp: false,
     helpContent: null,
     isPickerOpen: false,
@@ -121,7 +121,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         },
         // TODO: Detect the first panel added into a new dashboard better.
         // This is flaky in case the UID is generated differently
-        isModalOpen: locationService.getSearchObject().editPanel === '1',
+        isDataSourceModalOpen: locationService.getSearchObject().editPanel === '1',
       });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -280,7 +280,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   renderDataSourcePickerWithPrompt = () => {
-    const { isModalOpen } = this.state;
+    const { isDataSourceModalOpen } = this.state;
 
     const commonProps = {
       enableFileUpload: config.featureToggles.editPanelCSVDragAndDrop,
@@ -293,14 +293,16 @@ export class QueryGroup extends PureComponent<Props, State> {
       current: this.props.options.dataSource,
       onChange: (ds: DataSourceInstanceSettings) => {
         this.onChangeDataSource(ds);
-        this.setState({ isModalOpen: false });
+        this.setState({ isDataSourceModalOpen: false });
       },
     };
-    const onDismiss = () => this.setState({ isModalOpen: false });
+    const onDismiss = () => this.setState({ isDataSourceModalOpen: false });
 
     return (
       <>
-        {isModalOpen && <DataSourceModal {...commonProps} onDismiss={onDismiss}></DataSourceModal>}
+        {isDataSourceModalOpen && config.featureToggles.advancedDataSourcePicker && (
+          <DataSourceModal {...commonProps} onDismiss={onDismiss}></DataSourceModal>
+        )}
         <DataSourcePicker
           {...commonProps}
           metrics={true}
