@@ -136,7 +136,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse);
-        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN, totalRequests);
+        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -168,8 +168,7 @@ function updateLoadingFrame(
   response: DataQueryResponse,
   request: DataQueryRequest<LokiQuery>,
   partition: TimeRange[],
-  requestN: number,
-  totalRequests: number
+  requestN: number
 ): DataQueryResponse {
   if (isLogsQuery(request.targets[0].expr)) {
     return response;
@@ -181,14 +180,11 @@ function updateLoadingFrame(
     return response;
   }
 
-  const progress = Math.round(((totalRequests - requestN) / totalRequests) * 100);
-
   const loadingFrame = new ArrayDataFrame([
     {
       time: partition[0].from.valueOf(),
       timeEnd: partition[requestN - 2].to.valueOf(),
       isRegion: true,
-      text: `Loading ${progress}%`,
       color: 'rgba(120, 120, 120, 0.1)',
     },
   ]);
