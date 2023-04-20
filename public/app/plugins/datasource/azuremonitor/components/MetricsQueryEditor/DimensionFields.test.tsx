@@ -140,7 +140,7 @@ describe(`Azure Monitor QueryEditor`, () => {
           {
             ...mockPanelData.series[0].fields[0],
             name: 'Test Dimension 1',
-            labels: { testdimension1: 'testlabel' },
+            labels: { Testdimension1: 'testlabel' },
           },
         ],
       },

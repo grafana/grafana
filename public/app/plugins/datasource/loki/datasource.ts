@@ -30,6 +30,7 @@ import {
   QueryHint,
   rangeUtil,
   ScopedVars,
+  SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
 } from '@grafana/data';
@@ -171,8 +172,8 @@ export class LokiDatasource
     return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: LokiQuery): LokiQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
       return undefined;
     }
 
@@ -180,7 +181,7 @@ export class LokiDatasource
     const expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
 
-    switch (type) {
+    switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
@@ -206,7 +207,7 @@ export class LokiDatasource
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
-          maxLines: 100,
+          maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
         };
 
       default:
@@ -217,7 +218,7 @@ export class LokiDatasource
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, query))
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
@@ -238,7 +239,7 @@ export class LokiDatasource
   getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets
-      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsSample, query))
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
