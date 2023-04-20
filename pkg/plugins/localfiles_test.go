@@ -94,7 +94,6 @@ func TestLocalFS_Remove(t *testing.T) {
 		_, err = os.Stat(testFile)
 		require.NoError(t, err)
 	})
-
 }
 
 func TestLocalFile_Read(t *testing.T) {
