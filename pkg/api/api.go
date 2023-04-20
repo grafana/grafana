@@ -220,8 +220,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI) {
 		r.Get("/admin/authentication", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), hs.Index)
-		r.Get("/admin/authentication/saml", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML)), hs.Index)
-		r.Get("/admin/authentication/saml/*", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML)), hs.Index)
 	}
 
 	// authed api
