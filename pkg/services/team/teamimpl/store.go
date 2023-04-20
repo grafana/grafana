@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type store interface {
@@ -67,6 +68,7 @@ func getTeamMemberCount(db db.DB, filteredUsers []string) string {
 func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 	return `SELECT
 		team.id as id,
+		team.uid,
 		team.org_id,
 		team.name as name,
 		team.email as email, ` +
@@ -77,6 +79,7 @@ func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 func getTeamSelectWithPermissionsSQLBase(db db.DB, filteredUsers []string) string {
 	return `SELECT
 		team.id AS id,
+		team.uid,
 		team.org_id,
 		team.name AS name,
 		team.email AS email,
@@ -88,6 +91,7 @@ func getTeamSelectWithPermissionsSQLBase(db db.DB, filteredUsers []string) strin
 
 func (ss *xormStore) Create(name, email string, orgID int64) (team.Team, error) {
 	t := team.Team{
+		UID:     util.GenerateShortUID(),
 		Name:    name,
 		Email:   email,
 		OrgID:   orgID,
@@ -536,6 +540,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Join("INNER", ss.db.GetDialect().Quote("user"),
 			fmt.Sprintf("team_member.user_id=%s.%s", ss.db.GetDialect().Quote("user"), ss.db.GetDialect().Quote("id")),
 		)
+		sess.Join("INNER", "team", "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
 		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanStr(false))
@@ -545,11 +550,12 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		}
 
 		// Join with only most recent auth module
-		authJoinCondition := `(
-		SELECT id from user_auth
+		authJoinCondition := `user_auth.id=(
+			SELECT id
+			FROM user_auth
 			WHERE user_auth.user_id = team_member.user_id
-			ORDER BY user_auth.created DESC `
-		authJoinCondition = "user_auth.id=" + authJoinCondition + ss.db.GetDialect().Limit(1) + ")"
+			ORDER BY user_auth.created DESC ` +
+			ss.db.GetDialect().Limit(1) + ")"
 		sess.Join("LEFT", "user_auth", authJoinCondition)
 
 		if query.OrgID != 0 {
@@ -557,6 +563,9 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		}
 		if query.TeamID != 0 {
 			sess.Where("team_member.team_id=?", query.TeamID)
+		}
+		if query.TeamUID != "" {
+			sess.Where("team.uid=?", query.TeamUID)
 		}
 		if query.UserID != 0 {
 			sess.Where("team_member.user_id=?", query.UserID)
@@ -574,6 +583,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			"team_member.external",
 			"team_member.permission",
 			"user_auth.auth_module",
+			"team.uid",
 		)
 		sess.Asc("user.login", "user.email")
 
@@ -587,10 +597,20 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 }
 
 func (ss *xormStore) IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
-	var queryResult bool
+	queryResult := false
+
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sql := "SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?"
-		params := []interface{}{query.SignedInUser.OrgID, query.SignedInUser.UserID, dashboards.PERMISSION_ADMIN}
+		sql := `SELECT COUNT(team.id) AS count
+			FROM team
+			INNER JOIN team_member ON team_member.team_id = team.id
+			WHERE team.org_id = ?
+				AND team_member.user_id = ?
+				AND team_member.permission = ?`
+		params := []interface{}{
+			query.SignedInUser.OrgID,
+			query.SignedInUser.UserID,
+			dashboards.PERMISSION_ADMIN,
+		}
 
 		type teamCount struct {
 			Count int64
@@ -605,8 +625,6 @@ func (ss *xormStore) IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuer
 
 		return nil
 	})
-	if err != nil {
-		return false, err
-	}
-	return queryResult, nil
+
+	return queryResult, err
 }
