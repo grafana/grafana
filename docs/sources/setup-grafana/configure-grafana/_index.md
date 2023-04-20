@@ -679,6 +679,10 @@ List of additional allowed URLs to pass by the CSRF check. Suggested when authen
 
 List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
 
+### csrf_always_check
+
+Set to `true` to execute the CSRF check even if the login cookie is not present in a request (default `false`).
+
 ## [snapshots]
 
 ### enabled
