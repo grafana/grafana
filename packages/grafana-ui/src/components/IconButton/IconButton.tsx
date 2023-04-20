@@ -45,7 +45,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, variant);
+    const styles = getStyles(theme, size, variant);
     const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
     const button = (
@@ -68,7 +68,33 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, variant: IconButtonVariant) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButtonVariant) => {
+  const padding = (size: string) => {
+    switch (size) {
+      case 'xs':
+        return 4;
+
+      case 'sm':
+        return 4; // TODO: ask Staton
+
+      case 'lg':
+        return 6; // TODO: ask Staton
+
+      case 'xl':
+        return 12;
+
+      case 'xxl':
+        return 12; // TODO: ask Staton
+
+      case 'xxxl':
+        return 12; // TODO: ask Staton
+
+      case 'md':
+      default:
+        return 6;
+    }
+  };
+
   let iconColor = theme.colors.text.primary;
 
   if (variant === 'primary') {
@@ -80,37 +106,24 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, variant: IconButtonVarian
   return {
     button: css`
       z-index: 0;
-      position: relative;
       margin: 0 ${theme.spacing(0.5)} 0 0;
       box-shadow: none;
-      outline: none;
       border: none;
       display: inline-flex;
       background: transparent;
       justify-content: center;
       align-items: center;
-      padding: 0;
+      padding: ${padding(size)}px;
       color: ${iconColor};
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-property: transform, opacity;
 
       &[disabled],
       &:disabled {
         cursor: not-allowed;
         color: ${theme.colors.action.disabledText};
         opacity: 0.65;
-      }
-
-      &:before {
-        z-index: -1;
-        position: absolute;
-        box-sizing: border-box;
-        height: 105%;
-        width: 105%;
-        border-radius: ${theme.shape.radius.default};
-        content: '';
-        background: none;
-        transition-duration: 0.2s;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-property: transform, opacity;
       }
 
       &:focus,
@@ -123,11 +136,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, variant: IconButtonVarian
       }
 
       &:hover {
-        &:before {
-          background-color: ${variant === 'secondary'
-            ? theme.colors.action.hover
-            : colorManipulator.alpha(iconColor, 0.12)};
-        }
+        border-radius: ${theme.shape.radius.default};
+        background-color: ${variant === 'secondary'
+          ? theme.colors.action.hover
+          : colorManipulator.alpha(iconColor, 0.12)};
       }
     `,
     icon: css`
