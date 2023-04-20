@@ -88,17 +88,18 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 }
 
 func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
+	ret := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		where := "email=? OR login=?"
 		login := usr.Login
 		email := usr.Email
-		where := "email=? OR login=?"
 		if ss.cfg.CaseInsensitiveLogin {
 			where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
 			login = strings.ToLower(login)
 			email = strings.ToLower(email)
 		}
 
-		exists, err := sess.Where(where, email, login).Get(usr)
+		exists, err := sess.Where(where, email, login).Get(ret)
 		if !exists {
 			return user.ErrUserNotFound
 		}
@@ -110,7 +111,8 @@ func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error)
 	if err != nil {
 		return nil, err
 	}
-	return usr, nil
+
+	return ret, nil
 }
 
 func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {

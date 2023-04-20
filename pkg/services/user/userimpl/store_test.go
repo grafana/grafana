@@ -21,6 +21,91 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func TestIntegrationUserGet(t *testing.T) {
+	testCases := []struct {
+		name            string
+		wantErr         error
+		searchLogin     string
+		searchEmail     string
+		caseInsensitive bool
+	}{
+		{
+			name:            "user not found non exact - not case insensitive",
+			wantErr:         user.ErrUserNotFound,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: false,
+		},
+		{
+			name:            "user found exact - not case insensitive",
+			wantErr:         nil,
+			searchLogin:     "test",
+			searchEmail:     "test@email.com",
+			caseInsensitive: false,
+		},
+		{
+			name:            "user found non exact - case insensitive",
+			wantErr:         nil,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: true,
+		},
+		{
+			name:            "user found exact - case insensitive",
+			wantErr:         nil,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: true,
+		},
+		{
+			name:            "user not found - case insensitive",
+			wantErr:         user.ErrUserNotFound,
+			searchLogin:     "Test_login",
+			searchEmail:     "Test*@email.com",
+			caseInsensitive: true,
+		},
+	}
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ss := db.InitTestDB(t)
+	cfg := ss.Cfg
+	userStore := ProvideStore(ss, cfg)
+
+	_, errUser := userStore.Insert(context.Background(),
+		&user.User{
+			Email:   "test@email.com",
+			Name:    "test",
+			Login:   "test",
+			Created: time.Now(),
+			Updated: time.Now(),
+		},
+	)
+	require.NoError(t, errUser)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg.CaseInsensitiveLogin = tc.caseInsensitive
+			usr, err := userStore.Get(context.Background(),
+				&user.User{
+					Email: tc.searchEmail,
+					Login: tc.searchLogin,
+				},
+			)
+
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Nil(t, usr)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, usr)
+			}
+		})
+	}
+}
+
 func TestIntegrationUserDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
