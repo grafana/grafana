@@ -186,7 +186,7 @@
       "title": "警报规则"
     },
     "alerting-receivers": {
-      "subtitle": "选择当警报实例触发时如何通知您的联系人",
+      "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
     },
     "alerting-silences": {
