@@ -20,7 +20,7 @@ import { config, locationService } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -429,7 +429,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     });
 
     if (dashboard.meta.dashboardNotFound) {
-      return <PageNotFound />;
+      return (
+        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
+          <EntityNotFound entity="Dashboard" />
+        </Page>
+      );
     }
 
     return (
