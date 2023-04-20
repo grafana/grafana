@@ -12,15 +12,15 @@
       "light-theme": "Claro"
     },
     "search-box": {
-      "placeholder": ""
+      "placeholder": "Buscar o saltar a..."
     },
     "section": {
       "actions": "Acciones",
       "dashboard-search-results": "Paneles de control",
-      "folder-search-results": "",
+      "folder-search-results": "Carpetas",
       "pages": "Páginas",
       "preferences": "Preferencias",
-      "recent-dashboards": ""
+      "recent-dashboards": "Paneles de control recientes"
     }
   },
   "common": {
@@ -31,18 +31,18 @@
   },
   "dashboard": {
     "add-menu": {
-      "import": "",
-      "paste-panel": "",
-      "row": "",
-      "visualization": ""
+      "import": "Importar de la biblioteca",
+      "paste-panel": "Pegar panel",
+      "row": "Fila",
+      "visualization": "Visualización"
     },
     "empty": {
-      "add-import-body": "",
-      "add-import-button": "",
-      "add-import-header": "",
-      "add-row-body": "",
-      "add-row-button": "",
-      "add-row-header": "",
+      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
+      "add-import-button": "Importar el panel de la biblioteca",
+      "add-import-header": "Importar panel",
+      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
+      "add-row-button": "Añadir fila",
+      "add-row-header": "Añadir una fila",
       "add-visualization-body": "",
       "add-visualization-button": "",
       "add-visualization-header": ""
