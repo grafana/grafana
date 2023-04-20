@@ -25,7 +25,7 @@ def rgm_build(distros=["linux/amd64", "linux/arm64"]):
     "commands": [
       # the docker program is a requirement for running dagger programs
       "apk update && apk add docker",
-      "go run ./rgm/cmd --help",
+      "cd rgm && go run ./rgm/cmd --help",
     ],
     # The docker socket is a requirement for running dagger programs
     # In the future we should find a way to use dagger without mounting the docker socket.

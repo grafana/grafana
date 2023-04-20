@@ -4567,7 +4567,7 @@ steps:
   name: clone-rgm
 - commands:
   - apk update && apk add docker
-  - go run ./rgm/cmd --help
+  - cd rgm && go run ./rgm/cmd --help
   failure: ignore
   image: golang:1.20.3-alpine
   name: rgm-build
@@ -4605,7 +4605,7 @@ steps:
   name: clone-rgm
 - commands:
   - apk update && apk add docker
-  - go run ./rgm/cmd --help
+  - cd rgm && go run ./rgm/cmd --help
   failure: ignore
   image: golang:1.20.3-alpine
   name: rgm-build
@@ -6904,6 +6904,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: ad01fe8ef0c6e54806c054a613b379d3cd64cf7365f14b07a5c5b42ba42869d6
+hmac: 53ca4c8884d9ef1da4ef9c2692603d8403339a3d38f8fb77642c5a0d24e31259
 
 ...
