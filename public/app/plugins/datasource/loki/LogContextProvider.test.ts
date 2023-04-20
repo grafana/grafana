@@ -71,6 +71,28 @@ describe('LogContextProvider', () => {
     });
   });
 
+  describe('getLogRowContextQuery', () => {
+    it('should call getInitContextFilters if no appliedContextFilters', async () => {
+      const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
+        limit: 10,
+        direction: LogRowContextQueryDirection.Backward,
+      });
+      expect(query.expr).toBe('{bar="baz"}');
+    });
+
+    it('should not call getInitContextFilters if appliedContextFilters', async () => {
+      logContextProvider.appliedContextFilters = [
+        { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
+        { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
+      ];
+      const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
+        limit: 10,
+        direction: LogRowContextQueryDirection.Backward,
+      });
+      expect(query.expr).toBe('{bar="baz",xyz="abc"}');
+    });
+  });
+
   describe('prepareLogRowContextQueryTarget', () => {
     describe('query with no parser', () => {
       const query = {

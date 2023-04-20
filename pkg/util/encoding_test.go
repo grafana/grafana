@@ -1,6 +1,7 @@
 package util
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -129,4 +130,90 @@ func TestDecodeQuotedPrintable(t *testing.T) {
 		val := DecodeQuotedPrintable(str_in)
 		assert.Equal(t, str_out, val)
 	})
+}
+
+func TestGetRandomString(t *testing.T) {
+	charset := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	chars := len(charset)
+	length := 20
+	rounds := 50_000
+
+	// Generate random strings and count the frequency of each character
+	m := make(map[string]int)
+	for i := 0; i < rounds; i++ {
+		r, err := GetRandomString(length)
+		require.NoError(t, err)
+
+		for _, c := range r {
+			m[string(c)]++
+		}
+	}
+
+	// Find lowest and highest frequencies
+	min := rounds * length
+	max := 0
+
+	// Calculate chi-squared statistic
+	expected := float64(rounds) * float64(length) / float64(chars)
+	chiSquared := 0.0
+
+	for _, char := range charset {
+		if m[string(char)] < min {
+			min = m[string(char)]
+		}
+		if m[string(char)] > max {
+			max = m[string(char)]
+		}
+		chiSquared += math.Pow(float64(m[string(char)])-expected, 2) / expected
+	}
+
+	// Ensure there is no more than 10% variance between lowest and highest frequency characters
+	assert.LessOrEqual(t, float64(max-min)/float64(min), 0.1, "Variance between lowest and highest frequency characters must be no more than 10%")
+
+	// Ensure chi-squared value is lower than the critical bound
+	// 99.99% probability for 61 degrees of freedom
+	assert.Less(t, chiSquared, 110.8397, "Chi squared value must be less than the 99.99% critical bound")
+}
+
+func TestGetRandomDigits(t *testing.T) {
+	charset := "0123456789"
+	chars := len(charset)
+	length := 20
+	rounds := 50_000
+
+	// Generate random strings and count the frequency of each character
+	m := make(map[string]int)
+	for i := 0; i < rounds; i++ {
+		r, err := GetRandomString(length, []byte(charset)...)
+		require.NoError(t, err)
+
+		for _, c := range r {
+			m[string(c)]++
+		}
+	}
+
+	// Find lowest and highest frequencies
+	min := rounds * length
+	max := 0
+
+	// Calculate chi-squared statistic
+	expected := float64(rounds) * float64(length) / float64(chars)
+	chiSquared := 0.0
+
+	for _, char := range charset {
+		if m[string(char)] < min {
+			min = m[string(char)]
+		}
+		if m[string(char)] > max {
+			max = m[string(char)]
+		}
+		chiSquared += math.Pow(float64(m[string(char)])-expected, 2) / expected
+	}
+
+	// Ensure there is no more than 10% variance between lowest and highest frequency characters
+	assert.LessOrEqual(t, float64(max-min)/float64(min), 0.1, "Variance between lowest and highest frequency characters must be no more than 10%")
+
+	// Ensure chi-squared value is lower than the critical bound
+	// 99.99% probability for 9 degrees of freedom
+	assert.Less(t, chiSquared, 33.7199, "Chi squared value must be less than the 99.99% critical bound")
 }
