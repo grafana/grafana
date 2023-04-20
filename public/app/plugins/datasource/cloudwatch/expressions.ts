@@ -2,8 +2,6 @@ import {
   QueryEditorOperatorExpression as QueryEditorOperatorExpressionBase,
   QueryEditorOperator as QueryEditorOperatorBase,
   QueryEditorOperatorValueType,
-  QueryEditorExpressionType,
-  QueryEditorExpression,
 } from './dataquery.gen';
 export {
   QueryEditorPropertyType,
@@ -13,9 +11,9 @@ export {
   QueryEditorFunctionExpression,
   QueryEditorFunctionParameterExpression,
   QueryEditorArrayExpression,
+  QueryEditorExpressionType,
+  QueryEditorExpression,
 } from './dataquery.gen';
-
-export { QueryEditorExpressionType, QueryEditorExpression };
 
 export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> extends QueryEditorOperatorBase {
   value?: T;
