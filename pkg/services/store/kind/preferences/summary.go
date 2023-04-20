@@ -29,7 +29,7 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			}
 		}
 
-		obj := &preferences.Preferences{}
+		obj := &preferences.Spec{}
 		err := json.Unmarshal(body, obj)
 		if err != nil {
 			return nil, nil, err // unable to read object

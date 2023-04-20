@@ -26,19 +26,6 @@ func (j TSResourceJenny) JennyName() string {
 	return "TSResourceJenny"
 }
 
-// func (j TSResourceJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
-// 	// TODO allow using name instead of machine name in thema generator
-// 	f, err := typescript.GenerateTypes(sfg.Schema, &typescript.TypeConfig{
-// 		RootName: sfg.Name,
-// 		Group:    sfg.IsGroup,
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return codejen.NewFile(sfg.Schema.Lineage().Name()+"_types.gen.ts", []byte(f.String()), j), nil
-// }
-
 func (g *TSResourceJenny) Generate(kind kindsys.Kind) (codejen.Files, error) {
 	comm := kind.Props().Common()
 	sfg := SchemaForGen{
