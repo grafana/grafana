@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -122,38 +123,29 @@ const getStyles = (
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      background: ${theme.colors.background.secondary};
-      box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
+      background: ${color.transparent};
+      box-shadow: ${elevated ? theme.shadows.z3 : 'none'};
+      padding: ${theme.spacing(1, 2)};
+      border: 1px solid ${tinycolor2(color.border).setAlpha(0.2).toString()};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
       margin-top: ${theme.spacing(topSpacing ?? 0)};
-
-      &:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: ${theme.colors.background.primary};
-        z-index: -1;
-      }
     `,
     icon: css`
-      padding: ${theme.spacing(2, 3)};
-      background: ${color.main};
-      border-radius: ${borderRadius} 0 0 ${borderRadius};
-      color: ${color.contrastText};
+      padding-right: ${theme.spacing(2)};
+      //background: ${color.main};
+      //border-radius: ${borderRadius} 0 0 ${borderRadius};
+      color: ${color.text};
       display: flex;
       align-items: center;
       justify-content: center;
     `,
     title: css`
-      font-weight: ${theme.typography.fontWeightMedium};
+      //font-weight: ${theme.typography.fontWeightMedium};
       color: ${theme.colors.text.primary};
     `,
     body: css`
       color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1, 0)};
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -163,7 +155,7 @@ const getStyles = (
     `,
     content: css`
       color: ${theme.colors.text.secondary};
-      padding-top: ${hasTitle ? theme.spacing(1) : 0};
+      padding-top: ${hasTitle ? theme.spacing(0.5) : 0};
       max-height: 50vh;
       overflow-y: auto;
     `,
@@ -175,6 +167,7 @@ const getStyles = (
     `,
     close: css`
       padding: ${theme.spacing(2, 1)};
+      color: ${theme.colors.text.secondary};
       background: none;
       display: flex;
     `,
