@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { useAsyncFn } from 'react-use';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useAsync, useAsyncFn } from 'react-use';
 
 import {
   DataQueryResponse,
@@ -12,13 +12,16 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   SelectableValue,
+  rangeUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
-import { LoadingBar, Modal, useTheme2 } from '@grafana/ui';
+import { DataQuery, TimeZone } from '@grafana/schema';
+import { Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { splitOpen } from 'app/features/explore/state/main';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
+import { useDispatch } from 'app/types';
 
 import { LogRows } from '../LogRows';
 
@@ -104,6 +107,8 @@ interface LogRowContextModalProps {
   timeZone: TimeZone;
   onClose: () => void;
   getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
+
+  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -113,10 +118,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   row,
   open,
   logsSortOrder,
+  timeZone,
   getLogRowContextUi,
+  getRowContextQuery,
   onClose,
   getRowContext,
-  timeZone,
 }) => {
   const scrollElement = React.createRef<HTMLDivElement>();
   const entryElement = React.createRef<HTMLTableRowElement>();
@@ -125,12 +131,28 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   // first.
   const preEntryElement = React.createRef<HTMLTableRowElement>();
 
+  const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
   const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+  const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
+
+  const getFullTimeRange = useCallback(() => {
+    const { before, after } = context;
+    const allRows = [...before, row, ...after].sort((a, b) => a.timeEpochMs - b.timeEpochMs);
+    const first = allRows[0];
+    const last = allRows[allRows.length - 1];
+    return rangeUtil.convertRawToRange(
+      {
+        from: first.timeUtc,
+        to: last.timeUtc,
+      },
+      'utc'
+    );
+  }, [context, row]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
@@ -214,6 +236,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       setLoadingWidth(width);
     }
   }, [scrollElement]);
+
+  useAsync(async () => {
+    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+    setContextQuery(contextQuery);
+  }, [getRowContextQuery, row]);
 
   return (
     <Modal
@@ -300,6 +327,25 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
       </div>
+      {contextQuery?.datasource?.uid && (
+        <Modal.ButtonRow>
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              dispatch(
+                splitOpen({
+                  queries: [contextQuery],
+                  range: getFullTimeRange(),
+                  datasourceUid: contextQuery.datasource!.uid!,
+                })
+              );
+              onClose();
+            }}
+          >
+            Open in split view
+          </Button>
+        </Modal.ButtonRow>
+      )}
     </Modal>
   );
 };
