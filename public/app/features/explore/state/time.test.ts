@@ -4,8 +4,6 @@ import { dateTime, LoadingState } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreItemState } from 'app/types';
 
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-
 import { createDefaultInitialState } from './helpers';
 import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
 import { makeExplorePaneState } from './utils';
@@ -30,14 +28,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore item reducer', () => {
-  silenceConsoleOutput();
-
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
-      const { dispatch } = configureStore({
-        ...(createDefaultInitialState() as any),
-      });
-      await dispatch(updateTime({ exploreId: ExploreId.left }));
+      const { dispatch } = configureStore(createDefaultInitialState().defaultInitialState as any);
+      dispatch(updateTime({ exploreId: ExploreId.left }));
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
     });
