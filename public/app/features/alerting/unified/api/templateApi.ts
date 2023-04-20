@@ -27,13 +27,15 @@ export interface AlertFields {
 
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    previewPayload: build.mutation<TemplatesPreviewResponse, { template: string; payload: AlertFields[] }>({
-      query: ({ template, payload }) => ({
-        url: previewTemplateUrl,
-        data: { template: template, data: payload },
-        method: 'POST',
-      }),
-    }),
+    previewPayload: build.mutation<TemplatesPreviewResponse, { template: string; alerts: AlertFields[]; name: string }>(
+      {
+        query: ({ template, alerts, name }) => ({
+          url: previewTemplateUrl,
+          data: { template: template, alerts: alerts, name: name },
+          method: 'POST',
+        }),
+      }
+    ),
   }),
 });
 

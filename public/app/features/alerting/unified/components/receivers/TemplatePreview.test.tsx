@@ -50,6 +50,7 @@ describe('TemplatePreview component', () => {
         payload={'whatever'}
         payloadFormatError={'ERROR IN JSON FORMAT'}
         setPayloadFormatError={mockSetPayloadFormatError}
+        templateName="potato"
       />,
       { wrapper: getProviderWraper() }
     );
@@ -64,6 +65,7 @@ describe('TemplatePreview component', () => {
         payload={'whatever'}
         payloadFormatError={'ERROR IN JSON FORMAT'}
         setPayloadFormatError={mockSetPayloadFormatError}
+        templateName="potato"
       />,
       { wrapper: getProviderWraper() }
     );
@@ -85,6 +87,7 @@ describe('TemplatePreview component', () => {
         payload={'{"a":"b"}'}
         payloadFormatError={null}
         setPayloadFormatError={mockSetPayloadFormatError}
+        templateName="potato"
       />,
       { wrapper: getProviderWraper() }
     );
@@ -112,6 +115,7 @@ describe('TemplatePreview component', () => {
         payload={'{"a":"b"}'}
         payloadFormatError={null}
         setPayloadFormatError={mockSetPayloadFormatError}
+        templateName="potato"
       />,
       { wrapper: getProviderWraper() }
     );
@@ -141,6 +145,7 @@ describe('TemplatePreview component', () => {
         payload={'{"a":"b"}'}
         payloadFormatError={null}
         setPayloadFormatError={mockSetPayloadFormatError}
+        templateName="potato"
       />,
       { wrapper: getProviderWraper() }
     );

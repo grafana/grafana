@@ -14,6 +14,7 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 import { useDispatch } from 'app/types';
 
 import {
+  AlertFields,
   TemplatePreviewErrors,
   TemplatePreviewResult,
   TemplatesPreviewResponse,
@@ -50,8 +51,8 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-export const DEFAULT_PAYLOAD = `{
-  "alerts": [{
+export const DEFAULT_PAYLOAD = `[
+  {
     "annotations": {
       "summary": "Instance instance1 has been down for more than 5 minutes"
     },
@@ -61,8 +62,7 @@ export const DEFAULT_PAYLOAD = `{
     "startsAt": "2023-04-01T00:00:00Z",
     "endsAt": "2023-04-01T00:05:00Z"
   }]
-
-}`;
+`;
 
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
@@ -131,6 +131,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     formState: { errors },
     getValues,
     setValue,
+    watch,
   } = formApi;
 
   const validateNameIsUnique: Validate<string> = (name: string) => {
@@ -205,6 +206,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 payload={payload}
                 payloadFormatError={payloadFormatError}
                 setPayloadFormatError={setPayloadFormatError}
+                templateName={watch('name')}
               />
             ) : (
               <TemplateDataDocs />
@@ -328,9 +330,11 @@ export function TemplatePreview({
   payload,
   setPayloadFormatError,
   payloadFormatError,
+  templateName,
 }: {
   payload: string;
   payloadFormatError: string | null;
+  templateName: string;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
 }) {
   const styles = useStyles2(getStyles);
@@ -344,8 +348,8 @@ export function TemplatePreview({
 
   const onPreview = () => {
     try {
-      JSON.parse(payload);
-      trigger({ template: templateContent, payload: JSON.parse(payload) });
+      const alertList: AlertFields[] = JSON.parse(payload);
+      trigger({ template: templateContent, alerts: alertList, name: templateName });
       setPayloadFormatError(null);
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
