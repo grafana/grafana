@@ -4547,6 +4547,87 @@ volumes:
   name: docker
 ---
 clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-build
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - git clone https://github.com/grafana/grafana-build.git rgm
+  failure: ignore
+  image: alpine/git
+  name: clone-rgm
+- commands:
+  - apk update && apk add docker
+  - go run ./rgm/cmd --help
+  failure: ignore
+  image: golang:1.20.3-alpine
+  name: rgm-build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  branch: add-rgm-to-drone
+  event:
+  - push
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-build
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - git clone https://github.com/grafana/grafana-build.git rgm
+  failure: ignore
+  image: alpine/git
+  name: clone-rgm
+- commands:
+  - apk update && apk add docker
+  - go run ./rgm/cmd --help
+  failure: ignore
+  image: golang:1.20.3-alpine
+  name: rgm-build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
   disable: true
 depends_on: []
 environment:
@@ -6823,6 +6904,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: e8c29c328c07ab24a7f858cc319c9b35a5bec1fc79531e809e5d3a390bbcbc2f
+hmac: c1db134962f99c16ceab6d15c151e78d5d98600a6160e21ed10ab551216d2d68
 
 ...
