@@ -112,6 +112,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     modal: css`
       width: 80%;
       height: 80%;
+      max-height: 600px;
     `,
     modalContent: css`
       display: flex;
