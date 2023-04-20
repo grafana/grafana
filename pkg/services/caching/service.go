@@ -29,8 +29,9 @@ type CachedQueryDataResponse struct {
 type CachedResourceDataResponse struct {
 	// The cached response associated with a resource request, or nil if no cached data is found
 	Response *backend.CallResourceResponse
-	// A function that should be used to cache a CallResourceResponse for a given request.
+	// A function that should be used to cache a CallResourceResponse for a given resource request.
 	// It can be set to nil by the method implementation (if there is an error, for example), so it should be checked before being called.
+	// Because plugins can send multiple responses asyncronously, the implementation should be able to handle multiple calls to this function for one request.
 	UpdateCacheFn CacheResourceResponseFn
 }
 
@@ -46,9 +47,6 @@ type CachingService interface {
 	// HandleResourceRequest uses a CallResourceRequest to check the cache for any existing results for that request. If none are found, it should return false.
 	// This function may populate any response headers (accessible through the context) with the cache status using the X-Cache header.
 	HandleResourceRequest(context.Context, *backend.CallResourceRequest) (bool, CachedResourceDataResponse)
-	// CacheResourceResponse is used to cache resource responses for a resource request.
-	// Because plugins can send multiple responses asyncronously, the implementation should be able to handle multiple calls to this function for one request.
-	CacheResourceResponse(context.Context, *backend.CallResourceRequest, *backend.CallResourceResponse)
 }
 
 // Implementation of interface - does nothing
@@ -61,9 +59,6 @@ func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req *backend
 
 func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse) {
 	return false, CachedResourceDataResponse{}
-}
-
-func (s *OSSCachingService) CacheResourceResponse(ctx context.Context, req *backend.CallResourceRequest, resp *backend.CallResourceResponse) {
 }
 
 var _ CachingService = &OSSCachingService{}

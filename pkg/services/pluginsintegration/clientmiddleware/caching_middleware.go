@@ -127,6 +127,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		cr.UpdateCacheFn(ctx, res)
 		return sender.Send(res)
 	})
+
 	return m.next.CallResource(ctx, req, cacheSender)
 }
 
