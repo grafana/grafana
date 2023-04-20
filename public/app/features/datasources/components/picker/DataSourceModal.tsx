@@ -21,7 +21,6 @@ interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
-  datasources: DataSourceInstanceSettings[];
   recentlyUsed?: string[];
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
@@ -60,8 +59,9 @@ export function DataSourceModal({
             <DataSourceList
               dashboard={false}
               mixed={false}
+              variables
               // FIXME: Filter out the grafana data source in a hacky way
-              filter={(ds) => ds.name.includes(search) && ds.name !== '-- Grafana --'}
+              filter={(ds) => ds.name.toLowerCase().includes(search.toLowerCase()) && ds.name !== '-- Grafana --'}
               onChange={onChange}
               current={current}
             />

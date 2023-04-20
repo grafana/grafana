@@ -175,6 +175,12 @@ export interface ExploreItemState {
    */
   isPaused: boolean;
 
+  /**
+   * Index of the last item in the list of logs
+   * when the live tailing views gets cleared.
+   */
+  clearedAtIndex: number | null;
+
   querySubscription?: Unsubscribable;
 
   queryResponse: ExplorePanelData;

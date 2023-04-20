@@ -12,16 +12,18 @@ import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyl
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { PickerContentProps, DataSourceDrawerProps } from './types';
-import { dataSourceName as dataSourceLabel } from './utils';
+import { PickerContentProps, DataSourceDropdownProps } from './types';
+import { dataSourceLabel, useGetDatasource } from './utils';
 
-export function DataSourceDropdown(props: DataSourceDrawerProps) {
+export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
+
+  const currentDataSourceInstanceSettings = useGetDatasource(current);
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
@@ -51,10 +53,15 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
       {isOpen ? (
         <FocusScope contain autoFocus restoreFocus>
           <Input
-            prefix={filterTerm ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={current} />}
+            prefix={
+              filterTerm ? (
+                <DataSourceLogoPlaceHolder />
+              ) : (
+                <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
+              )
+            }
             suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
-            placeholder={dataSourceLabel(current)}
-            className={styles.input}
+            placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
             onChange={(e) => {
               setFilterTerm(e.currentTarget.value);
             }}
@@ -73,7 +80,7 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
                 onClose={() => {
                   setOpen(false);
                 }}
-                current={current}
+                current={currentDataSourceInstanceSettings}
                 style={popper.styles.popper}
                 ref={setSelectorElement}
                 {...restProps}
@@ -90,10 +97,10 @@ export function DataSourceDropdown(props: DataSourceDrawerProps) {
           }}
         >
           <Input
-            className={styles.markerInput}
-            prefix={<DataSourceLogo dataSource={current} />}
+            className={styles.input}
+            prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
             suffix={<Icon name="angle-down" />}
-            value={dataSourceLabel(current)}
+            value={dataSourceLabel(currentDataSourceInstanceSettings)}
             onFocus={() => {
               setOpen(true);
             }}
@@ -113,11 +120,6 @@ function getStylesDropdown(theme: GrafanaTheme2) {
       cursor: pointer;
     `,
     input: css`
-      input:focus {
-        box-shadow: none;
-      }
-    `,
-    markerInput: css`
       input {
         cursor: pointer;
       }
@@ -146,11 +148,10 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <div className={styles.dataSourceList}>
         <CustomScrollbar>
           <DataSourceList
-            mixed
-            dashboard
+            {...props}
             current={current}
             onChange={changeCallback}
-            filter={(ds) => !ds.meta.builtIn && ds.name.includes(filterTerm ?? '')}
+            filter={(ds) => ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
           ></DataSourceList>
         </CustomScrollbar>
       </div>
@@ -170,8 +171,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
-                  datasources: props.datasources,
-                  recentlyUsed: props.recentlyUsed,
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
                   current,
