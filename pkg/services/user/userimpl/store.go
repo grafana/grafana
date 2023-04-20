@@ -89,7 +89,16 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 
 func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("email=? OR login=?", usr.Email, usr.Login).Get(usr)
+		login := usr.Login
+		email := usr.Email
+		where := "email=? OR login=?"
+		if ss.cfg.CaseInsensitiveLogin {
+			where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+			login = strings.ToLower(login)
+			email = strings.ToLower(email)
+		}
+
+		exists, err := sess.Where(where, email, login).Get(usr)
 		if !exists {
 			return user.ErrUserNotFound
 		}
