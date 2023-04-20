@@ -5,4 +5,42 @@ import { UsersIndicator } from './UsersIndicator';
 
 A component that displays a set of user icons indicating which users are currently active. If there are too many users to display all the icons, it will collapse the icons into a single icon with a number indicating the number of additional users.
 
+## Usage
+
+```tsx
+import { UsersIndicator } from '@grafana/ui';
+
+const users = [
+  {
+    user: {
+      name: 'John Smith',
+      avatarUrl: 'https://example.com/avatar.png',
+    },
+    lastActiveAt: '2023-04-18T15:00:00.000Z',
+  },
+  {
+    user: {
+      name: 'Jane Doe',
+      avatarUrl: 'https://example.com/avatar.png',
+    },
+    lastActiveAt: '2023-04-17T10:00:00.000Z',
+  },
+  {
+    user: {
+      name: 'Bob Johnson',
+      avatarUrl: 'https://example.com/avatar.png',
+    },
+    lastActiveAt: '2023-04-16T08:00:00.000Z',
+  },
+];
+
+const ExampleComponent = () => {
+  return (
+    <div>
+      <UsersIndicator users={users} limit={2} />
+    </div>
+  );
+};
+```
+
 <Props of={UsersIndicator} />

@@ -26,4 +26,27 @@ const ExampleComponent = () => {
 };
 ```
 
+### With custom `children`
+
+`children` prop can be used to display a custom content inside `UserIcon`. This is useful to show the data about extra users.
+
+```jsx
+import { UserIcon } from '@grafana/ui';
+
+const ExampleComponent = () => {
+  const userView = {
+    user: { id: 1, name: 'John Smith', avatarUrl: 'https://example.com/avatar.png' },
+    lastActiveAt: '2023-04-18T15:00:00.000Z',
+  };
+
+  return (
+    <div>
+      <UserIcon userView={userView} showTooltip={false}>
+        +10
+      </UserIcon>
+    </div>
+  );
+};
+```
+
 <Props of={UserIcon} />
