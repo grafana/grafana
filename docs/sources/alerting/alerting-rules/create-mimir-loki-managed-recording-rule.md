@@ -43,8 +43,8 @@ To create a Grafana Mimir or Loki managed recording rule
    - Select your Loki or Prometheus data source.
    - Enter a PromQL or LogQL query.
 1. In Step 3, add the namespace and the group.
-   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click Add new and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}}).
-   - From the **Group** dropdown, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one.
+   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, type the desired name and hit Enter to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}}).
+   - From the **Group** dropdown, select an existing group within the selected namespace. Otherwise, type the desired name and hit Enter to create a new one.
 1. In Step 4, add the custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 1. Click **Save** to save the recording rule or **Save and exit** to save the recording rule and go back to the Alerting page.
