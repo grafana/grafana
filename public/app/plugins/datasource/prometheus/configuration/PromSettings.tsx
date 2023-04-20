@@ -56,6 +56,7 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
   { value: PromApplication.Thanos, label: PromApplication.Thanos },
+  { value: PromApplication.VictoriaMetrics, label: PromApplication.VictoriaMetrics },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
@@ -118,32 +119,34 @@ const setPrometheusVersion = (
   // This will save the current state of the form, as the url is needed for this API call to function
   onUpdate(options)
     .then((updatedOptions) => {
-      getBackendSrv()
-        .get(`/api/datasources/uid/${updatedOptions.uid}/resources/version-detect`)
-        .then((rawResponse: PromBuildInfoResponse) => {
-          const rawVersionStringFromApi = rawResponse.data?.version ?? '';
-          if (rawVersionStringFromApi && semver.valid(rawVersionStringFromApi)) {
-            const parsedVersion = getVersionString(rawVersionStringFromApi, updatedOptions.jsonData.prometheusType);
-            // If we got a successful response, let's update the backend with the version right away if it's new
-            if (parsedVersion) {
-              onUpdate({
-                ...updatedOptions,
-                jsonData: {
-                  ...updatedOptions.jsonData,
-                  prometheusVersion: parsedVersion,
-                },
-              }).then((updatedUpdatedOptions) => {
-                onOptionsChange(updatedUpdatedOptions);
-              });
+      // Not seeing version info in buildinfo response from victoria metrics, users will need to manually select version
+      if (updatedOptions.jsonData.prometheusType !== PromApplication.VictoriaMetrics) {
+        getBackendSrv()
+          .get(`/api/datasources/uid/${updatedOptions.uid}/resources/version-detect`)
+          .then((rawResponse: PromBuildInfoResponse) => {
+            const rawVersionStringFromApi = rawResponse.data?.version ?? '';
+            if (rawVersionStringFromApi && semver.valid(rawVersionStringFromApi)) {
+              const parsedVersion = getVersionString(rawVersionStringFromApi, updatedOptions.jsonData.prometheusType);
+              // If we got a successful response, let's update the backend with the version right away if it's new
+              if (parsedVersion) {
+                onUpdate({
+                  ...updatedOptions,
+                  jsonData: {
+                    ...updatedOptions.jsonData,
+                    prometheusVersion: parsedVersion,
+                  },
+                }).then((updatedUpdatedOptions) => {
+                  onOptionsChange(updatedUpdatedOptions);
+                });
+              }
+            } else {
+              unableToDeterminePrometheusVersion();
             }
-          } else {
-            unableToDeterminePrometheusVersion();
-          }
-        });
+          })
+          .catch(unableToDeterminePrometheusVersion);
+      }
     })
-    .catch((error) => {
-      unableToDeterminePrometheusVersion(error);
-    });
+    .catch(unableToDeterminePrometheusVersion);
 };
 
 export const PromSettings = (props: Props) => {

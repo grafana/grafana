@@ -9,7 +9,7 @@ import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'black';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text: React.ReactNode;
