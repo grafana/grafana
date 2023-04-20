@@ -73,11 +73,9 @@ const UserListAdminPageUnConnected = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  console.log('hola sr, acá estoy');
-
-  // useEffect(() => {
-  //   fetchUsers();
-  // }, [fetchUsers]);
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
 

@@ -25,9 +25,16 @@ export interface PublicDashboard extends PublicDashboardSettings {
   recipients?: Array<{ uid: string; recipient: string }>;
 }
 
+export interface SessionPublicDashboard {
+  name: string;
+  url: string;
+  configUrl: string;
+}
+
 export interface SessionUser {
   email: string;
   sessionCreatedAt: string;
+  publicDashboards?: SessionPublicDashboard[];
 }
 
 // Instance methods

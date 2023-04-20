@@ -15,9 +15,9 @@ import { UserListAdminPageContent } from './UserListAdminPage';
 import { UserListPublicDashboardPage } from './UserListPublicDashboardPage';
 
 enum TabView {
-  ADMIN,
-  ORG,
-  PUBLIC_DASHBOARDS,
+  ADMIN = 'admin',
+  ORG = 'org',
+  PUBLIC_DASHBOARDS = 'public-dashboards',
 }
 
 const selectors = e2eSelectors.pages.UserListPage;

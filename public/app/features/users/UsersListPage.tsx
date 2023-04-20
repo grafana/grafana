@@ -63,7 +63,6 @@ export const UsersListPageUnconnected = ({
   const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
 
   useEffect(() => {
-    console.log('te re cabe');
     loadUsers();
     fetchInvitees();
   }, [fetchInvitees, loadUsers]);
