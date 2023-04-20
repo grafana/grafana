@@ -30,6 +30,23 @@
     "save": "Save"
   },
   "dashboard": {
+    "add-menu": {
+      "import": "Import from library",
+      "paste-panel": "Paste panel",
+      "row": "Row",
+      "visualization": "Visualization"
+    },
+    "empty": {
+      "add-import-body": "Import visualizations that are shared with other dashboards.",
+      "add-import-button": "Import library panel",
+      "add-import-header": "Import panel",
+      "add-row-body": "Group your visualizations into expandable sections.",
+      "add-row-button": "Add row",
+      "add-row-header": "Add a row",
+      "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+      "add-visualization-button": "Add visualization",
+      "add-visualization-header": "Start your new dashboard by adding a visualization"
+    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",
@@ -75,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Data source stats",
+      "data-traceids": "Trace IDs",
       "processing-time": "Data processing time",
       "queries": "Number of queries",
       "request-time": "Total request time",
@@ -82,6 +100,7 @@
       "table-title": "Stats"
     },
     "toolbar": {
+      "add": "Add",
       "add-panel": "Add panel",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
@@ -92,7 +111,6 @@
       "save": "Save dashboard",
       "settings": "Dashboard settings",
       "share": "Share dashboard or panel",
-      "tv-button": "Cycle view mode",
       "unmark-favorite": "Unmark as favorite"
     }
   },
@@ -123,6 +141,9 @@
       "folder": "Save in folder",
       "folder-description": "Library panel permissions are derived from the folder permissions",
       "name": "Library panel name"
+    },
+    "add-widget": {
+      "title": "Add panel from panel library"
     }
   },
   "library-panels": {
@@ -185,8 +206,7 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Administration",
-      "titleBeforeTopnav": "Configuration"
+      "title": "Administration"
     },
     "correlations": {
       "subtitle": "Add and configure correlations",
@@ -224,8 +244,7 @@
     },
     "global-users": {
       "subtitle": "Manage users in Grafana",
-      "title": "Users",
-      "titleBeforeTopnav": "Users"
+      "title": "Users"
     },
     "help": {
       "title": "Help"
@@ -240,9 +259,6 @@
     "library-panels": {
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
-    },
-    "manage-dashboards": {
-      "title": "Browse"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -262,8 +278,7 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Default preferences",
-      "titleBeforeTopnav": "Preferences"
+      "title": "Default preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -282,7 +297,6 @@
     "profile/settings": {
       "title": "Profile"
     },
-    "profile/switch-org": "Switch organization",
     "public": {
       "title": "Public dashboards"
     },
@@ -303,7 +317,6 @@
       "subtitle": "Use service accounts to run automated workloads in Grafana",
       "title": "Service accounts"
     },
-    "sign-in": "Sign in",
     "sign-out": {
       "title": "Sign out"
     },
@@ -399,7 +412,6 @@
       "sort-placeholder": "Sort",
       "starred": "Starred",
       "view-as-folders": "View by folders",
-      "view-as-grid": "Grid view",
       "view-as-list": "View as list"
     },
     "dashboard-actions": {

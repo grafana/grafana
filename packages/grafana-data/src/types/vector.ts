@@ -1,12 +1,12 @@
 declare global {
   interface Array<T> {
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
     get(idx: number): T;
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
     set(idx: number, value: T): void;
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated Use .push(value). This only exists to help migrate Vector to Array */
     add(value: T): void;
-    /** @deprecated this only exists to help migrate Vector to Array */
+    /** @deprecated this is not necessary.  This only exists to help migrate Vector to Array */
     toArray(): T[];
   }
 }
@@ -97,3 +97,34 @@ export interface ReadWriteVector<T = any> extends Vector<T> {}
  * @deprecated -- this is now part of the base Vector interface
  */
 export interface MutableVector<T = any> extends ReadWriteVector<T> {}
+
+/**
+ * This is an extremely inefficient Vector wrapper that allows vectors to
+ * be treated as arrays.  We should avoid using this wrapper, but it is helpful
+ * for a clean migration to arrays
+ *
+ * @deprecated
+ */
+export function makeArrayIndexableVector<T extends Vector>(v: T): T {
+  return new Proxy(v, {
+    get(target: Vector, property: string, receiver: Vector) {
+      if (typeof property !== 'symbol') {
+        const idx = +property;
+        if (String(idx) === property) {
+          return target.get(idx);
+        }
+      }
+      return Reflect.get(target, property, receiver);
+    },
+    set(target: Vector, property: string, value: any, receiver: Vector) {
+      if (typeof property !== 'symbol') {
+        const idx = +property;
+        if (String(idx) === property) {
+          target.set(idx, value);
+          return true;
+        }
+      }
+      return Reflect.set(target, property, value, receiver);
+    },
+  }) as T;
+}

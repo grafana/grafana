@@ -11,16 +11,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import {
-  Alert,
-  DataSourceHttpSettings,
-  InfoBox,
-  InlineField,
-  InlineFormLabel,
-  LegacyForms,
-  SecureSocksProxySettings,
-  Select,
-} from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
@@ -334,11 +325,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
           dataSourceConfig={options}
           defaultUrl="http://localhost:8086"
           onChange={onOptionsChange}
+          secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
         />
-
-        {config.featureToggles.secureSocksDatasourceProxy && (
-          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-        )}
 
         <div className="gf-form-group">
           <div>
