@@ -14,7 +14,6 @@ import {
 import { config } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
-import { PanelQueriesChangedEvent } from 'app/types/events';
 
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
@@ -173,8 +172,6 @@ export const publishSnapshot = (data: DataFrame, panelID: number): void => {
   });
 
   panelModel!.refresh();
-
-  dashboard?.events.publish(PanelQueriesChangedEvent);
 };
 
 export const isDatagridEditEnabled = () => {

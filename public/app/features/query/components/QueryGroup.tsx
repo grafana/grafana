@@ -94,6 +94,25 @@ export class QueryGroup extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
+    this.setNewQueriesAndDatasource(options);
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
+  }
+
+  async componentDidUpdate() {
+    const { options } = this.props;
+
+    if (this.state.dataSource && options.dataSource.uid !== this.state.dataSource?.uid) {
+      this.setNewQueriesAndDatasource(options);
+    }
+  }
+
+  async setNewQueriesAndDatasource(options: QueryGroupOptions) {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
@@ -119,39 +138,6 @@ export class QueryGroup extends PureComponent<Props, State> {
       });
     } catch (error) {
       console.log('failed to load data source', error);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-      this.querySubscription = null;
-    }
-  }
-
-  async componentDidUpdate() {
-    const { options } = this.props;
-
-    if (this.state.dataSource && options.dataSource.uid !== this.state.dataSource?.uid) {
-      try {
-        const ds = await this.dataSourceSrv.get(options.dataSource);
-        const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
-        const datasource = ds.getRef();
-        const queries = options.queries.map((q) => ({
-          ...(queryIsEmpty(q) && ds?.getDefaultQuery?.(CoreApp.PanelEditor)),
-          datasource,
-          ...q,
-        }));
-
-        this.setState({
-          queries,
-          dataSource: ds,
-          dsSettings,
-          savedQueryUid: options.savedQueryUid,
-        });
-      } catch (error) {
-        console.log('failed to load data source', error);
-      }
     }
   }
 
