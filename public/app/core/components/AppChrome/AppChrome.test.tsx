@@ -9,7 +9,7 @@ import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
 
-import { Page } from '../PageNew/Page';
+import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
 
