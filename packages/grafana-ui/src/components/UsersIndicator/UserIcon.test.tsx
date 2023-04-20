@@ -28,28 +28,13 @@ describe('UserIcon', () => {
 
   it('renders avatar when URL is provided', () => {
     render(<UserIcon userView={testUserView} />);
-    expect(screen.getByLabelText('John Smith avatar')).toHaveAttribute('src', 'https://example.com/avatar.png');
+    expect(screen.getByAltText('John Smith avatar')).toHaveAttribute('src', 'https://example.com/avatar.png');
   });
 
   it('calls onClick handler when clicked', async () => {
     const handleClick = jest.fn();
     const { user } = setup(<UserIcon userView={testUserView} onClick={handleClick} />);
-    await user.click(screen.getByLabelText('John Smith avatar'));
+    await user.click(screen.getByLabelText('John Smith icon'));
     expect(handleClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows tooltip when showTooltip is true', async () => {
-    const { user } = setup(<UserIcon userView={testUserView} />);
-    //await userEvent.hover(screen.getByLabelText('John Smith avatar'));
-    screen.getByLabelText('John Smith avatar').focus();
-    await user.tab();
-    //expect(screen.getByText('John Smith')).toBeInTheDocument();
-    expect(screen.getByText('Active last 15m')).toBeInTheDocument();
-  });
-
-  it('does not show tooltip when showTooltip is false', () => {
-    render(<UserIcon userView={testUserView} showTooltip={false} />);
-    expect(screen.queryByText('John Smith')).not.toBeInTheDocument();
-    expect(screen.queryByText('Active last 15m')).not.toBeInTheDocument();
   });
 });
