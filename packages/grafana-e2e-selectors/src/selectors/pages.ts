@@ -285,5 +285,8 @@ export const Pages = {
     publicDashboards: {
       container: 'public-dashboards-users-list',
     },
+    UserListAdminPage: {
+      container: 'user-list-admin-page',
+    },
   },
 };

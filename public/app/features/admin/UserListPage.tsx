@@ -31,6 +31,12 @@ const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView:
   />
 );
 
+const TAB_PAGE_MAP: Record<TabView, JSX.Element> = {
+  [TabView.ADMIN]: <UserListAdminPageContent />,
+  [TabView.ORG]: <UsersListPageContent />,
+  [TabView.PUBLIC_DASHBOARDS]: <UserListPublicDashboardPage />,
+};
+
 export default function UserListPage() {
   const styles = useStyles2(getStyles);
 
@@ -51,19 +57,6 @@ export default function UserListPage() {
   });
 
   const showToggle = hasAccessToOrgUsers && hasAccessToAdminUsers;
-
-  const renderTable = (): JSX.Element => {
-    switch (view) {
-      case TabView.ADMIN:
-        return <UserListAdminPageContent />;
-      case TabView.ORG:
-        return <UsersListPageContent />;
-      case TabView.PUBLIC_DASHBOARDS:
-        return <UserListPublicDashboardPage />;
-    }
-
-    return <UsersListPageContent />;
-  };
 
   return (
     <Page navId={'global-users'}>
@@ -86,6 +79,10 @@ export default function UserListPage() {
       ) : (
         hasEmailSharingEnabled && (
           <TabsBar className={styles.tabsMargin}>
+            {
+              //TODO: we need to understand in cloud what about it. Maybe hasAccessToOrgUsers is true, so when rendering
+              // for the first time this wont be active
+            }
             <Tab
               label="Users"
               active={view === null}
@@ -96,7 +93,7 @@ export default function UserListPage() {
           </TabsBar>
         )
       )}
-      {renderTable()}
+      {view ? TAB_PAGE_MAP[view] : <UsersListPageContent />}
     </Page>
   );
 }

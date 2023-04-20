@@ -3,6 +3,7 @@ import React, { ComponentType, useEffect, useMemo, memo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import {
   Icon,
   IconName,
@@ -31,6 +32,8 @@ const extraFilters: Array<ComponentType<FilterProps>> = [];
 export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
   extraFilters.push(filter);
 };
+
+const selectors = e2eSelectors.pages.UserListPage.UserListAdminPage;
 
 const mapDispatchToProps = {
   fetchUsers,
@@ -70,15 +73,17 @@ const UserListAdminPageUnConnected = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  console.log('hola sr, acá estoy');
+
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, [fetchUsers]);
 
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
 
   return (
     <Page.Contents>
-      <div className="page-action-bar">
+      <div className="page-action-bar" data-testid={selectors.container}>
         <div className="gf-form gf-form--grow">
           <FilterInput
             placeholder="Search user by login, email, or name."
