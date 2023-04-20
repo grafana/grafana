@@ -6,10 +6,10 @@ import {
 } from '@grafana/runtime';
 import { config } from 'app/core/config';
 
-import { DataSourcePickerWithHistory } from './DataSourcePickerWithHistory';
-import { DataSourcePickerWithHistoryProps } from './types';
+import { DataSourceDropdown } from './DataSourceDropdown';
+import { DataSourceDropdownProps } from './types';
 
-type DataSourcePickerProps = DeprecatedDataSourcePickerProps | DataSourcePickerWithHistoryProps;
+type DataSourcePickerProps = DeprecatedDataSourcePickerProps | DataSourceDropdownProps;
 
 /**
  * DataSourcePicker is a wrapper around the old DataSourcePicker and the new one.
@@ -20,6 +20,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   return !config.featureToggles.advancedDataSourcePicker ? (
     <DeprecatedDataSourcePicker {...props} />
   ) : (
-    <DataSourcePickerWithHistory {...props} />
+    <DataSourceDropdown {...props} />
   );
 }

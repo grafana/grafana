@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Badge, Link } from '@grafana/ui';
+import { Badge, Link, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderDTO } from 'app/types';
 
@@ -47,7 +47,11 @@ export const DashboardListPage = memo(({ match, location }: Props) => {
       actions={
         config.featureToggles.nestedFolders && (
           <Link href="/nested-dashboards">
-            <Badge icon="folder" color="blue" text="Try WIP nested folders UI" />
+            <Tooltip content="New Browse Dashboards for nested folders is still under development and may be missing features">
+              <span>
+                <Badge icon="folder" color="blue" text="Preview new Browse Dashboards" />
+              </span>
+            </Tooltip>
           </Link>
         )
       }
