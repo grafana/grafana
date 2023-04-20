@@ -313,10 +313,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextOpen: true,
       contextRow: row,
     });
+    reportInteraction('grafana_explore_logs_log_context_opened', {
+      datasourceType: row.datasourceType,
+      logRowUid: row.uid,
+    });
     this.onCloseContext = () => {
       this.setState({
         contextOpen: false,
         contextRow: undefined,
+      });
+      reportInteraction('grafana_explore_logs_log_context_closed', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
       });
       onClose();
     };
