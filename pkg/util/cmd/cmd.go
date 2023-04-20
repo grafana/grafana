@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"syscall"
+
+	"github.com/fatih/color"
 )
 
 func RunGrafanaCmd(subCmd string) int {
@@ -15,6 +17,13 @@ func RunGrafanaCmd(subCmd string) int {
 	if err != nil {
 		fmt.Println("Error locating executable:", err)
 		return 1
+	}
+
+	switch filepath.Base(curr) {
+	case "grafana-server":
+		fmt.Printf("%s: %s\n", color.RedString("Deprecation warning:"), "The standalone 'grafana-server' program is deprecated and will be removed in the future. Please update all uses of 'grafana-server' to 'grafana server'")
+	case "grafana-cli":
+		fmt.Printf("%s: %s\n", color.RedString("Deprecation warning:"), "The standalone 'grafana-cli' program is deprecated and will be removed in the future. Please update all uses of 'grafana-cli' to 'grafana cli'")
 	}
 
 	executable := "grafana"
