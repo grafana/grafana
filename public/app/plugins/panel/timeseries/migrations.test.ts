@@ -2,17 +2,33 @@ import { cloneDeep } from 'lodash';
 
 import { PanelModel, FieldConfigSource, FieldMatcherID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel, PanelModel as PanelModelState } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { graphPanelChangedHandler } from './migrations';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
+  let dashboard: DashboardModel;
 
   beforeEach(() => {
     prevFieldConfig = {
       defaults: {},
       overrides: [],
     };
+
+    dashboard = createDashboardModelFixture({
+      id: 74,
+      version: 7,
+      annotations: {},
+      links: [],
+      panels: [],
+    });
+
+    getDashboardSrv().setCurrent(dashboard);
   });
 
   it('simple bars', () => {
@@ -80,6 +96,37 @@ describe('Graph Migrations', () => {
     expect(panel).toMatchSnapshot();
     expect(panel.fieldConfig.overrides[0].matcher.id).toBe(FieldMatcherID.byRegexp);
     expect(panel.fieldConfig.overrides[1].matcher.id).toBe(FieldMatcherID.byRegexp);
+  });
+
+  describe('time regions', () => {
+    test('should migrate', () => {
+      const old = {
+        angular: {
+          timeRegions: [
+            {
+              colorMode: 'red',
+              fill: true,
+              fillColor: 'rgba(234, 112, 112, 0.12)',
+              fromDayOfWeek: 1,
+              line: true,
+              lineColor: 'rgba(237, 46, 24, 0.60)',
+              op: 'time',
+            },
+          ],
+        },
+      };
+
+      const panel = { datasource: { type: 'datasource', uid: 'gdev-testdata' } } as PanelModel;
+      dashboard.panels.push(new PanelModelState(panel));
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(dashboard.panels).toHaveLength(1);
+      expect(dashboard.annotations.list).toHaveLength(2); // built-in + time region
+      expect(
+        dashboard.annotations.list.filter((annotation) => annotation.target?.queryType === GrafanaQueryType.TimeRegions)
+      ).toHaveLength(1);
+      expect(panel.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+      expect(panel).toMatchSnapshot();
+    });
   });
 
   describe('legend', () => {
