@@ -81,6 +81,7 @@ export const Connection = (props: ConnectionProps) => {
             label="Prometheus Server URL"
             labelWidth={PROM_CONFIG_LABEL_WIDTH}
             tooltip={urlTooltip}
+            required={true}
           >
             {urlInput}
           </InlineField>
