@@ -1,4 +1,4 @@
-import { QueryResultMeta } from '../types';
+import { makeArrayIndexableVector, QueryResultMeta } from '../types';
 import { Field, FieldType, DataFrame } from '../types/dataFrame';
 import { FunctionalVector } from '../vector/FunctionalVector';
 import { vectorToArray } from '../vector/vectorToArray';
@@ -15,6 +15,7 @@ class ArrayPropertyVector<T = any> extends FunctionalVector<T> {
 
   constructor(private source: any[], private prop: string) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length(): number {
@@ -64,6 +65,7 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
     } else {
       this.setFieldsFromObject(first);
     }
+    return makeArrayIndexableVector(this);
   }
 
   /**

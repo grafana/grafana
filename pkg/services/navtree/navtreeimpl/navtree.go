@@ -149,18 +149,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		}
 	}
 
-	orgAdminNode, err := s.getOrgAdminNode(c)
+	orgAdminNode, err := s.getAdminNode(c)
 
 	if orgAdminNode != nil {
 		treeRoot.AddSection(orgAdminNode)
 	} else if err != nil {
 		return nil, err
-	}
-
-	serverAdminNode := s.getServerAdminNode(c)
-
-	if serverAdminNode != nil {
-		treeRoot.AddSection(serverAdminNode)
 	}
 
 	s.addHelpLinks(treeRoot, c)

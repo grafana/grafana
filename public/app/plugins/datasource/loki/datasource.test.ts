@@ -5,7 +5,6 @@ import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
-  ArrayVector,
   CoreApp,
   DataFrame,
   dataFrameToJSON,
@@ -57,19 +56,19 @@ const testFrame: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1, 2]),
+      values: [1, 2],
     },
     {
       name: 'Line',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['line1', 'line2']),
+      values: ['line1', 'line2'],
     },
     {
       name: 'labels',
       type: FieldType.other,
       config: {},
-      values: new ArrayVector([
+      values: [
         {
           label: 'value',
           label2: 'value ',
@@ -79,19 +78,19 @@ const testFrame: DataFrame = {
           label2: 'value2',
           label3: ' ',
         },
-      ]),
+      ],
     },
     {
       name: 'tsNs',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['1000000', '2000000']),
+      values: ['1000000', '2000000'],
     },
     {
       name: 'id',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['id1', 'id2']),
+      values: ['id1', 'id2'],
     },
   ],
   length: 2,
@@ -400,19 +399,19 @@ describe('LokiDatasource', () => {
             name: 'Time',
             type: FieldType.time,
             config: {},
-            values: new ArrayVector([1, 2]),
+            values: [1, 2],
           },
           {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['hello', 'hello 2']),
+            values: ['hello', 'hello 2'],
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: new ArrayVector([
+            values: [
               {
                 label: 'value',
                 label2: 'value ',
@@ -422,19 +421,19 @@ describe('LokiDatasource', () => {
                 label2: 'value2',
                 label3: ' ',
               },
-            ]),
+            ],
           },
           {
             name: 'tsNs',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['1000000', '2000000']),
+            values: ['1000000', '2000000'],
           },
           {
             name: 'id',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['id1', 'id2']),
+            values: ['id1', 'id2'],
           },
         ],
         length: 2,
@@ -457,37 +456,37 @@ describe('LokiDatasource', () => {
             name: 'Time',
             type: FieldType.time,
             config: {},
-            values: new ArrayVector([1]),
+            values: [1],
           },
           {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['hello']),
+            values: ['hello'],
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: new ArrayVector([
+            values: [
               {
                 label: 'value',
                 label2: 'value2',
                 label3: 'value3',
               },
-            ]),
+            ],
           },
           {
             name: 'tsNs',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['1000000']),
+            values: ['1000000'],
           },
           {
             name: 'id',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['id1']),
+            values: ['id1'],
           },
         ],
         length: 1,
