@@ -30,7 +30,11 @@ The alert rule health is determined by the status of the evaluation of the alert
 
 **Alert instances**
 
-For Grafana-managed alert rules, multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting) and they can be in Normal, Pending, Alerting, No Data, Error states. For Mimir or Loki-managed alert rules, alert instances are only created when the threshold condition defined in an alert rule is breached.
+For Grafana-managed alert rules, multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
+
+Both Grafana-managed alert and Mimir or Loki-managed alert instances can be in Normal, Pending, Alerting, No Data, Error states.
+
+**Note:** For Mimir or Loki-managed alert rules, alert instances are only created when the threshold condition defined in an alert rule is breached.
 
 Alerting alert instances are grouped by labels according to the notification policy. This controls de-duplication and groups alert instances to send to your contact points.
 

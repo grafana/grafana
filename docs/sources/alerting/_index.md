@@ -35,7 +35,7 @@ A single Grafana Alerting page consolidates both Grafana-managed alerts and aler
 
 **Multi-dimensional alerts**
 
-Alert rules can create multiple individual alert instances per alert rule, known as multi-dimensional alerts, giving you the power and flexibility to gain visibility into your entire system with just a single alert rule. You do this by adding labels to your query to specify which component is being monitored and generate multiple alert instances for a single alert rule. For example, if you want to monitor each server in a cluster, a multidimensional alert will alert on each CPU, whereas a standard alert will alert on the overall server.
+Alert rules can create multiple individual alert instances per alert rule, known as multi-dimensional alerts, giving you the power and flexibility to gain visibility into your entire system with just a single alert rule. You do this by adding labels to your query to specify which component is being monitored and generate multiple alert instances for a single alert rule. For example, if you want to monitor each server in a cluster, a multi-dimensional alert will alert on each CPU, whereas a standard alert will alert on the overall server.
 
 **Route alerts**
 
@@ -43,11 +43,14 @@ Route each alert instance to a specific contact point based on labels you define
 
 **Silence alerts**
 
+Silences stop notifications from getting created and last for only a specified window of time.
 Silences allow you to stop receiving persistent notifications from one or more alert rules. You can also partially pause an alert based on certain criteria. Silences have their own dedicated section for better organization and visibility, so that you can scan your paused alert rules without cluttering the main alerting view.
 
 **Mute timings**
 
-With mute timings, you can specify a time interval when you don’t want new notifications to be generated or sent. You can also freeze alert notifications for recurring periods of time, such as during a maintenance period.
+A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
+
+Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
 ## Design your Alerting system
 

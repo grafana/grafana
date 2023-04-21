@@ -37,7 +37,9 @@ For more information, see Add an external Alertmanager.
 
 To create Grafana Mimir or Grafana Loki-managed alert rules, you must have a compatible Prometheus or Loki data source.
 
-You can check if your data source supports rule creation via Grafana by testing the data source and observing if the ruler API is supported.
+You can check if your data source supports rule creation via Grafana by testing the data source and observing if the Ruler API is supported.
+
+For more information on the Ruler API, refer to [Ruler API](docs/loki/latest/api/#ruler).
 
 The following diagram shows how Grafana Mimir or Grafana Loki-managed alerting works.
 
