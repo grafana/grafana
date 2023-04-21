@@ -353,10 +353,9 @@ func (ng *AlertNG) IsDisabled() bool {
 
 // SetRequestHandlerHook replaces the handler for a specific path. The hook is invoked
 // after all other middleware is invoked (authentication, instrumentation).
-func (ng *AlertNG) SetAPIRequestHandlerHook(path string, hook api.RequestHandlerFunc) {
-	ng.api.Hooks.Set(path, hook)
+func (ng *AlertNG) GetHooks() *Hooks {
+	ng.api.Hooks
 }
-
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 
