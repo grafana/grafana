@@ -224,8 +224,8 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI) {
-		r.Get("/admin/authentication", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), hs.Index)
+	if hs.License.FeatureEnabled("saml") && hs.Features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI) {
+		r.Get("/admin/authentication/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)), hs.Index)
 	}
 
 	// authed api

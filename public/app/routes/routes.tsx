@@ -309,11 +309,12 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin/authentication',
-      component: config.featureToggles.authenticationConfigUI
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
-          )
-        : () => <Redirect to="/admin" />,
+      component:
+        config.featureToggles.authenticationConfigUI && config.samlEnabled
+          ? SafeDynamicImport(
+              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+            )
+          : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin',
