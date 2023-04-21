@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CompactSelection, GridCell, GridCellKind } from '@glideapps/glide-data-grid';
+import { CompactSelection, GridCell, GridCellKind, GridSelection } from '@glideapps/glide-data-grid';
 
 import {
   ArrayVector,
@@ -11,15 +11,15 @@ import {
   GrafanaTheme2,
   FieldType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+
+import { isDatagridEditEnabled } from './featureFlagUtils';
 
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
 const TEXT_CANVAS = document.createElement('canvas');
 
-export const TEST_ID_DATAGRID_EDITOR = 'datagrid-editor';
 export const CELL_PADDING = 20;
 export const MAX_COLUMN_WIDTH = 300;
 export const ICON_AND_MENU_WIDTH = 65;
@@ -174,10 +174,6 @@ export const publishSnapshot = (data: DataFrame, panelID: number): void => {
   panelModel!.refresh();
 };
 
-export const isDatagridEditEnabled = () => {
-  return config.featureToggles.enableDatagridEditing;
-};
-
 //Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func
 export const cleanStringFieldAfterConversion = (field: Field): void => {
   const valuesArray = field.values.toArray();
@@ -202,7 +198,7 @@ export const getGridTheme = (theme: GrafanaTheme2) => {
   };
 };
 
-export const getGridCellKind = (field: Field, row: number): GridCell => {
+export const getGridCellKind = (field: Field, row: number, hasGridSelection = false): GridCell => {
   const value = field.values.get(row);
 
   switch (field.type) {
@@ -217,7 +213,7 @@ export const getGridCellKind = (field: Field, row: number): GridCell => {
       return {
         kind: GridCellKind.Number,
         data: value ? value : 0,
-        allowOverlay: isDatagridEditEnabled()!,
+        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -225,7 +221,7 @@ export const getGridCellKind = (field: Field, row: number): GridCell => {
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()!,
+        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -233,7 +229,7 @@ export const getGridCellKind = (field: Field, row: number): GridCell => {
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()!,
+        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -298,4 +294,12 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
       }
     `,
   };
+};
+
+export const hasGridSelection = (gridSelection: GridSelection): boolean => {
+  if (!gridSelection.current) {
+    return false;
+  }
+
+  return gridSelection.current.range && gridSelection.current.range.height > 1 && gridSelection.current.range.width > 1;
 };

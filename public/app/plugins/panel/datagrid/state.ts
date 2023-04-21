@@ -10,13 +10,13 @@ import {
 
 import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
+import { isDatagridEditEnabled } from './featureFlagUtils';
 import {
   DatagridContextMenuData,
   DEFAULT_CONTEXT_MENU,
   DEFAULT_RENAME_INPUT_DATA,
   EMPTY_GRID_SELECTION,
   getCellWidth,
-  isDatagridEditEnabled,
   RenameColumnInputData,
 } from './utils';
 

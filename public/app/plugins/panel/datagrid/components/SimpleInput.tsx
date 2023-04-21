@@ -23,5 +23,14 @@ export const SimpleInput = ({ onBlur, placeholder }: InputProps) => {
     }
   };
 
-  return <input type="text" placeholder={placeholder} onBlur={onBlur} ref={ref} onKeyDown={onKeyDown} />;
+  return (
+    <input
+      type="text"
+      placeholder={placeholder}
+      onBlur={onBlur}
+      ref={ref}
+      onKeyDown={onKeyDown}
+      data-testid="column-input"
+    />
+  );
 };

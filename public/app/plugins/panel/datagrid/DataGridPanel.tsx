@@ -19,6 +19,7 @@ import '@glideapps/glide-data-grid/dist/index.css';
 import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { RenameColumnCell } from './components/RenameColumnCell';
+import { isDatagridEditEnabled } from './featureFlagUtils';
 import { PanelOptions } from './panelcfg.gen';
 import { DatagridActionType, datagridReducer, initialState } from './state';
 import {
@@ -27,19 +28,18 @@ import {
   EMPTY_CELL,
   getGridCellKind,
   getGridTheme,
-  isDatagridEditEnabled,
   publishSnapshot,
   RIGHT_ELEMENT_PROPS,
   TRAILING_ROW_OPTIONS,
   getStyles,
   ROW_MARKER_BOTH,
   ROW_MARKER_NUMBER,
-  TEST_ID_DATAGRID_EDITOR,
+  hasGridSelection,
 } from './utils';
 
-interface DatagridProps extends PanelProps<PanelOptions> {}
+export interface DataGridProps extends PanelProps<PanelOptions> {}
 
-export function DataGridPanel({ options, data, id, fieldConfig }: DatagridProps) {
+export function DataGridPanel({ options, data, id, fieldConfig, width, height }: DataGridProps) {
   const [state, dispatch] = useReducer(datagridReducer, initialState);
   const {
     columns,
@@ -71,21 +71,10 @@ export function DataGridPanel({ options, data, id, fieldConfig }: DatagridProps)
       return EMPTY_CELL;
     }
 
-    return getGridCellKind(field, row);
+    return getGridCellKind(field, row, hasGridSelection(gridSelection));
   };
 
   const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
-    // If there is a gridSelection, then the only possible action for it was a multiple cell clear edit, which
-    // is handled by the onDeletePressed handler. So we can return early and avoid performance issues. if
-    // gridSelection has height 1 and width 1, it means the user activated a single cell for edit.
-    if (
-      gridSelection.current?.range &&
-      gridSelection.current.range.height > 1 &&
-      gridSelection.current.range.width > 1
-    ) {
-      return;
-    }
-
     const [col, row] = cell;
     const field: Field = frame.fields[col];
 
@@ -227,13 +216,13 @@ export function DataGridPanel({ options, data, id, fieldConfig }: DatagridProps)
   return (
     <>
       <DataEditor
-        data-testid={TEST_ID_DATAGRID_EDITOR}
         className={styles.dataEditor}
         getCellContent={getCellContent}
         columns={columns}
         rows={frame.length}
-        width={'100%'}
-        height={'100%'}
+        width={width}
+        height={height}
+        initialSize={[width, height]}
         theme={gridTheme}
         smoothScrollX
         smoothScrollY
