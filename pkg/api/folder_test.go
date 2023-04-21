@@ -309,7 +309,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 
 	t.Run("Should attach access control metadata to folder response with permissions cascading from nested folders", func(t *testing.T) {
 		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
-		folderService.ExpectedFolders = []*folder.Folder{{UID: "parent_uid"}}
+		folderService.ExpectedFolders = []*folder.Folder{{UID: "parentUid"}}
 		features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 		defer func() {
 			features = featuremgmt.WithFeatures()
@@ -320,7 +320,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent_uid")},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("parentUid")},
 				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
 			}),
 		}})
@@ -335,6 +335,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 
 		assert.True(t, body.AccessControl[dashboards.ActionFoldersRead])
 		assert.True(t, body.AccessControl[dashboards.ActionFoldersWrite])
+		assert.True(t, body.AccessControl[dashboards.ActionDashboardsCreate])
 	})
 
 	t.Run("Should not attach access control metadata to folder response", func(t *testing.T) {
