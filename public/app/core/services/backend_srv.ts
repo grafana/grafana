@@ -13,7 +13,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { AppEvents, DataSourceConfigEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -296,8 +296,14 @@ export class BackendSrv implements BackendService {
 
   showSuccessAlert<T>(response: FetchResponse<T>) {
     const { config } = response;
+    const data: { message: string } = response.data as any;
 
+    // for data source configs we want to handle the app errors separately so emit a different event
+    // that will be handled outside of current notifications
     if (config.showSuccessAlert === false) {
+      if (data?.message) {
+        this.dependencies.appEvents.emit(DataSourceConfigEvents.success, ['success', data.message]);
+      }
       return;
     }
 
@@ -309,23 +315,12 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    const data: { message: string } = response.data as any;
-
     if (data?.message) {
       this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
     }
   }
 
   showErrorAlert(config: BackendSrvRequest, err: FetchError) {
-    if (config.showErrorAlert === false) {
-      return;
-    }
-
-    // is showErrorAlert is undefined we only show alerts non data query and local api requests
-    if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
-      return;
-    }
-
     let description = '';
     let message = err.data.message;
 
@@ -343,6 +338,34 @@ export class BackendSrv implements BackendService {
     if (err.status === 422) {
       description = err.data.message;
       message = 'Validation failed';
+    }
+
+    if (config.showErrorAlert === false) {
+      // for data source configs we want to handle the app errors separately so emit a different event
+      // that will be handled outside of current notifications
+      this.dependencies.appEvents.emit(DataSourceConfigEvents.error, [
+        err.statusText,
+        err.data.error || message,
+        message,
+        err.data.traceID,
+        err.status,
+      ]);
+
+      return;
+    }
+
+    if (!err.statusText) {
+      err.statusText = 'error';
+    }
+
+    if (message.length > 80) {
+      description = message;
+      message = 'Error';
+    }
+
+    // is showErrorAlert is undefined we only show alerts non data query and local api requests
+    if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
+      return;
     }
 
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [

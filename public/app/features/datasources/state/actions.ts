@@ -20,6 +20,7 @@ import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types'
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+import { ConfigTestPayload } from '../types';
 import { findNewName, nameExits } from '../utils';
 
 import { buildCategories } from './buildCategories';
@@ -89,6 +90,23 @@ export const initDataSourceSettings = (
     }
   };
 };
+
+export const globalTest = (payload: ConfigTestPayload): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch, getState) => {
+    const status = payload[0];
+
+    const result = {
+      status: payload[0],
+      message: payload[1],
+    }
+
+    if (status === 'success') {
+      dispatch(testDataSourceSucceeded(result));
+    } else {
+      dispatch(testDataSourceFailed(result));
+    }
+  }
+}
 
 export const testDataSource = (
   dataSourceName: string,

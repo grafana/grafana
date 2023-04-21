@@ -1,9 +1,7 @@
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, LinkButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { Button } from '@grafana/ui';
 
 export interface Props {
   exploreUrl: string;
@@ -12,14 +10,9 @@ export interface Props {
   onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
-export function ButtonRow({ canSave, onSubmit, onTest, exploreUrl }: Props) {
-  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
-
+export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, exploreUrl }: Props) {
   return (
     <div className="gf-form-button-row">
-      <LinkButton variant="secondary" fill="solid" href={exploreUrl} disabled={!canExploreDataSources}>
-        Explore
-      </LinkButton>
       {canSave && (
         <Button
           type="submit"

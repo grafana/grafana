@@ -13,8 +13,19 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { eventFactory } from '../events/eventFactory';
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
+
+// err.statusText,err.data.message
+export type DataSourceConfigMessagePayload = [string, string, string?];
+// err.statusText,err.data.error,err.data.message,err.data.traceID, err.status
+export type DataSourceConfigErrorMessagePayload = [string, string, (string | Error)?, string?, string?];
+
+export const DataSourceConfigEvents = {
+  success: eventFactory<DataSourceConfigMessagePayload>('datasource-config-success'),
+  error: eventFactory<DataSourceConfigErrorMessagePayload>('datasource-config-error'),
+};
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,

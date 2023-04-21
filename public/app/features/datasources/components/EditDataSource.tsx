@@ -1,12 +1,14 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 
 import {
   DataSourcePluginContextProvider,
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
+  DataSourceConfigEvents,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -23,8 +25,9 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
+  globalTest,
 } from '../state';
-import { DataSourceRights } from '../types';
+import { DataSourceRights, ConfigTestPayload } from '../types';
 
 import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
@@ -59,6 +62,12 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
+  const onConfigTest = useCallback((payload: ConfigTestPayload) => dispatch(globalTest(payload)), [dispatch]);
+
+  useEffect((): void => {
+    appEvents.on(DataSourceConfigEvents.success, (payload: ConfigTestPayload) => onConfigTest(payload));
+    appEvents.on(DataSourceConfigEvents.error, (payload: ConfigTestPayload) => onConfigTest(payload));
+  }, [onConfigTest]);
 
   return (
     <EditDataSourceView
@@ -173,9 +182,16 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} />
+      <ButtonRow
+        onSubmit={onSubmit}
+        onDelete={onDelete}
+        onTest={onTest}
+        exploreUrl={exploreUrl}
+        canSave={!readOnly && hasWriteRights}
+        canDelete={!readOnly && hasDeleteRights}
+      />
 
-      <ButtonRow onSubmit={onSubmit} onTest={onTest} exploreUrl={exploreUrl} canSave={!readOnly && hasWriteRights} />
+      <DataSourceTestingStatus testingStatus={testingStatus} />
     </form>
   );
 }
