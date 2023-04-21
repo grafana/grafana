@@ -22,21 +22,23 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers }: Props) => {
   const styles = useStyles2(getStyles);
   const columns = useColumns();
 
+  // By default the form contains an empty matcher - with empty name and value and = operator
+  // We don't want to fetch previews for empty matchers as it results in all alerts returned
+  const hasValidMatchers = matchers.some((matcher) => matcher.value && matcher.name);
+
   const {
     currentData: alerts = [],
     isFetching,
     isError,
   } = useGetAlertmanagerAlertsQuery(
     { amSourceName, filter: { matchers } },
-    { skip: matchers.length === 0, refetchOnMountOrArgChange: true }
+    { skip: !hasValidMatchers, refetchOnMountOrArgChange: true }
   );
 
   const tableItemAlerts = alerts.map<DynamicTableItemProps<AlertmanagerAlert>>((alert) => ({
     id: alert.fingerprint,
     data: alert,
   }));
-
-  const hasValidMatchers = matchers.some((matcher) => matcher.value && matcher.name);
 
   return (
     <div>
@@ -53,7 +55,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers }: Props) => {
         </Alert>
       )}
       {isFetching && <LoadingPlaceholder text="Loading..." />}
-      {!isFetching && !isError && (
+      {!isFetching && !isError && hasValidMatchers && (
         <div className={styles.table}>
           {tableItemAlerts.length > 0 ? (
             <DynamicTable
