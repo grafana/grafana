@@ -142,9 +142,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
-  const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
+  // LoadMoreOptions[2] refers to 50 lines
+  const defaultLimit = LoadMoreOptions[2];
+  const [limit, setLimit] = useState<number>(defaultLimit.value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
-  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(defaultLimit);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
   const [wrapLines, setWrapLines] = useState(
     store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
