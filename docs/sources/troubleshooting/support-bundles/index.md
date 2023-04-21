@@ -57,9 +57,10 @@ To generate a support bundle and send the support bundle to Grafana Labs via a s
 
 ## Support bundle configuration
 
-You can configure the following settings for support bundles:
+You can configure the following settings for support bundles in the Grafana configuration file:
 
 ```ini
+[support_bundles]
 # Enable support bundle creation (default: true)
 enabled = true
 # Only server admins can generate and view support bundles. When set to false, organization admins can generate and view support bundles (default: true)
