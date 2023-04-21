@@ -11,7 +11,9 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 import { DashboardsTreeItem, DashboardTreeSelection, INDENT_AMOUNT_CSS_VAR } from '../types';
 
 import { NameCell } from './NameCell';
+import { TagsCell } from './TagsCell';
 import { TypeCell } from './TypeCell';
+import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
@@ -45,6 +47,7 @@ export function DashboardsTree({
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
+      width: 0,
       Header: () => <Checkbox value={false} />,
       Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
         const item = row.item;
@@ -65,20 +68,29 @@ export function DashboardsTree({
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
+      width: 3,
       Header: <span style={{ paddingLeft: 20 }}>Name</span>,
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const typeColumn: DashboardsTreeColumn = {
       id: 'type',
+      width: 1,
       Header: 'Type',
       Cell: TypeCell,
     };
 
-    return [checkboxColumn, nameColumn, typeColumn];
+    const tagsColumns: DashboardsTreeColumn = {
+      id: 'tags',
+      width: 2,
+      Header: 'Tags',
+      Cell: TagsCell,
+    };
+
+    return [checkboxColumn, nameColumn, typeColumn, tagsColumns];
   }, [onItemSelectionChange, onFolderClick]);
 
-  const table = useTable({ columns: tableColumns, data: items });
+  const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
 
   const virtualData = useMemo(() => {
@@ -112,7 +124,6 @@ export function DashboardsTree({
 
       <div {...getTableBodyProps()}>
         <List
-          className="virtual list"
           height={height - HEADER_HEIGHT}
           width={width}
           itemCount={items.length}
@@ -163,8 +174,6 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const columnSizing = 'auto 2fr 1fr';
-
   return {
     tableRoot: css({
       // Responsively
@@ -175,17 +184,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
 
-    cell: css({
-      padding: theme.spacing(1),
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    }),
+    // Column flex properties (cell sizing) are set by customFlexTableLayout.ts
 
     row: css({
-      display: 'grid',
-      gridTemplateColumns: columnSizing,
-      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
 
     headerRow: css({
@@ -199,6 +201,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       },
+    }),
+
+    cell: css({
+      padding: theme.spacing(1),
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
 
     link: css({
