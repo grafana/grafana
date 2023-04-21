@@ -371,6 +371,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	averageLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
 		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
+	averageLink2 := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
+		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana-1%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C` +
+		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana-1%22%7D%7D%5D%7D%5D%7D`)
 	totalLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
 		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A1%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
@@ -502,7 +505,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
 						[]*float64{util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), nil}).
-						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
@@ -510,7 +513,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
 						[]*float64{util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), nil}).
-						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
@@ -518,7 +521,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
 						[]*float64{util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), nil}).
-						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
 			},
 		},
 		{
@@ -686,9 +689,53 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
-					data.NewField("Percentage CPU", data.Labels{"microsoft.resourceid": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"}, []*float64{
+					data.NewField("Percentage CPU", data.Labels{"resourceName": "grafana"}, []*float64{
 						util.Pointer(2.0875), util.Pointer(2.1525), util.Pointer(2.155), util.Pointer(3.6925), util.Pointer(2.44),
-					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}, DisplayName: "Percentage CPU grafana"}),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}}),
+				),
+			},
+		},
+		{
+			name:         "multiple time series response with multiple dimensions",
+			responseFile: "10-azure-monitor-response-multi-with-dimensions.json",
+			mockQuery: &types.AzureMonitorQuery{
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
+					data.NewField("Percentage CPU", data.Labels{"resourceName": "grafana", "Test Dimension": "value-1"}, []*float64{
+						util.Pointer(2.0875), util.Pointer(2.1525), util.Pointer(2.155), util.Pointer(3.6925), util.Pointer(2.44),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}}),
+				),
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
+					data.NewField("Percentage CPU", data.Labels{"resourceName": "grafana", "Test Dimension": "value-2"}, []*float64{
+						util.Pointer(2.0875), util.Pointer(2.1525), util.Pointer(2.155), util.Pointer(3.6925), util.Pointer(2.44),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}}),
+				),
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink2}}),
+					data.NewField("Percentage CPU", data.Labels{"resourceName": "grafana-1", "Test Dimension": "value-1"}, []*float64{
+						util.Pointer(2.0875), util.Pointer(2.1525), util.Pointer(2.155), util.Pointer(3.6925), util.Pointer(2.44),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink2}}),
+				),
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink2}}),
+					data.NewField("Percentage CPU", data.Labels{"resourceName": "grafana-1", "Test Dimension": "value-3"}, []*float64{
+						util.Pointer(2.0875), util.Pointer(2.1525), util.Pointer(2.155), util.Pointer(3.6925), util.Pointer(2.44),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink2}}),
 				),
 			},
 		},
