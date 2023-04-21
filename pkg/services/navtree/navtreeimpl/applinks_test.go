@@ -203,7 +203,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "plugin-page-test-app3", appsNode.Children[1].Id)
 	})
 
-	t.Run("Should only add a 'Monitoring' section if a plugin exists that wants to live there", func(t *testing.T) {
+	t.Run("Should only add an 'Observability' section if a plugin exists that wants to live there", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
 		// Check if the Monitoring section is not there if no apps try to register to it
@@ -386,7 +386,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(0), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(1), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
