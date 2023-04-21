@@ -334,7 +334,7 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *alertingNotify.Template) ([]*alertingNotify.Integration, error) {
 	integrations := make([]*alertingNotify.Integration, 0, len(receiver.GrafanaManagedReceivers))
 	for i, r := range receiver.GrafanaManagedReceivers {
-		n, err := am.buildReceiverIntegration(r, tmpl)
+		n, err := am.buildReceiverIntegration(PostableGrafanaReceiverToGrafanaReceiver(r), tmpl)
 		if err != nil {
 			return nil, err
 		}
@@ -343,14 +343,14 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 	return integrations, nil
 }
 
-func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error) {
+func (am *Alertmanager) buildReceiverIntegration(r *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error) {
 	// secure settings are already encrypted at this point
 	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
 	for k, v := range r.SecureSettings {
 		d, err := base64.StdEncoding.DecodeString(v)
 		if err != nil {
-			return nil, InvalidReceiverError{
+			return nil, alertingNotify.InvalidReceiverError{
 				Receiver: r,
 				Err:      errors.New("failed to decode secure setting"),
 			}
@@ -365,27 +365,27 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			Name:                  r.Name,
 			Type:                  r.Type,
 			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              json.RawMessage(r.Settings),
+			Settings:              r.Settings,
 			SecureSettings:        secureSettings,
 		}
 	)
 	factoryConfig, err := receivers.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
 	if err != nil {
-		return nil, InvalidReceiverError{
+		return nil, alertingNotify.InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
 	}
 	receiverFactory, exists := alertingNotify.Factory(r.Type)
 	if !exists {
-		return nil, InvalidReceiverError{
+		return nil, alertingNotify.InvalidReceiverError{
 			Receiver: r,
 			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
 		}
 	}
 	n, err := receiverFactory(factoryConfig)
 	if err != nil {
-		return nil, InvalidReceiverError{
+		return nil, alertingNotify.InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}

@@ -16,7 +16,7 @@ const valueHelper = (f: TraceqlFilter) => {
   if (Array.isArray(f.value) && f.value.length > 1) {
     return `"${f.value.join('|')}"`;
   }
-  if (!f.valueType || f.valueType === 'string') {
+  if (f.valueType === 'string') {
     return `"${f.value}"`;
   }
   return f.value;

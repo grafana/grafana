@@ -11,7 +11,7 @@ import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import {
   locationUtil,
@@ -209,11 +209,11 @@ export class GrafanaApp {
         config,
       };
 
-      ReactDOM.render(
+      const root = createRoot(document.getElementById('reactRoot')!);
+      root.render(
         React.createElement(AppWrapper, {
           app: this,
-        }),
-        document.getElementById('reactRoot')
+        })
       );
     } catch (error) {
       console.error('Failed to start Grafana', error);

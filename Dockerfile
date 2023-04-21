@@ -3,7 +3,7 @@
 ARG BASE_IMAGE=alpine:3.17
 ARG JS_IMAGE=node:18-alpine3.17
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.1-alpine3.17
+ARG GO_IMAGE=golang:1.20.3-alpine3.17
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -31,6 +31,8 @@ RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
 
+ARG COMMIT_SHA=""
+ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
@@ -62,7 +64,9 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
-COPY .git .git
+
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 

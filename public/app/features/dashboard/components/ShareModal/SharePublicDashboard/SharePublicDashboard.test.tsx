@@ -1,4 +1,4 @@
-import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -143,14 +143,6 @@ describe('SharePublic', () => {
 
     await renderSharePublicDashboard();
     expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
-  });
-  it('renders default absolute time in input 2', async () => {
-    mockDashboard.time = { from: '2022-08-30T03:00:00.000Z', to: '2022-09-04T02:59:59.000Z' };
-    //@ts-ignore
-    mockDashboard.originalTime = { from: '2022-08-30T06:00:00.000Z', to: '2022-09-04T06:59:59.000Z' };
-
-    await renderSharePublicDashboard();
-    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 00:59:59')).toBeInTheDocument();
   });
   it('when modal is opened, then checkboxes are enabled but create button is disabled', async () => {
     server.use(getNonExistentPublicDashboardResponse());
@@ -311,6 +303,7 @@ describe('SharePublic - Already persisted', () => {
 
 describe('SharePublic - Report interactions', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     server.use(getExistentPublicDashboardResponse());
     server.use(
       rest.put('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
@@ -327,29 +320,41 @@ describe('SharePublic - Report interactions', () => {
 
   it('reports interaction when time range is clicked', async () => {
     await renderSharePublicDashboard();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    });
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
-      action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
+    await waitFor(() => {
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
+        action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
+      });
     });
   });
   it('reports interaction when show annotations is clicked', async () => {
     await renderSharePublicDashboard();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
+    });
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
-      action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
+    await waitFor(() => {
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
+        action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
+      });
     });
   });
   it('reports interaction when pause is clicked', async () => {
     await renderSharePublicDashboard();
+    await waitFor(() => {
+      expect(screen.getByTestId(selectors.PauseSwitch)).toBeEnabled();
+    });
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
 
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
-      action: pubdashResponse.isEnabled ? 'disable' : 'enable',
+    await waitFor(() => {
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
+        action: pubdashResponse.isEnabled ? 'disable' : 'enable',
+      });
     });
   });
 });

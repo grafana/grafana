@@ -75,7 +75,7 @@ rendering_ignore_https_errors = true
 enable = newNavigation
 ```
 
-You can override them on Linux machines with:
+You can override variables on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
@@ -729,6 +729,22 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 > **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
+
+## [sql_datasources]
+
+### max_open_conns_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum number of open connections (default: 100). The value configured in data source settings will be preferred over the default value.
+
+### max_idle_conns_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default allowed number of idle connections (default: 100). The value configured in data source settings will be preferred over the default value.
+
+### max_conn_lifetime_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum connection lifetime specified in seconds (default: 14400). The value configured in data source settings will be preferred over the default value.
+
+<hr/>
 
 ## [users]
 
@@ -2017,6 +2033,20 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
+
+<hr>
+
+## [plugin.plugin_id]
+
+This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
+
+Properties described in this section are available for all plugins, but you must set them individually for each plugin.
+
+### tracing
+
+> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+
+If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
 <hr>
 

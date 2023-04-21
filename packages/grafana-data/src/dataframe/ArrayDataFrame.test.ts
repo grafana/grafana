@@ -24,6 +24,7 @@ describe('Array DataFrame', () => {
 
     // Check map
     expect(frame.map((row) => row.name)).toEqual(expectedNames);
+    expect(frame[0].name).toEqual(input[0].name);
 
     let names: string[] = [];
     for (const row of frame) {

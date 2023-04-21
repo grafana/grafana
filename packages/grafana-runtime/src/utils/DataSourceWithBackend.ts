@@ -202,10 +202,16 @@ class DataSourceWithBackend<
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
-    let url = '/api/ds/query';
+    let url = '/api/ds/query?ds_type=' + this.type;
+
     if (hasExpr) {
       headers[PluginRequestHeaders.FromExpression] = 'true';
-      url += '?expression=true';
+      url += '&expression=true';
+    }
+
+    // Appending request ID to url to facilitate client-side performance metrics. See #65244 for more context.
+    if (requestId) {
+      url += `&requestId=${requestId}`;
     }
 
     if (request.dashboardUID) {

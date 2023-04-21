@@ -208,12 +208,14 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   }, [datasource, query, withTemplateVariableOptions]);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
-  const MetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+  const isMetricEncyclopediaEnabled = config.featureToggles.prometheusMetricEncyclopedia;
+
+  const initHints = datasource.getInitHints();
 
   return (
     <>
       <EditorRow>
-        {MetricEncyclopedia ? (
+        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled ? (
           <>
             <Button
               className={styles.button}
@@ -252,6 +254,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             onGetMetrics={onGetMetrics}
             datasource={datasource}
             labelsFilters={query.labels}
+            metricLookupDisabled={datasource.lookupsDisabled}
           />
         )}
         <LabelFilters
@@ -264,6 +267,18 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
         />
       </EditorRow>
+      {initHints.length ? (
+        <div className="query-row-break">
+          <div className="prom-query-field-info text-warning">
+            {initHints[0].label}{' '}
+            {initHints[0].fix ? (
+              <button type="button" className={'text-warning'}>
+                {initHints[0].fix.label}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
