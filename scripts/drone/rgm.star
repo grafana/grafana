@@ -41,7 +41,7 @@ def rgm_build(distros=["linux/amd64", "linux/arm64"]):
     "commands": [
       # the docker program is a requirement for running dagger programs
       "apk update && apk add docker",
-      "cd rgm && go run ./cmd --build-id=$${{DRONE_BUILD_ID}} --grafana-dir=../ --github_token=${{GITHUB_TOKEN}} package --distros={} publish --destination=$${{DESTINATION}} --gcp-service-account-key-base64=$${{GCP_KEY_BASE64}}".format(distroStr),
+      "cd rgm && go run ./cmd --build-id=$${{DRONE_BUILD_ID}} --grafana-dir=../ --github-token=${{GITHUB_TOKEN}} package --distros={} publish --destination=$${{DESTINATION}} --gcp-service-account-key-base64=$${{GCP_KEY_BASE64}}".format(distroStr),
     ],
     "environment": rgm_env_secrets,
     # The docker socket is a requirement for running dagger programs
