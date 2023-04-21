@@ -76,7 +76,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, true));
+  const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, false));
 
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
@@ -167,6 +167,10 @@ export function LokiContextUi(props: LokiContextUiProps) {
         onToggle={() => {
           store.set(IS_LOKI_LOG_CONTEXT_UI_OPEN, !isOpen);
           setIsOpen((isOpen) => !isOpen);
+          reportInteraction('grafana_explore_logs_loki_log_context_toggled', {
+            logRowUid: row.uid,
+            action: !isOpen ? 'open' : 'close',
+          });
         }}
         label={
           <div className={styles.query}>

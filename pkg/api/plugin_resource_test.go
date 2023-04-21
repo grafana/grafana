@@ -78,7 +78,6 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
-		hs.cachingService = &caching.OSSCachingService{}
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
