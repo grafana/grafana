@@ -6,9 +6,8 @@ import { getTimeZoneInfo, GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, FieldSet, HorizontalGroup, Select, TimeZonePicker, useStyles2 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
+import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-
-import { TimeRegionConfig } from '../types';
 
 import { TimePickerInput } from './TimePickerInput';
 

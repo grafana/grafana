@@ -1,11 +1,13 @@
 import { AbsoluteTimeRange, dateTime, TimeRange } from '@grafana/data';
 
-export interface BaseTimeRegionConfig {
+export interface TimeRegionConfig {
   from?: string;
   fromDayOfWeek?: number; // 1-7
 
   to?: string;
   toDayOfWeek?: number; // 1-7
+
+  timezone?: string;
 }
 
 interface ParsedTime {
@@ -15,7 +17,7 @@ interface ParsedTime {
   s?: number; // 0-59
 }
 
-export function calculateTimesWithin(cfg: BaseTimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
+export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): AbsoluteTimeRange[] {
   if (!(cfg.fromDayOfWeek || cfg.from) && !(cfg.toDayOfWeek || cfg.to)) {
     return [];
   }

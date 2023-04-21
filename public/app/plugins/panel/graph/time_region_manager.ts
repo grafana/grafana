@@ -3,7 +3,7 @@ import { map } from 'lodash';
 
 import { dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { config } from 'app/core/config';
-import { calculateTimesWithin, BaseTimeRegionConfig } from 'app/core/utils/timeRegions';
+import { calculateTimesWithin, TimeRegionConfig } from 'app/core/utils/timeRegions';
 
 type TimeRegionColorDefinition = {
   fill: string | null;
@@ -69,7 +69,7 @@ function getColor(timeRegion: any, theme: GrafanaTheme2): TimeRegionColorDefinit
   };
 }
 
-interface GraphTimeRegionConfig extends BaseTimeRegionConfig {
+interface GraphTimeRegionConfig extends TimeRegionConfig {
   colorMode: string;
 
   fill: boolean;
@@ -81,7 +81,7 @@ interface GraphTimeRegionConfig extends BaseTimeRegionConfig {
 
 export class TimeRegionManager {
   plot: any;
-  timeRegions?: BaseTimeRegionConfig[];
+  timeRegions?: TimeRegionConfig[];
 
   constructor(private panelCtrl: any) {}
 

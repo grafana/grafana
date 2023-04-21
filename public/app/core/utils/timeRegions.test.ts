@@ -1,5 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
-import { TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
+import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 
 import { calculateTimesWithin } from './timeRegions';
 

@@ -1,7 +1,5 @@
 import { TimeRange, DataFrame, FieldType, ArrayVector, getTimeZoneInfo } from '@grafana/data';
-import { calculateTimesWithin } from 'app/core/utils/timeRegions';
-
-import { TimeRegionConfig } from './types';
+import { TimeRegionConfig, calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 export function doTimeRegionQuery(
   name: string,
