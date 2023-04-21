@@ -108,8 +108,6 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
     defaultValues.matchers.map(matcherFieldToMatcher)
   );
 
-  console.log('Default matchers: ', defaultValues.matchers);
-
   const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
   useCleanup((state) => (state.unifiedAlerting.updateSilence = initialAsyncRequestState));
