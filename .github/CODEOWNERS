@@ -389,6 +389,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/bargauge/ @grafana/grafana-bi-squad
 /public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/debug/ @ryantxu
+/public/app/plugins/panel/datagrid/ @grafana/grafana-bi-squad
 /public/app/plugins/panel/gauge/ @grafana/grafana-bi-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/graph/ @grafana/dataviz-squad
