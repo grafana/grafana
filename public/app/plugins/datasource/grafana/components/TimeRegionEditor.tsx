@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import moment, { Moment } from 'moment/moment';
 import React, { useState } from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2 } from '@grafana/data';
+import { getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, FieldSet, HorizontalGroup, Select, TimeZonePicker, useStyles2 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
@@ -74,13 +74,36 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     return timezone;
   };
 
+  const onTimeChange = (v: Moment, field: string) => {
+    const time = v ? v.format('HH:mm') : undefined;
+    if (field === 'from') {
+      onChange({ ...value, from: time });
+    } else {
+      onChange({ ...value, to: time });
+    }
+  };
+
+  const onTimezoneChange = (v: string | undefined) => {
+    onChange({ ...value, timezone: v });
+  };
+
+  const onFromDayOfWeekChange = (v: SelectableValue<number>) => {
+    const fromDayOfWeek = v ? v.value : undefined;
+    const toDayOfWeek = v ? value.toDayOfWeek : undefined; // clear if everyday
+    onChange({ ...value, fromDayOfWeek, toDayOfWeek });
+  };
+
+  const onToDayOfWeekChange = (v: SelectableValue<number>) => {
+    onChange({ ...value, toDayOfWeek: v ? v.value : undefined });
+  };
+
   const renderTimezone = () => {
     if (isEditing) {
       return (
         <TimeZonePicker
           value={value.timezone}
           includeInternal={true}
-          onChange={(v) => onChange({ ...value, timezone: v })}
+          onChange={(v) => onTimezoneChange(v)}
           onBlur={() => setEditing(false)}
           menuShouldPortal={true}
           openMenuOnFocus={false}
@@ -109,16 +132,12 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             isClearable
             placeholder="Everyday"
             value={value.fromDayOfWeek ?? null}
-            onChange={(v) => {
-              const fromDayOfWeek = v ? v.value : undefined;
-              const toDayOfWeek = v ? value.toDayOfWeek : undefined; // clear if everyday
-              onChange({ ...value, fromDayOfWeek, toDayOfWeek });
-            }}
+            onChange={(v) => onFromDayOfWeekChange(v)}
             width={20}
           />
           <TimePickerInput
             value={getTime(value.from)}
-            onChange={(v) => onChange({ ...value, from: v ? v.format('HH:mm') : undefined })}
+            onChange={(v) => onTimeChange(v, 'from')}
             allowEmpty={true}
             placeholder="HH:mm"
             width={100}
@@ -133,13 +152,13 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               isClearable
               placeholder={getToPlaceholder()}
               value={value.toDayOfWeek ?? null}
-              onChange={(v) => onChange({ ...value, toDayOfWeek: v ? v.value : undefined })}
+              onChange={(v) => onToDayOfWeekChange(v)}
               width={20}
             />
           )}
           <TimePickerInput
             value={getTime(value.to)}
-            onChange={(v) => onChange({ ...value, to: v ? v.format('HH:mm') : undefined })}
+            onChange={(v) => onTimeChange(v, 'to')}
             allowEmpty={true}
             placeholder="HH:mm"
             width={100}
