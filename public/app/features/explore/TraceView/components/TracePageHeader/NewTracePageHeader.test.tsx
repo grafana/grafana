@@ -44,7 +44,7 @@ const setup = () => {
 
 describe('NewTracePageHeader test', () => {
   it('should render the new trace header', () => {
-    config.featureToggles.newTraceView = true;
+    config.featureToggles.newTraceViewHeader = true;
     setup();
 
     const header = document.querySelector('header');

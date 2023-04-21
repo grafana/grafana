@@ -5,7 +5,7 @@
   "builtIn": true,
 
   "info": {
-    "description": "TODO",
+    "description": "Uses the result set from another panel in the same dashboard",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

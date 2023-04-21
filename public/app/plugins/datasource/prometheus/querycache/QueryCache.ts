@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   DataQueryRequest,
   dateTime,
@@ -235,7 +234,7 @@ export class QueryCache {
     const newTo = request.range.to.valueOf();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
-    const shouldCache = request.rangeRaw?.to?.toString() === 'now';
+    const shouldCache = request.rangeRaw?.to?.toString() === 'now' && !request.targets.some((targ) => targ.instant);
 
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
@@ -360,16 +359,15 @@ export class QueryCache {
 
             // amend & re-cache
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            let prevTable: Table = cachedFrame.fields.map((field) => field.values.toArray()) as Table;
+            let prevTable: Table = cachedFrame.fields.map((field) => field.values) as Table;
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
+            let nextTable: Table = respFrame.fields.map((field) => field.values) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
             if (amendedTable) {
               for (let i = 0; i < amendedTable.length; i++) {
-                cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
+                cachedFrame.fields[i].values = amendedTable[i];
               }
-
               cachedFrame.length = cachedFrame.fields[0].values.length;
             }
           }
@@ -380,13 +378,13 @@ export class QueryCache {
 
         cachedFrames.forEach((frame) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          let table: Table = frame.fields.map((field) => field.values.toArray()) as Table;
+          let table: Table = frame.fields.map((field) => field.values) as Table;
 
           let trimmed = trimTable(table, newFrom, newTo);
 
           if (trimmed[0].length > 0) {
             for (let i = 0; i < trimmed.length; i++) {
-              frame.fields[i].values = new ArrayVector(trimmed[i]);
+              frame.fields[i].values = trimmed[i];
             }
             nonEmptyCachedFrames.push(frame);
           }
@@ -409,7 +407,7 @@ export class QueryCache {
           config: {
             ...field.config, // prevents mutatative exemplars links (re)enrichment
           },
-          values: new ArrayVector(field.values.toArray().slice()),
+          values: field.values.slice(),
         })),
       }));
     }
