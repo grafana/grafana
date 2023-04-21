@@ -52,17 +52,12 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('profileTypes');
   }
 
-  async getAllLabelsAndValues(): Promise<Record<string, string[]>> {
-    // For now, we send empty matcher to get all the series
-    return await super.getResource('allLabelsAndValues', { matchers: ['{}'] });
-  }
-
   async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelNames', {query, start, end});
+    return await super.getResource('labelNames', { query, start, end });
   }
 
-  async getLabelValues(label: string): Promise<string[]> {
-    return await super.getResource('labelValues', { label });
+  async getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]> {
+    return await super.getResource('labelValues', { label, query, start, end });
   }
 
   async getBackendType(): Promise<{ backendType: BackendType }> {

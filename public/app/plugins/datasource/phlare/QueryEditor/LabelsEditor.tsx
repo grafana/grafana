@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAsync, useLatest } from 'react-use';
 
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
 
 import { languageDefinition } from '../phlareql';
-import { BackendType } from '../types';
 
 import { ApiObject, CompletionProvider } from './autocomplete';
 
@@ -14,11 +13,10 @@ interface Props {
   onChange: (val: string) => void;
   onRunQuery: (value: string) => void;
   apiObject: ApiObject;
-  backendType: BackendType;
 }
 
 export function LabelsEditor(props: Props) {
-  const setupAutocompleteFn = useAutocomplete(props.apiObject, props.backendType);
+  const setupAutocompleteFn = useAutocomplete(props.apiObject);
   const styles = useStyles2(getStyles);
 
   const onRunQueryRef = useLatest(props.onRunQuery);
@@ -93,10 +91,10 @@ const EDITOR_HEIGHT_OFFSET = 2;
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
-function useAutocomplete(apiObject: ApiObject, backendType: BackendType) {
+function useAutocomplete(apiObject: ApiObject) {
   const providerRef = useRef<CompletionProvider>();
   if (providerRef.current === undefined) {
-    providerRef.current = new CompletionProvider(apiObject, backendType);
+    providerRef.current = new CompletionProvider(apiObject);
   }
 
   useAsync(async () => {

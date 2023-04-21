@@ -178,9 +178,3 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, query string, label s
 
 	return values, nil
 }
-
-func (c *PyroscopeClient) AllLabelsAndValues(ctx context.Context, matchers []string) (map[string][]string, error) {
-	// we return empty message because compared to phlare getting all the labels here would be expensive. Front end
-	// needs to deal with this.
-	return map[string][]string{}, nil
-}

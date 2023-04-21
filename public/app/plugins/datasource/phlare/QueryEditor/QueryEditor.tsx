@@ -70,7 +70,14 @@ export function QueryEditor(props: Props) {
 
   const apiObject: ApiObject = useMemo(() => {
     return {
-      getLabelValues: props.datasource.getLabelValues.bind(props.datasource),
+      getLabelValues: (label: string) => {
+        return props.datasource.getLabelValues(
+          props.query.profileTypeId + props.query.labelSelector,
+          label,
+          unpreciseRange.from,
+          unpreciseRange.to
+        );
+      },
       getLabelNames: () => {
         return props.datasource.getLabelNames(
           props.query.profileTypeId + props.query.labelSelector,
@@ -78,7 +85,6 @@ export function QueryEditor(props: Props) {
           unpreciseRange.to
         );
       },
-      getAllLabelsAndValues: props.datasource.getAllLabelsAndValues.bind(props.datasource),
     };
   }, [props.datasource, unpreciseRange.to, unpreciseRange.from, props.query.labelSelector, props.query.profileTypeId]);
 
@@ -93,7 +99,6 @@ export function QueryEditor(props: Props) {
           onChange={onLabelSelectorChange}
           onRunQuery={handleRunQuery}
           apiObject={apiObject}
-          backendType={props.datasource.backendType}
         />
       </EditorRow>
       <EditorRow>
@@ -116,7 +121,7 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
       } else {
         parts = profileType.id.split('.');
         const last = parts.pop()!;
-        parts = [parts.join('.'), last]
+        parts = [parts.join('.'), last];
       }
 
       const [name, type] = parts;

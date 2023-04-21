@@ -65,9 +65,6 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 	if req.Path == "labelNames" {
 		return d.labelNames(ctx, req, sender)
 	}
-	if req.Path == "allLabelsAndValues" {
-		return d.allLabelsAndValues(ctx, req, sender)
-	}
 	if req.Path == "labelValues" {
 		return d.labelValues(ctx, req, sender)
 	}
@@ -93,42 +90,6 @@ func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallRe
 		return err
 	}
 	return nil
-}
-
-type SeriesRequestJson struct {
-	Matchers []string `json:"matchers"`
-}
-
-func (d *PhlareDatasource) allLabelsAndValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	parsedUrl, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	matchers, ok := parsedUrl.Query()["matchers"]
-	if !ok {
-		matchers = []string{"{}"}
-	}
-
-	res, err := d.client.AllLabelsAndValues(ctx, matchers)
-	if err != nil {
-		return err
-	}
-
-	data, err := json.Marshal(res)
-	if err != nil {
-		return err
-	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type LabelNamesPayload struct {
-	Query string
-	Start int64
-	End   int64
 }
 
 func (d *PhlareDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -169,13 +130,21 @@ type LabelValuesPayload struct {
 }
 
 func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	var payload LabelValuesPayload
-	err := json.Unmarshal(req.Body, &payload)
+	u, err := url.Parse(req.URL)
 	if err != nil {
-		return fmt.Errorf("error unmarshaling labelValues payload: %v", err)
+		return err
+	}
+	query := u.Query()
+	start, err := strconv.ParseInt(query["start"][0], 10, 64)
+	if err != nil {
+		return err
+	}
+	end, err := strconv.ParseInt(query["end"][0], 10, 64)
+	if err != nil {
+		return err
 	}
 
-	res, err := d.client.LabelValues(ctx, payload.Query, payload.Label, payload.Start, payload.End)
+	res, err := d.client.LabelValues(ctx, query["query"][0], query["label"][0], start, end)
 	if err != nil {
 		return fmt.Errorf("error calling LabelValues: %v", err)
 	}

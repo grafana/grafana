@@ -2,6 +2,7 @@ package phlare
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -138,7 +139,7 @@ func getUnits(profileTypeID string) string {
 func (c *PhlareClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error seding LabelNames request %v", err)
 	}
 
 	var filtered []string
@@ -152,49 +153,11 @@ func (c *PhlareClient) LabelNames(ctx context.Context, query string, start int64
 }
 
 func (c *PhlareClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
-	// Phlare don't have a good endpoint for this so front end should use the AllLabelsAndValues API to get all the
-	// values at once
-	return []string{}, nil
-}
-
-func (c *PhlareClient) AllLabelsAndValues(ctx context.Context, matchers []string) (map[string][]string, error) {
-	res, err := c.connectClient.Series(ctx, connect.NewRequest(&querierv1.SeriesRequest{Matchers: matchers}))
+	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&querierv1.LabelValuesRequest{Name: label}))
 	if err != nil {
 		return nil, err
 	}
-
-	result := make(map[string]map[string]bool)
-
-	for _, val := range res.Msg.LabelsSet {
-		for _, label := range val.Labels {
-			if isPrivateLabel(label.Name) {
-				continue
-			}
-			if _, ok := result[label.Name]; ok {
-				// Make sure we deduplicate the values
-				if _, ok := result[label.Name][label.Value]; !ok {
-					result[label.Name][label.Value] = true
-				}
-			} else {
-				valueSet := make(map[string]bool)
-				valueSet[label.Value] = true
-				result[label.Name] = valueSet
-			}
-		}
-	}
-
-	final := make(map[string][]string)
-
-	for key, val := range result {
-		final[key] = make([]string, len(val))
-		i := 0
-		for k := range val {
-			final[key][i] = k
-			i++
-		}
-	}
-
-	return final, nil
+	return resp.Msg.Names, nil
 }
 
 func isPrivateLabel(label string) bool {

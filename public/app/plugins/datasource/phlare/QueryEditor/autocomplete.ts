@@ -1,11 +1,8 @@
 import { monacoTypes, Monaco } from '@grafana/ui';
 
-import { BackendType } from '../types';
-
 export type ApiObject = {
   getLabelValues: (label: string) => Promise<string[]>;
   getLabelNames: () => Promise<string[]>;
-  getAllLabelsAndValues: () => Promise<Record<string, string[]>>;
 };
 
 /**
@@ -22,25 +19,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private labels: { [label: string]: Set<string> } = {};
+  private labels: string[] = [];
 
-  constructor(private apiObject: ApiObject, private backendType: BackendType) {}
+  constructor(private apiObject: ApiObject) {}
 
   async init() {
-    if (this.backendType === 'pyroscope') {
-      const labels = await this.apiObject.getLabelNames();
-      for (const label of labels) {
-        if (!this.labels[label]) {
-          this.labels[label] = new Set();
-        }
-      }
-    } else {
-      // We try both of these because we don't know which one will be available.
-      const all = await this.apiObject.getAllLabelsAndValues();
-      for (const label of Object.keys(all)) {
-        this.labels[label] = new Set(all[label]);
-      }
-    }
+    this.labels = await this.apiObject.getLabelNames();
   }
 
   setApiObject(apiObject: ApiObject) {
@@ -87,17 +71,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @private
    */
   private async getCompletions(situation: Situation): Promise<Completion[]> {
-    if (this.backendType === 'phlare' && !Object.keys(this.labels).length) {
-      // With phlare, if we don't have any labels or values we can't suggest anything.
-      return [];
-    }
     switch (situation.type) {
       // Not really sure what would make sense to suggest in this case so just leave it
       case 'UNKNOWN': {
         return [];
       }
       case 'EMPTY': {
-        return Object.keys(this.labels).map((key) => {
+        return this.labels.map((key) => {
           return {
             label: key,
             insertText: `{${key}="`,
@@ -106,7 +86,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         });
       }
       case 'IN_LABEL_NAME':
-        return Object.keys(this.labels).map((key) => {
+        return this.labels.map((key) => {
           return {
             label: key,
             insertText: key,
@@ -114,12 +94,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           };
         });
       case 'IN_LABEL_VALUE':
-        let values: string[] = [];
-        if (this.labels[situation.labelName].size) {
-          values = Array.from(this.labels[situation.labelName].values());
-        } else if (this.backendType === 'pyroscope') {
-          values = await this.apiObject.getLabelValues(situation.labelName);
-        }
+        let values = await this.apiObject.getLabelValues(situation.labelName);
         return values.map((key) => {
           return {
             label: key,
