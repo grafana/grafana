@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Field, FieldSet, Icon, Input, LinkButton, Spinner, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Icon, Input, LinkButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -60,7 +60,7 @@ export const DEFAULT_PAYLOAD = `[
       "instance": "instance1"
     },
     "startsAt": "2023-04-01T00:00:00Z",
-    "endsAt": "2023-04-01T00:05:00Z"
+    "endsAt": "2023-12-01T00:05:00Z"
   }]
 `;
 
@@ -289,8 +289,16 @@ function ExpandableSection({ isOpen, toggleOpen, children, title }: ExpandableSe
 }
 
 function getResultsToRender(results: TemplatePreviewResult[]) {
-  return results.map((result: TemplatePreviewResult) => `Preview for ${result.name}:\n${result.text}`).join(`\n\n`);
+  return results
+    .map((result: TemplatePreviewResult) => {
+      if (result.text.trim().length > 0) {
+        return `Preview for ${result.name}:\n${result.text}`;
+      }
+      return '';
+    })
+    .join(`\n`);
 }
+
 function getErrorsToRender(results: TemplatePreviewErrors[]) {
   return results
     .map((result: TemplatePreviewErrors) => {
@@ -300,7 +308,7 @@ function getErrorsToRender(results: TemplatePreviewErrors[]) {
         return `ERROR:\n${result.kind}\n${result.message}`;
       }
     })
-    .join(`\n\n`);
+    .join(`\n`);
 }
 export const PREVIEW_NOT_AVAILABLE = 'Preview is not available';
 
@@ -322,7 +330,7 @@ function getPreviewTorender(
   if (somethingWasWrong) {
     return errorToRender;
   } else {
-    return `${previewResultsToRender}\n\n${previewErrorsToRender}`;
+    return `${previewResultsToRender}\n${previewErrorsToRender}`;
   }
 }
 
@@ -363,21 +371,14 @@ export function TemplatePreview({
       </Button>
 
       <Stack direction="column">
-        <div className={styles.preview.title}> Preview</div>
         {isLoading && (
           <>
             <Spinner inline={true} /> Loading preview...
           </>
         )}
-        <TextArea
-          required={true}
-          value={previewToRender}
-          disabled={true}
-          className={styles.preview.textArea}
-          rows={10}
-          cols={50}
-          data-testid="payloadJSON"
-        />
+        <pre className={styles.preview.result} data-testid="payloadJSON">
+          {previewToRender}
+        </pre>
       </Stack>
     </Stack>
   );
@@ -437,12 +438,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
   }),
   preview: {
-    title: css`
-    fontSize: ${theme.typography.bodySmall.fontSize};,
-    `,
-    textArea: css`
-      width: 605px;
-      height: 291px;
+    result: css`
+      width: 570px;
+      height: 363px;
     `,
   },
 });
