@@ -4,7 +4,7 @@ import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { DataSourceCard } from './DataSourceCard';
-import { isDataSourceMatch, useDatasources, useRecentlyUsedDataSources } from './utils';
+import { getDataSourceCompareFn, isDataSourceMatch, useDatasources, useRecentlyUsedDataSources } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -51,12 +51,11 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
-  const orderedDataSources = orderDataSourcesByRecentlyUsed(recentlyUsedDataSources, dataSources);
-
   return (
     <div className={className}>
-      {orderedDataSources
+      {dataSources
         .filter((ds) => (props.filter ? props.filter(ds) : true))
+        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
             key={ds.uid}
@@ -72,20 +71,11 @@ export function DataSourceList(props: DataSourceListProps) {
   );
 }
 
-function orderDataSourcesByRecentlyUsed(recentlyUsedDataSources: string[], dataSources: DataSourceInstanceSettings[]) {
-  const recentlyUsed = recentlyUsedDataSources
-    .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
-    .filter((ds): ds is DataSourceInstanceSettings => !!ds); //Custom typeguard to make sure ds is not undefined
-
+function getDataSourceVariableIDs() {
   const templateSrv = getTemplateSrv();
   /** Unforunately there is no easy way to identify data sources that are variables. The uid of the data source will be the name of the variable in a templating syntax $([name]) **/
-  const dataSourceVariablesIDs = templateSrv.getVariables().map((v) => `\${${v.id}}`);
-  const dataSourceVariables = dataSourceVariablesIDs
-    .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
-    .filter((ds): ds is DataSourceInstanceSettings => !!ds);
-
-  const otherDataSources = dataSources.filter(
-    (ds) => !recentlyUsedDataSources.includes(ds.uid) && !dataSourceVariablesIDs.includes(ds.uid)
-  );
-  return [...recentlyUsed, ...dataSourceVariables, ...otherDataSources];
+  return templateSrv
+    .getVariables()
+    .filter((v) => v.type === 'datasource')
+    .map((v) => `\${${v.id}}`);
 }
