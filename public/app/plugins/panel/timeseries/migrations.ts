@@ -401,6 +401,7 @@ export function graphToTimeseriesOptions(angular: any): {
           uid: 'grafana',
         },
         enable: true,
+        hide: true, // don't show the toggle at the top of the dashboard
         filter: {
           exclude: false,
           ids: [angular.panel.id],
