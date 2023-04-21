@@ -228,13 +228,13 @@ datasources:
         hide: false
       lokiSearch:
         datasourceUid: 'loki'
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
       spanBar:
         type: 'Tag'
         tag: 'http.path'
-      traceQuery:
-        timeShiftEnabled: true
-        spanStartTimeShift: 15m
-        spanEndTimeShift: 20m
 ```
 
 ## Query the data source
@@ -356,6 +356,22 @@ To open the Service Graph view:
 To open a query in Prometheus with the span name of that row automatically set in the query, click a row in the **rate**, **error rate**, or **duration** columns.
 
 To open a query in Tempo with the span name of that row automatically set in the query, click a row in the **links** column.
+
+## Span Filters
+
+> **Note:** This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
 
 ## Link to a trace ID from logs
 

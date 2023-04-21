@@ -25,8 +25,8 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         <InlineField label="Index name" labelWidth={26}>
           <Input
             id="es_config_indexName"
-            value={value.database || ''}
-            onChange={changeHandler('database', value, onChange)}
+            value={value.jsonData.index ?? (value.database || '')}
+            onChange={indexChangeHandler(value, onChange)}
             width={24}
             placeholder="es-index-name"
             required
@@ -108,13 +108,16 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
   );
 };
 
-// TODO: Use change handlers from @grafana/data
-const changeHandler =
-  (key: keyof DataSourceSettings<ElasticsearchOptions>, value: Props['value'], onChange: Props['onChange']) =>
+const indexChangeHandler =
+  (value: Props['value'], onChange: Props['onChange']) =>
   (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
     onChange({
       ...value,
-      [key]: event.currentTarget.value,
+      database: '',
+      jsonData: {
+        ...value.jsonData,
+        index: event.currentTarget.value,
+      },
     });
   };
 
@@ -145,11 +148,11 @@ const jsonDataSwitchChangeHandler =
 
 const intervalHandler =
   (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<Interval | 'none'>) => {
-    const { database } = value;
     // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
     const newInterval = option.value === 'none' ? undefined : option.value;
 
-    if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
+    const currentIndex = value.jsonData.index ?? value.database;
+    if (!currentIndex || currentIndex.length === 0 || currentIndex.startsWith('[logstash-]')) {
       let newDatabase = '';
 
       if (newInterval !== undefined) {
@@ -162,9 +165,10 @@ const intervalHandler =
 
       onChange({
         ...value,
-        database: newDatabase,
+        database: '',
         jsonData: {
           ...value.jsonData,
+          index: newDatabase,
           interval: newInterval,
         },
       });

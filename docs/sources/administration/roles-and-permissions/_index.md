@@ -92,14 +92,14 @@ The following table lists permissions for each role.
 
 ## Dashboard permissions
 
-When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and dashboard folders. For example, you might want a certain viewer to be able to edit a dashboard. While that user can _see_ all dashboards, you can grant them access to _update_ only one of them.
+When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and folders. For example, you might want a certain viewer to be able to edit a dashboard. While that user can _see_ all dashboards, you can grant them access to _update_ only one of them.
 
 > Important: The dashboard permissions you specify override the organization permissions you assign to the user for the selected entity.
 
 You can specify the following permissions to dashboards and folders.
 
-- **Admin**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Administrators can also change dashboard and folder permissions.
-- **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Editors _cannot_ change folder or dashboard permissions.
+- **Admin**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Administrators can also change dashboard and folder permissions.
+- **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
 > Important: When a user creates a dashboard or a folder, he is set as **Admin** of it.

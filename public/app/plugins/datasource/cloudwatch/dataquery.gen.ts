@@ -139,20 +139,11 @@ export enum QueryEditorPropertyType {
 }
 
 export interface QueryEditorArrayExpression {
-  /**
-   * TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-   */
-  expressions: unknown;
-  /**
-   * TODO this doesn't work; temporarily extended in veneer
-   */
-  type: QueryEditorExpressionType;
+  expressions: (Array<QueryEditorExpression> | Array<QueryEditorArrayExpression>);
+  type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
 }
 
-/**
- * QueryEditorArrayExpression is added in veneer
- */
-export type QueryEditorExpression = (QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
+export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
 export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;

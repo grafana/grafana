@@ -134,7 +134,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
           next: (rsp) => {
             if (rsp.data.length) {
               const names = (rsp.data[0] as DataFrame).fields[0];
-              const folders = names.values.toArray().map((v) => ({
+              const folders = names.values.map((v) => ({
                 value: v,
                 label: v,
               }));
@@ -419,7 +419,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 accept: DFImport.acceptedFiles,
               }}
             >
-              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+              <FileDropzoneDefaultChildren
+                primaryText={this.props?.query?.file ? 'Replace file' : 'Drop file here or click to upload'}
+              />
             </FileDropzone>
             {file && (
               <div className={styles.file}>

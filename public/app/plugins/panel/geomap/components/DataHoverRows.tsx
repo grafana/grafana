@@ -73,7 +73,7 @@ export const generateLabel = (feature: FeatureLike, idx: number): string | React
         if (!first) {
           first = k;
         }
-        props[k] = f.values.get(rowIndex);
+        props[k] = f.values[rowIndex];
       }
     }
   }

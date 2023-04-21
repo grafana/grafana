@@ -18,8 +18,9 @@ var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.interna
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
 type RoleRegistration struct {
-	Role   RoleDTO
-	Grants []string
+	Role                RoleDTO
+	Grants              []string
+	AllowGrantsOverride bool
 }
 
 // Role is the model for Role in RBAC.
@@ -348,7 +349,8 @@ const (
 	ActionServerStatsRead = "server.stats:read"
 
 	// Settings actions
-	ActionSettingsRead = "settings:read"
+	ActionSettingsRead  = "settings:read"
+	ActionSettingsWrite = "settings:write"
 
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
@@ -363,7 +365,9 @@ const (
 	ScopeUsersAll = "users:*"
 
 	// Settings scope
-	ScopeSettingsAll = "settings:*"
+	ScopeSettingsAll  = "settings:*"
+	ScopeSettingsAuth = "settings:auth:*"
+	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
