@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React, { memo, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Input, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -12,8 +13,10 @@ import { parseRouteParams } from '../search/utils';
 
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions';
+import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { SearchView } from './components/SearchView';
+import { useSelectedItemsState } from './state';
 
 export interface BrowseDashboardsPageRouteParams {
   uid?: string;
@@ -35,10 +38,16 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
 
+  // TODO abstract this out
+  const selectedItems = useSelectedItemsState();
+  const hasSelection = Object.values(selectedItems).some((obj) => Object.values(obj).some((v) => v));
+
   return (
     <Page navId="dashboards/browse" pageNav={navModel}>
       <Page.Contents className={styles.pageContents}>
-        <BrowseActions />
+        <Input placeholder="Search box" />
+
+        {hasSelection ? <BrowseActions /> : <BrowseFilters />}
 
         <div className={styles.subView}>
           <AutoSizer>
@@ -56,11 +65,12 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   );
 });
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
     display: 'grid',
-    gridTemplateRows: 'auto 1fr',
+    gridTemplateRows: 'auto auto 1fr',
     height: '100%',
+    rowGap: theme.spacing(1),
   }),
 
   // AutoSizer needs an element to measure the full height available
