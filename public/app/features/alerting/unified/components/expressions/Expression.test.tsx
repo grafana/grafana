@@ -14,6 +14,20 @@ describe('TestResult', () => {
     }).not.toThrow();
   });
 
+  it('should show labels and values', () => {
+    const series: DataFrame[] = [
+      toDataFrame({ fields: [{ name: 'temp', values: [0.1234], labels: { label1: 'value1', label2: 'value2' } }] }),
+      toDataFrame({ fields: [{ name: 'temp', values: [0.5678], labels: { label1: 'value3', label2: 'value4' } }] }),
+    ];
+    render(<ExpressionResult series={series} />);
+
+    expect(screen.getByTitle('{label1=value1, label2=value2}')).toBeInTheDocument();
+    expect(screen.getByText('0.1234')).toBeInTheDocument();
+
+    expect(screen.getByTitle('{label1=value3, label2=value4}')).toBeInTheDocument();
+    expect(screen.getByText('0.5678')).toBeInTheDocument();
+  });
+
   it('should not paginate with less than PAGE_SIZE', () => {
     const series: DataFrame[] = [
       toDataFrame({
@@ -58,7 +72,11 @@ function makeSeries(n: number) {
       fields: [
         {
           name: 'temp',
-          values: [1],
+          values: [0.1234],
+          labels: {
+            label1: 'value1',
+            label2: 'value2',
+          },
         },
       ],
     })
