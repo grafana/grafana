@@ -105,8 +105,8 @@ var (
 			Owner:        grafanaExploreSquad,
 		},
 		{
-			Name:         "newTraceView",
-			Description:  "Shows the new trace view design",
+			Name:         "newTraceViewHeader",
+			Description:  "Shows the new trace view header",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,

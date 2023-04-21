@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 
 import { getQueryHints } from './queryHints';
 
@@ -12,7 +12,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', '{"foo": "bar", "bar": "baz"}']),
+          values: ['{"foo": "bar", "bar": "baz"}', '{"foo": "bar", "bar": "baz"}'],
         },
       ],
     };
@@ -39,7 +39,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['foo="bar" bar="baz"', 'foo="bar" bar="baz"']),
+          values: ['foo="bar" bar="baz"', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -66,7 +66,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -99,7 +99,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"_entry": "bar", "bar": "baz"}']),
+          values: ['{"_entry": "bar", "bar": "baz"}'],
         },
       ],
     };
@@ -139,13 +139,13 @@ describe('getQueryHints', () => {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+            values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: new ArrayVector([labelVariable, { job: 'baz', foo: 'bar' }]),
+            values: [labelVariable, { job: 'baz', foo: 'bar' }],
           },
         ],
       };
@@ -172,7 +172,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -199,7 +199,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -226,7 +226,7 @@ describe('getQueryHints', () => {
           name: 'labels',
           type: FieldType.other,
           config: {},
-          values: new ArrayVector([{ __error__: 'some error', job: 'a' }]),
+          values: [{ __error__: 'some error', job: 'a' }],
         },
       ],
     };

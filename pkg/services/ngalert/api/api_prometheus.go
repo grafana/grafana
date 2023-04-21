@@ -329,13 +329,15 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 
 		states := srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		totals := make(map[string]int64)
+		totalsFiltered := make(map[string]int64)
 		for _, alertState := range states {
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
 				valString = formatValues(alertState)
 			}
-			totals[strings.ToLower(alertState.State.String())] += 1
+			stateKey := strings.ToLower(alertState.State.String())
+			totals[stateKey] += 1
 			// Do not add error twice when execution error state is Error
 			if alertState.Error != nil && rule.ExecErrState != ngmodels.ErrorErrState {
 				totals["error"] += 1
@@ -389,6 +391,12 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 				continue
 			}
 
+			totalsFiltered[stateKey] += 1
+			// Do not add error twice when execution error state is Error
+			if alertState.Error != nil && rule.ExecErrState != ngmodels.ErrorErrState {
+				totalsFiltered["error"] += 1
+			}
+
 			alertingRule.Alerts = append(alertingRule.Alerts, alert)
 		}
 
@@ -408,6 +416,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 
 		alertingRule.Rule = newRule
 		alertingRule.Totals = totals
+		alertingRule.TotalsFiltered = totalsFiltered
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
 		// TODO yuri. Change that when scheduler will process alerts in groups

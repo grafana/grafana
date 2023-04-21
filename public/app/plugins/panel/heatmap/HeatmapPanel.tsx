@@ -158,7 +158,7 @@ export const HeatmapPanel = ({
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
     if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-      hoverValue = countField.values.get(hover.dataIdx);
+      hoverValue = countField.values[hover.dataIdx];
     }
 
     return (
