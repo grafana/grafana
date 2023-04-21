@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
@@ -17,7 +18,6 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   if (!data.request) {
     return null;
   }
-
   let stats: QueryResultMetaStat[] = [];
 
   const requestTime = data.request.endTime ? data.request.endTime - data.request.startTime : -1;
@@ -64,7 +64,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace IDs');
 
   return (
-    <div aria-label={selectors.components.PanelInspector.Stats.content}>
+    <div aria-label={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
       {config.featureToggles.showTraceId && (
@@ -73,3 +73,8 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
     </div>
   );
 };
+
+const containerStyles = css`
+  height: 100%;
+  overflow-y: scroll;
+`;
