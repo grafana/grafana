@@ -4567,9 +4567,9 @@ steps:
   name: clone-rgm
 - commands:
   - apk update && apk add docker
-  - cd rgm && go run ./cmd --build-id=${DRONE_BUILD_ID} --grafana-dir=../ --github_token=${GITHUB_TOKEN}
-    package --distros=linux/amd64,linux/arm64 publish --destination=${DESTINATION}
-    --gcp-service-account-key-base64=${GCP_KEY_BASE64}
+  - cd rgm && go run ./cmd --build-id=$${DRONE_BUILD_ID} --grafana-dir=../ --github_token=${GITHUB_TOKEN}
+    package --distros=linux/amd64,linux/arm64 publish --destination=$${DESTINATION}
+    --gcp-service-account-key-base64=$${GCP_KEY_BASE64}
   environment:
     DESTINATION:
       from_secret: destination
@@ -4614,9 +4614,9 @@ steps:
   name: clone-rgm
 - commands:
   - apk update && apk add docker
-  - cd rgm && go run ./cmd --build-id=${DRONE_BUILD_ID} --grafana-dir=../ --github_token=${GITHUB_TOKEN}
-    package --distros=linux/amd64,linux/arm64 publish --destination=${DESTINATION}
-    --gcp-service-account-key-base64=${GCP_KEY_BASE64}
+  - cd rgm && go run ./cmd --build-id=$${DRONE_BUILD_ID} --grafana-dir=../ --github_token=${GITHUB_TOKEN}
+    package --distros=linux/amd64,linux/arm64 publish --destination=$${DESTINATION}
+    --gcp-service-account-key-base64=$${GCP_KEY_BASE64}
   environment:
     DESTINATION:
       from_secret: destination
@@ -6940,6 +6940,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 0ddb993c826c55e06774844b8d228ebe9e483e5a96803dcd7926ad9b1e13a008
+hmac: a1c99c41d900bd9e5affbce3bef89aab1c578cbc592af838fe3336e302c5de65
 
 ...
