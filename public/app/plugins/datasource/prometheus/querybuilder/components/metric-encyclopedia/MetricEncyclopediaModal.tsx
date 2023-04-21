@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { debounce as debounceLodash } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
@@ -67,12 +67,40 @@ const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
 
+// An enum with all the types of actions to use in our reducer
+type ActionKind = 'setIsLoading';
+
+// An interface for our actions
+interface Action {
+  type: ActionKind;
+  payload: boolean;
+}
+
+// An interface for our state
+interface MetricEncyclopediaState {
+  isLoading: boolean;
+}
+
+// Our reducer function that uses a switch statement to handle our actions
+function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action: Action) {
+  const { type, payload } = action;
+  switch (type) {
+    case 'setIsLoading':
+      return {
+        ...state,
+        isLoading: payload,
+      };
+    default:
+      return state;
+  }
+}
+
 export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
-  const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
+  const [state, dispatch] = useReducer(MetricEncyclopediaReducer, { isLoading: false });
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
@@ -90,6 +118,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const [nameHaystackOrder, setNameHaystackOrder] = useState<string[]>([]);
   const [metaHaystackDictionary, setMetaHaystackDictionary] = useState<HaystackDictionary>({});
   const [metaHaystackOrder, setMetaHaystackOrder] = useState<string[]>([]);
+
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
@@ -103,7 +132,11 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
-    setIsLoading(true);
+    dispatch({
+      type: 'setIsLoading',
+      payload: true,
+    });
+    // setIsLoading(true);
 
     // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
     // don't use it with the visual builder and there is no need to run all the start() setup anyway.
@@ -165,18 +198,14 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
     setMetaHaystackDictionary(metaHaystackDictionaryData);
     setNameHaystackDictionary(nameHaystackDictionaryData);
 
-    setVariables(
-      datasource.getVariables().map((v: string) => {
-        return {
-          value: v,
-          label: v,
-        };
-      })
-    );
-
     setTotalMetricCount(metricsData.length);
     setFilteredMetricCount(metricsData.length);
-    setIsLoading(false);
+
+    dispatch({
+      type: 'setIsLoading',
+      payload: false,
+    });
+    // setIsLoading(false);
   }, [query, datasource]);
 
   useEffect(() => {
@@ -223,7 +252,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
-    if (fuzzySearchQuery) {
+    if (fuzzySearchQuery && !useBackend) {
       if (fullMetaSearch) {
         filteredMetrics = metaHaystackOrder.map((needle: string) => metaHaystackDictionary[needle]);
       } else {
@@ -263,7 +292,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
    * The filtered and paginated metrics displayed in the modal
    * */
   function displayedMetrics(metrics: MetricsData) {
-    const filteredSorted: MetricsData = filterMetrics(metrics); //.sort(alphabetically(true, hasMetaDataFilters()));
+    const filteredSorted: MetricsData = filterMetrics(metrics);
 
     if (filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
       setFilteredMetricCount(filteredSorted.length);
@@ -277,7 +306,11 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const debouncedBackendSearch = useMemo(
     () =>
       debounce(async (metricText: string) => {
-        setIsLoading(true);
+        dispatch({
+          type: 'setIsLoading',
+          payload: true,
+        });
+        // setIsLoading(true);
         const queryString = regexifyLabelValuesQueryString(metricText);
 
         const labelsParams = query.labels.map((label) => {
@@ -300,7 +333,11 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
         setMetrics(metrics);
         setFilteredMetricCount(metrics.length);
-        setIsLoading(false);
+        // setIsLoading(false);
+        dispatch({
+          type: 'setIsLoading',
+          payload: false,
+        });
       }, datasource.getDebounceTimeInMilliseconds()),
     [datasource, query.labels]
   );
@@ -333,7 +370,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           onChange({ ...query, metric: value });
           reportInteraction('grafana_prom_metric_encycopedia_tracking', {
             metric: value,
-            hasVariables: variables.length > 0,
             hasMetadata: hasMetadata,
             totalMetricCount: metrics.length,
             fuzzySearchQuery: fuzzySearchQuery,
@@ -426,21 +462,28 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             />
           </EditorField>
         </div>
-        <div className={styles.inputItem}>
-          <EditorField label="Select template variables">
-            <Select
-              inputId="my-select"
-              options={variables}
-              value={''}
-              placeholder={placeholders.variables}
-              onChange={(v) => {
-                const value: string = v.value ?? '';
-                onChange({ ...query, metric: value });
-                onClose();
-              }}
-            />
-          </EditorField>
-        </div>
+        {true && (
+          <div className={styles.inputItem}>
+            <EditorField label="Select template variables">
+              <Select
+                inputId="my-select"
+                options={datasource.getVariables().map((v: string) => {
+                  return {
+                    value: v,
+                    label: v,
+                  };
+                })}
+                value={''}
+                placeholder={placeholders.variables}
+                onChange={(v) => {
+                  const value: string = v.value ?? '';
+                  onChange({ ...query, metric: value });
+                  onClose();
+                }}
+              />
+            </EditorField>
+          </div>
+        )}
       </div>
 
       <div className={styles.selectWrapper}>
@@ -492,7 +535,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
           Showing {filteredMetricCount} of {totalMetricCount} total metrics.{' '}
-          {isLoading && <Spinner className={styles.loadingSpinner} />}
+          {state.isLoading && <Spinner className={styles.loadingSpinner} />}
         </div>
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
