@@ -1,8 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, TextArea, useStyles2 } from '@grafana/ui';
+import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
+
+import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
 export const RESET_TO_DEFAULT = 'Reset to default payload';
 
@@ -18,6 +22,22 @@ export function PayloadEditor({
   const styles = useStyles2(getStyles);
   const onReset = () => {
     setPayload(defaultPayload);
+  };
+
+  const [isEditingAlertData, setIsEditingAlertData] = useState(false);
+
+  const onCloseEditAlertModal = () => {
+    setIsEditingAlertData(false);
+  };
+
+  const onOpenEditAlertModal = () => setIsEditingAlertData(true);
+
+  const onAddAlertList = (alerts: TestReceiversAlert[]) => {
+    onCloseEditAlertModal();
+    setPayload((payload) => {
+      const payloadObj = JSON.parse(payload);
+      return JSON.stringify([...payloadObj, ...alerts], undefined, 2);
+    });
   };
 
   return (
@@ -36,16 +56,32 @@ export function PayloadEditor({
             rows={10}
             cols={50}
           />
-          <Button onClick={onReset} className={styles.button}>
-            {RESET_TO_DEFAULT}
-          </Button>
+          <Stack>
+            <Button onClick={onReset} className={styles.button} icon="arrow-left" type="button" variant="secondary">
+              {RESET_TO_DEFAULT}
+            </Button>
+            <Button
+              onClick={onOpenEditAlertModal}
+              className={styles.button}
+              icon="plus-circle"
+              type="button"
+              variant="secondary"
+            >
+              Add alerts
+            </Button>
+          </Stack>
         </Stack>
+        <GenerateAlertDataModal
+          isOpen={isEditingAlertData}
+          onDismiss={onCloseEditAlertModal}
+          onAccept={onAddAlertList}
+        />
       </div>
     </Stack>
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   jsonEditor: css`
     width: 605px;
     height: 291px;
@@ -53,5 +89,6 @@ const getStyles = () => ({
   button: css`
     flex: none;
     width: fit-content;
+    padding-right: ${theme.spacing(1)};
   `,
 });
