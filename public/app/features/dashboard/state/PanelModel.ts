@@ -475,12 +475,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     wasAngular: boolean
   ) {
     if (newPlugin.onPanelTypeChanged) {
-      const { targets, transformations } = this;
       const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
       Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, this.fieldConfig));
-      if (targets !== this.targets || transformations !== this.transformations) {
-        this.refresh(); // ???? TODO ??? is this necessary on the first one?
-      }
     }
   }
 
