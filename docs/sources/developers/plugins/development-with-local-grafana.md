@@ -4,6 +4,8 @@ title: Development with local Grafana
 
 # Development with local Grafana
 
+test 
+
 This guide allows you to setup a development environment where you run Grafana and your plugin locally. With this, you will be able to see your changes as you add them.
 
 ## Run Grafana in your host

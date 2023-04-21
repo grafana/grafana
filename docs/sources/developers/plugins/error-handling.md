@@ -4,6 +4,8 @@ title: Error handling
 
 # Error handling
 
+test
+
 This guide explains how to handle errors in plugins.
 
 ## Provide usable defaults

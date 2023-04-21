@@ -9,6 +9,8 @@ type: docs
 
 # Publish a plugin
 
+test
+
 You've just built your first plugin, and now you want to share it with the world.
 In this guide, you'll learn how to package and share your plugin with others.
 
