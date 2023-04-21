@@ -15,7 +15,7 @@ import { LogRecord, omitLabels } from './common';
 interface LogRecordViewerProps {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
-  logsRef: React.MutableRefObject<HTMLElement[]>;
+  logsRef: React.MutableRefObject<Map<number, HTMLElement>>;
   onLabelClick?: (label: string) => void;
 }
 
@@ -23,15 +23,26 @@ export const LogRecordViewerByTimestamp = React.memo(
   ({ records, commonLabels, logsRef, onLabelClick }: LogRecordViewerProps) => {
     const styles = useStyles2(getStyles);
 
-    const groupedLines = groupBy(records, (record: LogRecord) => record.timestamp);
-    logsRef.current = [];
+    // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
+    // Looks like it improved performance significantly
+    const groupedLines = records.reduce((acc, current) => {
+      const tsGroup = acc.get(current.timestamp);
+      if (tsGroup) {
+        tsGroup.push(current);
+      }
+      acc.set(current.timestamp, [current]);
+
+      return acc;
+    }, new Map<number, LogRecord[]>());
+
+    logsRef.current.clear();
 
     return (
       <ul className={styles.logsScrollable} aria-label="State history by timestamp">
-        {Object.entries(groupedLines).map(([key, records]) => {
+        {Array.from(groupedLines.entries()).map(([key, records]) => {
           return (
-            <li id={key} key={key} ref={(element) => element && logsRef.current.push(element)}>
-              <Timestamp time={parseInt(key, 10)} />
+            <li id={key.toString(10)} key={key} ref={(element) => element && logsRef.current.set(key, element)}>
+              <Timestamp time={key} />
               <div className={styles.logsContainer}>
                 {records.map(({ line }) => (
                   <React.Fragment key={uniqueId()}>
@@ -82,7 +93,7 @@ export function LogRecordViewerByInstance({ records, commonLabels, logsRef }: Lo
             </h4>
             <div className={styles.logsContainer}>
               {records.map(({ line, timestamp }) => (
-                <div key={uniqueId()} ref={(ref) => ref && logsRef.current.push(ref)}>
+                <div key={uniqueId()} ref={(ref) => ref && logsRef.current.set(timestamp, ref)}>
                   <AlertStateTag state={line.previous} size="sm" muted />
                   <Icon name="arrow-right" size="sm" />
                   <AlertStateTag state={line.current} />

@@ -3,7 +3,7 @@ import { isEmpty, sortBy, take, uniq } from 'lodash';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, Button, Field, Icon, Input, Label, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -24,7 +24,7 @@ const MAX_TIMELINE_SERIES = 12;
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
-  const logsRef = useRef<HTMLDivElement[]>([]);
+  const logsRef = useRef<Map<number, HTMLDivElement>>(new Map<number, HTMLDivElement>());
 
   const { getValues, setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
 
@@ -42,7 +42,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     instancesFilter
   );
 
-  const frameSubset = useMemo(() => take(dataFrames, MAX_TIMELINE_SERIES), [dataFrames]);
+  const { frameSubset, frameSubsetTimestamps } = useFrameSubset(dataFrames);
 
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
@@ -60,14 +60,12 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
 
   const onTimelinePointerMove = useCallback(
     (seriesIdx: number, pointIdx: number) => {
-      const uniqueTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
+      const timestamp = frameSubsetTimestamps[pointIdx];
 
-      const timestamp = uniqueTimestamps[pointIdx];
-
-      const refToScroll = logsRef.current.find((x) => parseInt(x.id, 10) === timestamp);
+      const refToScroll = logsRef.current.get(timestamp);
       refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
-    [frameSubset]
+    [frameSubsetTimestamps]
   );
 
   if (isLoading) {
@@ -143,6 +141,15 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     </div>
   );
 };
+
+function useFrameSubset(frames: DataFrame[]) {
+  return useMemo(() => {
+    const frameSubset = take(frames, MAX_TIMELINE_SERIES);
+    const frameSubsetTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
+
+    return { frameSubset, frameSubsetTimestamps };
+  }, [frames]);
+}
 
 interface SearchFieldInputProps extends Omit<React.ComponentProps<typeof Input>, 'prefix' | 'suffix' | 'placeholder'> {
   showClearFilterSuffix: boolean;
