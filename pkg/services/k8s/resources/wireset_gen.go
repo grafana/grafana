@@ -13,6 +13,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/services/k8s/resources/dashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/folder"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/librarypanel"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/playlist"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/preferences"
@@ -23,6 +24,7 @@ import (
 
 var WireSet = wire.NewSet(
 	dashboard.WireSet,
+	folder.WireSet,
 	librarypanel.WireSet,
 	playlist.WireSet,
 	preferences.WireSet,

@@ -4,6 +4,7 @@ import semver from 'semver/preload';
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings as DataSourceSettingsType,
+  isValidDuration,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -23,6 +24,7 @@ import config from '../../../../core/config';
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
+import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PrometheusCacheLevel, PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -54,6 +56,7 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
   { value: PromApplication.Thanos, label: PromApplication.Thanos },
+  { value: PromApplication.VictoriaMetrics, label: PromApplication.VictoriaMetrics },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
@@ -116,32 +119,37 @@ const setPrometheusVersion = (
   // This will save the current state of the form, as the url is needed for this API call to function
   onUpdate(options)
     .then((updatedOptions) => {
-      getBackendSrv()
-        .get(`/api/datasources/uid/${updatedOptions.uid}/resources/version-detect`)
-        .then((rawResponse: PromBuildInfoResponse) => {
-          const rawVersionStringFromApi = rawResponse.data?.version ?? '';
-          if (rawVersionStringFromApi && semver.valid(rawVersionStringFromApi)) {
-            const parsedVersion = getVersionString(rawVersionStringFromApi, updatedOptions.jsonData.prometheusType);
-            // If we got a successful response, let's update the backend with the version right away if it's new
-            if (parsedVersion) {
-              onUpdate({
-                ...updatedOptions,
-                jsonData: {
-                  ...updatedOptions.jsonData,
-                  prometheusVersion: parsedVersion,
-                },
-              }).then((updatedUpdatedOptions) => {
-                onOptionsChange(updatedUpdatedOptions);
-              });
+      // Not seeing version info in buildinfo response from VictoriaMetrics, and Cortex doesn't support yet, users will need to manually select version
+      if (
+        updatedOptions.jsonData.prometheusType !== PromApplication.VictoriaMetrics &&
+        updatedOptions.jsonData.prometheusType !== PromApplication.Cortex
+      ) {
+        getBackendSrv()
+          .get(`/api/datasources/uid/${updatedOptions.uid}/resources/version-detect`)
+          .then((rawResponse: PromBuildInfoResponse) => {
+            const rawVersionStringFromApi = rawResponse.data?.version ?? '';
+            if (rawVersionStringFromApi && semver.valid(rawVersionStringFromApi)) {
+              const parsedVersion = getVersionString(rawVersionStringFromApi, updatedOptions.jsonData.prometheusType);
+              // If we got a successful response, let's update the backend with the version right away if it's new
+              if (parsedVersion) {
+                onUpdate({
+                  ...updatedOptions,
+                  jsonData: {
+                    ...updatedOptions.jsonData,
+                    prometheusVersion: parsedVersion,
+                  },
+                }).then((updatedUpdatedOptions) => {
+                  onOptionsChange(updatedUpdatedOptions);
+                });
+              }
+            } else {
+              unableToDeterminePrometheusVersion();
             }
-          } else {
-            unableToDeterminePrometheusVersion();
-          }
-        });
+          })
+          .catch(unableToDeterminePrometheusVersion);
+      }
     })
-    .catch((error) => {
-      unableToDeterminePrometheusVersion(error);
-    });
+    .catch(unableToDeterminePrometheusVersion);
 };
 
 export const PromSettings = (props: Props) => {
@@ -362,6 +370,50 @@ export const PromSettings = (props: Props) => {
             </div>
           </div>
         )}
+
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <FormField
+              label="Incremental querying (beta)"
+              labelWidth={14}
+              tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
+              inputEl={
+                <InlineSwitch
+                  value={options.jsonData.incrementalQuerying ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          </div>
+        </div>
+
+        <div className="gf-form-inline">
+          {options.jsonData.incrementalQuerying && (
+            <FormField
+              label="Query overlap window"
+              labelWidth={14}
+              tooltip="Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the duration of each incremental request."
+              inputEl={
+                <Input
+                  validationEvents={{
+                    onBlur: [
+                      {
+                        rule: (value) => isValidDuration(value),
+                        errorMessage: 'Invalid duration. Example values: 100s, 10m',
+                      },
+                    ],
+                  }}
+                  className="width-25"
+                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                  spellCheck={false}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          )}
+        </div>
       </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}

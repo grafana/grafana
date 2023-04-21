@@ -84,8 +84,8 @@ export const TooltipView = ({
     extraFacets = {
       colorFacetFieldName,
       sizeFacetFieldName,
-      colorFacetValue: colorFacet?.values.get(rowIndex),
-      sizeFacetValue: sizeFacet?.values.get(rowIndex),
+      colorFacetValue: colorFacet?.values[rowIndex],
+      sizeFacetValue: sizeFacet?.values[rowIndex],
     };
 
     extraFields = extraFields.filter((f) => f !== colorFacet && f !== sizeFacet);
@@ -93,7 +93,7 @@ export const TooltipView = ({
 
   yValue = {
     name: getFieldDisplayName(yField, frame),
-    val: yField.values.get(rowIndex),
+    val: yField.values[rowIndex],
     field: yField,
     color: series.pointColor(frame) as string,
   };
@@ -107,7 +107,7 @@ export const TooltipView = ({
         <tbody>
           <tr>
             <th>{getFieldDisplayName(xField, frame)}</th>
-            <td>{fmt(xField, xField.values.get(rowIndex))}</td>
+            <td>{fmt(xField, xField.values[rowIndex])}</td>
           </tr>
           <tr>
             <th>{yValue.name}:</th>
@@ -128,7 +128,7 @@ export const TooltipView = ({
           {extraFields.map((field, i) => (
             <tr key={i}>
               <th>{getFieldDisplayName(field, frame)}:</th>
-              <td>{fmt(field, field.values.get(rowIndex))}</td>
+              <td>{fmt(field, field.values[rowIndex])}</td>
             </tr>
           ))}
           {links.length > 0 && (

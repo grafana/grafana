@@ -152,13 +152,14 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, err
 	}
 
-	// verify public dashboard does not exist and that we didn't get one from the
-	// request
-	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
-	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
-	} else if existingPubdash != nil {
-		return nil, ErrBadRequest.Errorf("Create: public dashboard already exists: %s", dto.PublicDashboard.Uid)
+	// validate the dashboard does not already have a public dashboard
+	existingPubdash, err := pd.FindByDashboardUid(ctx, u.OrgID, dto.DashboardUid)
+	if err != nil && !errors.Is(err, ErrPublicDashboardNotFound) {
+		return nil, err
+	}
+
+	if existingPubdash != nil {
+		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 
 	// set default value for time settings
@@ -318,7 +319,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 			return accessToken, nil
 		}
 	}
-	return "", ErrInternalServerError.Errorf("failed to generate a unique accesssToken for public dashboard")
+	return "", ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard")
 }
 
 // FindAll Returns a list of public dashboards by orgId

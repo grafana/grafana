@@ -2,14 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
-import {
-  ArrayVector,
-  FieldType,
-  LoadingState,
-  MutableDataFrame,
-  SupplementaryQueryType,
-  DataSourceApi,
-} from '@grafana/data';
+import { FieldType, LoadingState, MutableDataFrame, SupplementaryQueryType, DataSourceApi } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
@@ -43,20 +36,20 @@ const sampleDataFrame = new MutableDataFrame({
     {
       name: 'labels',
       type: FieldType.other,
-      values: new ArrayVector([
+      values: [
         { place: 'luna', source: 'data' },
         { place: 'luna', source: 'data' },
-      ]),
+      ],
     },
     {
       name: 'Time',
       type: FieldType.time,
-      values: new ArrayVector(['2022-02-22T09:28:11.352440161Z', '2022-02-22T14:42:50.991981292Z']),
+      values: ['2022-02-22T09:28:11.352440161Z', '2022-02-22T14:42:50.991981292Z'],
     },
     {
       name: 'Line',
       type: FieldType.string,
-      values: new ArrayVector(['line1 ', 'line2']),
+      values: ['line1 ', 'line2'],
     },
   ],
 });

@@ -4,7 +4,6 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
-  ArrayVector,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
@@ -22,6 +21,7 @@ import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/type
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { makeLogs } from '../__mocks__/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { createDefaultInitialState } from './helpers';
@@ -41,6 +41,9 @@ import {
   setSupplementaryQueryEnabled,
   addQueryRow,
   cleanSupplementaryQueryDataProviderAction,
+  clearLogs,
+  queryStreamUpdatedAction,
+  QueryEndedPayload,
   changeQueries,
 } from './query';
 import * as actions from './query';
@@ -107,7 +110,7 @@ function setupQueryResponse(state: StoreState) {
       error: { message: 'test error' },
       data: [
         new MutableDataFrame({
-          fields: [{ name: 'test', values: new ArrayVector() }],
+          fields: [{ name: 'test', values: [] }],
           meta: {
             preferredVisualisationType: 'graph',
           },
@@ -171,7 +174,7 @@ describe('runQueries', () => {
       expect(datasource.getDataProvider).toHaveBeenCalledWith(
         type,
         expect.objectContaining({
-          requestId: `explore_left_${snakeCase(type)}`,
+          requestId: `explore_left_${snakeCase(type)}_0`,
         })
       );
     }
@@ -922,6 +925,79 @@ describe('reducer', () => {
       expect(
         getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataSubscription
       ).toBeUndefined();
+    });
+  });
+  describe('clear live logs', () => {
+    it('should clear current log rows', async () => {
+      const logRows = makeLogs(10);
+
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            queryResponse: {
+              state: LoadingState.Streaming,
+            },
+            logsResult: {
+              hasUniqueLabels: false,
+              rows: logRows,
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(logRows.length);
+
+      await dispatch(clearLogs({ exploreId: ExploreId.left }));
+
+      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(0);
+      expect(getState().explore[ExploreId.left].clearedAtIndex).toBe(logRows.length - 1);
+    });
+
+    it('should filter new log rows', async () => {
+      const oldLogRows = makeLogs(10);
+      const newLogRows = makeLogs(5);
+      const allLogRows = [...oldLogRows, ...newLogRows];
+
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            isLive: true,
+            queryResponse: {
+              state: LoadingState.Streaming,
+            },
+            logsResult: {
+              hasUniqueLabels: false,
+              rows: oldLogRows,
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(oldLogRows.length);
+
+      await dispatch(clearLogs({ exploreId: ExploreId.left }));
+      await dispatch(
+        queryStreamUpdatedAction({
+          exploreId: ExploreId.left,
+          response: {
+            request: true,
+            traceFrames: [],
+            nodeGraphFrames: [],
+            rawPrometheusFrames: [],
+            flameGraphFrames: [],
+            logsResult: {
+              hasUniqueLabels: false,
+              rows: allLogRows,
+            },
+          },
+        } as unknown as QueryEndedPayload)
+      );
+
+      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(newLogRows.length);
+      expect(getState().explore[ExploreId.left].clearedAtIndex).toBe(oldLogRows.length - 1);
     });
   });
 });

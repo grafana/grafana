@@ -1,0 +1,506 @@
+{
+  "apiVersion": "dashboard.core.grafana.com/v0-0alpha1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "gac1bb210fad34d835735ad65",
+    "namespace": "default",
+    "resourceVersion": "1"
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+      {
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 8,
+        "links": [],
+        "options": {
+          "displayMode": "basic",
+          "fieldOptions": {
+            "calcs": ["mean"],
+            "defaults": {
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "purple",
+                  "value": 50
+                },
+                {
+                  "color": "blue",
+                  "value": 70
+                }
+              ],
+              "unit": "watt"
+            },
+            "overrides": [],
+            "values": false
+          },
+          "orientation": "vertical",
+          "showUnfilled": false
+        },
+        "pluginVersion": "6.5.0-pre",
+        "targets": [
+          {
+            "refId": "C",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "D",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "I",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "J",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "K",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "L",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "M",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "N",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "O",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "P",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "Q",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Basic vertical ",
+        "type": "bargauge"
+      },
+      {
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 22,
+        "links": [],
+        "options": {
+          "displayMode": "basic",
+          "fieldOptions": {
+            "calcs": ["mean"],
+            "defaults": {
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "blue",
+                  "value": 25
+                },
+                {
+                  "color": "orange",
+                  "value": 37.5
+                },
+                {
+                  "color": "purple",
+                  "value": 43.75
+                },
+                {
+                  "color": "red",
+                  "value": 50
+                }
+              ],
+              "unit": "watt"
+            },
+            "overrides": [],
+            "values": false
+          },
+          "orientation": "vertical",
+          "showUnfilled": true
+        },
+        "pluginVersion": "6.5.0-pre",
+        "targets": [
+          {
+            "refId": "H",
+            "scenarioId": "csv_metric_values",
+            "stringInput": "100,100,100"
+          },
+          {
+            "refId": "J",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "K",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "L",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "M",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "N",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "O",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "P",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "Q",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Basic vertical (Unfilled)",
+        "type": "bargauge"
+      },
+      {
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 10
+        },
+        "id": 12,
+        "links": [],
+        "options": {
+          "displayMode": "gradient",
+          "fieldOptions": {
+            "calcs": ["mean"],
+            "defaults": {
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": [
+                {
+                  "color": "blue"
+                },
+                {
+                  "color": "green",
+                  "value": 20
+                },
+                {
+                  "color": "orange",
+                  "value": 40
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ],
+              "unit": "celsius"
+            },
+            "overrides": [],
+            "values": false
+          },
+          "orientation": "horizontal",
+          "showUnfilled": false
+        },
+        "pluginVersion": "6.5.0-pre",
+        "targets": [
+          {
+            "alias": "Inside",
+            "refId": "H",
+            "scenarioId": "csv_metric_values",
+            "stringInput": "100,100,100"
+          },
+          {
+            "alias": "Outhouse",
+            "refId": "A",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "F",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "B",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "C",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Gradient ",
+        "type": "bargauge"
+      },
+      {
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 10
+        },
+        "id": 23,
+        "links": [],
+        "options": {
+          "displayMode": "gradient",
+          "fieldOptions": {
+            "calcs": ["mean"],
+            "defaults": {
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": [
+                {
+                  "color": "blue"
+                },
+                {
+                  "color": "green",
+                  "value": 20
+                },
+                {
+                  "color": "orange",
+                  "value": 40
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ],
+              "unit": "celsius"
+            },
+            "overrides": [],
+            "values": false
+          },
+          "orientation": "horizontal",
+          "showUnfilled": true
+        },
+        "pluginVersion": "6.5.0-pre",
+        "targets": [
+          {
+            "alias": "Inside",
+            "refId": "H",
+            "scenarioId": "csv_metric_values",
+            "stringInput": "100,100,100"
+          },
+          {
+            "alias": "Outhouse",
+            "refId": "A",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "F",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "B",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "C",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Gradient (Unfilled)",
+        "type": "bargauge"
+      },
+      {
+        "gridPos": {
+          "h": 6,
+          "w": 12,
+          "x": 0,
+          "y": 19
+        },
+        "id": 21,
+        "links": [],
+        "options": {
+          "displayMode": "basic",
+          "fieldOptions": {
+            "calcs": ["mean"],
+            "defaults": {
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": [
+                {
+                  "color": "blue"
+                },
+                {
+                  "color": "green",
+                  "value": 20
+                },
+                {
+                  "color": "orange",
+                  "value": 40
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ],
+              "unit": "celsius"
+            },
+            "overrides": [],
+            "values": false
+          },
+          "orientation": "horizontal",
+          "showUnfilled": false
+        },
+        "pluginVersion": "6.5.0-pre",
+        "targets": [
+          {
+            "alias": "Inside",
+            "refId": "H",
+            "scenarioId": "csv_metric_values",
+            "stringInput": "100,100,100"
+          },
+          {
+            "alias": "Outhouse",
+            "refId": "A",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "F",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "B",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "C",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Title to left of bar",
+        "type": "bargauge"
+      },
+      {
+        "gridPos": {
+          "h": 6,
+          "w": 12,
+          "x": 12,
+          "y": 19
+        },
+        "id": 24,
+        "links": [],
+        "options": {
+          "displayMode": "basic",
+          "fieldOptions": {
+            "calcs": ["mean"],
+            "defaults": {
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": [
+                {
+                  "color": "blue"
+                },
+                {
+                  "color": "green",
+                  "value": 20
+                },
+                {
+                  "color": "orange",
+                  "value": 40
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ],
+              "unit": "celsius"
+            },
+            "overrides": [],
+            "values": false
+          },
+          "orientation": "horizontal",
+          "showUnfilled": true
+        },
+        "pluginVersion": "6.5.0-pre",
+        "targets": [
+          {
+            "alias": "Inside",
+            "refId": "H",
+            "scenarioId": "csv_metric_values",
+            "stringInput": "100,100,100"
+          },
+          {
+            "alias": "Outhouse",
+            "refId": "A",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "F",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "B",
+            "scenarioId": "random_walk"
+          },
+          {
+            "refId": "C",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "Title to left of bar (Filled)",
+        "type": "bargauge"
+      }
+    ],
+    "schemaVersion": 21,
+    "style": "dark",
+    "tags": ["gdev", "panel-tests"],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    },
+    "timezone": "",
+    "title": "Panel Tests - Bar Gauge XXX"
+  }
+}

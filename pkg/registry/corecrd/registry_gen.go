@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/dashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/folder"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/librarypanel"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/playlist"
 	"github.com/grafana/grafana/pkg/services/k8s/resources/preferences"
@@ -41,6 +42,7 @@ func New(
 	clientsetProvider client.ClientSetProvider,
 	informerFactory informer.Informer,
 	dashboardWatcher dashboard.Watcher,
+	folderWatcher folder.Watcher,
 	librarypanelWatcher librarypanel.Watcher,
 	playlistWatcher playlist.Watcher,
 	preferencesWatcher preferences.Watcher,
@@ -54,6 +56,7 @@ func New(
 		clientsetProvider,
 		informerFactory,
 		dashboardWatcher,
+		folderWatcher,
 		librarypanelWatcher,
 		playlistWatcher,
 		preferencesWatcher,
@@ -86,10 +89,11 @@ func (r *Registry) All() []crd.Kind {
 // generically across all kinds.
 type Registry struct {
 	*services.BasicService
-	all                    [7]crd.Kind
+	all                    [8]crd.Kind
 	clientsetProvider      client.ClientSetProvider
 	informerFactory        informer.Informer
 	dashboardWatcher       dashboard.Watcher
+	folderWatcher          folder.Watcher
 	librarypanelWatcher    librarypanel.Watcher
 	playlistWatcher        playlist.Watcher
 	preferencesWatcher     preferences.Watcher
@@ -129,14 +133,38 @@ func (r *Registry) start(ctx context.Context) error {
 	watcherWrapper0 := dashboard.NewWatcherWrapper(r.dashboardWatcher)
 	r.informerFactory.AddWatcher(dashboard.CRD, watcherWrapper0)
 
-	/************************ LibraryPanel ************************/
+	/************************ Folder ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map1 := make(map[string]any)
-	err = yaml.Unmarshal(librarypanel.CRDYaml, map1)
+	err = yaml.Unmarshal(folder.CRDYaml, map1)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD YAML for Folder failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map1)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for Folder: %s", err))
+	}
+	err = json.Unmarshal(b, &folder.CRD.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for Folder: %s", err))
+	}
+
+	err = clientSet.RegisterKind(ctx, folder.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Folder failed to register: %s\n", err))
+	}
+
+	watcherWrapper1 := folder.NewWatcherWrapper(r.folderWatcher)
+	r.informerFactory.AddWatcher(folder.CRD, watcherWrapper1)
+
+	/************************ LibraryPanel ************************/
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map2 := make(map[string]any)
+	err = yaml.Unmarshal(librarypanel.CRDYaml, map2)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for LibraryPanel failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map1)
+	b, err = json.Marshal(map2)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for LibraryPanel: %s", err))
 	}
@@ -150,17 +178,17 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to register: %s\n", err))
 	}
 
-	watcherWrapper1 := librarypanel.NewWatcherWrapper(r.librarypanelWatcher)
-	r.informerFactory.AddWatcher(librarypanel.CRD, watcherWrapper1)
+	watcherWrapper2 := librarypanel.NewWatcherWrapper(r.librarypanelWatcher)
+	r.informerFactory.AddWatcher(librarypanel.CRD, watcherWrapper2)
 
 	/************************ Playlist ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-	map2 := make(map[string]any)
-	err = yaml.Unmarshal(playlist.CRDYaml, map2)
+	map3 := make(map[string]any)
+	err = yaml.Unmarshal(playlist.CRDYaml, map3)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Playlist failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map2)
+	b, err = json.Marshal(map3)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Playlist: %s", err))
 	}
@@ -174,17 +202,17 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for Playlist failed to register: %s\n", err))
 	}
 
-	watcherWrapper2 := playlist.NewWatcherWrapper(r.playlistWatcher)
-	r.informerFactory.AddWatcher(playlist.CRD, watcherWrapper2)
+	watcherWrapper3 := playlist.NewWatcherWrapper(r.playlistWatcher)
+	r.informerFactory.AddWatcher(playlist.CRD, watcherWrapper3)
 
 	/************************ Preferences ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-	map3 := make(map[string]any)
-	err = yaml.Unmarshal(preferences.CRDYaml, map3)
+	map4 := make(map[string]any)
+	err = yaml.Unmarshal(preferences.CRDYaml, map4)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Preferences failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map3)
+	b, err = json.Marshal(map4)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Preferences: %s", err))
 	}
@@ -198,17 +226,17 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for Preferences failed to register: %s\n", err))
 	}
 
-	watcherWrapper3 := preferences.NewWatcherWrapper(r.preferencesWatcher)
-	r.informerFactory.AddWatcher(preferences.CRD, watcherWrapper3)
+	watcherWrapper4 := preferences.NewWatcherWrapper(r.preferencesWatcher)
+	r.informerFactory.AddWatcher(preferences.CRD, watcherWrapper4)
 
 	/************************ PublicDashboard ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-	map4 := make(map[string]any)
-	err = yaml.Unmarshal(publicdashboard.CRDYaml, map4)
+	map5 := make(map[string]any)
+	err = yaml.Unmarshal(publicdashboard.CRDYaml, map5)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for PublicDashboard failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map4)
+	b, err = json.Marshal(map5)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for PublicDashboard: %s", err))
 	}
@@ -222,17 +250,17 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to register: %s\n", err))
 	}
 
-	watcherWrapper4 := publicdashboard.NewWatcherWrapper(r.publicdashboardWatcher)
-	r.informerFactory.AddWatcher(publicdashboard.CRD, watcherWrapper4)
+	watcherWrapper5 := publicdashboard.NewWatcherWrapper(r.publicdashboardWatcher)
+	r.informerFactory.AddWatcher(publicdashboard.CRD, watcherWrapper5)
 
 	/************************ ServiceAccount ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-	map5 := make(map[string]any)
-	err = yaml.Unmarshal(serviceaccount.CRDYaml, map5)
+	map6 := make(map[string]any)
+	err = yaml.Unmarshal(serviceaccount.CRDYaml, map6)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for ServiceAccount failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map5)
+	b, err = json.Marshal(map6)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for ServiceAccount: %s", err))
 	}
@@ -246,17 +274,17 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s\n", err))
 	}
 
-	watcherWrapper5 := serviceaccount.NewWatcherWrapper(r.serviceaccountWatcher)
-	r.informerFactory.AddWatcher(serviceaccount.CRD, watcherWrapper5)
+	watcherWrapper6 := serviceaccount.NewWatcherWrapper(r.serviceaccountWatcher)
+	r.informerFactory.AddWatcher(serviceaccount.CRD, watcherWrapper6)
 
 	/************************ Team ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
-	map6 := make(map[string]any)
-	err = yaml.Unmarshal(team.CRDYaml, map6)
+	map7 := make(map[string]any)
+	err = yaml.Unmarshal(team.CRDYaml, map7)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Team failed to unmarshal: %s", err))
 	}
-	b, err = json.Marshal(map6)
+	b, err = json.Marshal(map7)
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Team: %s", err))
 	}
@@ -270,8 +298,8 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("generated CRD for Team failed to register: %s\n", err))
 	}
 
-	watcherWrapper6 := team.NewWatcherWrapper(r.teamWatcher)
-	r.informerFactory.AddWatcher(team.CRD, watcherWrapper6)
+	watcherWrapper7 := team.NewWatcherWrapper(r.teamWatcher)
+	r.informerFactory.AddWatcher(team.CRD, watcherWrapper7)
 
 	return nil
 }
@@ -286,34 +314,39 @@ func (r *Registry) Dashboard() crd.Kind {
 	return r.all[0]
 }
 
+// Folder returns the [crd.Kind] instance for the Folder kind.
+func (r *Registry) Folder() crd.Kind {
+	return r.all[1]
+}
+
 // LibraryPanel returns the [crd.Kind] instance for the LibraryPanel kind.
 func (r *Registry) LibraryPanel() crd.Kind {
-	return r.all[1]
+	return r.all[2]
 }
 
 // Playlist returns the [crd.Kind] instance for the Playlist kind.
 func (r *Registry) Playlist() crd.Kind {
-	return r.all[2]
+	return r.all[3]
 }
 
 // Preferences returns the [crd.Kind] instance for the Preferences kind.
 func (r *Registry) Preferences() crd.Kind {
-	return r.all[3]
+	return r.all[4]
 }
 
 // PublicDashboard returns the [crd.Kind] instance for the PublicDashboard kind.
 func (r *Registry) PublicDashboard() crd.Kind {
-	return r.all[4]
+	return r.all[5]
 }
 
 // ServiceAccount returns the [crd.Kind] instance for the ServiceAccount kind.
 func (r *Registry) ServiceAccount() crd.Kind {
-	return r.all[5]
+	return r.all[6]
 }
 
 // Team returns the [crd.Kind] instance for the Team kind.
 func (r *Registry) Team() crd.Kind {
-	return r.all[6]
+	return r.all[7]
 }
 
 func doNewRegistry(
@@ -321,6 +354,7 @@ func doNewRegistry(
 	clientsetProvider client.ClientSetProvider,
 	informerFactory informer.Informer,
 	dashboardWatcher dashboard.Watcher,
+	folderWatcher folder.Watcher,
 	librarypanelWatcher librarypanel.Watcher,
 	playlistWatcher playlist.Watcher,
 	preferencesWatcher preferences.Watcher,
@@ -335,23 +369,26 @@ func doNewRegistry(
 	reg.dashboardWatcher = dashboardWatcher
 	reg.all[0] = dashboard.CRD
 
+	reg.folderWatcher = folderWatcher
+	reg.all[1] = folder.CRD
+
 	reg.librarypanelWatcher = librarypanelWatcher
-	reg.all[1] = librarypanel.CRD
+	reg.all[2] = librarypanel.CRD
 
 	reg.playlistWatcher = playlistWatcher
-	reg.all[2] = playlist.CRD
+	reg.all[3] = playlist.CRD
 
 	reg.preferencesWatcher = preferencesWatcher
-	reg.all[3] = preferences.CRD
+	reg.all[4] = preferences.CRD
 
 	reg.publicdashboardWatcher = publicdashboardWatcher
-	reg.all[4] = publicdashboard.CRD
+	reg.all[5] = publicdashboard.CRD
 
 	reg.serviceaccountWatcher = serviceaccountWatcher
-	reg.all[5] = serviceaccount.CRD
+	reg.all[6] = serviceaccount.CRD
 
 	reg.teamWatcher = teamWatcher
-	reg.all[6] = team.CRD
+	reg.all[7] = team.CRD
 
 	return reg
 }

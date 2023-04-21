@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
 
@@ -20,11 +21,15 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
           <h1 className={cx(styles.headerSection, styles.headerBig)}>
-            Start your new dashboard by adding a visualization
+            <Trans i18nKey="dashboard.empty.add-visualization-header">
+              Start your new dashboard by adding a visualization
+            </Trans>
           </h1>
           <div className={cx(styles.bodySection, styles.bodyBig)}>
-            Select a data source and then query and visualize your data with charts, stats and tables or create lists,
-            markdowns and other widgets.
+            <Trans i18nKey="dashboard.empty.add-visualization-body">
+              Select a data source and then query and visualize your data with charts, stats and tables or create lists,
+              markdowns and other widgets.
+            </Trans>
           </div>
           <Button
             size="lg"
@@ -37,14 +42,16 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             }}
             disabled={!canCreate}
           >
-            Add visualization
+            <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
           </Button>
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <h3 className={cx(styles.headerSection, styles.headerSmall)}>Add a row</h3>
+            <h3 className={cx(styles.headerSection, styles.headerSmall)}>
+              <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
+            </h3>
             <div className={cx(styles.bodySection, styles.bodySmall)}>
-              Group your visualizations into expandable sections.
+              <Trans i18nKey="dashboard.empty.add-row-body">Group your visualizations into expandable sections.</Trans>
             </div>
             <Button
               icon="plus"
@@ -56,13 +63,17 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               }}
               disabled={!canCreate}
             >
-              Add row
+              <Trans i18nKey="dashboard.empty.add-row-button">Add row</Trans>
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <h3 className={cx(styles.headerSection, styles.headerSmall)}>Import panel</h3>
+            <h3 className={cx(styles.headerSection, styles.headerSmall)}>
+              <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
+            </h3>
             <div className={cx(styles.bodySection, styles.bodySmall)}>
-              Import visualizations that are shared with other dashboards.
+              <Trans i18nKey="dashboard.empty.add-import-body">
+                Import visualizations that are shared with other dashboards.
+              </Trans>
             </div>
             <Button
               icon="plus"
@@ -74,7 +85,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               }}
               disabled={!canCreate}
             >
-              Import library panel
+              <Trans i18nKey="dashboard.empty.add-import-button">Import library panel</Trans>
             </Button>
           </div>
         </div>
@@ -130,7 +141,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     headerSection: css({
       label: 'header-section',
-      fontWeight: 600,
+      fontWeight: theme.typography.fontWeightMedium,
       textAlign: 'center',
     }),
     headerBig: css({
