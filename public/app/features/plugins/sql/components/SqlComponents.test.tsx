@@ -17,7 +17,7 @@ afterEach(() => {
 
 describe('SqlQueryEditor', () => {
   describe('alerts', () => {
-    it('should ONLY render the `database update` alert', async () => {
+    it('should render the correct alert - `Default datasource update`', async () => {
       // @ts-ignore
       // Property 'templateSrv' is a protected type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
       render(<SqlQueryEditor {...buildSqlQueryEditorProps({ datasource: buildMockDatasource(true) })} />);
@@ -33,7 +33,7 @@ describe('SqlQueryEditor', () => {
       });
     });
 
-    it('should ONLY render the `no postgres database` alert', async () => {
+    it('should render the correct alert - `Default datasource error`', async () => {
       render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { isPostgresInstance: true } })} />);
 
       await waitFor(() => {

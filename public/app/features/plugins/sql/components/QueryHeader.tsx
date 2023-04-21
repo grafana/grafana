@@ -93,6 +93,7 @@ export function QueryHeader({
       sql: undefined,
       rawSql: '',
     };
+
     onChange(next);
   };
 

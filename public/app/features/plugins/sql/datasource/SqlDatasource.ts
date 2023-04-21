@@ -145,6 +145,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   async runSql<T>(query: string, options?: RunSQLOptions) {
+    console.log('inside', this.type);
     const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, options);
     return new DataFrameView<T>(frame);
   }
