@@ -243,7 +243,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             <>
               <Label
                 className={styles.label}
-                description={`By using a parser in your original query, you are able to use filter for extracted labels. Refine your search by applying extracted labels created from the selected log line.`}
+                description={`By using a parser in your original query, you can use filters for extracted labels. Refine your search by applying extracted labels created from the selected log line.`}
               >
                 Refine the search
               </Label>
