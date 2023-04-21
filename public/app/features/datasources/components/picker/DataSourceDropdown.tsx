@@ -10,11 +10,13 @@ import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
+import { useDatasource } from '../../hooks';
+
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
-import { dataSourceLabel, useDatasource } from './utils';
+import { dataSourceLabel } from './utils';
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;

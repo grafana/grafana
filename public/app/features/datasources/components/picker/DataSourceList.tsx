@@ -3,8 +3,10 @@ import React from 'react';
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
+import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+
 import { DataSourceCard } from './DataSourceCard';
-import { getDataSourceCompareFn, isDataSourceMatch, useDatasources, useRecentlyUsedDataSources } from './utils';
+import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
