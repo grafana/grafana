@@ -1,8 +1,8 @@
 import { defaults } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import { defaultPhlare, defaultPhlareQueryType, Phlare } from '../dataquery.gen';
@@ -13,7 +13,6 @@ import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
 import { LabelsEditor } from './LabelsEditor';
 import { QueryOptions } from './QueryOptions';
-import { ApiObject } from './autocomplete';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
 
@@ -23,70 +22,25 @@ export const defaultQuery: Partial<Phlare> = {
 };
 
 export function QueryEditor(props: Props) {
-  const profileTypes = useProfileTypes(props.datasource);
-
-  function onProfileTypeChange(value: string[], selectedOptions: CascaderOption[]) {
-    if (selectedOptions.length === 0) {
-      return;
-    }
-
-    const id = selectedOptions[selectedOptions.length - 1].value;
-
-    // Probably cannot happen but makes TS happy
-    if (typeof id !== 'string') {
-      throw new Error('id is not string');
-    }
-
-    props.onChange({ ...props.query, profileTypeId: id });
-  }
-
-  function onLabelSelectorChange(value: string) {
-    props.onChange({ ...props.query, labelSelector: value });
-  }
+  let query = normalizeQuery(props.query, props.app);
 
   function handleRunQuery(value: string) {
     props.onChange({ ...props.query, labelSelector: value });
     props.onRunQuery();
   }
 
-  // Round to nearest 5 seconds. If the range is something like last 1h then every render the range values change slightly
-  // and what ever has range as dependency is rerun. So this effectively debounces the queries.
-  const unpreciseRange = {
-    to: Math.ceil((props.range?.to.valueOf() || 0) / 5000) * 5000,
-    from: Math.floor((props.range?.from.valueOf() || 0) / 5000) * 5000,
-  };
-
-  const labelsResult = useAsync(() => {
-    return props.datasource.getLabelNames(
-      props.query.profileTypeId + props.query.labelSelector,
-      unpreciseRange.from,
-      unpreciseRange.to
-    );
-  }, [props.datasource, props.query.profileTypeId, props.query.labelSelector, unpreciseRange.to, unpreciseRange.from]);
-
+  const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(
+    props.datasource,
+    props.query,
+    props.onChange
+  );
+  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(
+    props.range,
+    props.datasource,
+    props.query,
+    props.onChange
+  );
   const cascaderOptions = useCascaderOptions(profileTypes);
-  const selectedProfileName = useProfileName(profileTypes, props.query.profileTypeId);
-  let query = normalizeQuery(props.query, props.app);
-
-  const apiObject: ApiObject = useMemo(() => {
-    return {
-      getLabelValues: (label: string) => {
-        return props.datasource.getLabelValues(
-          props.query.profileTypeId + props.query.labelSelector,
-          label,
-          unpreciseRange.from,
-          unpreciseRange.to
-        );
-      },
-      getLabelNames: () => {
-        return props.datasource.getLabelNames(
-          props.query.profileTypeId + props.query.labelSelector,
-          unpreciseRange.from,
-          unpreciseRange.to
-        );
-      },
-    };
-  }, [props.datasource, unpreciseRange.to, unpreciseRange.from, props.query.labelSelector, props.query.profileTypeId]);
 
   return (
     <EditorRows>
@@ -98,14 +52,55 @@ export function QueryEditor(props: Props) {
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
           onRunQuery={handleRunQuery}
-          apiObject={apiObject}
+          labels={labels}
+          getLabelValues={getLabelValues}
         />
       </EditorRow>
       <EditorRow>
-        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} labels={labelsResult.value} />
+        <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} labels={labels} />
       </EditorRow>
     </EditorRows>
   );
+}
+
+function useLabels(
+  range: TimeRange | undefined,
+  datasource: PhlareDataSource,
+  query: Query,
+  onChange: (value: Query) => void
+) {
+  // Round to nearest 5 seconds. If the range is something like last 1h then every render the range values change slightly
+  // and what ever has range as dependency is rerun. So this effectively debounces the queries.
+  const unpreciseRange = {
+    to: Math.ceil((range?.to.valueOf() || 0) / 5000) * 5000,
+    from: Math.floor((range?.from.valueOf() || 0) / 5000) * 5000,
+  };
+
+  const labelsResult = useAsync(() => {
+    return datasource.getLabelNames(query.profileTypeId + query.labelSelector, unpreciseRange.from, unpreciseRange.to);
+  }, [datasource, query.profileTypeId, query.labelSelector, unpreciseRange.to, unpreciseRange.from]);
+
+  // Create a function with range and query already baked in so we don't have to send those everywhere
+  const getLabelValues = useCallback(
+    (label: string) => {
+      return datasource.getLabelValues(
+        query.profileTypeId + query.labelSelector,
+        label,
+        unpreciseRange.from,
+        unpreciseRange.to
+      );
+    },
+    [query, datasource, unpreciseRange.to, unpreciseRange.from]
+  );
+
+  const onLabelSelectorChange = useCallback(
+    (value: string) => {
+      onChange({ ...query, labelSelector: value });
+    },
+    [onChange, query]
+  );
+
+  return { labels: labelsResult.value, getLabelValues, onLabelSelectorChange };
 }
 
 // Turn profileTypes into cascader options
@@ -142,15 +137,37 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
   }, [profileTypes]);
 }
 
-function useProfileTypes(datasource: PhlareDataSource) {
+function useProfileTypes(datasource: PhlareDataSource, query: Query, onChange: (value: Query) => void) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);
+
   useEffect(() => {
     (async () => {
       const profileTypes = await datasource.getProfileTypes();
       setProfileTypes(profileTypes);
     })();
   }, [datasource]);
-  return profileTypes;
+
+  const onProfileTypeChange = useCallback(
+    (value: string[], selectedOptions: CascaderOption[]) => {
+      if (selectedOptions.length === 0) {
+        return;
+      }
+
+      const id = selectedOptions[selectedOptions.length - 1].value;
+
+      // Probably cannot happen but makes TS happy
+      if (typeof id !== 'string') {
+        throw new Error('id is not string');
+      }
+
+      onChange({ ...query, profileTypeId: id });
+    },
+    [onChange, query]
+  );
+
+  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId);
+
+  return { profileTypes, onProfileTypeChange, selectedProfileName };
 }
 
 function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: string) {

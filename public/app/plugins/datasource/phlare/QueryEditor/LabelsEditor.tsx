@@ -6,17 +6,18 @@ import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
 
 import { languageDefinition } from '../phlareql';
 
-import { ApiObject, CompletionProvider } from './autocomplete';
+import { CompletionProvider } from './autocomplete';
 
 interface Props {
   value: string;
   onChange: (val: string) => void;
   onRunQuery: (value: string) => void;
-  apiObject: ApiObject;
+  labels?: string[];
+  getLabelValues: (label: string) => Promise<string[]>;
 }
 
 export function LabelsEditor(props: Props) {
-  const setupAutocompleteFn = useAutocomplete(props.apiObject);
+  const setupAutocompleteFn = useAutocomplete(props.getLabelValues, props.labels);
   const styles = useStyles2(getStyles);
 
   const onRunQueryRef = useLatest(props.onRunQuery);
@@ -91,10 +92,10 @@ const EDITOR_HEIGHT_OFFSET = 2;
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
-function useAutocomplete(apiObject: ApiObject) {
+function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, labels?: string[]) {
   const providerRef = useRef<CompletionProvider>();
   if (providerRef.current === undefined) {
-    providerRef.current = new CompletionProvider(apiObject);
+    providerRef.current = new CompletionProvider();
   }
 
   useAsync(async () => {
@@ -102,10 +103,9 @@ function useAutocomplete(apiObject: ApiObject) {
       // This is a bit weird but to simplify the API this depends on the apiObject changes with time range change
       // as that is baked in. So if that object changes we have to reinit the provider. For phlare this does not do
       // much but for Pyro it can pull different labels based on the time range.
-      providerRef.current.setApiObject(apiObject);
-      await providerRef.current.init();
+      providerRef.current.init(labels || [], getLabelValues);
     }
-  }, [apiObject]);
+  }, [labels, getLabelValues]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {

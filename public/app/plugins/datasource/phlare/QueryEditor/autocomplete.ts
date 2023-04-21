@@ -1,10 +1,5 @@
 import { monacoTypes, Monaco } from '@grafana/ui';
 
-export type ApiObject = {
-  getLabelValues: (label: string) => Promise<string[]>;
-  getLabelNames: () => Promise<string[]>;
-};
-
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
@@ -20,15 +15,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private labels: string[] = [];
+  private getLabelValues: (label: string) => Promise<string[]> = () => Promise.resolve([]);
 
-  constructor(private apiObject: ApiObject) {}
-
-  async init() {
-    this.labels = await this.apiObject.getLabelNames();
-  }
-
-  setApiObject(apiObject: ApiObject) {
-    this.apiObject = apiObject;
+  init(labels: string[], getLabelValues: (label: string) => Promise<string[]>) {
+    this.labels = labels;
+    this.getLabelValues = getLabelValues;
   }
 
   provideCompletionItems(
@@ -94,7 +85,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           };
         });
       case 'IN_LABEL_VALUE':
-        let values = await this.apiObject.getLabelValues(situation.labelName);
+        let values = await this.getLabelValues(situation.labelName);
         return values.map((key) => {
           return {
             label: key,
