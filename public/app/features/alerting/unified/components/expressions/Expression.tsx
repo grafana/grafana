@@ -320,7 +320,7 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
             <>
               <span>{'{'}</span>
               {labels.map(([key, value], index) => (
-                <span key={uniqueId()} className={styles.expression.labelWrapper}>
+                <span key={uniqueId()}>
                   <span className={styles.expression.labelKey}>{key}</span>
                   <span>=</span>
                   <span>&quot;</span>
@@ -440,12 +440,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
         background-color: ${theme.colors.background.canvas};
       }
     `,
-    labelWrapper: css``,
     labelKey: css`
-      color: ${theme.isDark ? '#ce9178' : '#a31515'};
+      color: ${theme.isDark ? '#73bf69' : '#56a64b'};
     `,
     labelValue: css`
-      color: ${theme.isDark ? '#73bf69' : '#56a64b'};
+      color: ${theme.isDark ? '#ce9178' : '#a31515'};
     `,
     resultValue: css`
       text-align: right;
