@@ -197,7 +197,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         options.annotation.name,
         query.timeRegion!,
         options.range,
-        getDashboardSrv().getCurrent()?.timezone
+        getDashboardSrv().getCurrent()?.timezone // Annotation queries don't include the timezone
       );
       return Promise.resolve({ data: frame ? [frame] : [] });
     }
