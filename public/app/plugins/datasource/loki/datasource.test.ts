@@ -5,7 +5,6 @@ import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
-  ArrayVector,
   CoreApp,
   DataFrame,
   dataFrameToJSON,
@@ -57,19 +56,19 @@ const testFrame: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1, 2]),
+      values: [1, 2],
     },
     {
       name: 'Line',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['line1', 'line2']),
+      values: ['line1', 'line2'],
     },
     {
       name: 'labels',
       type: FieldType.other,
       config: {},
-      values: new ArrayVector([
+      values: [
         {
           label: 'value',
           label2: 'value ',
@@ -79,19 +78,19 @@ const testFrame: DataFrame = {
           label2: 'value2',
           label3: ' ',
         },
-      ]),
+      ],
     },
     {
       name: 'tsNs',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['1000000', '2000000']),
+      values: ['1000000', '2000000'],
     },
     {
       name: 'id',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['id1', 'id2']),
+      values: ['id1', 'id2'],
     },
   ],
   length: 2,
@@ -400,19 +399,19 @@ describe('LokiDatasource', () => {
             name: 'Time',
             type: FieldType.time,
             config: {},
-            values: new ArrayVector([1, 2]),
+            values: [1, 2],
           },
           {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['hello', 'hello 2']),
+            values: ['hello', 'hello 2'],
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: new ArrayVector([
+            values: [
               {
                 label: 'value',
                 label2: 'value ',
@@ -422,19 +421,19 @@ describe('LokiDatasource', () => {
                 label2: 'value2',
                 label3: ' ',
               },
-            ]),
+            ],
           },
           {
             name: 'tsNs',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['1000000', '2000000']),
+            values: ['1000000', '2000000'],
           },
           {
             name: 'id',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['id1', 'id2']),
+            values: ['id1', 'id2'],
           },
         ],
         length: 2,
@@ -457,37 +456,37 @@ describe('LokiDatasource', () => {
             name: 'Time',
             type: FieldType.time,
             config: {},
-            values: new ArrayVector([1]),
+            values: [1],
           },
           {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['hello']),
+            values: ['hello'],
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: new ArrayVector([
+            values: [
               {
                 label: 'value',
                 label2: 'value2',
                 label3: 'value3',
               },
-            ]),
+            ],
           },
           {
             name: 'tsNs',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['1000000']),
+            values: ['1000000'],
           },
           {
             name: 'id',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['id1']),
+            values: ['id1'],
           },
         ],
         length: 1,
@@ -923,11 +922,14 @@ describe('LokiDatasource', () => {
     describe('logs volume', () => {
       it('returns logs volume query for range log query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-            expr: '{label=value}',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label=value}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual({
           expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
           instant: false,
@@ -939,21 +941,27 @@ describe('LokiDatasource', () => {
 
       it('does not return logs volume query for instant log query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-            expr: '{label=value}',
-            queryType: LokiQueryType.Instant,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label=value}',
+              queryType: LokiQueryType.Instant,
+              refId: 'A',
+            }
+          )
         ).toEqual(undefined);
       });
 
       it('does not return logs volume query for metric query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-            expr: 'rate({label=value}[5m]',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual(undefined);
       });
     });
@@ -961,41 +969,68 @@ describe('LokiDatasource', () => {
     describe('logs sample', () => {
       it('returns logs sample query for range metric query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
-            expr: 'rate({label=value}[5m]',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual({
           expr: '{label=value}',
           queryType: 'range',
           refId: 'log-sample-A',
-          maxLines: 100,
+          maxLines: 20,
         });
       });
 
       it('returns logs sample query for instant metric query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
-            expr: 'rate({label=value}[5m]',
-            queryType: LokiQueryType.Instant,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Instant,
+              refId: 'A',
+            }
+          )
         ).toEqual({
           expr: '{label=value}',
           queryType: 'instant',
           refId: 'log-sample-A',
-          maxLines: 100,
+          maxLines: 20,
+        });
+      });
+
+      it('correctly overrides maxLines if limit is set', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample, limit: 5 },
+            {
+              expr: 'rate({label=value}[5m]',
+              queryType: LokiQueryType.Instant,
+              refId: 'A',
+            }
+          )
+        ).toEqual({
+          expr: '{label=value}',
+          queryType: 'instant',
+          refId: 'log-sample-A',
+          maxLines: 5,
         });
       });
 
       it('does not return logs sample query for log query query', () => {
         expect(
-          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
-            expr: '{label=value}',
-            queryType: LokiQueryType.Range,
-            refId: 'A',
-          })
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: '{label=value}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+            }
+          )
         ).toEqual(undefined);
       });
     });
@@ -1139,6 +1174,14 @@ describe('Variable support', () => {
     const ds = createLokiDatasource(templateSrvStub);
 
     expect(ds.variables).toBeInstanceOf(LokiVariableSupport);
+  });
+});
+
+describe('showContextToggle()', () => {
+  it('always displays logs context', () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    expect(ds.showContextToggle()).toBe(true);
   });
 });
 

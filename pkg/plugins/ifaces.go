@@ -58,6 +58,10 @@ type FS interface {
 	Files() []string
 }
 
+type FSRemover interface {
+	Remove() error
+}
+
 type FoundBundle struct {
 	Primary  FoundPlugin
 	Children []*FoundPlugin
@@ -135,4 +139,12 @@ type ClientMiddlewareFunc func(next Client) Client
 // CreateClientMiddleware implements the ClientMiddleware interface.
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
+}
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+type SignatureCalculator interface {
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
 }

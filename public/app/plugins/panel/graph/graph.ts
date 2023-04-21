@@ -321,7 +321,7 @@ class GraphElement {
           field: { config: fieldConfig, type: FieldType.number },
           theme: config.theme2,
           timeZone: this.dashboard.getTimezone(),
-        })(field.values.get(dataIndex));
+        })(field.values[dataIndex]);
         linksSupplier = links.length
           ? getFieldLinksSupplier({
               display: fieldDisplay,
@@ -365,13 +365,13 @@ class GraphElement {
       return dataIndex;
     }
 
-    const field = timeField.values.get(dataIndex);
+    const field = timeField.values[dataIndex];
 
     if (field === ts) {
       return dataIndex;
     }
 
-    const correctIndex = timeField.values.toArray().findIndex((value) => value === ts);
+    const correctIndex = timeField.values.findIndex((value) => value === ts);
     return correctIndex > -1 ? correctIndex : dataIndex;
   }
 

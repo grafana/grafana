@@ -17,7 +17,7 @@ const getSeriesName = (frame: DataFrame): string => {
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  const value = frame.fields[0]?.values.get(0);
+  const value = frame.fields[0]?.values[0];
 
   if (Number.isFinite(value)) {
     return roundDecimals(value, 5);
@@ -33,9 +33,7 @@ const formatLabels = (labels: Labels): string => {
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
-  const isEmpty = series.every((serie) =>
-    serie.fields.every((field) => field.values.toArray().every((value) => value == null))
-  );
+  const isEmpty = series.every((serie) => serie.fields.every((field) => field.values.every((value) => value == null)));
 
   return isEmpty;
 };

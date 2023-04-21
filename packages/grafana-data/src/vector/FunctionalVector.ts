@@ -2,7 +2,10 @@ import { Vector } from '../types';
 
 import { vectorToArray } from './vectorToArray';
 
-/** @public */
+/**
+ * @public
+ * @deprecated use a simple Arrays
+ */
 export abstract class FunctionalVector<T = any> implements Vector<T> {
   abstract get length(): number;
 
@@ -187,6 +190,8 @@ const emptyarray: any[] = [];
 
 /**
  * Use functional programming with your vector
+ *
+ * @deprecated use a simple Arrays
  */
 export function vectorator<T>(vector: Vector<T>) {
   return {

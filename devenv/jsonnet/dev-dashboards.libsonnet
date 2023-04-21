@@ -79,6 +79,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('annotation-filtering', import '../dev-dashboards/annotations/annotation-filtering.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('auto_decimals', import '../dev-dashboards/panel-common/auto_decimals.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

@@ -67,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   azureAuthEnabled = false;
+  secureSocksDSProxyEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;

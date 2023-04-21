@@ -174,7 +174,7 @@ describe('field convert types transformer', () => {
     expect(
       numbers[0].fields.map((f) => ({
         type: f.type,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toEqual([
       { type: FieldType.number, values: [1, 2, 3, 4, 5] },
@@ -212,7 +212,7 @@ describe('field convert types transformer', () => {
     expect(
       booleans[0].fields.map((f) => ({
         type: f.type,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toEqual([
       {
@@ -276,7 +276,7 @@ describe('field convert types transformer', () => {
     expect(
       complex[0].fields.map((f) => ({
         type: f.type,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toEqual([
       {
@@ -324,7 +324,7 @@ describe('field convert types transformer', () => {
     expect(
       stringified[0].fields.map((f) => ({
         type: f.type,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toEqual([
       {
@@ -354,7 +354,7 @@ describe('field convert types transformer', () => {
         ],
       }),
     ])[0].fields[0];
-    expect(stringified.values.toArray()).toEqual([
+    expect(stringified.values).toEqual([
       '2021-07',
       '2021-07',
       '2021-07', // can group by month

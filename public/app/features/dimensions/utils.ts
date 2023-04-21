@@ -125,7 +125,7 @@ export function getLastNotNullFieldValue<T>(field: Field): T {
   const data = field.values;
   let idx = data.length - 1;
   while (idx >= 0) {
-    const v = data.get(idx--);
+    const v = data[idx--];
     if (v != null) {
       return v;
     }

@@ -67,7 +67,7 @@ export const ConfigEditor = (props: Props) => {
         </InlineField>
       </ConnectionConfig>
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
+      {config.secureSocksDSProxyEnabled && (
         <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
       )}
 

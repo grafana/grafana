@@ -162,6 +162,29 @@ describe('SpanFilters', () => {
     jest.advanceTimersByTime(1000);
     expect(screen.getAllByLabelText('Select tag key').length).toBe(1);
   });
+
+  it('should allow resetting filters', async () => {
+    render(<SpanFiltersWithProps />);
+    const resetFiltersButton = screen.getByRole('button', { name: 'Reset filters button' });
+    expect(resetFiltersButton).toBeInTheDocument();
+    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+
+    const serviceValue = screen.getByLabelText('Select service name');
+    const spanValue = screen.getByLabelText('Select span name');
+    const tagKey = screen.getByLabelText('Select tag key');
+    const tagValue = screen.getByLabelText('Select tag value');
+    await selectAndCheckValue(user, serviceValue, 'Service0');
+    await selectAndCheckValue(user, spanValue, 'Span0');
+    await selectAndCheckValue(user, tagKey, 'TagKey0');
+    await selectAndCheckValue(user, tagValue, 'TagValue0');
+
+    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
+    await user.click(resetFiltersButton);
+    expect(screen.queryByText('Service0')).not.toBeInTheDocument();
+    expect(screen.queryByText('Span0')).not.toBeInTheDocument();
+    expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();
+    expect(screen.queryByText('TagValue0')).not.toBeInTheDocument();
+  });
 });
 
 const selectAndCheckValue = async (user: ReturnType<typeof userEvent.setup>, elem: HTMLElement, text: string) => {
