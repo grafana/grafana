@@ -94,7 +94,6 @@ export function SelectBase<T>({
   autoFocus = false,
   backspaceRemovesValue = true,
   cacheOptions,
-  captureMenuScroll = false,
   className,
   closeMenuOnSelect = true,
   components,
@@ -215,7 +214,7 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
-    captureMenuScroll,
+    captureMenuScroll: onMenuScrollToBottom || onMenuScrollToTop,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
     // So only close if none of the parents are the select menu itself
