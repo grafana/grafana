@@ -31,6 +31,7 @@ func (h *Hooks) Set(path string, hook RequestHandlerFunc) {
 func (h *Hooks) Wrap(next RequestHandlerFunc) RequestHandlerFunc {
 	return func(req *contextmodel.ReqContext) response.Response {
 		if hook, ok := h.hooks[req.Context.Req.URL.Path]; ok {
+		h.logger.Debug("hook defined - invoking new handler", "path", req.Context.Req.URL.Path)
 			return hook(req)
 		}
 		return next(req)
