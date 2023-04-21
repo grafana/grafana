@@ -4572,11 +4572,11 @@ steps:
     --gcp-service-account-key-base64=${GCP_KEY_BASE64}
   environment:
     DESTINATION:
-      from_secret: rgm_destination
+      from_secret: destination
     GCP_KEY_BASE64:
-      from_secret: rgm_gcp_key_base64
+      from_secret: gcp_key_base64
     GITHUB_TOKEN:
-      from_secret: rgm_github_token
+      from_secret: github_token
   failure: ignore
   image: golang:1.20.3-alpine
   name: rgm-build
@@ -4619,11 +4619,11 @@ steps:
     --gcp-service-account-key-base64=${GCP_KEY_BASE64}
   environment:
     DESTINATION:
-      from_secret: rgm_destination
+      from_secret: destination
     GCP_KEY_BASE64:
-      from_secret: rgm_gcp_key_base64
+      from_secret: gcp_key_base64
     GITHUB_TOKEN:
-      from_secret: rgm_github_token
+      from_secret: github_token
   failure: ignore
   image: golang:1.20.3-alpine
   name: rgm-build
@@ -6925,21 +6925,21 @@ get:
   name: gcp_service_account_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
-name: rgm_gcp_key_base64
+name: gcp_key_base64
 ---
 get:
   name: destination
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
-name: rgm_destination
+name: destination
 ---
 get:
   name: pat
   path: infra/data/ci/github/grafanabot
 kind: secret
-name: rgm_github_token
+name: github_token
 ---
 kind: signature
-hmac: e966503184ead261d4adb14e9894a4443412bc7bd7e7d644e68227b00a6ae2a1
+hmac: 0ddb993c826c55e06774844b8d228ebe9e483e5a96803dcd7926ad9b1e13a008
 
 ...

@@ -9,9 +9,9 @@ azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
 
-rgm_gcp_key_base64 = "rgm_gcp_key_base64"
-rgm_destination = "rgm_destination"
-rgm_github_token = "rgm_github_token"
+rgm_gcp_key_base64 = "gcp_key_base64"
+rgm_destination = "destination"
+rgm_github_token = "github_token"
 
 def from_secret(secret):
     return {"from_secret": secret}
