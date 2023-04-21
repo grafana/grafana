@@ -14,7 +14,6 @@ export const TabsEditor = ({ onTabChange }: Props) => {
   const tabs = [
     { label: 'Selected Element', value: InlineEditTabs.SelectedElement },
     { label: 'Element Management', value: InlineEditTabs.ElementManagement },
-    { label: 'Selected Connection', value: InlineEditTabs.SelectedConnection },
   ];
 
   const onCurrentTabChange = (value: string) => {

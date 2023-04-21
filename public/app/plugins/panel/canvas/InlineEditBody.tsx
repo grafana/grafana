@@ -16,7 +16,6 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { TabsEditor } from './editor/TabsEditor';
-import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { addStandardCanvasEditorOptions } from './module';
@@ -56,17 +55,6 @@ export function InlineEditBody() {
         }
       }
 
-      const connectionSelection = state.selectedConnection;
-      if (connectionSelection && activeTab === InlineEditTabs.SelectedConnection) {
-        builder.addNestedOptions(
-          getConnectionEditor({
-            category: ['Selected connection'],
-            connection: connectionSelection,
-            scene: state.scene,
-          })
-        );
-      }
-
       addStandardCanvasEditorOptions(builder);
     };
 
@@ -95,9 +83,6 @@ export function InlineEditBody() {
   const noElementSelected =
     instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0;
 
-  const noConnectionSelected =
-    instanceState && activeTab === InlineEditTabs.SelectedConnection && !instanceState.selectedConnection;
-
   return (
     <>
       <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
@@ -108,7 +93,6 @@ export function InlineEditBody() {
         <TabsEditor onTabChange={onTabChange} />
         {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
         {noElementSelected && <div className={styles.selectElement}>Please select an element</div>}
-        {noConnectionSelected && <div className={styles.selectElement}>Please select a connection</div>}
       </div>
     </>
   );
