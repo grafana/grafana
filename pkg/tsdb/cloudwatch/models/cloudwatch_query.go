@@ -369,26 +369,6 @@ func getStatistic(query metricsDataQuery) string {
 	return *query.Statistic
 }
 
-var aliasPatterns = map[string]string{
-	"metric":    `${PROP('MetricName')}`,
-	"namespace": `${PROP('Namespace')}`,
-	"period":    `${PROP('Period')}`,
-	"region":    `${PROP('Region')}`,
-	"stat":      `${PROP('Stat')}`,
-	"label":     `${LABEL}`,
-}
-
-var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
-
-func getLabel(query metricsDataQuery) string {
-	if query.Label != nil {
-		return *query.Label
-	}
-
-	var result string
-	return result
-}
-
 func calculatePeriodBasedOnTimeRange(startTime, endTime time.Time) int {
 	deltaInSeconds := endTime.Sub(startTime).Seconds()
 	periods := getRetainedPeriods(time.Since(startTime))
