@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,19 +36,6 @@ import (
 var orgID = int64(1)
 var usr = &user.SignedInUser{UserID: 1, OrgID: orgID}
 
-func TestIntegrationProvideFolderService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	t.Run("should register scope resolvers", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
-
-		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
-	})
-}
-
 func TestIntegrationFolderService(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -62,7 +48,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = true
 		features := featuremgmt.WithFeatures()
 
 		service := &Service{
@@ -449,7 +434,6 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	folderService := &Service{
 		cfg:                  cfg,
 		store:                nestedFolderStore,
@@ -972,7 +956,6 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 
 	// nothing enabled yet
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	return &Service{
 		cfg:                  cfg,
 		log:                  log.New("test-folder-service"),
