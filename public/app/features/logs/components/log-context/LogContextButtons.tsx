@@ -7,11 +7,8 @@ import { ButtonGroup, ButtonSelect, InlineField, InlineFieldRow, InlineSwitch, u
 
 const getStyles = () => {
   return {
-    inlineButtons: css`
+    buttonGroup: css`
       display: inline-flex;
-    `,
-    center: css`
-      align-self: center;
     `,
   };
 };
@@ -50,7 +47,7 @@ export const LogContextButtons = (props: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <ButtonGroup className={styles.inlineButtons}>
+    <ButtonGroup className={styles.buttonGroup}>
       {position === 'top' && onChangeWrapLines && (
         <InlineFieldRow>
           <InlineField label="Wrap lines">
