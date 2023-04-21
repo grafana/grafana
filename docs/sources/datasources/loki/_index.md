@@ -57,7 +57,7 @@ The **Derived Fields** configuration helps you:
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
 These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
 
-> **Note:** If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
+> **Note:** If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support). Or create a new datasource, point it (same URL) to the existing one, use Basic Auth with the same user and provide an API key (created on grafana.com or a [token](https://grafana.com/docs/grafana/latest/administration/service-accounts/) as Password. Then add your desired derived fields to the newly created datasource. 
 
 Each derived field consists of:
 
@@ -79,6 +79,8 @@ Select **Show example log message** to display a text area where you can enter a
 The new field with the link shown in log details:
 
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
+
+Derived fields can be used like labels but do not add to the cardinality and can help non-technical user to access important log information faster. 
 
 ### Provision the data source
 
