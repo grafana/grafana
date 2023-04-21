@@ -55,12 +55,19 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]ProfileType, erro
 }
 
 type PyroscopeProfileResponse struct {
-	Flamebearer *PyroFlamebearer `json:"flamebearer"`
-	Metadata    *Metadata        `json:"metadata"`
+	Flamebearer *PyroFlamebearer  `json:"flamebearer"`
+	Metadata    *Metadata         `json:"metadata"`
+	Groups      map[string]*Group `json:"groups"`
 }
 
 type Metadata struct {
 	Units string `json:"units"`
+}
+
+type Group struct {
+	StartTime     int64   `json:"startTime"`
+	Samples       []int64 `json:"samples"`
+	DurationDelta int64   `json:"durationDelta"`
 }
 
 type PyroFlamebearer struct {
@@ -70,12 +77,15 @@ type PyroFlamebearer struct {
 	Names    []string  `json:"names"`
 }
 
-func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
+func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string) (*PyroscopeProfileResponse, error) {
 	params := url.Values{}
 	params.Add("from", strconv.FormatInt(start, 10))
 	params.Add("until", strconv.FormatInt(end, 10))
 	params.Add("query", profileTypeID+labelSelector)
 	params.Add("format", "json")
+	if groupBy != nil && len(groupBy) > 0 {
+		params.Add("groupBy", groupBy[0])
+	}
 
 	url := c.URL + "/render?" + params.Encode()
 	logger.Debug("calling /render", "url", url)
@@ -96,6 +106,15 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID string, 
 	if err != nil {
 		logger.Debug("flamegraph data", "body", string(body))
 		return nil, fmt.Errorf("error decoding flamegraph data: %v", err)
+	}
+
+	return respData, nil
+}
+
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
+	respData, err := c.getProfileData(ctx, profileTypeID, labelSelector, start, end, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	mappedLevels := make([]*Level, len(respData.Flamebearer.Levels))
@@ -125,10 +144,64 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID string, 
 }
 
 func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
-	// TODO implement
-	return &SeriesResponse{
-		Series: []*Series{},
-	}, nil
+	// This is super ineffective at the moment. We need 2 different APIs one for profile one for series (timeline) data
+	// but Pyro returns all in single response. This currently does the simplest thing and calls the same API 2 times
+	// and gets the part of the response it needs.
+	respData, err := c.getProfileData(ctx, profileTypeID, labelSelector, start, end, groupBy)
+	if err != nil {
+		return nil, err
+	}
+
+	stepMillis := int64(step * 1000)
+	var series []*Series
+
+	if len(respData.Groups) == 1 {
+		series = []*Series{processGroup(respData.Groups["*"], stepMillis, nil)}
+	} else {
+		for key, val := range respData.Groups {
+			// If we have a group by, we don't want the * group
+			if key != "*" {
+				label := &LabelPair{
+					Name:  groupBy[0],
+					Value: key,
+				}
+
+				series = append(series, processGroup(val, stepMillis, label))
+			}
+		}
+	}
+
+	return &SeriesResponse{Series: series}, nil
+}
+
+// processGroup turns group timeline data into the Series format. Pyro does not seem to have a way to define step, so we
+// always get the data in specific step, and we have to aggregate a bit into s step size we need.
+func processGroup(group *Group, step int64, label *LabelPair) *Series {
+	series := &Series{}
+	if label != nil {
+		series.Labels = []*LabelPair{label}
+	}
+
+	durationDeltaMillis := group.DurationDelta * 1000
+	timestamp := group.StartTime * 1000
+	value := int64(0)
+
+	for i, sample := range group.Samples {
+		pointsLen := int64(len(series.Points))
+		// Check if the timestamp of the sample is more than next timestamp in the series. If so we create a new point
+		// with the value we have so far.
+		if int64(i)*durationDeltaMillis > step*pointsLen+1 {
+			series.Points = append(series.Points, &Point{
+				Value:     float64(value),
+				Timestamp: timestamp + step*pointsLen,
+			})
+			value = 0
+		}
+
+		value += sample
+	}
+
+	return series
 }
 
 func (c *PyroscopeClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
@@ -156,7 +229,7 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, query string, start in
 		}
 	}
 
-	return names, nil
+	return filtered, nil
 }
 
 func (c *PyroscopeClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
@@ -171,9 +244,14 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, query string, label s
 		return nil, err
 	}
 	var values []string
-	err = json.NewDecoder(resp.Body).Decode(&values)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	err = json.Unmarshal(body, &values)
+	if err != nil {
+		logger.Debug("response", "body", string(body))
+		return nil, fmt.Errorf("error unmarshaling response %v", err)
 	}
 
 	return values, nil
