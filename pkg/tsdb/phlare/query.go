@@ -78,7 +78,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		logger.Debug("Calling GetProfile", "queryModel", qm)
-		prof, err := d.client.GetProfile(ctx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli())
+		prof, err := d.client.GetProfile(ctx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), int64(qm.MaxNodes))
 		if err != nil {
 			logger.Error("Error GetProfile()", "err", err)
 			response.Error = err
