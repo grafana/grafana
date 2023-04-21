@@ -24,7 +24,7 @@ const MAX_TIMELINE_SERIES = 12;
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
-  const logsRef = useRef<Map<number, HTMLDivElement>>(new Map<number, HTMLDivElement>());
+  const logsRef = useRef<Map<number, HTMLElement>>(new Map<number, HTMLElement>());
 
   const { getValues, setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
 
@@ -133,7 +133,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
           <LogRecordViewerByTimestamp
             records={historyRecords}
             commonLabels={commonLabels}
-            logsRef={logsRef}
+            onRecordsRendered={(recordRefs) => (logsRef.current = recordRefs)}
             onLabelClick={onLogRecordLabelClick}
           />
         </>

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -15,12 +15,12 @@ import { LogRecord, omitLabels } from './common';
 interface LogRecordViewerProps {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
-  logsRef: React.MutableRefObject<Map<number, HTMLElement>>;
+  onRecordsRendered?: (timestampRefs: Map<number, HTMLElement>) => void;
   onLabelClick?: (label: string) => void;
 }
 
 export const LogRecordViewerByTimestamp = React.memo(
-  ({ records, commonLabels, logsRef, onLabelClick }: LogRecordViewerProps) => {
+  ({ records, commonLabels, onLabelClick, onRecordsRendered }: LogRecordViewerProps) => {
     const styles = useStyles2(getStyles);
 
     // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
@@ -29,19 +29,23 @@ export const LogRecordViewerByTimestamp = React.memo(
       const tsGroup = acc.get(current.timestamp);
       if (tsGroup) {
         tsGroup.push(current);
+      } else {
+        acc.set(current.timestamp, [current]);
       }
-      acc.set(current.timestamp, [current]);
 
       return acc;
     }, new Map<number, LogRecord[]>());
 
-    logsRef.current.clear();
+    const timestampRefs = new Map<number, HTMLElement>();
+    useEffect(() => {
+      onRecordsRendered && onRecordsRendered(timestampRefs);
+    });
 
     return (
       <ul className={styles.logsScrollable} aria-label="State history by timestamp">
         {Array.from(groupedLines.entries()).map(([key, records]) => {
           return (
-            <li id={key.toString(10)} key={key} ref={(element) => element && logsRef.current.set(key, element)}>
+            <li id={key.toString(10)} key={key} ref={(element) => element && timestampRefs.set(key, element)}>
               <Timestamp time={key} />
               <div className={styles.logsContainer}>
                 {records.map(({ line }) => (
@@ -72,7 +76,7 @@ export const LogRecordViewerByTimestamp = React.memo(
 );
 LogRecordViewerByTimestamp.displayName = 'LogRecordViewerByTimestamp';
 
-export function LogRecordViewerByInstance({ records, commonLabels, logsRef }: LogRecordViewerProps) {
+export function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerProps) {
   const styles = useStyles2(getStyles);
 
   const groupedLines = groupBy(records, (record: LogRecord) => {
@@ -93,7 +97,7 @@ export function LogRecordViewerByInstance({ records, commonLabels, logsRef }: Lo
             </h4>
             <div className={styles.logsContainer}>
               {records.map(({ line, timestamp }) => (
-                <div key={uniqueId()} ref={(ref) => ref && logsRef.current.set(timestamp, ref)}>
+                <div key={uniqueId()}>
                   <AlertStateTag state={line.previous} size="sm" muted />
                   <Icon name="arrow-right" size="sm" />
                   <AlertStateTag state={line.current} />
