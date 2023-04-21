@@ -540,7 +540,7 @@ export const navIndex: NavIndex = {
   },
   monitoring: {
     id: 'monitoring',
-    text: 'Monitoring',
+    text: 'Observability',
     section: NavSection.Core,
     subTitle: 'Monitoring and infrastructure apps',
     icon: 'heart-rate',
