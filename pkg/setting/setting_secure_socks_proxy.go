@@ -2,7 +2,10 @@ package setting
 
 import (
 	"errors"
+	"os"
+	"strconv"
 
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"gopkg.in/ini.v1"
 )
 
@@ -40,5 +43,45 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		return s, errors.New("proxy address required")
 	}
 
+	err := SetProxyEnvVariables(s)
+	if err != nil {
+		return s, err
+	}
+
 	return s, nil
+}
+
+// SetProxyEnvVariables sets the needed environment variables for grafana core datasoruces
+// to use the grafana-plugin-sdk code to set up the proxy
+func SetProxyEnvVariables(settings SecureSocksDSProxySettings) error {
+	err := os.Setenv(sdkproxy.PluginSecureSocksProxyClientCert, settings.ClientCert)
+	if err != nil {
+		return err
+	}
+
+	err = os.Setenv(sdkproxy.PluginSecureSocksProxyClientKey, settings.ClientKey)
+	if err != nil {
+		return err
+	}
+
+	err = os.Setenv(sdkproxy.PluginSecureSocksProxyRootCACert, settings.RootCA)
+	if err != nil {
+		return err
+	}
+
+	err = os.Setenv(sdkproxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(settings.Enabled))
+	if err != nil {
+		return err
+	}
+
+	err = os.Setenv(sdkproxy.PluginSecureSocksProxyProxyAddress, settings.ProxyAddress)
+	if err != nil {
+		return err
+	}
+
+	err = os.Setenv(sdkproxy.PluginSecureSocksProxyServerName, settings.ServerName)
+	if err != nil {
+		return err
+	}
+	return nil
 }

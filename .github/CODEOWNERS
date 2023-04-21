@@ -83,7 +83,6 @@
 /pkg/infra/metrics/ @grafana/backend-platform
 /pkg/infra/network/ @grafana/backend-platform
 /pkg/infra/process/ @grafana/backend-platform
-/pkg/infra/proxy/ @grafana/hosted-grafana-team
 /pkg/infra/remotecache/ @grafana/backend-platform
 /pkg/infra/serverlock/ @grafana/backend-platform
 /pkg/infra/slugify/ @grafana/backend-platform
@@ -142,6 +141,7 @@
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
 /pkg/tsdb/sqleng/ @grafana/backend-platform
+/pkg/tsdb/sqleng/proxyutil/ @grafana/hosted-grafana-team
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 

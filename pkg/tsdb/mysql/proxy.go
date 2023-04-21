@@ -5,17 +5,16 @@ import (
 	"net"
 
 	"github.com/go-sql-driver/mysql"
-	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
-	"github.com/grafana/grafana/pkg/setting"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/net/proxy"
 )
 
 // registerProxyDialerContext registers a new dialer context to be used by mysql when the proxy network is
 // specified in the connection string
-func registerProxyDialerContext(settings *setting.SecureSocksDSProxySettings, protocol, cnnstr string) (string, error) {
+func registerProxyDialerContext(protocol, cnnstr string, opts *sdkproxy.Options) (string, error) {
 	// the dialer contains the true network used behind the scenes
-	dialer, err := getProxyDialerContext(settings, protocol)
+	dialer, err := getProxyDialerContext(protocol, opts)
 	if err != nil {
 		return "", err
 	}
@@ -39,8 +38,8 @@ type mySQLContextDialer struct {
 }
 
 // getProxyDialerContext returns a context dialer that will send the request through to the secure socks proxy
-func getProxyDialerContext(cfg *setting.SecureSocksDSProxySettings, actualNetwork string) (*mySQLContextDialer, error) {
-	dialer, err := iproxy.NewSecureSocksProxyContextDialer(cfg)
+func getProxyDialerContext(actualNetwork string, opts *sdkproxy.Options) (*mySQLContextDialer, error) {
+	dialer, err := sdkproxy.NewSecureSocksProxyContextDialer(opts)
 	if err != nil {
 		return nil, err
 	}
