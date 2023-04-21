@@ -517,7 +517,7 @@ export const navIndex: NavIndex = {
   },
   monitoring: {
     id: 'monitoring',
-    text: 'Monitoring',
+    text: 'Observability',
     subTitle: 'Monitoring and infrastructure apps',
     icon: 'heart-rate',
     url: '/monitoring',

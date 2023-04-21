@@ -92,7 +92,7 @@ export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
   (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';
 
 export const isSupportedVersion = (version: SemVer): boolean => {
-  if (gte(version, '7.10.0')) {
+  if (gte(version, '7.16.0')) {
     return true;
   }
 
@@ -100,4 +100,4 @@ export const isSupportedVersion = (version: SemVer): boolean => {
 };
 
 export const unsupportedVersionMessage =
-  'Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed. Using unsupported version of Elasticsearch may lead to unexpected and incorrect results.';
+  'Support for Elasticsearch versions after their end-of-life (currently versions < 7.16) was removed. Using unsupported version of Elasticsearch may lead to unexpected and incorrect results.';

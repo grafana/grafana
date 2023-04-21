@@ -12,7 +12,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   AzureDataSourceJsonData
 > {
   filterQuery(item: AzureMonitorQuery): boolean {
-    return !!item.azureResourceGraph?.query;
+    return !!item.azureResourceGraph?.query && !!item.subscriptions && item.subscriptions.length > 0;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
