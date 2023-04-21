@@ -451,6 +451,33 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
 	})
 
+	t.Run("Should be able to find a dashboard folder's children by UID", func(t *testing.T) {
+		setup()
+		query := dashboards.FindPersistedDashboardsQuery{
+			OrgId:      1,
+			FolderUIDs: []string{savedFolder.UID},
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+				},
+			},
+		}
+
+		hits, err := testSearchDashboards(dashboardStore, &query)
+		require.NoError(t, err)
+
+		require.Equal(t, len(hits), 2)
+		hit := hits[0]
+		require.Equal(t, hit.ID, savedDash.ID)
+		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
+		require.Equal(t, hit.FolderID, savedFolder.ID)
+		require.Equal(t, hit.FolderUID, savedFolder.UID)
+		require.Equal(t, hit.FolderTitle, savedFolder.Title)
+		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
+	})
+
 	t.Run("Should be able to find dashboards by ids", func(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
