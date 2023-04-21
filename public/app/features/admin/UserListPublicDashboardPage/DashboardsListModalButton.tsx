@@ -1,29 +1,25 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Button, LinkButton, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
+import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
 import {
   generatePublicDashboardUrl,
-  SessionPublicDashboard,
+  SessionDashboard,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
-const DashboardsListModal = ({
-  dashboards,
-  onDismiss,
-}: {
-  dashboards: SessionPublicDashboard[];
-  onDismiss: () => void;
-}) => {
+const DashboardsListModal = ({ dashboards, onDismiss }: { dashboards: SessionDashboard[]; onDismiss: () => void }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Modal className={styles.modal} isOpen title="Public Dashboards" onDismiss={onDismiss}>
+    <Modal className={styles.modal} isOpen title="Public dashboards" onDismiss={onDismiss}>
       {dashboards.map((dash) => (
         <div key={dash.name} className={styles.listItem}>
           <p className={styles.dashboardTitle}>{dash.name}</p>
           <div className={styles.urlsContainer}>
             <a
+              rel="noreferrer"
+              target="_blank"
               className={styles.url}
               href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
               onClick={onDismiss}
@@ -42,7 +38,7 @@ const DashboardsListModal = ({
   );
 };
 
-export const DashboardsListModalButton = ({ dashboards }: { dashboards: SessionPublicDashboard[] }) => (
+export const DashboardsListModalButton = ({ dashboards }: { dashboards: SessionDashboard[] }) => (
   <ModalsController>
     {({ showModal, hideModal }) => (
       <Button

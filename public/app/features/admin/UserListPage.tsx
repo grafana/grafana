@@ -79,14 +79,10 @@ export default function UserListPage() {
       ) : (
         hasEmailSharingEnabled && (
           <TabsBar className={styles.tabsMargin}>
-            {
-              //TODO: we need to understand in cloud what about it. Maybe hasAccessToOrgUsers is true, so when rendering
-              // for the first time this wont be active
-            }
             <Tab
               label="Users"
-              active={view === null}
-              onChangeTab={() => setView(null)}
+              active={view === TabView.ORG}
+              onChangeTab={() => setView(TabView.ORG)}
               data-testid={selectors.tabs.users}
             />
             <PublicDashboardsTab view={view} setView={setView} />
