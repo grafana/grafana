@@ -12,7 +12,7 @@ import { AccessControlAction } from '../../types';
 import { UsersListPageContent } from '../users/UsersListPage';
 
 import { UserListAdminPageContent } from './UserListAdminPage';
-import { UserListPublicDashboardPage } from './UserListPublicDashboardPage';
+import { UserListPublicDashboardPage } from './UserListPublicDashboardPage/UserListPublicDashboardPage';
 
 enum TabView {
   ADMIN = 'admin',
