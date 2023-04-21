@@ -52,7 +52,7 @@ export function getStyles(theme: GrafanaTheme2) {
       textAlign: 'center',
     }),
     grot: css({
-      maxWidth: '550px',
+      maxWidth: '450px',
       paddingTop: theme.spacing(8),
       margin: '0 auto',
     }),
