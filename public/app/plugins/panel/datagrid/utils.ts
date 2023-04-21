@@ -170,6 +170,8 @@ export const publishSnapshot = (data: DataFrame, panelID: number): void => {
     dataSource: GRAFANA_DS,
     queries: [query],
   });
+
+  panelModel!.refresh();
 };
 
 //Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func
