@@ -148,14 +148,6 @@ export class SQLSearcher implements GrafanaSearcher {
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
     const rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
 
-    // eslint-disable-next-line no-console
-    console.groupCollapsed('Search query for ' + query.query);
-    console.log('Query', query);
-    console.log('Results', rsp);
-    console.log('Stack', new Error());
-    // eslint-disable-next-line no-console
-    console.groupEnd();
-
     // Field values (columnar)
     const kind: string[] = [];
     const name: string[] = [];
