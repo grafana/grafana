@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { createElement, CSSProperties, useCallback } from 'react';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
@@ -23,36 +23,39 @@ interface TextProps {
   children: React.ReactNode;
 }
 
-export const Text = ({ as = 'span', variant, weight, color, truncate, textAlignment, margin, children }: TextProps) => {
-  const styles = useStyles2(
-    useCallback(
-      (theme) => {
-        let styleVariant: keyof ThemeTypographyVariantTypes;
-        if (!variant) {
-          if (as === 'span' || as === 'legend') {
-            styleVariant = 'bodySmall';
-          } else if (as === 'p') {
-            styleVariant = 'body';
+export const Text = React.forwardRef<HTMLElement, TextProps>(
+  ({ as = 'span', variant, weight, color, truncate, textAlignment, margin, children }, ref) => {
+    const styles = useStyles2(
+      useCallback(
+        (theme) => {
+          let styleVariant: keyof ThemeTypographyVariantTypes;
+          if (!variant) {
+            if (as === 'span' || as === 'legend') {
+              styleVariant = 'bodySmall';
+            } else if (as === 'p') {
+              styleVariant = 'body';
+            } else {
+              styleVariant = as;
+            }
           } else {
-            styleVariant = as;
+            styleVariant = variant;
           }
-        } else {
-          styleVariant = variant;
-        }
-        return getTextStyles(theme, styleVariant, color, weight, truncate, textAlignment, margin);
-      },
-      [color, margin, textAlignment, truncate, weight, as, variant]
-    )
-  );
+          return getTextStyles(theme, styleVariant, color, weight, truncate, textAlignment, margin);
+        },
+        [color, margin, textAlignment, truncate, weight, as, variant]
+      )
+    );
 
-  return createElement(
-    as,
-    {
-      className: styles,
-    },
-    children
-  );
-};
+    return createElement(
+      as,
+      {
+        className: styles,
+        ref,
+      },
+      children
+    );
+  }
+);
 
 Text.displayName = 'Text';
 
@@ -89,7 +92,7 @@ const getTextStyles = (
   ]);
 };
 
-const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2) => {
+const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2): number => {
   switch (weight) {
     case 'bold':
       return theme.typography.fontWeightBold;
@@ -97,12 +100,13 @@ const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2) => {
       return theme.typography.fontWeightMedium;
     case 'light':
       return theme.typography.fontWeightLight;
-    default:
+    case 'regular':
+    case undefined:
       return theme.typography.fontWeightRegular;
   }
 };
 
-const customColor = (color: TextProps['color'], theme: GrafanaTheme2) => {
+const customColor = (color: TextProps['color'], theme: GrafanaTheme2): string | undefined => {
   switch (color) {
     case 'error':
       return theme.colors.error.text;
