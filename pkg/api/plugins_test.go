@@ -279,8 +279,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
-		pfs := plugins.NewLocalFS(filepath.Dir(requestedFile))
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, pfs)
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(filepath.Dir(requestedFile)))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -315,8 +314,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		pfs := plugins.NewLocalFS(filepath.Dir(requestedFile))
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, pfs)
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(filepath.Dir(requestedFile)))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,

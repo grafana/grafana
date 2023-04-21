@@ -287,7 +287,7 @@ func TestNewToSlash(t *testing.T) {
 	})
 }
 
-// fsPathSeparatorFiles embeds plugins.LocalFS and overrides the Files() behaviour so all the returned elements
+// fsPathSeparatorFiles embeds a plugins.FS and overrides the Files() behaviour so all the returned elements
 // have the specified path separator. This can be used to test Files() behaviour cross-platform.
 type fsPathSeparatorFiles struct {
 	plugins.FS
@@ -296,8 +296,7 @@ type fsPathSeparatorFiles struct {
 }
 
 // newPathSeparatorOverrideFS returns a new fsPathSeparatorFiles. Sep is the separator that will be used ONLY for
-// the elements returned by Files(). basePath MUST use the os-specific path separator (filepath.Separator)
-// if Open() is required to work for the test case.
+// the elements returned by Files().
 func newPathSeparatorOverrideFS(sep string, ufs plugins.FS) (fsPathSeparatorFiles, error) {
 	return fsPathSeparatorFiles{
 		FS:        ufs,
@@ -305,7 +304,8 @@ func newPathSeparatorOverrideFS(sep string, ufs plugins.FS) (fsPathSeparatorFile
 	}, nil
 }
 
-// Files returns LocalFS.Files(), but all path separators (filepath.Separator) are replaced with f.separator.
+// Files returns LocalFS.Files(), but all path separators for the current platform (filepath.Separator)
+// are replaced with f.separator.
 func (f fsPathSeparatorFiles) Files() ([]string, error) {
 	files, err := f.FS.Files()
 	if err != nil {

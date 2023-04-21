@@ -105,11 +105,6 @@ func (f LocalFS) Open(name string) (fs.File, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: FS: Check if it's the same as the check in fileIsAllowed ?
-	//if strings.Contains(cleanPath, "..") {
-	//	return nil, ErrFileNotExist
-	//}
 	basePath := f.Base()
 	absFn := filepath.Join(basePath, cleanPath)
 	finfo, err := os.Stat(absFn)
