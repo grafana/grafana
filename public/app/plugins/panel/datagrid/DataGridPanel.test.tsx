@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act, prettyDOM, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
 import { ArrayVector, DataFrame, dateTime, EventBus, FieldType, LoadingState, MutableDataFrame } from '@grafana/data';
@@ -591,7 +591,7 @@ const sendClick = (el: Element | Node | Document | Window, options?: {}): void =
   fireEvent.click(el, options);
 };
 
-const Context = (p) => {
+const Context = (p: any) => {
   return (
     <>
       {p.children}
