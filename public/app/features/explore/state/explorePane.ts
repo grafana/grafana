@@ -149,7 +149,7 @@ export const initializeExplore = createAsyncThunk(
       // We do not want to add the url to browser history on init because when the pane is initialised it's because
       // we already have something in the url. Adding basically the same state as additional history item prevents
       // user to go back to previous url.
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
 
     return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });

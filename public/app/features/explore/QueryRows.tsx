@@ -46,7 +46,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   const eventBridge = useSelector(getEventBridge);
 
   const onRunQueries = useCallback(() => {
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(

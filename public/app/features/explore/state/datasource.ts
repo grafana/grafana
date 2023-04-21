@@ -72,7 +72,7 @@ export function changeDatasource(
 
     // Exception - we only want to run queries on data source change, if the queries were imported
     if (options?.importQueries) {
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
   };
 }

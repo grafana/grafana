@@ -45,11 +45,11 @@ export const updateTimeRange = (options: {
     if (syncedTimes) {
       Object.keys(getState().explore.panes).forEach((exploreId) => {
         dispatch(updateTime({ ...options, exploreId: exploreId as ExploreId }));
-        dispatch(runQueries(exploreId as ExploreId, { preserveCache: true }));
+        dispatch(runQueries({ exploreId: exploreId as ExploreId, preserveCache: true }));
       });
     } else {
       dispatch(updateTime({ ...options }));
-      dispatch(runQueries(options.exploreId, { preserveCache: true }));
+      dispatch(runQueries({ exploreId: options.exploreId, preserveCache: true }));
     }
   };
 };

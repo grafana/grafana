@@ -191,8 +191,8 @@ export function useStateSync(params: ExploreQueryParams) {
             dispatch(setQueriesAction({ exploreId, queries: withUniqueRefIds(queries) }));
           }
 
-          if (update.queries || update.range) {
-            dispatch(runQueries(exploreId));
+          if (update.range) {
+            dispatch(runQueries({ exploreId }));
           }
         }
       }

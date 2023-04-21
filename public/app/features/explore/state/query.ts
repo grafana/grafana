@@ -325,7 +325,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
 
     // if we are removing a query we want to run the remaining ones
     if (queries.length < queries.length) {
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
   }
 );
@@ -429,7 +429,7 @@ export function modifyQueries(
 
     dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     if (!modification.preventSubmit) {
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
   };
 }
@@ -456,18 +456,22 @@ async function handleHistory(
   }
 }
 
+interface RunQueriesOptions {
+  exploreId: ExploreId;
+  preserveCache?: boolean;
+}
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (exploreId: ExploreId, options?: { preserveCache?: boolean }): ThunkResult<void> => {
-  return (dispatch, getState) => {
+export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
+  'explore/runQueries',
+  async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     dispatch(updateTime({ exploreId }));
 
     const correlations$ = getCorrelations();
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
-    const preserveCache = options?.preserveCache === true;
-    if (!preserveCache) {
+    if (preserveCache !== true) {
       dispatch(clearCache(exploreId));
     }
 
@@ -567,7 +571,7 @@ export const runQueries = (exploreId: ExploreId, options?: { preserveCache?: boo
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
-              dispatch(runQueries(exploreId));
+              dispatch(runQueries({ exploreId }));
             } else {
               // We can stop scanning if we have a result
               dispatch(scanStopAction({ exploreId }));
@@ -615,8 +619,8 @@ export const runQueries = (exploreId: ExploreId, options?: { preserveCache?: boo
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
-  };
-};
+  }
+);
 
 const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars) => {
   const nonMixedDataSources = datasources.filter((t) => {
@@ -761,7 +765,7 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
     const queries = getState().explore.panes[exploreId]!.queries;
     const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
     dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   };
 }
 
@@ -778,7 +782,7 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   };
 }
 

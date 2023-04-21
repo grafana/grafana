@@ -88,7 +88,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (loading) {
       return dispatch(cancelQueries(exploreId));
     } else {
-      return dispatch(runQueries(exploreId));
+      return dispatch(runQueries({ exploreId }));
     }
   };
 
