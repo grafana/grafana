@@ -25,6 +25,8 @@ replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.
 // hoist a replace statement.
 replace k8s.io/client-go => k8s.io/client-go v0.25.3
 
+replace github.com/grafana/thema => github.com/grafana/thema v0.0.0-20230403072128-78fc27f0b99d
+
 require (
 	k8s.io/apiextensions-apiserver v0.26.2 // indirect
 	k8s.io/apimachinery v0.26.2
@@ -211,7 +213,7 @@ require (
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rs/cors v1.8.3 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
-	github.com/segmentio/encoding v0.3.5
+	github.com/segmentio/encoding v0.3.5 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
