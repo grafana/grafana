@@ -43,29 +43,42 @@ export function dataSourceLabel(
   return 'Unknown';
 }
 
-export function useGetDatasources(filters: GetDataSourceListFilters) {
+/**
+ * Stores the uid of the last 5 data sources selected by the user
+ *
+ * @returns function for pushing a data source uid to the store
+ */
+export function useRecentlyUsedDataSources() {
   const [value = [], setStorage] = useLocalStorage<string[]>(LOCAL_STORAGE_KEY, []);
 
-  const dataSourceSrv = getDataSourceSrv();
-
-  const dataSources = dataSourceSrv.getList(filters);
-
-  const updateStorage = (ds: DataSourceInstanceSettings) => {
+  const pushRecentlyUsedDataSource = (ds: DataSourceInstanceSettings) => {
     if (ds.meta.builtIn) {
-      return; //Prevent storing the built in datasources (-- Grafana --, -- Mixed --,  -- Dashboard --)
+      // Prevent storing the built in datasources (-- Grafana --, -- Mixed --,  -- Dashboard --)
+      return;
     }
-    setStorage([ds.uid, ...value].slice(0, 5));
+    if (value.includes(ds.uid)) {
+      // Prevent storing multiple copies of the same data source, put it at the front of the array instead.
+      value.splice(
+        value.findIndex((dsUid) => ds.uid === dsUid),
+        1
+      );
+      setStorage([ds.uid, ...value]);
+    } else {
+      setStorage([ds.uid, ...value].slice(0, 5));
+    }
   };
 
-  const recentlyUsed = value
-    .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
-    .filter((ds): ds is DataSourceInstanceSettings => !!ds); //Custom typeguard to make sure ds is not undefined
-  const otherDataSources = dataSources.filter((ds) => !value.includes(ds.uid));
-
-  return { dataSources: [...recentlyUsed, ...otherDataSources], updateStorage };
+  return { recentlyUsedDataSources: value, pushRecentlyUsedDataSource };
 }
 
-export function useGetDatasource(dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) {
+export function useDatasources(filters: GetDataSourceListFilters) {
+  const dataSourceSrv = getDataSourceSrv();
+  const dataSources = dataSourceSrv.getList(filters);
+
+  return dataSources;
+}
+
+export function useDatasource(dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) {
   const dataSourceSrv = getDataSourceSrv();
 
   if (!dataSource) {

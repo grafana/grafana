@@ -3,7 +3,7 @@ import React from 'react';
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 
 import { DataSourceCard } from './DataSourceCard';
-import { isDataSourceMatch, useGetDatasources } from './utils';
+import { isDataSourceMatch, useDatasources, useRecentlyUsedDataSources } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -35,7 +35,7 @@ export interface DataSourceListProps {
 export function DataSourceList(props: DataSourceListProps) {
   const { className, current, onChange } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
-  const { dataSources, updateStorage } = useGetDatasources({
+  const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
     dashboard: props.dashboard,
@@ -48,16 +48,20 @@ export function DataSourceList(props: DataSourceListProps) {
     variables: props.variables,
   });
 
+  const { recentlyUsedDataSources, pushRecentlyUsedDataSource } = useRecentlyUsedDataSources();
+
+  const orderedDataSources = orderDataSourcesByRecentlyUsed(recentlyUsedDataSources, dataSources);
+
   return (
     <div className={className}>
-      {dataSources
+      {orderedDataSources
         .filter((ds) => (props.filter ? props.filter(ds) : true))
         .map((ds) => (
           <DataSourceCard
             key={ds.uid}
             ds={ds}
             onClick={() => {
-              updateStorage(ds);
+              pushRecentlyUsedDataSource(ds);
               onChange(ds);
             }}
             selected={!!isDataSourceMatch(ds, current)}
@@ -65,4 +69,12 @@ export function DataSourceList(props: DataSourceListProps) {
         ))}
     </div>
   );
+}
+
+function orderDataSourcesByRecentlyUsed(recentlyUsedDataSources: string[], dataSources: DataSourceInstanceSettings[]) {
+  const recentlyUsed = recentlyUsedDataSources
+    .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
+    .filter((ds): ds is DataSourceInstanceSettings => !!ds); //Custom typeguard to make sure ds is not undefined
+  const otherDataSources = dataSources.filter((ds) => !recentlyUsedDataSources.includes(ds.uid));
+  return [...recentlyUsed, ...otherDataSources];
 }

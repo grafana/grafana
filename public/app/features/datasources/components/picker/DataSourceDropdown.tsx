@@ -14,7 +14,7 @@ import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
-import { dataSourceLabel, useGetDatasource } from './utils';
+import { dataSourceLabel, useDatasource } from './utils';
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
@@ -24,7 +24,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
 
-  const currentDataSourceInstanceSettings = useGetDatasource(current);
+  const currentDataSourceInstanceSettings = useDatasource(current);
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
