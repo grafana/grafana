@@ -335,7 +335,10 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 			require.NoError(t, err)
 			files, err := fs.Files()
 			require.NoError(t, err)
-			require.Equal(t, []string{"a", strings.Join([]string{"a", "b", "c"}, tc.sep)}, files)
+			exp := []string{"a", strings.Join([]string{"a", "b", "c"}, tc.sep)}
+			sort.Strings(files)
+			sort.Strings(exp)
+			require.Equal(t, exp, files)
 		})
 	}
 }
