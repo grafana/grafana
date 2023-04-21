@@ -8,6 +8,7 @@ import { usePopper } from 'react-popper';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
@@ -157,7 +158,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       </div>
 
       <div className={styles.footer}>
-        {onClickAddCSV && (
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
           <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
             Add csv or spreadsheet
           </Button>
@@ -198,7 +199,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      height: 480px;
+      height: 412px;
       box-shadow: ${theme.shadows.z3};
       width: 480px;
       background: ${theme.colors.background.primary};
@@ -208,15 +209,16 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       background: ${theme.colors.background.secondary};
     `,
     dataSourceList: css`
-      height: 423px;
-      padding: 0 ${theme.spacing(2)};
+      flex: 1;
+      height: 100%;
     `,
     footer: css`
+      flex: 0;
       display: flex;
       justify-content: space-between;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};
-      height: 57px;
+      background-color: ${theme.colors.background.secondary};
     `,
   };
 }

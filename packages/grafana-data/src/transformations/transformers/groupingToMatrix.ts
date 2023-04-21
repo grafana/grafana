@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue, Vector } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -111,8 +111,8 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
     ),
 };
 
-function uniqueValues(values: Vector): any[] {
-  const unique = new Set();
+function uniqueValues<T>(values: T[]): T[] {
+  const unique = new Set<T>();
 
   for (let index = 0; index < values.length; index++) {
     unique.add(values[index]);

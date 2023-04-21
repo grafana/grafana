@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
   getCopiedPanelPlugin,
@@ -23,7 +24,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
     <Menu>
       <Menu.Item
         key="add-visualisation"
-        label="Visualization"
+        label={t('dashboard.add-menu.visualization', 'Visualization')}
         testId={selectors.components.PageToolbar.itemButton('Add new visualization menu item')}
         onClick={() => {
           reportInteraction('Create new panel');
@@ -33,7 +34,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
       />
       <Menu.Item
         key="add-row"
-        label="Row"
+        label={t('dashboard.add-menu.row', 'Row')}
         testId={selectors.components.PageToolbar.itemButton('Add new row menu item')}
         onClick={() => {
           reportInteraction('Create new row');
@@ -42,7 +43,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
       />
       <Menu.Item
         key="add-panel-lib"
-        label="Import from library"
+        label={t('dashboard.add-menu.import', 'Import from library')}
         testId={selectors.components.PageToolbar.itemButton('Add new panel from panel library menu item')}
         onClick={() => {
           reportInteraction('Add a panel from the panel library');
@@ -51,7 +52,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
       />
       <Menu.Item
         key="add-panel-clipboard"
-        label="Paste panel"
+        label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
         testId={selectors.components.PageToolbar.itemButton('Add new panel from clipboard menu item')}
         onClick={() => {
           reportInteraction('Paste panel from clipboard');

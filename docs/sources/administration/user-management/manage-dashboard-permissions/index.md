@@ -8,13 +8,13 @@ weight: 500
 
 # Manage dashboard permissions
 
-Dashboard and dasboard folder permissions enable you to grant a viewer the ability to edit and save dashboard changes, or limit an editor's permission to modify a dashboard.
+Dashboard and folder permissions enable you to grant a viewer the ability to edit and save dashboard changes, or limit an editor's permission to modify a dashboard.
 
 For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
 
-## Grant dashboard folder permissions
+## Grant folder permissions
 
-When you grant user permissions for folders, that setting applies to all dashboards contained in the folder. Consider using this approach to assigning dashboard permissions when you have users or teams who require access to groups of related dashboards.
+When you grant user permissions for folders, that setting applies to all dashboards and subfolders contained in the folder. Consider using this approach to assigning dashboard and folder permissions when you have users or teams who require access to groups of related dashboards or folders.
 
 ### Before you begin
 
@@ -33,13 +33,13 @@ When you grant user permissions for folders, that setting applies to all dashboa
 
 ## Grant dashboard permissions
 
-When you grant dashboard folder permissions, that setting applies to all dashboards in the folder. For a more granular approach to assigning permissions, you can also assign user permissions to individual dashboards.
+When you grant folder permissions, that setting applies to all dashboards and subfolders in the folder. For a more granular approach to assigning permissions, you can also assign user permissions to individual dashboards.
 
 For example, if a user with the viewer organization role requires editor (or admin) access to a dashboard, you can assign those elevated permissions on an individual basis.
 
 > **Note**: If you have assigned a user dashboard folder permissions, you cannot also assign the user permission to dashboards contained in the folder.
 
-Grant dashboard permissions when you want to restrict or enhance dashboard access for users who do not have permissions defined in the associated dashboard folder.
+Grant dashboard permissions when you want to restrict or enhance dashboard access for users who do not have permissions defined in the associated folder.
 
 ### Before you begin
 
@@ -102,7 +102,7 @@ Edit dashboard permissions when you are want to enhance or restrict a user's acc
 Grafana applies the highest permission a given user has to access a resource like a dashboard, so if you want to prevent a user from accessing a folder or dashboard you need to consider the user's organization role, folder permissions, and dashboard permissions.
 
 - You cannot override organization administrator permissions. Organization administrators have access to all organization resources.
-- User permissions set for a dashboard folder propagate to dashboards contained in the folder.
+- User permissions set for a folder propagate to all dashboards and subfolders contained in a folder. Permissions also cascade down to all dashboards and folders under the subfolders, and so on.
 - A lower permission level does not affect access if a more general rule exists with a higher permission.
 
 Refer to the following examples to understand how organization and dashboard permissions impact a user's access to dashboards.
@@ -140,5 +140,15 @@ Dashboard permissions settings:
 - user1 is set to `edit`
 
 Result: You receive an error message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions.
+
+### Example 4
+
+In this example, user1 has the viewer organization role.
+
+Folder permissions settings:
+
+- user1 is set to `edit`, which is inherited from the permissions set in grandparent folder
+
+Result: User1 has editor permissions for the folder because user1 has permissions on a folder that contains this folder.
 
 > Refer to [Role-based access Control]({{< relref "../../roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.
