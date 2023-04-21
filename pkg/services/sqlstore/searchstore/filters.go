@@ -100,7 +100,7 @@ type FolderUIDFilter struct {
 func (f FolderUIDFilter) Where() (string, []interface{}) {
 	innerSelect, params := sqlUIDin("uid", f.UIDs)
 	params = append([]interface{}{f.OrgID}, params...)
-	return fmt.Sprintf("dashboard.folder_id IN (SELECT id FROM dashboard WHERE is_folder = %s AND org_id = ? AND %s)", f.Dialect.BooleanStr(true), innerSelect), params
+	return fmt.Sprintf("dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND %s)", innerSelect), params
 }
 
 type DashboardIDFilter struct {
