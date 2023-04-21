@@ -150,6 +150,10 @@ function fieldToNumberField(field: Field): Field {
     if (valuesAsStrings && toBeConverted != null) {
       // some numbers returned from datasources have commas
       // strip the commas, coerce the string to a number
+      if (typeof toBeConverted !== 'string') {
+        toBeConverted = String(toBeConverted);
+      }
+
       toBeConverted = toBeConverted.replace(/,/g, '');
     }
 

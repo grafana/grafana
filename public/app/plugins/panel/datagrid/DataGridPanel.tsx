@@ -108,7 +108,11 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const addNewRow = () => {
     const newFrame = new MutableDataFrame(frame);
-    newFrame.appendRow(new Array(newFrame.fields.length).fill(null));
+
+    newFrame.fields.map((field) => {
+      field.values = new ArrayVector([...field.values.toArray(), null]);
+    });
+
     publishSnapshot(newFrame, id);
   };
 
