@@ -66,5 +66,4 @@ func TestProxySettings_NotEnabled(t *testing.T) {
 		require.Equal(t, settings.ProxyAddress, os.Getenv(sdkproxy.PluginSecureSocksProxyProxyAddress))
 		require.Equal(t, settings.ServerName, os.Getenv(sdkproxy.PluginSecureSocksProxyServerName))
 	})
-
 }
