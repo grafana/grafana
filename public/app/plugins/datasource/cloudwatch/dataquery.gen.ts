@@ -181,11 +181,17 @@ export interface QueryEditorGroupByExpression {
 }
 
 export interface QueryEditorOperatorExpression {
+  /**
+   * TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+   */
   operator: QueryEditorOperator;
   property: QueryEditorProperty;
   type: QueryEditorExpressionType.Operator;
 }
 
+/**
+ * TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
+ */
 export interface QueryEditorOperator {
   name?: string;
   value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
@@ -272,11 +278,17 @@ export interface LogGroup {
  */
 export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
   /**
-   * Use this parameter to filter the results of the operation to only those alarms that use a certain alarm action prefix.
+   * Use this parameter to filter the results of the operation to only those alarms
+   * that use a certain alarm action. For example, you could specify the ARN of
+   * an SNS topic to find all alarms that send notifications to that topic.
+   * e.g. `arn:aws:sns:us-east-1:123456789012:my-app-` would match `arn:aws:sns:us-east-1:123456789012:my-app-action`
+   * but not match `arn:aws:sns:us-east-1:123456789012:your-app-action`
    */
   actionPrefix?: string;
   /**
-   * Use this parameter to filter the results of the operation to only those alarms that use a certain alarm name prefix.
+   * An alarm name prefix. If you specify this parameter, you receive information
+   * about all alarms that have names that start with this prefix.
+   * e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
    */
   alarmNamePrefix?: string;
   /**

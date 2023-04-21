@@ -291,10 +291,16 @@ type CloudWatchAnnotationQuery struct {
 	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
 	AccountId *string `json:"accountId,omitempty"`
 
-	// Use this parameter to filter the results of the operation to only those alarms that use a certain alarm action prefix.
+	// Use this parameter to filter the results of the operation to only those alarms
+	// that use a certain alarm action. For example, you could specify the ARN of
+	// an SNS topic to find all alarms that send notifications to that topic.
+	// e.g. `arn:aws:sns:us-east-1:123456789012:my-app-` would match `arn:aws:sns:us-east-1:123456789012:my-app-action`
+	// but not match `arn:aws:sns:us-east-1:123456789012:your-app-action`
 	ActionPrefix *string `json:"actionPrefix,omitempty"`
 
-	// Use this parameter to filter the results of the operation to only those alarms that use a certain alarm name prefix.
+	// An alarm name prefix. If you specify this parameter, you receive information
+	// about all alarms that have names that start with this prefix.
+	// e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
 	AlarmNamePrefix *string `json:"alarmNamePrefix,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
@@ -569,7 +575,9 @@ type CloudWatchMetricsQuerySqlGroupByExpressionsPropertyType string
 type CloudWatchMetricsQuerySqlGroupByExpressionsItem struct {
 	Expressions []interface{} `json:"expressions,omitempty"`
 	Name        *string       `json:"name,omitempty"`
-	Operator    *struct {
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator,omitempty"`
@@ -610,7 +618,9 @@ type CloudWatchMetricsQuerySqlWhereExpressionsPropertyType string
 type CloudWatchMetricsQuerySqlWhereExpressionsItem struct {
 	Expressions []interface{} `json:"expressions,omitempty"`
 	Name        *string       `json:"name,omitempty"`
-	Operator    *struct {
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator,omitempty"`
@@ -702,7 +712,9 @@ type QueryEditorArrayExpressionExpressionsPropertyType string
 type QueryEditorArrayExpressionExpressionsItem struct {
 	Expressions []interface{} `json:"expressions,omitempty"`
 	Name        *string       `json:"name,omitempty"`
-	Operator    *struct {
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator,omitempty"`
@@ -725,7 +737,9 @@ type QueryEditorArrayExpressionType string
 type QueryEditorExpression struct {
 	Expressions []QueryEditorExpressionExpressionsItem `json:"expressions,omitempty"`
 	Name        *string                                `json:"name,omitempty"`
-	Operator    *struct {
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator,omitempty"`
@@ -749,7 +763,9 @@ type QueryEditorExpressionExpressionsPropertyType string
 
 // QueryEditorExpressionExpressionsItem defines model for QueryEditorExpression.expressions.Item.
 type QueryEditorExpressionExpressionsItem struct {
-	Name     *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty"`
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
 	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
@@ -815,7 +831,7 @@ type QueryEditorGroupByExpressionPropertyType string
 // QueryEditorGroupByExpressionType defines model for QueryEditorGroupByExpression.Type.
 type QueryEditorGroupByExpressionType string
 
-// QueryEditorOperator defines model for QueryEditorOperator.
+// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
 type QueryEditorOperator struct {
 	Name  *string      `json:"name,omitempty"`
 	Value *interface{} `json:"value,omitempty"`
@@ -823,6 +839,7 @@ type QueryEditorOperator struct {
 
 // QueryEditorOperatorExpression defines model for QueryEditorOperatorExpression.
 type QueryEditorOperatorExpression struct {
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
 	Operator struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
@@ -939,7 +956,9 @@ type SQLExpressionGroupByExpressionsPropertyType string
 type SQLExpressionGroupByExpressionsItem struct {
 	Expressions []interface{} `json:"expressions,omitempty"`
 	Name        *string       `json:"name,omitempty"`
-	Operator    *struct {
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator,omitempty"`
@@ -980,7 +999,9 @@ type SQLExpressionWhereExpressionsPropertyType string
 type SQLExpressionWhereExpressionsItem struct {
 	Expressions []interface{} `json:"expressions,omitempty"`
 	Name        *string       `json:"name,omitempty"`
-	Operator    *struct {
+
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator *struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator,omitempty"`

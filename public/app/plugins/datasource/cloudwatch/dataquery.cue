@@ -124,9 +124,11 @@ composableKinds: DataQuery: {
 						#QueryEditorOperatorExpression: {
 							type:     #QueryEditorExpressionType & "operator"
 							property: #QueryEditorProperty
+							// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
 							operator: #QueryEditorOperator
 						} @cuetsy(kind="interface")
 
+						// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
 						#QueryEditorOperator: {
 							name?:  string
 							value?: #QueryEditorOperatorType | [...#QueryEditorOperatorType]
@@ -189,9 +191,15 @@ composableKinds: DataQuery: {
 							queryMode: #CloudWatchQueryMode
 							// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
 							prefixMatching?: bool
-							// Use this parameter to filter the results of the operation to only those alarms that use a certain alarm action prefix.
+							// Use this parameter to filter the results of the operation to only those alarms
+							// that use a certain alarm action. For example, you could specify the ARN of
+							// an SNS topic to find all alarms that send notifications to that topic.
+							// e.g. `arn:aws:sns:us-east-1:123456789012:my-app-` would match `arn:aws:sns:us-east-1:123456789012:my-app-action`
+							// but not match `arn:aws:sns:us-east-1:123456789012:your-app-action`
 							actionPrefix?: string
-							// Use this parameter to filter the results of the operation to only those alarms that use a certain alarm name prefix.
+							// An alarm name prefix. If you specify this parameter, you receive information
+							// about all alarms that have names that start with this prefix.
+							// e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
 							alarmNamePrefix?: string
 						} @cuetsy(kind="interface")
 
