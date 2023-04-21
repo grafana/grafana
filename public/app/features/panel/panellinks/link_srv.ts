@@ -1,4 +1,4 @@
-import { chain, isArray } from 'lodash';
+import { chain } from 'lodash';
 
 import {
   DataFrame,
@@ -20,30 +20,11 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { formatRegistry, VariableValue, VariableValueSingle } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
-
-formatRegistry.register({
-  id: VariableFormatID.UriEncode,
-  name: 'Percent encode as URI',
-  description: 'Useful for URL escaping values, taking into URI syntax characters',
-  formatter: (value: VariableValue) => {
-    if (isArray(value)) {
-      return encodeURIStrict('{' + value.join(',') + '}');
-    }
-
-    return encodeURIStrict(value);
-  },
-});
-
-const encodeURIStrict = (str: VariableValueSingle) =>
-  encodeURI(String(str)).replace(/[!'()*]/g, (c) => {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
-  });
 
 const timeRangeVars = [
   {
