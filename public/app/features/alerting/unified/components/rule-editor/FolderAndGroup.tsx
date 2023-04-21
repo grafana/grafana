@@ -6,9 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { AsyncSelect, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
-import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, useDispatch } from 'app/types';
 
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -20,7 +18,7 @@ import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
 
 import { MINUTE } from './AlertRuleForm';
-import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
+import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const SLICE_GROUP_RESULTS_TO = 1000;
@@ -51,35 +49,6 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
 };
 
-const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
-  const isSearchHitAvailable = useCallback(
-    (hit: DashboardSearchHit) => {
-      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
-
-      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
-        AccessControlAction.AlertingRuleCreate,
-        hit,
-        rbacDisabledFallback
-      );
-
-      const canUpdateInCurrentFolder =
-        existingRuleForm &&
-        hit.folderId === existingRuleForm.id &&
-        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
-      return canCreateRuleInFolder || canUpdateInCurrentFolder;
-    },
-    [existingRuleForm]
-  );
-
-  return useCallback<FolderPickerFilter>(
-    (folderHits) =>
-      folderHits
-        .filter(isSearchHitAvailable)
-        .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? '')),
-    [isSearchHitAvailable]
-  );
-};
-
 export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   const {
     formState: { errors },
@@ -89,7 +58,6 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
 
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const folderFilter = useRuleFolderFilter(initialFolder);
 
   const folder = watch('folder');
   const group = watch('group');
@@ -165,7 +133,6 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               {...field}
               enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
               enableReset={true}
-              filter={folderFilter}
               onChange={({ title, uid }) => {
                 field.onChange({ title, uid });
                 if (!groupIsInGroupOptions(selectedGroup.value ?? '')) {
