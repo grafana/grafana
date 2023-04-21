@@ -826,8 +826,6 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		// TODO: is this needed for the testing of RBAC?
-		// ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
@@ -906,7 +904,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		dashboardPermissions,
-		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
@@ -929,7 +927,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
-		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
@@ -1020,7 +1018,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		accesscontrolmock.NewMockedPermissionsService(),
-		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
