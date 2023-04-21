@@ -12,6 +12,8 @@ import { getDataSourceSrv, DataSourcePickerState, DataSourcePickerProps } from '
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { ActionMeta, HorizontalGroup, PluginSignatureBadge, MultiSelect } from '@grafana/ui';
 
+import { isDataSourceManagingAlerts } from '../../utils/datasource';
+
 export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProps, 'onChange' | 'current'> {
   onChange: (ds: DataSourceInstanceSettings, action: 'add' | 'remove') => void;
   current: string[] | undefined;
@@ -102,17 +104,15 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       type,
     });
 
-    const alertManagingDs = dataSources
-      .filter((ds) => ds.jsonData.manageAlerts)
-      .map((ds) => ({
-        value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+    const alertManagingDs = dataSources.filter(isDataSourceManagingAlerts).map((ds) => ({
+      value: ds.name,
+      label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    }));
 
     const nonAlertManagingDs = dataSources
-      .filter((ds) => !ds.jsonData.manageAlerts)
+      .filter((ds) => !isDataSourceManagingAlerts(ds))
       .map((ds) => ({
         value: ds.name,
         label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
