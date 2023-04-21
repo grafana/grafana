@@ -39,6 +39,8 @@ import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/t
 import { defaultGraphConfig } from './config';
 import { PanelOptions } from './panelcfg.gen';
 
+let dashboardRefresher: ReturnType<typeof setTimeout> | null = null;
+
 /**
  * This is called when the panel changes from another panel
  */
@@ -59,6 +61,17 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard && annotations.length > 0) {
       dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
+      console.log('updating annotations from migration', panel, dashboard.annotations);
+
+      // Trigger a full dashbaord refresh ???
+      if (dashboardRefresher == null) {
+        console.log('scheduling a refresh');
+        dashboardRefresher = setTimeout(() => {
+          console.log('trigger refresh for annotations');
+          dashboard.startRefresh({ refreshAll: true, panelIds: [] });
+          dashboardRefresher = null;
+        }, 100);
+      }
     }
 
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
