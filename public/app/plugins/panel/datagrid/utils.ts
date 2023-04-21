@@ -273,7 +273,7 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
         outline: none;
         height: 37px;
         font-size: 20px;
-        background-color: ${theme.colors.background.secondary};
+        background-color: ${theme.colors.background.primary};
         color: ${theme.colors.text.primary};
         border-right: 1px solid ${theme.components.panel.borderColor};
         border-bottom: 1px solid ${theme.components.panel.borderColor};
