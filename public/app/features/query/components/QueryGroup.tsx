@@ -264,6 +264,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   renderDataSourcePickerWithPrompt = () => {
     const { isDataSourceModalOpen } = this.state;
+    const { reportedInteractionFrom } = this.props;
 
     const commonProps = {
       enableFileUpload: config.featureToggles.editPanelCSVDragAndDrop,

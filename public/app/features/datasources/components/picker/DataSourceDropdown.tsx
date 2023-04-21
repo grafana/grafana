@@ -176,6 +176,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 showModal(DataSourceModal, {
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
+                  reportedInteractionFrom: 'ds_picker',
                   current,
                   onDismiss: hideModal,
                   onChange: (ds) => {
