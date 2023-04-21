@@ -6,7 +6,7 @@ import { arrayMove } from 'app/core/utils/arrayMove';
 
 import { GraphiteDatasource } from './datasource';
 import { FuncInstance } from './gfunc';
-import { Parser } from './parser';
+import { AstNode, Parser } from './parser';
 import { GraphiteSegment } from './types';
 
 export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
@@ -336,30 +336,26 @@ function renderTagString(tag: { key: any; operator?: any; value?: any }) {
  * @param astNode
  * @param innerFunc
  */
-// eslint-disable-next-line
-function handlemultipleSeriesByTagsParams(astNode: any, innerFunc: any) {
+function handlemultipleSeriesByTagsParams(astNode: AstNode, innerFunc: FuncInstance) {
   // if function is asPercent and has two params that are function seriesByTags keep the second as a string otherwise we have a parsing error
-  if (innerFunc.def.name === 'asPercent' && astNode.params.length >= 2) {
+  if (innerFunc.def.name === 'asPercent' && astNode.params && astNode.params.length >= 2) {
     let count = 0;
-    // eslint-disable-next-line
-    astNode.params = astNode.params.map((p: any) => {
+    astNode.params = astNode.params.map((p: AstNode) => {
       if (p.type === 'function') {
         count += 1;
       }
 
       if (count === 2 && p.type === 'function' && p.name === 'seriesByTag') {
         // convert second function to a string
-        // eslint-disable-next-line
-        const stringParams = p.params.reduce(
-          (acc: string, p: { type: string; value: string }, idx: number, paramsArr: any[]) => {
+        const stringParams =
+          p.params &&
+          p.params.reduce((acc: string, p: AstNode, idx: number, paramsArr: AstNode[]) => {
             if (idx === 0 || idx !== paramsArr.length - 1) {
               return `${acc}'${p.value}',`;
             }
 
             return `${acc}'${p.value}'`;
-          },
-          ''
-        );
+          }, '');
 
         return {
           type: 'string',
