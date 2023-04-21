@@ -52,7 +52,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
-import { trackQuery } from './tracking';
+import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
   BucketAggregation,
@@ -321,7 +321,7 @@ export class ElasticDatasource
       ignore_unavailable: true,
     };
 
-    // old elastic annotations had index specified on them
+    // @deprecated annotation.index  is deprecated and will be removed
     if (annotation.index) {
       header.index = annotation.index;
     } else {
@@ -330,6 +330,7 @@ export class ElasticDatasource
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
+    trackAnnotationQuery(annotation);
     return lastValueFrom(
       this.post('_msearch', payload).pipe(
         map((res) => {
