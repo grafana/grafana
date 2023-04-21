@@ -156,7 +156,7 @@ type SearchParams struct {
 	// List of folder UID’s to search in for dashboards
 	// in:query
 	// required: false
-	FolderUIDs []string `json:"FolderUIDs"`
+	FolderUIDs []string `json:"folderUIDs"`
 	// Flag indicating if only starred Dashboards should be returned
 	// in:query
 	// required: false

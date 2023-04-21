@@ -20603,7 +20603,7 @@
           {
             "description": "List of folder UID’s to search in for dashboards",
             "in": "query",
-            "name": "FolderUIDs",
+            "name": "folderUIDs",
             "schema": {
               "items": {
                 "type": "string"
