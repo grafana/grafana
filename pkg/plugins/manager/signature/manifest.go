@@ -66,9 +66,13 @@ func ProvideService(cfg *config.Cfg, kv plugins.KeyStore) *Signature {
 	}
 }
 
+func (s *Signature) Run(ctx context.Context) error {
+	return s.verifier.Run(ctx)
+}
+
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
+func (s *Signature) readPluginManifest(ctx context.Context, body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -81,7 +85,7 @@ func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	if err = s.validateManifest(manifest, block); err != nil {
+	if err = s.validateManifest(ctx, manifest, block); err != nil {
 		return nil, err
 	}
 
@@ -131,7 +135,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		}, nil
 	}
 
-	manifest, err := s.readPluginManifest(byteValue)
+	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
 		s.mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
@@ -286,7 +290,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func (s *Signature) validateManifest(m PluginManifest, block *clearsign.Block) error {
+func (s *Signature) validateManifest(ctx context.Context, m PluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}
@@ -314,5 +318,5 @@ func (s *Signature) validateManifest(m PluginManifest, block *clearsign.Block) e
 		}
 	}
 
-	return s.verifier.Verify(m.KeyID, block)
+	return s.verifier.Verify(ctx, m.KeyID, block)
 }

@@ -154,6 +154,6 @@ type KeyStore interface {
 	Set(ctx context.Context, key string, value string) error
 	Del(ctx context.Context, key string) error
 	ListKeys(ctx context.Context) ([]string, error)
-	GetLastUpdated(ctx context.Context) time.Time
-	SetLastUpdated(ctx context.Context)
+	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	SetLastUpdated(ctx context.Context) error
 }

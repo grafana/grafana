@@ -32,7 +32,7 @@ func Test_Verify(t *testing.T) {
 			t.Fatal("failed to decode")
 		}
 
-		err = v.Verify("7e4d0c6a708866e7", block)
+		err = v.Verify(context.Background(), "7e4d0c6a708866e7", block)
 		require.NoError(t, err)
 	})
 }
@@ -66,12 +66,13 @@ func setFakeAPIServer(t *testing.T, publicKey string, keyID string) (*httptest.S
 func Test_PublicKeyUpdate(t *testing.T) {
 	t.Run("it should verify a manifest with the API key", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
+			Features: featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
 		}
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
+		go v.Run(context.Background())
 		<-done
 
 		// wait for the lock to be free
@@ -85,29 +86,32 @@ func Test_PublicKeyUpdate(t *testing.T) {
 
 	t.Run("it should update the latest update date", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
+			Features: featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
 		}
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
+		go v.Run(context.Background())
 		<-done
 
 		// wait for the lock to be free
 		v.lock.Lock()
 		defer v.lock.Unlock()
-		ti := v.kv.GetLastUpdated(context.Background())
-		require.Less(t, time.Time{}, ti)
+		ti, err := v.kv.GetLastUpdated(context.Background())
+		require.NoError(t, err)
+		require.Less(t, time.Time{}, *ti)
 	})
 
 	t.Run("it should remove old keys", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
+			Features: featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
 		}
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "other")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
+		go v.Run(context.Background())
 		<-done
 
 		// wait for the lock to be free
