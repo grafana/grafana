@@ -153,8 +153,8 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           )}
         </>
       )}
-      {grafanaQueryType === GrafanaQueryType.TimeRegions && (
-        <TimeRegionEditor value={annotationQuery.timeRegion!} onChange={onTimeRegionChange} />
+      {grafanaQueryType === GrafanaQueryType.TimeRegions && annotationQuery.timeRegion && (
+        <TimeRegionEditor value={annotationQuery.timeRegion} onChange={onTimeRegionChange} />
       )}
     </FieldSet>
   );
