@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"math"
 	"sort"
-	"strconv"
 	"sync"
 	"time"
 	"unsafe"
@@ -237,7 +237,7 @@ func (r *alertRulesRegistry) getDiff(rules map[models.AlertRuleKey]*models.Alert
 type fingerprint uint64
 
 func (f fingerprint) String() string {
-	return strconv.FormatUint(uint64(f), 10)
+	return fmt.Sprintf("%016x", uint64(f))
 }
 
 // fingerprintSeparator used during calculation of fingerprint to separate different fields. Contains a byte sequence that cannot happen in UTF-8 strings.
