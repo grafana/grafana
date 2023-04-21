@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import React, { useCallback } from 'react';
 
 import {
   DataSourceInstanceSettings,
@@ -11,14 +10,12 @@ import {
   RelativeTimeRange,
   urlUtil,
 } from '@grafana/data';
-import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
-import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { TABLE, TIMESERIES } from '../../utils/constants';
 import { Authorize } from '../Authorize';
 import { VizWrapper } from '../rule-editor/VizWrapper';
 
@@ -33,21 +30,14 @@ const headerHeight = 4;
 
 export function RuleViewerVisualization({
   data,
-  refId,
   model,
   datasourceUid,
   relativeTimeRange,
   onTimeRangeChange,
   className,
 }: RuleViewerVisualizationProps): JSX.Element | null {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const panel = isExpressionQuery(model) ? TABLE : TIMESERIES;
   const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceUid);
-  const [options, setOptions] = useState<PanelOptions>({
-    frameIndex: 0,
-    showHeader: true,
-  });
 
   const onTimeChange = useCallback(
     (newDateTime: DateTime) => {
