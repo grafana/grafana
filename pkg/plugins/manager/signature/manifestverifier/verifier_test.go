@@ -72,7 +72,10 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
-		go v.Run(context.Background())
+		go func() {
+			err := v.Run(context.Background())
+			require.NoError(t, err)
+		}()
 		<-done
 
 		// wait for the lock to be free
@@ -92,7 +95,10 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
-		go v.Run(context.Background())
+		go func() {
+			err := v.Run(context.Background())
+			require.NoError(t, err)
+		}()
 		<-done
 
 		// wait for the lock to be free
@@ -111,7 +117,10 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		s, done := setFakeAPIServer(t, expectedKey, "other")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
-		go v.Run(context.Background())
+		go func() {
+			err := v.Run(context.Background())
+			require.NoError(t, err)
+		}()
 		<-done
 
 		// wait for the lock to be free
