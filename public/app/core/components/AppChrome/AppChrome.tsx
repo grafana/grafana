@@ -109,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageContainer: css({
       label: 'page-container',
       flexGrow: 1,
+      minHeight: 0,
     }),
   };
 };
