@@ -421,7 +421,7 @@
       "new-folder": "新建文件夹"
     },
     "folder-view": {
-      "go-to-folder": "转到文件夹",
+      "go-to-folder": "前往文件夹",
       "select-folder": "选择文件夹"
     },
     "result-kind": {
@@ -432,7 +432,7 @@
     "results-table": {
       "datasource-header": "数据源",
       "location-header": "位置",
-      "name-header": "姓名",
+      "name-header": "名称",
       "tags-header": "标签",
       "type-dashboard": "仪表板",
       "type-folder": "文件夹",
