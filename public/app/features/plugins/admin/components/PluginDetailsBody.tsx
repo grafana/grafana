@@ -119,5 +119,23 @@ export const getStyles = (theme: GrafanaTheme2) => ({
         text-decoration: underline;
       }
     }
+
+    table {
+      table-layout: fixed;
+      width: 100%;
+
+      td,
+      th {
+        overflow-x: auto;
+        padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid ${theme.colors.border.medium};
+        border-collapse: collapse;
+      }
+    }
   `,
 });
