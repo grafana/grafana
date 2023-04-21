@@ -975,10 +975,13 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	filters = append(filters, query.Filters...)
 
+	var orgID int64
 	if query.OrgId != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+		orgID = query.OrgId
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	} else if query.SignedInUser.OrgID != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgID})
+		orgID = query.SignedInUser.OrgID
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	}
 
 	if len(query.Tags) > 0 {
@@ -1004,7 +1007,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.FolderUIDs) > 0 {
-		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), UIDs: query.FolderUIDs})
+		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), OrgID: orgID, UIDs: query.FolderUIDs})
 	}
 
 	var res []dashboards.DashboardSearchProjection
