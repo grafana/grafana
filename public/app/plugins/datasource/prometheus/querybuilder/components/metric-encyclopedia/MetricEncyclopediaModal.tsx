@@ -1,10 +1,9 @@
-import { css, cx } from '@emotion/css';
-import uFuzzy from '@leeoniya/ufuzzy';
+import { cx } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { debounce as debounceLodash } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -27,15 +26,10 @@ import { promQueryModeller } from '../../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../../shared/parsingUtils';
 import { FeedbackLink } from '.././FeedbackLink';
 
-import { alphabet, alphabetCheck } from './helpers';
-import {
-  PromFilterOption,
-  UFuzzyInfo,
-  MetricsData,
-  MetricEncyclopediaProps,
-  HaystackDictionary,
-  MetricData,
-} from './types';
+import { LetterSearch } from './LetterSearch';
+import { getStyles } from './styles';
+import { PromFilterOption, MetricsData, MetricEncyclopediaProps, HaystackDictionary, MetricData } from './types';
+import { fuzzySearch } from './uFuzzy';
 
 export const promTypes: PromFilterOption[] = [
   {
@@ -68,32 +62,8 @@ export const placeholders = {
   setUseBackend: 'Use the backend to browse metrics',
 };
 
-export const DEFAULT_RESULTS_PER_PAGE = 10;
-
-const uf = new uFuzzy({
-  intraMode: 1,
-  intraIns: 1,
-  intraSub: 1,
-  intraTrn: 1,
-  intraDel: 1,
-});
-
-function fuzzySearch(haystack: string[], query: string, orderSetter: React.Dispatch<React.SetStateAction<string[]>>) {
-  let idxs = uf.filter(haystack, query);
-  idxs = idxs ?? [];
-  // let idxs = u.filter(haystack, needle);
-  let info: UFuzzyInfo = uf.info(idxs, haystack, query);
-  let order = uf.sort(info, haystack, query);
-
-  let haystackOrder: string[] = [];
-  for (let i = 0; i < order.length; i++) {
-    let infoIdx = order[i];
-
-    haystackOrder.push(haystack[info.idx[infoIdx]]);
-  }
-
-  idxs && orderSetter(haystackOrder);
-}
+const DEFAULT_RESULTS_PER_PAGE = 10;
+const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
 
@@ -335,51 +305,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
     [datasource, query.labels]
   );
 
-  function letterSearchComponent(metrics: MetricsData) {
-    const alphabetDictionary = alphabetCheck();
-
-    filterMetrics(metrics, true).forEach((m: MetricData, idx) => {
-      const metricFirstLetter = m.value[0].toUpperCase();
-
-      if (alphabet.includes(metricFirstLetter) && !alphabetDictionary[metricFirstLetter]) {
-        alphabetDictionary[metricFirstLetter] += 1;
-      }
-    });
-
-    // return the alphabet components with the correct style and behavior
-    return Object.keys(alphabetDictionary).map((letter: string) => {
-      const active: boolean = alphabetDictionary[letter] > 0;
-      // starts with letter search
-      // filter by starts with letter
-      // if same letter searched null out remove letter search
-      function updateLetterSearch() {
-        if (letterSearch === letter) {
-          setLetterSearch(null);
-        } else {
-          setLetterSearch(letter);
-        }
-        setPageNum(1);
-      }
-      // selected letter to filter by
-      const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
-      // these letters are represented in the list of metrics
-      const activeClass: string = active ? styles.active : styles.gray;
-
-      return (
-        <span
-          onClick={active ? updateLetterSearch : () => {}}
-          className={`${selectedClass} ${activeClass}`}
-          key={letter}
-          data-testid={'letter-' + letter}
-        >
-          {letter + ' '}
-          {/* {idx !== coll.length - 1 ? '|': ''} */}
-        </span>
-      );
-    });
-  }
-
-  const MAXIMUM_RESULTS_PER_PAGE = 1000;
   const calculateResultsPerPage = (results: number) => {
     if (results < 1) {
       return 1;
@@ -577,7 +502,19 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       </div>
 
       <div className={styles.alphabetRow}>
-        <div>{letterSearchComponent(metrics)}</div>
+        <LetterSearch
+          filteredMetrics={filterMetrics(metrics, true)}
+          disableTextWrap={disableTextWrap}
+          updateLetterSearch={(letter: string) => {
+            if (letterSearch === letter) {
+              setLetterSearch(null);
+            } else {
+              setLetterSearch(letter);
+            }
+            setPageNum(1);
+          }}
+          letterSearch={letterSearch}
+        />
         <div className={styles.alphabetRowToggles}>
           <div className={styles.selectItem}>
             <Switch value={disableTextWrap} onChange={() => setDisableTextWrap((p) => !p)} />
@@ -644,113 +581,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       </div>
     </Modal>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
-  return {
-    modal: css`
-      width: 85vw;
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-      }
-    `,
-    inputWrapper: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: ${theme.spacing(2)};
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    inputItemFirst: css`
-      flex-basis: 40%;
-    `,
-    inputItem: css`
-      flex-grow: 1;
-      flex-basis: 20%;
-      ${theme.breakpoints.down('md')} {
-        min-width: 100%;
-      }
-    `,
-    selectWrapper: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    selectItem: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-    `,
-    selectItemLabel: css`
-      margin: 0 0 0 ${theme.spacing(1)};
-      align-self: center;
-      color: ${theme.colors.text.secondary};
-    `,
-    resultsHeading: css`
-      margin: 0 0 0 0;
-    `,
-    resultsData: css`
-      margin: 0 0 ${theme.spacing(1)} 0;
-    `,
-    resultsDataCount: css`
-      margin: 0;
-    `,
-    resultsDataFiltered: css`
-      margin: 0;
-      color: ${theme.colors.warning.main};
-    `,
-    alphabetRow: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      column-gap: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    alphabetRowToggles: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      flex-wrap: wrap;
-      column-gap: ${theme.spacing(1)};
-    `,
-    results: css`
-      height: 300px;
-      overflow-y: scroll;
-    `,
-    pageSettingsWrapper: css`
-      padding-top: ${theme.spacing(1.5)};
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-    `,
-    pageSettings: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-    `,
-    selAlpha: css`
-      cursor: pointer;
-      color: #6e9fff;
-    `,
-    active: css`
-      cursor: pointer;
-    `,
-    gray: css`
-      color: grey;
-    `,
-    loadingSpinner: css`
-      display: inline-block;
-    `,
-    table: css`
-      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
-      td {
-        vertical-align: baseline;
-      }
-    `,
-  };
 };
 
 export const testIds = {
