@@ -32,9 +32,9 @@ import {
   GraphTransform,
   AnnotationQuery,
 } from '@grafana/schema';
+import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { GrafanaQuery, GrafanaQueryType, TimeRegionConfig } from 'app/plugins/datasource/grafana/types';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
 import { PanelOptions } from './panelcfg.gen';
@@ -57,15 +57,8 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
     });
 
     const dashboard = getDashboardSrv().getCurrent();
-    // @TODO constant uids/types
     if (dashboard && annotations.length > 0) {
       dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
-      if (panel?.datasource?.uid !== 'grafana') {
-        panel.datasource = {
-          uid: MIXED_DATASOURCE_NAME,
-          type: 'mixed',
-        };
-      }
     }
 
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel

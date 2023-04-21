@@ -6,7 +6,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel as PanelModelState } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { graphPanelChangedHandler } from './migrations';
 
@@ -124,7 +123,6 @@ describe('Graph Migrations', () => {
       expect(
         dashboard.annotations.list.filter((annotation) => annotation.target?.queryType === GrafanaQueryType.TimeRegions)
       ).toHaveLength(1);
-      expect(panel.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
       expect(panel).toMatchSnapshot();
     });
   });
