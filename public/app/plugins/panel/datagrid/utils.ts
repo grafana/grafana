@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CompactSelection, GridCell, GridCellKind, GridSelection } from '@glideapps/glide-data-grid';
+import { CompactSelection, GridCell, GridCellKind, GridSelection, Theme } from '@glideapps/glide-data-grid';
 
 import {
   ArrayVector,
@@ -181,22 +181,27 @@ export const cleanStringFieldAfterConversion = (field: Field): void => {
   return;
 };
 
-export const getGridTheme = (theme: GrafanaTheme2) => {
+export function getGridTheme(theme: GrafanaTheme2): Partial<Theme> {
   return {
     accentColor: theme.colors.primary.main,
     accentFg: theme.colors.secondary.main,
     textDark: theme.colors.text.primary,
-    textMedium: theme.colors.text.primary,
-    textLight: theme.colors.text.primary,
+    textMedium: theme.colors.text.secondary,
+    textLight: theme.colors.text.secondary,
     textBubble: theme.colors.text.primary,
     textHeader: theme.colors.text.primary,
     bgCell: theme.colors.background.primary,
     bgCellMedium: theme.colors.background.primary,
-    bgHeader: theme.colors.background.secondary,
+    bgHeader: theme.colors.background.primary,
     bgHeaderHasFocus: theme.colors.background.secondary,
     bgHeaderHovered: theme.colors.background.secondary,
+    linkColor: theme.colors.text.link,
+    fontFamily: theme.typography.fontFamily,
+    headerFontStyle: `${theme.typography.fontWeightMedium} ${theme.typography.fontSize}px`,
+    fgIconHeader: theme.colors.secondary.contrastText,
+    bgIconHeader: theme.colors.secondary.main,
   };
-};
+}
 
 export const getGridCellKind = (field: Field, row: number, hasGridSelection = false): GridCell => {
   const value = field.values.get(row);
