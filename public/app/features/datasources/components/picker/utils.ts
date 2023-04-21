@@ -45,10 +45,8 @@ export function dataSourceLabel(
 
 /**
  * Stores the uid of the last 5 data sources selected by the user
- *
- * @returns function for pushing a data source uid to the store
  */
-export function useRecentlyUsedDataSources() {
+export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstanceSettings) => void] {
   const [value = [], setStorage] = useLocalStorage<string[]>(LOCAL_STORAGE_KEY, []);
 
   const pushRecentlyUsedDataSource = (ds: DataSourceInstanceSettings) => {
@@ -68,7 +66,7 @@ export function useRecentlyUsedDataSources() {
     }
   };
 
-  return { recentlyUsedDataSources: value, pushRecentlyUsedDataSource };
+  return [value, pushRecentlyUsedDataSource];
 }
 
 export function useDatasources(filters: GetDataSourceListFilters) {

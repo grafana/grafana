@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { DataSourceCard } from './DataSourceCard';
 import { isDataSourceMatch, useDatasources, useRecentlyUsedDataSources } from './utils';
@@ -48,7 +49,7 @@ export function DataSourceList(props: DataSourceListProps) {
     variables: props.variables,
   });
 
-  const { recentlyUsedDataSources, pushRecentlyUsedDataSource } = useRecentlyUsedDataSources();
+  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
   const orderedDataSources = orderDataSourcesByRecentlyUsed(recentlyUsedDataSources, dataSources);
 
@@ -75,6 +76,16 @@ function orderDataSourcesByRecentlyUsed(recentlyUsedDataSources: string[], dataS
   const recentlyUsed = recentlyUsedDataSources
     .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
     .filter((ds): ds is DataSourceInstanceSettings => !!ds); //Custom typeguard to make sure ds is not undefined
-  const otherDataSources = dataSources.filter((ds) => !recentlyUsedDataSources.includes(ds.uid));
-  return [...recentlyUsed, ...otherDataSources];
+
+  const templateSrv = getTemplateSrv();
+  /** Unforunately there is no easy way to identify data sources that are variables. The uid of the data source will be the name of the variable in a templating syntax $([name]) **/
+  const dataSourceVariablesIDs = templateSrv.getVariables().map((v) => `\${${v.id}}`);
+  const dataSourceVariables = dataSourceVariablesIDs
+    .map((dsUID) => dataSources.find((ds) => ds.uid === dsUID))
+    .filter((ds): ds is DataSourceInstanceSettings => !!ds);
+
+  const otherDataSources = dataSources.filter(
+    (ds) => !recentlyUsedDataSources.includes(ds.uid) && !dataSourceVariablesIDs.includes(ds.uid)
+  );
+  return [...recentlyUsed, ...dataSourceVariables, ...otherDataSources];
 }
