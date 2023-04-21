@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps } from '@grafana/data';
+import { DataFrame, Field, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -38,21 +38,22 @@ export const TimeSeriesPanel = ({
   };
 
   const { annotations, exemplars } = useMemo(() => {
-    let annotations = [];
-    let exemplars = [];
+    let annotations: DataFrame[] | null = null;
+    let exemplars: DataFrame[] | null = null;
 
-    for (let frame of data.annotations ?? []) {
-      if (frame.name === 'exemplar') {
-        exemplars.push(frame);
-      } else {
-        annotations.push(frame);
+    if (data?.annotations?.length) {
+      annotations = [];
+      exemplars = [];
+      for (let frame of data.annotations) {
+        if (frame.name === 'exemplar') {
+          exemplars.push(frame);
+        } else {
+          annotations.push(frame);
+        }
       }
     }
 
-    return {
-      annotations: annotations.length ? annotations : undefined,
-      exemplars: exemplars.length ? exemplars : undefined,
-    };
+    return { annotations, exemplars };
   }, [data.annotations]);
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
