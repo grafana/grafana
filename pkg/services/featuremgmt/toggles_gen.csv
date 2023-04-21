@@ -14,7 +14,7 @@ migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
-newTraceView,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
+newTraceViewHeader,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
 cloudWatchDynamicLabels,stable,@grafana/aws-plugins,false,false,false,false
 datasourceQueryMultiStatus,alpha,@grafana/plugins-platform-backend,false,false,false,false
@@ -45,7 +45,6 @@ accessTokenExpirationCheck,stable,@grafana/grafana-authnz-team,false,false,false
 showTraceId,alpha,@grafana/observability-logs,false,false,false,false
 datasourceOnboarding,alpha,@grafana/dashboards-squad,false,false,false,false
 emptyDashboardPage,stable,@grafana/dashboards-squad,false,false,false,true
-secureSocksDatasourceProxy,alpha,@grafana/hosted-grafana-team,false,false,false,false
 authnService,alpha,@grafana/grafana-authnz-team,false,false,false,false
 disablePrometheusExemplarSampling,stable,@grafana/observability-metrics,false,false,false,false
 alertingBacktesting,alpha,@grafana/alerting-squad,false,false,false,false
@@ -77,5 +76,6 @@ dataplaneFrontendFallback,alpha,@grafana/observability-metrics,false,false,false
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
 enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
+pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,false
 advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
 opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true

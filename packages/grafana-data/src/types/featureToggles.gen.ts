@@ -33,7 +33,7 @@ export interface FeatureToggles {
   storage?: boolean;
   k8s?: boolean;
   exploreMixedDatasource?: boolean;
-  newTraceView?: boolean;
+  newTraceViewHeader?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -64,7 +64,6 @@ export interface FeatureToggles {
   showTraceId?: boolean;
   datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
-  secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -96,6 +95,7 @@ export interface FeatureToggles {
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
+  pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
 }

@@ -62,6 +62,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
   includeFrozen?: boolean;
+  index?: string;
 }
 
 interface MetricConfiguration<T extends MetricAggregationType> {
