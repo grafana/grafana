@@ -351,11 +351,12 @@ func (ng *AlertNG) IsDisabled() bool {
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
 }
 
-// SetRequestHandlerHook replaces the handler for a specific path. The hook is invoked
-// after all other middleware is invoked (authentication, instrumentation).
-func (ng *AlertNG) GetHooks() *Hooks {
-	ng.api.Hooks
+// GetHooks returns a facility for replacing handlers for paths. The handler hook for a path
+// is invoked after all other middleware is invoked (authentication, instrumentation).
+func (ng *AlertNG) GetHooks() *api.Hooks {
+	return ng.api.Hooks
 }
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 
