@@ -5,7 +5,7 @@
 import { ThemeColors } from './createColors';
 
 /** @beta */
-export interface ThemeTypography {
+export interface ThemeTypography extends ThemeTypographyVariantTypes {
   fontFamily: string;
   fontFamilyMonospace: string;
   fontSize: number;
@@ -16,16 +16,6 @@ export interface ThemeTypography {
 
   // The font-size on the html element.
   htmlFontSize?: number;
-
-  h1: ThemeTypographyVariant;
-  h2: ThemeTypographyVariant;
-  h3: ThemeTypographyVariant;
-  h4: ThemeTypographyVariant;
-  h5: ThemeTypographyVariant;
-  h6: ThemeTypographyVariant;
-
-  body: ThemeTypographyVariant;
-  bodySmall: ThemeTypographyVariant;
 
   /**
    * @deprecated
