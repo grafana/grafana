@@ -146,6 +146,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
+  const [wrapLines, setWrapLines] = useState(
+    store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
+  );
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
@@ -265,7 +268,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
-          <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
+          <LogContextButtons
+            position="top"
+            wrapLines={wrapLines}
+            onChangeWrapLines={setWrapLines}
+            onChangeOption={onChangeLimitOption}
+            option={loadMoreOption}
+          />
         </div>
       </div>
       <div className={loading ? '' : styles.hidden}>
@@ -281,7 +290,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -299,7 +308,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -316,7 +325,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
