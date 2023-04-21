@@ -62,6 +62,18 @@ datasources:
       prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
       prometheusVersion: 2.40.0
 
+  - name: gdev-victoriametrics
+    uid: gdev-victoriametrics
+    type: prometheus
+    access: proxy
+    url: http://localhost:8428
+    jsonData:
+      manageAlerts: false # @todo add support for vmalerts
+      alertmanagerUid: gdev-alertmanager
+      prometheusType: VictoriaMetrics #Cortex | Mimir | Prometheus | Thanos | VictoriaMetrics
+      prometheusVersion: 1.90.0
+      incrementalQuerying: true
+
   - name: gdev-slow-prometheus
     type: prometheus
     access: proxy
