@@ -49,13 +49,13 @@ In this step, you'll set up the sample application, as well as supporting servic
    cd tutorial-environment
    ```
 
-1. Make sure Docker is running:
+1. Make sure Docker Desktop or the Docker daemon is running:
 
    ```
    docker ps
    ```
 
-   No errors means it is running. If you get an error, then start Docker and then run the command again.
+   No errors means it is running. If you get an error, then start Docker Desktop or [start the daemon](https://docs.docker.com/config/daemon/start/) and retry the command.
 
 1. Start the sample application:
 
