@@ -84,8 +84,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   };
 
   const matcherList = useMemo(
-    () => parseMatchers(props.options.alertInstanceLabelFilter),
-    [props.options.alertInstanceLabelFilter]
+    () => parseMatchers(parsedOptions.alertInstanceLabelFilter),
+    [parsedOptions.alertInstanceLabelFilter]
   );
 
   useEffect(() => {
