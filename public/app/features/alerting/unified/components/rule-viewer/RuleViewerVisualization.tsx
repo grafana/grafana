@@ -20,6 +20,7 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { Authorize } from '../Authorize';
+import { VizWrapper } from '../rule-editor/VizWrapper';
 
 interface RuleViewerVisualizationProps
   extends Pick<AlertQuery, 'refId' | 'datasourceUid' | 'model' | 'relativeTimeRange'> {
@@ -87,50 +88,29 @@ export function RuleViewerVisualization({
 
   return (
     <div className={cx(styles.content, className)}>
-      <AutoSizer>
-        {({ width, height }) => {
-          return (
-            <div style={{ width, height }}>
-              <div className={styles.header}>
-                <div className={styles.actions}>
-                  {!isExpressionQuery(model) && relativeTimeRange ? (
-                    <DateTimePicker
-                      date={setDateTime(relativeTimeRange.to)}
-                      onChange={onTimeChange}
-                      maxDate={new Date()}
-                    />
-                  ) : null}
-                  <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
-                    {!isExpressionQuery(model) && (
-                      <>
-                        <div className={styles.spacing} />
-                        <LinkButton
-                          size="md"
-                          variant="secondary"
-                          icon="compass"
-                          target="_blank"
-                          href={createExploreLink(dsSettings, model)}
-                        >
-                          View in Explore
-                        </LinkButton>
-                      </>
-                    )}
-                  </Authorize>
-                </div>
-              </div>
-              <PanelRenderer
-                height={height - theme.spacing.gridSize * headerHeight}
-                width={width}
-                data={data}
-                pluginId={panel}
-                title=""
-                onOptionsChange={setOptions}
-                options={options}
-              />
-            </div>
-          );
-        }}
-      </AutoSizer>
+      <div className={styles.header}>
+        <div className={styles.actions}>
+          {!isExpressionQuery(model) && relativeTimeRange ? (
+            <DateTimePicker date={setDateTime(relativeTimeRange.to)} onChange={onTimeChange} maxDate={new Date()} />
+          ) : null}
+          <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
+            {!isExpressionQuery(model) && (
+              <>
+                <LinkButton
+                  size="md"
+                  variant="secondary"
+                  icon="compass"
+                  target="_blank"
+                  href={createExploreLink(dsSettings, model)}
+                >
+                  View in Explore
+                </LinkButton>
+              </>
+            )}
+          </Authorize>
+        </div>
+      </div>
+      <VizWrapper data={data} />
     </div>
   );
 }
@@ -160,7 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     content: css`
       width: 100%;
-      height: 250px;
+      height: 380px;
     `,
     header: css`
       height: ${theme.spacing(headerHeight)};
@@ -168,6 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       justify-content: flex-end;
       white-space: nowrap;
+      margin-bottom: ${theme.spacing(2)};
     `,
     refId: css`
       font-weight: ${theme.typography.fontWeightMedium};
@@ -182,9 +163,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css`
       display: flex;
       align-items: center;
-    `,
-    spacing: css`
-      padding: ${theme.spacing(0, 1, 0, 0)};
     `,
     errorMessage: css`
       white-space: pre-wrap;
