@@ -52,18 +52,13 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 
 		fs := &fakes.FakePluginStorage{
-			AddFunc: func(_ context.Context, id string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			ExtractFunc: func(_ context.Context, id string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginID, id)
 				require.Equal(t, mockZipV1, z)
 				return &storage.ExtractedPluginArchive{
 					Path: zipNameV1,
 				}, nil
 			},
-			RegisterFunc: func(_ context.Context, pluginID, pluginDir string) error {
-				require.Equal(t, pluginV1.ID, pluginID)
-				return nil
-			},
-			Store: map[string]struct{}{},
 		}
 
 		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
@@ -112,16 +107,12 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV2,
 				}, nil
 			}
-			fs.AddFunc = func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			fs.ExtractFunc = func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginV1.ID, pluginID)
 				require.Equal(t, mockZipV2, z)
 				return &storage.ExtractedPluginArchive{
 					Path: zipNameV2,
 				}, nil
-			}
-			fs.RegisterFunc = func(_ context.Context, pluginID, pluginDir string) error {
-				require.Equal(t, pluginV2.ID, pluginID)
-				return nil
 			}
 
 			err = inst.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})

@@ -33,13 +33,9 @@ export class LogContextProvider {
     this.appliedContextFilters = [];
   }
 
-  getLogRowContext = async (
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    origQuery?: DataQuery
-  ): Promise<{ data: DataFrame[] }> => {
+  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: DataQuery) {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
-    const limit = (options && options.limit) || 10;
+    const limit = (options && options.limit) || this.datasource.maxLines;
 
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
@@ -48,7 +44,27 @@ export class LogContextProvider {
       this.appliedContextFilters = filters;
     }
 
-    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+  }
+
+  getLogRowContextQuery = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<LokiQuery> => {
+    const { query } = await this.getQueryAndRange(row, options, origQuery);
+
+    return query;
+  };
+
+  getLogRowContext = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<{ data: DataFrame[] }> => {
+    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
+
+    const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
@@ -101,6 +117,7 @@ export class LogContextProvider {
       refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
       maxLines: limit,
       direction: queryDirection,
+      datasource: { uid: this.datasource.uid, type: this.datasource.type },
     };
 
     const fieldCache = new FieldCache(row.dataFrame);
@@ -108,7 +125,7 @@ export class LogContextProvider {
     if (tsField === undefined) {
       throw new Error('loki: data frame missing time-field, should never happen');
     }
-    const tsValue = tsField.values.get(row.rowIndex);
+    const tsValue = tsField.values[row.rowIndex];
     const timestamp = toUtc(tsValue);
 
     const range =

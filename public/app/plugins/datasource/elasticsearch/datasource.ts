@@ -257,7 +257,17 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query;
+
+    // the `target.query` is the "new" location for the query.
+    // normally we would write this code as
+    // try-the-new-place-then-try-the-old-place,
+    // but we had the bug at
+    // https://github.com/grafana/grafana/issues/61107
+    // that may have stored annotations where
+    // both the old and the new place are set,
+    // and in that scenario the old place needs
+    // to have priority.
+    const queryString = annotation.query ?? annotation.target?.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
@@ -518,7 +528,7 @@ export class ElasticDatasource
       );
     } else {
       const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
-      const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
+      const searchAfter = sortField?.values[row.rowIndex] || [row.timeEpochMs];
       const sort = options?.direction === LogRowContextQueryDirection.Forward ? 'asc' : 'desc';
 
       const header =
@@ -1115,7 +1125,7 @@ export class ElasticDatasource
         // Sorting of results in the context query
         sortDirection: direction === LogRowContextQueryDirection.Backward ? 'desc' : 'asc',
         // Used to get the next log lines before/after the current log line using sort field of selected log line
-        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values[row.rowIndex] ?? [row.timeEpochMs],
       },
     };
 
