@@ -23,7 +23,7 @@ export interface BrowseDashboardsPageRouteParams {
   slug?: string;
 }
 
-interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRouteParams> {}
+export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRouteParams> {}
 
 // New Browse/Manage/Search Dashboards views for nested folders
 
