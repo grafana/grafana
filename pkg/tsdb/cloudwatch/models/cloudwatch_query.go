@@ -165,7 +165,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 
 	if q.isSearchExpression() {
 		metricExpressions := &metricExpression{Expression: q.UsedExpression}
-			metricExpressions.Label = q.Label
+		metricExpressions.Label = q.Label
 		link.Metrics = []interface{}{metricExpressions}
 	} else {
 		metricStat := []interface{}{q.Namespace, q.MetricName}
@@ -176,7 +176,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 			Stat:   q.Statistic,
 			Period: q.Period,
 		}
-			metricStatMeta.Label = q.Label
+		metricStatMeta.Label = q.Label
 		if q.AccountId != nil {
 			metricStatMeta.AccountId = *q.AccountId
 		}
@@ -245,7 +245,6 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Namespace:         mdq.Namespace,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
-
 
 		if mdq.MetricName != nil {
 			cwQuery.MetricName = *mdq.MetricName
