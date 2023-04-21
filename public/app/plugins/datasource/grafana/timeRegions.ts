@@ -1,4 +1,4 @@
-import { TimeRange, DataFrame, FieldType, ArrayVector, getTimeZoneInfo } from '@grafana/data';
+import { TimeRange, DataFrame, FieldType, getTimeZoneInfo } from '@grafana/data';
 import { TimeRegionConfig, calculateTimesWithin } from 'app/core/utils/timeRegions';
 
 export function doTimeRegionQuery(
@@ -39,9 +39,9 @@ export function doTimeRegionQuery(
 
   return {
     fields: [
-      { name: 'time', type: FieldType.time, values: new ArrayVector(times), config: {} },
-      { name: 'timeEnd', type: FieldType.time, values: new ArrayVector(timesEnd), config: {} },
-      { name: 'text', type: FieldType.string, values: new ArrayVector(texts), config: {} },
+      { name: 'time', type: FieldType.time, values: times, config: {} },
+      { name: 'timeEnd', type: FieldType.time, values: timesEnd, config: {} },
+      { name: 'text', type: FieldType.string, values: texts, config: {} },
     ],
     length: times.length,
   };
