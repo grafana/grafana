@@ -67,7 +67,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const getCellContent = ([col, row]: Item): GridCell => {
     const field: Field = frame.fields[col];
 
-    if (!field) {
+    if (!field || row > frame.length) {
       return EMPTY_CELL;
     }
 
@@ -109,7 +109,6 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const addNewRow = () => {
     const newFrame = new MutableDataFrame(frame);
     newFrame.appendRow(new Array(newFrame.fields.length).fill(null));
-
     publishSnapshot(newFrame, id);
   };
 
