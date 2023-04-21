@@ -220,20 +220,10 @@ func (f StaticFS) Open(name string) (fs.File, error) {
 	return f.FS.Open(name)
 }
 
-// Files returns a slice of all the file paths in the FS relative to the base path.
-// It calls Files() on the underlying FS, and intersects the result with the allow-list.
+// Files returns a slice of all static file paths relative to the base path.
 func (f StaticFS) Files() ([]string, error) {
-	// Get files from the underlying FS
-	filesystemFiles, err := f.FS.Files()
-	if err != nil {
-		return filesystemFiles, err
-	}
-	// Intersect with allow list
-	files := make([]string, 0, len(filesystemFiles))
-	for _, fn := range filesystemFiles {
-		if !f.staticFilesMap.isAllowed(fn) {
-			continue
-		}
+	files := make([]string, 0, len(f.staticFilesMap))
+	for fn := range f.staticFilesMap {
 		files = append(files, fn)
 	}
 	return files, nil
