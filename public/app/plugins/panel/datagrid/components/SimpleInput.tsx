@@ -18,8 +18,8 @@ export const SimpleInput = ({ onBlur, placeholder }: InputProps) => {
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      // @ts-ignore
-      e.target.blur();
+      const target = e.target as HTMLInputElement;
+      target.blur();
     }
   };
 
