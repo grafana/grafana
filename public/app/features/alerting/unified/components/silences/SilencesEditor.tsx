@@ -30,7 +30,7 @@ import { initialAsyncRequestState } from '../../utils/redux';
 
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
-import { SilencedInstancesPreview } from './SilencedInstancedPreview';
+import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 
 interface Props {
   silence?: Silence;

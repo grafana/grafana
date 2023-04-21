@@ -6,6 +6,7 @@ import { Alert, Badge, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert, Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 
@@ -95,7 +96,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
       id: 'created',
       label: 'Created',
       renderCell: function renderSummary({ data }) {
-        return <>{data.startsAt.startsWith('0001') ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
+        return <>{isNullDate(data.startsAt) ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },
       size: '180px',
     },
