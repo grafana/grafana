@@ -15,13 +15,15 @@ export function DataSourceCard({ ds, onClick, selected }: DataSourceCardProps) {
 
   return (
     <Card key={ds.uid} onClick={onClick} className={cx(styles.card, selected ? styles.selected : undefined)}>
-      <Card.Heading>{ds.name}</Card.Heading>
-      <Card.Meta className={styles.meta}>
-        {ds.meta.name}
-        {ds.meta.info.description}
-      </Card.Meta>
+      <Card.Heading className={styles.heading}>
+        <div className={styles.headingContent}>
+          <span className={styles.dsName}>{ds.name}</span>
+          <span className={styles.headingSeparator}>|</span>
+          <small className={styles.dsType}>{ds.meta.name}</small>
+        </div>
+      </Card.Heading>
       <Card.Figure>
-        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} height="40" width="40" />
+        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} height="32" width="32" />
       </Card.Figure>
       <Card.Tags>{ds.isDefault ? <TagList tags={['default']} /> : null}</Card.Tags>
     </Card>
@@ -38,6 +40,34 @@ function getStyles(theme: GrafanaTheme2) {
       // Move to list component
       margin-bottom: 0;
       border-radius: 0;
+      padding: ${theme.spacing(1.5)};
+    `,
+    heading: css`
+      width: 100%;
+      overflow: hidden;
+      // This is needed to enable ellipsis when text overlfows
+      > button {
+        width: 100%;
+      }
+    `,
+    headingContent: css`
+      color: ${theme.colors.text.secondary};
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `,
+    dsName: css`
+      color: ${theme.colors.text.primary};
+    `,
+    dsType: css`
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `,
+    headingSeparator: css`
+      margin: 0 ${theme.spacing(1)};
+      color: ${theme.colors.border.weak};
     `,
     selected: css`
       background-color: ${theme.colors.background.secondary};
