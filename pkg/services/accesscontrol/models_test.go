@@ -54,7 +54,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "slugify the external service ID",
+			name: "slugify the external service ID correctly",
 			cmd: SaveExternalServiceRoleCommand{
 				ExternalServiceID: "ThisIs a Very Strange ___ App Name?",
 				Global:            true,
