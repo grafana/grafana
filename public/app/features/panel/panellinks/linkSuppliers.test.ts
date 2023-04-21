@@ -108,7 +108,7 @@ describe('getFieldLinksSupplier', () => {
       view: new DataFrameView(data),
       rowIndex,
       colIndex,
-      display: field.display!(field.values.get(rowIndex)),
+      display: field.display!(field.values[rowIndex]),
       hasLinks: true,
     };
 

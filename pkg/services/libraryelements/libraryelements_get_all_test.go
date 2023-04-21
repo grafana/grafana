@@ -524,7 +524,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolder(t, sc, "NewFolder")
 			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -591,7 +591,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolder(t, sc, "NewFolder")
 			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)

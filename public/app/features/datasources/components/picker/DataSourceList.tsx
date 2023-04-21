@@ -1,10 +1,12 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
+
+import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { DataSourceCard } from './DataSourceCard';
-import { isDataSourceMatch } from './utils';
+import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -14,7 +16,8 @@ import { isDataSourceMatch } from './utils';
 export interface DataSourceListProps {
   className?: string;
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: DataSourceRef | string | null; // uid
+  current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined;
+  /** Would be nicer if these parameters were part of a filtering object */
   tracing?: boolean;
   mixed?: boolean;
   dashboard?: boolean;
@@ -32,88 +35,49 @@ export interface DataSourceListProps {
   onClear?: () => void;
 }
 
-/**
- * Component state description for the {@link DataSourceList}
- *
- * @internal
- */
-export interface DataSourceListState {
-  error?: string;
-}
+export function DataSourceList(props: DataSourceListProps) {
+  const { className, current, onChange } = props;
+  // QUESTION: Should we use data from the Redux store as admin DS view does?
+  const dataSources = useDatasources({
+    alerting: props.alerting,
+    annotations: props.annotations,
+    dashboard: props.dashboard,
+    logs: props.logs,
+    metrics: props.metrics,
+    mixed: props.mixed,
+    pluginId: props.pluginId,
+    tracing: props.tracing,
+    type: props.type,
+    variables: props.variables,
+  });
 
-/**
- * Component to be able to select a datasource from the list of installed and enabled
- * datasources in the current Grafana instance.
- *
- * @internal
- */
-export class DataSourceList extends PureComponent<DataSourceListProps, DataSourceListState> {
-  dataSourceSrv = getDataSourceSrv();
+  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
-  static defaultProps: Partial<DataSourceListProps> = {
-    filter: () => true,
-  };
-
-  state: DataSourceListState = {};
-
-  constructor(props: DataSourceListProps) {
-    super(props);
-  }
-
-  componentDidMount() {
-    const { current } = this.props;
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(current);
-    if (!dsSettings) {
-      this.setState({ error: 'Could not find data source ' + current });
-    }
-  }
-
-  onChange = (item: DataSourceInstanceSettings) => {
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(item);
-
-    if (dsSettings) {
-      this.props.onChange(dsSettings);
-      this.setState({ error: undefined });
-    }
-  };
-
-  getDataSourceOptions() {
-    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
-      this.props;
-
-    const options = this.dataSourceSrv.getList({
-      alerting,
-      tracing,
-      metrics,
-      logs,
-      dashboard,
-      mixed,
-      variables,
-      annotations,
-      pluginId,
-      filter,
-      type,
-    });
-
-    return options;
-  }
-
-  render() {
-    const { className, current } = this.props;
-    // QUESTION: Should we use data from the Redux store as admin DS view does?
-    const options = this.getDataSourceOptions();
-
-    return (
-      <div className={className}>
-        {options.map((ds) => (
+  return (
+    <div className={className}>
+      {dataSources
+        .filter((ds) => (props.filter ? props.filter(ds) : true))
+        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
+        .map((ds) => (
           <DataSourceCard
             key={ds.uid}
             ds={ds}
-            onClick={this.onChange.bind(this, ds)}
+            onClick={() => {
+              pushRecentlyUsedDataSource(ds);
+              onChange(ds);
+            }}
             selected={!!isDataSourceMatch(ds, current)}
           />
         ))}
-      </div>
-    );
-  }
+    </div>
+  );
+}
+
+function getDataSourceVariableIDs() {
+  const templateSrv = getTemplateSrv();
+  /** Unforunately there is no easy way to identify data sources that are variables. The uid of the data source will be the name of the variable in a templating syntax $([name]) **/
+  return templateSrv
+    .getVariables()
+    .filter((v) => v.type === 'datasource')
+    .map((v) => `\${${v.id}}`);
 }

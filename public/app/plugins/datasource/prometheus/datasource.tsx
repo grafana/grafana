@@ -173,6 +173,8 @@ export class PrometheusDatasource
       this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
       // https://github.com/cortexproject/cortex/discussions/4542
       this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
+      //https://github.com/VictoriaMetrics/VictoriaMetrics/releases/tag/v1.24.0
+      this._isDatasourceVersionGreaterOrEqualTo('1.24.0', PromApplication.VictoriaMetrics) ||
       // https://github.com/thanos-io/thanos/pull/3566
       //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
       this._isDatasourceVersionGreaterOrEqualTo('0.18.0', PromApplication.Thanos)
@@ -866,10 +868,10 @@ export class PrometheusDatasource
       const timeValueTuple: Array<[number, number]> = [];
 
       let idx = 0;
-      valueField.values.toArray().forEach((value: string) => {
+      valueField.values.forEach((value: string) => {
         let timeStampValue: number;
         let valueValue: number;
-        const time = timeField.values.get(idx);
+        const time = timeField.values[idx];
 
         // If we want to use value as a time, we use value as timeStampValue and valueValue will be 1
         if (options.annotation.useValueForTime) {
@@ -992,6 +994,7 @@ export class PrometheusDatasource
       [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
       [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
       [PromApplication.Thanos]: '/public/app/plugins/datasource/prometheus/img/thanos_logo.svg',
+      [PromApplication.VictoriaMetrics]: '/public/app/plugins/datasource/prometheus/img/vm_logo.svg',
     };
 
     const COLORS: Record<PromApplication, BadgeColor> = {
@@ -999,6 +1002,7 @@ export class PrometheusDatasource
       [PromApplication.Mimir]: 'orange',
       [PromApplication.Prometheus]: 'red',
       [PromApplication.Thanos]: 'purple', // Purple hex taken from thanos.io
+      [PromApplication.VictoriaMetrics]: 'black',
     };
 
     const AppDisplayNames: Record<PromApplication, string> = {
@@ -1006,6 +1010,7 @@ export class PrometheusDatasource
       [PromApplication.Mimir]: 'Mimir',
       [PromApplication.Prometheus]: 'Prometheus',
       [PromApplication.Thanos]: 'Thanos',
+      [PromApplication.VictoriaMetrics]: 'VictoriaMetrics',
     };
 
     const application = this.datasourceConfigurationPrometheusFlavor ?? buildInfo.application;

@@ -11,7 +11,7 @@ import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderByUid, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { AccessControlAction, PermissionLevelString } from 'app/types';
+import { AccessControlAction, PermissionLevelString, SearchQueryType } from 'app/types';
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
@@ -40,7 +40,7 @@ export interface Props {
   allowEmpty?: boolean;
   showRoot?: boolean;
   onClear?: () => void;
-  accessControlMetadata?: boolean;
+  searchQueryType?: SearchQueryType;
   customAdd?: CustomAdd;
   folderWarning?: FolderWarning;
 
@@ -73,7 +73,7 @@ export function FolderPicker(props: Props) {
     rootName = 'General',
     showRoot = true,
     skipInitialLoad,
-    accessControlMetadata,
+    searchQueryType,
     customAdd,
     folderWarning,
   } = props;
@@ -89,7 +89,7 @@ export function FolderPicker(props: Props) {
 
   const getOptions = useCallback(
     async (query: string) => {
-      const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
+      const searchHits = await searchFolders(query, permissionLevel, searchQueryType);
       const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
       const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
 
@@ -122,7 +122,7 @@ export function FolderPicker(props: Props) {
       permissionLevel,
       rootName,
       showRoot,
-      accessControlMetadata,
+      searchQueryType,
       filter,
       enableCreateNew,
       customAdd,

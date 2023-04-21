@@ -22,10 +22,10 @@ replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 
 // contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20221218111347-341999f48bdb
+replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8
 
 // contains go generation fixes
-replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.12.5-0.20230206122001-6a05ca88e18e
+replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.12.5-0.20230417081915-2945b61c0b1c
 
 require (
 	cloud.google.com/go/storage v1.28.1
@@ -77,14 +77,14 @@ require (
 	github.com/linkedin/goavro/v2 v2.10.0
 	github.com/m3db/prometheus_remote_client_golang v0.4.4
 	github.com/magefile/mage v1.14.0
-	github.com/mattn/go-isatty v0.0.16
+	github.com/mattn/go-isatty v0.0.17
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/matttproud/golang_protobuf_extensions v1.0.4
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
@@ -107,7 +107,7 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
 	go.opentelemetry.io/otel/sdk v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
-	golang.org/x/crypto v0.5.0
+	golang.org/x/crypto v0.6.0
 	golang.org/x/exp v0.0.0-20221211140036-ad323defaf05
 	golang.org/x/net v0.8.0
 	golang.org/x/oauth2 v0.6.0
@@ -239,7 +239,7 @@ require (
 	github.com/bufbuild/connect-go v1.4.1
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/drone/drone-cli v1.6.1
-	github.com/getkin/kin-openapi v0.112.0
+	github.com/getkin/kin-openapi v0.115.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/codejen v0.0.3
@@ -260,7 +260,7 @@ require (
 	k8s.io/apiserver v0.26.2
 	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 	k8s.io/component-base v0.26.2 // indirect
-	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
+	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280
 )
 
 require (
@@ -275,8 +275,8 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/kindsys v0.0.0-20230309200316-812b9884a375
-	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7
+	github.com/grafana/kindsys v0.0.0-20230414093523-5df3e256ebc0
+	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
 	github.com/hmarr/codeowners v1.1.2
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
@@ -350,6 +350,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
+	github.com/perimeterx/marshmallow v1.1.4 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/rueian/rueidis v0.0.100-go1.18 // indirect
@@ -431,7 +432,7 @@ require (
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/labstack/echo/v4 v4.10.0 // indirect
+	github.com/labstack/echo/v4 v4.10.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect

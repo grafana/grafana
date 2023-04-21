@@ -170,6 +170,7 @@ const SearchField = ({
           aria-label={`select ${filter.id} value`}
           allowCustomValue={true}
           isMulti
+          allowCreateWhileLoading
         />
       )}
       {allowDelete && (
