@@ -272,7 +272,7 @@ func (ng *AlertNG) init() error {
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
 		Historian:            history,
-		Hooks:                api.NewHooks(),
+		Hooks:                api.NewHooks(ng.Log),
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
