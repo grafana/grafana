@@ -33,7 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
-    padding: ${config.featureToggles.newTraceView ? 0 : theme.spacing(theme.components.panel.padding)};
+    padding: ${config.featureToggles.newTraceViewHeader ? 0 : theme.spacing(theme.components.panel.padding)};
   `,
 });
 
@@ -57,7 +57,7 @@ export function TraceViewContainer(props: Props) {
 
   return (
     <div className={style.container}>
-      {!config.featureToggles.newTraceView && (
+      {!config.featureToggles.newTraceViewHeader && (
         <TracePageSearchBar
           navigable={true}
           searchValue={search}
