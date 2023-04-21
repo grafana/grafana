@@ -71,4 +71,25 @@ describe('getDataSouceCompareFn', () => {
       { uid: 'a', name: 'a', meta: { builtIn: true } },
     ] as DataSourceInstanceSettings[]);
   });
+
+  it('sorts datasources current -> recently used -> variables -> others -> built in', () => {
+    const dataSources = [
+      { uid: 'a', name: 'a', meta: { builtIn: true } },
+      { uid: 'b', name: 'b', meta: { builtIn: false } },
+      { uid: 'c', name: 'c', meta: { builtIn: false } },
+      { uid: 'e', name: 'e', meta: { builtIn: false } },
+      { uid: 'd', name: 'd', meta: { builtIn: false } },
+      { uid: 'f', name: 'f', meta: { builtIn: false } },
+    ] as DataSourceInstanceSettings[];
+
+    dataSources.sort(getDataSourceCompareFn('c', ['b', 'e'], ['d']));
+    expect(dataSources).toEqual([
+      { uid: 'c', name: 'c', meta: { builtIn: false } },
+      { uid: 'e', name: 'e', meta: { builtIn: false } },
+      { uid: 'b', name: 'b', meta: { builtIn: false } },
+      { uid: 'd', name: 'd', meta: { builtIn: false } },
+      { uid: 'f', name: 'f', meta: { builtIn: false } },
+      { uid: 'a', name: 'a', meta: { builtIn: true } },
+    ] as DataSourceInstanceSettings[]);
+  });
 });
