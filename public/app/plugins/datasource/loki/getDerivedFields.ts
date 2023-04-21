@@ -25,7 +25,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
   lineField.values.forEach((line) => {
     for (const field of newFields) {
       const logMatch = line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
-      field.values.add(logMatch && logMatch[1]);
+      field.values.push(logMatch && logMatch[1]);
     }
   });
 
