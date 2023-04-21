@@ -63,7 +63,7 @@ export const UsersActionBarUnconnected = ({
           <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
         </div>
       )}
-      {canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
+      {!externalUserMngLinkUrl && canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
       {externalUserMngLinkUrl && (
         <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
           {externalUserMngLinkName}
