@@ -22,6 +22,7 @@ func NewHooks() *Hooks {
 // Add creates a new request hook for a path, causing requests to the path to
 // be handled by the hook function, and not the original handler.
 func (h *Hooks) Set(path string, hook RequestHandlerFunc) {
+  h.logger.Info("setting hook override for the specified route", "path", path)
 	h.hooks[path] = hook
 }
 
