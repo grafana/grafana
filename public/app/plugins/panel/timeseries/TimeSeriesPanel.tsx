@@ -49,7 +49,10 @@ export const TimeSeriesPanel = ({
       }
     }
 
-    return { annotations, exemplars };
+    return {
+      annotations: annotations.length ? annotations : undefined,
+      exemplars: exemplars.length ? exemplars : undefined,
+    };
   }, [data.annotations]);
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
@@ -103,9 +106,7 @@ export const TimeSeriesPanel = ({
               />
             )}
             {/* Renders annotation markers*/}
-            {annotations.length > 0 && (
-              <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />
-            )}
+            {annotations && <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />}
             {/* Enables annotations creation*/}
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
@@ -147,7 +148,7 @@ export const TimeSeriesPanel = ({
                 defaultItems={[]}
               />
             )}
-            {exemplars.length > 0 && (
+            {exemplars && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(config, frames)}
                 config={config}
