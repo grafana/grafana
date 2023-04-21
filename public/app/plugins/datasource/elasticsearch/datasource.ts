@@ -321,7 +321,8 @@ export class ElasticDatasource
       ignore_unavailable: true,
     };
 
-    // @deprecated annotation.index  is deprecated and will be removed
+    // @deprecated
+    // Field annotation.index is deprecated and will be removed in the future
     if (annotation.index) {
       header.index = annotation.index;
     } else {
