@@ -33,13 +33,9 @@ export class LogContextProvider {
     this.appliedContextFilters = [];
   }
 
-  getLogRowContext = async (
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    origQuery?: DataQuery
-  ): Promise<{ data: DataFrame[] }> => {
+  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: DataQuery) {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
-    const limit = (options && options.limit) || 10;
+    const limit = (options && options.limit) || this.datasource.maxLines;
 
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
@@ -48,44 +44,31 @@ export class LogContextProvider {
       this.appliedContextFilters = filters;
     }
 
-    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+  }
 
-    const processDataFrame = (frame: DataFrame): DataFrame => {
-      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-      const cache = new FieldCache(frame);
-      const timestampField = cache.getFirstFieldOfType(FieldType.time);
-      const lineField = cache.getFirstFieldOfType(FieldType.string);
-      const idField = cache.getFieldByName('id');
+  getLogRowContextQuery = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<LokiQuery> => {
+    const { query } = await this.getQueryAndRange(row, options, origQuery);
 
-      if (timestampField === undefined || lineField === undefined || idField === undefined) {
-        // this should never really happen, but i want to keep typescript happy
-        return { ...frame, fields: [] };
-      }
+    return query;
+  };
 
-      return {
-        ...frame,
-        fields: [
-          {
-            ...timestampField,
-            name: 'ts',
-          },
-          {
-            ...lineField,
-            name: 'line',
-          },
-          {
-            ...idField,
-            name: 'id',
-          },
-        ],
-      };
-    };
+  getLogRowContext = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<{ data: DataFrame[] }> => {
+    const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
+
+    const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
-      const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, SortDirection.Descending))
-        .map((frame) => processDataFrame(frame)); // rename fields if needed
+      const processedFrames = frames.map((frame) => sortDataFrameByTime(frame, SortDirection.Descending));
 
       return {
         ...result,
@@ -134,6 +117,7 @@ export class LogContextProvider {
       refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
       maxLines: limit,
       direction: queryDirection,
+      datasource: { uid: this.datasource.uid, type: this.datasource.type },
     };
 
     const fieldCache = new FieldCache(row.dataFrame);
@@ -170,7 +154,7 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
+  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, originalQuery?: DataQuery): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
       this.appliedContextFilters = contextFilters;
 
@@ -186,8 +170,15 @@ export class LogContextProvider {
         this.appliedContextFilters = [];
       });
 
+    let origQuery: LokiQuery | undefined = undefined;
+    // Type guard for LokiQuery
+    if (originalQuery && isLokiQuery(originalQuery)) {
+      origQuery = originalQuery;
+    }
+
     return LokiContextUi({
       row,
+      origQuery,
       updateFilter,
       onClose: this.onContextClose,
       logContextProvider: this,
@@ -197,10 +188,9 @@ export class LogContextProvider {
   processContextFiltersToExpr = (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) => {
     const labelFilters = contextFilters
       .map((filter) => {
-        const label = filter.value;
         if (!filter.fromParser && filter.enabled) {
           // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+          return `${filter.label}="${escapeLabelValueInExactSelector(filter.value)}"`;
         }
         return '';
       })
@@ -219,7 +209,7 @@ export class LogContextProvider {
         const parsedLabels = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
         for (const parsedLabel of parsedLabels) {
           if (parsedLabel.enabled) {
-            expr = addLabelToQuery(expr, parsedLabel.label, '=', row.labels[parsedLabel.label]);
+            expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value);
           }
         }
       }
@@ -235,10 +225,9 @@ export class LogContextProvider {
     Object.entries(labels).forEach(([label, value]) => {
       const filter: ContextFilter = {
         label,
-        value: label, // this looks weird in the first place, but we need to set the label as value here
+        value: value,
         enabled: allLabels.includes(label),
         fromParser: !allLabels.includes(label),
-        description: value,
       };
       contextFilters.push(filter);
     });

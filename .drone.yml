@@ -336,7 +336,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.3
@@ -569,6 +571,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -872,8 +876,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -889,8 +894,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -1291,7 +1297,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.3
@@ -1452,6 +1460,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -1728,7 +1738,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./scripts/circle-release-canary-packages.sh
+  - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1740,6 +1750,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: release-canary-npm-packages
   when:
+    paths:
+      include:
+      - packages/**
     repo:
     - grafana/grafana
 - commands:
@@ -1876,8 +1889,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -1893,8 +1907,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -2545,7 +2560,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.3
@@ -3107,7 +3124,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.3
@@ -4673,6 +4692,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -4992,7 +5013,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.3
@@ -5087,8 +5110,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -5104,8 +5128,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -5312,6 +5337,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -5678,7 +5705,9 @@ steps:
   image: grafana/build-container:1.7.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.3
@@ -5800,8 +5829,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -5817,8 +5847,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -6029,6 +6060,8 @@ steps:
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
   depends_on:
   - compile-build-cmd
   - yarn-install
@@ -6267,8 +6300,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -6284,8 +6318,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -6438,8 +6473,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -6455,8 +6491,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=5m {}'
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   environment:
@@ -6786,6 +6823,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: da82099e984231d3b292921e031655723eae03f45efac84af1a5a2104601fbfe
+hmac: e8c29c328c07ab24a7f858cc319c9b35a5bec1fc79531e809e5d3a390bbcbc2f
 
 ...

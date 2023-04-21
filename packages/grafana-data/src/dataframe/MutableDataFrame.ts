@@ -2,16 +2,14 @@ import { isString } from 'lodash';
 
 import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
-import { Vector } from '../types/vector';
 import { makeFieldParser } from '../utils/fieldParser';
-import { ArrayVector } from '../vector/ArrayVector';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
 export type MutableField<T = any> = Field<T>;
 
-type MutableVectorCreator = (buffer?: any[]) => Vector;
+type MutableVectorCreator = (buffer?: any[]) => any[];
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
@@ -21,7 +19,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   meta?: QueryResultMeta;
   fields: MutableField[] = [];
 
-  private first: Vector = new ArrayVector();
+  private first: any[] = [];
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
@@ -31,7 +29,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     this.creator = creator
       ? creator
       : (buffer?: any[]) => {
-          return new ArrayVector(buffer);
+          return buffer ?? [];
         };
 
     // Copy values from
@@ -78,11 +76,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
-      if (Array.isArray(f.values)) {
-        buffer = f.values;
-      } else {
-        buffer = (f.values as Vector).toArray();
-      }
+      buffer = f.values;
     }
 
     let type = f.type;

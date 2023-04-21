@@ -1,6 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap, switchMap } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
 import {
@@ -25,12 +25,10 @@ import {
   QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
+  SupplementaryQueryOptions,
   DataQueryError,
-  FieldCache,
-  FieldType,
   rangeUtil,
   Field,
-  sortDataFrame,
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
@@ -118,10 +116,10 @@ export class ElasticDatasource
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
-    this.index = instanceSettings.database ?? '';
     this.isProxyAccess = instanceSettings.access === 'proxy';
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
+    this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
     this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
@@ -259,7 +257,17 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query;
+
+    // the `target.query` is the "new" location for the query.
+    // normally we would write this code as
+    // try-the-new-place-then-try-the-old-place,
+    // but we had the bug at
+    // https://github.com/grafana/grafana/issues/61107
+    // that may have stored annotations where
+    // both the old and the new place are set,
+    // and in that scenario the old place needs
+    // to have priority.
+    const queryString = annotation.query ?? annotation.target?.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
@@ -515,9 +523,6 @@ export class ElasticDatasource
               statusText: err.statusText,
             };
             throw error;
-          }),
-          switchMap((res) => {
-            return of(processToLogContextDataFrames(res));
           })
         )
       );
@@ -603,14 +608,14 @@ export class ElasticDatasource
     return [SupplementaryQueryType.LogsVolume];
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
       return undefined;
     }
 
     let isQuerySuitable = false;
 
-    switch (type) {
+    switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
@@ -661,7 +666,7 @@ export class ElasticDatasource
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((target) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, target))
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
       .filter((query): query is ElasticsearchQuery => !!query);
 
     if (!targets.length) {
@@ -1221,44 +1226,6 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
         },
       },
     ],
-  };
-}
-
-function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
-  const frames = result.data.map((frame) => sortDataFrame(frame, 0, true));
-  const processedFrames = frames.map((frame) => {
-    // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-    const cache = new FieldCache(frame);
-    const timestampField = cache.getFirstFieldOfType(FieldType.time);
-    const lineField = cache.getFirstFieldOfType(FieldType.string);
-    const idField = cache.getFieldByName('_id');
-
-    if (!timestampField || !lineField || !idField) {
-      return { ...frame, fields: [] };
-    }
-
-    return {
-      ...frame,
-      fields: [
-        {
-          ...timestampField,
-          name: 'ts',
-        },
-        {
-          ...lineField,
-          name: 'line',
-        },
-        {
-          ...idField,
-          name: 'id',
-        },
-      ],
-    };
-  });
-
-  return {
-    ...result,
-    data: processedFrames,
   };
 }
 

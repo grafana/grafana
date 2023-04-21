@@ -34,6 +34,7 @@ interface ConfigurePanelOptional {
   panelTitle?: string;
   timeRange?: TimeRangeConfig;
   visualizationName?: string;
+  timeout?: number;
 }
 
 interface ConfigurePanelRequired {
@@ -80,6 +81,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       timeRange,
       visitDashboardAtStart,
       visualizationName,
+      timeout,
     } = fullConfig;
 
     if (visitDashboardAtStart) {
@@ -111,6 +113,13 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
+      e2e.components.DataSourcePicker.container().within(() => {
+        e2e()
+          .get('[class$="-input-suffix"]')
+          .then((element) => {
+            Cypress.dom.isAttached(element);
+          });
+      });
       selectOption({
         container: e2e.components.DataSourcePicker.container(),
         optionText: dataSourceName,
@@ -158,7 +167,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     // Wait for RxJS
-    e2e().wait(500);
+    e2e().wait(timeout ?? e2e.config().defaultCommandTimeout);
 
     if (matchScreenshot) {
       let visualization;

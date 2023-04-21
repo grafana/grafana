@@ -56,7 +56,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
           if (!out.field) {
             return; // ???
           }
-          point.setGeometry(out.field.values.get(frame.length - 1));
+          point.setGeometry(out.field.values[frame.length - 1]);
         }
       },
     };

@@ -89,7 +89,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			Id:             "starred",
 			Icon:           "star",
 			SortWeight:     navtree.WeightSavedItems,
-			Section:        navtree.NavSectionCore,
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
 			Url:            s.cfg.AppSubURL + "/dashboards?starred",
@@ -106,7 +105,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			Icon:       "apps",
 			Url:        s.cfg.AppSubURL + "/dashboards",
 			SortWeight: navtree.WeightDashboard,
-			Section:    navtree.NavSectionCore,
 			Children:   dashboardChildLinks,
 		}
 
@@ -124,7 +122,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			SubTitle:   "Explore your data",
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
-			Section:    navtree.NavSectionCore,
 			Url:        s.cfg.AppSubURL + "/explore",
 		})
 	}
@@ -152,18 +149,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		}
 	}
 
-	orgAdminNode, err := s.getOrgAdminNode(c)
+	orgAdminNode, err := s.getAdminNode(c)
 
 	if orgAdminNode != nil {
 		treeRoot.AddSection(orgAdminNode)
 	} else if err != nil {
 		return nil, err
-	}
-
-	serverAdminNode := s.getServerAdminNode(c)
-
-	if serverAdminNode != nil {
-		treeRoot.AddSection(serverAdminNode)
 	}
 
 	s.addHelpLinks(treeRoot, c)
@@ -192,7 +183,6 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Id:         "home",
 		Url:        homeUrl,
 		Icon:       "home-alt",
-		Section:    navtree.NavSectionCore,
 		SortWeight: navtree.WeightHome,
 	}
 	return homeNode
@@ -216,7 +206,6 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 			Url:        "#",
 			Icon:       "question-circle",
 			SortWeight: navtree.WeightHelp,
-			Section:    navtree.NavSectionConfig,
 			Children:   []*navtree.NavLink{},
 		}
 
@@ -234,7 +223,6 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 				Id:         "support-bundles",
 				Url:        "/support-bundles",
 				Icon:       "wrench",
-				Section:    navtree.NavSectionConfig,
 				SortWeight: navtree.WeightHelp,
 			}
 
@@ -286,7 +274,6 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		Id:         "profile",
 		Img:        gravatarURL,
 		Url:        s.cfg.AppSubURL + "/profile",
-		Section:    navtree.NavSectionConfig,
 		SortWeight: navtree.WeightProfile,
 		Children:   children,
 		RoundIcon:  true,
@@ -387,12 +374,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 	if hasEditPerm {
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
+				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
 			})
 
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Import dashboard", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
-				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
+				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, IsCreateAction: true,
 			})
 		}
 	}
@@ -419,7 +406,6 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navt
 		Id:         "alerting-legacy",
 		Icon:       "bell",
 		Children:   alertChildNavs,
-		Section:    navtree.NavSectionCore,
 		SortWeight: navtree.WeightAlerting,
 		Url:        s.cfg.AppSubURL + "/alerting",
 	}
@@ -462,7 +448,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext, hasEditPerm
 	if hasAccess(fallbackHasEditPerm, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Create alert rule", SubTitle: "Create an alert rule", Id: "alert",
-			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
+			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, IsCreateAction: true,
 		})
 	}
 
@@ -473,7 +459,6 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext, hasEditPerm
 			Id:         navtree.NavIDAlerting,
 			Icon:       "bell",
 			Children:   alertChildNavs,
-			Section:    navtree.NavSectionCore,
 			SortWeight: navtree.WeightAlerting,
 			Url:        s.cfg.AppSubURL + "/alerting",
 		}
@@ -527,7 +512,6 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			Id:         "connections",
 			Url:        baseUrl,
 			Children:   children,
-			Section:    navtree.NavSectionCore,
 			SortWeight: navtree.WeightDataConnections,
 		}
 
