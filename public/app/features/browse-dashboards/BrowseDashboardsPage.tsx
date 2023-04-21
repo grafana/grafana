@@ -16,7 +16,7 @@ import { BrowseActions } from './components/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { SearchView } from './components/SearchView';
-import { useSelectedItemsState } from './state';
+import { useHasSelection } from './state';
 
 export interface BrowseDashboardsPageRouteParams {
   uid?: string;
@@ -37,10 +37,7 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
-
-  // TODO abstract this out
-  const selectedItems = useSelectedItemsState();
-  const hasSelection = Object.values(selectedItems).some((obj) => Object.values(obj).some((v) => v));
+  const hasSelection = useHasSelection();
 
   return (
     <Page navId="dashboards/browse" pageNav={navModel}>
