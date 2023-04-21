@@ -20,22 +20,10 @@ interface TextProps {
   textAlignment?: CSSProperties['textAlign'];
   /** Margin to set on the component. Remember, it does not work with inline elements such as 'span'. */
   margin?: string | number;
-  /** Class to apply to the component */
-  className?: string;
   children: React.ReactNode;
 }
 
-export const Text = ({
-  as = 'span',
-  variant,
-  weight,
-  color,
-  truncate,
-  textAlignment,
-  margin,
-  className,
-  children,
-}: TextProps) => {
+export const Text = ({ as = 'span', variant, weight, color, truncate, textAlignment, margin, children }: TextProps) => {
   const styles = useStyles2(
     useCallback(
       (theme) => {
@@ -60,7 +48,7 @@ export const Text = ({
   return createElement(
     as,
     {
-      className: cx(className, styles),
+      className: styles,
     },
     children
   );
