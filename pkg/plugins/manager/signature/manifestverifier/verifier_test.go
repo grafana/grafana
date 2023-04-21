@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -36,42 +37,87 @@ func Test_Verify(t *testing.T) {
 	})
 }
 
+func setFakeAPIServer(t *testing.T, publicKey string, keyID string) (*httptest.Server, chan bool) {
+	done := make(chan bool)
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/plugins/ci/keys" {
+			w.WriteHeader(http.StatusOK)
+			data := struct {
+				Items []ManifestKeys `json:"items"`
+			}{
+				Items: []ManifestKeys{{PublicKey: publicKey, KeyID: keyID}},
+			}
+			b, err := json.Marshal(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = w.Write(b)
+			if err != nil {
+				t.Fatal(err)
+			}
+			require.NoError(t, err)
+			done <- true
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		done <- true
+	})), done
+}
 func Test_PublicKeyUpdate(t *testing.T) {
 	t.Run("it should verify a manifest with the API key", func(t *testing.T) {
 		cfg := &config.Cfg{
 			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
 		}
-		done := make(chan bool)
-		apiCalled := false
 		expectedKey := "fake"
-		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/api/plugins/ci/keys" {
-				w.WriteHeader(http.StatusOK)
-				data := struct {
-					Items []ManifestKeys `json:"items"`
-				}{
-					Items: []ManifestKeys{{PublicKey: expectedKey, KeyID: "7e4d0c6a708866e7"}},
-				}
-				b, err := json.Marshal(data)
-				require.NoError(t, err)
-				_, err = w.Write(b)
-				require.NoError(t, err)
-				apiCalled = true
-				done <- true
-				return
-			}
-			w.WriteHeader(http.StatusNotFound)
-			done <- true
-		}))
+		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
 		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
-
 		<-done
-		require.Equal(t, true, apiCalled)
+
 		// wait for the lock to be free
 		v.lock.Lock()
 		defer v.lock.Unlock()
 		res, found, err := v.kv.Get(context.Background(), "7e4d0c6a708866e7")
+		require.NoError(t, err)
+		require.Equal(t, true, found)
+		require.Equal(t, expectedKey, res)
+	})
+
+	t.Run("it should update the latest update date", func(t *testing.T) {
+		cfg := &config.Cfg{
+			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
+		}
+		expectedKey := "fake"
+		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
+		cfg.GrafanaComURL = s.URL
+		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
+		<-done
+
+		// wait for the lock to be free
+		v.lock.Lock()
+		defer v.lock.Unlock()
+		ti := v.kv.GetLastUpdated(context.Background())
+		require.Less(t, time.Time{}, ti)
+	})
+
+	t.Run("it should remove old keys", func(t *testing.T) {
+		cfg := &config.Cfg{
+			Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...),
+		}
+		expectedKey := "fake"
+		s, done := setFakeAPIServer(t, expectedKey, "other")
+		cfg.GrafanaComURL = s.URL
+		v := New(cfg, log.New("test"), keystore.ProvideService(kvstore.NewFakeKVStore()))
+		<-done
+
+		// wait for the lock to be free
+		v.lock.Lock()
+		defer v.lock.Unlock()
+		_, found, err := v.kv.Get(context.Background(), "7e4d0c6a708866e7")
+		require.NoError(t, err)
+		require.Equal(t, false, found)
+
+		res, found, err := v.kv.Get(context.Background(), "other")
 		require.NoError(t, err)
 		require.Equal(t, true, found)
 		require.Equal(t, expectedKey, res)

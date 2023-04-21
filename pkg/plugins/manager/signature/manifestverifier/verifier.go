@@ -184,7 +184,7 @@ func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 	}
 
 	// Update the last updated timestamp
-	pmv.kv.GetLastUpdated(ctx)
+	pmv.kv.SetLastUpdated(ctx)
 
 	return nil
 }
