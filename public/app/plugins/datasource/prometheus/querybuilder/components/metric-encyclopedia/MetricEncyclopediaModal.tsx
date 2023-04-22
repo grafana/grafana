@@ -63,26 +63,29 @@ export const placeholders = {
   setUseBackend: 'Use the backend to browse metrics',
 };
 
-const DEFAULT_RESULTS_PER_PAGE = 10;
+const DEFAULT_RESULTS_PER_PAGE = 100;
 const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
+
+export type MetricEncyclopediaMetadata = {
+  isLoading: boolean;
+  metrics: MetricsData;
+  hasMetadata: boolean;
+  metaHaystack: string[];
+  nameHaystack: string[];
+  metaHaystackDictionary: HaystackDictionary;
+  nameHaystackDictionary: HaystackDictionary;
+  totalMetricCount: number;
+  filteredMetricCount: number | null;
+};
 
 // An interface for our actions
 type Action =
   | { type: 'setIsLoading'; payload: boolean }
   | {
-      type: 'init';
-      payload: {
-        metrics: MetricsData;
-        hasMetadata: boolean;
-        metaHaystack: string[];
-        nameHaystack: string[];
-        metaHaystackDictionary: HaystackDictionary;
-        nameHaystackDictionary: HaystackDictionary;
-        totalMetricCount: number;
-        filteredMetricCount: number | null;
-      };
+      type: 'setMetadata';
+      payload: MetricEncyclopediaMetadata;
     }
   | {
       type: 'filterMetricsBackend';
@@ -91,7 +94,9 @@ type Action =
         filteredMetricCount: number;
       };
     }
-  | { type: 'setFilteredMetricCount'; payload: number };
+  | { type: 'setFilteredMetricCount'; payload: number }
+  | { type: 'setResultsPerPage'; payload: number }
+  | { type: 'setPageNum'; payload: number };
 
 // An interface for our state
 export interface MetricEncyclopediaState {
@@ -104,6 +109,8 @@ export interface MetricEncyclopediaState {
   nameHaystackDictionary: HaystackDictionary;
   totalMetricCount: number;
   filteredMetricCount: number | null;
+  resultsPerPage: number;
+  pageNum: number;
 }
 
 export type MetricEncyclopediaProps = {
@@ -123,7 +130,7 @@ function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action: Actio
         ...state,
         ...payload,
       };
-    case 'init':
+    case 'setMetadata':
       return {
         ...state,
         ...payload,
@@ -137,6 +144,16 @@ function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action: Actio
       return {
         ...state,
         filteredMetricCount: payload,
+      };
+    case 'setResultsPerPage':
+      return {
+        ...state,
+        resultsPerPage: payload,
+      };
+    case 'setPageNum':
+      return {
+        ...state,
+        pageNum: payload,
       };
     default:
       return state;
@@ -153,6 +170,8 @@ const initialState = {
   nameHaystackDictionary: {},
   totalMetricCount: 0,
   filteredMetricCount: null,
+  resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
+  pageNum: 1,
 };
 
 // next step, access state and update all the things that need to be updated when
@@ -161,10 +180,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
   const [state, dispatch] = useReducer(MetricEncyclopediaReducer, initialState);
-
-  // pagination
-  const [resultsPerPage, setResultsPerPage] = useState<number>(DEFAULT_RESULTS_PER_PAGE);
-  const [pageNum, setPageNum] = useState<number>(1);
 
   // filters
   const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
@@ -187,11 +202,12 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       payload: true,
     });
 
-    const data: MetricEncyclopediaState = await getMetadata(datasource, query);
+    const data: MetricEncyclopediaMetadata = await getMetadata(datasource, query);
 
     dispatch({
-      type: 'init',
+      type: 'setMetadata',
       payload: {
+        isLoading: false,
         hasMetadata: data.hasMetadata,
         metrics: data.metrics,
         metaHaystack: data.metaHaystack,
@@ -201,11 +217,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
         totalMetricCount: data.metrics.length,
         filteredMetricCount: data.metrics.length,
       },
-    });
-
-    dispatch({
-      type: 'setIsLoading',
-      payload: false,
     });
   }, [query, datasource]);
 
@@ -301,7 +312,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       });
     }
 
-    return sliceMetrics(filteredSorted, pageNum, resultsPerPage);
+    return sliceMetrics(filteredSorted, state.pageNum, state.resultsPerPage);
   }
   /**
    * The backend debounced search
@@ -446,7 +457,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                 setLetterSearch(null);
                 fuzzySearchCallback(value, fullMetaSearch);
 
-                setPageNum(1);
+                dispatch({
+                  type: 'setPageNum',
+                  payload: 1,
+                });
               }}
             />
           </EditorField>
@@ -465,7 +479,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                 // *** always include metrics without metadata but label it as unknown type
                 // Consider tabs select instead of actual select or multi select
                 setSelectedTypes(v);
-                setPageNum(1);
+                dispatch({
+                  type: 'setPageNum',
+                  payload: 1,
+                });
               }}
             />
           </EditorField>
@@ -508,7 +525,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
                   fuzzySearchCallback(fuzzySearchQuery, newVal);
 
-                  setPageNum(1);
+                  dispatch({
+                    type: 'setPageNum',
+                    payload: 1,
+                  });
                 }}
               />
               <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
@@ -530,8 +550,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                     }
                     // otherwise wait for user typing
                   }
-
-                  setPageNum(1);
+                  dispatch({
+                    type: 'setPageNum',
+                    payload: 1,
+                  });
                 }}
               />
               <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
@@ -562,7 +584,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             } else {
               setLetterSearch(letter);
             }
-            setPageNum(1);
+            dispatch({
+              type: 'setPageNum',
+              payload: 1,
+            });
           }}
           letterSearch={letterSearch}
         />
@@ -577,7 +602,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
               disabled={useBackend || !state.hasMetadata}
               onChange={() => {
                 setExcludeNullMetadata(!excludeNullMetadata);
-                setPageNum(1);
+                dispatch({
+                  type: 'setPageNum',
+                  payload: 1,
+                });
               }}
             />
             <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
@@ -592,15 +620,18 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           <InlineField label="Select page" labelWidth={20} className="query-keyword">
             <Select
               data-testid={testIds.searchPage}
-              options={calculatePageList(state.metrics, resultsPerPage).map((p) => {
+              options={calculatePageList(state.metrics, state.resultsPerPage).map((p) => {
                 return { value: p, label: '' + p };
               })}
-              value={pageNum ?? 1}
+              value={state.pageNum ?? 1}
               placeholder="select page"
               width={20}
               onChange={(e) => {
                 const value = e.value ?? 1;
-                setPageNum(value);
+                dispatch({
+                  type: 'setPageNum',
+                  payload: value,
+                });
               }}
             />
           </InlineField>
@@ -612,7 +643,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           >
             <Input
               data-testid={testIds.resultsPerPage}
-              value={calculateResultsPerPage(resultsPerPage)}
+              value={calculateResultsPerPage(state.resultsPerPage)}
               placeholder="results per page"
               width={20}
               onInput={(e) => {
@@ -622,7 +653,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                   return;
                 }
 
-                setResultsPerPage(value);
+                dispatch({
+                  type: 'setResultsPerPage',
+                  payload: value,
+                });
               }}
             />
           </InlineField>

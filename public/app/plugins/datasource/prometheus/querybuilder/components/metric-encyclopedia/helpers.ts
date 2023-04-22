@@ -3,13 +3,13 @@ import { getMetadataHelp, getMetadataType } from '../../../language_provider';
 import { promQueryModeller } from '../../PromQueryModeller';
 import { PromVisualQuery } from '../../types';
 
-import { MetricEncyclopediaState } from './MetricEncyclopediaModal';
+import { MetricEncyclopediaMetadata } from './MetricEncyclopediaModal';
 import { HaystackDictionary, MetricData, MetricsData } from './types';
 
 export async function getMetadata(
   datasource: PrometheusDatasource,
   query: PromVisualQuery
-): Promise<MetricEncyclopediaState> {
+): Promise<MetricEncyclopediaMetadata> {
   // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   if (!datasource.languageProvider.metricsMetadata) {

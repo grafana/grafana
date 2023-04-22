@@ -57,7 +57,6 @@ export function LetterSearch(props: LetterSearchProps) {
           </span>
         );
       })}
-      ;
     </div>
   );
 }
