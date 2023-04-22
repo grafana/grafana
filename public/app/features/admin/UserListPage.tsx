@@ -31,7 +31,7 @@ const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView:
   />
 );
 
-const TAB_PAGE_MAP: Record<TabView, JSX.Element> = {
+const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
   [TabView.ADMIN]: <UserListAdminPageContent />,
   [TabView.ORG]: <UsersListPageContent />,
   [TabView.PUBLIC_DASHBOARDS]: <UserListPublicDashboardPage />,

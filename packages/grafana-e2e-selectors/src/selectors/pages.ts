@@ -307,5 +307,11 @@ export const Pages = {
     UserListAdminPage: {
       container: 'user-list-admin-page',
     },
+    UsersListPage: {
+      container: 'users-list-page',
+    },
+    UsersListPublicDashboardsPage: {
+      container: 'users-list-public-dashboards-page',
+    },
   },
 };
