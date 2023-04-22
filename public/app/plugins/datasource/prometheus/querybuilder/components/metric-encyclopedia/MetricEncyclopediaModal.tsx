@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
-  Button,
+  // Button,
   CellProps,
   Column,
   InlineField,
@@ -63,7 +63,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const styles = getStyles(theme, state.disableTextWrap);
 
   /**
-   * loads metrics and metadata on opening and switching off useBackend
+   * loads metrics and metadata on opening modal and switching off useBackend
    */
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
@@ -125,18 +125,14 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
     [datasource, query]
   );
 
-  const ButtonCell = ({
+  const ValueCell = ({
     row: {
       original: { value },
     },
   }: CellProps<MetricData, void>) => {
     return (
-      <Button
-        size="sm"
-        variant={'secondary'}
-        fill={'solid'}
-        aria-label="use this metric button"
-        data-testid={testIds.useMetric}
+      <div
+        className={styles.tableDiv}
         onClick={() => {
           onChange({ ...query, metric: value });
           reportInteraction('grafana_prom_metric_encycopedia_tracking', {
@@ -151,19 +147,71 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           onClose();
         }}
       >
-        Use this metric
-      </Button>
+        {value}
+      </div>
     );
   };
 
+  const TypeCell = ({
+    row: {
+      original: { type, value },
+    },
+  }: CellProps<MetricData, void>) => {
+    return (
+      <div
+        className={styles.tableDiv}
+        onClick={() => {
+          onChange({ ...query, metric: value });
+          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+            metric: value,
+            hasMetadata: state.hasMetadata,
+            totalMetricCount: state.totalMetricCount,
+            fuzzySearchQuery: state.fuzzySearchQuery,
+            fullMetaSearch: state.fullMetaSearch,
+            selectedTypes: state.selectedTypes,
+            letterSearch: state.letterSearch,
+          });
+          onClose();
+        }}
+      >
+        {type ? type : ' '}
+      </div>
+    );
+  };
+
+  const DescCell = ({
+    row: {
+      original: { description, value },
+    },
+  }: CellProps<MetricData, void>) => {
+    return (
+      <div
+        className={styles.tableDiv}
+        onClick={() => {
+          onChange({ ...query, metric: value });
+          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+            metric: value,
+            hasMetadata: state.hasMetadata,
+            totalMetricCount: state.totalMetricCount,
+            fuzzySearchQuery: state.fuzzySearchQuery,
+            fullMetaSearch: state.fullMetaSearch,
+            selectedTypes: state.selectedTypes,
+            letterSearch: state.letterSearch,
+          });
+          onClose();
+        }}
+      >
+        {description ? description : ' '}
+      </div>
+    );
+  };
   function tableResults(metrics: MetricsData) {
     const tableData: MetricsData = metrics;
 
     const columns: Array<Column<MetricData>> = [
-      { id: '', header: 'Select', cell: ButtonCell },
-      { id: 'value', header: 'Name' },
-      { id: 'type', header: 'Type' },
-      { id: 'description', header: 'Description' },
+      { id: 'value', header: 'Name', cell: ValueCell },
+      { id: 'type', header: 'Type', cell: TypeCell },
+      { id: 'description', header: 'Description', cell: DescCell },
     ];
 
     return <InteractiveTable className={styles.table} columns={columns} data={tableData} getRowId={(r) => r.value} />;
@@ -199,6 +247,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
           <EditorField label="Search metrics">
             <Input
+              autoFocus={true}
               data-testid={testIds.searchMetric}
               placeholder={placeholders.browse}
               value={state.fuzzySearchQuery}

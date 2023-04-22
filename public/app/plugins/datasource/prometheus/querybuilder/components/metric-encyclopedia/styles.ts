@@ -104,7 +104,11 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
       td {
         vertical-align: baseline;
+        padding: 0;
       }
+    `,
+    tableDiv: css`
+      padding: 8px;
     `,
   };
 };
