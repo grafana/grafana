@@ -189,6 +189,8 @@ We are excited to introduce a new panel that allows you to display trends where 
 
 We have implemented support for adding time regions to the time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday-Friday to display work weeks right alongside your data. Time regions are a useful way to highlight specific parts of a day like night, work hours, or whatever you define for each day. They allow the viewer to quickly orient themselves in parts of the day and/or ignore highlighted parts of the time series.
 
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
+
 ### Annotation filtering
 
 We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
