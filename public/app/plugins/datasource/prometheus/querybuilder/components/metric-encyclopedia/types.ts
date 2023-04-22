@@ -1,14 +1,3 @@
-import { PrometheusDatasource } from '../../../datasource';
-import { PromVisualQuery } from '../../types';
-
-export type MetricEncyclopediaProps = {
-  datasource: PrometheusDatasource;
-  isOpen: boolean;
-  query: PromVisualQuery;
-  onClose: () => void;
-  onChange: (query: PromVisualQuery) => void;
-};
-
 export type MetricsData = MetricData[];
 
 export type MetricData = {

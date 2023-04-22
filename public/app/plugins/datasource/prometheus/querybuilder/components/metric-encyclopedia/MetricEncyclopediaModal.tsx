@@ -21,14 +21,15 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { getMetadataHelp, getMetadataType } from '../../../language_provider';
-import { promQueryModeller } from '../../PromQueryModeller';
+import { PrometheusDatasource } from '../../../datasource';
 import { regexifyLabelValuesQueryString } from '../../shared/parsingUtils';
+import { PromVisualQuery } from '../../types';
 import { FeedbackLink } from '.././FeedbackLink';
 
 import { LetterSearch } from './LetterSearch';
+import { getMetadata } from './helpers';
 import { getStyles } from './styles';
-import { PromFilterOption, MetricsData, MetricEncyclopediaProps, HaystackDictionary, MetricData } from './types';
+import { PromFilterOption, MetricsData, HaystackDictionary, MetricData } from './types';
 import { fuzzySearch } from './uFuzzy';
 
 export const promTypes: PromFilterOption[] = [
@@ -67,46 +68,99 @@ const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
 
-// An enum with all the types of actions to use in our reducer
-type ActionKind = 'setIsLoading';
-
 // An interface for our actions
-interface Action {
-  type: ActionKind;
-  payload: boolean;
-}
+type Action =
+  | { type: 'setIsLoading'; payload: boolean }
+  | {
+      type: 'init';
+      payload: {
+        metrics: MetricsData;
+        hasMetadata: boolean;
+        metaHaystack: string[];
+        nameHaystack: string[];
+        metaHaystackDictionary: HaystackDictionary;
+        nameHaystackDictionary: HaystackDictionary;
+        totalMetricCount: number;
+        filteredMetricCount: number | null;
+      };
+    }
+  | {
+      type: 'filterMetricsBackend';
+      payload: {
+        metrics: MetricsData;
+        filteredMetricCount: number;
+      };
+    }
+  | { type: 'setFilteredMetricCount'; payload: number };
 
 // An interface for our state
-interface MetricEncyclopediaState {
+export interface MetricEncyclopediaState {
   isLoading: boolean;
+  metrics: MetricsData;
+  hasMetadata: boolean;
+  metaHaystack: string[];
+  nameHaystack: string[];
+  metaHaystackDictionary: HaystackDictionary;
+  nameHaystackDictionary: HaystackDictionary;
+  totalMetricCount: number;
+  filteredMetricCount: number | null;
 }
+
+export type MetricEncyclopediaProps = {
+  datasource: PrometheusDatasource;
+  isOpen: boolean;
+  query: PromVisualQuery;
+  onClose: () => void;
+  onChange: (query: PromVisualQuery) => void;
+};
 
 // Our reducer function that uses a switch statement to handle our actions
 function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action: Action) {
   const { type, payload } = action;
   switch (type) {
+    case 'filterMetricsBackend':
+      return {
+        ...state,
+        ...payload,
+      };
+    case 'init':
+      return {
+        ...state,
+        ...payload,
+      };
     case 'setIsLoading':
       return {
         ...state,
         isLoading: payload,
+      };
+    case 'setFilteredMetricCount':
+      return {
+        ...state,
+        filteredMetricCount: payload,
       };
     default:
       return state;
   }
 }
 
+const initialState = {
+  isLoading: true,
+  metrics: [],
+  hasMetadata: true,
+  metaHaystack: [],
+  nameHaystack: [],
+  metaHaystackDictionary: {},
+  nameHaystackDictionary: {},
+  totalMetricCount: 0,
+  filteredMetricCount: null,
+};
+
+// next step, access state and update all the things that need to be updated when
+// the interactions happen
 export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
-  const [state, dispatch] = useReducer(MetricEncyclopediaReducer, { isLoading: false });
-
-  // const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // metric list
-  const [metrics, setMetrics] = useState<MetricsData>([]);
-  const [hasMetadata, setHasMetadata] = useState<boolean>(true);
-  const [metaHaystack, setMetaHaystack] = useState<string[]>([]);
-  const [nameHaystack, setNameHaystack] = useState<string[]>([]);
+  const [state, dispatch] = useReducer(MetricEncyclopediaReducer, initialState);
 
   // pagination
   const [resultsPerPage, setResultsPerPage] = useState<number>(DEFAULT_RESULTS_PER_PAGE);
@@ -114,9 +168,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
   // filters
   const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
-  const [nameHaystackDictionary, setNameHaystackDictionary] = useState<HaystackDictionary>({});
   const [nameHaystackOrder, setNameHaystackOrder] = useState<string[]>([]);
-  const [metaHaystackDictionary, setMetaHaystackDictionary] = useState<HaystackDictionary>({});
   const [metaHaystackOrder, setMetaHaystackOrder] = useState<string[]>([]);
 
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
@@ -124,8 +176,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
-  const [totalMetricCount, setTotalMetricCount] = useState<number>(0);
-  const [filteredMetricCount, setFilteredMetricCount] = useState<number>();
   // backend search metric names by text
   const [useBackend, setUseBackend] = useState<boolean>(false);
   const [disableTextWrap, setDisableTextWrap] = useState<boolean>(false);
@@ -136,76 +186,27 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       type: 'setIsLoading',
       payload: true,
     });
-    // setIsLoading(true);
 
-    // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
-    // don't use it with the visual builder and there is no need to run all the start() setup anyway.
-    if (!datasource.languageProvider.metricsMetadata) {
-      await datasource.languageProvider.loadMetricsMetadata();
-    }
+    const data: MetricEncyclopediaState = await getMetadata(datasource, query);
 
-    // Error handling for when metrics metadata returns as undefined
-    // *** Will have to handle metadata filtering if this happens
-    // *** only display metrics fuzzy search, filter and pagination
-    if (!datasource.languageProvider.metricsMetadata) {
-      setHasMetadata(false);
-      datasource.languageProvider.metricsMetadata = {};
-    }
-
-    // filter by adding the query.labels to the search?
-    // *** do this in the filter???
-    let metrics;
-    if (query.labels.length > 0) {
-      const expr = promQueryModeller.renderLabels(query.labels);
-      metrics = (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
-    } else {
-      metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
-    }
-
-    let metaHaystackData: string[] = [];
-    let nameHaystackData: string[] = [];
-
-    let nameHaystackDictionaryData: HaystackDictionary = {};
-    let metaHaystackDictionaryData: HaystackDictionary = {};
-
-    let metricsData: MetricsData = metrics.map((m: string) => {
-      const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
-      const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
-
-      // string[] = name + type + description
-      const metaDataString = `${m} ${type} ${description}`;
-      metaHaystackData.push(metaDataString);
-      nameHaystackData.push(m);
-
-      const metricData: MetricData = {
-        value: m,
-        type: type,
-        description: description,
-      };
-
-      nameHaystackDictionaryData[m] = metricData;
-      metaHaystackDictionaryData[metaDataString] = metricData;
-
-      return metricData;
+    dispatch({
+      type: 'init',
+      payload: {
+        hasMetadata: data.hasMetadata,
+        metrics: data.metrics,
+        metaHaystack: data.metaHaystack,
+        nameHaystack: data.nameHaystack,
+        metaHaystackDictionary: data.metaHaystackDictionary,
+        nameHaystackDictionary: data.nameHaystackDictionary,
+        totalMetricCount: data.metrics.length,
+        filteredMetricCount: data.metrics.length,
+      },
     });
-
-    // setting this by the backend if useBackend is true
-    setMetrics(metricsData);
-    setMetaHaystack(metaHaystackData);
-    setNameHaystack(nameHaystackData);
-
-    // when choosing a fuzzy filtering option, have the list generated by uFuzzy
-    setMetaHaystackDictionary(metaHaystackDictionaryData);
-    setNameHaystackDictionary(nameHaystackDictionaryData);
-
-    setTotalMetricCount(metricsData.length);
-    setFilteredMetricCount(metricsData.length);
 
     dispatch({
       type: 'setIsLoading',
       payload: false,
     });
-    // setIsLoading(false);
   }, [query, datasource]);
 
   useEffect(() => {
@@ -243,8 +244,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   }
 
   /**
-   * Filter
-   *
+   * Filter the metrics with all the options, fuzzy, type, letter
    * @param metrics
    * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
    * @returns
@@ -254,9 +254,9 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
     if (fuzzySearchQuery && !useBackend) {
       if (fullMetaSearch) {
-        filteredMetrics = metaHaystackOrder.map((needle: string) => metaHaystackDictionary[needle]);
+        filteredMetrics = metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
       } else {
-        filteredMetrics = nameHaystackOrder.map((needle: string) => nameHaystackDictionary[needle]);
+        filteredMetrics = nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
       }
     }
 
@@ -294,8 +294,11 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   function displayedMetrics(metrics: MetricsData) {
     const filteredSorted: MetricsData = filterMetrics(metrics);
 
-    if (filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
-      setFilteredMetricCount(filteredSorted.length);
+    if (state.filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
+      dispatch({
+        type: 'setFilteredMetricCount',
+        payload: filteredSorted.length,
+      });
     }
 
     return sliceMetrics(filteredSorted, pageNum, resultsPerPage);
@@ -331,9 +334,14 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           });
         });
 
-        setMetrics(metrics);
-        setFilteredMetricCount(metrics.length);
-        // setIsLoading(false);
+        dispatch({
+          type: 'filterMetricsBackend',
+          payload: {
+            metrics: metrics,
+            filteredMetricCount: metrics.length,
+          },
+        });
+
         dispatch({
           type: 'setIsLoading',
           payload: false,
@@ -370,8 +378,8 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           onChange({ ...query, metric: value });
           reportInteraction('grafana_prom_metric_encycopedia_tracking', {
             metric: value,
-            hasMetadata: hasMetadata,
-            totalMetricCount: metrics.length,
+            hasMetadata: state.hasMetadata,
+            totalMetricCount: state.totalMetricCount,
             fuzzySearchQuery: fuzzySearchQuery,
             fullMetaSearch: fullMetaSearch,
             selectedTypes: selectedTypes,
@@ -409,9 +417,9 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       // fuzzy search go!
 
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(metaHaystack, query, setMetaHaystackOrder);
+        debouncedFuzzySearch(state.metaHaystack, query, setMetaHaystackOrder);
       } else {
-        debouncedFuzzySearch(nameHaystack, query, setNameHaystackOrder);
+        debouncedFuzzySearch(state.nameHaystack, query, setNameHaystackOrder);
       }
     }
   }
@@ -450,7 +458,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
               inputId="my-select"
               options={typeOptions}
               value={selectedTypes}
-              disabled={!hasMetadata || useBackend}
+              disabled={!state.hasMetadata || useBackend}
               placeholder={placeholders.type}
               onChange={(v) => {
                 // *** Filter by type
@@ -493,7 +501,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
               <Switch
                 data-testid={testIds.searchWithMetadata}
                 value={fullMetaSearch}
-                disabled={useBackend || !hasMetadata}
+                disabled={useBackend || !state.hasMetadata}
                 onChange={() => {
                   const newVal = !fullMetaSearch;
                   setFullMetaSearch(newVal);
@@ -534,7 +542,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       <h4 className={styles.resultsHeading}>Results</h4>
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
-          Showing {filteredMetricCount} of {totalMetricCount} total metrics.{' '}
+          Showing {state.filteredMetricCount} of {state.totalMetricCount} total metrics.{' '}
           {state.isLoading && <Spinner className={styles.loadingSpinner} />}
         </div>
         {query.labels.length > 0 && (
@@ -546,7 +554,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
       <div className={styles.alphabetRow}>
         <LetterSearch
-          filteredMetrics={filterMetrics(metrics, true)}
+          filteredMetrics={filterMetrics(state.metrics, true)}
           disableTextWrap={disableTextWrap}
           updateLetterSearch={(letter: string) => {
             if (letterSearch === letter) {
@@ -566,7 +574,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           <div className={styles.selectItem}>
             <Switch
               value={excludeNullMetadata}
-              disabled={useBackend || !hasMetadata}
+              disabled={useBackend || !state.hasMetadata}
               onChange={() => {
                 setExcludeNullMetadata(!excludeNullMetadata);
                 setPageNum(1);
@@ -577,14 +585,14 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
         </div>
       </div>
 
-      <div className={styles.results}>{metrics && tableResults(displayedMetrics(metrics))}</div>
+      <div className={styles.results}>{state.metrics && tableResults(displayedMetrics(state.metrics))}</div>
 
       <div className={styles.pageSettingsWrapper}>
         <div className={styles.pageSettings}>
           <InlineField label="Select page" labelWidth={20} className="query-keyword">
             <Select
               data-testid={testIds.searchPage}
-              options={calculatePageList(metrics, resultsPerPage).map((p) => {
+              options={calculatePageList(state.metrics, resultsPerPage).map((p) => {
                 return { value: p, label: '' + p };
               })}
               value={pageNum ?? 1}
