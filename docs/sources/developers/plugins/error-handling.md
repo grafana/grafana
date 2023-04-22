@@ -4,9 +4,7 @@ title: Error handling
 
 # Error handling
 
-test
-
-This guide explains how to handle errors in plugins.
+This guide explains how to handle errors in plugins and provides suggestions for common scenarios.
 
 ## Provide usable defaults
 
@@ -35,7 +33,7 @@ Grafana displays the error message in the top-left corner of the panel.
 
 {{< figure src="/static/img/docs/panel_error.png" class="docs-image--no-shadow" max-width="850px" >}}
 
-Avoid displaying overly-technical error messages to the user. If you want to let technical users report an error, consider logging it instead.
+We recommend that you avoid displaying overly technical error messages to the user. If you want to let technical users report an error, consider logging it to the console instead.
 
 ```ts
 try {
@@ -46,7 +44,9 @@ try {
 }
 ```
 
-> **Note:** Grafana displays the exception message in the UI as written, so we recommend using grammatically correct sentences. For more information, refer to the [Documentation style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/documentation-style-guide.md).
+> **Note:** Grafana displays the exception message in the UI as written, so use grammatically correct sentences. For more information, refer to the [Documentation style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/documentation-style-guide.md).
+
+## Common error scenarios
 
 Here are some examples of situations where you might want to display an error to the user.
 
