@@ -51,7 +51,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     resultsDataFiltered: css`
       margin: 0;
-      color: ${theme.colors.warning.main};
+      color: ${theme.colors.warning.text};
     `,
     alphabetRow: css`
       display: flex;
