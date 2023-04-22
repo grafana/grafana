@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Redirects URLs that are missing the configured subpath to an URL that contains the subpath.
+// SubPathRedirect Redirects URLs that are missing the configured subpath to an URL that contains the subpath.
 func SubPathRedirect(cfg *setting.Cfg) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
