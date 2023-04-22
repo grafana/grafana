@@ -81,7 +81,7 @@ export type MetricEncyclopediaMetadata = {
 };
 
 // An interface for our actions
-type Action =
+export type Action =
   | { type: 'setIsLoading'; payload: boolean }
   | {
       type: 'setMetadata';
@@ -96,7 +96,10 @@ type Action =
     }
   | { type: 'setFilteredMetricCount'; payload: number }
   | { type: 'setResultsPerPage'; payload: number }
-  | { type: 'setPageNum'; payload: number };
+  | { type: 'setPageNum'; payload: number }
+  | { type: 'setFuzzySearchQuery'; payload: string }
+  | { type: 'setNameHaystackOrder'; payload: string[] }
+  | { type: 'setMetaHaystackOrder'; payload: string[] };
 
 // An interface for our state
 export interface MetricEncyclopediaState {
@@ -111,6 +114,10 @@ export interface MetricEncyclopediaState {
   filteredMetricCount: number | null;
   resultsPerPage: number;
   pageNum: number;
+  fuzzySearchQuery: string;
+  letterSearch: string | null;
+  nameHaystackOrder: string[];
+  metaHaystackOrder: string[];
 }
 
 export type MetricEncyclopediaProps = {
@@ -155,6 +162,23 @@ function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action: Actio
         ...state,
         pageNum: payload,
       };
+    case 'setFuzzySearchQuery':
+      return {
+        ...state,
+        fuzzySearchQuery: payload,
+        pageNum: 1,
+        letterSearch: null,
+      };
+    case 'setNameHaystackOrder':
+      return {
+        ...state,
+        nameHaystackOrder: payload,
+      };
+    case 'setMetaHaystackOrder':
+      return {
+        ...state,
+        metaHaystackOrder: payload,
+      };
     default:
       return state;
   }
@@ -172,6 +196,10 @@ const initialState = {
   filteredMetricCount: null,
   resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
   pageNum: 1,
+  fuzzySearchQuery: '',
+  letterSearch: null,
+  nameHaystackOrder: [],
+  metaHaystackOrder: [],
 };
 
 // next step, access state and update all the things that need to be updated when
@@ -182,10 +210,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const [state, dispatch] = useReducer(MetricEncyclopediaReducer, initialState);
 
   // filters
-  const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
-  const [nameHaystackOrder, setNameHaystackOrder] = useState<string[]>([]);
-  const [metaHaystackOrder, setMetaHaystackOrder] = useState<string[]>([]);
-
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
@@ -263,11 +287,11 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
-    if (fuzzySearchQuery && !useBackend) {
+    if (state.fuzzySearchQuery && !useBackend) {
       if (fullMetaSearch) {
-        filteredMetrics = metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
+        filteredMetrics = state.metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
       } else {
-        filteredMetrics = nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
+        filteredMetrics = state.nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
       }
     }
 
@@ -391,7 +415,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             metric: value,
             hasMetadata: state.hasMetadata,
             totalMetricCount: state.totalMetricCount,
-            fuzzySearchQuery: fuzzySearchQuery,
+            fuzzySearchQuery: state.fuzzySearchQuery,
             fullMetaSearch: fullMetaSearch,
             selectedTypes: selectedTypes,
             letterSearch: letterSearch,
@@ -428,9 +452,10 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       // fuzzy search go!
 
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(state.metaHaystack, query, setMetaHaystackOrder);
+        debouncedFuzzySearch(state.metaHaystack, query, 'setMetaHaystackOrder', dispatch);
       } else {
-        debouncedFuzzySearch(state.nameHaystack, query, setNameHaystackOrder);
+        debouncedFuzzySearch(state.nameHaystack, query, 'setNameHaystackOrder', dispatch);
+        // debouncedFuzzySearch(state.nameHaystack, query, setNameHaystackOrder);
       }
     }
   }
@@ -450,17 +475,21 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             <Input
               data-testid={testIds.searchMetric}
               placeholder={placeholders.browse}
-              value={fuzzySearchQuery}
+              value={state.fuzzySearchQuery}
               onInput={(e) => {
                 const value = e.currentTarget.value ?? '';
-                setFuzzySearchQuery(value);
-                setLetterSearch(null);
+                dispatch({
+                  type: 'setFuzzySearchQuery',
+                  payload: value,
+                });
+
+                // setLetterSearch(null);
                 fuzzySearchCallback(value, fullMetaSearch);
 
-                dispatch({
-                  type: 'setPageNum',
-                  payload: 1,
-                });
+                // dispatch({
+                //   type: 'setPageNum',
+                //   payload: 1,
+                // });
               }}
             />
           </EditorField>
@@ -523,7 +552,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                   const newVal = !fullMetaSearch;
                   setFullMetaSearch(newVal);
 
-                  fuzzySearchCallback(fuzzySearchQuery, newVal);
+                  fuzzySearchCallback(state.fuzzySearchQuery, newVal);
 
                   dispatch({
                     type: 'setPageNum',
@@ -545,8 +574,8 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                     updateMetricsMetadata();
                   } else {
                     // check if there is text in the browse search and update
-                    if (fuzzySearchQuery !== '') {
-                      debouncedBackendSearch(fuzzySearchQuery);
+                    if (state.fuzzySearchQuery !== '') {
+                      debouncedBackendSearch(state.fuzzySearchQuery);
                     }
                     // otherwise wait for user typing
                   }

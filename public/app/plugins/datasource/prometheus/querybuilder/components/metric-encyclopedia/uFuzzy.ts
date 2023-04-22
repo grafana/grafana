@@ -1,5 +1,6 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
+import { Action } from './MetricEncyclopediaModal';
 import { UFuzzyInfo } from './types';
 
 const uf = new uFuzzy({
@@ -13,7 +14,8 @@ const uf = new uFuzzy({
 export function fuzzySearch(
   haystack: string[],
   query: string,
-  orderSetter: React.Dispatch<React.SetStateAction<string[]>>
+  type: 'setMetaHaystackOrder' | 'setNameHaystackOrder',
+  dispatcher: React.Dispatch<Action>
 ) {
   let idxs = uf.filter(haystack, query);
   idxs = idxs ?? [];
@@ -28,5 +30,10 @@ export function fuzzySearch(
     haystackOrder.push(haystack[info.idx[infoIdx]]);
   }
 
-  idxs && orderSetter(haystackOrder);
+  const action = {
+    type: type,
+    payload: haystackOrder,
+  };
+
+  idxs && dispatcher(action);
 }
