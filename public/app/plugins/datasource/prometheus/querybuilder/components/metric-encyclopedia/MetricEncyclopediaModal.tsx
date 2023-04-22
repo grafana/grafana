@@ -18,6 +18,7 @@ import {
   Select,
   Spinner,
   useTheme2,
+  Pagination,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
@@ -415,25 +416,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
       <div className={styles.pageSettingsWrapper}>
         <div className={styles.pageSettings}>
-          <InlineField label="Select page" labelWidth={20} className="query-keyword">
-            <Select
-              data-testid={testIds.searchPage}
-              options={calculatePageList(state).map((p) => {
-                return { value: p, label: '' + p };
-              })}
-              value={state.pageNum ?? 1}
-              placeholder="select page"
-              width={20}
-              onChange={(e) => {
-                const value = e.value ?? 1;
-                dispatch({
-                  type: 'setPageNum',
-                  payload: value,
-                });
-              }}
-            />
-          </InlineField>
-
           <InlineField
             label="# results per page"
             tooltip={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
@@ -458,6 +440,16 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
               }}
             />
           </InlineField>
+          <Pagination
+            currentPage={state.pageNum ?? 1}
+            numberOfPages={calculatePageList(state).length}
+            onNavigate={(val: number) =>
+              dispatch({
+                type: 'setPageNum',
+                payload: val ?? 1,
+              })
+            }
+          />
         </div>
 
         <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
