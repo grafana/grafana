@@ -36,9 +36,6 @@ export async function getMetadata(
     metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
   }
 
-  let metaHaystackData: string[] = [];
-  let nameHaystackData: string[] = [];
-
   let nameHaystackDictionaryData: HaystackDictionary = {};
   let metaHaystackDictionaryData: HaystackDictionary = {};
 
@@ -48,8 +45,6 @@ export async function getMetadata(
 
     // string[] = name + type + description
     const metaDataString = `${m} ${type} ${description}`;
-    metaHaystackData.push(metaDataString);
-    nameHaystackData.push(m);
 
     const metricData: MetricData = {
       value: m,
@@ -67,8 +62,6 @@ export async function getMetadata(
     isLoading: false,
     hasMetadata: hasMetadata,
     metrics: metricsData,
-    metaHaystack: metaHaystackData,
-    nameHaystack: nameHaystackData,
     metaHaystackDictionary: metaHaystackDictionaryData,
     nameHaystackDictionary: nameHaystackDictionaryData,
     totalMetricCount: metricsData.length,

@@ -72,8 +72,6 @@ export type MetricEncyclopediaMetadata = {
   isLoading: boolean;
   metrics: MetricsData;
   hasMetadata: boolean;
-  metaHaystack: string[];
-  nameHaystack: string[];
   metaHaystackDictionary: HaystackDictionary;
   nameHaystackDictionary: HaystackDictionary;
   totalMetricCount: number;
@@ -111,8 +109,6 @@ export interface MetricEncyclopediaState {
   isLoading: boolean;
   metrics: MetricsData;
   hasMetadata: boolean;
-  metaHaystack: string[];
-  nameHaystack: string[];
   metaHaystackDictionary: HaystackDictionary;
   nameHaystackDictionary: HaystackDictionary;
   totalMetricCount: number;
@@ -263,8 +259,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
         isLoading: false,
         hasMetadata: data.hasMetadata,
         metrics: data.metrics,
-        metaHaystack: data.metaHaystack,
-        nameHaystack: data.nameHaystack,
         metaHaystackDictionary: data.metaHaystackDictionary,
         nameHaystackDictionary: data.nameHaystackDictionary,
         totalMetricCount: data.metrics.length,
@@ -476,9 +470,9 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       // search either the names or all metadata
       // fuzzy search go!
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(state.metaHaystack, query, 'setMetaHaystackOrder', dispatch);
+        debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, 'setMetaHaystackOrder', dispatch);
       } else {
-        debouncedFuzzySearch(state.nameHaystack, query, 'setNameHaystackOrder', dispatch);
+        debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, 'setNameHaystackOrder', dispatch);
       }
     }
   }
