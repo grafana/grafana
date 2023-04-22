@@ -1,6 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
+import { debounce as debounceLodash } from 'lodash';
 
-import { Action } from './MetricEncyclopediaModal';
+import { Action } from './state/types';
 import { UFuzzyInfo } from './types';
 
 const uf = new uFuzzy({
@@ -37,3 +38,5 @@ export function fuzzySearch(
 
   idxs && dispatcher(action);
 }
+
+export const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
