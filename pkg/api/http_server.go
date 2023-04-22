@@ -605,7 +605,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
-		m.Use(middleware.SubPathRedirect(hs.Cfg))
+		m.UseMiddleware(middleware.SubPathRedirect(hs.Cfg))
 	}
 
 	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
