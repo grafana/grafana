@@ -3,7 +3,7 @@ import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTheme2, IconName, Button, Icon, IconButton, AlertVariant } from '@grafana/ui';
+import { useTheme2, IconName, Button, Icon, IconButton, AlertVariant, Link } from '@grafana/ui';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -15,6 +15,11 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  successMessage?: ReactNode;
+  exploreUrl: string;
+  canExploreDataSources: boolean;
+  dataSourceId: string;
+  onDashboardLinkClicked: any;
 }
 
 export function getIconFromSeverity(severity: AlertVariant): IconName {
@@ -29,6 +34,9 @@ export function getIconFromSeverity(severity: AlertVariant): IconName {
   }
 }
 
+const createDashboardLinkText = `creating a dashboard`;
+const exploreDataLinkText = `exploring the data`;
+
 export const DataSourceConfigAlert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
@@ -41,6 +49,10 @@ export const DataSourceConfigAlert = React.forwardRef<HTMLDivElement, Props>(
       topSpacing,
       className,
       severity = 'error',
+      exploreUrl,
+      canExploreDataSources,
+      dataSourceId,
+      onDashboardLinkClicked,
       ...restProps
     },
     ref
@@ -73,6 +85,28 @@ export const DataSourceConfigAlert = React.forwardRef<HTMLDivElement, Props>(
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
+          {severity === 'success' && (
+            <div className={styles.content}>
+              Next, you can analyze the data by &nbsp;
+              <Link
+                aria-label={`Create a dashboard`}
+                href={`../../dashboard/new-with-ds/${dataSourceId}`}
+                className={styles.link}
+                onClick={onDashboardLinkClicked}
+              >
+                {createDashboardLinkText}
+              </Link>
+              , or &nbsp;
+              <Link
+                aria-label={`Explore data`}
+                className={cx(styles.link, { [`${styles.disabled}`]: !canExploreDataSources })}
+                href={exploreUrl}
+              >
+                {exploreDataLinkText}
+              </Link>
+              .
+            </div>
+          )}
         </div>
 
         {/* If onRemove is specified, giving preference to onRemove */}
@@ -161,6 +195,14 @@ const getStyles = (
       padding-top: ${hasTitle ? theme.spacing(1) : 0};
       max-height: 50vh;
       overflow-y: auto;
+    `,
+    link: css`
+      color: ${theme.colors.primary.text};
+      text-decoration: underline;
+    `,
+    disabled: css`
+      pointer-events: none;
+      color: ${theme.colors.text.secondary};
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};
