@@ -34,8 +34,8 @@ export function getIconFromSeverity(severity: AlertVariant): IconName {
   }
 }
 
-const createDashboardLinkText = `creating a dashboard`;
-const exploreDataLinkText = `exploring the data`;
+export const createDashboardLinkText = `creating a dashboard`;
+export const exploreDataLinkText = `exploring the data`;
 
 export const DataSourceConfigAlert = React.forwardRef<HTMLDivElement, Props>(
   (
