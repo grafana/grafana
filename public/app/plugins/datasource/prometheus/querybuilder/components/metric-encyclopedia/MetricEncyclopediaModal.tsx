@@ -28,8 +28,8 @@ import {
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
   MetricEncyclopediaReducer,
+  MetricEncyclopediaMetadata,
 } from './state/state';
-import { MetricEncyclopediaMetadata } from './state/types';
 import { getStyles } from './styles';
 import { PromFilterOption, MetricData } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
@@ -45,7 +45,7 @@ export type MetricEncyclopediaProps = {
 export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
-  const [state, dispatch] = useReducer(MetricEncyclopediaReducer, initialState);
+  const [state, dispatch] = useReducer(MetricEncyclopediaReducer, initialState());
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
@@ -133,9 +133,9 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       // search either the names or all metadata
       // fuzzy search go!
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, 'setMetaHaystackOrder', dispatch);
+        debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, 'setMetaHaystack', dispatch);
       } else {
-        debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, 'setNameHaystackOrder', dispatch);
+        debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, 'setNameHaystack', dispatch);
       }
     }
   }

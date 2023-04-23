@@ -7,7 +7,7 @@ import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { Action, MetricEncyclopediaMetadata, MetricEncyclopediaState } from './types';
+import { Action, MetricEncyclopediaMetadata, MetricEncyclopediaState } from './state';
 
 export async function getMetadata(
   datasource: PrometheusDatasource,

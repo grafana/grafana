@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
+import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -7,7 +8,7 @@ import { useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
-import { MetricEncyclopediaState } from './state/types';
+import { MetricEncyclopediaState } from './state/state';
 import { MetricData, MetricsData } from './types';
 
 type ResultsTableProps = {
@@ -68,6 +69,38 @@ export function ResultsTable(props: ResultsTableProps) {
     }
   }, [selectedIdx, hovered]);
 
+  function metaHighlighting(metric: MetricData) {
+    if (state.fullMetaSearch) {
+      return (
+        <>
+          <td>
+            <Highlighter
+              textToHighlight={metric.type ?? ''}
+              searchWords={state.metaHaystackMatches}
+              autoEscape
+              highlightClassName={styles.matchHighLight}
+            />
+          </td>
+          <td>
+            <Highlighter
+              textToHighlight={metric.description ?? ''}
+              searchWords={state.metaHaystackMatches}
+              autoEscape
+              highlightClassName={styles.matchHighLight}
+            />
+          </td>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <td>{metric.type}</td>
+          <td>{metric.description}</td>
+        </>
+      );
+    }
+  }
+
   return (
     <table className={styles.table} ref={tableRef}>
       <thead>
@@ -91,9 +124,15 @@ export function ResultsTable(props: ResultsTableProps) {
                     setSelectedIdx(idx);
                   }}
                 >
-                  <td>{metric.value}</td>
-                  <td>{metric.type}</td>
-                  <td>{metric.description}</td>
+                  <td>
+                    <Highlighter
+                      textToHighlight={metric.value}
+                      searchWords={state.fullMetaSearch ? state.metaHaystackMatches : state.nameHaystackMatches}
+                      autoEscape
+                      highlightClassName={styles.matchHighLight}
+                    />
+                  </td>
+                  {metaHighlighting(metric)}
                 </tr>
               );
             })}
@@ -137,6 +176,11 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     selectedRow: css`
       background-color: ${rowHoverBg};
+    `,
+    matchHighLight: css`
+      background: inherit;
+      color: ${theme.components.textHighlight.text};
+      background-color: ${theme.components.textHighlight.background};
     `,
   };
 };
