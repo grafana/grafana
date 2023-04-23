@@ -89,6 +89,21 @@ export function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action
         ...state,
         disableTextWrap: !state.disableTextWrap,
       };
+    case 'setSelectedIdx':
+      return {
+        ...state,
+        selectedIdx: payload,
+      };
+    case 'showAdditionalSettings':
+      return {
+        ...state,
+        showAdditionalSettings: !state.showAdditionalSettings,
+      };
+    case 'setHovered':
+      return {
+        ...state,
+        hovered: payload,
+      };
     default:
       return state;
   }
@@ -115,4 +130,7 @@ export const initialState = {
   letterSearch: '',
   useBackend: false,
   disableTextWrap: false,
+  selectedIdx: 0,
+  showAdditionalSettings: false,
+  hovered: false,
 };

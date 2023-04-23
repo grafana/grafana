@@ -1,0 +1,142 @@
+import { css } from '@emotion/css';
+import React, { useEffect, useRef } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { useTheme2 } from '@grafana/ui';
+
+import { PromVisualQuery } from '../../types';
+
+import { MetricEncyclopediaState } from './state/types';
+import { MetricData, MetricsData } from './types';
+
+type ResultsTableProps = {
+  metrics: MetricsData;
+  onChange: (query: PromVisualQuery) => void;
+  onClose: () => void;
+  query: PromVisualQuery;
+  state: MetricEncyclopediaState;
+  selectedIdx: number;
+  setSelectedIdx: (idx: number) => void;
+  disableTextWrap: boolean;
+  hovered: boolean;
+  setHovered: (set: boolean) => void;
+};
+
+export function ResultsTable(props: ResultsTableProps) {
+  const {
+    metrics,
+    onChange,
+    onClose,
+    query,
+    state,
+    selectedIdx,
+    setSelectedIdx,
+    disableTextWrap,
+    hovered,
+    setHovered,
+  } = props;
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, disableTextWrap);
+
+  const tableRef = useRef<HTMLTableElement | null>(null);
+
+  function isSelectedRow(idx: number): boolean {
+    return idx === selectedIdx;
+  }
+
+  function selectMetric(metric: MetricData) {
+    onChange({ ...query, metric: metric.value });
+    reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+      metric: metric.value,
+      hasMetadata: state.hasMetadata,
+      totalMetricCount: state.totalMetricCount,
+      fuzzySearchQuery: state.fuzzySearchQuery,
+      fullMetaSearch: state.fullMetaSearch,
+      selectedTypes: state.selectedTypes,
+      letterSearch: state.letterSearch,
+    });
+    onClose();
+  }
+
+  useEffect(() => {
+    const tr = tableRef.current?.getElementsByClassName('selected-row')[0];
+
+    if (!hovered) {
+      tr?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [selectedIdx, hovered]);
+
+  return (
+    <table className={styles.table} ref={tableRef}>
+      <thead>
+        <tr className={styles.header}>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <>
+          {metrics &&
+            metrics.map((metric: MetricData, idx: number) => {
+              return (
+                <tr
+                  key={metric.value}
+                  className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
+                  onClick={() => selectMetric(metric)}
+                  onMouseEnter={() => {
+                    setHovered(true);
+                    setSelectedIdx(idx);
+                  }}
+                >
+                  <td>{metric.value}</td>
+                  <td>{metric.type}</td>
+                  <td>{metric.description}</td>
+                </tr>
+              );
+            })}
+        </>
+        <tr></tr>
+      </tbody>
+    </table>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
+  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
+
+  return {
+    table: css`
+      border-radius: ${theme.shape.borderRadius()};
+      width: 100%;
+      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
+      td {
+        padding: ${theme.spacing(1)};
+      }
+
+      td,
+      th {
+        min-width: ${theme.spacing(3)};
+      }
+    `,
+    disableGrow: css`
+      width: 0%;
+    `,
+    header: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
+    `,
+    row: css`
+      label: row;
+      border-bottom: 1px solid ${theme.colors.border.weak};
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    `,
+    selectedRow: css`
+      background-color: ${rowHoverBg};
+    `,
+  };
+};

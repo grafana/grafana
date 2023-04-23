@@ -22,6 +22,9 @@ export interface MetricEncyclopediaState {
   letterSearch: string;
   useBackend: boolean;
   disableTextWrap: boolean;
+  selectedIdx: number;
+  showAdditionalSettings: boolean;
+  hovered: boolean;
 }
 
 // type for the useEffect load metadata
@@ -62,4 +65,7 @@ export type Action =
   | { type: 'setSelectedTypes'; payload: Array<SelectableValue<string>> }
   | { type: 'setLetterSearch'; payload: string }
   | { type: 'setUseBackend'; payload: boolean }
-  | { type: 'setDisableTextWrap'; payload: null };
+  | { type: 'setSelectedIdx'; payload: number }
+  | { type: 'setDisableTextWrap'; payload: null }
+  | { type: 'showAdditionalSettings'; payload: null }
+  | { type: 'setHovered'; payload: boolean };

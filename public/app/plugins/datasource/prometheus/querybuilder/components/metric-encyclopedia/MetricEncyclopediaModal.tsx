@@ -5,27 +5,14 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  // Button,
-  CellProps,
-  Column,
-  InlineField,
-  Switch,
-  Input,
-  InteractiveTable,
-  Modal,
-  MultiSelect,
-  Select,
-  Spinner,
-  useTheme2,
-  Pagination,
-} from '@grafana/ui';
+import { InlineField, Switch, Input, Modal, MultiSelect, Spinner, useTheme2, Pagination, Button } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 import { FeedbackLink } from '.././FeedbackLink';
 
 import { LetterSearch } from './LetterSearch';
+import { ResultsTable } from './ResultsTable';
 import {
   calculatePageList,
   calculateResultsPerPage,
@@ -44,7 +31,7 @@ import {
 } from './state/state';
 import { MetricEncyclopediaMetadata } from './state/types';
 import { getStyles } from './styles';
-import { PromFilterOption, MetricsData, MetricData } from './types';
+import { PromFilterOption, MetricData } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
 export type MetricEncyclopediaProps = {
@@ -75,12 +62,20 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
     const data: MetricEncyclopediaMetadata = await getMetadata(datasource, query);
 
+    const variables = datasource.getVariables().map((v: string): MetricData => {
+      return {
+        value: v,
+        type: '',
+        description: 'template variable',
+      };
+    });
+
     dispatch({
       type: 'setMetadata',
       payload: {
         isLoading: false,
         hasMetadata: data.hasMetadata,
-        metrics: data.metrics,
+        metrics: [...variables, ...data.metrics],
         metaHaystackDictionary: data.metaHaystackDictionary,
         nameHaystackDictionary: data.nameHaystackDictionary,
         totalMetricCount: data.metrics.length,
@@ -126,98 +121,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
     [datasource, query]
   );
 
-  const ValueCell = ({
-    row: {
-      original: { value },
-    },
-  }: CellProps<MetricData, void>) => {
-    return (
-      <div
-        className={styles.tableDiv}
-        onClick={() => {
-          onChange({ ...query, metric: value });
-          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-            metric: value,
-            hasMetadata: state.hasMetadata,
-            totalMetricCount: state.totalMetricCount,
-            fuzzySearchQuery: state.fuzzySearchQuery,
-            fullMetaSearch: state.fullMetaSearch,
-            selectedTypes: state.selectedTypes,
-            letterSearch: state.letterSearch,
-          });
-          onClose();
-        }}
-      >
-        {value}
-      </div>
-    );
-  };
-
-  const TypeCell = ({
-    row: {
-      original: { type, value },
-    },
-  }: CellProps<MetricData, void>) => {
-    return (
-      <div
-        className={styles.tableDiv}
-        onClick={() => {
-          onChange({ ...query, metric: value });
-          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-            metric: value,
-            hasMetadata: state.hasMetadata,
-            totalMetricCount: state.totalMetricCount,
-            fuzzySearchQuery: state.fuzzySearchQuery,
-            fullMetaSearch: state.fullMetaSearch,
-            selectedTypes: state.selectedTypes,
-            letterSearch: state.letterSearch,
-          });
-          onClose();
-        }}
-      >
-        {type ? type : ' '}
-      </div>
-    );
-  };
-
-  const DescCell = ({
-    row: {
-      original: { description, value },
-    },
-  }: CellProps<MetricData, void>) => {
-    return (
-      <div
-        className={styles.tableDiv}
-        onClick={() => {
-          onChange({ ...query, metric: value });
-          reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-            metric: value,
-            hasMetadata: state.hasMetadata,
-            totalMetricCount: state.totalMetricCount,
-            fuzzySearchQuery: state.fuzzySearchQuery,
-            fullMetaSearch: state.fullMetaSearch,
-            selectedTypes: state.selectedTypes,
-            letterSearch: state.letterSearch,
-          });
-          onClose();
-        }}
-      >
-        {description ? description : ' '}
-      </div>
-    );
-  };
-  function tableResults(metrics: MetricsData) {
-    const tableData: MetricsData = metrics;
-
-    const columns: Array<Column<MetricData>> = [
-      { id: 'value', header: 'Name', cell: ValueCell },
-      { id: 'type', header: 'Type', cell: TypeCell },
-      { id: 'description', header: 'Description', cell: DescCell },
-    ];
-
-    return <InteractiveTable className={styles.table} columns={columns} data={tableData} getRowId={(r) => r.value} />;
-  }
-
   function fuzzySearchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
       // get all metrics data if a user erases everything in the input
@@ -232,6 +135,30 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       } else {
         debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, 'setNameHaystackOrder', dispatch);
       }
+    }
+  }
+
+  function keyFunction(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.code === 'ArrowDown' && state.selectedIdx < state.resultsPerPage - 1) {
+      dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx + 1 });
+      dispatch({ type: 'setHovered', payload: false });
+    } else if (e.code === 'ArrowUp' && state.selectedIdx > 0) {
+      dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx - 1 });
+      dispatch({ type: 'setHovered', payload: false });
+    } else if (e.code === 'Enter') {
+      const metric = displayedMetrics(state, dispatch)[state.selectedIdx];
+
+      onChange({ ...query, metric: metric.value });
+      reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+        metric: metric.value,
+        hasMetadata: state.hasMetadata,
+        totalMetricCount: state.totalMetricCount,
+        fuzzySearchQuery: state.fuzzySearchQuery,
+        fullMetaSearch: state.fullMetaSearch,
+        selectedTypes: state.selectedTypes,
+        letterSearch: state.letterSearch,
+      });
+      onClose();
     }
   }
 
@@ -261,6 +188,9 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
                 fuzzySearchCallback(value, state.fullMetaSearch);
               }}
+              onKeyDown={(e) => {
+                keyFunction(e);
+              }}
             />
           </EditorField>
         </div>
@@ -285,32 +215,38 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             />
           </EditorField>
         </div>
-        {true && (
-          <div className={styles.inputItem}>
-            <EditorField label="Select template variables">
-              <Select
-                inputId="my-select"
-                options={datasource.getVariables().map((v: string) => {
-                  return {
-                    value: v,
-                    label: v,
-                  };
-                })}
-                value={''}
-                placeholder={placeholders.variables}
-                onChange={(v) => {
-                  const value: string = v.value ?? '';
-                  onChange({ ...query, metric: value });
-                  onClose();
-                }}
-              />
-            </EditorField>
-          </div>
-        )}
       </div>
 
+      <div className={styles.alphabetRow}>
+        <LetterSearch
+          filteredMetrics={filterMetrics(state, true)}
+          disableTextWrap={state.disableTextWrap}
+          updateLetterSearch={(letter: string) => {
+            if (state.letterSearch === letter) {
+              dispatch({
+                type: 'setLetterSearch',
+                payload: '',
+              });
+            } else {
+              dispatch({
+                type: 'setLetterSearch',
+                payload: letter,
+              });
+            }
+          }}
+          letterSearch={state.letterSearch}
+        />
+        <Button
+          variant="primary"
+          fill="outline"
+          size="sm"
+          onClick={() => dispatch({ type: 'showAdditionalSettings', payload: null })}
+        >
+          Additional Settings
+        </Button>
+      </div>
       <div className={styles.selectWrapper}>
-        <EditorField label="Search Settings">
+        {state.showAdditionalSettings && (
           <>
             <div className={styles.selectItem}>
               <Switch
@@ -353,9 +289,30 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
               />
               <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
             </div>
+            <div className={styles.selectItem}>
+              <Switch
+                value={state.disableTextWrap}
+                onChange={() => dispatch({ type: 'setDisableTextWrap', payload: null })}
+              />
+              <p className={styles.selectItemLabel}>Disable text wrap</p>
+            </div>
+            <div className={styles.selectItem}>
+              <Switch
+                value={state.excludeNullMetadata}
+                disabled={state.useBackend || !state.hasMetadata}
+                onChange={() => {
+                  dispatch({
+                    type: 'setExcludeNullMetadata',
+                    payload: !state.excludeNullMetadata,
+                  });
+                }}
+              />
+              <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
+            </div>
           </>
-        </EditorField>
+        )}
       </div>
+
       <h4 className={styles.resultsHeading}>Results</h4>
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
@@ -368,51 +325,27 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           </p>
         )}
       </div>
-
-      <div className={styles.alphabetRow}>
-        <LetterSearch
-          filteredMetrics={filterMetrics(state, true)}
-          disableTextWrap={state.disableTextWrap}
-          updateLetterSearch={(letter: string) => {
-            if (state.letterSearch === letter) {
+      <div className={styles.results}>
+        {state.metrics && (
+          <ResultsTable
+            metrics={displayedMetrics(state, dispatch)}
+            onChange={onChange}
+            onClose={onClose}
+            query={query}
+            state={state}
+            selectedIdx={state.selectedIdx}
+            setSelectedIdx={(idx: number) =>
               dispatch({
-                type: 'setLetterSearch',
-                payload: '',
-              });
-            } else {
-              dispatch({
-                type: 'setLetterSearch',
-                payload: letter,
-              });
+                type: 'setSelectedIdx',
+                payload: idx,
+              })
             }
-          }}
-          letterSearch={state.letterSearch}
-        />
-        <div className={styles.alphabetRowToggles}>
-          <div className={styles.selectItem}>
-            <Switch
-              value={state.disableTextWrap}
-              onChange={() => dispatch({ type: 'setDisableTextWrap', payload: null })}
-            />
-            <p className={styles.selectItemLabel}>Disable text wrap</p>
-          </div>
-          <div className={styles.selectItem}>
-            <Switch
-              value={state.excludeNullMetadata}
-              disabled={state.useBackend || !state.hasMetadata}
-              onChange={() => {
-                dispatch({
-                  type: 'setExcludeNullMetadata',
-                  payload: !state.excludeNullMetadata,
-                });
-              }}
-            />
-            <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
-          </div>
-        </div>
+            disableTextWrap={state.disableTextWrap}
+            hovered={state.hovered}
+            setHovered={(set: boolean) => dispatch({ type: 'setHovered', payload: set })}
+          />
+        )}
       </div>
-
-      <div className={styles.results}>{state.metrics && tableResults(displayedMetrics(state, dispatch))}</div>
 
       <div className={styles.pageSettingsWrapper}>
         <div className={styles.pageSettings}>
@@ -451,7 +384,6 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             }
           />
         </div>
-
         <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       </div>
     </Modal>

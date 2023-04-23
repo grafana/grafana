@@ -70,7 +70,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       column-gap: ${theme.spacing(1)};
     `,
     results: css`
-      height: 300px;
+      height: 200px;
       overflow-y: scroll;
     `,
     pageSettingsWrapper: css`
@@ -80,6 +80,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
     `,
     pageSettings: css`
       display: flex;
