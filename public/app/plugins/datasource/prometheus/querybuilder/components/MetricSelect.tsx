@@ -6,7 +6,7 @@ import Highlighter from 'react-highlight-words';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { AsyncSelect, Button, FormatOptionLabelMeta, SelectBaseProps, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Button, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -28,6 +28,8 @@ export interface Props {
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
+
+const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
 
 export function MetricSelect({
   datasource,
@@ -138,15 +140,22 @@ export function MetricSelect({
   // eslint-disable-next-line
   const CustomOption = (props: any) => {
     const option = props.data;
+
     if (option.value === 'MetricEncyclopedia') {
+      const isFocused = props.isFocused ? styles.focus : '';
+
       return (
-        <div {...props.innerProps}>
+        <div
+          {...props.innerProps}
+          onKeyDown={(e) => {
+            // if there is no metric and the m.e. is enabled, open the modal
+            if (e.code === 'Enter') {
+              openMetricEncyclopedia();
+            }
+          }}
+        >
           {
-            <div
-              className={styles.customOption}
-              onClick={() => openMetricEncyclopedia()}
-              onKeyDown={(e) => console.log(e.code)}
-            >
+            <div className={`${styles.customOption} ${isFocused}`}>
               <div>
                 <div>{option.label}</div>
                 <div className={styles.customOptionDesc}>{option.description}</div>
@@ -203,7 +212,12 @@ export function MetricSelect({
           defaultOptions={state.metrics}
           onChange={({ value }) => {
             if (value) {
-              onChange({ ...query, metric: value });
+              // if there is no metric and the m.e. is enabled, open the modal
+              if (prometheusMetricEncyclopedia && value === 'MetricEncyclopedia') {
+                openMetricEncyclopedia();
+              } else {
+                onChange({ ...query, metric: value });
+              }
             }
           }}
           components={{ Option: CustomOption }}
@@ -225,7 +239,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.warning.main};
   `,
   customOption: css`
-    cursor: pointer;
     padding: 8px;
     display: flex;
     justify-content: space-between;
@@ -240,5 +253,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.secondary};
     font-size: ${theme.typography.size.xs};
     opacity: 50%;
+  `,
+  focus: css`
+    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
   `,
 });
