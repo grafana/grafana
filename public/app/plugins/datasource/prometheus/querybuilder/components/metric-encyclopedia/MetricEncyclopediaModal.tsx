@@ -423,7 +423,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           >
             <Input
               data-testid={testIds.resultsPerPage}
-              value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE)}
+              value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
               placeholder="results per page"
               width={20}
               onInput={(e) => {

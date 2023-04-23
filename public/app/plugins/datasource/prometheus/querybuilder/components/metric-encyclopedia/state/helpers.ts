@@ -152,16 +152,16 @@ export function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPa
   return metrics.slice(start, end);
 }
 
-export const calculateResultsPerPage = (results: number, defaultResults: number) => {
+export const calculateResultsPerPage = (results: number, defaultResults: number, max: number) => {
   if (results < 1) {
     return 1;
   }
 
-  if (results > defaultResults) {
-    return defaultResults;
+  if (results > max) {
+    return max;
   }
 
-  return results ?? 10;
+  return results ?? defaultResults;
 };
 
 /**

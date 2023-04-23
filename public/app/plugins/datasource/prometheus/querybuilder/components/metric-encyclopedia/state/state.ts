@@ -1,6 +1,6 @@
 import { Action, MetricEncyclopediaState } from './types';
 
-export const DEFAULT_RESULTS_PER_PAGE = 101;
+export const DEFAULT_RESULTS_PER_PAGE = 100;
 export const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 // Our reducer function that uses a switch statement to handle our actions
