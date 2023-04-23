@@ -75,7 +75,7 @@ def rgm_main():
     name="rgm-main-build",
     edition="all",
     trigger=trigger,
-    steps=rgm_build(script="drone_publish_tag.sh"),
+    steps=rgm_build(),
   )
 
 def rgm_tag():
@@ -99,7 +99,7 @@ def rgm_tag():
     name="rgm-tag-build",
     edition="all",
     trigger=trigger,
-    steps=rgm_build(),
+    steps=rgm_build(script="drone_publish_tag.sh"),
   )
 
 def rgm():

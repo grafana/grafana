@@ -4568,7 +4568,7 @@ steps:
 - commands:
   - apk update && apk add docker
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_tag.sh
+  - cd rgm && ./scripts/drone_publish_main.sh
   environment:
     DESTINATION:
       from_secret: destination
@@ -4615,7 +4615,7 @@ steps:
 - commands:
   - apk update && apk add docker
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_main.sh
+  - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
     DESTINATION:
       from_secret: destination
@@ -6940,6 +6940,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: ee8b93a9ed3ca23b82ea7ba80782cbfc9e4c40f675c4830b3c8655a0971eb947
+hmac: 1f20d3167163340bd1736e87a720e716d39bdda3740f53d381acd2ae4ca3454c
 
 ...
