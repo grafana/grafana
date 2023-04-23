@@ -23,7 +23,7 @@ rgm_env_secrets = {
   "GITHUB_TOKEN": from_secret(rgm_github_token),
 }
 
-def rgm_build(distros=["linux/amd64"]):
+def rgm_build(distros=["linux/amd64"], script="drone_publish_main.sh"):
   clone_step = {
     "name": "clone-rgm",
     "image": "alpine/git",
@@ -48,7 +48,7 @@ def rgm_build(distros=["linux/amd64"]):
       # the docker program is a requirement for running dagger programs
       "apk update && apk add docker",
       "export GRAFANA_DIR=$$(pwd)",
-      "cd rgm && ./actions/package/publish/publish.sh"
+      "cd rgm && ./scripts/{}".format(script)
     ],
     "environment": env,
     # The docker socket is a requirement for running dagger programs
@@ -75,7 +75,7 @@ def rgm_main():
     name="rgm-main-build",
     edition="all",
     trigger=trigger,
-    steps=rgm_build(),
+    steps=rgm_build(script="drone_publish_tag.sh"),
   )
 
 def rgm_tag():
