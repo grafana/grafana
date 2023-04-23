@@ -5,7 +5,9 @@ import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { AsyncSelect, Button, FormatOptionLabelMeta, SelectBaseProps, useStyles2 } from '@grafana/ui';
+import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
@@ -22,6 +24,7 @@ export interface Props {
   onGetMetrics: () => Promise<SelectableValue[]>;
   datasource: PrometheusDatasource;
   labelsFilters: QueryBuilderLabelFilter[];
+  openMetricEncyclopedia: () => void;
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
@@ -33,6 +36,7 @@ export function MetricSelect({
   onGetMetrics,
   labelsFilters,
   metricLookupDisabled,
+  openMetricEncyclopedia,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
@@ -129,6 +133,35 @@ export function MetricSelect({
     (query: string) => getMetricLabels(query),
     datasource.getDebounceTimeInMilliseconds()
   );
+  // No type found for the common select props so typing as any
+  // https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Select/SelectBase.tsx/#L212-L263
+  // eslint-disable-next-line
+  const CustomOption = (props: any) => {
+    const option = props.data;
+    if (option.value === 'MetricEncyclopedia') {
+      return (
+        <div {...props.innerProps}>
+          {
+            <div
+              className={styles.customOption}
+              onClick={() => openMetricEncyclopedia()}
+              onKeyDown={(e) => console.log(e.code)}
+            >
+              <div>
+                <div>{option.label}</div>
+                <div className={styles.customOptionDesc}>{option.description}</div>
+              </div>
+              <Button variant="primary" fill="outline" size="sm" onClick={() => openMetricEncyclopedia()} icon="book">
+                Open
+              </Button>
+            </div>
+          }
+        </div>
+      );
+    }
+
+    return SelectMenuOptions(props);
+  };
 
   return (
     <EditorFieldGroup>
@@ -147,10 +180,23 @@ export function MetricSelect({
             }
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
+
             if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
               metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
             }
-            setState({ metrics, isLoading: undefined });
+
+            if (config.featureToggles.prometheusMetricEncyclopedia) {
+              const metricEncyclopediaOption: SelectableValue[] = [
+                {
+                  value: 'MetricEncyclopedia',
+                  label: 'Metric Encyclopedia',
+                  description: 'Browse and filter metrics and metadata with a fuzzy search',
+                },
+              ];
+              setState({ metrics: [...metricEncyclopediaOption, ...metrics], isLoading: undefined });
+            } else {
+              setState({ metrics, isLoading: undefined });
+            }
           }}
           loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
           isLoading={state.isLoading}
@@ -160,6 +206,7 @@ export function MetricSelect({
               onChange({ ...query, metric: value });
             }
           }}
+          components={{ Option: CustomOption }}
         />
       </EditorField>
     </EditorFieldGroup>
@@ -176,5 +223,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: inherit;
     color: ${theme.colors.warning.contrastText};
     background-color: ${theme.colors.warning.main};
+  `,
+  customOption: css`
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    :hover {
+      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+    }
+  `,
+  customOptionlabel: css`
+    color: ${theme.colors.text.primary};
+  `,
+  customOptionDesc: css`
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.size.xs};
+    opacity: 50%;
   `,
 });

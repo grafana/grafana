@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
+import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, Tag, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -44,7 +42,6 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     onChange({ ...query, labels });
   };
 
-  const styles = useStyles2(getStyles);
   /**
    * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
    */
@@ -215,49 +212,25 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       <EditorRow>
-        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled ? (
-          <EditorField label="Metric">
-            <>
-              <Button
-                variant="primary"
-                fill="outline"
-                size="md"
-                onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
-              >
-                Metric encyclopedia
-              </Button>
-              {query.metric && (
-                <Tag
-                  name={' ' + query.metric}
-                  icon="times"
-                  onClick={() => {
-                    onChange({ ...query, metric: '' });
-                  }}
-                  title="Click to remove metric"
-                  className={styles.metricTag}
-                />
-              )}
-              {metricEncyclopediaModalOpen && (
-                <MetricEncyclopediaModal
-                  datasource={datasource}
-                  isOpen={metricEncyclopediaModalOpen}
-                  onClose={() => setMetricEncyclopediaModalOpen(false)}
-                  query={query}
-                  onChange={onChange}
-                />
-              )}
-            </>
-          </EditorField>
-        ) : (
-          <MetricSelect
+        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled && (
+          <MetricEncyclopediaModal
+            datasource={datasource}
+            isOpen={metricEncyclopediaModalOpen}
+            onClose={() => setMetricEncyclopediaModalOpen(false)}
             query={query}
             onChange={onChange}
-            onGetMetrics={onGetMetrics}
-            datasource={datasource}
-            labelsFilters={query.labels}
-            metricLookupDisabled={datasource.lookupsDisabled}
           />
         )}
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
+          labelsFilters={query.labels}
+          metricLookupDisabled={datasource.lookupsDisabled}
+          openMetricEncyclopedia={() => setMetricEncyclopediaModalOpen(true)}
+        />
+
         <LabelFilters
           debounceDuration={datasource.getDebounceTimeInMilliseconds()}
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
@@ -366,13 +339,3 @@ async function getMetrics(
 }
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    metricTag: css`
-      margin-left: 10px;
-      background-color: #3d71d9;
-      height: 32px;
-    `,
-  };
-};
