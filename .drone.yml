@@ -4568,12 +4568,11 @@ steps:
 - commands:
   - apk update && apk add docker
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && go run ./cmd --build-id=$${DRONE_BUILD_ID} --grafana-dir=$${GRAFANA_DIR}
-    --github-token=${GITHUB_TOKEN} package --distro=linux/amd64 publish --destination=$${DESTINATION}/${DRONE_BUILD_EVENT}
-    --gcp-service-account-key-base64=$${GCP_KEY_BASE64}
+  - cd rgm && ./actions/package/publish/publish.sh
   environment:
     DESTINATION:
       from_secret: destination
+    DISTROS: linux/amd64
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -4616,12 +4615,11 @@ steps:
 - commands:
   - apk update && apk add docker
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && go run ./cmd --build-id=$${DRONE_BUILD_ID} --grafana-dir=$${GRAFANA_DIR}
-    --github-token=${GITHUB_TOKEN} package --distro=linux/amd64 publish --destination=$${DESTINATION}/${DRONE_BUILD_EVENT}
-    --gcp-service-account-key-base64=$${GCP_KEY_BASE64}
+  - cd rgm && ./actions/package/publish/publish.sh
   environment:
     DESTINATION:
       from_secret: destination
+    DISTROS: linux/amd64
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -6942,6 +6940,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: b3b2bde472b5f0b4263caf4216c160792a9805167aedbb342c27ec38e6c74dfe
+hmac: 4004717cd91cf209a43ffff5327360b9bdbb959e63ba685be33e9b1288d55843
 
 ...

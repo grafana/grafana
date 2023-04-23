@@ -34,6 +34,12 @@ def rgm_build(distros=["linux/amd64"]):
   }
 
   distroStr = ",".join(distros)
+  env = {
+    "DISTROS": distroStr,
+  }
+
+  for key in rgm_env_secrets:
+    env[key] = rgm_env_secrets[key]
 
   rgm_build_step = {
     "name": "rgm-build",
@@ -42,9 +48,9 @@ def rgm_build(distros=["linux/amd64"]):
       # the docker program is a requirement for running dagger programs
       "apk update && apk add docker",
       "export GRAFANA_DIR=$$(pwd)",
-      "cd rgm && go run ./cmd --build-id=$${{DRONE_BUILD_ID}} --grafana-dir=$${{GRAFANA_DIR}} --github-token=${{GITHUB_TOKEN}} package --distro={} publish --destination=$${{DESTINATION}}/${{DRONE_BUILD_EVENT}} --gcp-service-account-key-base64=$${{GCP_KEY_BASE64}}".format(distroStr),
+      "cd rgm && ./actions/package/publish/publish.sh"
     ],
-    "environment": rgm_env_secrets,
+    "environment": env,
     # The docker socket is a requirement for running dagger programs
     # In the future we should find a way to use dagger without mounting the docker socket.
     "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
