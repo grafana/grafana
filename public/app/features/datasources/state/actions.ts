@@ -124,7 +124,11 @@ export const testDataSource = (
       return;
     }
 
-    dispatch(testDataSourceStarting());
+    // add a small delay before setting the status to `info` as we might
+    // run a global test before and this could cause the alert box to flicker
+    setTimeout(() => {
+      dispatch(testDataSourceStarting())
+    }, 200);
 
     dependencies.getBackendSrv().withNoBackendCache(async () => {
       try {
