@@ -31,7 +31,7 @@ import {
   MetricEncyclopediaMetadata,
 } from './state/state';
 import { getStyles } from './styles';
-import { PromFilterOption, MetricData } from './types';
+import { PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
 export type MetricEncyclopediaProps = {
@@ -62,25 +62,15 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
 
     const data: MetricEncyclopediaMetadata = await getMetadata(datasource, query);
 
-    const variables = datasource.getVariables().map((v: string): MetricData => {
-      return {
-        value: v,
-        type: '',
-        description: 'template variable',
-      };
-    });
-
-    const allResults = [...variables, ...data.metrics];
-
     dispatch({
       type: 'setMetadata',
       payload: {
         isLoading: false,
         hasMetadata: data.hasMetadata,
-        metrics: allResults,
+        metrics: data.metrics,
         metaHaystackDictionary: data.metaHaystackDictionary,
         nameHaystackDictionary: data.nameHaystackDictionary,
-        totalMetricCount: allResults.length,
+        totalMetricCount: data.metrics.length,
         filteredMetricCount: data.metrics.length,
       },
     });
@@ -143,10 +133,8 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
   function keyFunction(e: React.KeyboardEvent<HTMLElement>) {
     if (e.code === 'ArrowDown' && state.selectedIdx < state.resultsPerPage - 1) {
       dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx + 1 });
-      dispatch({ type: 'setHovered', payload: false });
     } else if (e.code === 'ArrowUp' && state.selectedIdx > 0) {
       dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx - 1 });
-      dispatch({ type: 'setHovered', payload: false });
     } else if (e.code === 'Enter') {
       const metric = displayedMetrics(state, dispatch)[state.selectedIdx];
 
@@ -356,8 +344,8 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
               })
             }
             disableTextWrap={state.disableTextWrap}
-            hovered={state.hovered}
-            setHovered={(set: boolean) => dispatch({ type: 'setHovered', payload: set })}
+            // hovered={state.hovered}
+            // setHovered={(set: boolean) => dispatch({ type: 'setHovered', payload: set })}
           />
         )}
       </div>

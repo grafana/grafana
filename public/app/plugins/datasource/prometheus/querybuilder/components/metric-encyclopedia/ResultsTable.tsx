@@ -20,23 +20,10 @@ type ResultsTableProps = {
   selectedIdx: number;
   setSelectedIdx: (idx: number) => void;
   disableTextWrap: boolean;
-  hovered: boolean;
-  setHovered: (set: boolean) => void;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const {
-    metrics,
-    onChange,
-    onClose,
-    query,
-    state,
-    selectedIdx,
-    setSelectedIdx,
-    disableTextWrap,
-    hovered,
-    setHovered,
-  } = props;
+  const { metrics, onChange, onClose, query, state, selectedIdx, setSelectedIdx, disableTextWrap } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
@@ -63,11 +50,8 @@ export function ResultsTable(props: ResultsTableProps) {
 
   useEffect(() => {
     const tr = tableRef.current?.getElementsByClassName('selected-row')[0];
-
-    if (!hovered) {
-      tr?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
-  }, [selectedIdx, hovered]);
+    tr?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [selectedIdx]);
 
   function metaHighlighting(metric: MetricData) {
     if (state.fullMetaSearch) {
@@ -120,7 +104,6 @@ export function ResultsTable(props: ResultsTableProps) {
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
                   onClick={() => selectMetric(metric)}
                   onMouseEnter={() => {
-                    setHovered(true);
                     setSelectedIdx(idx);
                   }}
                 >
@@ -160,18 +143,17 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         min-width: ${theme.spacing(3)};
       }
     `,
-    disableGrow: css`
-      width: 0%;
-    `,
     header: css`
       border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     row: css`
       label: row;
       border-bottom: 1px solid ${theme.colors.border.weak};
-
       &:last-child {
         border-bottom: 0;
+      }
+      :hover {
+        background-color: ${rowHoverBg};
       }
     `,
     selectedRow: css`

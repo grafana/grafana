@@ -109,11 +109,6 @@ export function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action
         ...state,
         showAdditionalSettings: !state.showAdditionalSettings,
       };
-    case 'setHovered':
-      return {
-        ...state,
-        hovered: payload,
-      };
     default:
       return state;
   }
@@ -147,7 +142,6 @@ export function initialState(): MetricEncyclopediaState {
     disableTextWrap: false,
     selectedIdx: 0,
     showAdditionalSettings: false,
-    hovered: false,
   };
 }
 
@@ -203,8 +197,6 @@ export interface MetricEncyclopediaState {
   selectedIdx: number;
   /** Display toggle switches for settings */
   showAdditionalSettings: boolean;
-  /** Used when hovering over a metric to disable the scroll behavior for keypresses */
-  hovered: boolean;
 }
 
 /**
@@ -250,5 +242,4 @@ export type Action =
   | { type: 'setUseBackend'; payload: boolean }
   | { type: 'setSelectedIdx'; payload: number }
   | { type: 'setDisableTextWrap'; payload: null }
-  | { type: 'showAdditionalSettings'; payload: null }
-  | { type: 'setHovered'; payload: boolean };
+  | { type: 'showAdditionalSettings'; payload: null };
