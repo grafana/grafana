@@ -70,15 +70,17 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       };
     });
 
+    const allResults = [...variables, ...data.metrics];
+
     dispatch({
       type: 'setMetadata',
       payload: {
         isLoading: false,
         hasMetadata: data.hasMetadata,
-        metrics: [...variables, ...data.metrics],
+        metrics: allResults,
         metaHaystackDictionary: data.metaHaystackDictionary,
         nameHaystackDictionary: data.nameHaystackDictionary,
-        totalMetricCount: data.metrics.length,
+        totalMetricCount: allResults.length,
         filteredMetricCount: data.metrics.length,
       },
     });
@@ -138,7 +140,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
     }
   }
 
-  function keyFunction(e: React.KeyboardEvent<HTMLInputElement>) {
+  function keyFunction(e: React.KeyboardEvent<HTMLElement>) {
     if (e.code === 'ArrowDown' && state.selectedIdx < state.resultsPerPage - 1) {
       dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx + 1 });
       dispatch({ type: 'setHovered', payload: false });
@@ -216,108 +218,121 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
           </EditorField>
         </div>
       </div>
-
-      <div className={styles.alphabetRow}>
-        <LetterSearch
-          filteredMetrics={filterMetrics(state, true)}
-          disableTextWrap={state.disableTextWrap}
-          updateLetterSearch={(letter: string) => {
-            if (state.letterSearch === letter) {
-              dispatch({
-                type: 'setLetterSearch',
-                payload: '',
-              });
-            } else {
-              dispatch({
-                type: 'setLetterSearch',
-                payload: letter,
-              });
-            }
-          }}
-          letterSearch={state.letterSearch}
-        />
-        <Button
-          variant="primary"
-          fill="outline"
-          size="sm"
-          onClick={() => dispatch({ type: 'showAdditionalSettings', payload: null })}
-        >
-          Additional Settings
-        </Button>
-      </div>
-      <div className={styles.selectWrapper}>
-        {state.showAdditionalSettings && (
-          <>
-            <div className={styles.selectItem}>
-              <Switch
-                data-testid={testIds.searchWithMetadata}
-                value={state.fullMetaSearch}
-                disabled={state.useBackend || !state.hasMetadata}
-                onChange={() => {
-                  const newVal = !state.fullMetaSearch;
-                  dispatch({
-                    type: 'setFullMetaSearch',
-                    payload: newVal,
-                  });
-
-                  fuzzySearchCallback(state.fuzzySearchQuery, newVal);
-                }}
-              />
-              <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
-            </div>
-            <div className={styles.selectItem}>
-              <Switch
-                data-testid={testIds.setUseBackend}
-                value={state.useBackend}
-                onChange={() => {
-                  const newVal = !state.useBackend;
-                  dispatch({
-                    type: 'setUseBackend',
-                    payload: newVal,
-                  });
-                  if (newVal === false) {
-                    // rebuild the metrics metadata if we turn off useBackend
-                    updateMetricsMetadata();
-                  } else {
-                    // check if there is text in the browse search and update
-                    if (state.fuzzySearchQuery !== '') {
-                      debouncedBackendSearch(state.fuzzySearchQuery);
-                    }
-                    // otherwise wait for user typing
-                  }
-                }}
-              />
-              <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
-            </div>
-            <div className={styles.selectItem}>
-              <Switch
-                value={state.disableTextWrap}
-                onChange={() => dispatch({ type: 'setDisableTextWrap', payload: null })}
-              />
-              <p className={styles.selectItemLabel}>Disable text wrap</p>
-            </div>
-            <div className={styles.selectItem}>
-              <Switch
-                value={state.excludeNullMetadata}
-                disabled={state.useBackend || !state.hasMetadata}
-                onChange={() => {
-                  dispatch({
-                    type: 'setExcludeNullMetadata',
-                    payload: !state.excludeNullMetadata,
-                  });
-                }}
-              />
-              <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
-            </div>
-          </>
-        )}
-      </div>
-
-      <h4 className={styles.resultsHeading}>Results</h4>
+      {/* <h4 className={styles.resultsHeading}>Results</h4> */}
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} total metrics.{' '}
-          {state.isLoading && <Spinner className={styles.loadingSpinner} />}
+          Showing {state.filteredMetricCount} of {state.totalMetricCount} results.{' '}
+          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
+          <div className={styles.selectWrapper}>
+            <div className={styles.alphabetRow}>
+              <LetterSearch
+                filteredMetrics={filterMetrics(state, true)}
+                disableTextWrap={state.disableTextWrap}
+                updateLetterSearch={(letter: string) => {
+                  if (state.letterSearch === letter) {
+                    dispatch({
+                      type: 'setLetterSearch',
+                      payload: '',
+                    });
+                  } else {
+                    dispatch({
+                      type: 'setLetterSearch',
+                      payload: letter,
+                    });
+                  }
+                }}
+                letterSearch={state.letterSearch}
+              />
+              <Button
+                variant="secondary"
+                fill="text"
+                size="sm"
+                onClick={() => dispatch({ type: 'showAdditionalSettings', payload: null })}
+                onKeyDown={(e) => {
+                  keyFunction(e);
+                }}
+              >
+                Additional Settings
+              </Button>
+            </div>
+            {state.showAdditionalSettings && (
+              <>
+                <div className={styles.selectItem}>
+                  <Switch
+                    data-testid={testIds.searchWithMetadata}
+                    value={state.fullMetaSearch}
+                    disabled={state.useBackend || !state.hasMetadata}
+                    onChange={() => {
+                      const newVal = !state.fullMetaSearch;
+                      dispatch({
+                        type: 'setFullMetaSearch',
+                        payload: newVal,
+                      });
+
+                      fuzzySearchCallback(state.fuzzySearchQuery, newVal);
+                    }}
+                    onKeyDown={(e) => {
+                      keyFunction(e);
+                    }}
+                  />
+                  <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
+                </div>
+                <div className={styles.selectItem}>
+                  <Switch
+                    value={state.excludeNullMetadata}
+                    disabled={state.useBackend || !state.hasMetadata}
+                    onChange={() => {
+                      dispatch({
+                        type: 'setExcludeNullMetadata',
+                        payload: !state.excludeNullMetadata,
+                      });
+                    }}
+                    onKeyDown={(e) => {
+                      keyFunction(e);
+                    }}
+                  />
+                  <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
+                </div>
+                <div className={styles.selectItem}>
+                  <Switch
+                    value={state.disableTextWrap}
+                    onChange={() => dispatch({ type: 'setDisableTextWrap', payload: null })}
+                    onKeyDown={(e) => {
+                      keyFunction(e);
+                    }}
+                  />
+                  <p className={styles.selectItemLabel}>Disable text wrap</p>
+                </div>
+                <div className={styles.selectItem}>
+                  <Switch
+                    data-testid={testIds.setUseBackend}
+                    value={state.useBackend}
+                    onChange={() => {
+                      const newVal = !state.useBackend;
+                      dispatch({
+                        type: 'setUseBackend',
+                        payload: newVal,
+                      });
+                      if (newVal === false) {
+                        // rebuild the metrics metadata if we turn off useBackend
+                        updateMetricsMetadata();
+                      } else {
+                        // check if there is text in the browse search and update
+                        if (state.fuzzySearchQuery !== '') {
+                          debouncedBackendSearch(state.fuzzySearchQuery);
+                        }
+                        // otherwise wait for user typing
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      keyFunction(e);
+                    }}
+                  />
+                  <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>

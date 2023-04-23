@@ -78,7 +78,7 @@ export async function getMetadata(
 export function displayedMetrics(state: MetricEncyclopediaState, dispatch: React.Dispatch<Action>) {
   const filteredSorted: MetricsData = filterMetrics(state);
 
-  if (state.filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
+  if (!state.isLoading && state.filteredMetricCount !== filteredSorted.length) {
     dispatch({
       type: 'setFilteredMetricCount',
       payload: filteredSorted.length,

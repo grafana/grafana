@@ -43,6 +43,7 @@ export function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action
         fuzzySearchQuery: payload,
         pageNum: 1,
         letterSearch: '',
+        selectedIdx: 0,
       };
     case 'setNameHaystackOrder':
       return {

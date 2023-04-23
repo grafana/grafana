@@ -28,7 +28,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       }
     `,
     selectWrapper: css`
-      margin-bottom: ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
     selectItem: css`
       display: flex;
@@ -57,7 +57,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      justify-content: space-between;
       align-items: center;
       column-gap: ${theme.spacing(1)};
       margin-bottom: ${theme.spacing(1)};
@@ -70,7 +69,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       column-gap: ${theme.spacing(1)};
     `,
     results: css`
-      height: 200px;
+      height: 250px;
       overflow-y: scroll;
     `,
     pageSettingsWrapper: css`
@@ -97,9 +96,11 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     gray: css`
       color: grey;
+      opacity: 50%;
     `,
     loadingSpinner: css`
       display: inline-block;
+      visibility: hidden;
     `,
     table: css`
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
@@ -110,6 +111,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     tableDiv: css`
       padding: 8px;
+    `,
+    visible: css`
+      visibility: visible;
     `,
   };
 };
