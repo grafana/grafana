@@ -107,6 +107,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const addNewRow = () => {
+    //TODO use .appendRow() after fieldValues refactor is finished
     const newFrame = new MutableDataFrame(frame);
 
     newFrame.fields.map((field) => {
