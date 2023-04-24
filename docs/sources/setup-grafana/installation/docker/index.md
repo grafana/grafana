@@ -10,7 +10,7 @@ weight: 200
 
 This topic guides you on how to install Grafana by utilizing the official Docker images. Specifically, it covers running Grafana via the Docker command line (CLI) and docker-compose.
 
-Grafana docker images come in two editions:
+Grafana Docker images come in two editions:
 - **Grafana Enterprise**: `grafana/grafana-enterprise`
 - **Grafana Open Source**: `grafana/grafana-oss`
 
