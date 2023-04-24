@@ -310,7 +310,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/authentication',
       component:
-        config.featureToggles.authenticationConfigUI && config.samlEnabled
+        config.featureToggles.authenticationConfigUI && config.licenseInfo.edition !== 'Open Source'
           ? SafeDynamicImport(
               () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
             )
