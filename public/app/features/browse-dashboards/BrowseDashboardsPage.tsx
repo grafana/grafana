@@ -50,7 +50,7 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               searchState.query ? (
-                <SearchView searchState={searchState} />
+                <SearchView width={width} height={height} folderUID={folderUID} />
               ) : (
                 <BrowseView width={width} height={height} folderUID={folderUID} />
               )
