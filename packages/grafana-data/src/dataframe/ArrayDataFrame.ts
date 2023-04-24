@@ -59,7 +59,7 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
           name,
           type: guessFieldTypeFromNameAndValue(name, first[name]),
           config: {},
-          values: new ArrayPropertyVector(source, name),
+          values: new ArrayPropertyVector(source, name).toArray(),
         };
       });
     } else {
@@ -77,7 +77,7 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
         name,
         type: guessFieldTypeFromNameAndValue(name, obj[name]),
         config: {},
-        values: new ArrayPropertyVector(this.source, name),
+        values: new ArrayPropertyVector(this.source, name).toArray(),
       };
     });
   }
