@@ -6,13 +6,13 @@ import selectEvent from 'react-select-event';
 import { config } from '@grafana/runtime';
 
 import { MetricStatEditor } from '..';
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { setupMockedDataSource, statisticVariable } from '../../__mocks__/CloudWatchDataSource';
 import { validMetricSearchBuilderQuery } from '../../__mocks__/queries';
 import { MetricStat } from '../../types';
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const ds = setupMockedDataSource({
-  variables: [],
+  variables: [statisticVariable],
 });
 
 ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
@@ -45,7 +45,6 @@ describe('MetricStatEditor', () => {
       async (statistic) => {
         const onChange = jest.fn();
         props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
-
         render(<MetricStatEditor {...props} onChange={onChange} />);
 
         const statisticElement = await screen.findByLabelText('Statistic');
@@ -57,7 +56,7 @@ describe('MetricStatEditor', () => {
       }
     );
 
-    test.each([['CustomStat', 'p23,23', '$statistic']])('should not accept invalid values', async (statistic) => {
+    test.each(['CustomStat', 'p23,23', '$someUnknownValue'])('should not accept invalid values', async (statistic) => {
       const onChange = jest.fn();
 
       render(<MetricStatEditor {...props} onChange={onChange} />);

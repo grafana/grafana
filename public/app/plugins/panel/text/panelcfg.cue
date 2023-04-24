@@ -34,7 +34,7 @@ composableKinds: PanelCfg: {
 						} @cuetsy(kind="interface")
 
 						PanelOptions: {
-							mode:    TextMode | *"markdown"
+							mode:    TextMode & (*"markdown" | _)
 							code?:   CodeOptions
 							content: string | *"""
                     # Title

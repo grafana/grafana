@@ -28,15 +28,20 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 	}
 
 	var period int64
-	if model.Period != "" {
-		p, err := strconv.ParseInt(model.Period, 10, 64)
+
+	if model.Period != nil && *model.Period != "" {
+		p, err := strconv.ParseInt(*model.Period, 10, 64)
 		if err != nil {
 			return nil, err
 		}
 		period = p
 	}
 
-	if period == 0 && !model.PrefixMatching {
+	prefixMatching := false
+	if model.PrefixMatching != nil {
+		prefixMatching = *model.PrefixMatching
+	}
+	if period == 0 && !prefixMatching {
 		period = 300
 	}
 
@@ -49,19 +54,23 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 	}
 
 	var alarmNames []*string
-	if model.PrefixMatching {
+	metricName := ""
+	if model.MetricName != nil {
+		metricName = *model.MetricName
+	}
+	if prefixMatching {
 		params := &cloudwatch.DescribeAlarmsInput{
 			MaxRecords:      aws.Int64(100),
-			ActionPrefix:    aws.String(actionPrefix),
-			AlarmNamePrefix: aws.String(alarmNamePrefix),
+			ActionPrefix:    actionPrefix,
+			AlarmNamePrefix: alarmNamePrefix,
 		}
 		resp, err := cli.DescribeAlarms(params)
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)
 		}
-		alarmNames = filterAlarms(resp, model.Namespace, model.MetricName, model.Dimensions, statistic, period)
+		alarmNames = filterAlarms(resp, model.Namespace, metricName, model.Dimensions, statistic, period)
 	} else {
-		if model.Region == "" || model.Namespace == "" || model.MetricName == "" || statistic == "" {
+		if model.Region == "" || model.Namespace == "" || metricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
 
@@ -80,7 +89,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		}
 		params := &cloudwatch.DescribeAlarmsForMetricInput{
 			Namespace:  aws.String(model.Namespace),
-			MetricName: aws.String(model.MetricName),
+			MetricName: aws.String(metricName),
 			Dimensions: qd,
 			Statistic:  aws.String(statistic),
 			Period:     aws.Int64(period),

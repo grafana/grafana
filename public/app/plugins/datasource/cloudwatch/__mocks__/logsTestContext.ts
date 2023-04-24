@@ -4,7 +4,6 @@ import {
   DataFrame,
   dataFrameToJSON,
   MutableDataFrame,
-  ArrayVector,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourceRef,
@@ -35,15 +34,15 @@ export function setupForLogs() {
     fields: [
       {
         name: '@message',
-        values: new ArrayVector(['something']),
+        values: ['something'],
       },
       {
         name: '@timestamp',
-        values: new ArrayVector([1]),
+        values: [1],
       },
       {
         name: '@xrayTraceId',
-        values: new ArrayVector(['1-613f0d6b-3e7cb34375b60662359611bd']),
+        values: ['1-613f0d6b-3e7cb34375b60662359611bd'],
       },
     ],
     meta: { custom: { Status: CloudWatchLogsQueryStatus.Complete } },

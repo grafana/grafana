@@ -416,4 +416,8 @@ export const Components = {
   Variables: {
     variableOption: 'data-testid variable-option',
   },
+  Annotations: {
+    annotationsTypeInput: 'annotations-type-input',
+    annotationsChoosePanelInput: 'choose-panels-input',
+  },
 };

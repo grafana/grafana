@@ -34,6 +34,7 @@ interface ConfigurePanelOptional {
   panelTitle?: string;
   timeRange?: TimeRangeConfig;
   visualizationName?: string;
+  timeout?: number;
 }
 
 interface ConfigurePanelRequired {
@@ -80,6 +81,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       timeRange,
       visitDashboardAtStart,
       visualizationName,
+      timeout,
     } = fullConfig;
 
     if (visitDashboardAtStart) {
@@ -158,7 +160,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     // Wait for RxJS
-    e2e().wait(500);
+    e2e().wait(timeout ?? e2e.config().defaultCommandTimeout);
 
     if (matchScreenshot) {
       let visualization;
