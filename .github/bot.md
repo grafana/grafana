@@ -23,7 +23,7 @@ Metrics are configured in [metrics-collector.json](https://github.com/grafana/gr
 ## Backport PR
 
 To automatically backport a PR to a release branch like v7.3.x add a label named `backport v7.3.x`. The label name should follow the pattern `backport <branch-name>`. Once merged grafanabot will automatically 
-try to cherry-pick the PR merge commit into that branch and open a PR. You must then add the milestone to your backport pr.
+try to cherry-pick the PR merge commit into that branch and open a PR. You must then add the milestone to your backport PR.
 
 If there are merge conflicts the bot will write a comment on the source PR saying the cherry-pick failed. In this case you have to do the cherry pick and backport PR manually. 
 
