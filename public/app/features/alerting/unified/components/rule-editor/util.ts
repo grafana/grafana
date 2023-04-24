@@ -114,13 +114,12 @@ export function warningFromSeries(series: DataFrame[]): Error | undefined {
   return warning ? new Error(warning) : undefined;
 }
 
-export type ThresholdDefinitions = Record<
-  string,
-  {
-    config: ThresholdsConfig;
-    mode: GraphTresholdsStyleMode;
-  }
->;
+export type ThresholdDefinition = {
+  config: ThresholdsConfig;
+  mode: GraphTresholdsStyleMode;
+};
+
+export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
 
 /**
  * This function will retrieve threshold definitions for the given array of data and expression queries.

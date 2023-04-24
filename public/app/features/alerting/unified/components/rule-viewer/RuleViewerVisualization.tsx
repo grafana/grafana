@@ -18,10 +18,12 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Authorize } from '../Authorize';
 import { VizWrapper } from '../rule-editor/VizWrapper';
+import { ThresholdDefinition } from '../rule-editor/util';
 
 interface RuleViewerVisualizationProps
   extends Pick<AlertQuery, 'refId' | 'datasourceUid' | 'model' | 'relativeTimeRange'> {
   data?: PanelData;
+  thresholds?: ThresholdDefinition;
   onTimeRangeChange: (range: RelativeTimeRange) => void;
   className?: string;
 }
@@ -31,6 +33,7 @@ const headerHeight = 4;
 export function RuleViewerVisualization({
   data,
   model,
+  thresholds,
   datasourceUid,
   relativeTimeRange,
   onTimeRangeChange,
@@ -100,7 +103,7 @@ export function RuleViewerVisualization({
           </Authorize>
         </div>
       </div>
-      <VizWrapper data={data} />
+      <VizWrapper data={data} thresholds={thresholds?.config} thresholdsType={thresholds?.mode} />
     </div>
   );
 }
