@@ -792,6 +792,16 @@
         },
         "description": "(empty)"
       },
+      "getFolderChildrenCountsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FolderChildrenCounts"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getFolderPermissionListResponse": {
         "content": {
           "application/json": {
@@ -4641,6 +4651,13 @@
             "format": "int64",
             "type": "integer"
           }
+        },
+        "type": "object"
+      },
+      "FolderChildrenCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
         },
         "type": "object"
       },
@@ -16997,6 +17014,42 @@
           }
         },
         "summary": "Update folder.",
+        "tags": [
+          "folders"
+        ]
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "operationId": "getFolderChildrenCounts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getFolderChildrenCountsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
         "tags": [
           "folders"
         ]
