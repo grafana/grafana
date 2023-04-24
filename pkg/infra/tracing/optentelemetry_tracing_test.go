@@ -62,7 +62,7 @@ func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 	otlpsect := cfg.Raw.Section("tracing.opentelemetry.otlp")
 
 	assert.NoError(t, otel.parseSettings())
-	assert.Equal(t, noopExporter, otel.Enabled)
+	assert.Equal(t, noopExporter, otel.enabled)
 
 	otelsect.Key("custom_attributes")
 	assert.NoError(t, otel.parseSettings())
@@ -79,11 +79,11 @@ func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 	jaegersect.Key("address").SetValue("somehost:6831")
 	assert.NoError(t, otel.parseSettings())
 	assert.Equal(t, "somehost:6831", otel.Address)
-	assert.Equal(t, jaegerExporter, otel.Enabled)
+	assert.Equal(t, jaegerExporter, otel.enabled)
 
 	jaegersect.Key("address").SetValue("")
 	otlpsect.Key("address").SetValue("somehost:4317")
 	assert.NoError(t, otel.parseSettings())
 	assert.Equal(t, "somehost:4317", otel.Address)
-	assert.Equal(t, otlpExporter, otel.Enabled)
+	assert.Equal(t, otlpExporter, otel.enabled)
 }
