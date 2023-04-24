@@ -63,6 +63,11 @@ async function lokiSendLogLine(timestampNs, line, tags) {
   await jsonRequest(data, 'POST', url, 204);
 }
 
+function getSineValue(counter, loopLength) {
+  // we try to make a sine-wave, where one full "loop" takes loopLength steps
+  return Math.sin((Math.PI * 2 * counter) / loopLength);
+}
+
 function getRandomLogItem(counter) {
   const randomText = `${Math.trunc(Math.random() * 1000 * 1000 * 1000)}`;
   const maybeAnsiText = Math.random() < 0.5 ? 'with ANSI \u001b[31mpart of the text\u001b[0m' : '';
@@ -70,6 +75,7 @@ function getRandomLogItem(counter) {
     _entry: `log text ${maybeAnsiText} [${randomText}]`,
     counter: counter.toString(),
     float: Math.random() > 0.2 ? (Math.trunc(100000 * Math.random())/1000).toString() : 'NaN',
+    wave: getSineValue(counter, 20), // let's loop in 20 steps
     label: chooseRandomElement(['val1', 'val2', 'val3']),
     level: chooseRandomElement(['debug','info', 'info', 'info', 'info', 'warning', 'error', 'error']),
   };
@@ -151,8 +157,15 @@ function getRandomNanosecPart() {
   return Math.trunc(Math.random()*1000000).toString().padStart(6, '0')
 }
 
+const sharedLabels = {
+  source: 'data',
+  instance: 'server\\1',
+  job: '"grafana/data"'
+};
 
-async function main() {
+let globalCounter = 0;
+
+async function sendOldLogs() {
   const delays = calculateDelays(DAYS * POINTS_PER_DAY);
   const timeRange = DAYS * 24 * 60 * 60 * 1000;
   let timestampMs = new Date().getTime() - timeRange;
@@ -160,10 +173,31 @@ async function main() {
     const delay = delays[i];
     timestampMs += Math.trunc(delay * timeRange);
     const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
-    const item = getRandomLogItem(i + 1)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', source: 'data', instance: 'server\\1', job: '"grafana/data"'});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', source: 'data', instance: 'server\\2', job: '"grafana/data"'});
+    globalCounter += 1;
+    const item = getRandomLogItem(globalCounter)
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', ...sharedLabels});
   };
+}
+
+async function sendNewLogs() {
+  while(true) {
+    globalCounter += 1;
+    const nowMs = new Date().getTime();
+    const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
+    const item = getRandomLogItem(globalCounter)
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', ...sharedLabels});
+    const sleepDuration  = 200 + Math.random() * 800; // between 0.2 and 1 seconds
+    await sleep(sleepDuration);
+  }
+}
+
+async function main() {
+  // first we send logs to build a last-7-days log-data
+  await sendOldLogs();
+  // then keep sending new data forever
+  await sendNewLogs();
 }
 
 // when running in docker, we catch the needed stop-signal, to shutdown fast

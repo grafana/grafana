@@ -12,15 +12,15 @@
       "light-theme": "Claro"
     },
     "search-box": {
-      "placeholder": ""
+      "placeholder": "Buscar o saltar a..."
     },
     "section": {
       "actions": "Acciones",
       "dashboard-search-results": "Paneles de control",
-      "folder-search-results": "",
+      "folder-search-results": "Carpetas",
       "pages": "Páginas",
       "preferences": "Preferencias",
-      "recent-dashboards": ""
+      "recent-dashboards": "Paneles de control recientes"
     }
   },
   "common": {
@@ -31,21 +31,21 @@
   },
   "dashboard": {
     "add-menu": {
-      "import": "",
-      "paste-panel": "",
-      "row": "",
-      "visualization": ""
+      "import": "Importar de la biblioteca",
+      "paste-panel": "Pegar panel",
+      "row": "Fila",
+      "visualization": "Visualización"
     },
     "empty": {
-      "add-import-body": "",
-      "add-import-button": "",
-      "add-import-header": "",
-      "add-row-body": "",
-      "add-row-button": "",
-      "add-row-header": "",
-      "add-visualization-body": "",
-      "add-visualization-button": "",
-      "add-visualization-header": ""
+      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
+      "add-import-button": "Importar el panel de la biblioteca",
+      "add-import-header": "Importar panel",
+      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
+      "add-row-button": "Añadir fila",
+      "add-row-header": "Añadir una fila",
+      "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
+      "add-visualization-button": "Añadir visualización",
+      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
     },
     "inspect": {
       "data-tab": "Datos",
@@ -92,7 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Estadísticas de origen de datos",
-      "data-traceids": "",
+      "data-traceids": "Trazar ID",
       "processing-time": "Tiempo de procesamiento de datos",
       "queries": "Número de consultas",
       "request-time": "Tiempo total de solicitud",
@@ -100,7 +100,7 @@
       "table-title": "Estadísticas"
     },
     "toolbar": {
-      "add": "",
+      "add": "Añadir",
       "add-panel": "Añadir panel",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
@@ -128,9 +128,9 @@
   },
   "grafana-ui": {
     "segment-async": {
-      "error": "",
-      "loading": "",
-      "no-options": ""
+      "error": "No se han podido cargar las opciones",
+      "loading": "Cargando las opciones...",
+      "no-options": "No se ha encontrado ninguna opción"
     }
   },
   "library-panel": {
@@ -143,7 +143,7 @@
       "name": "Nombre del panel de librería"
     },
     "add-widget": {
-      "title": ""
+      "title": "Añadir panel de la biblioteca de paneles"
     }
   },
   "library-panels": {
@@ -186,7 +186,7 @@
       "title": "Reglas de alerta"
     },
     "alerting-receivers": {
-      "subtitle": "",
+      "subtitle": "Elige cómo notificar tus puntos de contacto cuando se dispara una instancia de alerta",
       "title": "Puntos de contacto"
     },
     "alerting-silences": {
@@ -195,7 +195,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",
-      "title": "Alertas e incidentes"
+      "title": "Alertas e IRM"
     },
     "api-keys": {
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
@@ -216,7 +216,7 @@
       "title": "Crear"
     },
     "create-alert": {
-      "title": ""
+      "title": "Crear regla de alerta"
     },
     "create-dashboard": {
       "title": "Panel de control"
@@ -225,7 +225,7 @@
       "title": "Carpeta"
     },
     "create-import": {
-      "title": ""
+      "title": "Importar panel de control"
     },
     "dashboards": {
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
@@ -261,11 +261,11 @@
       "title": "Paneles de librería"
     },
     "manage-folder": {
-      "subtitle": ""
+      "subtitle": "Gestionar paneles de control de carpetas y permisos"
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
-      "title": "Seguimiento"
+      "title": "Observabilidad"
     },
     "new": {
       "title": "Nuevo"
@@ -298,13 +298,13 @@
       "title": "Perfil"
     },
     "public": {
-      "title": ""
+      "title": "Paneles de control públicos"
     },
     "scenes": {
       "title": "Escenas"
     },
     "search": {
-      "placeholderCommandPalette": ""
+      "placeholderCommandPalette": "Buscar o saltar a..."
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
@@ -355,9 +355,9 @@
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
     "toolbar": {
-      "enable-kiosk": "",
-      "toggle-menu": "",
-      "toggle-search-bar": ""
+      "enable-kiosk": "Activar el modo de quiosco",
+      "toggle-menu": "Activar o desactivar menú",
+      "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
     }
   },
   "news": {
@@ -407,12 +407,12 @@
   },
   "search": {
     "actions": {
-      "include-panels": "",
-      "remove-datasource-filter": "",
-      "sort-placeholder": "",
+      "include-panels": "Incluir paneles",
+      "remove-datasource-filter": "Fuente de datos: {{datasource}}",
+      "sort-placeholder": "Ordenar",
       "starred": "Destacado",
-      "view-as-folders": "",
-      "view-as-list": ""
+      "view-as-folders": "Ver por carpetas",
+      "view-as-list": "Ver como lista"
     },
     "dashboard-actions": {
       "import": "Importar",
@@ -421,26 +421,26 @@
       "new-folder": "Nueva carpeta"
     },
     "folder-view": {
-      "go-to-folder": "",
-      "select-folder": ""
+      "go-to-folder": "Ir a la carpeta",
+      "select-folder": "Seleccionar carpeta"
     },
     "result-kind": {
       "dashboard": "Panel de control",
       "folder": "Carpeta",
-      "panel": ""
+      "panel": "Panel"
     },
     "results-table": {
-      "datasource-header": "",
-      "location-header": "",
+      "datasource-header": "Fuente de datos",
+      "location-header": "Ubicación",
       "name-header": "Nombre",
-      "tags-header": "",
+      "tags-header": "Etiquetas",
       "type-dashboard": "Panel de control",
       "type-folder": "Carpeta",
-      "type-header": ""
+      "type-header": "Tipo"
     },
     "search-input": {
-      "include-panels-placeholder": "",
-      "placeholder": ""
+      "include-panels-placeholder": "Buscar paneles de control y paneles",
+      "placeholder": "Buscar paneles de control"
     }
   },
   "share-modal": {
@@ -536,14 +536,14 @@
       "dark-label": "Oscuro",
       "default-label": "Por defecto",
       "light-label": "Claro",
-      "system-label": ""
+      "system-label": "Sistema"
     },
     "title": "Preferencias"
   },
   "tag-filter": {
-    "loading": "",
-    "no-tags": "",
-    "placeholder": ""
+    "loading": "Cargando...",
+    "no-tags": "No se ha encontrado ninguna etiqueta",
+    "placeholder": "Filtrar por etiqueta"
   },
   "time-picker": {
     "absolute": {
@@ -621,7 +621,7 @@
   },
   "variable": {
     "adhoc": {
-      "placeholder": ""
+      "placeholder": "Seleccionar valor"
     },
     "dropdown": {
       "placeholder": "Introducir el valor de la variable"

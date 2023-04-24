@@ -240,7 +240,7 @@ export const generateColumns = (
       Cell: (p) => {
         return (
           <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
-            {vals.get(p.row.index)}
+            {vals[p.row.index]}
           </div>
         );
       },

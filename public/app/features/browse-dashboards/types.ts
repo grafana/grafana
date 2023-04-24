@@ -1,5 +1,7 @@
 import { DashboardViewItem as DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
+export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>>;
+
 export interface BrowseDashboardsState {
   rootItems: DashboardViewItem[];
   childrenByParentUID: Record<string, DashboardViewItem[] | undefined>;
@@ -21,7 +23,5 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   level: number;
   isOpen: boolean;
 }
-
-export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>>;
 
 export const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';
