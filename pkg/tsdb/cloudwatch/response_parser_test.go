@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -27,8 +26,6 @@ func loadGetMetricDataOutputsFromFile(filePath string) ([]*cloudwatch.GetMetricD
 }
 
 func TestCloudWatchResponseParser(t *testing.T) {
-	startTime := time.Now()
-	endTime := startTime.Add(2 * time.Hour)
 	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
 		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs-query-a.json")
 		require.NoError(t, err)
@@ -137,14 +134,18 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			})
 		})
 	})
+}
 
-	t.Run("buildDataFrames should use response label as frame name", func(t *testing.T) {
+func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) {
+	startTime := time.Now()
+	endTime := startTime.Add(2 * time.Hour)
+	t.Run("using exact match", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
-					Label: aws.String("label for lb1"),
+					Label: aws.String("some label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -201,13 +202,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
 	})
 
-	t.Run("Expand dimension value using wildcard", func(t *testing.T) {
+	t.Run("using wildcard", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
-					Label: aws.String("lb3"),
+					Label: aws.String("some label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -259,13 +260,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, "lb4 Expanded", frames[1].Name)
 	})
 
-	t.Run("Expand dimension value when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
+	t.Run("when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
-					Label: aws.String("lb3"),
+					Label: aws.String("some label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -297,13 +298,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, "lb2 Expanded", frames[1].Name)
 	})
 
-	t.Run("Expand dimension value when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
+	t.Run("when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
-					Label: aws.String("lb3"),
+					Label: aws.String("some label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -338,13 +339,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, "lb2 Expanded micro - res", frames[1].Name)
 	})
 
-	t.Run("Should only expand certain fields when using SQL queries", func(t *testing.T) {
+	t.Run("when using SQL queries", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
-					Label: aws.String("lb3"),
+					Label: aws.String("some label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 					},
@@ -372,13 +373,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		frames, err := buildDataFrames(startTime, endTime, *response, query)
 		require.NoError(t, err)
 
-		assert.False(t, strings.Contains(frames[0].Name, "AWS/ApplicationELB"))
-		assert.False(t, strings.Contains(frames[0].Name, "lb1"))
-		assert.False(t, strings.Contains(frames[0].Name, "micro"))
-		assert.False(t, strings.Contains(frames[0].Name, "AWS/ApplicationELB"))
-
-		assert.True(t, strings.Contains(frames[0].Name, "us-east-1"))
-		assert.True(t, strings.Contains(frames[0].Name, "60"))
+		assert.Equal(t, "some label", frames[0].Name)
 	})
 
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
