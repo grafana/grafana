@@ -43,7 +43,6 @@ export function fuzzySearch(
       haystackOrder.push(haystack[info.idx[infoIdx]]);
     }
 
-    console.log(matchesSet);
     const action = {
       type: type,
       payload: [haystackOrder, [...matchesSet]],

@@ -239,6 +239,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
                 onKeyDown={(e) => {
                   keyFunction(e);
                 }}
+                data-testid={testIds.showAdditionalSettings}
               >
                 Additional Settings
               </Button>
@@ -403,4 +404,5 @@ export const testIds = {
   searchPage: 'search-page',
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
+  showAdditionalSettings: 'show-additional-settings',
 };

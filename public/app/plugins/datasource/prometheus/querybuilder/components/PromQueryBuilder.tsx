@@ -212,7 +212,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       <EditorRow>
-        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled && (
+        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled && metricEncyclopediaModalOpen && (
           <MetricEncyclopediaModal
             datasource={datasource}
             isOpen={metricEncyclopediaModalOpen}

@@ -35,17 +35,19 @@ export function ResultsTable(props: ResultsTableProps) {
   }
 
   function selectMetric(metric: MetricData) {
-    onChange({ ...query, metric: metric.value });
-    reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-      metric: metric.value,
-      hasMetadata: state.hasMetadata,
-      totalMetricCount: state.totalMetricCount,
-      fuzzySearchQuery: state.fuzzySearchQuery,
-      fullMetaSearch: state.fullMetaSearch,
-      selectedTypes: state.selectedTypes,
-      letterSearch: state.letterSearch,
-    });
-    onClose();
+    if (metric.value) {
+      onChange({ ...query, metric: metric.value });
+      reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+        metric: metric.value,
+        hasMetadata: state.hasMetadata,
+        totalMetricCount: state.totalMetricCount,
+        fuzzySearchQuery: state.fuzzySearchQuery,
+        fullMetaSearch: state.fullMetaSearch,
+        selectedTypes: state.selectedTypes,
+        letterSearch: state.letterSearch,
+      });
+      onClose();
+    }
   }
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export function ResultsTable(props: ResultsTableProps) {
   }, [selectedIdx]);
 
   function metaHighlighting(metric: MetricData) {
-    if (state.fullMetaSearch) {
+    if (state.fullMetaSearch && metric) {
       return (
         <>
           <td>
@@ -78,8 +80,8 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td>{metric.type}</td>
-          <td>{metric.description}</td>
+          <td>{metric.type ?? ''}</td>
+          <td>{metric.description ?? ''}</td>
         </>
       );
     }
@@ -100,7 +102,7 @@ export function ResultsTable(props: ResultsTableProps) {
             metrics.map((metric: MetricData, idx: number) => {
               return (
                 <tr
-                  key={metric.value}
+                  key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
                   onClick={() => selectMetric(metric)}
                   onMouseEnter={() => {
@@ -109,7 +111,7 @@ export function ResultsTable(props: ResultsTableProps) {
                 >
                   <td>
                     <Highlighter
-                      textToHighlight={metric.value}
+                      textToHighlight={metric?.value ?? ''}
                       searchWords={state.fullMetaSearch ? state.metaHaystackMatches : state.nameHaystackMatches}
                       autoEscape
                       highlightClassName={styles.matchHighLight}

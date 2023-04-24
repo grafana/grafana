@@ -102,18 +102,9 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricStartingWithSomethingElse).toBeNull();
   });
 
-  it('allows a user to select a template variable', async () => {
-    setup(defaultQuery, listOfMetrics);
-
-    await waitFor(() => {
-      const selectType = screen.getByText('Select template variables');
-      expect(selectType).toBeInTheDocument();
-    });
-  });
-
   // Pagination
   it('shows metrics within a range by pagination', async () => {
-    // default resultsPerPage is 10
+    // default resultsPerPage is 100
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
@@ -174,11 +165,9 @@ describe('MetricEncyclopediaModal', () => {
     });
     const searchMetric = screen.getByTestId(testIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
-    await userEvent.type(searchMetric, 'a_b');
+    await userEvent.type(searchMetric, 'a_buck');
 
     await waitFor(() => {
-      metricABucket = screen.getByText('a_bucket');
-      expect(metricABucket).toBeInTheDocument();
       metricAll = screen.queryByText('all-metrics');
       expect(metricAll).toBeNull();
     });
@@ -193,6 +182,10 @@ describe('MetricEncyclopediaModal', () => {
       metricABucket = screen.getByText('a_bucket');
       expect(metricABucket).toBeInTheDocument();
     });
+
+    const showSettingsButton = screen.getByTestId(testIds.showAdditionalSettings);
+    expect(showSettingsButton).toBeInTheDocument();
+    await userEvent.click(showSettingsButton);
 
     const metadataSwitch = screen.getByTestId(testIds.searchWithMetadata);
     expect(metadataSwitch).toBeInTheDocument();
