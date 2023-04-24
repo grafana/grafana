@@ -5,7 +5,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './helpers';
-import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
+import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
 import { makeExplorePaneState } from './utils';
 
 const MOCK_TIME_RANGE = {};
@@ -56,7 +56,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
+        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
         .thenStateShouldEqual(expectedState);
     });
 
@@ -76,7 +76,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
+        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: '' }))
         .thenStateShouldEqual(expectedState);
     });
   });

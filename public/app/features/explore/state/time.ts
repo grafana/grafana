@@ -1,4 +1,4 @@
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -33,7 +33,7 @@ export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: string;
 }
-export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
+export const changeRefreshInterval = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 export const updateTimeRange = (options: {
   exploreId: ExploreId;
@@ -53,16 +53,6 @@ export const updateTimeRange = (options: {
     }
   };
 };
-
-/**
- * Change the refresh interval of Explore. Called from the Refresh picker.
- */
-export function changeRefreshInterval(
-  exploreId: ExploreId,
-  refreshInterval: string
-): PayloadAction<ChangeRefreshIntervalPayload> {
-  return changeRefreshIntervalAction({ exploreId, refreshInterval });
-}
 
 export const updateTime = (config: {
   exploreId: ExploreId;
@@ -156,7 +146,7 @@ export function makeAbsoluteTime(): ThunkResult<void> {
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const timeReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (changeRefreshIntervalAction.match(action)) {
+  if (changeRefreshInterval.match(action)) {
     const { refreshInterval } = action.payload;
     const live = RefreshPicker.isLive(refreshInterval);
     const sortOrder = refreshIntervalToSortOrder(refreshInterval);

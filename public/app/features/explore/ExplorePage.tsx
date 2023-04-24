@@ -20,6 +20,7 @@ import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useStateSync } from './hooks/useStateSync';
 import { useURLSync } from './hooks/useURLSync';
 import { splitSizeUpdateAction } from './state/main';
+import { selectOrderedExplorePanes } from './state/selectors';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -45,7 +46,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const minWidth = 200;
   const exploreState = useSelector((state) => state.explore);
 
-  const panes = useSelector((state) => state.explore.panes);
+  const panes = useSelector(selectOrderedExplorePanes);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.

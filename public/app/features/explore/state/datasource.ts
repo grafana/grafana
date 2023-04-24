@@ -67,7 +67,7 @@ export function changeDatasource(
     }
 
     if (getState().explore.panes[exploreId]!.isLive) {
-      dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
+      dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.offOption.value }));
     }
 
     // Exception - we only want to run queries on data source change, if the queries were imported

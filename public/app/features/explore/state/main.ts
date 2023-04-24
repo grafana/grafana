@@ -77,7 +77,7 @@ export const splitOpen = createAsyncThunk(
   async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
     const leftState: ExploreItemState = getState().explore.panes.left!;
 
-    dispatch(
+    await dispatch(
       initializeExplore({
         exploreId: ExploreId.right,
         // TODO: fix this
@@ -250,21 +250,15 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (action.payload) {
-    const { exploreId } = action.payload;
-    if (exploreId !== undefined) {
-      return {
-        ...state,
-        panes: Object.entries(state.panes).reduce<ExploreState['panes']>((panes, [id, pane]) => {
-          if (id === exploreId) {
-            panes[id as ExploreId] = paneReducer(pane, action);
-          } else {
-            panes[id as ExploreId] = pane;
-          }
-          return panes;
-        }, {}),
-      };
-    }
+  const exploreId: ExploreId | undefined = action.payload?.exploreId;
+  if (typeof exploreId === 'string') {
+    return {
+      ...state,
+      panes: {
+        ...state.panes,
+        [exploreId]: paneReducer(state.panes[exploreId], action),
+      },
+    };
   }
 
   return state;

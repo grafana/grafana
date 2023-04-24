@@ -4,13 +4,15 @@ import { serializeStateToUrlParam } from '@grafana/data';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { addListener, useDispatch } from 'app/types';
 
-import { runQueries } from '../state/query';
+import { splitClose, splitOpen } from '../state/main';
+import { commitQueries, runQueries } from '../state/query';
+import { changeRangeAction } from '../state/time';
 
 import { getUrlStateFromPaneState } from './utils';
 
 /**
  * Syncs the URL with the state of the Explore panes by attaching a listener to the store and uptading
- * the URL on every state change (throttled).
+ * the URL on select state change.
  */
 export function useURLSync() {
   const dispatch = useDispatch();
@@ -20,8 +22,19 @@ export function useURLSync() {
   useEffect(() => {
     const unsubscribe = dispatch(
       addListener({
-        // We only want to update the URL when a query run is triggered.
-        predicate: (action) => action.type === runQueries.pending.type,
+        predicate: (action) =>
+          // We want to update the URL when:
+          [
+            // - a pane is opened or closed
+            splitClose.type,
+            splitOpen.fulfilled.type,
+            // - a query is run
+            runQueries.pending.type,
+            // - range is changed
+            changeRangeAction.type,
+            // - queries are committed
+            commitQueries.type,
+          ].includes(action.type),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
           // The following 2 lines will throttle the URL updates to 200ms.
           // This is because we don't want to update the URL multiple when for instance multiple
@@ -31,27 +44,27 @@ export function useURLSync() {
 
           const { left, right } = getState().explore.panes;
           const orgId = getState().user.orgId.toString();
-          const urlStates: { [index: string]: string | null } = { orgId };
+          const panesState: { [index: string]: string | null } = { orgId };
 
           if (left) {
-            urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
+            panesState.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
           }
 
           if (right) {
-            urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
+            panesState.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
           } else {
-            urlStates.right = null;
+            panesState.right = null;
           }
 
           if (
-            location.getSearch().get('right') !== urlStates.right ||
-            location.getSearch().get('left') !== urlStates.left
+            location.getSearch().get('right') !== panesState.right ||
+            location.getSearch().get('left') !== panesState.left
           ) {
             // If there's no state in the URL it means we are mounting explore for the first time.
             // In that case we want to replace the URL instead of pushing a new entry to the history.
             const replace = !location.getSearch().has('right') && !location.getSearch().has('left');
 
-            location.partial({ ...urlStates }, replace);
+            location.partial({ ...panesState }, replace);
           }
         },
       })

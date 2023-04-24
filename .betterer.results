@@ -2832,10 +2832,6 @@ exports[`better eslint`] = {
     "public/app/features/explore/state/history.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/explore/state/main.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "public/app/features/explore/state/query.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

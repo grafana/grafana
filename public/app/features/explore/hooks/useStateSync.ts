@@ -15,6 +15,7 @@ import { changeDatasource } from '../state/datasource';
 import { initializeExplore, urlDiff } from '../state/explorePane';
 import { clearPanes, splitClose, syncTimesAction } from '../state/main';
 import { runQueries, setQueriesAction } from '../state/query';
+import { selectPanes } from '../state/selectors';
 import { updateTime } from '../state/time';
 
 import { getUrlStateFromPaneState } from './utils';
@@ -30,7 +31,7 @@ export function useStateSync(params: ExploreQueryParams) {
     },
   } = useGrafana();
   const dispatch = useDispatch();
-  const statePanes = useSelector((state) => state.explore.panes);
+  const statePanes = useSelector(selectPanes);
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef<ExploreQueryParams>(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
@@ -191,7 +192,7 @@ export function useStateSync(params: ExploreQueryParams) {
             dispatch(setQueriesAction({ exploreId, queries: withUniqueRefIds(queries) }));
           }
 
-          if (update.range) {
+          if (update.queries || update.range) {
             dispatch(runQueries({ exploreId }));
           }
         }

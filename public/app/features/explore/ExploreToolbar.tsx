@@ -119,8 +119,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const onChangeFiscalYearStartMonth = (fiscalyearStartMonth: number) =>
     dispatch(updateFiscalYearStartMonthForSession(fiscalyearStartMonth));
 
-  const onChangeRefreshInterval = (item: string) => {
-    dispatch(changeRefreshInterval(exploreId, item));
+  const onChangeRefreshInterval = (refreshInterval: string) => {
+    dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
   const showExploreToDashboard = useMemo(

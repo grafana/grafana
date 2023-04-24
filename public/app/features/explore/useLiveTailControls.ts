@@ -30,12 +30,12 @@ export function useLiveTailControls(exploreId: ExploreId) {
 
     // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
     //  great. Needs a bit of refactoring.
-    dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
+    dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.offOption.value }));
     dispatch(runQueries({ exploreId }));
   }, [exploreId, dispatch, pause]);
 
   const start = useCallback(() => {
-    dispatch(changeRefreshInterval(exploreId, RefreshPicker.liveOption.value));
+    dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.liveOption.value }));
   }, [exploreId, dispatch]);
 
   return {
