@@ -106,6 +106,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}, totalBytes, func() error {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
+		removeNonAllowedHeaders(req.Headers)
 
 		processedStreams := 0
 		wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
