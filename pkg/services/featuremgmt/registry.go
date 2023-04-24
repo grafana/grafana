@@ -429,7 +429,7 @@ var (
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
 			Expression:  "true",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -441,7 +441,7 @@ var (
 		{
 			Name:         "dataplaneFrontendFallback",
 			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
 			Expression:   "true",
 			Owner:        grafanaObservabilityMetricsSquad,
