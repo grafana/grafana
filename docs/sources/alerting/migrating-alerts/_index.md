@@ -3,24 +3,24 @@ aliases:
   - difference-old-new/
   - unified-alerting/
   - unified-alerting/difference-old-new/
-description: Upgrade Grafana alerts
+description: Instructions for upgrading Grafana alerts to the new format
 title: Upgrade Alerting
 weight: 110
 ---
 
-# Upgrade Alerting
+# Upgrading to the New Grafana Alerting System
 
 Grafana Alerting is enabled by default for new installations or existing installations whether or not legacy alerting is configured.
 
 > **Note**: When upgrading, your dashboard alerts are migrated to a new format. This migration can be rolled back easily by [opting out]({{< relref "opt-out/" >}}). If you have any questions regarding this migration, please contact us.
 
-Existing installations that do not use legacy alerting will have Grafana Alerting enabled by default unless alerting is disabled in the configuration.
+If you have not configured legacy alerting, Grafana Alerting will be enabled by default.
 
 Likewise, existing installations that use legacy alerting will be automatically upgraded to Grafana Alerting unless you have [opted out]({{< relref "opt-out/" >}}) of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost.
 
 Once the upgrade has taken place, you still have the option to [roll back]({{< relref "roll-back/" >}}) to legacy alerting. However, we do not recommend choosing this option. If you do choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place. All new alerts and changes made exclusively in Grafana Alerting will be deleted.
 
-> **Note**: Cloud customers, who do not want to upgrade to Grafana Alerting, should contact customer support.
+> **Note**: **Cloud customers, who do not want to upgrade to Grafana Alerting, should contact customer support.**
 
 If you have opted out or rolled back, you can always choose to [opt in]({{< relref "opt-in/" >}}) to Grafana Alerting at a later point in time.
 
