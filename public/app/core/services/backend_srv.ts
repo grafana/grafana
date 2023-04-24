@@ -344,7 +344,7 @@ export class BackendSrv implements BackendService {
       // for data source configs we want to handle the app errors separately so emit a different event
       // that will be handled outside of current notifications
       this.dependencies.appEvents.emit(DataSourceConfigEvents.error, [
-        err.statusText,
+        'error',
         err.data.error || message,
         message,
         err.data.traceID,

@@ -19,7 +19,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   exploreUrl: string;
   canExploreDataSources: boolean;
   dataSourceId: string;
-  onDashboardLinkClicked: any;
+  onDashboardLinkClicked: () => void;
 }
 
 export function getIconFromSeverity(severity: AlertVariant): IconName {
