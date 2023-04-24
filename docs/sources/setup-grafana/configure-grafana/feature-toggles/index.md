@@ -34,6 +34,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `emptyDashboardPage`                | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                             | Yes                |
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                         |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                         | Yes                |
+| `logsContextDatasourceUi`           | Allow datasource to provide custom UI for context view                                                                                                                       | Yes                |
 | `useCachingService`                 | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                |                    |
 
 ## Beta feature toggles
@@ -88,7 +89,6 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                                                      |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                                                   |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                                       |
-| `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                                              |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                                            |
 | `lokiQuerySplittingConfig`         | Give users the option to configure split durations for Loki queries                                                                                                                                 |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                                                      |
