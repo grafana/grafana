@@ -96,7 +96,7 @@ Let's see how to create and return a data frame from the `query` method. In this
    const query = defaults(target, defaultQuery);
    ```
 
-1. Create a default query at the top of datasource.ts
+1. Create a default query at the top of datasource.ts:
 
    ```ts
    export const defaultQuery: Partial<MyQuery> = {
