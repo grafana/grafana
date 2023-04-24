@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -88,6 +88,8 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
                   mockPromAlertingRule({
                     name: 'rule1',
                     alerts: [mockPromAlert({ labels: { severity: 'critical' } })],
+                    totals: { alerting: 1 },
+                    totalsFiltered: { alerting: 1 },
                   }),
                 ],
               }),
@@ -126,7 +128,7 @@ describe('UnifiedAlertList', () => {
 
     const user = userEvent.setup();
 
-    renderPanel({
+    await renderPanel({
       alertInstanceLabelFilter: '$label',
       dashboardAlerts: false,
       alertName: '',
@@ -135,6 +137,10 @@ describe('UnifiedAlertList', () => {
     });
 
     expect(byText('rule1').get()).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('1 instance')).toBeInTheDocument();
+    });
 
     const expandElement = byText('1 instance').get();
 

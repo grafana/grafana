@@ -270,7 +270,7 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     namespace: namespace,
     group,
     instanceTotals: isAlertingRule(rule) ? calculateRuleTotals(rule) : {},
-    filteredInstanceTotals: {},
+    filteredInstanceTotals: isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {},
   };
 }
 
