@@ -214,17 +214,17 @@ export class LogContextProvider {
     }
 
     let allLabels: string[] = [];
-    if (isQueryWithParser(query.expr).parserCount === 1) {
-      // If we have 1 parser, we use fetchSeriesLabels to fetch actual labels for selected stream
+    if (!isQueryWithParser(query.expr).queryWithParser) {
+      // If there is no parser, we use getLabelKeys because it has better caching
+      // and all labels should already be fetched
+      await this.datasource.languageProvider.start();
+      allLabels = this.datasource.languageProvider.getLabelKeys();
+    } else {
+      // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
       const stream = getStreamSelectorsFromQuery(query.expr);
       // We are using stream[0] as log query can always have just 1 stream selector
       const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
       allLabels = Object.keys(series);
-    } else {
-      // Otherwise, we use getLabelKeys because it has better caching
-      // and all labels should already be fetched
-      await this.datasource.languageProvider.start();
-      allLabels = this.datasource.languageProvider.getLabelKeys();
     }
 
     const contextFilters: ContextFilter[] = [];
