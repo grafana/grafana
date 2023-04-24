@@ -6,7 +6,6 @@ import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { pluginDevTask } from './tasks/plugin.dev';
-import { pluginSignTask } from './tasks/plugin.sign';
 import { pluginTestTask } from './tasks/plugin.tests';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
@@ -181,17 +180,12 @@ export const run = (includeInternalScripts = false) => {
       },
       []
     )
-    .description('[Deprecated] Create a plugin signature')
-    .action(async (cmd) => {
+    .description('[removed] Use grafana sign-plugin instead')
+    .action(() => {
       console.log(
-        chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️') +
-          '\nPlease migrate to grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin'
+        'No longer supported. Use grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin\n'
       );
-      await execTask(pluginSignTask)({
-        signatureType: cmd.signatureType,
-        rootUrls: cmd.rootUrls,
-        silent: true,
-      });
+      process.exit(1);
     });
 
   program
