@@ -1302,15 +1302,31 @@ export class PrometheusDatasource
     return getClientCacheDurationInMinutes(this.cacheLevel);
   }
 
-  getDefaultQuery(app: CoreApp): Partial<PromQuery> {
+  getDefaultQuery(app: CoreApp): PromQuery {
+    const defaults = {
+      refId: 'A',
+      expr: '',
+      range: true,
+      instant: false,
+    };
+
     if (app === CoreApp.UnifiedAlerting) {
       return {
+        ...defaults,
         instant: true,
         range: false,
       };
     }
 
-    return {};
+    if (app === CoreApp.Explore) {
+      return {
+        ...defaults,
+        instant: true,
+        range: true,
+      };
+    }
+
+    return defaults;
   }
 }
 

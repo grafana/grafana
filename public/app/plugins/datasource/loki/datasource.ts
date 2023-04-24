@@ -825,12 +825,20 @@ export class LokiDatasource
     return getQueryHints(query.expr, result);
   }
 
-  getDefaultQuery(app: CoreApp): Partial<LokiQuery> {
+  getDefaultQuery(app: CoreApp): LokiQuery {
+    const defaults = { refId: 'A', expr: '' };
+
     if (app === CoreApp.UnifiedAlerting) {
-      return { queryType: LokiQueryType.Instant };
+      return {
+        ...defaults,
+        queryType: LokiQueryType.Instant,
+      };
     }
 
-    return {};
+    return {
+      ...defaults,
+      queryType: LokiQueryType.Range,
+    };
   }
 }
 
