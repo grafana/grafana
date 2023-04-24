@@ -66,6 +66,10 @@ func ProvideService(cfg *config.Cfg, kv plugins.KeyStore) *Signature {
 	}
 }
 
+func (s *Signature) IsDisabled() bool {
+	return s.verifier.IsDisabled()
+}
+
 func (s *Signature) Run(ctx context.Context) error {
 	return s.verifier.Run(ctx)
 }

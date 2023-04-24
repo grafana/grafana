@@ -37,9 +37,10 @@ type ManifestVerifier struct {
 	cfg  *config.Cfg
 	mlog log.Logger
 
-	lock sync.Mutex
-	cli  http.Client
-	kv   plugins.KeyStore
+	lock    sync.Mutex
+	cli     http.Client
+	kv      plugins.KeyStore
+	hasKeys bool
 }
 
 func New(cfg *config.Cfg, mlog log.Logger, kv plugins.KeyStore) *ManifestVerifier {
@@ -52,12 +53,12 @@ func New(cfg *config.Cfg, mlog log.Logger, kv plugins.KeyStore) *ManifestVerifie
 	return pmv
 }
 
-func (pmv *ManifestVerifier) Run(ctx context.Context) error {
-	if !pmv.featureEnabled() {
-		<-ctx.Done()
-		return ctx.Err()
-	}
+// IsDisabled disables dynamic retrieval of public keys from the API server.
+func (pmv *ManifestVerifier) IsDisabled() bool {
+	return pmv.cfg == nil || pmv.cfg.Features == nil || !pmv.cfg.Features.IsEnabled(featuremgmt.FlagPluginsAPIManifestKey)
+}
 
+func (pmv *ManifestVerifier) Run(ctx context.Context) error {
 	// do an initial update if necessary
 	err := pmv.updateKeys(ctx)
 	if err != nil {
@@ -95,10 +96,6 @@ func (pmv *ManifestVerifier) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (pmv *ManifestVerifier) featureEnabled() bool {
-	return pmv.cfg != nil && pmv.cfg.Features != nil && pmv.cfg.Features.IsEnabled(featuremgmt.FlagPluginsAPIManifestKey)
-}
-
 func (pmv *ManifestVerifier) updateKeys(ctx context.Context) error {
 	pmv.lock.Lock()
 	defer pmv.lock.Unlock()
@@ -115,6 +112,7 @@ func (pmv *ManifestVerifier) updateKeys(ctx context.Context) error {
 	return pmv.downloadKeys(ctx)
 }
 
+const publicKeyID = "7e4d0c6a708866e7"
 const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
@@ -201,27 +199,39 @@ func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 	return pmv.kv.SetLastUpdated(ctx)
 }
 
+func (pmv *ManifestVerifier) ensureKeys(ctx context.Context) error {
+	if pmv.hasKeys {
+		return nil
+	}
+	keys, err := pmv.kv.ListKeys(ctx)
+	if err != nil {
+		return err
+	}
+	if len(keys) == 0 {
+		// Populate with the default key
+		err := pmv.kv.Set(ctx, publicKeyID, publicKeyText)
+		if err != nil {
+			return err
+		}
+	}
+	pmv.hasKeys = true
+	return nil
+}
+
 // getPublicKey loads public keys from:
 //   - The hard-coded value if the feature flag is not enabled.
 //   - A cached value from kv storage if it has been already retrieved. This cache is populated from the grafana.com API.
 func (pmv *ManifestVerifier) getPublicKey(ctx context.Context, keyID string) (string, error) {
-	if !pmv.featureEnabled() {
+	if pmv.IsDisabled() {
 		return publicKeyText, nil
 	}
 
 	pmv.lock.Lock()
 	defer pmv.lock.Unlock()
 
-	keys, err := pmv.kv.ListKeys(ctx)
+	err := pmv.ensureKeys(ctx)
 	if err != nil {
 		return "", err
-	}
-	if len(keys) == 0 {
-		// Populate with the default key
-		err := pmv.kv.Set(ctx, keyID, publicKeyText)
-		if err != nil {
-			return "", err
-		}
 	}
 
 	key, exist, err := pmv.kv.Get(ctx, keyID)
