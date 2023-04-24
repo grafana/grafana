@@ -24,7 +24,6 @@ export const LogRecordViewerByTimestamp = React.memo(
     const styles = useStyles2(getStyles);
 
     // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
-    // Looks like it improved performance significantly
     const groupedLines = records.reduce((acc, current) => {
       const tsGroup = acc.get(current.timestamp);
       if (tsGroup) {
@@ -45,7 +44,12 @@ export const LogRecordViewerByTimestamp = React.memo(
       <ul className={styles.logsScrollable} aria-label="State history by timestamp">
         {Array.from(groupedLines.entries()).map(([key, records]) => {
           return (
-            <li id={key.toString(10)} key={key} ref={(element) => element && timestampRefs.set(key, element)}>
+            <li
+              id={key.toString(10)}
+              key={key}
+              data-testid={key}
+              ref={(element) => element && timestampRefs.set(key, element)}
+            >
               <Timestamp time={key} />
               <div className={styles.logsContainer}>
                 {records.map(({ line }) => (
