@@ -16,14 +16,11 @@ weight: 500
 
 By updating settings at runtime, you can update Grafana settings without needing to restart the Grafana server.
 
-Updates that happen at runtime are stored in the database and override
-[settings from the other sources]({{< relref "../../configure-grafana/" >}})
-(arguments, environment variables, settings file, etc). Therefore, every time a specific setting key is removed at runtime,
-the value used for that key is the inherited one from the other sources in the reverse order of precedence
-(`arguments > environment variables > settings file`), being the application default the value used when no one provided
-through one of these, at least.
+Updates that happen at runtime are stored in the database. These updates override [settings from the other sources]({{< relref "../../configure-grafana/" >}}), such as arguments, environment variables, and settings file, etc.
 
-Currently, **it only supports updates on the `auth.saml` section.**
+Thus, whenever a particular setting key is deleted at runtime, the value for that key is inherited from the other sources in the reverse order of precedence, which is: command-line arguments, environment variables, and settings file. If none of these sources provide a value, the application's default value will be used.
+
+Currently, **this only supports updates on the `auth.saml` section.**
 
 ## Update settings via the API
 
@@ -32,8 +29,7 @@ You can update settings through the [Admin API]({{< relref "../../../developers/
 When you submit a settings update via API, Grafana verifies if the given settings updates are allowed and valid. If they are, then Grafana stores the settings in the database and reloads
 Grafana services with no need to restart the instance.
 
-So, the payload of a `PUT` request to the update settings endpoint (`/api/admin/settings`)
-should contain (either one or both):
+To update settings via the API, send a `PUT` request to the (`/api/admin/settings`) endpoint. The payload of the request should contain either one or both of the following:
 
 - An `updates` map with a key, and a value per section you want to set.
 - A `removals` list with keys per section you want to unset.
@@ -63,7 +59,7 @@ it would remove the key/value setting identified by `allow_idp_initiated` within
 So, the SAML service would be reloaded and that value would be inherited for either (settings `.ini` file,
 environment variable, command line arguments or any other accepted mechanism to provide configuration).
 
-Therefore, the complete HTTP payload would looks like:
+Therefore, the complete HTTP payload would look like:
 
 ```json
 {
@@ -79,16 +75,15 @@ Therefore, the complete HTTP payload would looks like:
 }
 ```
 
-In case any of these settings cannot be overridden nor valid, it would return an error and these settings
-won't be persisted into the database.
+If any of these settings cannot be overridden or are invalid, an error will be returned and the settings will not be saved to the database.
 
 ## Background job (high availability set-ups)
 
 Grafana Enterprise has a built-in scheduled background job that looks into the database every minute for
 settings updates. If there are updates, it reloads the Grafana services affected by the detected changes.
 
-The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
-HTTP API, then the other instances are synchronized through the database and the background job.
+The background job synchronizes settings between instances in high availability set-ups, ensuring that all instances have the same settings. So, after you perform some changes through the
+HTTP API, the other instances are synchronized through the database and the background job.
 
 ## Control access with role-based access control
 
