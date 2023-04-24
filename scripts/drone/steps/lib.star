@@ -126,6 +126,22 @@ def init_enterprise_step(ver_mode):
     else:
         environment = {}
         token = ""
+    commands = [
+        'mv bin/grabpl /tmp/',
+        'rmdir bin',
+        'mv grafana-enterprise /tmp/',
+    ]
+
+    if ver_mode == 'release':
+      commands += ['export DRONE_TARGET_BRANCH=$${DRONE_TAG}']
+
+    commands += [
+        '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
+        'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
+        'mkdir bin',
+        'mv /tmp/grabpl bin/'
+    ]
+
     return {
         'name': 'init-enterprise',
         'image': build_image,
@@ -133,15 +149,7 @@ def init_enterprise_step(ver_mode):
             'clone-enterprise',
         ],
         'environment': environment,
-        'commands': [
-            'mv bin/grabpl /tmp/',
-            'rmdir bin',
-            'mv grafana-enterprise /tmp/',
-            '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
-            'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
-            'mkdir bin',
-            'mv /tmp/grabpl bin/'
-        ],
+        'commands': commands,
     }
 
 

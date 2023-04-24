@@ -1993,6 +1993,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
+  - export DRONE_TARGET_BRANCH=$${DRONE_TAG}
   - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
     ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
@@ -2350,6 +2351,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
+  - export DRONE_TARGET_BRANCH=$${DRONE_TAG}
   - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
     ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
@@ -2529,6 +2531,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
+  - export DRONE_TARGET_BRANCH=$${DRONE_TAG}
   - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
     ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
@@ -4724,6 +4727,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: ea3044683103acec9dbb09a50a699c4b8174eb3ad887417a16627a262713f7c5
+hmac: 3e76cf4a5ccab6bb3619b91805fd695d632d9d7df097da90386da7b5b5e25885
 
 ...
