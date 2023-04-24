@@ -38,5 +38,16 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
+// this is a dummy hook for now to replace calling the actual api
+// TODO actual implementation
+export const useGetChildCount = (folderUid: string) => {
+  return {
+    dashboard: 4,
+    folder: 4,
+    libraryPanel: 4,
+    alertRule: 4,
+  };
+};
+
 export const { useGetFolderQuery } = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

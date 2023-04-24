@@ -1,18 +1,29 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 
+import { DashboardTreeSelection } from '../../types';
+
+import { buildBreakdownString } from './utils';
+
 export interface Props {
+  isOpen: boolean;
+  onConfirm: () => void;
   onDismiss: () => void;
+  selectedItems: DashboardTreeSelection;
 }
 
-export const DeleteModal = ({ onDismiss, ...props }: Props) => {
+export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const styles = useStyles2(getStyles);
+  const folderCount = Object.values(selectedItems.folder).filter(isTruthy).length;
+  const dashboardCount = Object.values(selectedItems.dashboard).filter(isTruthy).length;
+  const libraryPanelCount = 1;
+  const alertRuleCount = 1;
 
-  const onConfirm = () => {
-    console.log('onConfirm clicked!');
+  const onDelete = () => {
+    onConfirm();
     onDismiss();
   };
 
@@ -21,14 +32,15 @@ export const DeleteModal = ({ onDismiss, ...props }: Props) => {
       body={
         <div className={styles.modalBody}>
           This action will delete the following content:
-          <p className={styles.breakdown}>6 items: 1 subfolder, 1 library panel, 2 dashboards, 2 alert rules</p>
+          <p className={styles.breakdown}>
+            {buildBreakdownString(folderCount, dashboardCount, libraryPanelCount, alertRuleCount)}
+          </p>
         </div>
       }
       confirmationText="Delete"
       confirmText="Delete"
-      isOpen
       onDismiss={onDismiss}
-      onConfirm={onConfirm}
+      onConfirm={onDelete}
       title="Delete Compute Resources"
       {...props}
     />

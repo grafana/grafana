@@ -1,28 +1,43 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { Alert, Button, Field, Modal, useStyles2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
+import { DashboardTreeSelection } from '../../types';
+
+import { buildBreakdownString } from './utils';
+
 export interface Props {
+  isOpen: boolean;
+  onConfirm: (targetFolderUid: string) => void;
   onDismiss: () => void;
+  selectedItems: DashboardTreeSelection;
 }
 
-export const MoveModal = ({ onDismiss, ...props }: Props) => {
+export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const styles = useStyles2(getStyles);
+  const folderCount = Object.values(selectedItems.folder).filter(isTruthy).length;
+  const dashboardCount = Object.values(selectedItems.dashboard).filter(isTruthy).length;
+  const libraryPanelCount = 1;
+  const alertRuleCount = 1;
 
   const onMove = () => {
-    console.log(`onMove clicked with target ${moveTarget}!`);
+    if (moveTarget !== undefined) {
+      onConfirm(moveTarget);
+    }
     onDismiss();
   };
 
   return (
     <Modal title="Move" onDismiss={onDismiss} {...props}>
-      <Alert severity="warning" title="Moving this item may change its permissions." />
+      {folderCount > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
       This action will move the following content:
-      <p className={styles.breakdown}>6 items: 1 subfolder, 1 library panel, 2 dashboards, 2 alert rules</p>
+      <p className={styles.breakdown}>
+        {buildBreakdownString(folderCount, dashboardCount, libraryPanelCount, alertRuleCount)}
+      </p>
       <Field label="Folder name">
         <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
       </Field>
