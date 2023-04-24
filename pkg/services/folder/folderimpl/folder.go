@@ -634,7 +634,7 @@ func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildren
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	countsMap := folder.ChildrenCounts{}
+	countsMap := make(folder.ChildrenCounts, len(s.registry))
 	for _, v := range s.registry {
 		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
 		if err != nil {
