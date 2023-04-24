@@ -51,8 +51,8 @@ export function SqlQueryEditor({
     if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
       // JEV: possible issues:
       // - Updating a datasource config DOES NOT effect the query run for MYSQL/MSSQL data sources when loading a dashboard,
-      //   nor is it saved anywhere in the json model. So, the change will NOT be reflected upon panel load. This is NOT
-      //   true for Postgres data sources, however. I can't understand why?
+      //   it is saved in the json model (jsondata), but the query is NOT updated. So, the change is NOT reflected upon panel load,
+      //   since the panel used the query object to make the query.
       // - If a default database changes for ANY data source, and the new database has a table that the previous one also had,
       //   the query will NOT error out, but WILL be caught by my alerts.
       // - Unable to find a way to bubble editor-level errors to panel chrome.
