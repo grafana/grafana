@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
-import { useEffectOnce, usePrevious, useToggle } from 'react-use';
+import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
@@ -59,7 +59,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [limitInstances, toggleLimit] = useToggle(true);
-  const previousMode = usePrevious(props.options.groupMode);
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -89,9 +88,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   );
 
   useEffect(() => {
-    //when coming back from cusom group mode, we restore limits and filters
-    const comingBackFromCustom = previousMode === GroupMode.Custom && props.options.groupMode === GroupMode.Default;
-    if (comingBackFromCustom) {
+    if (props.options.groupMode === GroupMode.Default) {
       dispatch(
         fetchAllPromAndRulerRulesAction(false, {
           limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
@@ -100,7 +97,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         })
       );
     }
-  }, [props.options.groupMode, limitInstances, dispatch, matcherList, stateList, previousMode]);
+  }, [props.options.groupMode, limitInstances, dispatch, matcherList, stateList]);
 
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.

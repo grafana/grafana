@@ -49,11 +49,12 @@ export const AlertInstances = ({
     [alerts, options]
   );
   const isGrafanaAlert = grafanaTotalInstances !== undefined;
-  const hiddenInstances = isGrafanaAlert
-    ? grafanaTotalInstances && grafanaFilteredInstancesTotal
-      ? grafanaTotalInstances - grafanaFilteredInstancesTotal
-      : 0
-    : alerts.length - filteredAlerts.length;
+
+  const hiddenInstancesForGrafanaAlerts =
+    grafanaTotalInstances && grafanaFilteredInstancesTotal ? grafanaTotalInstances - grafanaFilteredInstancesTotal : 0;
+  const hiddenInstancesForNonGrafanaAlerts = alerts.length - filteredAlerts.length;
+
+  const hiddenInstances = isGrafanaAlert ? hiddenInstancesForGrafanaAlerts : hiddenInstancesForNonGrafanaAlerts;
 
   const uncollapsible = filteredAlerts.length > 0;
   const toggleShowInstances = uncollapsible ? toggleDisplayInstances : noop;
@@ -68,7 +69,7 @@ export const AlertInstances = ({
     if (!handleInstancesLimit) {
       return;
     }
-    await handleInstancesLimit(false);
+    handleInstancesLimit(false);
     setDisplayInstances(true);
   };
 
@@ -76,7 +77,7 @@ export const AlertInstances = ({
     if (!handleInstancesLimit) {
       return;
     }
-    await handleInstancesLimit(true);
+    handleInstancesLimit(true);
     setDisplayInstances(true);
   };
   const totalInstancesNumber = limitInstances ? grafanaFilteredInstancesTotal : filteredAlerts.length;
@@ -84,7 +85,9 @@ export const AlertInstances = ({
     ? `Showing ${INSTANCES_DISPLAY_LIMIT} of ${grafanaTotalInstances} instances`
     : `Showing all ${grafanaTotalInstances} instances`;
 
-  const limitButtonLabel = limitInstances ? 'Remove limit' : `Limit the result to ${INSTANCES_DISPLAY_LIMIT} instances`;
+  const limitButtonLabel = limitInstances
+    ? 'View all instances'
+    : `Limit the result to ${INSTANCES_DISPLAY_LIMIT} instances`;
 
   const instancesLimitedAndOverflowed =
     grafanaTotalInstances &&

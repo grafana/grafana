@@ -66,7 +66,7 @@ export function paramsWithMatcherAndState(
   }
 
   if (matchers?.length) {
-    const matcherToJsonString: string[] = matchers.map((m) => `${JSON.stringify(m)}`);
+    const matcherToJsonString: string[] = matchers.map((m) => JSON.stringify(m));
     paramsResult = {
       ...paramsResult,
       matcher: matcherToJsonString,
