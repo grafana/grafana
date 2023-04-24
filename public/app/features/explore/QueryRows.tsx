@@ -11,7 +11,7 @@ import { ExploreId } from 'app/types/explore';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { changeQueries, commitQueries } from './state/query';
+import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
@@ -46,8 +46,8 @@ export const QueryRows = ({ exploreId }: Props) => {
   const eventBridge = useSelector(getEventBridge);
 
   const onRunQueries = useCallback(() => {
-    dispatch(commitQueries());
-  }, [dispatch]);
+    dispatch(runQueries({ exploreId }));
+  }, [dispatch, exploreId]);
 
   const onChange = useCallback(
     (newQueries: DataQuery[]) => {

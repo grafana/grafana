@@ -18,7 +18,6 @@ import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExploreCorrelations } from './hooks/useExploreCorrelations';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useStateSync } from './hooks/useStateSync';
-import { useURLSync } from './hooks/useURLSync';
 import { splitSizeUpdateAction } from './state/main';
 import { selectOrderedExplorePanes } from './state/selectors';
 
@@ -34,8 +33,6 @@ const styles = {
 
 export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useStateSync(props.queryParams);
-  useURLSync();
-  // FIXME: This should happen as part of URL changes, or at least only after URL has changed
   useExplorePageTitle();
   useExploreCorrelations();
   const dispatch = useDispatch();

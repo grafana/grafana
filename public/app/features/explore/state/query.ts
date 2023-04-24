@@ -224,12 +224,6 @@ export interface ClearCachePayload {
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
 /**
- * Signals Explore to commit queries to the URL. This usually happens when a datasource requests a query run as a result of a
- * change in the query editor. In such cases we don't want to directly run the queries, but let explore update the URL and run the queries as a result of those changes.
- */
-export const commitQueries = createAction('explore/commitQueries');
-
-/**
  * Adds a query row after the row with the given index.
  */
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {

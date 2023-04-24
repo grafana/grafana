@@ -9,19 +9,19 @@ import { lastUsedDatasourceKeyForOrgId, parseUrlState } from 'app/core/utils/exp
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreId, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
+import { addListener, ExploreId, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
 import { changeDatasource } from '../state/datasource';
 import { initializeExplore, urlDiff } from '../state/explorePane';
-import { clearPanes, splitClose, syncTimesAction } from '../state/main';
+import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../state/main';
 import { runQueries, setQueriesAction } from '../state/query';
 import { selectPanes } from '../state/selectors';
-import { updateTime } from '../state/time';
+import { changeRangeAction, updateTime } from '../state/time';
 
 import { getUrlStateFromPaneState } from './utils';
 
 /**
- * Syncs URL changes with Explore's panes state by reacting to URL changes and updating the state.
+ * Bi-directionally syncs URL changes with Explore's state.
  */
 export function useStateSync(params: ExploreQueryParams) {
   const {
@@ -36,8 +36,63 @@ export function useStateSync(params: ExploreQueryParams) {
   const prevParams = useRef<ExploreQueryParams>(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
 
+  // @ts-expect-error
   useEffect(() => {
-    const shouldSync = prevParams.current?.left !== params.left || prevParams.current?.right !== params.right;
+    const unsubscribe = dispatch(
+      addListener({
+        predicate: (action) =>
+          // We want to update the URL when:
+          [
+            // - a pane is opened or closed
+            splitClose.type,
+            splitOpen.fulfilled.type,
+            // - a query is run
+            runQueries.pending.type,
+            // - range is changed
+            changeRangeAction.type,
+            // - queries are committed
+          ].includes(action.type),
+        effect: async (_, { cancelActiveListeners, delay, getState }) => {
+          // The following 2 lines will throttle the URL updates to 200ms.
+          // This is because we don't want to update the URL multiple times when for instance multiple
+          // panes trigger a query run at the same time or when queries are executed in very rapid succession.
+          cancelActiveListeners();
+          await delay(200);
+
+          const { left, right } = getState().explore.panes;
+          const orgId = getState().user.orgId.toString();
+          const panesState: { [index: string]: string | undefined } = { orgId };
+
+          if (left) {
+            panesState.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
+          }
+
+          if (right) {
+            panesState.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
+          } else {
+            panesState.right = undefined;
+          }
+
+          if (prevParams.current.right !== panesState.right || prevParams.current.left !== panesState.left) {
+            // If there's no state in the URL it means we are mounting explore for the first time.
+            // In that case we want to replace the URL instead of pushing a new entry to the history.
+            const replace = !prevParams.current.right && !prevParams.current.left;
+
+            prevParams.current = {
+              left: panesState.left,
+              right: panesState.right,
+            };
+            location.partial({ ...panesState }, replace);
+          }
+        },
+      })
+    );
+
+    return unsubscribe;
+  }, [dispatch, location]);
+
+  useEffect(() => {
+    const isURLOutOfSync = prevParams.current?.left !== params.left || prevParams.current?.right !== params.right;
 
     const urlPanes = {
       left: parseUrlState(params.left),
@@ -130,9 +185,7 @@ export function useStateSync(params: ExploreQueryParams) {
 
       Promise.all(initPromises).then((panes) => {
         const urlState = panes.reduce<ExploreQueryParams>((acc, { exploreId, state }) => {
-          acc[exploreId] = serializeStateToUrlParam(getUrlStateFromPaneState(state));
-
-          return acc;
+          return { ...acc, [exploreId]: serializeStateToUrlParam(getUrlStateFromPaneState(state)) };
         }, {});
 
         location.partial({ ...urlState, orgId }, true);
@@ -205,7 +258,7 @@ export function useStateSync(params: ExploreQueryParams) {
         .forEach((paneId) => dispatch(splitClose(paneId as ExploreId)));
     }
 
-    if (!shouldSync && initState.current === 'notstarted') {
+    if (!isURLOutOfSync && initState.current === 'notstarted') {
       init();
     }
 
@@ -214,7 +267,7 @@ export function useStateSync(params: ExploreQueryParams) {
       right: params.right,
     };
 
-    shouldSync && initState.current === 'done' && sync();
+    isURLOutOfSync && initState.current === 'done' && sync();
   }, [params.left, params.right, dispatch, statePanes, exploreMixedDatasource, orgId, location]);
 }
 
