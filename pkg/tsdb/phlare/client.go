@@ -6,7 +6,7 @@ import (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(context.Context) ([]ProfileType, error)
+	ProfileTypes(context.Context) ([]*ProfileType, error)
 	LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)

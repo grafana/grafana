@@ -21,18 +21,18 @@ func NewPhlareClient(httpClient *http.Client, url string) *PhlareClient {
 	}
 }
 
-func (c *PhlareClient) ProfileTypes(ctx context.Context) ([]ProfileType, error) {
+func (c *PhlareClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
 		return nil, err
 	}
 	if res.Msg.ProfileTypes == nil {
 		// Let's make sure we send at least empty array if we don't have any types
-		return []ProfileType{}, nil
+		return []*ProfileType{}, nil
 	} else {
-		pTypes := make([]ProfileType, len(res.Msg.ProfileTypes))
+		pTypes := make([]*ProfileType, len(res.Msg.ProfileTypes))
 		for i, pType := range res.Msg.ProfileTypes {
-			pTypes[i] = ProfileType{
+			pTypes[i] = &ProfileType{
 				ID:    pType.ID,
 				Label: pType.Name + " - " + pType.SampleType,
 			}

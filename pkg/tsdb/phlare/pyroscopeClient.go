@@ -26,7 +26,7 @@ func NewPyroscopeClient(httpClient *http.Client, url string) *PyroscopeClient {
 	}
 }
 
-func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]ProfileType, error) {
+func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	resp, err := c.httpClient.Get(c.URL + "/api/apps")
 	if err != nil {
 		return nil, err
@@ -43,9 +43,9 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]ProfileType, erro
 		return nil, err
 	}
 
-	var profileTypes []ProfileType
+	var profileTypes []*ProfileType
 	for _, app := range apps {
-		profileTypes = append(profileTypes, ProfileType{
+		profileTypes = append(profileTypes, &ProfileType{
 			ID:    app.Name,
 			Label: app.Name,
 		})
