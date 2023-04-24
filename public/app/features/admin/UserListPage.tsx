@@ -56,11 +56,11 @@ export default function UserListPage() {
     return null;
   });
 
-  const showToggle = hasAccessToOrgUsers && hasAccessToAdminUsers;
+  const showAdminAndOrgTabs = hasAccessToOrgUsers && hasAccessToAdminUsers;
 
   return (
     <Page navId={'global-users'}>
-      {showToggle ? (
+      {showAdminAndOrgTabs ? (
         <TabsBar className={styles.tabsMargin}>
           <Tab
             label="All users"
