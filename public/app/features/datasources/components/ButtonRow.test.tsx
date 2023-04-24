@@ -8,9 +8,7 @@ import { ButtonRow, Props } from './ButtonRow';
 const setup = (propOverrides?: object) => {
   const props: Props = {
     canSave: false,
-    canDelete: false,
     onSubmit: jest.fn(),
-    onDelete: jest.fn(),
     onTest: jest.fn(),
     exploreUrl: '/explore',
   };
