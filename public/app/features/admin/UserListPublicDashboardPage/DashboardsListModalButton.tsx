@@ -14,7 +14,7 @@ const DashboardsListModal = ({ dashboards, onDismiss }: { dashboards: SessionDas
   return (
     <Modal className={styles.modal} isOpen title="Public dashboards" onDismiss={onDismiss}>
       {dashboards.map((dash) => (
-        <div key={dash.name} className={styles.listItem}>
+        <div key={dash.dashboardUid} className={styles.listItem}>
           <p className={styles.dashboardTitle}>{dash.name}</p>
           <div className={styles.urlsContainer}>
             <a
