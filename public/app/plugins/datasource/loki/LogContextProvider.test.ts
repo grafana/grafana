@@ -15,7 +15,7 @@ import { LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {
   start: jest.fn(),
-  getLabelKeys: jest.fn(() => ['bar', 'xyz']),
+  fetchSeriesLabels: jest.fn(() => ({ bar: ['baz'], xyz: ['abc'] })),
 } as unknown as LokiLanguageProvider;
 
 const defaultDatasourceMock = createLokiDatasource();
@@ -41,23 +41,36 @@ describe('LogContextProvider', () => {
   let logContextProvider: LogContextProvider;
   beforeEach(() => {
     logContextProvider = new LogContextProvider(defaultDatasourceMock);
-    logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
-      Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
-    );
   });
 
   describe('getLogRowContext', () => {
     it('should call getInitContextFilters if no appliedContextFilters', async () => {
+      logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
+        Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
+      );
       expect(logContextProvider.appliedContextFilters).toHaveLength(0);
-      await logContextProvider.getLogRowContext(defaultLogRow, {
-        limit: 10,
-        direction: LogRowContextQueryDirection.Backward,
-      });
+      await logContextProvider.getLogRowContext(
+        defaultLogRow,
+        {
+          limit: 10,
+          direction: LogRowContextQueryDirection.Backward,
+        },
+        {
+          expr: '{bar="baz"}',
+        } as LokiQuery
+      );
       expect(logContextProvider.getInitContextFiltersFromLabels).toBeCalled();
+      expect(logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalledWith(
+        { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
+        { expr: '{bar="baz"}' }
+      );
       expect(logContextProvider.appliedContextFilters).toHaveLength(1);
     });
 
     it('should not call getInitContextFilters if appliedContextFilters', async () => {
+      logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
+        Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
+      );
       logContextProvider.appliedContextFilters = [
         { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
         { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
@@ -73,6 +86,9 @@ describe('LogContextProvider', () => {
 
   describe('getLogRowContextQuery', () => {
     it('should call getInitContextFilters if no appliedContextFilters', async () => {
+      logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
+        Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
+      );
       const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
         limit: 10,
         direction: LogRowContextQueryDirection.Backward,
@@ -179,5 +195,30 @@ describe('LogContextProvider', () => {
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"}`);
     });
+  });
+
+  describe('getInitContextFiltersFromLabels', () => {
+    it('should correctly create contextFilters', async () => {
+      const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, {
+        expr: '{bar="baz"}',
+      } as LokiQuery);
+      expect(filters).toEqual([
+        { enabled: true, fromParser: false, label: 'bar', value: 'baz' },
+        { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
+        { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+      ]);
+    });
+  });
+
+  it('should return empty contextFilters if no query', async () => {
+    const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, undefined);
+    expect(filters).toEqual([]);
+  });
+
+  it('should return empty contextFilters if no labels', async () => {
+    const filters = await logContextProvider.getInitContextFiltersFromLabels(undefined, {
+      expr: '{bar="baz"}',
+    } as LokiQuery);
+    expect(filters).toEqual([]);
   });
 });

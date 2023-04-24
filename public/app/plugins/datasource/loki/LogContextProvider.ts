@@ -213,6 +213,7 @@ export class LogContextProvider {
     }
 
     const stream = getStreamSelectorsFromQuery(query.expr);
+    // We are using stream[0] as log query can always have just 1 stream selector
     const seriesLabels = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
 
     const contextFilters: ContextFilter[] = [];
@@ -223,7 +224,7 @@ export class LogContextProvider {
         enabled: false,
         fromParser: true,
       };
-      if (seriesLabels?.[label]?.includes(value)) {
+      if (seriesLabels?.[label]) {
         filter.enabled = true;
         filter.fromParser = false;
       }
