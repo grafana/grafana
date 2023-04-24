@@ -326,4 +326,8 @@ const (
 	// FlagOpensearchDetectVersion
 	// Enable version detection in OpenSearch
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+
+	// FlagEnableDatagridEditing
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditing = "enableDatagridEditing"
 )

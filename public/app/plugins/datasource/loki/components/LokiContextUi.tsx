@@ -123,7 +123,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels);
+    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
     setContextFilters(contextFilters);
     setInitialized(true);
     setLoading(false);
