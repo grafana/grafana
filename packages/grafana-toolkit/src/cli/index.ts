@@ -5,7 +5,6 @@ import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
-import { pluginDevTask } from './tasks/plugin.dev';
 import { pluginSignTask } from './tasks/plugin.sign';
 import { pluginTestTask } from './tasks/plugin.tests';
 import { pluginUpdateTask } from './tasks/plugin.update';
@@ -118,22 +117,6 @@ export const run = (includeInternalScripts = false) => {
         preserveConsole: cmd.preserveConsole,
         skipLint: cmd.skipLint,
         skipTest: cmd.skipTest,
-      });
-    });
-
-  program
-    .command('plugin:dev')
-    .option('-w, --watch', 'Run plugin development mode with watch enabled')
-    .description('[Deprecated] Starts plugin dev mode')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
-      console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
-      );
-
-      await execTask(pluginDevTask)({
-        watch: !!cmd.watch,
-        silent: true,
       });
     });
 
