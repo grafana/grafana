@@ -681,7 +681,7 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 
 ### csrf_always_check
 
-Set to `true` to execute the CSRF check even if the login cookie is not present in a request (default `false`).
+Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
 
 ## [snapshots]
 
