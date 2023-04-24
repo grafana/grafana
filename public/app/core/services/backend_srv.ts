@@ -301,7 +301,9 @@ export class BackendSrv implements BackendService {
     // for data source configs we want to handle the app errors separately so emit a different event
     // that will be handled outside of current notifications
     if (config.showSuccessAlert === false) {
-      if (data?.message) {
+      // We don't need to show this to the user as the test status will be updated anyway and
+      // this causes flickering of the alert box when states are changing rapidly
+      if (data?.message && data.message !== 'Datasource updated') {
         this.dependencies.appEvents.emit(DataSourceConfigEvents.success, ['success', data.message]);
       }
       return;
@@ -329,11 +331,6 @@ export class BackendSrv implements BackendService {
       message = err.message;
     }
 
-    if (message.length > 80) {
-      description = message;
-      message = 'Error';
-    }
-
     // Validation
     if (err.status === 422) {
       description = err.data.message;
@@ -352,6 +349,11 @@ export class BackendSrv implements BackendService {
       ]);
 
       return;
+    }
+
+    if (message.length > 80) {
+      description = message;
+      message = 'Error';
     }
 
     if (!err.statusText) {

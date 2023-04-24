@@ -25,7 +25,7 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
-  globalTest,
+  handleBackendTest,
 } from '../state';
 import { DataSourceRights, ConfigTestPayload } from '../types';
 
@@ -62,7 +62,7 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
-  const onConfigTest = useCallback((payload: ConfigTestPayload) => dispatch(globalTest(payload)), [dispatch]);
+  const onConfigTest = useCallback((payload: ConfigTestPayload) => dispatch(handleBackendTest(payload)), [dispatch]);
 
   useEffect((): void => {
     appEvents.on(DataSourceConfigEvents.success, (payload: ConfigTestPayload) => onConfigTest(payload));

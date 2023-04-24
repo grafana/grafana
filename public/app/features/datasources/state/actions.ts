@@ -91,8 +91,8 @@ export const initDataSourceSettings = (
   };
 };
 
-export const globalTest = (payload: ConfigTestPayload): ThunkResult<void> => {
-  return async (dispatch: ThunkDispatch, getState) => {
+export const handleBackendTest = (payload: ConfigTestPayload): ThunkResult<void> => {
+  return async (dispatch: ThunkDispatch) => {
     const status = payload[0];
 
     const result = {
@@ -124,11 +124,7 @@ export const testDataSource = (
       return;
     }
 
-    // add a small delay before setting the status to `info` as we might
-    // run a global test before and this could cause the alert box to flicker
-    setTimeout(() => {
-      dispatch(testDataSourceStarting())
-    }, 200);
+    dispatch(testDataSourceStarting());
 
     dependencies.getBackendSrv().withNoBackendCache(async () => {
       try {
