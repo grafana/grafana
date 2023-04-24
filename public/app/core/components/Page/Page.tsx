@@ -44,7 +44,7 @@ export const OldPage: PageType = ({
     if (navModel) {
       // This is needed for chrome to update it's chromeless state
       chrome.update({
-        sectionNav: navModel.node,
+        sectionNav: navModel,
       });
     } else {
       // Need to trigger a chrome state update for the route change to be processed

@@ -1,4 +1,4 @@
-import { ArrayVector, Field, FieldType, MutableDataFrame } from '@grafana/data';
+import { Field, FieldType, MutableDataFrame } from '@grafana/data';
 
 import { getTooltipData } from './FlameGraphTooltip';
 import { FlameGraphDataContainer } from './dataTransform';
@@ -89,6 +89,6 @@ function makeField(name: string, unit: string, values: number[]): Field {
     config: {
       unit,
     },
-    values: new ArrayVector(values),
+    values: values,
   };
 }

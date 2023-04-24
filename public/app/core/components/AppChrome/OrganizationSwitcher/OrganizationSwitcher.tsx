@@ -18,7 +18,7 @@ export function OrganizationSwitcher() {
   const onSelectChange = (option: SelectableValue<UserOrg>) => {
     if (option.value) {
       setUserOrganization(option.value.orgId);
-      locationService.partial({ orgId: option.value.orgId }, true);
+      locationService.push(`/?orgId=${option.value.orgId}`);
       // TODO how to reload the current page
       window.location.reload();
     }
