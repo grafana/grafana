@@ -167,7 +167,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         ) : null}
       </FieldSet>
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
+      {config.secureSocksDSProxyEnabled && (
         <FieldSet label="Secure Socks Proxy">
           <InlineField labelWidth={26} label="Enabled" tooltip="Connect to this datasource via the secure socks proxy.">
             <InlineSwitch

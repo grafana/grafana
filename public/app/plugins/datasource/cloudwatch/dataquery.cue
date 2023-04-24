@@ -23,7 +23,7 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
@@ -125,8 +125,7 @@ composableKinds: DataQuery: {
 							expressions: [...#QueryEditorExpression] | [...#QueryEditorArrayExpression]
 						} @cuetsy(kind="interface")
 
-						// QueryEditorArrayExpression is added in veneer
-						#QueryEditorExpression: #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
+						#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 
 						#CloudWatchLogsQuery: {
 							common.DataQuery

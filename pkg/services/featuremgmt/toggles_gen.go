@@ -67,9 +67,9 @@ const (
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagNewTraceView
-	// Shows the new trace view design
-	FlagNewTraceView = "newTraceView"
+	// FlagNewTraceViewHeader
+	// Shows the new trace view header
+	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
@@ -190,10 +190,6 @@ const (
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
-
-	// FlagSecureSocksDatasourceProxy
-	// Enable secure socks tunneling for supported core datasources
-	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
 
 	// FlagAuthnService
 	// Use new auth service to perform authentication
@@ -330,4 +326,8 @@ const (
 	// FlagOpensearchDetectVersion
 	// Enable version detection in OpenSearch
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+
+	// FlagEnableDatagridEditing
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditing = "enableDatagridEditing"
 )

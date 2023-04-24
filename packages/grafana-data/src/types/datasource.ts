@@ -57,6 +57,7 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated -- register the annotation support in the instance constructor */
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
     this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;

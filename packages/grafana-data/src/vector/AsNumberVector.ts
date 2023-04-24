@@ -1,23 +1,14 @@
 import { Vector } from '../types';
 
-import { FunctionalVector } from './FunctionalVector';
-
 /**
  * This will force all values to be numbers
  *
  * @public
- * @deprecated use a simple Arrays
+ * @deprecated use a simple Arrays.  NOTE: Not used in grafana core
  */
-export class AsNumberVector extends FunctionalVector<number> {
-  constructor(private field: Vector) {
+export class AsNumberVector extends Array<number> {
+  constructor(field: Vector) {
     super();
-  }
-
-  get length() {
-    return this.field.length;
-  }
-
-  get(index: number) {
-    return +this.field.get(index);
+    return field.map((v) => +v) as AsNumberVector;
   }
 }

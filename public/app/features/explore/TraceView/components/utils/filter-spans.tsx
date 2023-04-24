@@ -17,7 +17,7 @@ import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export function filterSpansNewTraceView(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpansNewTraceViewHeader(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
@@ -151,7 +151,7 @@ export const convertTimeFilter = (time: string) => {
   return undefined;
 };
 
-// legacy code that will be removed when the newTraceView feature flag is removed
+// legacy code that will be removed when the Header feature flag is removed
 export function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;

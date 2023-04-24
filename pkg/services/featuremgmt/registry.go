@@ -105,8 +105,8 @@ var (
 			Owner:        grafanaExploreSquad,
 		},
 		{
-			Name:         "newTraceView",
-			Description:  "Shows the new trace view design",
+			Name:         "newTraceViewHeader",
+			Description:  "Shows the new trace view header",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
@@ -309,12 +309,6 @@ var (
 			FrontendOnly: true,
 			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:        "secureSocksDatasourceProxy",
-			Description: "Enable secure socks tunneling for supported core datasources",
-			State:       FeatureStateAlpha,
-			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "authnService",
@@ -537,6 +531,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:         "enableDatagridEditing",
+			Description:  "Enables the edit functionality in the datagrid panel",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

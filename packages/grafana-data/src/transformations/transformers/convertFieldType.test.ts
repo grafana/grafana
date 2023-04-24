@@ -100,6 +100,27 @@ describe('field convert type', () => {
   });
 });
 
+it('can convert proper numeric strings to numbers, but also treat edge-cases', () => {
+  const options = { targetField: 'stringy nums', destinationType: FieldType.number };
+
+  //there are scenarios where string fields have numeric values, or the strings are non-numeric and cannot pe converted
+  const stringyNumbers = {
+    name: 'stringy nums',
+    type: FieldType.string,
+    values: ['10', '1asd2', '30', 14, 10, '23', '', null],
+    config: {},
+  };
+
+  const numbers = convertFieldType(stringyNumbers, options);
+
+  expect(numbers).toEqual({
+    name: 'stringy nums',
+    type: FieldType.number,
+    values: [10, null, 30, 14, 10, 23, 0, 0],
+    config: {},
+  });
+});
+
 it('can convert strings with commas to numbers', () => {
   const options = { targetField: 'stringy nums', destinationType: FieldType.number };
 

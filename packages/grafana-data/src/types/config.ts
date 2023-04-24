@@ -74,6 +74,8 @@ export interface GrafanaJavascriptAgentConfig {
 
 export interface UnifiedAlertingConfig {
   minInterval: string;
+  // will be undefined if alerStateHistory is not enabled
+  alertStateHistoryBackend?: string;
 }
 
 /** Supported OAuth services
@@ -216,6 +218,7 @@ export interface GrafanaConfig {
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
+  secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;

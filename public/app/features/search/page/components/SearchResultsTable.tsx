@@ -108,7 +108,7 @@ export const SearchResultsTable = React.memo(
         const row = rows[rowIndex];
         prepareRow(row);
 
-        const url = response.view.fields.url?.values.get(rowIndex);
+        const url = response.view.fields.url?.values[rowIndex];
         let className = styles.rowContainer;
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
