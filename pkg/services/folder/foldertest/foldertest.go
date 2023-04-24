@@ -7,9 +7,10 @@ import (
 )
 
 type FakeService struct {
-	ExpectedFolders []*folder.Folder
-	ExpectedFolder  *folder.Folder
-	ExpectedError   error
+	ExpectedFolders        []*folder.Folder
+	ExpectedFolder         *folder.Folder
+	ExpectedError          error
+	ExpectedChildrenCounts map[string]int64
 }
 
 func NewFakeService() *FakeService {
@@ -48,4 +49,8 @@ func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (
 
 func (s *FakeService) RegisterService(service folder.RegistryService) error {
 	return s.ExpectedError
+}
+
+func (s *FakeService) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.ChildrenCounts, error) {
+	return s.ExpectedChildrenCounts, s.ExpectedError
 }

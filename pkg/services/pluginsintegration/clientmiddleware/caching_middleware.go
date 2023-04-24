@@ -100,7 +100,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	start := time.Now()
 
 	// First look in the resource cache if enabled
-	hit, resp := m.caching.HandleResourceRequest(ctx, req)
+	hit, cr := m.caching.HandleResourceRequest(ctx, req)
 
 	defer func() {
 		// record request duration if caching was used
@@ -114,13 +114,21 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 
 	// Cache hit; send the response and return
 	if hit {
-		return sender.Send(resp)
+		return sender.Send(cr.Response)
 	}
 
 	// Cache miss; do the actual request
-	// The call to update the cache happens in /pkg/api/plugin_resource.go in the flushStream() func
-	// TODO: Implement updating the cache from this method
-	return m.next.CallResource(ctx, req, sender)
+	// If there is no update cache func, just pass in the original sender
+	if cr.UpdateCacheFn == nil {
+		return m.next.CallResource(ctx, req, sender)
+	}
+	// Otherwise, intercept the responses in a wrapped sender so we can cache them first
+	cacheSender := cachedSenderFunc(func(res *backend.CallResourceResponse) error {
+		cr.UpdateCacheFn(ctx, res)
+		return sender.Send(res)
+	})
+
+	return m.next.CallResource(ctx, req, cacheSender)
 }
 
 func (m *CachingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -141,4 +149,10 @@ func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 
 func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
+}
+
+type cachedSenderFunc func(res *backend.CallResourceResponse) error
+
+func (fn cachedSenderFunc) Send(res *backend.CallResourceResponse) error {
+	return fn(res)
 }
