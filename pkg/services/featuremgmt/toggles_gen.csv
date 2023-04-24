@@ -79,3 +79,4 @@ authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,fals
 pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,false
 advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
 opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
+enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
