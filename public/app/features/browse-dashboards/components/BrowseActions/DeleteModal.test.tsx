@@ -37,7 +37,7 @@ describe('browse-dashboards DeleteModal', () => {
     expect(await screen.findByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 
-  it('only enables the `Delete` button if a the confirmation text is typed', async () => {
+  it('only enables the `Delete` button if the confirmation text is typed', async () => {
     render(<DeleteModal {...defaultProps} />);
 
     const confirmationInput = await screen.findByPlaceholderText('Type Delete to confirm');
