@@ -20,12 +20,14 @@ limitations under the License.
 package apiserver
 
 import (
+	"crypto/x509"
 	"net"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/certgenerator"
+	oteltrace "go.opentelemetry.io/otel/trace"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -33,8 +35,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/options"
 	serveroptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/util/proxy"
@@ -42,7 +48,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	corev1 "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 )
 
 func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, error) {
@@ -51,7 +56,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{"system:unauthenticated", "system:apiserver"}
+	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.CoreAPI = nil
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
@@ -80,16 +85,16 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 		return apiextensionsapiserver.Config{}, err
 	}
 
-	serverConfig.LoopbackClientConfig = &rest.Config{
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true,
-		},
-		Host:     DefaultAPIServerHost,
-		Username: "grafana",
-		Password: "grafana",
+	rootCert, err := certUtil.GetK8sCACert()
+	if err != nil {
+		return apiextensionsapiserver.Config{}, err
 	}
 
-	serverConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
+	authenticator, err := newAuthenticator(rootCert)
+	if err != nil {
+		return apiextensionsapiserver.Config{}, err
+	}
+	serverConfig.Authentication.Authenticator = authenticator
 
 	if err := o.APIEnablement.ApplyTo(
 		&serverConfig.Config,
@@ -98,6 +103,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 		return apiextensionsapiserver.Config{}, err
 	}
 
+	serverConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 	serviceResolver := &serviceResolver{serverConfig.SharedInformerFactory.Core().V1().Services().Lister()}
 	serverConfig.RESTOptionsGetter = &restOptionsGetter{
 		codec: apiextensionsapiserver.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion, v1.SchemeGroupVersion),
@@ -109,7 +115,7 @@ func createAPIExtensionsConfig(dataPath string) (apiextensionsapiserver.Config, 
 			CRDRESTOptionsGetter: &restOptionsGetter{codec: unstructured.UnstructuredJSONScheme},
 			MasterCount:          1,
 			ServiceResolver:      serviceResolver,
-			AuthResolverWrapper:  authWrapperFactory(serverConfig.LoopbackClientConfig),
+			AuthResolverWrapper:  webhook.NewDefaultAuthenticationInfoResolverWrapper(nil, nil, serverConfig.LoopbackClientConfig, oteltrace.NewNoopTracerProvider()),
 		},
 	}
 
@@ -131,24 +137,6 @@ func (r *serviceResolver) ResolveEndpoint(namespace, name string, port int32) (*
 	return proxy.ResolveCluster(r.services, namespace, name, port)
 }
 
-func authWrapperFactory(conf *rest.Config) webhook.AuthenticationInfoResolverWrapper {
-	return func(webhook.AuthenticationInfoResolver) webhook.AuthenticationInfoResolver {
-		return &authResolver{config: conf}
-	}
-}
-
-type authResolver struct {
-	config *rest.Config
-}
-
-func (a *authResolver) ClientConfigFor(hostPort string) (*rest.Config, error) {
-	return a.config, nil
-}
-
-func (a *authResolver) ClientConfigForService(serviceName, serviceNamespace string, servicePort int) (*rest.Config, error) {
-	return a.config, nil
-}
-
 type restOptionsGetter struct {
 	codec runtime.Codec
 }
@@ -162,4 +150,23 @@ func (r restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generi
 			},
 		},
 	}, nil
+}
+
+func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
+	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
+		UsernameHeaders:     []string{"X-Remote-User"},
+		GroupHeaders:        []string{"X-Remote-Group"},
+		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
+	}
+
+	requestHeaderAuthenticator, err := headerrequest.New(
+		reqHeaderOptions.UsernameHeaders,
+		reqHeaderOptions.GroupHeaders,
+		reqHeaderOptions.ExtraHeaderPrefixes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return requestHeaderAuthenticator, nil
 }

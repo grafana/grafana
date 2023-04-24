@@ -54,23 +54,14 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	uids := make(map[string]bool, len(folders))
 	result := make([]dtos.FolderSearchHit, 0)
 	for _, f := range folders {
-		uids[f.UID] = true
 		result = append(result, dtos.FolderSearchHit{
 			Id:        f.ID,
 			Uid:       f.UID,
 			Title:     f.Title,
 			ParentUID: f.ParentUID,
 		})
-	}
-
-	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, uids)
-	if len(metadata) > 0 {
-		for i := range result {
-			result[i].AccessControl = metadata[result[i].Uid]
-		}
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -303,6 +294,26 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, "")
 }
 
+// swagger:route GET /folders/{folder_uid}/counts folders getFolderChildrenCounts
+//
+// Gets the count of each descendant of a folder by kind. The folder is identified by UID.
+//
+// Responses:
+// 200: getFolderChildrenCountsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetFolderChildrenCounts(c *contextmodel.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	counts, err := hs.folderService.GetChildrenCounts(c.Req.Context(), &folder.GetChildrenCountsQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
+	if err != nil {
+		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	return response.JSON(http.StatusOK, counts)
+}
+
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
@@ -317,6 +328,8 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 	if folder.UpdatedBy > 0 {
 		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
 	}
+
+	acMetadata, _ := hs.getFolderACMetadata(c, folder)
 
 	return dtos.Folder{
 		Id:            folder.ID,
@@ -333,9 +346,36 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 		UpdatedBy:     updater,
 		Updated:       folder.Updated,
 		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+		AccessControl: acMetadata,
 		ParentUID:     folder.ParentUID,
 	}
+}
+
+func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
+	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	parents, err := hs.folderService.GetParents(c.Req.Context(), folder.GetParentsQuery{UID: f.UID, OrgID: c.OrgID})
+	if err != nil {
+		return nil, err
+	}
+
+	folderIDs := map[string]bool{f.UID: true}
+	for _, p := range parents {
+		folderIDs[p.UID] = true
+	}
+
+	allMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folderIDs)
+	metadata := allMetadata[f.UID]
+
+	// Flatten metadata - if any parent has a permission, the child folder inherits it
+	for _, md := range allMetadata {
+		for action := range md {
+			metadata[action] = true
+		}
+	}
+	return metadata, nil
 }
 
 func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folder, error) {
@@ -478,4 +518,18 @@ type DeleteFolderResponse struct {
 		// example: Folder My Folder deleted
 		Message string `json:"message"`
 	} `json:"body"`
+}
+
+// swagger:parameters getFolderChildrenCounts
+type GetFolderChildrenCountsParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+}
+
+// swagger:response getFolderChildrenCountsResponse
+type GetFolderChildrenCountsResponse struct {
+	// The response message
+	// in: body
+	Body folder.ChildrenCounts `json:"body"`
 }

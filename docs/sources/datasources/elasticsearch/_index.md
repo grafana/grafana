@@ -30,7 +30,7 @@ Once you've added the Elasticsearch data source, you can [configure it]({{< relr
 
 This data source supports these versions of Elasticsearch:
 
-- v7.10+
+- v7.16+
 - v8.x
 
 ## Configure the data source

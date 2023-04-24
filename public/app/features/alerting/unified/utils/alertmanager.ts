@@ -1,3 +1,5 @@
+import { isEqual, uniqWith } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
@@ -173,7 +175,7 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
     const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
     matchers.push({
       name: key,
-      value: value.trim(),
+      value: isRegex ? getValidRegexString(value.trim()) : value.trim(),
       isEqual,
       isRegex,
     });
@@ -181,6 +183,16 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
   });
 
   return matchers;
+}
+
+function getValidRegexString(regex: string): string {
+  // Regexes provided by users might be invalid, so we need to catch the error
+  try {
+    new RegExp(regex);
+    return regex;
+  } catch (error) {
+    return '';
+  }
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
@@ -204,6 +216,12 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
       return nameMatches && valueMatches;
     });
   });
+}
+
+export function combineMatcherStrings(...matcherStrings: string[]): string {
+  const matchers = matcherStrings.map(parseMatchers).flat();
+  const uniqueMatchers = uniqWith(matchers, isEqual);
+  return matchersToString(uniqueMatchers);
 }
 
 export function getAllAlertmanagerDataSources() {

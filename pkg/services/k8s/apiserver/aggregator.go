@@ -27,12 +27,16 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
+	"k8s.io/kube-openapi/pkg/common"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
+	apiextensionsopenapi "k8s.io/apiextensions-apiserver/pkg/generated/openapi"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/apiserver/pkg/server/resourceconfig"
@@ -47,6 +51,7 @@ import (
 	apiregistrationclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1"
 	apiregistrationinformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
+	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kubernetes/pkg/controlplane/controller/crdregistration"
 )
 
@@ -58,10 +63,17 @@ func createAggregatorConfig(
 	genericConfig := sharedConfig
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
 	genericConfig.RESTOptionsGetter = &restOptionsGetter{codec: aggregatorscheme.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion)}
-	// prevent generic API server from installing the OpenAPI handler. Aggregator server
-	// has its own customized OpenAPI handler.
-	genericConfig.SkipOpenAPIInstallation = true
+	getOpenAPIConfig := func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		result := apiextensionsopenapi.GetOpenAPIDefinitions(ref)
+		for k, v := range aggregatoropenapi.GetOpenAPIDefinitions(ref) {
+			result[k] = v
+		}
+		return result
+	}
 
+	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(getOpenAPIConfig, openapinamer.NewDefinitionNamer(apiextensionsapiserver.Scheme, aggregatorscheme.Scheme))
+	genericConfig.OpenAPIConfig.Info.Title = "Grafana"
+	genericConfig.OpenAPIConfig.Info.Version = "1.0.0"
 	mergedResourceConfig, err := resourceconfig.MergeAPIResourceConfigs(aggregatorapiserver.DefaultAPIResourceConfigSource(), nil, aggregatorscheme.Scheme)
 	if err != nil {
 		return nil, err
