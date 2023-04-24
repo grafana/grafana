@@ -364,25 +364,36 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	return searchResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
+func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) (*serviceaccounts.MigrationResult, error) {
 	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	migrationResult := &serviceaccounts.MigrationResult{
+		Total:         len(basicKeys),
+		Migrated:      0,
+		Failed:        0,
+		FailedDetails: []string{},
+	}
+
 	if len(basicKeys) > 0 {
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
 			if err != nil {
-				s.log.Error("migating to service accounts failed with error", err)
-				return err
+				s.log.Error("migating to service accounts failed with error", err.Error())
+				migrationResult.Failed++
+				migrationResult.FailedDetails = append(migrationResult.FailedDetails, fmt.Sprintf("API key name: %s - Error: %s", key.Name, err.Error()))
+			} else {
+				migrationResult.Migrated++
+				s.log.Debug("API key converted to service account token", "keyId", key.ID)
 			}
-			s.log.Debug("API key converted to service account token", "keyId", key.ID)
 		}
 	}
 	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
 		s.log.Error("Failed to write API keys migration status", err)
 	}
-	return nil
+	return migrationResult, nil
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
@@ -406,6 +417,11 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
+	// TODO: Remove this once we have a way to simulate a failure
+	// Simulate a failure
+	if strings.HasPrefix(key.Name, "fail-") {
+		return fmt.Errorf("failed to migrate api key: %s", key.Name)
+	}
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgID, key.Name),
