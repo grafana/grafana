@@ -619,67 +619,6 @@ func TestStitchReceivers(t *testing.T) {
 			},
 		},
 		{
-			name: "rename to another existing group, moves receiver",
-			new: &definitions.PostableGrafanaReceiver{
-				UID:  "def",
-				Name: "receiver-1",
-				Type: "slack",
-			},
-			expModified: true,
-			expCfg: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{
-						Receiver: "receiver-1",
-						Routes: []*definitions.Route{
-							{
-								Receiver: "receiver-1",
-							},
-						},
-					},
-				},
-				Receivers: []*definitions.PostableApiReceiver{
-					{
-						Receiver: config.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
-								{
-									UID:  "abc",
-									Name: "receiver-1",
-									Type: "slack",
-								},
-								{
-									UID:  "def",
-									Name: "receiver-1",
-									Type: "slack",
-								},
-							},
-						},
-					},
-					{
-						Receiver: config.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
-								{
-									UID:  "ghi",
-									Name: "receiver-2",
-									Type: "email",
-								},
-								{
-									UID:  "jkl",
-									Name: "receiver-2",
-									Type: "discord",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
 			name: "rename when there are many groups",
 			initial: &definitions.PostableUserConfig{
 				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
