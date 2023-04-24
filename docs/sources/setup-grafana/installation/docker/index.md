@@ -62,8 +62,6 @@ When you use Docker containers, the data inside them is temporary by default. Th
 
 #### Use persistent storage (recommended)
 
-[When would I do this and why is this recommended?]
-
 To use persistent storage, complete the following steps:
 
 1. Ceate a Docker volume by running the following command:
@@ -241,11 +239,7 @@ When you use Docker containers, the data inside them is temporary by default. Th
 
 #### Use persistent storage (recommended)
 
-[Need intro here on why you'd use this option over bind mounts. Why is this recommended?]
-
 Complete the following steps to use persistent storage.
-
-[This is the same as the steps documented in ### Run the latest stable version of Grafana]
 
 1. Create a `docker-compose.yaml` file 
    
