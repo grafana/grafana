@@ -99,7 +99,10 @@ export const DataSourceConfigAlert = React.forwardRef<HTMLDivElement, Props>(
               , or &nbsp;
               <Link
                 aria-label={`Explore data`}
-                className={cx(styles.link, { [`${styles.disabled}`]: !canExploreDataSources, 'test-disabled': !canExploreDataSources })}
+                className={cx(styles.link, {
+                  [`${styles.disabled}`]: !canExploreDataSources,
+                  'test-disabled': !canExploreDataSources,
+                })}
                 href={exploreUrl}
               >
                 {exploreDataLinkText}
