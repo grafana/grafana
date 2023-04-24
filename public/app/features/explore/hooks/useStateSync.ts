@@ -36,7 +36,15 @@ export function useStateSync(params: ExploreQueryParams) {
   const prevParams = useRef<ExploreQueryParams>(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
 
-  // @ts-expect-error
+  useEffect(() => {
+    // This happens when the user navigates to an explore "empty page" while within Explore.
+    // ie. by clicking on the explore when explore is active.
+    if (!params.left && !params.right) {
+      initState.current = 'notstarted';
+      prevParams.current = {};
+    }
+  }, [params]);
+
   useEffect(() => {
     const unsubscribe = dispatch(
       addListener({
@@ -88,7 +96,8 @@ export function useStateSync(params: ExploreQueryParams) {
       })
     );
 
-    return unsubscribe;
+    // @ts-expect-error the return type of addListener is actually callable, but dispatch is not middleware-aware
+    return () => unsubscribe();
   }, [dispatch, location]);
 
   useEffect(() => {
