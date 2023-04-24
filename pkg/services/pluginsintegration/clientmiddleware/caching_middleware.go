@@ -123,7 +123,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		return m.next.CallResource(ctx, req, sender)
 	}
 	// Otherwise, intercept the responses in a wrapped sender so we can cache them first
-	cacheSender := cachedSenderFunc(func(res *backend.CallResourceResponse) error {
+	cacheSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		cr.UpdateCacheFn(ctx, res)
 		return sender.Send(res)
 	})
@@ -149,10 +149,4 @@ func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 
 func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
-}
-
-type cachedSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn cachedSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
 }

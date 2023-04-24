@@ -202,7 +202,7 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
 	})
 
-	t.Run("Should remove non-allowed response headers and set Content-Security-Policy header", func(t *testing.T) {
+	t.Run("Should remove non-allowed response headers", func(t *testing.T) {
 		resHeaders := map[string][]string{
 			setCookieHeaderName: {"monster"},
 			"X-Custom":          {"should not be deleted"},
@@ -242,7 +242,6 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, http.StatusOK, res.Status)
 		require.Equal(t, []byte(backendResponse), res.Body)
 		require.Empty(t, res.Headers[setCookieHeaderName])
-		require.Equal(t, "sandbox", res.Headers["Content-Security-Policy"][0])
 		require.Equal(t, "should not be deleted", res.Headers["X-Custom"][0])
 	})
 
