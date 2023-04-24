@@ -11,6 +11,10 @@ import { MoveModal, Props } from './MoveModal';
 describe('browse-dashboards MoveModal', () => {
   const mockOnDismiss = jest.fn();
   const mockOnConfirm = jest.fn();
+  const mockFolders = [
+    { title: 'General', uid: '' } as DashboardSearchHit,
+    { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
+  ];
   let props: Props;
 
   beforeEach(() => {
@@ -26,12 +30,7 @@ describe('browse-dashboards MoveModal', () => {
     };
 
     // mock the searchFolders api call so the folder picker has some folders in it
-    jest
-      .spyOn(api, 'searchFolders')
-      .mockResolvedValue([
-        { title: 'General', uid: '' } as DashboardSearchHit,
-        { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
-      ]);
+    jest.spyOn(api, 'searchFolders').mockResolvedValue(mockFolders);
   });
 
   it('renders a dialog with the correct title', async () => {
@@ -73,7 +72,7 @@ describe('browse-dashboards MoveModal', () => {
     expect(await screen.findByRole('button', { name: 'Move' })).toBeDisabled();
     const folderPicker = await screen.findByRole('combobox', { name: 'Select a folder' });
 
-    await selectOptionInTest(folderPicker, 'Folder 1');
+    await selectOptionInTest(folderPicker, mockFolders[1].title);
     expect(await screen.findByRole('button', { name: 'Move' })).toBeEnabled();
   });
 
@@ -81,9 +80,9 @@ describe('browse-dashboards MoveModal', () => {
     render(<MoveModal {...props} />);
     const folderPicker = await screen.findByRole('combobox', { name: 'Select a folder' });
 
-    await selectOptionInTest(folderPicker, 'Folder 1');
+    await selectOptionInTest(folderPicker, mockFolders[1].title);
     await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
-    expect(mockOnConfirm).toHaveBeenCalledWith('wfTJJL5Wz');
+    expect(mockOnConfirm).toHaveBeenCalledWith(mockFolders[1].uid);
   });
 
   it('calls onDismiss when clicking the `Cancel` button', async () => {
