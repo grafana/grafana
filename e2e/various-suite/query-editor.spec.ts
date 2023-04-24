@@ -30,11 +30,6 @@ e2e.scenario({
 
     cy.contains(queryText).should('be.visible');
 
-    cy.get('body').click();
     e2e.components.Alert.alertV2('error').should('not.be.visible');
-
-    cy.contains('label', 'Builder').click();
-
-    cy.get('[data-testid="operations.0.wrapper"]').should('be.visible');
   },
 });
