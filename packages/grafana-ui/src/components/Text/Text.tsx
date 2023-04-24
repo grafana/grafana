@@ -24,25 +24,32 @@ interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ as = 'span', variant, weight, color, truncate, textAlignment, margin, children }, ref) => {
+  ({ as = 'span', variant = 'bodySmall', weight, color, truncate, textAlignment, margin, children }, ref) => {
+    // const styles = useStyles2(
+    //   useCallback(
+    //     (theme) => {
+    //       let styleVariant: keyof ThemeTypographyVariantTypes;
+    //       if (!variant) {
+    //         if (as === 'span' || as === 'legend') {
+    //           styleVariant = 'bodySmall';
+    //         } else if (as === 'p') {
+    //           styleVariant = 'body';
+    //         } else {
+    //           styleVariant = as;
+    //         }
+    //       } else {
+    //         styleVariant = variant;
+    //       }
+    //       return getTextStyles(theme, styleVariant, color, weight, truncate, textAlignment, margin);
+    //     },
+    //     [color, margin, textAlignment, truncate, weight, as, variant]
+    //   )
+    // );
+
     const styles = useStyles2(
       useCallback(
-        (theme) => {
-          let styleVariant: keyof ThemeTypographyVariantTypes;
-          if (!variant) {
-            if (as === 'span' || as === 'legend') {
-              styleVariant = 'bodySmall';
-            } else if (as === 'p') {
-              styleVariant = 'body';
-            } else {
-              styleVariant = as;
-            }
-          } else {
-            styleVariant = variant;
-          }
-          return getTextStyles(theme, styleVariant, color, weight, truncate, textAlignment, margin);
-        },
-        [color, margin, textAlignment, truncate, weight, as, variant]
+        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
+        [color, margin, textAlignment, truncate, weight, variant]
       )
     );
 

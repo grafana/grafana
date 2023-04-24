@@ -1,13 +1,10 @@
-import { css } from '@emotion/css';
-import React, { createElement, CSSProperties, useCallback } from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { Text } from './Text';
 
-interface TextProps {
-  /** Defines what HTML element is defined underneath, also maps into a default typography variant */
-  //as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
+interface TextElementsProps {
   /** What typograpy variant should be used for the component. Only use if default variant for the defined 'as' is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
@@ -23,271 +20,56 @@ interface TextProps {
   children: React.ReactNode;
 }
 
-export const H1 = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'h1', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'h1',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const H1 = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="h1" {...props} variant={props.variant || 'h1'} ref={ref} />;
+});
 
 H1.displayName = 'H1';
 
-export const H2 = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'h2', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'h1',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const H2 = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="h2" {...props} variant={props.variant || 'h2'} ref={ref} />;
+});
 
 H2.displayName = 'H2';
 
-export const H3 = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'h3', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'h3',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const H3 = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="h3" {...props} variant={props.variant || 'h3'} ref={ref} />;
+});
 
 H3.displayName = 'H3';
 
-export const H4 = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'h4', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'h4',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const H4 = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="h4" {...props} variant={props.variant || 'h4'} ref={ref} />;
+});
 
 H4.displayName = 'H4';
 
-export const H5 = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'h5', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'h5',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const H5 = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="h5" {...props} variant={props.variant || 'h5'} ref={ref} />;
+});
 
 H5.displayName = 'H5';
 
-export const H6 = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'h6', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'h6',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const H6 = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="h6" {...props} variant={props.variant || 'h6'} ref={ref} />;
+});
 
 H6.displayName = 'H6';
 
-export const P = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'body', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'body',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const P = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="p" {...props} variant={props.variant || 'body'} ref={ref} />;
+});
 
 P.displayName = 'P';
 
-export const Span = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'bodySmall', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'bodySmall',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const Span = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="span" {...props} variant={props.variant || 'bodySmall'} ref={ref} />;
+});
 
 Span.displayName = 'Span';
 
-export const Legend = React.forwardRef<HTMLElement, TextProps>(
-  ({ variant = 'bodySmall', weight, color, truncate, textAlignment, margin, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
-      )
-    );
-
-    return createElement(
-      'bodySmall',
-      {
-        className: styles,
-        variant,
-        ref,
-      },
-      children
-    );
-  }
-);
+export const Legend = React.forwardRef<HTMLElement, TextElementsProps>((props, ref) => {
+  return <Text as="legend" {...props} variant={props.variant || 'bodySmall'} ref={ref} />;
+});
 
 Legend.displayName = 'Legend';
-
-const getTextStyles = (
-  theme: GrafanaTheme2,
-  variant: keyof ThemeTypographyVariantTypes,
-  color?: TextProps['color'],
-  weight?: TextProps['weight'],
-  truncate?: TextProps['truncate'],
-  textAlignment?: TextProps['textAlignment'],
-  margin?: TextProps['margin']
-) => {
-  return css([
-    {
-      ...theme.typography[variant],
-    },
-    color && {
-      color: customColor(color, theme),
-    },
-    weight && {
-      fontWeight: customWeight(weight, theme),
-    },
-    truncate && {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    },
-    margin && {
-      margin,
-    },
-    textAlignment && {
-      textAlign: textAlignment,
-    },
-  ]);
-};
-
-const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2): number => {
-  switch (weight) {
-    case 'bold':
-      return theme.typography.fontWeightBold;
-    case 'medium':
-      return theme.typography.fontWeightMedium;
-    case 'light':
-      return theme.typography.fontWeightLight;
-    case 'regular':
-    case undefined:
-      return theme.typography.fontWeightRegular;
-  }
-};
-
-const customColor = (color: TextProps['color'], theme: GrafanaTheme2): string | undefined => {
-  switch (color) {
-    case 'error':
-      return theme.colors.error.text;
-    case 'success':
-      return theme.colors.success.text;
-    case 'info':
-      return theme.colors.info.text;
-    case 'warning':
-      return theme.colors.warning.text;
-    default:
-      return color ? theme.colors.text[color] : undefined;
-  }
-};
