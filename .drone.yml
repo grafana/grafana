@@ -335,12 +335,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.7.3
   name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.7.3
-  name: test-backend-integration
 trigger:
   event:
   - pull_request
@@ -1264,12 +1258,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.7.3
   name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.7.3
-  name: test-backend-integration
 trigger:
   branch: main
   event:
@@ -2492,12 +2480,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.7.3
   name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.7.3
-  name: test-backend-integration
 trigger:
   event:
     exclude:
@@ -3054,12 +3036,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.7.3
   name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.7.3
-  name: test-backend-integration
 trigger:
   event:
     exclude:
@@ -4939,12 +4915,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.7.3
   name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.7.3
-  name: test-backend-integration
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -5599,12 +5569,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.7.3
   name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.7.3
-  name: test-backend-integration
 trigger:
   ref:
   - refs/heads/v[0-9]*
