@@ -367,7 +367,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *alertingNotify.GrafanaIntegr
 		return nil, err
 	}
 	if len(integrations) == 0 {
-		// this should not happen but it is better return some error than panic
+		// This should not happen, but it is better to return some error rather than having a panic.
 		return nil, fmt.Errorf("failed to build integration")
 	}
 	return integrations[0], nil
