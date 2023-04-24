@@ -18,15 +18,17 @@ weight: 600
 
 In addition to field overrides, value mapping is a technique that you can use to change the visual treatment of data that appears in a visualization.
 
-Values mapped via value mappings bypass the unit formatting. This means that a text value mapped to a numerical value is not formatted using the configured unit.
+When values are mapped using value mappings, they are not formatted using the configured unit. This means that a text value mapped to a numerical value is not formatted using the configured unit.
 
 ![Value mappings example](/static/img/docs/value-mappings/value-mappings-example-8-0.png)
 
 If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
 
-> **Note:** The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
+
 
 ## Types of value mappings
+
+> **Note:** The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
 
 Grafana supports the following value mappings:
 
@@ -67,7 +69,7 @@ The following image shows a table visualization with value mappings. If you want
 
 ## Map a value
 
-Map a value when you want to format a single value.
+Use value mapping to format a single value.
 
 1. Open a panel for which you want to map a value.
 1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
@@ -81,7 +83,7 @@ Map a value when you want to format a single value.
 
 ## Map a range
 
-Map a range of values when you want to format multiple, continuous values.
+Use range value mapping to format multiple, continuous values.
 
 1. Edit the panel for which you want to map a range of values.
 1. In panel display options, in the **Value mappings** section, click **Add value mappings**.
@@ -95,7 +97,7 @@ Map a range of values when you want to format multiple, continuous values.
 
 ## Map a regular expression
 
-Map a regular expression when you want to format the text and color of a regular expression value.
+Use regex value mapping to format the text and color of a regular expression value.
 
 1. Edit the panel for which you want to map a regular expression.
 1. In the **Value mappings** section of the panel display options, click **Add value mappings**.
@@ -107,7 +109,7 @@ Map a regular expression when you want to format the text and color of a regular
 
 ## Map a special value
 
-Map a special value when you want to format uncommon, boolean, or empty values.
+Use special value mapping to format uncommon, boolean, or empty values.
 
 1. Edit the panel for which you want to map a special value.
 1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
@@ -121,7 +123,7 @@ Map a special value when you want to format uncommon, boolean, or empty values.
 
 ## Edit a value mapping
 
-You can change a value mapping at any time.
+You can edit a value mapping at any time.
 
 1. Edit the panel that contains the value mapping you want to edit.
 1. In the panel display options, in the **Value mappings** section, click **Edit value mappings**.
