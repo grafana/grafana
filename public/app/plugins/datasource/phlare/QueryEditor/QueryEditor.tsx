@@ -7,7 +7,7 @@ import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import { defaultPhlare, defaultPhlareQueryType, Phlare } from '../dataquery.gen';
 import { PhlareDataSource } from '../datasource';
-import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { BackendType, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -32,7 +32,8 @@ export function QueryEditor(props: Props) {
   const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(
     props.datasource,
     props.query,
-    props.onChange
+    props.onChange,
+    props.datasource.backendType
   );
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(
     props.range,
@@ -137,7 +138,12 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
   }, [profileTypes]);
 }
 
-function useProfileTypes(datasource: PhlareDataSource, query: Query, onChange: (value: Query) => void) {
+function useProfileTypes(
+  datasource: PhlareDataSource,
+  query: Query,
+  onChange: (value: Query) => void,
+  backendType: BackendType = 'phlare'
+) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);
 
   useEffect(() => {
@@ -165,23 +171,26 @@ function useProfileTypes(datasource: PhlareDataSource, query: Query, onChange: (
     [onChange, query]
   );
 
-  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId);
+  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId, backendType);
 
   return { profileTypes, onProfileTypeChange, selectedProfileName };
 }
 
-function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: string) {
+function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: string, backendType: BackendType) {
   return useMemo(() => {
     if (!profileTypes) {
       return 'Loading';
     }
     const profile = profileTypes.find((type) => type.id === profileTypeId);
     if (!profile) {
+      if (backendType === 'pyroscope') {
+        return 'Select application';
+      }
       return 'Select a profile type';
     }
 
     return profile.label;
-  }, [profileTypeId, profileTypes]);
+  }, [profileTypeId, profileTypes, backendType]);
 }
 
 export function normalizeQuery(query: Query, app?: CoreApp | string) {
