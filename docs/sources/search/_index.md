@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ./
 cascade:
   - _target:
       path: /docs/grafana/*/search/**
