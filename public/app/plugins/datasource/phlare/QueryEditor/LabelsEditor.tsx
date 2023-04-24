@@ -100,9 +100,6 @@ function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, l
 
   useAsync(async () => {
     if (providerRef.current) {
-      // This is a bit weird but to simplify the API this depends on the apiObject changes with time range change
-      // as that is baked in. So if that object changes we have to reinit the provider. For phlare this does not do
-      // much but for Pyro it can pull different labels based on the time range.
       providerRef.current.init(labels || [], getLabelValues);
     }
   }, [labels, getLabelValues]);
@@ -145,7 +142,7 @@ const getStyles = () => {
   return {
     queryField: css`
       flex: 1;
-      // Not exactly sure but without this the editor doe not shrink after resizing (so you can make it bigger but not
+      // Not exactly sure but without this the editor does not shrink after resizing (so you can make it bigger but not
       // smaller). At the same time this does not actually make the editor 100px because it has flex 1 so I assume
       // this should sort of act as a flex-basis (but flex-basis does not work for this). So yeah CSS magic.
       width: 100px;
