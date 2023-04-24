@@ -14,10 +14,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 
@@ -373,23 +373,17 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	})
 
 	testCases := map[string]struct {
-		feature    *featuremgmt.FeatureManager
 		parameters queryParameters
 	}{
-		"should not pass GetMetricData label when query label is empty": {
-			feature: featuremgmt.WithFeatures(),
-		},
-		"should not pass GetMetricData label when query label is empty string": {
-			feature:    featuremgmt.WithFeatures(),
-			parameters: queryParameters{Label: aws.String("")},
-		},
+		"should not pass GetMetricData label when query label is empty":        {},
+		"should not pass GetMetricData label when query label is empty string": {parameters: queryParameters{Label: aws.String("")}},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			api = mocks.MetricsAPI{}
 			api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, tc.feature)
+			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -440,7 +434,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
-	t.Run("where user defines search expression and alias is defined", func(t *testing.T) {
+	t.Run("where user defines search expression", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
 			MetricQueryType:  models.MetricQueryTypeSearch,                                                 // contributes to isUserDefinedSearchExpression = true
 			MetricEditorMode: models.MetricEditorModeRaw,                                                   // contributes to isUserDefinedSearchExpression = true
@@ -464,7 +458,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 		assert.Equal(t, labelFromGetMetricData, resp.Responses["A"].Frames[0].Name)
 	})
 
-	t.Run("where no alias is provided and query is math expression", func(t *testing.T) {
+	t.Run("where query is math expression", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
 			MetricQueryType:  models.MetricQueryTypeSearch,
 			MetricEditorMode: models.MetricEditorModeRaw,
@@ -485,7 +479,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 		assert.Equal(t, labelFromGetMetricData, resp.Responses["A"].Frames[0].Name)
 	})
 
-	t.Run("where no alias provided and query type is MetricQueryTypeQuery", func(t *testing.T) {
+	t.Run("where query type is MetricQueryTypeQuery", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
 			MetricQueryType: models.MetricQueryTypeQuery,
 		})

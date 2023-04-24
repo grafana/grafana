@@ -143,7 +143,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
-					Label: aws.String("lb1"),
+					Label: aws.String("label for lb1"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -158,7 +158,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				},
 				{
 					Id:    aws.String("id2"),
-					Label: aws.String("lb2"),
+					Label: aws.String("label for lb2"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -192,11 +192,11 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		require.NoError(t, err)
 
 		frame1 := frames[0]
-		assert.Equal(t, "lb1", frame1.Name)
+		assert.Equal(t, "label for lb1", frame1.Name)
 		assert.Equal(t, "lb1", frame1.Fields[1].Labels["LoadBalancer"])
 
 		frame2 := frames[1]
-		assert.Equal(t, "lb2", frame2.Name)
+		assert.Equal(t, "label for lb2", frame2.Name)
 		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
 	})
 
@@ -206,7 +206,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
-					Label: aws.String("lb"),
+					Label: aws.String("some label"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -240,7 +240,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		require.NoError(t, err)
 
 		frame := frames[0]
-		assert.Equal(t, "lb", frame.Name)
+		assert.Equal(t, "some label", frame.Name)
 		assert.Equal(t, "Time", frame.Fields[0].Name)
 		assert.Equal(t, "lb", frame.Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, 10.0, *frame.Fields[1].At(0).(*float64))
