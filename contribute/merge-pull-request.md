@@ -44,6 +44,8 @@ A milestone **should** be added to every pull request. Several things in the Gra
 
 This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through git commits which is not an efficient process.
 
+Always assign the milestone for the version that a pr is merged into. Ex: if you create a pr that is going to be merged into the next minor (1.2.x) and you assign a backport label so that it is also released in the next patch (1.1.x), then put the milestone of the next minor in the original pr (1.2.x), and the milestone of the backport on the backport pr (1.1.x).
+
 ### Include in changelog and release notes?
 
 At Grafana we generate the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) and [release notes](https://grafana.com/docs/grafana/latest/release-notes/) based on merged pull requests. Including changes in the changelog/release notes is very important to provide a somewhat complete picture of what changes a Grafana release actually includes.
