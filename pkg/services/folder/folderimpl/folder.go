@@ -640,11 +640,7 @@ func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildren
 		if err != nil {
 			return nil, err
 		}
-		if _, exists := countsMap[v.Kind()]; !exists {
-			countsMap[v.Kind()] = c
-		} else {
-			countsMap[v.Kind()] += c
-		}
+		countsMap[v.Kind()] += c
 	}
 	return countsMap, nil
 }
