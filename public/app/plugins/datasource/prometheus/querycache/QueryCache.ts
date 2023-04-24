@@ -1,5 +1,3 @@
-import { toInteger } from 'lodash';
-
 import {
   ArrayVector,
   DataFrame,
@@ -160,7 +158,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
                     if (value.identity === currentRequest.identity && value.bytes !== null) {
                       const previous = this.pendingAccumulatedEvents.get(value.identity);
 
-                      const savedBytes = toInteger(value.bytes) - requestTransferSize;
+                      const savedBytes = value.bytes - requestTransferSize;
 
                       this.pendingAccumulatedEvents.set(value.identity, {
                         datasource: value.datasource ?? 'N/A',
