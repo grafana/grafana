@@ -8,8 +8,6 @@ import { AccessControlAction } from 'app/types';
 export interface Props {
   exploreUrl: string;
   canSave: boolean;
-  canDelete: boolean;
-  onDelete: () => void;
   onSubmit: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
