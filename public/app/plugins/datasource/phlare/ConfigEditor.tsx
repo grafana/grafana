@@ -16,13 +16,18 @@ export const ConfigEditor = (props: Props) => {
 
   const dataSourceSrv = getDataSourceSrv();
 
-  const { value: datasource } = useAsync(async () => {
+  const { value: datasource } = useAsync(async (): Promise<PhlareDataSource | void> => {
     // If backend type is already set don't try to autodetect.
     // TODO: maybe we should check anyway and show a warning if it does not match?
     if (options.jsonData.backendType) {
       return;
     }
-    return (await dataSourceSrv.get({ type: options.type, uid: options.uid })) as PhlareDataSource;
+    const ds = await dataSourceSrv.get({ type: options.type, uid: options.uid });
+    if (!(ds instanceof PhlareDataSource)) {
+      // Should not happen, makes TS happy
+      throw new Error('Datasource is not a PhlareDataSource');
+    }
+    return ds;
   }, [dataSourceSrv, options]);
 
   useAsync(async () => {
