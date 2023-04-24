@@ -6,7 +6,6 @@ import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import store from 'app/core/store';
 import { lastUsedDatasourceKeyForOrgId, parseUrlState } from 'app/core/utils/explore';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { addListener, ExploreId, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
@@ -17,6 +16,7 @@ import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../state/mai
 import { runQueries, setQueriesAction } from '../state/query';
 import { selectPanes } from '../state/selectors';
 import { changeRangeAction, updateTime } from '../state/time';
+import { withUniqueRefIds } from '../utils/queries';
 
 import { getUrlStateFromPaneState } from './utils';
 
@@ -278,36 +278,6 @@ export function useStateSync(params: ExploreQueryParams) {
 
     isURLOutOfSync && initState.current === 'done' && sync();
   }, [params.left, params.right, dispatch, statePanes, exploreMixedDatasource, orgId, location]);
-}
-
-/**
- * Makes sure all the queries have unique (and valid) refIds
- */
-function withUniqueRefIds(queries: DataQuery[]): DataQuery[] {
-  const refIds = new Set<string>(queries.map((query) => query.refId).filter(Boolean));
-
-  if (refIds.size === queries.length) {
-    return queries;
-  }
-
-  refIds.clear();
-
-  return queries.map((query) => {
-    if (query.refId && !refIds.has(query.refId)) {
-      refIds.add(query.refId);
-      return query;
-    }
-
-    const refId = getNextRefIdChar(queries);
-    refIds.add(refId);
-
-    const newQuery = {
-      ...query,
-      refId,
-    };
-
-    return newQuery;
-  });
 }
 
 /**

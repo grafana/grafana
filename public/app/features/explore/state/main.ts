@@ -12,6 +12,7 @@ import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/uti
 import { createAsyncThunk, ThunkResult } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
+import { withUniqueRefIds } from '../utils/queries';
 
 import { initializeExplore, paneReducer } from './explorePane';
 import { makeExplorePaneState } from './utils';
@@ -77,12 +78,14 @@ export const splitOpen = createAsyncThunk(
   async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
     const leftState: ExploreItemState = getState().explore.panes.left!;
 
+    const queries = options?.queries ?? (options?.query ? [options?.query] : leftState.queries);
+
     await dispatch(
       initializeExplore({
         exploreId: ExploreId.right,
         // TODO: fix this
         datasource: options?.datasourceUid || leftState.datasourceInstance?.uid!,
-        queries: options?.queries ?? (options?.query ? [options?.query] : leftState.queries),
+        queries: withUniqueRefIds(queries),
         range: options?.range || leftState.range.raw,
         panelsState: options?.panelsState || leftState.panelsState,
       })
