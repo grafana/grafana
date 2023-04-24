@@ -94,6 +94,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
           <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
             <Input
               value={query.maxNodes || ''}
+              type="number"
               placeholder="16384"
               onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
                 let newValue = parseInt(event.currentTarget.value, 10);
