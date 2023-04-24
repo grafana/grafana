@@ -226,7 +226,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           loadingState={data.state}
           statusMessage={errorMessage}
           statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
-          description={!!panel.description ? panelChromeProps.onShowPanelDescription : undefined}
+          description={panelChromeProps.description}
           titleItems={titleItems}
           menu={this.props.hideMenu ? undefined : menu}
           dragClass={dragClass}

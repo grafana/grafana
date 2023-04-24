@@ -87,6 +87,8 @@ export function getPanelChromeProps(panel: PanelModel, dashboard: DashboardModel
     };
   };
 
+  const description = panel.description ? onShowPanelDescription() : undefined;
+
   return {
     hasOverlayHeader,
     onShowPanelDescription,
@@ -96,5 +98,6 @@ export function getPanelChromeProps(panel: PanelModel, dashboard: DashboardModel
     onCancelQuery,
     padding,
     getPanelHeaderTitleItemsProps,
+    description,
   };
 }
