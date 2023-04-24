@@ -429,7 +429,8 @@ var (
 		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
-			State:       FeatureStateAlpha,
+			Expression:  "true",
+			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -437,6 +438,20 @@ var (
 			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true",
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "alertStateHistoryLokiSecondary",
@@ -455,12 +470,6 @@ var (
 			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "disableSSEDataplane",
-			Description: "Disables dataplane specific processing in server side expressions.",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "unifiedRequestLog",
@@ -486,13 +495,6 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 			Owner:           grafanaAuthnzSquad,
-		},
-		{
-			Name:         "dataplaneFrontendFallback",
-			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:            "useCachingService",
