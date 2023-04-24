@@ -68,6 +68,7 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable: boolean;
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
@@ -646,7 +647,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin, isDraggable } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -681,7 +682,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       />
     );
 
-    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+    const dragClass = !(isViewing || isEditing) && isDraggable ? 'grid-drag-handle' : '';
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;

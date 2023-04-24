@@ -10,7 +10,7 @@ import { PanelMenu } from './PanelMenu';
 
 interface Props {
   children?: React.ReactNode;
-  menu: ReactElement | (() => ReactElement);
+  menu?: ReactElement | (() => ReactElement);
   title?: string;
   offset?: number;
   dragClass?: string;
@@ -51,7 +51,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           <Icon name="expand-arrows" className={styles.draggableIcon} />
         </div>
       )}
-      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
+      {!title && <h6 className={cx(styles.untitled, { [styles.draggable]: !!dragClass }, dragClass)}>Untitled</h6>}
       {children}
       <PanelMenu
         menu={menu}
