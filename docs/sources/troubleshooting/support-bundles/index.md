@@ -1,5 +1,10 @@
 ---
 description: Learn how to send a support bundle to Grafana Labs support for troubleshooting
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 keywords:
   - grafana
   - troubleshooting
