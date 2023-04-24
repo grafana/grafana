@@ -64,6 +64,7 @@ export enum PromApplication {
   Mimir = 'Mimir',
   Prometheus = 'Prometheus',
   Thanos = 'Thanos',
+  VictoriaMetrics = 'VictoriaMetrics',
 }
 
 export interface PromBuildInfoResponse {

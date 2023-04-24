@@ -106,6 +106,13 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     );
   }
 
+  const { options, replaceVariables } = props;
+  const parsedOptions: UnifiedAlertListOptions = {
+    ...props.options,
+    alertName: replaceVariables(options.alertName),
+    alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+  };
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
@@ -124,10 +131,10 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
-            <GroupedModeView rules={rules} options={props.options} />
+            <GroupedModeView rules={rules} options={parsedOptions} />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView rules={rules} options={props.options} />
+            <UngroupedModeView rules={rules} options={parsedOptions} />
           )}
         </section>
       </div>
@@ -209,7 +216,15 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
     const alertingRule = getAlertingRule(rule);
-    const filteredAlerts = alertingRule ? filterAlerts(options, alertingRule.alerts ?? []) : [];
+    const filteredAlerts = alertingRule
+      ? filterAlerts(
+          {
+            stateFilter: options.stateFilter,
+            alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+          },
+          alertingRule.alerts ?? []
+        )
+      : [];
     if (filteredAlerts.length) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)

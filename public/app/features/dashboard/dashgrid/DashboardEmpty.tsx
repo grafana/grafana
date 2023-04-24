@@ -141,7 +141,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     headerSection: css({
       label: 'header-section',
-      fontWeight: 600,
+      fontWeight: theme.typography.fontWeightMedium,
       textAlign: 'center',
     }),
     headerBig: css({

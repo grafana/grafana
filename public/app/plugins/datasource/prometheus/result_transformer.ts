@@ -235,11 +235,11 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     dataFramesByRefId[refId].forEach((df) => {
       const timeFields = df.fields[0]?.values ?? [];
       const dataFields = df.fields[1]?.values ?? [];
-      timeFields.forEach((value) => timeField.values.add(value));
+      timeFields.forEach((value) => timeField.values.push(value));
       dataFields.forEach((value) => {
-        valueField.values.add(parseSampleValue(value));
+        valueField.values.push(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
-        labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
+        labelFields.forEach((field) => field.values.push(getLabelValue(labelsForField, field.name)));
       });
     });
 
@@ -527,14 +527,14 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
   md.forEach((d) => {
     if (isMatrixData(d)) {
       d.values.forEach((val) => {
-        timeField.values.add(val[0] * 1000);
+        timeField.values.push(val[0] * 1000);
         metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
-        valueField.values.add(parseSampleValue(val[1]));
+        valueField.values.push(parseSampleValue(val[1]));
       });
     } else {
-      timeField.values.add(d.value[0] * 1000);
+      timeField.values.push(d.value[0] * 1000);
       metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
-      valueField.values.add(parseSampleValue(d.value[1]));
+      valueField.values.push(parseSampleValue(d.value[1]));
     }
   });
 
