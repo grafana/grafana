@@ -42,14 +42,14 @@ type State struct {
 	// All subsequent states will be false until the next transition from Firing to Normal.
 	Resolved bool
 
-	// ImageURI contains a URI for an optional image for the state.
-	// This image tends to be included in notifications as a visualization to show why the alert fired.
-	// The identifier could be either:
-	//	1. A URL pointing to the image.
-	//		- Used directly in notifications (if supported).
+	// ImageURI contains a URI that represents an optional image for the state.
+	// This image is usually included in notifications to explain why the alert fired.
+	// The identifier can take one of two forms:
+	// 1. A URL that points to the image.
+	//		- Can be used directly in notifications (if supported).
 	//		- Can be used to query the database for image metadata.
-	//	2. A token, prefixed by `token://`.
-	//		- Used to query the database for image metadata.
+	// 2. A token, prefixed by `token://`.
+	//		- Can be used to query the database for image metadata.
 	ImageURI string
 
 	// Annotations contains the annotations from the alert rule. If an annotation is templated

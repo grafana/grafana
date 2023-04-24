@@ -20,7 +20,7 @@ func TestGetImage(t *testing.T) {
 			Path:  "test.png",
 		}
 		err := fakeImageStore.SaveImage(context.Background(), &img)
-		require.NoError(t, err)
+		require.NoError(tt, err)
 
 		savedImg, err := store.GetImage(context.Background(), "token://"+img.Token)
 		require.NoError(tt, err)
@@ -36,7 +36,7 @@ func TestGetImage(t *testing.T) {
 			URL:   "https://test.com/test.png",
 		}
 		err := fakeImageStore.SaveImage(context.Background(), &img)
-		require.NoError(t, err)
+		require.NoError(tt, err)
 
 		savedImg, err := store.GetImage(context.Background(), img.URL)
 		require.NoError(tt, err)
