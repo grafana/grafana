@@ -90,14 +90,15 @@ export function createSpanLinkFactory({
         });
 
         return {
-          logLinks: [
-            {
-              href: links[0].href,
-              onClick: links[0].onClick,
-              content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
-              field: links[0].origin,
-            },
-          ],
+          otherLinks: links.map((link) => {
+            return {
+              title: link.title,
+              href: link.href,
+              onClick: link.onClick,
+              content: <Icon name="link" title={link.title || 'Link'} />,
+              field: link.origin,
+            };
+          }),
         };
       } catch (error) {
         // It's fairly easy to crash here for example if data source defines wrong interpolation in the data link

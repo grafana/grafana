@@ -100,6 +100,33 @@ const renderMenuItems = (
           ))}
         </MenuGroup>
       ) : null}
+      {!!links.otherLinks?.length ? (
+        <MenuGroup label="Other">
+          {links.otherLinks.map((link, i) => (
+            <MenuItem
+              key={i}
+              label={link.title ?? 'View link'}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      reportInteraction('grafana_traces_trace_view_other_link_clicked', {
+                        datasourceType: datasourceType,
+                        grafana_version: config.buildInfo.version,
+                        type: 'other',
+                        location: 'menu',
+                      });
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
+              url={link.href}
+              className={styles.menuItem}
+            />
+          ))}
+        </MenuGroup>
+      ) : null}
     </>
   );
 };

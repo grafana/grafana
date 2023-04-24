@@ -489,7 +489,12 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 const links = createSpanLink(span);
                 const count = countLinks(links);
                 if (links && count === 1) {
-                  const link = links.logLinks?.[0] ?? links.metricLinks?.[0] ?? links.traceLinks?.[0] ?? undefined;
+                  const link =
+                    links.logLinks?.[0] ??
+                    links.metricLinks?.[0] ??
+                    links.traceLinks?.[0] ??
+                    links.otherLinks?.[0] ??
+                    undefined;
                   if (!link) {
                     return null;
                   }

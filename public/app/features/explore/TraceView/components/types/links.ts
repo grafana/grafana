@@ -16,6 +16,7 @@ export type SpanLinks = {
   logLinks?: SpanLinkDef[];
   traceLinks?: SpanLinkDef[];
   metricLinks?: SpanLinkDef[];
+  otherLinks?: SpanLinkDef[];
 };
 
 export type SpanLinkFunc = (span: TraceSpan) => SpanLinks | undefined;
