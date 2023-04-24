@@ -2,6 +2,7 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { assertIsDefined } from 'test/helpers/asserts';
 
 import { wellFormedDashboard, wellFormedEmptyFolder, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 
@@ -38,6 +39,7 @@ describe('browse-dashboards DashboardsTree', () => {
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
     expect(screen.queryByText('Dashboard')).toBeInTheDocument();
+    expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
   });
 
   it('renders a folder item', () => {

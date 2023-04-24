@@ -70,6 +70,7 @@ import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
+  getLokiQueryFromDataQuery,
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
@@ -654,7 +655,7 @@ export class LokiDatasource
     options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    return await this.logContextProvider.getLogRowContext(row, options, origQuery);
+    return await this.logContextProvider.getLogRowContext(row, options, getLokiQueryFromDataQuery(origQuery));
   };
 
   getLogRowContextQuery = async (
@@ -662,11 +663,11 @@ export class LokiDatasource
     options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<DataQuery> => {
-    return await this.logContextProvider.getLogRowContextQuery(row, options, origQuery);
+    return await this.logContextProvider.getLogRowContextQuery(row, options, getLokiQueryFromDataQuery(origQuery));
   };
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, origQuery);
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {

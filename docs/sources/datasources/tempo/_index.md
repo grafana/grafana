@@ -359,7 +359,7 @@ To open a query in Tempo with the span name of that row automatically set in the
 
 ## Span Filters
 
-> **Note:** This feature is behind the `newTraceView` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+> **Note:** This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
