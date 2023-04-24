@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, TextArea, useStyles2 } from '@grafana/ui';
-import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
+import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
@@ -32,7 +32,7 @@ export function PayloadEditor({
 
   const onOpenEditAlertModal = () => setIsEditingAlertData(true);
 
-  const onAddAlertList = (alerts: TestReceiversAlert[]) => {
+  const onAddAlertList = (alerts: TestTemplateAlert[]) => {
     onCloseEditAlertModal();
     setPayload((payload) => {
       const payloadObj = JSON.parse(payload);
