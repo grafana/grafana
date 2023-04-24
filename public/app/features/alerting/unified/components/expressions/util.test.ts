@@ -62,6 +62,25 @@ describe('getSeriesName', () => {
   it('should work with NoData frames', () => {
     expect(getSeriesName(EMPTY_FRAME)).toBe('');
   });
+
+  it('should give preference to displayNameFromDS', () => {
+    const frame: DataFrame = {
+      name: 'MyFrame',
+      ...toDataFrame({
+        fields: [
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [1, 2, 3],
+            labels: { foo: 'bar' },
+            config: { displayNameFromDS: 'series-name-override' },
+          },
+        ],
+      }),
+    };
+
+    expect(getSeriesName(frame)).toBe('series-name-override');
+  });
 });
 
 describe('getSeriesValue', () => {

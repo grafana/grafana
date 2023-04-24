@@ -6,11 +6,13 @@ import { ExploreGraphStyle } from 'app/types';
 
 export type FieldConfig = FieldConfigSource<GraphFieldConfig>;
 
-export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle): FieldConfig {
+export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle, maximum?: number): FieldConfig {
   return produce(config, (draft) => {
     if (draft.defaults.custom === undefined) {
       draft.defaults.custom = {};
     }
+
+    draft.defaults.max = maximum;
 
     const { custom } = draft.defaults;
 

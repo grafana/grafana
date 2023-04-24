@@ -25,7 +25,7 @@ var ldapLogger = log.New("login.ldap")
 // populated with the logged in user if successful.
 var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery,
 	loginService login.Service, cfg *setting.Cfg) (bool, error) {
-	if !cfg.LDAPEnabled {
+	if !cfg.LDAPAuthEnabled {
 		return false, nil
 	}
 
@@ -59,10 +59,6 @@ var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery,
 			UserID: nil,
 		},
 	}
-	if err = loginService.UpsertUser(ctx, upsert); err != nil {
-		return true, err
-	}
-	query.User = upsert.Result
-
-	return true, nil
+	query.User, err = loginService.UpsertUser(ctx, upsert)
+	return true, err
 }

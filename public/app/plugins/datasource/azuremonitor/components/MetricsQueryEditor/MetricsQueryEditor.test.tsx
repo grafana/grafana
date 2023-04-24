@@ -45,7 +45,7 @@ export function createMockResourcePickerData() {
   mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
   mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
   mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-  mockResourcePicker.getLogsLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
+  mockResourcePicker.getLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
   return mockResourcePicker;
 }
 

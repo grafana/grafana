@@ -142,7 +142,6 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
-
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {

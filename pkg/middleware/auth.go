@@ -10,12 +10,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -43,6 +44,12 @@ func notAuthorized(c *contextmodel.ReqContext) {
 	}
 
 	writeRedirectCookie(c)
+
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+		return
+	}
+
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -93,7 +100,7 @@ func EnsureEditorOrViewerCanEdit(cfg *setting.Cfg) func(c *contextmodel.ReqConte
 
 func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
-		if !plugins.ReqCanAdminPlugins(cfg)(c) {
+		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) {
 			accessForbidden(c)
 			return
 		}

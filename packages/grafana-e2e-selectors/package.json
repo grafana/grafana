@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e-selectors",
-  "version": "9.5.0-pre",
+  "version": "10.0.0-pre",
   "description": "Grafana End-to-End Test Selectors Library",
   "keywords": [
     "cli",

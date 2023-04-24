@@ -129,8 +129,6 @@ In long format, string values are represented as separate fields rather than as 
 
 Grafana can detect and convert data frames in long format into wide format.
 
-> **Note:** Long format is currently only supported in the backend: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219).
-
 For example, the following data frame in long format:
 
 ```text

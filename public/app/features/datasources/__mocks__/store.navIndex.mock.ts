@@ -1,10 +1,9 @@
-import { NavSection, NavIndex } from '@grafana/data';
+import { NavIndex } from '@grafana/data';
 
 export const navIndex: NavIndex = {
   dashboards: {
     id: 'dashboards',
     text: 'Dashboards',
-    section: NavSection.Core,
     subTitle: 'Manage dashboards and folders',
     icon: 'apps',
     url: '/dashboards',
@@ -35,18 +34,11 @@ export const navIndex: NavIndex = {
         url: '/library-panels',
       },
       {
-        id: 'divider',
-        text: 'Divider',
-        divider: true,
-        hideFromTabs: true,
-      },
-      {
         id: 'new-dashboard',
         text: 'New dashboard',
         icon: 'plus',
         url: '/dashboard/new',
         hideFromTabs: true,
-        showIconInNavbar: true,
       },
       {
         id: 'new-folder',
@@ -55,7 +47,6 @@ export const navIndex: NavIndex = {
         icon: 'plus',
         url: '/dashboards/folder/new',
         hideFromTabs: true,
-        showIconInNavbar: true,
       },
       {
         id: 'import',
@@ -64,7 +55,6 @@ export const navIndex: NavIndex = {
         icon: 'plus',
         url: '/dashboard/import',
         hideFromTabs: true,
-        showIconInNavbar: true,
       },
     ],
   },
@@ -76,7 +66,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -107,18 +96,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -127,7 +109,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -136,7 +117,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -149,7 +129,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -180,18 +159,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -200,7 +172,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -209,7 +180,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -222,7 +192,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -253,18 +222,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -273,7 +235,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -282,7 +243,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -295,7 +255,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -326,18 +285,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -346,7 +298,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -355,75 +306,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
-        },
-      ],
-    },
-  },
-  divider: {
-    id: 'divider',
-    text: 'Divider',
-    divider: true,
-    hideFromTabs: true,
-    parentItem: {
-      id: 'alerting',
-      text: 'Alerting',
-      section: NavSection.Core,
-      subTitle: 'Alert rules and notifications',
-      icon: 'bell',
-      url: '/alerting/list',
-      sortWeight: -1600,
-      children: [
-        {
-          id: 'alert-list',
-          text: 'Alert rules',
-          icon: 'list-ul',
-          url: '/alerting/list',
-        },
-        {
-          id: 'receivers',
-          text: 'Contact points',
-          icon: 'comment-alt-share',
-          url: '/alerting/notifications',
-        },
-        {
-          id: 'am-routes',
-          text: 'Notification policies',
-          icon: 'sitemap',
-          url: '/alerting/routes',
-        },
-        {
-          id: 'silences',
-          text: 'Silences',
-          icon: 'bell-slash',
-          url: '/alerting/silences',
-        },
-        {
-          id: 'groups',
-          text: 'Alert groups',
-          icon: 'layer-group',
-          url: '/alerting/groups',
-        },
-        {
-          id: 'alerting-admin',
-          text: 'Admin',
-          icon: 'cog',
-          url: '/alerting/admin',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
-          id: 'alert',
-          text: 'Create alert rule',
-          subTitle: 'Create an alert rule',
-          icon: 'plus',
-          url: '/alerting/new',
-          hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -434,11 +316,9 @@ export const navIndex: NavIndex = {
     icon: 'plus',
     url: '/dashboard/new',
     hideFromTabs: true,
-    showIconInNavbar: true,
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -469,18 +349,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -489,7 +362,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -498,7 +370,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -510,11 +381,9 @@ export const navIndex: NavIndex = {
     icon: 'plus',
     url: '/dashboards/folder/new',
     hideFromTabs: true,
-    showIconInNavbar: true,
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -545,18 +414,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -565,7 +427,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -574,7 +435,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -586,11 +446,9 @@ export const navIndex: NavIndex = {
     icon: 'plus',
     url: '/dashboard/import',
     hideFromTabs: true,
-    showIconInNavbar: true,
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -621,18 +479,11 @@ export const navIndex: NavIndex = {
           url: '/library-panels',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'new-dashboard',
           text: 'New dashboard',
           icon: 'plus',
           url: '/dashboard/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'new-folder',
@@ -641,7 +492,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboards/folder/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
         {
           id: 'import',
@@ -650,7 +500,6 @@ export const navIndex: NavIndex = {
           icon: 'plus',
           url: '/dashboard/import',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -663,7 +512,6 @@ export const navIndex: NavIndex = {
   explore: {
     id: 'explore',
     text: 'Explore',
-    section: NavSection.Core,
     subTitle: 'Explore your data',
     icon: 'compass',
     url: '/explore',
@@ -672,7 +520,6 @@ export const navIndex: NavIndex = {
   alerting: {
     id: 'alerting',
     text: 'Alerting',
-    section: NavSection.Core,
     subTitle: 'Alert rules and notifications',
     icon: 'bell',
     url: '/alerting/list',
@@ -715,19 +562,12 @@ export const navIndex: NavIndex = {
         url: '/alerting/admin',
       },
       {
-        id: 'divider',
-        text: 'Divider',
-        divider: true,
-        hideFromTabs: true,
-      },
-      {
         id: 'alert',
         text: 'Create alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
         hideFromTabs: true,
-        showIconInNavbar: true,
       },
     ],
   },
@@ -739,7 +579,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -782,19 +621,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -807,7 +639,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -850,19 +681,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -875,7 +699,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -918,19 +741,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -943,7 +759,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -986,19 +801,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -1011,7 +819,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1054,19 +861,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -1079,7 +879,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1122,19 +921,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -1146,11 +938,9 @@ export const navIndex: NavIndex = {
     icon: 'plus',
     url: '/alerting/new',
     hideFromTabs: true,
-    showIconInNavbar: true,
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -1193,19 +983,12 @@ export const navIndex: NavIndex = {
           url: '/alerting/admin',
         },
         {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
           id: 'alert',
           text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
           hideFromTabs: true,
-          showIconInNavbar: true,
         },
       ],
     },
@@ -1213,7 +996,6 @@ export const navIndex: NavIndex = {
   connections: {
     id: 'connections',
     text: 'Connections',
-    section: NavSection.Core,
     icon: 'link',
     url: '/connections',
     sortWeight: -1500,
@@ -1257,7 +1039,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'connections',
       text: 'Connections',
-      section: NavSection.Core,
       icon: 'link',
       url: '/connections',
       sortWeight: -1500,
@@ -1302,7 +1083,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'connections',
       text: 'Connections',
-      section: NavSection.Core,
       icon: 'link',
       url: '/connections',
       sortWeight: -1500,
@@ -1347,7 +1127,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'connections',
       text: 'Connections',
-      section: NavSection.Core,
       icon: 'link',
       url: '/connections',
       sortWeight: -1500,
@@ -1392,7 +1171,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'connections',
       text: 'Connections',
-      section: NavSection.Core,
       icon: 'link',
       url: '/connections',
       sortWeight: -1500,
@@ -1431,7 +1209,6 @@ export const navIndex: NavIndex = {
   'plugin-page-basic-app': {
     id: 'plugin-page-basic-app',
     text: 'Basic App',
-    section: NavSection.Plugin,
     img: 'public/plugins/basic-app/img/logo.svg',
     url: '/a/basic-app/one',
     sortWeight: -1400,
@@ -1465,7 +1242,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'plugin-page-grafana-synthetic-monitoring-app',
       text: 'Synthetic Monitoring',
-      section: NavSection.Plugin,
       img: 'public/plugins/grafana-synthetic-monitoring-app/img/logo.svg',
       url: '/a/grafana-synthetic-monitoring-app/home',
       sortWeight: -1400,
@@ -1500,7 +1276,6 @@ export const navIndex: NavIndex = {
   'plugin-page-cloudflare-app': {
     id: 'plugin-page-cloudflare-app',
     text: 'Cloudflare Grafana App',
-    section: NavSection.Plugin,
     img: 'public/plugins/cloudflare-app/img/cf_icon.png',
     sortWeight: -1400,
     children: [
@@ -1517,7 +1292,6 @@ export const navIndex: NavIndex = {
   'plugin-page-grafana-easystart-app': {
     id: 'plugin-page-grafana-easystart-app',
     text: 'Integrations and Connections',
-    section: NavSection.Plugin,
     img: 'public/plugins/grafana-easystart-app/img/logo.svg',
     url: '/a/grafana-easystart-app',
     sortWeight: -1400,
@@ -1525,7 +1299,6 @@ export const navIndex: NavIndex = {
   'plugin-page-redis-explorer-app': {
     id: 'plugin-page-redis-explorer-app',
     text: 'Redis Explorer',
-    section: NavSection.Plugin,
     img: 'public/plugins/redis-explorer-app/img/logo.svg',
     url: '/a/redis-explorer-app/',
     sortWeight: -1400,
@@ -1565,7 +1338,6 @@ export const navIndex: NavIndex = {
   'plugin-page-grafana-synthetic-monitoring-app': {
     id: 'plugin-page-grafana-synthetic-monitoring-app',
     text: 'Synthetic Monitoring',
-    section: NavSection.Plugin,
     img: 'public/plugins/grafana-synthetic-monitoring-app/img/logo.svg',
     url: '/a/grafana-synthetic-monitoring-app/home',
     sortWeight: -1400,
@@ -1599,7 +1371,6 @@ export const navIndex: NavIndex = {
   'plugin-page-grafana-k6-app': {
     id: 'plugin-page-grafana-k6-app',
     text: 'k6 Cloud App',
-    section: NavSection.Plugin,
     img: 'public/plugins/grafana-k6-app/img/logo.svg',
     url: '/a/grafana-k6-app',
     sortWeight: -1400,
@@ -1607,7 +1378,6 @@ export const navIndex: NavIndex = {
   cfg: {
     id: 'cfg',
     text: 'Configuration',
-    section: NavSection.Config,
     subTitle: 'Organization: Main Org.',
     icon: 'cog',
     url: '/datasources',
@@ -1673,7 +1443,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1740,7 +1509,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1807,7 +1575,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1874,7 +1641,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -1941,7 +1707,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -2008,7 +1773,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -2075,7 +1839,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org.',
       icon: 'cog',
       url: '/datasources',
@@ -2136,7 +1899,6 @@ export const navIndex: NavIndex = {
   admin: {
     id: 'admin',
     text: 'Server Admin',
-    section: NavSection.Config,
     subTitle: 'Manage all users and orgs',
     icon: 'shield',
     url: '/admin/users',
@@ -2183,7 +1945,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2231,7 +1992,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2279,7 +2039,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2327,7 +2086,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2375,7 +2133,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -2418,7 +2175,6 @@ export const navIndex: NavIndex = {
   profile: {
     id: 'profile',
     text: 'admin',
-    section: NavSection.Config,
     img: '/avatar/46d229b033af06a191ff2267bca9ae56',
     url: '/profile',
     sortWeight: -1100,
@@ -2459,7 +2215,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2501,7 +2256,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2543,7 +2297,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2587,7 +2340,6 @@ export const navIndex: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       sortWeight: -1100,
@@ -2624,7 +2376,6 @@ export const navIndex: NavIndex = {
   help: {
     id: 'help',
     text: 'Help',
-    section: NavSection.Config,
     subTitle: 'Grafana v9.0.0-pre (cd35366222)',
     icon: 'question-circle',
     url: '#',

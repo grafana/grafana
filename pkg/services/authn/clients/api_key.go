@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -85,7 +85,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
 	fn := s.getFromToken
-	if !strings.HasPrefix(token, apikeygenprefix.GrafanaPrefix) {
+	if !strings.HasPrefix(token, satokengen.GrafanaPrefix) {
 		fn = s.getFromTokenLegacy
 	}
 
@@ -98,7 +98,7 @@ func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, e
 }
 
 func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey, error) {
-	decoded, err := apikeygenprefix.Decode(token)
+	decoded, err := satokengen.Decode(token)
 	if err != nil {
 		return nil, err
 	}

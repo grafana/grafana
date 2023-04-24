@@ -107,9 +107,9 @@ type (
 
 	cloudMonitoringBucketOptions struct {
 		LinearBuckets *struct {
-			NumFiniteBuckets int64 `json:"numFiniteBuckets"`
-			Width            int64 `json:"width"`
-			Offset           int64 `json:"offset"`
+			NumFiniteBuckets int64   `json:"numFiniteBuckets"`
+			Width            float64 `json:"width"`
+			Offset           float64 `json:"offset"`
 		} `json:"linearBuckets"`
 		ExponentialBuckets *struct {
 			NumFiniteBuckets int64   `json:"numFiniteBuckets"`

@@ -22,7 +22,16 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ## PostgreSQL settings
 
-To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the PostgreSQL data source.
+To configure basic settings for the data source, complete the following steps:
+
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `PostgreSQL` in the search bar.
+1.  Select **PostgreSQL**.
+
+    The **Settings** tab of the data source is displayed.
+
+1.  Set the data source's basic configuration options:
 
 | Name                        | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,8 +44,9 @@ To access PostgreSQL settings, hover your mouse over the **Configuration** (gear
 | **SSL Mode**                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                                                                                                                                                                                                |
 | **SSL Auth Details Method** | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+                                                                                                                                                                                                                                                                                                                |
 | **SSL Auth Details Value**  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                                                                                                                                                                                                    |
-| **Max open**                | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                            |
-| **Max idle**                | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                             |
+| **Max open**                | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                  |
+| **Max idle**                | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                           |
+| **Auto (max idle)**         | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                  |
 | **Max lifetime**            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).                                                                                                                                                                                                                                                                                                              |
 | **Version**                 | Determines which functions are available in the query builder (only available in Grafana 5.3+).                                                                                                                                                                                                                                                                                                                         |
 | **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+). For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
@@ -131,8 +141,9 @@ datasources:
     jsonData:
       database: grafana
       sslmode: 'disable' # disable/require/verify-ca/verify-full
-      maxOpenConns: 0 # Grafana v5.4+
-      maxIdleConns: 2 # Grafana v5.4+
+      maxOpenConns: 100 # Grafana v5.4+
+      maxIdleConns: 100 # Grafana v5.4+
+      maxIdleConnsAuto: true # Grafana v9.5.1+
       connMaxLifetime: 14400 # Grafana v5.4+
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false

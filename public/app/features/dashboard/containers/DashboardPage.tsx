@@ -19,6 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -48,6 +49,7 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
+import { calculateNewPanelGridPos } from '../utils/panel';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -361,17 +363,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // Move all panels down by the height of the "add panel" widget.
-    // This is to work around an issue with react-grid-layout that can mess up the layout
-    // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
-    const addPanelWidgetHeight = 8;
-    for (const panel of dashboard.panelIterator()) {
-      panel.gridPos.y += addPanelWidgetHeight;
-    }
-
     dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: addPanelWidgetHeight },
+      gridPos: calculateNewPanelGridPos(dashboard),
       title: 'Panel Title',
     });
 
@@ -447,47 +441,53 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         >
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
-          {showSubMenu && (
-            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-            </section>
-          )}
-          {config.featureToggles.editPanelCSVDragAndDrop ? (
-            <DropZone
-              onDrop={this.onFileDrop}
-              accept={DFImport.acceptedFiles}
-              maxSize={DFImport.maxFileSize}
-              noClick={true}
-            >
-              {({ getRootProps, isDragActive }) => {
-                const styles = getStyles(this.props.theme, isDragActive);
-                return (
-                  <div {...getRootProps({ className: styles.dropZone })}>
-                    <div className={styles.dropOverlay}>
-                      <div className={styles.dropHint}>
-                        <Icon name="upload" size="xxxl"></Icon>
-                        <h3>Create tables from spreadsheets</h3>
-                      </div>
-                    </div>
-                    <DashboardGrid
-                      dashboard={dashboard}
-                      isEditable={!!dashboard.meta.canEdit}
-                      viewPanel={viewPanel}
-                      editPanel={editPanel}
-                    />
-                  </div>
-                );
-              }}
-            </DropZone>
+          {dashboard.meta.dashboardNotFound ? (
+            <ErrorPage />
           ) : (
-            <DashboardGrid
-              dashboard={dashboard}
-              isEditable={!!dashboard.meta.canEdit}
-              viewPanel={viewPanel}
-              editPanel={editPanel}
-            />
+            <>
+              {showSubMenu && (
+                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                </section>
+              )}
+              {config.featureToggles.editPanelCSVDragAndDrop ? (
+                <DropZone
+                  onDrop={this.onFileDrop}
+                  accept={DFImport.acceptedFiles}
+                  maxSize={DFImport.maxFileSize}
+                  noClick={true}
+                >
+                  {({ getRootProps, isDragActive }) => {
+                    const styles = getStyles(this.props.theme, isDragActive);
+                    return (
+                      <div {...getRootProps({ className: styles.dropZone })}>
+                        <div className={styles.dropOverlay}>
+                          <div className={styles.dropHint}>
+                            <Icon name="upload" size="xxxl"></Icon>
+                            <h3>Create tables from spreadsheets</h3>
+                          </div>
+                        </div>
+                        <DashboardGrid
+                          dashboard={dashboard}
+                          isEditable={!!dashboard.meta.canEdit}
+                          viewPanel={viewPanel}
+                          editPanel={editPanel}
+                        />
+                      </div>
+                    );
+                  }}
+                </DropZone>
+              ) : (
+                <DashboardGrid
+                  dashboard={dashboard}
+                  isEditable={!!dashboard.meta.canEdit}
+                  viewPanel={viewPanel}
+                  editPanel={editPanel}
+                />
+              )}
+              {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+            </>
           )}
-          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
         {editPanel && (
           <PanelEditor
@@ -551,7 +551,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
+    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
   }
 
   if (state.editPanel || state.viewPanel) {

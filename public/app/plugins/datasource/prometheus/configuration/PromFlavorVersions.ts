@@ -77,4 +77,15 @@ export const PromFlavorVersions: { [index: string]: Array<{ value?: string; labe
     { value: '1.13.0', label: '1.13.x' },
     { value: '1.14.0', label: '> 1.13.x' },
   ],
+  VictoriaMetrics: [
+    { value: '1.23.0', label: '< 1.24.0' },
+    { value: '1.24.0', label: '>= 1.24.x' },
+    { value: '1.30.0', label: '1.3x' },
+    { value: '1.40.0', label: '1.4x' },
+    { value: '1.50.0', label: '1.5x' },
+    { value: '1.60.0', label: '1.6x' },
+    { value: '1.70.0', label: '1.7x' },
+    { value: '1.80.0', label: '1.8x' },
+    { value: '1.90.0', label: '>= 1.9x' },
+  ],
 };

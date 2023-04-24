@@ -42,6 +42,7 @@ export const Pages = {
   },
   AddDashboard: {
     url: '/dashboard/new',
+    itemButton: (title: string) => `data-testid ${title}`,
     addNewPanel: 'Add new panel',
     addNewRow: 'Add new row',
     addNewPanelLibrary: 'Add new panel from panel library',
@@ -65,8 +66,16 @@ export const Pages = {
       submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
+      Annotations: {
+        annotationsWrapper: 'data-testid annotation-wrapper',
+        annotationLabel: (label: string) => `data-testid Dashboard annotations submenu Label ${label}`,
+        annotationToggle: (label: string) => `data-testid Dashboard annotations submenu Toggle ${label}`,
+      },
     },
     Settings: {
+      Actions: {
+        close: 'data-testid dashboard-settings-close',
+      },
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
@@ -88,6 +97,11 @@ export const Pages = {
         },
         Settings: {
           name: 'Annotations settings name input',
+        },
+        NewAnnotation: {
+          panelFilterSelect: 'data-testid annotations-panel-filter',
+          showInLabel: 'show-in-label',
+          previewInDashboard: 'data-testid annotations-preview',
         },
       },
       Variables: {
@@ -206,6 +220,8 @@ export const Pages = {
         EmailSharingInput: 'data-testid public dashboard email sharing input',
         EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
         EmailSharingList: 'data-testid public dashboard email sharing list',
+        DeleteEmail: 'data-testid public dashboard delete email button',
+        ReshareLink: 'data-testid public dashboard reshare link button',
       },
     },
   },
@@ -233,6 +249,9 @@ export const Pages = {
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
+    Annotations: {
+      marker: 'data-testid annotation-marker',
+    },
   },
   PluginsList: {
     page: 'Plugins list page',
@@ -249,6 +268,12 @@ export const Pages = {
     name: 'Playlist name',
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
+  },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
   },
   Search: {
     url: '/?search=openn',

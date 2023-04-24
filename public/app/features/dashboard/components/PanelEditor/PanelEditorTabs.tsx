@@ -27,7 +27,7 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
   const styles = useStyles2(getStyles);
 
   const instrumentedOnChangeTab = useCallback(
-    (tab) => {
+    (tab: PanelEditorTab) => {
       if (!tab.active) {
         reportInteraction('panel_editor_tabs_changed', { tab_id: tab.id });
       }

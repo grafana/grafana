@@ -66,7 +66,13 @@ func (d *PhlareDatasource) callProfileTypes(ctx context.Context, req *backend.Ca
 	if err != nil {
 		return err
 	}
-	data, err := json.Marshal(res.Msg.ProfileTypes)
+	var data []byte
+	if res.Msg.ProfileTypes == nil {
+		// Let's make sure we send at least empty array if we don't have any types
+		data, err = json.Marshal([]*typesv1.ProfileType{})
+	} else {
+		data, err = json.Marshal(res.Msg.ProfileTypes)
+	}
 	if err != nil {
 		return err
 	}

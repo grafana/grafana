@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,9 +42,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			rw.WriteHeader(200)
 		}))
 
-		version, err := semver.NewVersion("8.0.0")
-		require.NoError(t, err)
-
 		configuredFields := ConfiguredFields{
 			TimeField:       "testtime",
 			LogMessageField: "line",
@@ -56,7 +52,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			URL:                        ts.URL,
 			HTTPClient:                 ts.Client(),
 			Database:                   "[metrics-]YYYY.MM.DD",
-			ESVersion:                  version,
 			ConfiguredFields:           configuredFields,
 			Interval:                   "Daily",
 			MaxConcurrentShardRequests: 6,

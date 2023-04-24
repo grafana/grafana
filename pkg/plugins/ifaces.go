@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"io/fs"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -30,6 +31,16 @@ type PluginSource interface {
 	DefaultSignature(ctx context.Context) (Signature, bool)
 }
 
+type FileStore interface {
+	// File retrieves a plugin file.
+	File(ctx context.Context, pluginID, filename string) (*File, error)
+}
+
+type File struct {
+	Content []byte
+	ModTime time.Time
+}
+
 type CompatOpts struct {
 	GrafanaVersion string
 	OS             string
@@ -45,6 +56,10 @@ type FS interface {
 
 	Base() string
 	Files() []string
+}
+
+type FSRemover interface {
+	Remove() error
 }
 
 type FoundBundle struct {
@@ -124,4 +139,12 @@ type ClientMiddlewareFunc func(next Client) Client
 // CreateClientMiddleware implements the ClientMiddleware interface.
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
+}
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+type SignatureCalculator interface {
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
 }

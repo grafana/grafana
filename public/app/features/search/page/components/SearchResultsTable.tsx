@@ -52,7 +52,7 @@ export const SearchResultsTable = React.memo(
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
-    const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Md);
+    const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
@@ -108,7 +108,7 @@ export const SearchResultsTable = React.memo(
         const row = rows[rowIndex];
         prepareRow(row);
 
-        const url = response.view.fields.url?.values.get(rowIndex);
+        const url = response.view.fields.url?.values[rowIndex];
         let className = styles.rowContainer;
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
