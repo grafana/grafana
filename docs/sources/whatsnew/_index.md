@@ -54,10 +54,12 @@ aliases:
   - whats-new-in-v6-6/
   - whats-new-in-v6-7/
 cascade:
-  labels:
-    products:
-      - cloud
-      - oss
+  - _target:
+      path: /docs/grafana/*/whatsnew/**
+    labels:
+      products:
+        - cloud
+        - oss
 title: What's new
 weight: 1
 ---

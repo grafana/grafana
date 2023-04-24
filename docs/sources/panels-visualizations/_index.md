@@ -4,11 +4,13 @@ aliases:
   - features/panels/panels/
   - panels/
 cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - _target:
+      path: /docs/grafana/*/panels-visualizations/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
 keywords:
   - grafana
   - configure

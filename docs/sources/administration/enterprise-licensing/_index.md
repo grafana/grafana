@@ -9,9 +9,11 @@ aliases:
   - ../enterprise/license/license-restrictions/
   - license-restrictions/
 cascade:
-  labels:
-    products:
-      - enterprise
+  - _target:
+      path: /docs/grafana/*/administration/enterprise-licensing/**
+    labels:
+      products:
+        - enterprise
 description: Activate and manage a Grafana Enterprise license
 keywords:
   - grafana

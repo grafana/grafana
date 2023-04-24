@@ -1,10 +1,12 @@
 ---
 cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - _target:
+      path: /docs/grafana/*/administration/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
 description: Administration
 title: Administration
 weight: 40

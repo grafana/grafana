@@ -1,10 +1,12 @@
 ---
 cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - _target:
+      path: /docs/grafana/*/release-notes/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
 title: Release notes
 weight: 10000
 ---

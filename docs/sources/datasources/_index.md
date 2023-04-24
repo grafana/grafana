@@ -3,11 +3,13 @@ aliases:
   - data-sources/
   - overview/
 cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - _target:
+      path: /docs/grafana/*/datasources/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
 title: Data sources
 weight: 60
 ---

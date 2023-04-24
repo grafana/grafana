@@ -2,11 +2,13 @@
 aliases:
   - features/dashboard/dashboards/
 cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - _target:
+      path: /docs/grafana/*/dashboards/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
 title: Dashboards
 weight: 70
 ---

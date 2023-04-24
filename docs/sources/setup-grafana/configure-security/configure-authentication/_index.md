@@ -3,11 +3,13 @@ aliases:
   - ../../auth/
   - ../../auth/overview/
 cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - _target:
+      path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 title: Configure authentication
