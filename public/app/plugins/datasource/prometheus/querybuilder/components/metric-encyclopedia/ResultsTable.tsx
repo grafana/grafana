@@ -18,12 +18,11 @@ type ResultsTableProps = {
   query: PromVisualQuery;
   state: MetricEncyclopediaState;
   selectedIdx: number;
-  setSelectedIdx: (idx: number) => void;
   disableTextWrap: boolean;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, selectedIdx, setSelectedIdx, disableTextWrap } = props;
+  const { metrics, onChange, onClose, query, state, selectedIdx, disableTextWrap } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
@@ -105,9 +104,6 @@ export function ResultsTable(props: ResultsTableProps) {
                   key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
                   onClick={() => selectMetric(metric)}
-                  onMouseEnter={() => {
-                    setSelectedIdx(idx);
-                  }}
                 >
                   <td>
                     <Highlighter

@@ -338,15 +338,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
             query={query}
             state={state}
             selectedIdx={state.selectedIdx}
-            setSelectedIdx={(idx: number) =>
-              dispatch({
-                type: 'setSelectedIdx',
-                payload: idx,
-              })
-            }
             disableTextWrap={state.disableTextWrap}
-            // hovered={state.hovered}
-            // setHovered={(set: boolean) => dispatch({ type: 'setHovered', payload: set })}
           />
         )}
       </div>
