@@ -12,15 +12,15 @@
       "light-theme": "浅色"
     },
     "search-box": {
-      "placeholder": ""
+      "placeholder": "搜索或跳转至..."
     },
     "section": {
       "actions": "操作",
       "dashboard-search-results": "仪表板",
-      "folder-search-results": "",
+      "folder-search-results": "文件夹",
       "pages": "页面",
       "preferences": "首选项",
-      "recent-dashboards": ""
+      "recent-dashboards": "最近的仪表板"
     }
   },
   "common": {
@@ -31,21 +31,21 @@
   },
   "dashboard": {
     "add-menu": {
-      "import": "",
-      "paste-panel": "",
-      "row": "",
-      "visualization": ""
+      "import": "从库导入",
+      "paste-panel": "粘贴面板",
+      "row": "行",
+      "visualization": "可视化"
     },
     "empty": {
-      "add-import-body": "",
-      "add-import-button": "",
-      "add-import-header": "",
-      "add-row-body": "",
-      "add-row-button": "",
-      "add-row-header": "",
-      "add-visualization-body": "",
-      "add-visualization-button": "",
-      "add-visualization-header": ""
+      "add-import-body": "导入与其他仪表板共享的可视化。",
+      "add-import-button": "导入库面板",
+      "add-import-header": "导入面板",
+      "add-row-body": "将您的可视化分组成可扩展部分。",
+      "add-row-button": "添加行",
+      "add-row-header": "添加一行",
+      "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
+      "add-visualization-button": "添加可视化",
+      "add-visualization-header": "通过添加可视化开始您的新仪表板"
     },
     "inspect": {
       "data-tab": "数据",
@@ -92,7 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "数据源统计信息",
-      "data-traceids": "",
+      "data-traceids": "轨迹 ID",
       "processing-time": "数据处理时间",
       "queries": "查询数",
       "request-time": "总请求时间",
@@ -100,7 +100,7 @@
       "table-title": "统计信息"
     },
     "toolbar": {
-      "add": "",
+      "add": "添加",
       "add-panel": "添加面板",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
@@ -128,9 +128,9 @@
   },
   "grafana-ui": {
     "segment-async": {
-      "error": "",
-      "loading": "",
-      "no-options": ""
+      "error": "加载选项失败",
+      "loading": "正在加载选项...",
+      "no-options": "未找到选项"
     }
   },
   "library-panel": {
@@ -143,7 +143,7 @@
       "name": "库面板名称"
     },
     "add-widget": {
-      "title": ""
+      "title": "从面板库中添加面板"
     }
   },
   "library-panels": {
@@ -186,7 +186,7 @@
       "title": "警报规则"
     },
     "alerting-receivers": {
-      "subtitle": "",
+      "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
     },
     "alerting-silences": {
@@ -195,7 +195,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
-      "title": "警报和事件"
+      "title": "警报和 IRM"
     },
     "api-keys": {
       "subtitle": "管理和创建用于与 Grafana HTTP API 交互的 API 密钥",
@@ -216,7 +216,7 @@
       "title": "创建"
     },
     "create-alert": {
-      "title": ""
+      "title": "创建警报规则"
     },
     "create-dashboard": {
       "title": "仪表板"
@@ -225,7 +225,7 @@
       "title": "文件夹"
     },
     "create-import": {
-      "title": ""
+      "title": "导入仪表板"
     },
     "dashboards": {
       "subtitle": "创建并管理仪表板，以将您的数据可视化",
@@ -261,11 +261,11 @@
       "title": "库面板"
     },
     "manage-folder": {
-      "subtitle": ""
+      "subtitle": "管理文件夹仪表板和权限"
     },
     "monitoring": {
       "subtitle": "监控和基础设施应用",
-      "title": "正在监控"
+      "title": "可观测性"
     },
     "new": {
       "title": "新建"
@@ -298,13 +298,13 @@
       "title": "个人资料"
     },
     "public": {
-      "title": ""
+      "title": "公共仪表板"
     },
     "scenes": {
       "title": "场景"
     },
     "search": {
-      "placeholderCommandPalette": ""
+      "placeholderCommandPalette": "搜索或跳转至..."
     },
     "search-dashboards": {
       "title": "搜索仪表板"
@@ -355,9 +355,9 @@
       "tv-alert": "按 ESC 退出 kiosk 模式"
     },
     "toolbar": {
-      "enable-kiosk": "",
-      "toggle-menu": "",
-      "toggle-search-bar": ""
+      "enable-kiosk": "启用 kiosk 模式",
+      "toggle-menu": "切换菜单",
+      "toggle-search-bar": "切换顶部搜索栏"
     }
   },
   "news": {
@@ -407,12 +407,12 @@
   },
   "search": {
     "actions": {
-      "include-panels": "",
-      "remove-datasource-filter": "",
-      "sort-placeholder": "",
+      "include-panels": "包括面板",
+      "remove-datasource-filter": "数据源：{{datasource}}",
+      "sort-placeholder": "排序",
       "starred": "已加星标",
-      "view-as-folders": "",
-      "view-as-list": ""
+      "view-as-folders": "按文件夹查看",
+      "view-as-list": "以列表形式查看"
     },
     "dashboard-actions": {
       "import": "导入",
@@ -421,26 +421,26 @@
       "new-folder": "新建文件夹"
     },
     "folder-view": {
-      "go-to-folder": "",
-      "select-folder": ""
+      "go-to-folder": "前往文件夹",
+      "select-folder": "选择文件夹"
     },
     "result-kind": {
       "dashboard": "仪表板",
       "folder": "文件夹",
-      "panel": ""
+      "panel": "面板"
     },
     "results-table": {
-      "datasource-header": "",
-      "location-header": "",
-      "name-header": "姓名",
-      "tags-header": "",
+      "datasource-header": "数据源",
+      "location-header": "位置",
+      "name-header": "名称",
+      "tags-header": "标签",
       "type-dashboard": "仪表板",
       "type-folder": "文件夹",
-      "type-header": ""
+      "type-header": "类型"
     },
     "search-input": {
-      "include-panels-placeholder": "",
-      "placeholder": ""
+      "include-panels-placeholder": "搜索仪表板和面板",
+      "placeholder": "搜索仪表板"
     }
   },
   "share-modal": {
@@ -536,14 +536,14 @@
       "dark-label": "深色",
       "default-label": "默认",
       "light-label": "浅色",
-      "system-label": ""
+      "system-label": "系统"
     },
     "title": "首选项"
   },
   "tag-filter": {
-    "loading": "",
-    "no-tags": "",
-    "placeholder": ""
+    "loading": "加载中...",
+    "no-tags": "未找到标签",
+    "placeholder": "按标签筛选"
   },
   "time-picker": {
     "absolute": {
@@ -621,7 +621,7 @@
   },
   "variable": {
     "adhoc": {
-      "placeholder": ""
+      "placeholder": "选择值"
     },
     "dropdown": {
       "placeholder": "输入变量值"

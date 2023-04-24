@@ -15,8 +15,21 @@ const flatTreeSelector = createSelector(
   }
 );
 
+const hasSelectionSelector = createSelector(
+  (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
+  (selectedItems) => {
+    return Object.values(selectedItems).some((selectedItem) =>
+      Object.values(selectedItem).some((isSelected) => isSelected)
+    );
+  }
+);
+
 export function useFlatTreeState(folderUID: string | undefined) {
   return useSelector((state) => flatTreeSelector(state, folderUID));
+}
+
+export function useHasSelection() {
+  return useSelector((state) => hasSelectionSelector(state));
 }
 
 export function useSelectedItemsState() {
