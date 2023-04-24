@@ -128,12 +128,12 @@ describe('backendSrv', () => {
     describe('when making a successful call and conditions for showSuccessAlert are not favorable', () => {
       it('then it should return correct result and not emit anything', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
-          data: { message: 'A message' },
+          data: { message: 'Datasource updated' },
         });
         const url = '/api/dashboard/';
         const result = await backendSrv.request({ url, method: 'DELETE', showSuccessAlert: false });
 
-        expect(result).toEqual({ message: 'A message' });
+        expect(result).toEqual({ message: 'Datasource updated' });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
         expectRequestCallChain({ url, method: 'DELETE', showSuccessAlert: false });
       });

@@ -136,7 +136,7 @@ const getStyles = (
   hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
-  topSpacing?: number,
+  topSpacing?: number
 ) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();

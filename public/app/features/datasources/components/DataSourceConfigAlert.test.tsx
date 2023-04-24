@@ -27,7 +27,7 @@ describe('DataSourceConfigAlert', () => {
   });
 
   it('explore link is rendered disabled when user doesn`t have privileges', () => {
-    setup({ canExploreDataSources: false});
+    setup({ canExploreDataSources: false });
 
     expect(screen.getByText(exploreDataLinkText)).toHaveClass('disabled');
   });

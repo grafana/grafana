@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
+import { eventFactory } from '../events/eventFactory';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 import { ScopedVars } from './ScopedVars';
@@ -13,7 +14,6 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
-import { eventFactory } from '../events/eventFactory';
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 

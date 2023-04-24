@@ -71,7 +71,10 @@ export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { 
 export const updateDataSource = (dataSource: DataSourceSettings) => {
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
-  return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, { showErrorAlert: false, showSuccessAlert: false });
-}
+  return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
+    showErrorAlert: false,
+    showSuccessAlert: false,
+  });
+};
 
 export const deleteDataSource = (uid: string) => getBackendSrv().delete(`/api/datasources/uid/${uid}`);

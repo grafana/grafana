@@ -4,7 +4,7 @@ import {
   DataSourceJsonData,
   DataSourcePlugin,
   DataSourceConfigMessagePayload,
-  DataSourceConfigErrorMessagePayload
+  DataSourceConfigErrorMessagePayload,
 } from '@grafana/data';
 
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;

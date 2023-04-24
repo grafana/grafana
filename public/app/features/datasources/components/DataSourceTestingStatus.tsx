@@ -18,7 +18,7 @@ export type Props = {
 };
 
 export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource }: Props) {
-  const severity = testingStatus?.status ? testingStatus?.status as AlertVariant : 'error';
+  const severity = testingStatus?.status ? (testingStatus?.status as AlertVariant) : 'error';
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
@@ -30,7 +30,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
       plugin_name: dataSource.typeName,
       path: location.pathname,
     });
-  }
+  };
 
   if (message) {
     return (

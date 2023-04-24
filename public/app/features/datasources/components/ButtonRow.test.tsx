@@ -21,7 +21,7 @@ describe('<ButtonRow>', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByRole('link', { name: 'Explore' })).toBeInTheDocument();
+    expect(screen.getByText('Test')).toBeInTheDocument();
   });
   it('should render save & test', () => {
     setup({ canSave: true });

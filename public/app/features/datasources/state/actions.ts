@@ -98,15 +98,15 @@ export const handleBackendTest = (payload: ConfigTestPayload): ThunkResult<void>
     const result = {
       status: payload[0],
       message: payload[1],
-    }
+    };
 
     if (status === 'success') {
       dispatch(testDataSourceSucceeded(result));
     } else {
       dispatch(testDataSourceFailed(result));
     }
-  }
-}
+  };
+};
 
 export const testDataSource = (
   dataSourceName: string,
