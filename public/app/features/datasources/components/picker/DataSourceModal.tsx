@@ -30,7 +30,7 @@ interface DataSourceModalProps {
 }
 
 const MAP_BUILT_IN_DS_TO_EVENT_ITEM: Record<string, string> = {
-  '-- Grafana --': 'use_mock_data_ds',
+  grafana: 'use_mock_data_ds',
   '-- Mixed --': 'use_mixed_ds',
   '-- Dashboard --': 'use_dashboard_ds',
 };
