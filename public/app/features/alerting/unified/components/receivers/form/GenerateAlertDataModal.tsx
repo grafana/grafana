@@ -65,10 +65,14 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   const onSubmit = () => {
     onAccept(alerts);
     setAlerts([]);
+    formMethods.reset();
   };
 
-  const labelsOrAnnotationsAdded =
-    (labels[0]?.key !== '' && labels[0]?.value !== '') || (annotations[0]?.key !== '' && annotations[0]?.value !== '');
+  const labelsOrAnnotationsAdded = () => {
+    const someLabels = labels.some((lb) => lb.key !== '' && lb.value !== '');
+    const someAnnotations = annotations.some((ann) => ann.key !== '' && ann.value !== '');
+    return someLabels || someAnnotations;
+  };
 
   return (
     <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Generate alert data'}>
@@ -77,6 +81,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            formMethods.reset();
           }}
         >
           <>
@@ -100,7 +105,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                     icon="plus-circle"
                     type="button"
                     variant="secondary"
-                    disabled={!labelsOrAnnotationsAdded}
+                    disabled={!labelsOrAnnotationsAdded()}
                   >
                     Add alert
                   </Button>
@@ -114,10 +119,18 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
             </div>
             <Modal.ButtonRow>
               <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
-                Add this alert list
+                Add this alert list to the payload
               </Button>
             </Modal.ButtonRow>
           </div>
+          {alerts.length > 0 && (
+            <Stack direction="column" gap={1}>
+              <h5> You have this alert data prepared to be added to the payload:</h5>
+              <pre className={styles.result} data-testid="payloadJSON">
+                {JSON.stringify(alerts, null, 2)}
+              </pre>
+            </Stack>
+          )}
         </form>
       </FormProvider>
     </Modal>
@@ -147,5 +160,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   onSubmitButton: css`
     margin-left: ${theme.spacing(2)};
+  `,
+  result: css`
+    width: 570px;
+    height: 363px;
   `,
 });

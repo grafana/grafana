@@ -67,7 +67,7 @@ export function PayloadEditor({
               type="button"
               variant="secondary"
             >
-              Add alerts
+              Add alerts to this payload
             </Button>
           </Stack>
         </Stack>
