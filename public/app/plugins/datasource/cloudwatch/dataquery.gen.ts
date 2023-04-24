@@ -10,6 +10,8 @@
 
 import * as common from '@grafana/schema';
 
+import * as common from '@grafana/schema';
+
 export const DataQueryModelVersion = Object.freeze([0, 0]);
 
 export interface MetricStat {
