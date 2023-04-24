@@ -11,9 +11,9 @@ weight: 103
 
 Once the upgrade has taken place, you still have the option to roll back to legacy alerting. If you choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place.
 
-All new alerts and changes made exclusively in Grafana Alerting will be deleted.
+All new alerts and changes made exclusively in Grafana Alerting will be deleted and cannot be recovered.
 
-To roll back to legacy alerting, enter the following in your configuration:
+To roll back to legacy alerting, add the following configuration to your Grafana configuration file:
 
 ```
 force_migration = true
@@ -25,4 +25,4 @@ enabled = true
 enabled = false
 ```
 
-> **Note**: We do not recommend this option. If you choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place. All new alerts and changes made exclusively in Grafana Alerting will be deleted.
+> **Note**: We do not recommend this option. If you choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place. All new alerts and changes made exclusively in Grafana Alerting will be deleted. Rolling back to legacy alerting can cause compatibility issues with newer versions of Grafana and may result in the loss of new features and functionality
