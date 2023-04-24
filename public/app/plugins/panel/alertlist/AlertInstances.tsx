@@ -79,7 +79,10 @@ export const AlertInstances = ({
     await handleInstancesLimit(true);
     setDisplayInstances(true);
   };
-  const limitStatus = limitInstances ? `Limiting the result to ${INSTANCES_DISPLAY_LIMIT} instances` : `Showing all`;
+  const totalInstancesNumber = limitInstances ? grafanaFilteredInstancesTotal : filteredAlerts.length;
+  const limitStatus = limitInstances
+    ? `Showing ${INSTANCES_DISPLAY_LIMIT} of ${grafanaTotalInstances} instances`
+    : `Showing all ${grafanaTotalInstances} instances`;
 
   const limitButtonLabel = limitInstances ? 'Remove limit' : `Limit the result to ${INSTANCES_DISPLAY_LIMIT} instances`;
 
@@ -110,7 +113,7 @@ export const AlertInstances = ({
           onClick={() => toggleShowInstances()}
         >
           {uncollapsible && <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />}
-          <span>{`${filteredAlerts.length} ${pluralize('instance', filteredAlerts.length)}`}</span>
+          <span>{`${totalInstancesNumber} ${pluralize('instance', totalInstancesNumber)}`}</span>
           {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
         </button>
       )}
