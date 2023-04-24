@@ -1,39 +1,41 @@
-import React, { useMemo } from 'react';
+import { css } from '@emotion/css';
+import React from 'react';
 
-import { Input } from '@grafana/ui';
-import { ActionRow } from 'app/features/search/page/components/ActionRow';
-import { SearchLayout } from 'app/features/search/types';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
+
+export interface Props {}
 
 export function BrowseActions() {
-  const fakeState = useMemo(() => {
-    return {
-      query: '',
-      tag: [],
-      starred: false,
-      layout: SearchLayout.Folders,
-      eventTrackingNamespace: 'manage_dashboards' as const,
-    };
-  }, []);
+  const styles = useStyles2(getStyles);
+
+  const onMove = () => {
+    // TODO real implemenation, stub for now
+    console.log('onMoveClicked');
+  };
+
+  const onDelete = () => {
+    // TODO real implementation, stub for now
+    console.log('onDeleteClicked');
+  };
 
   return (
-    <div>
-      <Input placeholder="Search box" />
-
-      <br />
-
-      <ActionRow
-        includePanels={false}
-        state={fakeState}
-        getTagOptions={() => Promise.resolve([])}
-        getSortOptions={() => Promise.resolve([])}
-        onLayoutChange={() => {}}
-        onSortChange={() => {}}
-        onStarredFilterChange={() => {}}
-        onTagFilterChange={() => {}}
-        onDatasourceChange={() => {}}
-        onPanelTypeChange={() => {}}
-        onSetIncludePanels={() => {}}
-      />
+    <div className={styles.row} data-testid="manage-actions">
+      <Button onClick={onMove} variant="secondary">
+        Move
+      </Button>
+      <Button onClick={onDelete} variant="destructive">
+        Delete
+      </Button>
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  row: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+  }),
+});

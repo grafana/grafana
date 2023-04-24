@@ -927,22 +927,28 @@ describe('ElasticDatasource', () => {
 
     it('does not return logs volume query for metric query', () => {
       expect(
-        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-          refId: 'A',
-          metrics: [{ type: 'count', id: '1' }],
-          bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
-          query: 'foo="bar"',
-        })
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
+            query: 'foo="bar"',
+          }
+        )
       ).toEqual(undefined);
     });
 
     it('returns logs volume query for log query', () => {
       expect(
-        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-          refId: 'A',
-          metrics: [{ type: 'logs', id: '1' }],
-          query: 'foo="bar"',
-        })
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: 'foo="bar"',
+          }
+        )
       ).toEqual({
         bucketAggs: [
           {
@@ -1204,7 +1210,6 @@ describe('addAdhocFilters', () => {
 const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
   return {
     requestId: '',
-    dashboardId: 0,
     interval: '',
     panelId: 0,
     intervalMs: 1,

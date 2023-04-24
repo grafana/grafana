@@ -12,6 +12,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -33,7 +34,7 @@ func TestMigrations(t *testing.T) {
 	_, err = x.SQL(query).Get(&result)
 	require.Error(t, err)
 
-	mg := NewMigrator(x, &setting.Cfg{})
+	mg := NewMigrator(x, &setting.Cfg{Raw: ini.Empty()})
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)

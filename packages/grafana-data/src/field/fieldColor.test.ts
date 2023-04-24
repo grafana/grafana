@@ -3,9 +3,9 @@ import { Field, FieldColorModeId, FieldType } from '../types';
 
 import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 
-function getTestField(mode: string, fixedColor?: string): Field {
+function getTestField(mode: string, fixedColor?: string, name = 'name'): Field {
   return {
-    name: 'name',
+    name: name,
     type: FieldType.number,
     values: [],
     config: {
@@ -21,11 +21,12 @@ function getTestField(mode: string, fixedColor?: string): Field {
 interface GetCalcOptions {
   mode: string;
   seriesIndex?: number;
+  name?: string;
   fixedColor?: string;
 }
 
 function getCalculator(options: GetCalcOptions): FieldValueColorCalculator {
-  const field = getTestField(options.mode, options.fixedColor);
+  const field = getTestField(options.mode, options.fixedColor, options.name);
   const mode = fieldColorModeRegistry.get(options.mode);
   field.state!.seriesIndex = options.seriesIndex;
   return mode.getCalculator(field, createTheme());
@@ -38,13 +39,19 @@ describe('fieldColorModeRegistry', () => {
   });
 
   it('Palette classic with series index 0', () => {
-    const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 0 });
+    const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 0, name: 'series1' });
     expect(calcFn(70, 0, undefined)).toEqual('#73BF69');
   });
 
   it('Palette classic with series index 1', () => {
-    const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 1 });
+    const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 1, name: 'series2' });
     expect(calcFn(70, 0, undefined)).toEqual('#F2CC0C');
+  });
+
+  it('Palette uses name', () => {
+    const calcFn1 = getCalculator({ mode: FieldColorModeId.PaletteClassicByName, seriesIndex: 0, name: 'same name' });
+    const calcFn2 = getCalculator({ mode: FieldColorModeId.PaletteClassicByName, seriesIndex: 1, name: 'same name' });
+    expect(calcFn1(12, 34, undefined)).toEqual(calcFn2(56, 78, undefined));
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {

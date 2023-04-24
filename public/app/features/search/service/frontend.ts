@@ -1,6 +1,6 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { DataFrameView, SelectableValue, ArrayVector } from '@grafana/data';
+import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
@@ -94,12 +94,12 @@ class FullResultCache {
   });
 
   constructor(private full: DataFrameView<DashboardQueryResult>) {
-    this.names = this.full.fields.name.values.toArray();
+    this.names = this.full.fields.name.values;
 
     // Copy with empty values
     this.empty = new DataFrameView<DashboardQueryResult>({
       ...this.full.dataFrame, // copy folder metadata
-      fields: this.full.dataFrame.fields.map((v) => ({ ...v, values: new ArrayVector([]) })),
+      fields: this.full.dataFrame.fields.map((v) => ({ ...v, values: [] })),
       length: 0, // for now
     });
   }
@@ -119,7 +119,7 @@ class FullResultCache {
     let [idxs, info, order] = this.ufuzzy.search(haystack, query, true);
 
     for (let c = 0; c < allFields.length; c++) {
-      let src = allFields[c].values.toArray();
+      let src = allFields[c].values;
       let dst = values[c];
 
       // <= 1000 matches (ranked)
@@ -140,7 +140,7 @@ class FullResultCache {
 
     // mutates the search object
     this.empty.dataFrame.fields.forEach((f, idx) => {
-      f.values = new ArrayVector(values[idx]); // or just set it?
+      f.values = values[idx]; // or just set it?
     });
     this.empty.dataFrame.length = this.empty.dataFrame.fields[0].values.length;
 

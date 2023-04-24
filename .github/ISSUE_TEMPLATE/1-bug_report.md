@@ -14,15 +14,15 @@ PROTIP: record your screen and attach it as a gif to showcase the issue.
 - How to record and attach gif: https://bit.ly/2Mi8T6K
 -->
 
-**What happened**:
+## What happened:
 
-**What you expected to happen**:
+## What you expected to happen:
 
-**How to reproduce it (as minimally and precisely as possible)**:
+## How to reproduce it (as minimally and precisely as possible):
 
-**Anything else we need to know?**:
+## Anything else we need to know?:
 
-**Environment**:
+## Environment:
 - Grafana version:
 - Data source type & version:
 - OS Grafana is installed on:

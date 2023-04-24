@@ -38,6 +38,13 @@ var (
 			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
 		}, []string{"source", "plugin_id", "endpoint", "target"},
 	)
+
+	PluginRequestDurationSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "plugin_request_duration_seconds",
+		Help:      "Plugin request duration in seconds",
+		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
+	}, []string{"source", "plugin_id", "endpoint", "status", "target"})
 )
 
 const (
@@ -71,6 +78,8 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	elapsed := time.Since(start)
 	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
 	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
+
+	PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, string(cfg.Target), status).Observe(elapsed.Seconds())
 
 	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{

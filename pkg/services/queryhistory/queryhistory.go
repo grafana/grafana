@@ -2,6 +2,7 @@ package queryhistory
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -16,6 +17,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
 		log:           log.New("query-history"),
+		now:           time.Now,
 	}
 
 	// Register routes only when query history is enabled
@@ -43,6 +45,7 @@ type QueryHistoryService struct {
 	Cfg           *setting.Cfg
 	RouteRegister routing.RouteRegister
 	log           log.Logger
+	now           func() time.Time
 }
 
 func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error) {

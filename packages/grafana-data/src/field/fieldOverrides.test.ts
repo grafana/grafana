@@ -935,7 +935,7 @@ describe('applyRawFieldOverrides', () => {
 
   const getDisplayValue = (frames: DataFrame[], frameIndex: number, fieldIndex: number) => {
     const field = frames[frameIndex].fields[fieldIndex];
-    const value = field.values.get(0);
+    const value = field.values[0];
     return field.display!(value);
   };
 
