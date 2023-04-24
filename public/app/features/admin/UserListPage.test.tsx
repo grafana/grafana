@@ -19,6 +19,16 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]) }),
 }));
 
+jest.mock('./UserListAdminPage', () => ({
+  UserListAdminPageContent: () => <div data-testid={selectors.UserListAdminPage.container} />,
+}));
+jest.mock('../users/UsersListPage', () => ({
+  UsersListPageContent: () => <div data-testid={selectors.UsersListPage.container} />,
+}));
+jest.mock('./UserListPublicDashboardPage/UserListPublicDashboardPage', () => ({
+  UserListPublicDashboardPage: () => <div data-testid={selectors.UsersListPublicDashboardsPage.container} />,
+}));
+
 const renderPage = () => {
   render(
     <TestProvider>
@@ -44,18 +54,8 @@ afterEach(() => {
   config.licenseInfo = originalConfigData.licenseInfo;
 });
 
-jest.mock('./UserListAdminPage', () => ({
-  UserListAdminPageContent: () => <div data-testid={selectors.UserListAdminPage.container} />,
-}));
-jest.mock('../users/UsersListPage', () => ({
-  UsersListPageContent: () => <div data-testid={selectors.UsersListPage.container} />,
-}));
-jest.mock('./UserListPublicDashboardPage/UserListPublicDashboardPage', () => ({
-  UserListPublicDashboardPage: () => <div data-testid={selectors.UsersListPublicDashboardsPage.container} />,
-}));
-
 describe('Tabs rendering', () => {
-  it('should render All and Org Users when user has permissions to read to org users and is admin', async () => {
+  it('should render All and Org Users tabs when user has permissions to read to org users and is admin', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
@@ -65,7 +65,7 @@ describe('Tabs rendering', () => {
     expect(screen.getByTestId(tabsSelector.orgUsers)).toBeInTheDocument();
     expect(screen.queryByTestId(tabsSelector.publicDashboardsUsers)).not.toBeInTheDocument();
   });
-  it('should render All,Org and Public Dashboard users when user has permissions to read org users, is admin and has email sharing enabled', async () => {
+  it('should render All, Org and Public dashboard tabs when user has permissions to read org users, is admin and has email sharing enabled', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
@@ -99,7 +99,7 @@ describe('Tabs rendering', () => {
       });
     });
   });
-  describe('No permissions to read org users or not admin but email sharing', () => {
+  describe('No permissions to read org users or not admin but email sharing enabled', () => {
     [
       {
         title: 'user has no permissions to read org users',
@@ -112,7 +112,7 @@ describe('Tabs rendering', () => {
         isAdmin: false,
       },
     ].forEach((scenario) => {
-      it(`should render user and public dashboard tabs when ${scenario.title} but has email sharing enabled`, async () => {
+      it(`should render User and Public dashboard tabs when ${scenario.title} but has email sharing enabled`, async () => {
         jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(scenario.hasOrgReadPermissions);
         jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(scenario.isAdmin);
 
@@ -130,7 +130,7 @@ describe('Tabs rendering', () => {
 });
 
 describe('Tables rendering', () => {
-  it('should render UserListAdminPage page when user is admin', () => {
+  it('should render UserListAdminPage when user is admin', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
@@ -141,7 +141,7 @@ describe('Tables rendering', () => {
 
     expect(screen.getByTestId(selectors.UserListAdminPage.container)).toBeInTheDocument();
   });
-  it('should render UsersListPage page when user is admin and has org read permissions', async () => {
+  it('should render UsersListPage when user is admin and has org read permissions', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
@@ -155,7 +155,7 @@ describe('Tables rendering', () => {
     expect(screen.getByTestId(tabsSelector.orgUsers).className.includes('activeTabStyle')).toBeTruthy();
     expect(screen.getByTestId(selectors.UsersListPage.container)).toBeInTheDocument();
   });
-  it('should render UsersListPage page when user has org read permissions and is not admin', async () => {
+  it('should render UsersListPage when user has org read permissions and is not admin', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
