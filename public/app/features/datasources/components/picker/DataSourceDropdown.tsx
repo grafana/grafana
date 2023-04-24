@@ -6,6 +6,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -25,6 +26,10 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
+  const openDropdown = () => {
+    reportInteraction('dashboards_dspicker_clicked', { item: 'open_dspicker' });
+    setOpen(true);
+  };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
@@ -93,20 +98,13 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           </Portal>
         </FocusScope>
       ) : (
-        <div
-          className={styles.trigger}
-          onClick={() => {
-            setOpen(true);
-          }}
-        >
+        <div className={styles.trigger} onClick={openDropdown}>
           <Input
             className={styles.input}
             prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
             suffix={<Icon name="angle-down" />}
             value={dataSourceLabel(currentDataSourceInstanceSettings)}
-            onFocus={() => {
-              setOpen(true);
-            }}
+            onFocus={openDropdown}
           />
         </div>
       )}
@@ -135,6 +133,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
+      reportInteraction('dashboards_dspicker_clicked', { item: 'select_ds' });
     },
     [onChange]
   );
@@ -142,6 +141,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const clickAddCSVCallback = useCallback(() => {
     onClickAddCSV?.();
     onClose();
+    reportInteraction('dashboards_dspicker_clicked', { item: 'add_file' });
   }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStylesPickerContent);
@@ -184,6 +184,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                     hideModal();
                   },
                 });
+                reportInteraction('dashboards_dspicker_clicked', { item: 'open_advanced_ds_picker' });
               }}
             >
               Open advanced data source picker
