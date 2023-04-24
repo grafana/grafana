@@ -2686,8 +2686,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/datasources/components/ButtonRow.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/datasources/components/DataSourceReadOnlyMessage.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -4204,9 +4203,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"],
       [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Do not use any type assertions.", "12"]
     ],
     "public/app/plugins/datasource/graphite/components/FunctionEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5228,6 +5228,25 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/dashlist/module.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/panel/datagrid/DataGridPanel.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/panel/datagrid/components/RenameColumnCell.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/panel/datagrid/components/SimpleInput.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/panel/datagrid/state.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"]
     ],
     "public/app/plugins/panel/debug/CursorView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

@@ -31,49 +31,73 @@ composableKinds: DataQuery: {
 				schemas: [
 					{
 						#MetricStat: {
-							region:      string
-							namespace:   string
+							// AWS region to query for the metric
+							region: string
+							// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
+							namespace: string
+							// Name of the metric
 							metricName?: string
+							// The dimensions of the metric
 							dimensions?: #Dimensions
+							// Only show metrics that exactly match all defined dimension names.
 							matchExact?: bool
-							period?:     string
-							accountId?:  string
-							statistic?:  string
+							// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
+							period?: string
+							// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
+							accountId?: string
+							// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
+							statistic?: string
 							// @deprecated use statistic
 							statistics?: [...string]
 						} @cuetsy(kind="interface")
 
+						// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
 						#Dimensions: {[string]: string | [...string]} @cuetsy(kind="type")
 
+						// Shape of a CloudWatch Metrics query
 						#CloudWatchMetricsQuery: {
 							common.DataQuery
 							#MetricStat
-							queryMode?:        #CloudWatchQueryMode
-							metricQueryType?:  #MetricQueryType
+
+							// Whether a query is a Metrics, Logs, or Annotations query
+							queryMode?: #CloudWatchQueryMode
+							// Whether to use a metric search or metric query. Metric query is referred to as "Metrics Insights" in the AWS console.
+							metricQueryType?: #MetricQueryType
+							// Whether to use the query builder or code editor to create the query
 							metricEditorMode?: #MetricEditorMode
-							// common props
-							id:     string
+							// ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
+							id: string
+							// To be deprecated. Use label
 							alias?: string
+							// Change the time series legend names using dynamic labels. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html for more details.
 							label?: string
 							// Math expression query
-							expression?:    string
+							expression?: string
+							// When the metric query type is `metricQueryType` is set to `Query`, this field is used to specify the query string.
 							sqlExpression?: string
-							sql?:           #SQLExpression
+							// When the metric query type is `metricQueryType` is set to `Query` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
+							sql?: #SQLExpression
 						} @cuetsy(kind="interface")
 
 						#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
 						#MetricQueryType:     0 | 1                              @cuetsy(kind="enum", memberNames="Search|Query")
 						#MetricEditorMode:    0 | 1                              @cuetsy(kind="enum", memberNames="Builder|Code")
 						#SQLExpression: {
-							select?:           #QueryEditorFunctionExpression
-							from?:             #QueryEditorPropertyExpression | #QueryEditorFunctionExpression
-							where?:            #QueryEditorArrayExpression
-							groupBy?:          #QueryEditorArrayExpression
-							orderBy?:          #QueryEditorFunctionExpression
+							// SELECT part of the SQL expression
+							select?: #QueryEditorFunctionExpression
+							// FROM part of the SQL expression
+							from?: #QueryEditorPropertyExpression | #QueryEditorFunctionExpression
+							// WHERE part of the SQL expression
+							where?: #QueryEditorArrayExpression
+							// GROUP BY part of the SQL expression
+							groupBy?: #QueryEditorArrayExpression
+							// ORDER BY part of the SQL expression
+							orderBy?: #QueryEditorFunctionExpression
+							// The sort order of the SQL expression, `ASC` or `DESC`
 							orderByDirection?: string
-							limit?:            int64
+							// LIMIT part of the SQL expression
+							limit?: int64
 						} @cuetsy(kind="interface")
-
 						#QueryEditorFunctionExpression: {
 							type:  #QueryEditorExpressionType & "function"
 							name?: string
@@ -127,33 +151,55 @@ composableKinds: DataQuery: {
 
 						#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 
+						// Shape of a CloudWatch Logs query
 						#CloudWatchLogsQuery: {
 							common.DataQuery
-							queryMode:   #CloudWatchQueryMode
-							id:          string
-							region:      string
+
+							// Whether a query is a Metrics, Logs, or Annotations query
+							queryMode: #CloudWatchQueryMode
+							id:        string
+							// AWS region to query for the logs
+							region: string
+							// The CloudWatch Logs Insights query to execute
 							expression?: string
+							// Fields to group the results by, this field is automatically populated whenever the query is updated
 							statsGroups?: [...string]
+							// Log groups to query
 							logGroups?: [...#LogGroup]
-							// deprecated, use logGroups instead
+							// @deprecated use logGroups
 							logGroupNames?: [...string]
 						} @cuetsy(kind="interface")
-
 						#LogGroup: {
-							arn:           string
-							name:          string
-							accountId?:    string
+							// ARN of the log group
+							arn: string
+							// Name of the log group
+							name: string
+							// AccountId of the log group
+							accountId?: string
+							// Label of the log group
 							accountLabel?: string
 						} @cuetsy(kind="interface")
 
 						#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
 
+						// Shape of a CloudWatch Annotation query
 						#CloudWatchAnnotationQuery: {
 							common.DataQuery
 							#MetricStat
-							queryMode:        #CloudWatchQueryMode
-							prefixMatching?:  bool
-							actionPrefix?:    string
+
+							// Whether a query is a Metrics, Logs, or Annotations query
+							queryMode: #CloudWatchQueryMode
+							// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
+							prefixMatching?: bool
+							// Use this parameter to filter the results of the operation to only those alarms
+							// that use a certain alarm action. For example, you could specify the ARN of
+							// an SNS topic to find all alarms that send notifications to that topic.
+							// e.g. `arn:aws:sns:us-east-1:123456789012:my-app-` would match `arn:aws:sns:us-east-1:123456789012:my-app-action`
+							// but not match `arn:aws:sns:us-east-1:123456789012:your-app-action`
+							actionPrefix?: string
+							// An alarm name prefix. If you specify this parameter, you receive information
+							// about all alarms that have names that start with this prefix.
+							// e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
 							alarmNamePrefix?: string
 						} @cuetsy(kind="interface")
 

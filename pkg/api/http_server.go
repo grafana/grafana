@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/k8s/authnz"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -44,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -260,13 +260,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	starApi *starApi.API, cachingService caching.CachingService,
-	exportService export.ExportService,
 
+	exportService export.ExportService,
 	// NOTE: k8sAuthnzAPI isn't a code-dependency of httpserver. However, it needs to be exercised somewhere
 	// in order for Wire to pull it in.
 	// It's possible, registering it in the modules registry is the correct way to go
 	_ *authnz.K8sAuthnzAPI,
-
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -662,6 +661,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
+		m.UseMiddleware(middleware.SubPathRedirect(hs.Cfg))
 	}
 
 	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
@@ -676,6 +676,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
+
 	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 	}
