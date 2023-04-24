@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -20,14 +20,18 @@ const DashboardsListModal = ({ dashboards, onDismiss }: { dashboards: SessionDas
             <a
               rel="noreferrer"
               target="_blank"
-              className={styles.url}
+              className={cx('external-link', styles.url)}
               href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
               onClick={onDismiss}
             >
               Public dashboard URL
             </a>
             <span className={styles.urlsDivider}>•</span>
-            <a className={styles.url} href={`/d/${dash.dashboardUid}?shareView=share`} onClick={onDismiss}>
+            <a
+              className={cx('external-link', styles.url)}
+              href={`/d/${dash.dashboardUid}?shareView=share`}
+              onClick={onDismiss}
+            >
               Public dashboard settings
             </a>
           </div>
@@ -87,7 +91,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   url: css`
     font-size: ${theme.typography.body.fontSize};
-    color: ${theme.colors.primary.text};
-    text-decoration: underline;
   `,
 });
