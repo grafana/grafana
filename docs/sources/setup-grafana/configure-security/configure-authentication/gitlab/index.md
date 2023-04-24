@@ -11,20 +11,20 @@ title: Configure GitLab OAuth2 Authentication
 weight: 700
 ---
 
-# Configure GitLab OAuth2 authentication
+# Guide to Configuring GitLab OAuth2 Authentication in Grafan
 
 To enable GitLab OAuth2 you must register the application in GitLab. GitLab will generate a client ID and secret key for you to use.
 
-## Create GitLab OAuth keys
+## Create GitLab OAuth application and obtain client ID and secret key
 
 You need to [create a GitLab OAuth application](https://docs.gitlab.com/ce/integration/oauth_provider.html).
-Choose a descriptive _Name_, and use the following _Redirect URI_:
+Choose a descriptive _Name_ for the GitLab OAuth application, and use the following _Redirect URI_:
 
 ```
 https://grafana.example.com/login/gitlab
 ```
 
-where `https://grafana.example.com` is the URL you use to connect to Grafana.
+Replace `https://grafana.example.com` with the URL you use to connect to Grafana.
 Adjust it as needed if you don't use HTTPS or if you use a different port; for
 instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 
@@ -37,9 +37,7 @@ not going to use GitLab groups for authorization (i.e. not setting
 `allowed_groups`, see below), you can select `read_user` instead of `read_api` as
 the scope, thus giving a more restricted access to your GitLab API.
 
-You'll get an _Application Id_ and a _Secret_ in return; we'll call them
-`GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
-section.
+You'll get an _Application Id_ and a _Secret_ in return; for the rest of this section, we'll refer to the Application Id and Secret as `GITLAB_APPLICATION_ID` and `GITLAB_SECRET`, respectively.
 
 ## Enable GitLab in Grafana
 
@@ -63,8 +61,7 @@ role_attribute_strict = false
 allow_assign_grafana_admin = false
 ```
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be
-correct. For example in case you are serving Grafana behind a proxy.
+If you're serving Grafana behind a proxy, you may need to set the `root_url` option of `[server]` to ensure the callback URL is correct.
 
 Restart the Grafana backend for your changes to take effect.
 
@@ -184,7 +181,7 @@ This allows every GitLab Admin to be an Admin in Grafana.
 Groups can also be used to map roles. Group name (lowercased and unique) is used instead of display name for identifying groups
 
 For instance, if you have a group with display name 'Example-Group' you can use the following snippet to
-ensure those members inherit the role 'Editor'.
+ensure those members inherit the 'Editor' role.
 
 ```ini
 role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
