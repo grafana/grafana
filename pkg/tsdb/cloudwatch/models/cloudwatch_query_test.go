@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/kindsys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
@@ -285,16 +287,6 @@ func TestCloudWatchQuery(t *testing.T) {
 		assert.True(t, query.isSearchExpression(), "Expected search expression")
 		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
-}
-
-func TestQueryJSON(t *testing.T) {
-	jsonString := []byte(`{
-		"type": "timeSeriesQuery"
-	}`)
-	var res metricsDataQuery
-	err := json.Unmarshal(jsonString, &res)
-	require.NoError(t, err)
-	assert.Equal(t, "timeSeriesQuery", res.QueryType)
 }
 
 func TestRequestParser(t *testing.T) {
@@ -622,11 +614,11 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 }
 
 func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query_api_mode(t *testing.T) {
-	const dummyTestEditorMode MetricEditorMode = 99
+	const dummyTestEditorMode dataquery.CloudWatchMetricsQueryMetricEditorMode = 99
 	testCases := map[string]struct {
 		extraDataQueryJson       string
-		expectedMetricQueryType  MetricQueryType
-		expectedMetricEditorMode MetricEditorMode
+		expectedMetricQueryType  dataquery.CloudWatchMetricsQueryMetricQueryType
+		expectedMetricEditorMode dataquery.CloudWatchMetricsQueryMetricEditorMode
 		expectedGMDApiMode       GMDApiMode
 	}{
 		"no metric query type, no metric editor mode, no expression": {
@@ -930,16 +922,18 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 			false := false
 
 			queryToMigrate := metricsDataQuery{
-				Region:     "us-east-1",
-				Namespace:  "ec2",
-				MetricName: "CPUUtilization",
-				Alias:      tc.inputAlias,
-				Dimensions: map[string]interface{}{
-					"InstanceId": []interface{}{"test"},
+				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
+					Region:     "us-east-1",
+					Namespace:  "ec2",
+					MetricName: kindsys.Ptr("CPUUtilization"),
+					Alias:      kindsys.Ptr(tc.inputAlias),
+					Dimensions: map[string]interface{}{
+						"InstanceId": []interface{}{"test"},
+					},
+					Statistic: &average,
+					Period:    kindsys.Ptr("600"),
+					Hide:      &false,
 				},
-				Statistic: &average,
-				Period:    "600",
-				Hide:      &false,
 			}
 
 			assert.Equal(t, tc.expectedLabel, getLabel(queryToMigrate, true))

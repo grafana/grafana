@@ -7,13 +7,12 @@ import { Subscription } from 'rxjs';
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   HorizontalGroup,
   InlineSwitch,
   ModalsController,
-  PageToolbar,
   RadioButtonGroup,
   stylesFactory,
   Themeable2,
@@ -322,7 +321,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderEditorActions() {
-    const size = config.featureToggles.topnav ? 'sm' : 'md';
+    const size = 'sm';
     let editorActions = [
       <Button
         onClick={this.onDiscard}
@@ -431,18 +430,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderToolbar() {
-    if (config.featureToggles.topnav) {
-      return (
-        <AppChromeUpdate
-          actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
-        />
-      );
-    }
-
     return (
-      <PageToolbar title={this.props.dashboard.title} section="Edit Panel" onGoBack={this.onGoBackToDashboard}>
-        {this.renderEditorActions()}
-      </PageToolbar>
+      <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>} />
     );
   }
 
@@ -514,7 +503,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
       flexGrow: 1,
       minHeight: 0,
       display: 'flex',
-      paddingTop: config.featureToggles.topnav ? theme.spacing(2) : 0,
+      paddingTop: theme.spacing(2),
     }),
     verticalSplitPanesWrapper: css`
       display: flex;

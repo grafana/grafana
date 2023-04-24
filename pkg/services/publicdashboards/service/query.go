@@ -70,7 +70,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
-				Color:       *anno.IconColor,
+				Color:       anno.IconColor,
 				Time:        item.Time,
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
@@ -78,7 +78,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
 			// which is only intended for tag and org annotations.
-			if anno.Type == "dashboard" {
+			if anno.Type != nil && *anno.Type == "dashboard" {
 				event.PanelId = item.PanelID
 			}
 
@@ -120,7 +120,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetQueryDataResponse returns a query data response for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
@@ -213,7 +213,10 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	var datasourceUids []string
 	exists := map[string]bool{}
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	// collapsed rows contain panels in a nested structure, so we need to flatten them before calculate unique uids
+	flattenedPanels := getFlattenedPanels(dashboard)
+
+	for _, panelObj := range flattenedPanels {
 		panel := simplejson.NewFromAny(panelObj)
 		uid := getDataSourceUidFromJson(panel)
 
@@ -236,6 +239,23 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	}
 
 	return datasourceUids
+}
+
+func getFlattenedPanels(dashboard *simplejson.Json) []interface{} {
+	var flatPanels []interface{}
+	for _, panelObj := range dashboard.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		// if it is not collapsed, the row does not have any panels
+		if panel.Get("type").MustString() == "row" {
+			if panel.Get("collapsed").MustBool() {
+				flatPanels = append(flatPanels, panel.Get("panels").MustArray()...)
+			}
+		} else {
+			flatPanels = append(flatPanels, panelObj)
+		}
+	}
+	return flatPanels
 }
 
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {

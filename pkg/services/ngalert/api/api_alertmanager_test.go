@@ -108,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -116,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}}))
 	})
@@ -148,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.InvalidReceiverError{},
 			}},
 		}, {
 			Name: "test2",
@@ -156,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})
@@ -378,6 +378,46 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 		for _, config := range configs {
 			require.NotZero(tt, config.LastApplied)
 		}
+	})
+}
+
+func TestRoutePostGrafanaAlertingConfigHistoryActivate(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 404 when no historical configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 404, response.Status())
+	})
+
+	t.Run("assert 202 for a valid org and id", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 202, response.Status())
+	})
+
+	t.Run("assert 400 when id is not parseable", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "abc")
+		require.Equal(tt, 400, response.Status())
 	})
 }
 

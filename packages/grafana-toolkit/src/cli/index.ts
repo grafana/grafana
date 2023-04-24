@@ -1,15 +1,11 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
-import { pluginCreateTask } from './tasks/plugin.create';
-import { pluginDevTask } from './tasks/plugin.dev';
 import { pluginSignTask } from './tasks/plugin.sign';
-import { pluginTestTask } from './tasks/plugin.tests';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
@@ -82,24 +78,6 @@ export const run = (includeInternalScripts = false) => {
         );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
-
-    // React generator
-    program
-      .command('component:create')
-      .description(
-        '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
-      )
-      .action(async () => {
-        console.log(
-          chalk.yellow.bold(
-            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-          )
-        );
-        console.log(
-          'if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component'
-        );
-        await execTask(componentCreateTask)({});
-      });
   }
 
   program.option('-v, --version', 'Toolkit version').action(async () => {
@@ -109,13 +87,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:create [name]')
-    .description('[Deprecated] Creates plugin from template')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+    .description('[removed] Use grafana create-plugin instead')
+    .action(async () => {
       console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+        'No longer supported. Use grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
       );
-      await execTask(pluginCreateTask)({ name: cmd, silent: true });
+      process.exit(1);
     });
 
   program
@@ -139,48 +116,6 @@ export const run = (includeInternalScripts = false) => {
         preserveConsole: cmd.preserveConsole,
         skipLint: cmd.skipLint,
         skipTest: cmd.skipTest,
-      });
-    });
-
-  program
-    .command('plugin:dev')
-    .option('-w, --watch', 'Run plugin development mode with watch enabled')
-    .description('[Deprecated] Starts plugin dev mode')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
-      console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
-      );
-
-      await execTask(pluginDevTask)({
-        watch: !!cmd.watch,
-        silent: true,
-      });
-    });
-
-  program
-    .command('plugin:test')
-    .option('-u, --updateSnapshot', 'Run snapshots update')
-    .option('--coverage', 'Run code coverage')
-    .option('--watch', 'Run tests in interactive watch mode')
-    .option('--testPathPattern <regex>', 'Run only tests with a path that matches the regex')
-    .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
-    .option('--maxWorkers <num>|<string>', 'Limit number of workers spawned')
-    .description('[Deprecated] Executes plugin tests')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
-      console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
-      );
-
-      await execTask(pluginTestTask)({
-        updateSnapshot: !!cmd.updateSnapshot,
-        coverage: !!cmd.coverage,
-        watch: !!cmd.watch,
-        testPathPattern: cmd.testPathPattern,
-        testNamePattern: cmd.testNamePattern,
-        maxWorkers: cmd.maxWorkers,
-        silent: true,
       });
     });
 

@@ -1,10 +1,9 @@
 import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { defer, lastValueFrom, merge, mergeMap, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
-  ArrayVector,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -33,10 +32,11 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import { getAllPolicies } from './influxQLMetadataQuery';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
+import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
 import { InfluxQueryBuilder } from './query_builder';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
@@ -88,7 +88,7 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
     config: {},
-    values: new ArrayVector<number>(times),
+    values: times,
   };
 
   const valueField = {
@@ -97,7 +97,7 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     config: {
       displayNameFromDS: timeSeries.title,
     },
-    values: new ArrayVector<unknown>(values),
+    values: values,
     labels: timeSeries.tags,
   };
 
@@ -127,6 +127,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
+  retentionPolicies: string[];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -152,6 +153,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.retentionPolicies = [];
 
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -166,11 +168,47 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
   }
 
+  async getRetentionPolicies(): Promise<string[]> {
+    if (this.retentionPolicies.length) {
+      return Promise.resolve(this.retentionPolicies);
+    } else {
+      return getAllPolicies(this).catch((err) => {
+        console.error(
+          'Unable to fetch retention policies. Queries will be run without specifying retention policy.',
+          err
+        );
+        return Promise.resolve(this.retentionPolicies);
+      });
+    }
+  }
+
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     if (!this.isProxyAccess) {
       const error = new Error(BROWSER_MODE_DISABLED_MESSAGE);
       return throwError(() => error);
     }
+
+    // When the dashboard first load or on dashboard panel edit mode
+    // PanelQueryRunner runs the queries to have a visualization on the panel.
+    // At that point datasource doesn't have the retention policies fetched.
+    // So hardcoded policy is being sent. Which causes problems.
+    // To overcome this we check/load policies first and then do the query.
+    return defer(() => this.getRetentionPolicies()).pipe(
+      mergeMap((allPolicies) => {
+        this.retentionPolicies = allPolicies;
+        const policyFixedRequests = {
+          ...request,
+          targets: request.targets.map((t) => ({
+            ...t,
+            policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
+          })),
+        };
+        return this._query(policyFixedRequests);
+      })
+    );
+  }
+
+  _query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     // for not-flux queries we call `this.classicQuery`, and that
     // handles the is-hidden situation.
     // for the flux-case, we do the filtering here
@@ -539,13 +577,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    const interpolated = this.templateSrv.replace(query, undefined, 'regex');
+    const interpolated = new InfluxQueryModel(
+      {
+        refId: 'metricFindQuery',
+        query,
+        rawQuery: true,
+      },
+      this.templateSrv,
+      options.scopedVars
+    ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
     });
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
+  // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options: any = {}) {
     const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_KEYS');

@@ -6,7 +6,7 @@ import { initReactI18next } from 'react-i18next';
 import { matchers } from './matchers';
 
 failOnConsole({
-  shouldFailOnLog: true,
+  shouldFailOnLog: process.env.CI ? true : false,
 });
 
 expect.extend(matchers);

@@ -81,6 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sectionHeader: css`
     display: flex;
     justify-content: space-between;
+    margin-bottom: ${theme.spacing(1)};
   `,
   wrapper: css`
     margin-bottom: ${theme.spacing(4)};

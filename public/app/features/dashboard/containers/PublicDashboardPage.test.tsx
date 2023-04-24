@@ -1,4 +1,4 @@
-import { render, RenderResult, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -48,29 +48,27 @@ jest.mock('app/types', () => ({
   useDispatch: () => jest.fn(),
 }));
 
-interface ScenarioContext {
-  mount: () => void;
-  rerender: ({
-    propOverrides,
-    newState,
-  }: {
-    propOverrides?: Partial<Props>;
-    newState?: Partial<appTypes.StoreState>;
-  }) => void;
-  setup: (fn: () => void) => void;
-}
-
-const renderWithProvider = ({
-  props,
-  initialState,
-}: {
-  props: Props;
-  initialState?: Partial<appTypes.StoreState>;
-}): RenderResult => {
+const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
   const context = getGrafanaContextMock();
   const store = configureStore(initialState);
 
-  return render(
+  const props: Props = {
+    ...getRouteComponentProps({
+      match: { params: { accessToken: 'an-access-token' }, isExact: true, url: '', path: '' },
+      route: {
+        routeName: DashboardRoutes.Public,
+        path: '/public-dashboards/:accessToken',
+        component: SafeDynamicImport(
+          () =>
+            import(/* webpackChunkName: "PublicDashboardPage"*/ 'app/features/dashboard/containers/PublicDashboardPage')
+        ),
+      },
+    }),
+  };
+
+  Object.assign(props, propOverrides);
+
+  const { unmount, rerender } = render(
     <GrafanaContext.Provider value={context}>
       <Provider store={store}>
         <Router history={locationService.getHistory()}>
@@ -79,6 +77,21 @@ const renderWithProvider = ({
       </Provider>
     </GrafanaContext.Provider>
   );
+
+  const wrappedRerender = (newProps: Partial<Props>) => {
+    Object.assign(props, newProps);
+    return rerender(
+      <GrafanaContext.Provider value={context}>
+        <Provider store={store}>
+          <Router history={locationService.getHistory()}>
+            <PublicDashboardPage {...props} />
+          </Router>
+        </Provider>
+      </GrafanaContext.Provider>
+    );
+  };
+
+  return { rerender: wrappedRerender, unmount };
 };
 
 const selectors = e2eSelectors.components;
@@ -110,185 +123,114 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
   return new DashboardModel(data, metaOverrides);
 };
 
-function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
-  describe(description, () => {
-    let setupFn: () => void;
+describe('PublicDashboardPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-    const ctx: ScenarioContext = {
-      setup: (fn) => {
-        setupFn = fn;
+  it('Should call initDashboard on mount', () => {
+    setup();
+    expect(initDashboard).toBeCalledWith({
+      fixUrl: false,
+      accessToken: 'an-access-token',
+      routeName: 'public-dashboard',
+      keybindingSrv: expect.anything(),
+    });
+  });
+
+  describe('Given a simple public dashboard', () => {
+    const newState = {
+      dashboard: {
+        getModel: getTestDashboard,
+        initError: null,
+        initPhase: DashboardInitPhase.Completed,
+        permissions: [],
       },
-      mount: () => {
-        const props: Props = {
-          ...getRouteComponentProps({
-            match: { params: { accessToken: 'an-access-token' }, isExact: true, url: '', path: '' },
-            route: {
-              routeName: DashboardRoutes.Public,
-              path: '/public-dashboards/:accessToken',
-              component: SafeDynamicImport(
-                () =>
-                  import(
-                    /* webpackChunkName: "PublicDashboardPage"*/ 'app/features/dashboard/containers/PublicDashboardPage'
-                  )
-              ),
-            },
-          }),
-        };
-
-        const { rerender } = renderWithProvider({ props });
-
-        ctx.rerender = ({
-          propsOverride,
-          newState,
-        }: {
-          propsOverride?: Partial<Props>;
-          newState?: Partial<appTypes.StoreState>;
-        }) => {
-          Object.assign(props, propsOverride);
-
-          const context = getGrafanaContextMock();
-          const store = configureStore(newState);
-
-          rerender(
-            <GrafanaContext.Provider value={context}>
-              <Provider store={store}>
-                <Router history={locationService.getHistory()}>
-                  <PublicDashboardPage {...props} />
-                </Router>
-              </Provider>
-            </GrafanaContext.Provider>
-          );
-        };
-      },
-      rerender: () => {},
     };
 
-    beforeEach(() => {
-      setupFn();
+    it('Should render panels', async () => {
+      setup(undefined, newState);
+      expect(await screen.findByText('My panel title')).toBeInTheDocument();
     });
 
-    scenarioFn(ctx);
-  });
-}
-
-describe('PublicDashboardPage', () => {
-  dashboardPageScenario('Given initial state', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
+    it('Should update title', async () => {
+      setup(undefined, newState);
+      await waitFor(() => {
+        expect(document.title).toBe('My dashboard - Grafana');
+      });
     });
 
-    it('Should call initDashboard on mount', () => {
-      expect(initDashboard).toBeCalledWith({
-        fixUrl: false,
-        accessToken: 'an-access-token',
-        routeName: 'public-dashboard',
-        keybindingSrv: expect.anything(),
+    it('Should not render neither time range nor refresh picker buttons', async () => {
+      setup(undefined, newState);
+      await waitFor(() => {
+        expect(screen.queryByTestId(selectors.TimePicker.openButton)).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.RefreshPicker.intervalButtonV2)).not.toBeInTheDocument();
+      });
+    });
+
+    it('Should not render paused or deleted screen', async () => {
+      setup(undefined, newState);
+      await waitFor(() => {
+        expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
       });
     });
   });
 
-  dashboardPageScenario('Given a simple public dashboard', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({
-        newState: {
-          dashboard: {
-            getModel: getTestDashboard,
-            initError: null,
-            initPhase: DashboardInitPhase.Completed,
-            permissions: [],
-          },
+  describe('Given a public dashboard with time range enabled', () => {
+    it('Should render time range and refresh picker buttons', async () => {
+      setup(undefined, {
+        dashboard: {
+          getModel: () =>
+            getTestDashboard({
+              timepicker: { hidden: false, collapse: false, enable: true, refresh_intervals: [], time_options: [] },
+            }),
+          initError: null,
+          initPhase: DashboardInitPhase.Completed,
+          permissions: [],
         },
       });
-    });
-
-    it('Should render panels', () => {
-      expect(screen.getByText('My panel title')).toBeInTheDocument();
-    });
-
-    it('Should update title', () => {
-      expect(document.title).toBe('My dashboard - Grafana');
-    });
-
-    it('Should not render neither time range nor refresh picker buttons', () => {
-      expect(screen.queryByTestId(selectors.TimePicker.openButton)).not.toBeInTheDocument();
-      expect(screen.queryByTestId(selectors.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
-      expect(screen.queryByTestId(selectors.RefreshPicker.intervalButtonV2)).not.toBeInTheDocument();
-    });
-
-    it('Should not render paused or deleted screen', () => {
-      expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
-    });
-  });
-
-  dashboardPageScenario('Given a public dashboard with time range enabled', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({
-        newState: {
-          dashboard: {
-            getModel: () =>
-              getTestDashboard({
-                timepicker: { hidden: false, collapse: false, enable: true, refresh_intervals: [], time_options: [] },
-              }),
-            initError: null,
-            initPhase: DashboardInitPhase.Completed,
-            permissions: [],
-          },
-        },
-      });
-    });
-
-    it('Should render time range and refresh picker buttons', () => {
-      expect(screen.getByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
     });
   });
 
-  dashboardPageScenario('Given paused public dashboard', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({
-        newState: {
-          dashboard: {
-            getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
-            initError: null,
-            initPhase: DashboardInitPhase.Completed,
-            permissions: [],
-          },
+  describe('Given paused public dashboard', () => {
+    it('Should render public dashboard paused screen', async () => {
+      setup(undefined, {
+        dashboard: {
+          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
+          initError: null,
+          initPhase: DashboardInitPhase.Completed,
+          permissions: [],
         },
       });
-    });
 
-    it('Should render public dashboard paused screen', () => {
-      expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
-
+      await waitFor(() => {
+        expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
+      });
       expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
       expect(screen.getByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
     });
   });
 
-  dashboardPageScenario('Given deleted public dashboard', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({
-        newState: {
-          dashboard: {
-            getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
-            initError: null,
-            initPhase: DashboardInitPhase.Completed,
-            permissions: [],
-          },
+  describe('Given deleted public dashboard', () => {
+    it('Should render public dashboard deleted screen', async () => {
+      setup(undefined, {
+        dashboard: {
+          getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
+          initError: null,
+          initPhase: DashboardInitPhase.Completed,
+          permissions: [],
         },
       });
-    });
 
-    it('Should render public dashboard deleted screen', () => {
-      expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
-
+      await waitFor(() => {
+        expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
+        expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).not.toBeInTheDocument();
+      });
       expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
-      expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).not.toBeInTheDocument();
     });
   });
 });

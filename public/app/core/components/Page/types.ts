@@ -2,7 +2,6 @@ import React, { FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 
-import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
 
 export interface PageProps extends HTMLAttributes<HTMLDivElement> {
@@ -34,6 +33,5 @@ export interface PageInfoItem {
 }
 
 export interface PageType extends FC<PageProps> {
-  OldNavOnly: typeof OldNavOnly;
   Contents: typeof PageContents;
 }

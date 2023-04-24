@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { Observable } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
@@ -50,11 +50,11 @@ describe('SearchView', () => {
         name: 'kind',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector([DashboardSearchItemType.DashFolder]),
+        values: [DashboardSearchItemType.DashFolder],
       },
-      { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My folder 1']) },
-      { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1']) },
-      { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-folder-1']) },
+      { name: 'name', type: FieldType.string, config: {}, values: ['My folder 1'] },
+      { name: 'uid', type: FieldType.string, config: {}, values: ['my-folder-1'] },
+      { name: 'url', type: FieldType.string, config: {}, values: ['/my-folder-1'] },
     ],
     length: 1,
   };

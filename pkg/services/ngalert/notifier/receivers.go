@@ -3,8 +3,6 @@ package notifier
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -14,10 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-)
-
-var (
-	ErrNoReceivers = errors.New("no receivers")
 )
 
 type TestReceiversResult struct {
@@ -36,24 +30,6 @@ type TestReceiverConfigResult struct {
 	UID    string
 	Status string
 	Error  error
-}
-
-type InvalidReceiverError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
-	Err      error
-}
-
-func (e InvalidReceiverError) Error() string {
-	return fmt.Sprintf("the receiver is invalid: %s", e.Err)
-}
-
-type ReceiverTimeoutError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
-	Err      error
-}
-
-func (e ReceiverTimeoutError) Error() string {
-	return fmt.Sprintf("the receiver timed out: %s", e.Err)
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {

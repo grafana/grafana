@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Input, useStyles2, Spinner } from '@grafana/ui';
+import { useStyles2, FilterInput } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO, AccessControlAction } from 'app/types';
@@ -43,9 +43,9 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
     <>
       <div className={cx(styles.actionBar, 'page-action-bar')}>
         <div className={cx(styles.inputWrapper, 'gf-form gf-form--grow m-r-2')}>
-          <Input
+          <FilterInput
             value={state.query ?? ''}
-            onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
+            onChange={(e) => stateManager.onQueryChange(e)}
             onKeyDown={onKeyDown}
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
@@ -55,8 +55,8 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
                 ? t('search.search-input.include-panels-placeholder', 'Search for dashboards and panels')
                 : t('search.search-input.placeholder', 'Search for dashboards')
             }
+            escapeRegex={false}
             className={styles.searchInput}
-            suffix={false ? <Spinner /> : null}
           />
         </div>
         {viewActions && (
