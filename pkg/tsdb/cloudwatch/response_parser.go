@@ -141,11 +141,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []*time.Time{})
 				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
 
-				frameName := label
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: label, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
-					Name: frameName,
+					Name: label,
 					Fields: []*data.Field{
 						timeField,
 						valueField,
@@ -170,11 +169,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		frameName := label
-		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
+		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: label, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{
-			Name: frameName,
+			Name: label,
 			Fields: []*data.Field{
 				timeField,
 				valueField,
