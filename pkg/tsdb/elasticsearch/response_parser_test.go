@@ -170,7 +170,6 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[0].Name, "label")
 			require.Equal(t, frame.Fields[1].Name, "Average value 1")
 			require.Equal(t, frame.Fields[2].Name, "Average value 4")
-
 		})
 
 		t.Run("Single group by query one metric", func(t *testing.T) {
