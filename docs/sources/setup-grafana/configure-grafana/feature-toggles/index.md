@@ -56,6 +56,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
+| `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 
 ## Alpha feature toggles
 
@@ -70,7 +71,7 @@ Alpha features might be changed or removed without prior notice.
 | `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                            |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                                              |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                                                     |
-| `newTraceView`                     | Shows the new trace view design                                                                                                                                                                     |
+| `newTraceViewHeader`               | Shows the new trace view header                                                                                                                                                                     |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                                                    |
 | `traceToMetrics`                   | Enable trace to metrics links                                                                                                                                                                       |
 | `prometheusWideSeries`             | Enable wide series responses in the Prometheus datasource                                                                                                                                           |

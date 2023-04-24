@@ -11,7 +11,6 @@ var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.m
 var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
-var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusInternal, "folder.target-registry-srv-conflict")
 
@@ -161,3 +160,14 @@ type HasEditPermissionInFoldersQuery struct {
 type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *user.SignedInUser
 }
+
+// GetChildrenCountsQuery captures the information required by the folder service
+// to return the count of children in a folder.
+type GetChildrenCountsQuery struct {
+	UID   *string
+	OrgID int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
+}
+
+type ChildrenCounts map[string]int64

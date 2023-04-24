@@ -33,7 +33,7 @@ export interface FeatureToggles {
   storage?: boolean;
   k8s?: boolean;
   exploreMixedDatasource?: boolean;
-  newTraceView?: boolean;
+  newTraceViewHeader?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -98,4 +98,5 @@ export interface FeatureToggles {
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
+  enableDatagridEditing?: boolean;
 }

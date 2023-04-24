@@ -1,10 +1,9 @@
 import { getByLabelText, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
 
 import { wellFormedTree } from '../fixtures/dashboardsTreeItem.fixture';
 
@@ -12,10 +11,8 @@ import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD }] = wellFormedTree();
 
-function render(...args: Parameters<typeof rtlRender>) {
-  const [ui, options] = args;
-
-  rtlRender(<Router history={locationService.getHistory()}>{ui}</Router>, options);
+function render(...[ui, options]: Parameters<typeof rtlRender>) {
+  rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
 
 jest.mock('app/features/search/service/folders', () => {
