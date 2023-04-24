@@ -10,7 +10,6 @@ import {
   CoreApp,
   DataFrame,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
 
 import { AdHocFilterItem } from '../Table/types';
 
@@ -86,15 +85,9 @@ export interface PanelContext {
   onToggleLegendSort?: (sortBy: string) => void;
 
   /**
-   * Some panels could be interested in updating the queries.
-   * This optional and not always available in all contexts.
-   */
-  onUpdateQueries?: (queries: DataQuery[]) => void;
-
-  /**
    * Optional, only some contexts support this. This can fail / be cancelled. Which is why it returns a promise.
    */
-  onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
+  onUpdateData?: (frames: DataFrame[]) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

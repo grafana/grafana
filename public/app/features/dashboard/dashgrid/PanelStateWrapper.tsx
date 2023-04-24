@@ -28,7 +28,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, config, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
-import { DataQuery, VizLegendOptions } from '@grafana/schema';
+import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
   PanelChrome,
@@ -37,6 +37,7 @@ import {
   PanelPadding,
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
+  ConfirmModal,
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
@@ -88,6 +89,8 @@ export interface State {
   context: PanelContext;
   data: PanelData;
   liveTime?: TimeRange;
+  updateDataCallback: () => void;
+  showDataChangeModal: boolean;
 }
 
 export class PanelStateWrapper extends PureComponent<Props, State> {
@@ -106,6 +109,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
+      updateDataCallback: () => {},
+      showDataChangeModal: false,
       context: {
         eventBus,
         app: this.getPanelContextApp(),
@@ -121,7 +126,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
-        onUpdateQueries: this.onUpdateQueries,
         onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
@@ -153,8 +157,9 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return CoreApp.Dashboard;
   }
 
-  onUpdateData = (frames: DataFrame[]) => {
+  changeToSnapshotData = (frames: DataFrame[]) => {
     const snapshot: DataFrameJSON[] = frames.map((f) => dataFrameToJSON(f));
+
     const query: GrafanaQuery = {
       refId: 'A',
       queryType: GrafanaQueryType.Snapshot,
@@ -166,20 +171,23 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       dataSource: { uid: GRAFANA_DATASOURCE_NAME },
       queries: [query],
     });
+
+    this.props.panel.refresh();
+
+    this.closeConfirmationModal();
   };
 
-  onUpdateQueries = (queries: DataQuery[]) => {
-    const { panel } = this.props;
-
-    if (!queries.length) {
+  onUpdateData = (frames: DataFrame[]) => {
+    if (this.props.panel.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
+      this.changeToSnapshotData(frames);
       return;
     }
 
-    const ds = queries[0].datasource;
-    panel.updateQueries({
-      dataSource: ds!,
-      queries,
-    });
+    this.setState({ updateDataCallback: () => this.changeToSnapshotData(frames), showDataChangeModal: true });
+  };
+
+  closeConfirmationModal = () => {
+    this.setState({ updateDataCallback: () => {}, showDataChangeModal: false });
   };
 
   onSeriesColorChange = (label: string, color: string) => {
@@ -683,7 +691,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
-    const { errorMessage, data } = this.state;
+    const { errorMessage, data, showDataChangeModal, updateDataCallback } = this.state;
     const { transparent } = panel;
 
     const alertState = data.alertState?.state;
@@ -718,6 +726,18 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
 
     const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+
+    const dataChangeConfirmationModal = (
+      <ConfirmModal
+        isOpen={showDataChangeModal}
+        title="Data Change Confirmation"
+        body="This action will change your queries and replace your existing data. Are you sure you want to continue?"
+        confirmText="Yes"
+        onConfirm={updateDataCallback}
+        onDismiss={this.closeConfirmationModal}
+      />
+    );
+
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
@@ -729,73 +749,79 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       );
 
       return (
-        <PanelChrome
-          width={width}
-          height={height}
-          title={title}
-          loadingState={data.state}
-          statusMessage={errorMessage}
-          statusMessageOnClick={this.onOpenErrorInspect}
-          description={!!panel.description ? this.onShowPanelDescription : undefined}
-          titleItems={titleItems}
-          menu={this.props.hideMenu ? undefined : menu}
-          dragClass={dragClass}
-          dragClassCancel="grid-drag-cancel"
-          padding={padding}
-          hoverHeaderOffset={hoverHeaderOffset}
-          hoverHeader={this.hasOverlayHeader()}
-          displayMode={transparent ? 'transparent' : 'default'}
-          onCancelQuery={this.onCancelQuery}
-        >
-          {(innerWidth, innerHeight) => (
-            <>
-              <ErrorBoundary
-                dependencies={[data, plugin, panel.getOptions()]}
-                onError={this.onPanelError}
-                onRecover={this.onPanelErrorRecover}
-              >
-                {({ error }) => {
-                  if (error) {
-                    return null;
-                  }
-                  return this.renderPanelContent(innerWidth, innerHeight);
-                }}
-              </ErrorBoundary>
-            </>
-          )}
-        </PanelChrome>
+        <>
+          <PanelChrome
+            width={width}
+            height={height}
+            title={title}
+            loadingState={data.state}
+            statusMessage={errorMessage}
+            statusMessageOnClick={this.onOpenErrorInspect}
+            description={!!panel.description ? this.onShowPanelDescription : undefined}
+            titleItems={titleItems}
+            menu={this.props.hideMenu ? undefined : menu}
+            dragClass={dragClass}
+            dragClassCancel="grid-drag-cancel"
+            padding={padding}
+            hoverHeaderOffset={hoverHeaderOffset}
+            hoverHeader={this.hasOverlayHeader()}
+            displayMode={transparent ? 'transparent' : 'default'}
+            onCancelQuery={this.onCancelQuery}
+          >
+            {(innerWidth, innerHeight) => (
+              <>
+                <ErrorBoundary
+                  dependencies={[data, plugin, panel.getOptions()]}
+                  onError={this.onPanelError}
+                  onRecover={this.onPanelErrorRecover}
+                >
+                  {({ error }) => {
+                    if (error) {
+                      return null;
+                    }
+                    return this.renderPanelContent(innerWidth, innerHeight);
+                  }}
+                </ErrorBoundary>
+              </>
+            )}
+          </PanelChrome>
+          {dataChangeConfirmationModal}
+        </>
       );
     } else {
       return (
-        <section
-          className={containerClassNames}
-          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
-        >
-          <PanelHeader
-            panel={panel}
-            dashboard={dashboard}
-            title={panel.title}
-            description={panel.description}
-            links={panel.links}
-            error={errorMessage}
-            isEditing={isEditing}
-            isViewing={isViewing}
-            alertState={alertState}
-            data={data}
-          />
-          <ErrorBoundary
-            dependencies={[data, plugin, panel.getOptions()]}
-            onError={this.onPanelError}
-            onRecover={this.onPanelErrorRecover}
+        <>
+          <section
+            className={containerClassNames}
+            aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
           >
-            {({ error }) => {
-              if (error) {
-                return null;
-              }
-              return this.renderPanel(width, height);
-            }}
-          </ErrorBoundary>
-        </section>
+            <PanelHeader
+              panel={panel}
+              dashboard={dashboard}
+              title={panel.title}
+              description={panel.description}
+              links={panel.links}
+              error={errorMessage}
+              isEditing={isEditing}
+              isViewing={isViewing}
+              alertState={alertState}
+              data={data}
+            />
+            <ErrorBoundary
+              dependencies={[data, plugin, panel.getOptions()]}
+              onError={this.onPanelError}
+              onRecover={this.onPanelErrorRecover}
+            >
+              {({ error }) => {
+                if (error) {
+                  return null;
+                }
+                return this.renderPanel(width, height);
+              }}
+            </ErrorBoundary>
+          </section>
+          {dataChangeConfirmationModal}
+        </>
       );
     }
   }
