@@ -4238,6 +4238,7 @@ steps:
   depends_on:
   - clone
   environment:
+    DRONE_TARGET_BRANCH: release-8.5.24
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/ci-wix:0.1.1
