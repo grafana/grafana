@@ -7,7 +7,7 @@ import { workSheetToFrame } from './sheet';
 describe('sheets', () => {
   it('will use first row as names', () => {
     const sheet = utils.aoa_to_sheet([
-      ['Number', 'Bool', 'String', 'date', 'object'],
+      ['Number', 'String', 'Bool', 'Date', 'Object'],
       [1, 'A', true, Date.UTC(2020, 1, 1), { hello: 'world' }],
       [2, 'B', false, Date.UTC(2020, 1, 2), { hello: 'world' }],
     ]);
@@ -24,7 +24,7 @@ describe('sheets', () => {
           ],
         },
         {
-          "name": "Bool",
+          "name": "String",
           "type": "string",
           "values": [
             "A",
@@ -32,7 +32,7 @@ describe('sheets', () => {
           ],
         },
         {
-          "name": "String",
+          "name": "Bool",
           "type": "boolean",
           "values": [
             true,
@@ -40,7 +40,7 @@ describe('sheets', () => {
           ],
         },
         {
-          "name": "date",
+          "name": "Date",
           "type": "number",
           "values": [
             1580515200000,
@@ -48,7 +48,7 @@ describe('sheets', () => {
           ],
         },
         {
-          "name": "object",
+          "name": "Object",
           "type": "string",
           "values": [
             undefined,
