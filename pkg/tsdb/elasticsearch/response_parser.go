@@ -1256,20 +1256,20 @@ func addOtherMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, met
 
 	for _, m := range target.Metrics {
 		// To other metrics we add metric of the same type that are not the current metric
-		if m.ID != metric.ID && m.Type == metric.Type{
-			otherMetrics = append(otherMetrics, m)	
+		if m.ID != metric.ID && m.Type == metric.Type {
+			otherMetrics = append(otherMetrics, m)
 		}
 	}
 
 	if len(otherMetrics) > 0 {
 		metricName += " " + metric.Field
 
-		// We check if we have metric with the same type and same field name 
+		// We check if we have metric with the same type and same field name
 		// If so, append metric.ID to the metric name
 		for _, m := range otherMetrics {
 			if m.Field == metric.Field {
 				metricName += " " + metric.ID
-				break;
+				break
 			}
 		}
 
