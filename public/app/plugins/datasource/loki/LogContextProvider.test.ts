@@ -46,9 +46,10 @@ describe('LogContextProvider', () => {
 
   describe('getLogRowContext', () => {
     it('should call getInitContextFilters if no appliedContextFilters', async () => {
-      logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
-        Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
-      );
+      logContextProvider.getInitContextFiltersFromLabels = jest
+        .fn()
+        .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
+
       expect(logContextProvider.appliedContextFilters).toHaveLength(0);
       await logContextProvider.getLogRowContext(
         defaultLogRow,
@@ -69,9 +70,10 @@ describe('LogContextProvider', () => {
     });
 
     it('should not call getInitContextFilters if appliedContextFilters', async () => {
-      logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
-        Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
-      );
+      logContextProvider.getInitContextFiltersFromLabels = jest
+        .fn()
+        .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
+
       logContextProvider.appliedContextFilters = [
         { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
         { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
@@ -87,9 +89,10 @@ describe('LogContextProvider', () => {
 
   describe('getLogRowContextQuery', () => {
     it('should call getInitContextFilters if no appliedContextFilters', async () => {
-      logContextProvider.getInitContextFiltersFromLabels = jest.fn(() =>
-        Promise.resolve([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }])
-      );
+      logContextProvider.getInitContextFiltersFromLabels = jest
+        .fn()
+        .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
+
       const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
         limit: 10,
         direction: LogRowContextQueryDirection.Backward,
