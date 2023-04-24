@@ -62,7 +62,6 @@ When you use Docker containers, the data inside them is temporary by default. Th
 
 #### Use persistent storage (recommended)
 
-[When would I do this and why is this recommended?]
 
 To use persistent storage, complete the following steps:
 
