@@ -1,8 +1,4 @@
-import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-
-import { mockPromAlert } from '../mocks';
-
-import { getMatcherQueryParams, findAlertInstancesWithMatchers, parseQueryParamMatchers } from './matchers';
+import { getMatcherQueryParams, parseQueryParamMatchers } from './matchers';
 
 describe('Unified Alerting matchers', () => {
   describe('getMatcherQueryParams tests', () => {
@@ -35,59 +31,6 @@ describe('Unified Alerting matchers', () => {
       expect(matchers).toHaveLength(1);
       expect(matchers[0].name).toBe('alertname');
       expect(matchers[0].value).toBe('TestData 1');
-    });
-  });
-
-  describe('matchLabelsToMatchers', () => {
-    it('should match for equal', () => {
-      const matchers = [{ name: 'foo', value: 'bar', operator: MatcherOperator.equal }];
-      const alerts = [mockPromAlert({ labels: { foo: 'bar' } }), mockPromAlert({ labels: { foo: 'baz' } })];
-      const matchedAlerts = findAlertInstancesWithMatchers(alerts, matchers);
-
-      expect(matchedAlerts).toHaveLength(1);
-    });
-
-    it('should match for not equal', () => {
-      const matchers = [{ name: 'foo', value: 'bar', operator: MatcherOperator.notEqual }];
-      const alerts = [mockPromAlert({ labels: { foo: 'bar' } }), mockPromAlert({ labels: { foo: 'baz' } })];
-
-      const matchedAlerts = findAlertInstancesWithMatchers(alerts, matchers);
-      expect(matchedAlerts).toHaveLength(1);
-    });
-
-    it('should match for regex', () => {
-      const matchers = [{ name: 'foo', value: 'b{1}a.*', operator: MatcherOperator.regex }];
-      const alerts = [
-        mockPromAlert({ labels: { foo: 'bbr' } }),
-        mockPromAlert({ labels: { foo: 'aba' } }), // This does not match because the regex is implicitly anchored.
-        mockPromAlert({ labels: { foo: 'ba' } }),
-        mockPromAlert({ labels: { foo: 'bar' } }),
-        mockPromAlert({ labels: { foo: 'baz' } }),
-        mockPromAlert({ labels: { foo: 'bas' } }),
-      ];
-
-      const matchedAlerts = findAlertInstancesWithMatchers(alerts, matchers);
-      expect(matchedAlerts).toHaveLength(4);
-      expect(matchedAlerts.map((instance) => instance.data.matchedInstance.labels.foo)).toEqual([
-        'ba',
-        'bar',
-        'baz',
-        'bas',
-      ]);
-    });
-
-    it('should not match regex', () => {
-      const matchers = [{ name: 'foo', value: 'ba{3}', operator: MatcherOperator.notRegex }];
-      const alerts = [
-        mockPromAlert({ labels: { foo: 'bar' } }),
-        mockPromAlert({ labels: { foo: 'baz' } }),
-        mockPromAlert({ labels: { foo: 'baaa' } }),
-        mockPromAlert({ labels: { foo: 'bas' } }),
-      ];
-
-      const matchedAlerts = findAlertInstancesWithMatchers(alerts, matchers);
-      expect(matchedAlerts).toHaveLength(3);
-      expect(matchedAlerts.map((instance) => instance.data.matchedInstance.labels.foo)).toEqual(['bar', 'baz', 'bas']);
     });
   });
 });
