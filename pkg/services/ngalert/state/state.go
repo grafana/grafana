@@ -389,7 +389,7 @@ func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*mode
 		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
 			errors.Is(err, models.ErrNoDashboard) ||
 			errors.Is(err, models.ErrNoPanel) {
-			return &models.Image{}, nil
+			return nil, nil
 		}
 		return nil, err
 	}

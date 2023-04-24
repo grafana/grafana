@@ -314,8 +314,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 				"dashboard", alertRule.GetDashboardUID(),
 				"panel", alertRule.GetPanelID(),
 				"error", err)
+		} else if image != nil {
+			currentState.ImageURI = generateImageURI(image)
 		}
-		currentState.ImageURI = generateImageURI(image)
 	}
 
 	st.cache.set(currentState)
@@ -444,7 +445,7 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 					"dashboard", alertRule.GetDashboardUID(),
 					"panel", alertRule.GetPanelID(),
 					"error", err)
-			} else {
+			} else if image != nil {
 				s.ImageURI = generateImageURI(image)
 			}
 		}
