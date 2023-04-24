@@ -12,11 +12,11 @@ weight: 500
 
 # Meta monitoring
 
-Meta monitoring is the process of monitoring your monitoring, and alerting when your monitoring is not working as it should. Whether you use Grafana Managed Alerts or Mimir, meta monitoring is possible both on-premise and in Grafana Cloud.
+Meta monitoring involves monitoring the monitoring system itself and alerting when it detects any issues or anomalies. Meta monitoring can be implemented using either Grafana Managed Alerts or Mimir, and is available for both on-premise and Grafana Cloud deployments.
 
 ## Grafana Managed Alerts
 
-Meta monitoring of Grafana Managed Alerts requires having a Prometheus server, or other metrics database, collecting and storing metrics exported by Grafana. For example, if using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Grafana server.
+To implement meta monitoring for Grafana Managed Alerts, you need to have a Prometheus server or other metrics database that collects and stores metrics exported by Grafana. For example, if using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Grafana server.
 
 Here is an example of how this might look:
 
@@ -37,7 +37,7 @@ The Grafana ruler, which is responsible for evaluating alert rules, and the Graf
 
 #### grafana_alerting_alerts
 
-This metric is a counter that shows you the number of `normal`, `pending`, `alerting`, `nodata` and `error` alerts. For example, you might want to create an alert that fires when `grafana_alerting_alerts{state="error"}` is greater than 0.
+This metric is a counter that shows the number of alerts in different states, including `normal`, `pending`, `alerting`, `nodata`, and `error`. For example, you might want to create an alert that fires when `grafana_alerting_alerts{state="error"}` is greater than 0.
 
 #### grafana_alerting_schedule_alert_rules
 
@@ -63,7 +63,7 @@ This metric is a histogram that shows you the number of seconds taken to send no
 
 ## Grafana Mimir
 
-Meta monitoring in Grafana Mimir requires having a Prometheus/Mimir server, or other metrics database, collecting and storing metrics exported by the Mimir ruler.
+To implement meta monitoring in Grafana Mimir, you need to have a Prometheus/Mimir server or other metrics database that collects and stores metrics exported by the Mimir ruler.
 
 #### cortex_prometheus_rule_evaluation_failures_total
 
@@ -71,7 +71,7 @@ This metric is a counter that shows you the total number of rule evaluation fail
 
 ## Alertmanager
 
-Meta monitoring in Alertmanager also requires having a Prometheus/Mimir server, or other metrics database, collecting and storing metrics exported by Alertmanager. For example, if using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Alertmanager.
+To implement meta monitoring in Alertmanager, you need to have a Prometheus/Mimir server or other metrics database that collects and stores metrics exported by Alertmanager. For example, if using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Alertmanager.
 
 Here is an example of how this might look:
 
@@ -90,7 +90,7 @@ Here is an example of how this might look:
 
 #### alertmanager_alerts
 
-This metric is a counter that shows you the number of active, suppressed and unprocessed alerts in Alertmanager. Suppressed alerts are silenced alerts, and unprocessed alerts are alerts that have been sent to the Alertmanager but have not been processed.
+This metric is a counter that shows the number of alerts in different states, including active, suppressed, and unprocessed alerts in Alertmanager. Suppressed alerts are silenced alerts, and unprocessed alerts are alerts that have been sent to the Alertmanager but have not been processed.
 
 #### alertmanager_alerts_invalid_total
 
@@ -112,11 +112,11 @@ This metric is a histogram that shows you the amount of time it takes Alertmanag
 
 ## Alertmanager in high availability mode
 
-If using Alertmanager in high availability mode there are a number of additional metrics that you might want to create alerts for.
+If you are using Alertmanager in high availability mode, there are additional metrics that you can use to create alerts.
 
 #### alertmanager_cluster_members
 
-This metric is a gauge that shows you the current number of members in the cluster. The value of this gauge should be the same across all Alertmanagers. If different Alertmanagers are showing different numbers of members then this is indicative of an issue with your Alertmanager cluster. You should look at the metrics and logs from your Alertmanagers to better understand what might be going wrong.
+This metric is a gauge that shows the current number of members in the Alertmanager cluster. The value of this gauge should be the same across all Alertmanagers. If different Alertmanagers are showing different numbers of members then this is indicative of an issue with your Alertmanager cluster. You should look at the metrics and logs from your Alertmanagers to better understand what might be going wrong.
 
 #### alertmanager_cluster_failed_peers
 
@@ -124,7 +124,7 @@ This metric is a gauge that shows you the current number of failed peers.
 
 #### alertmanager_cluster_health_score
 
-This metric is a gauge showing the health score of the Alertmanager. Lower values are better, and zero means the Alertmanager is healthy.
+This metric is a gauge that shows the health score of the Alertmanager, with lower values indicating better health, and zero means the Alertmanager is healthy.
 
 #### alertmanager_cluster_peer_info
 
@@ -132,7 +132,7 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 
 #### alertmanager_cluster_reconnections_failed_total
 
-This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
+This metric is a counter that shows the number of failed peer connection attempts in the Alertmanager cluster. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
 
 > These metrics are not available in Grafana Cloud as it uses a different high availability strategy than on-premise Alertmanagers.
 
