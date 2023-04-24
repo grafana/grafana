@@ -20,7 +20,7 @@ In addition to supporting multiple data sources, you can also add expressions to
 
 The following diagram shows how Grafana-managed alerting works.
 
-{{< figure src="/media/docs/alerting/grafana-managed-rule.png" max-width="750px" caption="How Alerting works" >}}
+{{< figure src="/media/docs/alerting/grafana-managed-rule.png" max-width="750px" caption="Grafana-managed alerting" >}}
 
 1. Alert rules are created within Grafana based on one or more data sources.
 
@@ -43,7 +43,7 @@ For more information on the Ruler API, refer to [Ruler API](docs/loki/latest/api
 
 The following diagram shows how Grafana Mimir or Grafana Loki-managed alerting works.
 
-{{< figure src="/media/docs/alerting/loki-mimir-rule.png" max-width="750px" caption="How Alerting works" >}}
+{{< figure src="/media/docs/alerting/loki-mimir-rule.png" max-width="750px" caption="Grafana Mimir/Loki-managed alerting" >}}
 
 1. Alert rules are created and stored within the data source itself.
 1. Alert rules can only be created based on Prometheus data.
@@ -63,15 +63,18 @@ For more information on recording rules in Prometheus, refer to [recording rules
 
 When choosing which alert rule type to use, consider the following comparison between Grafana-managed alert rules and Grafana Mimir or Loki alert rules.
 
-| Feature                                                                 | Grafana-managed alert rule                                                                                                   | Loki/Mimir-managed alert rule                                                                                                                           |
+{{< responsive-table >}}
+| <div style="width:200px">Feature</div> | <div style="width:200px">Grafana-managed alert rule</div> | <div style="width:200px">Loki/Mimir-managed alert rule |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Create alert rules based on data from any of our supported data sources | Yes                                                                                                                          | No: You can only create alert rules that are based on Prometheus data. The data source must have the Ruler API enabled.                                 |
-| Mix and match data sources                                              | Yes                                                                                                                          | No                                                                                                                                                      |
-| Includes support for recording rules                                    | No                                                                                                                           | Yes                                                                                                                                                     |
-| Add expressions to transform your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
-| Use images in alert notifications                                       | Yes                                                                                                                          | No                                                                                                                                                      |
-| Scaling                                                                 | More resource intensive, depend on the database, and are likely to suffer from transient errors. They only scale vertically. | Store alert rules within the data source itself and allow for “infinite” scaling. Generate and send alert notifications from the location of your data. |
-| Alert rule evaluation and delivery                                      | Alert rule evaluation and delivery is done from within Grafana, using an external Alertmanager; or both.                     | Alert rule evaluation and alert delivery is distributed, meaning there is no single point of failure.                                                   |
+| Create alert rules<wbr /> based on data from any of our supported data sources | Yes | No: You can only create alert rules that are based on Prometheus data. The data source must have the Ruler API enabled. |
+| Mix and match data sources | Yes | No |
+| Includes support for recording rules | No | Yes |
+| Add expressions to transform<wbr /> your data and set alert conditions | Yes | No |
+| Use images in alert notifications | Yes | No |
+| Scaling | More resource intensive, depend on the database, and are likely to suffer from transient errors. They only scale vertically. | Store alert rules within the data source itself and allow for “infinite” scaling. Generate and send alert notifications from the location of your data. |
+| Alert rule evaluation and delivery | Alert rule evaluation and delivery is done from within Grafana, using an external Alertmanager; or both. | Alert rule evaluation and alert delivery is distributed, meaning there is no single point of failure. |
+
+{{< /responsive-table >}}
 
 **Note:**
 
