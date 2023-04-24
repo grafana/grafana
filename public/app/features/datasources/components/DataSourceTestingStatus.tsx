@@ -38,7 +38,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
         <DataSourceConfigAlert
           severity={severity}
           title={message}
-          data-testid={e2eSelectors.pages.DataSource.alert}
+          aria-label={e2eSelectors.pages.DataSource.alert}
           canExploreDataSources={canExploreDataSources}
           exploreUrl={exploreUrl}
           dataSourceId={dataSource.uid}
