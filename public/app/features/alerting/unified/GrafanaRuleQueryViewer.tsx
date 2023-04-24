@@ -24,7 +24,7 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 import { ExpressionResult } from './components/expressions/Expression';
-import { getThresholdsForQueries, ThresholdDefinition, ThresholdDefinitions } from './components/rule-editor/util';
+import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 
 interface GrafanaRuleViewerProps {
@@ -136,10 +136,10 @@ export function QueryPreview({
           datasourceUid={dataSource.uid}
           model={model}
           data={queryData}
+          thresholds={thresholds}
           relativeTimeRange={evalTimeRange}
           onTimeRangeChange={onEvalTimeRangeChange}
           className={styles.visualization}
-          thresholds={thresholds}
         />
       )}
     </QueryBox>
