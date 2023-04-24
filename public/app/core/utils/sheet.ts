@@ -27,22 +27,22 @@ export function workSheetToFrame(sheet: WorkSheet, name?: string): DataFrame {
       switch (c.type ?? 's') {
         case 'b':
           type = FieldType.boolean;
-          values = c.data.map((v) => (v?.v == null ? v.v : Boolean(v.v)));
+          values = c.data.map((v) => (v?.v == null ? v?.v : Boolean(v.v)));
           break;
 
         case 'n':
           type = FieldType.number;
-          values = c.data.map((v) => (v?.v == null ? v.v : +v.v));
+          values = c.data.map((v) => (v?.v == null ? v?.v : +v.v));
           break;
 
         case 'd':
           type = FieldType.time;
-          values = c.data.map((v) => (v?.v == null ? v.v : +v.v)); // ???
+          values = c.data.map((v) => (v?.v == null ? v?.v : +v.v)); // ???
           break;
 
         default:
           type = FieldType.string;
-          values = c.data.map((v) => (v?.v == null ? v.v : utils.format_cell(v)));
+          values = c.data.map((v) => (v?.v == null ? v?.v : utils.format_cell(v)));
           break;
       }
 

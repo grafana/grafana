@@ -117,6 +117,65 @@ describe('sheets', () => {
       ]
     `);
   });
+
+  it('is OK with nulls and undefineds, and misalignment', () => {
+    const sheet = utils.aoa_to_sheet([
+      [null, 'A', true],
+      [2, 'B', null, Date.UTC(2020, 1, 2), { hello: 'world' }],
+      [3, 'C', true, undefined, { hello: 'world' }],
+    ]);
+    const frame = workSheetToFrame(sheet);
+
+    expect(toSnapshotFrame(frame)).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "A",
+          "type": "number",
+          "values": [
+            undefined,
+            2,
+            3,
+          ],
+        },
+        {
+          "name": "B",
+          "type": "string",
+          "values": [
+            "A",
+            "B",
+            "C",
+          ],
+        },
+        {
+          "name": "C",
+          "type": "boolean",
+          "values": [
+            true,
+            undefined,
+            true,
+          ],
+        },
+        {
+          "name": "D",
+          "type": "number",
+          "values": [
+            undefined,
+            1580601600000,
+            undefined,
+          ],
+        },
+        {
+          "name": "E",
+          "type": "string",
+          "values": [
+            undefined,
+            undefined,
+            undefined,
+          ],
+        },
+      ]
+    `);
+  });
 });
 
 function toSnapshotFrame(frame: DataFrame) {
