@@ -68,18 +68,17 @@ datasources:
 
 ## Query editor
 
-Open a graph in edit mode by click the title. Query editor will differ if the data source has version <=2.1 or = 2.2.
-In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
-can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
+Open a graph in edit mode by clicking the title. The query editor interface differs depending on the version of OpenTSDB used as a data source. For versions <=2.1, only tags can be used to query OpenTSDB, while for version 2.2, filters as well as tags can be used to query OpenTSDB. Fill Policy is also introduced in OpenTSDB 2.2.
+
 
 ![](/static/img/docs/v43/opentsdb_query_editor.png)
 
-> **Note:** While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
+> **Note:** When using the OpenTSDB 2.2 data source, make sure to use either Filters or Tags, as they are mutually exclusive. Using them together may give  unexpected results.
 
 ### Auto complete suggestions
 
+Auto complete suggestions for metric names, tag names, and tag values are only available if the OpenTSDB suggest API is enabled. 
 As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
-The autocomplete only works if the OpenTSDB suggest API is enabled.
 
 ## Templating queries
 
