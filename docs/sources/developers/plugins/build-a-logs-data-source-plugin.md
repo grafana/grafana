@@ -4,11 +4,9 @@ title: Build a logs data source plugin
 
 # Build a logs data source plugin
 
-This guide explains how to build a logs data source plugin. 
+Data logs are defined as data stored over a period of time in different systems or environments for the purpose of tracking certain events.  
 
-Data logs are defined as data stored over a period of time in different systems or environments for the purpose of tracking a variety of events.  
-
-Grafana data source plugins support both metrics and log data. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences. 
+Grafana data source plugins support metrics , logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences. 
 
 ## Before you begin
 
@@ -21,7 +19,7 @@ To add logs support to an existing data source, you need to:
 1. Enable logs support
 1. Construct the log data
 
-When these steps are done, then you can improve the user experience with one or more optional features.
+When these steps are done, then you can improve the user experience with one or more [optional features](#enhance-your-logs-data-source-plugin-with-optional-features).
 
 ### Step 1: Enable logs support
 
@@ -60,9 +58,11 @@ Congratulations, you just wrote your first logs data source plugin! Next, let's 
 
 ## Enhance your logs data source plugin with optional features
 
-### Add a preferred visualisation type hint to the data frame
+Add visualization type hints, labels, and other optional features to logs.
 
-To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have do set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries/#selecting-preferred-visualisation" >}})
+### Add a preferred visualization type hint to the data frame
+
+To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have to set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries/#selecting-preferred-visualisation" >}})
 
 **Example:**
 
@@ -81,9 +81,9 @@ const frame = new MutableDataFrame({
 
 ## Add labels to your logs
 
-To help filter log lines, many log systems let you query logs based on metadata, or _labels_.
+Many log systems let you query logs based on metadata, or _labels_, to help filter log lines.
 
-Add labels to a stream of logs by setting the labels property on the Field.
+Add labels to a stream of logs by setting the `labels` property on the Field.
 
 **Example**:
 

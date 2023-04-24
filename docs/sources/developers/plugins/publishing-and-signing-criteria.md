@@ -10,6 +10,8 @@ Grafana plugins must adhere to the following criteria when being reviewed for pu
 
 ## Privacy and security
 
+The following criteria must all be met to satisfy Grafan's requirements.
+
 ### Data collection
 Plugins cannot collect usage or user information. Violations of this guideline include but are not limited to:
    - Directly collecting installation and user statistics.

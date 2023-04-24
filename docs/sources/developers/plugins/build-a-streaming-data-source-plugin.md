@@ -4,15 +4,13 @@ title: Build a streaming data source plugin
 
 # Build a streaming data source plugin
 
-This guide explains how to build a streaming data source plugin.
-
 In Grafana, you can set your dashboards to automatically refresh at a certain interval, no matter what data source you use. Unfortunately, this means that your queries are requesting all the data to be sent again, regardless of whether the data has actually changed. The solution to this issue is to add _streaming_ to the plugin.
 
 ## Before you begin
 
 This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin/).
 
-Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data source to a panel visualization. There's a lot more to RxJS than what's covered in this guide. 
+Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data source to a panel visualization. 
 
 > **Note:** To learn more about RxJs, refer to the [RxJS documentation](https://rxjs.dev/guide/overview).
 
@@ -148,3 +146,7 @@ query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
 ```
 
 One limitation with this example is that the panel visualization is cleared every time you update the dashboard. If you have access to historical data, you can add it, or _backfill_ it, to the data frame before the first call to `subscriber.next()`.
+
+For another example of a streaming plugin, refer to the [streaming websocket example](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-streaming-websocket) on GitHub. 
+
+
