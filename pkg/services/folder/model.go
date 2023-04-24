@@ -161,8 +161,9 @@ type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *user.SignedInUser
 }
 
-// GetFolderChildrenCountsQuery
-type GetFolderChildrenCountsQuery struct {
+// GetChildrenCountsQuery captures the information required by the folder service
+// to return the count of children in a folder.
+type GetChildrenCountsQuery struct {
 	UID   *string
 	OrgID int64
 

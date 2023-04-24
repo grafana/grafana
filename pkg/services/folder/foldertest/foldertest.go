@@ -51,6 +51,6 @@ func (s *FakeService) RegisterService(service folder.RegistryService) error {
 	return s.ExpectedError
 }
 
-func (s *FakeService) GetChildrenCounts(ctx context.Context, cmd *folder.GetFolderChildrenCountsQuery) (folder.FolderChildrenCounts, error) {
+func (s *FakeService) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.FolderChildrenCounts, error) {
 	return s.ExpectedChildrenCounts, s.ExpectedError
 }

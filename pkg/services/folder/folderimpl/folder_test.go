@@ -982,7 +982,7 @@ func TestGetChildrenCounts(t *testing.T) {
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID}
 	ctx := appcontext.WithUser(context.Background(), &signedInUser)
-	res, err := folderService.GetChildrenCounts(ctx, &folder.GetFolderChildrenCountsQuery{
+	res, err := folderService.GetChildrenCounts(ctx, &folder.GetChildrenCountsQuery{
 		SignedInUser: usr,
 		UID:          &folderUID,
 		OrgID:        orgID,
