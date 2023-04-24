@@ -22,7 +22,6 @@ export const Pages = {
     readOnly: 'Data source settings page read only message',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
-    working: 'Data source is working',
   },
   DataSources: {
     url: '/datasources',

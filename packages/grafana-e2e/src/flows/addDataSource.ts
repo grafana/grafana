@@ -89,7 +89,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   }
 
   // use the timeout passed in if it exists, otherwise, continue to use the default
-  e2e.pages.DataSource.working()
+  e2e.pages.DataSource.alert()
     .should('exist')
     .contains(expectedAlertMessage, {
       timeout: timeout ?? e2e.config().defaultCommandTimeout,
