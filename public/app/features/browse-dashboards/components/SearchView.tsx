@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
+import { Spinner } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { newSearchSelection, updateSearchSelection } from 'app/features/search/page/selection';
 import { getSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
@@ -18,7 +18,6 @@ interface SearchViewProps {
 export function SearchView({ folderUID, width, height }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
-  const showManage = true; // TODO: bring this in from parent?
 
   const { keyboardEvents } = useKeyNavigationListener();
 
@@ -26,9 +25,6 @@ export function SearchView({ folderUID, width, height }: SearchViewProps) {
   useEffect(() => stateManager.initStateFromUrl(folderUID), [folderUID, stateManager]);
 
   const state = stateManager.useState();
-
-  const [searchSelection, setSearchSelection] = useState(() => newSearchSelection());
-
   const value = state.result;
 
   const selectionChecker = useCallback(
@@ -43,9 +39,8 @@ export function SearchView({ folderUID, width, height }: SearchViewProps) {
   );
 
   const clearSelection = useCallback(() => {
-    searchSelection.items.clear();
-    setSearchSelection({ ...searchSelection });
-  }, [searchSelection]);
+    console.log('TODO: clearSelection');
+  }, []);
 
   const handleItemSelectionChange = useCallback(
     (kind: string, uid: string) => {
@@ -59,7 +54,11 @@ export function SearchView({ folderUID, width, height }: SearchViewProps) {
   );
 
   if (!value) {
-    return <div>loading?</div>;
+    return (
+      <div>
+        <Spinner />
+      </div>
+    );
   }
 
   const props: SearchResultsProps = {
