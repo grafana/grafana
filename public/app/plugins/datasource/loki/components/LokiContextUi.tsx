@@ -183,7 +183,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               )}
               className={styles.rawQuery}
             />
-            <Tooltip content="Initially executed log context query is created from all labels defining the stream for the selected log line. Use editor bellow to customize log context query.">
+            <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
               <Icon name="info-circle" size="sm" className={styles.queryDescription} />
             </Tooltip>
           </div>
@@ -192,7 +192,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         <div className={styles.ui}>
           <Tooltip
             content={
-              'This feature is experimental and may change in the future. Currently it supports using parser and extracted labels for queries with no more than 1 parser (e.g. logfmt, json). Please report any issues in the Grafana GitHub repository.'
+              'This feature is experimental and may change in the future. Currently it supports using a parser and extracted labels for queries with no more than 1 parser (for example, logfmt, json). Please report any issues in the grafana GitHub repository.'
             }
             placement="top"
           >
@@ -200,7 +200,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           </Tooltip>{' '}
           <Label
             className={styles.label}
-            description="By removing some of the selected label filters, you can broaden your search."
+            description="The initial log context query is created from all labels defining the stream for the selected log line. You can broaden your search by removing one or more of the label filters."
           >
             Widen the search
           </Label>
@@ -241,7 +241,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             <>
               <Label
                 className={styles.label}
-                description={`By using parser in your original query, you are able to filter for extracted labels. Refine your search by applying extracted labels from selected log line.`}
+                description={`By using a parser in your original query, you can use filters for extracted labels. Refine your search by applying extracted labels created from the selected log line.`}
               >
                 Refine the search
               </Label>
