@@ -1,9 +1,12 @@
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
+import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { DataSourceCard } from './DataSourceCard';
-import { isDataSourceMatch, useGetDatasources } from './utils';
+import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -35,7 +38,7 @@ export interface DataSourceListProps {
 export function DataSourceList(props: DataSourceListProps) {
   const { className, current, onChange } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
-  const dataSources = useGetDatasources({
+  const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
     dashboard: props.dashboard,
@@ -48,18 +51,33 @@ export function DataSourceList(props: DataSourceListProps) {
     variables: props.variables,
   });
 
+  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+
   return (
     <div className={className}>
       {dataSources
         .filter((ds) => (props.filter ? props.filter(ds) : true))
+        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
             key={ds.uid}
             ds={ds}
-            onClick={() => onChange(ds)}
+            onClick={() => {
+              pushRecentlyUsedDataSource(ds);
+              onChange(ds);
+            }}
             selected={!!isDataSourceMatch(ds, current)}
           />
         ))}
     </div>
   );
+}
+
+function getDataSourceVariableIDs() {
+  const templateSrv = getTemplateSrv();
+  /** Unforunately there is no easy way to identify data sources that are variables. The uid of the data source will be the name of the variable in a templating syntax $([name]) **/
+  return templateSrv
+    .getVariables()
+    .filter((v) => v.type === 'datasource')
+    .map((v) => `\${${v.id}}`);
 }

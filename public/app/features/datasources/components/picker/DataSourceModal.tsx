@@ -123,7 +123,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       width: 50%;
       height: 100%;
-      padding-right: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(4)};
       border-right: 1px solid ${theme.colors.border.weak};
     `,
     rightColumn: css`
@@ -133,7 +133,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 100%;
       justify-items: space-evenly;
       align-items: stretch;
-      padding-left: ${theme.spacing(1)};
+      padding-left: ${theme.spacing(4)};
     `,
     builtInDataSources: css`
       flex: 1;

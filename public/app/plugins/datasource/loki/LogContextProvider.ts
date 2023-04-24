@@ -125,7 +125,7 @@ export class LogContextProvider {
     if (tsField === undefined) {
       throw new Error('loki: data frame missing time-field, should never happen');
     }
-    const tsValue = tsField.values.get(row.rowIndex);
+    const tsValue = tsField.values[row.rowIndex];
     const timestamp = toUtc(tsValue);
 
     const range =
