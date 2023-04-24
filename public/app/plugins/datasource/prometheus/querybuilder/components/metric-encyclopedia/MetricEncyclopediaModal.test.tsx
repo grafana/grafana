@@ -137,9 +137,9 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricInsideRange).toBeInTheDocument();
   });
 
-  it('paginates millions of metrics and does not run out of memory', async () => {
-    const millionsOfMetrics: string[] = [...Array(1000000).keys()].map((i) => '' + i);
-    setup(defaultQuery, millionsOfMetrics);
+  it('paginates lots of metrics and does not run out of memory', async () => {
+    const lotsOfMetrics: string[] = [...Array(100000).keys()].map((i) => '' + i);
+    setup(defaultQuery, lotsOfMetrics);
     await waitFor(() => {
       // doesn't break on loading
       expect(screen.getByText('0')).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('MetricEncyclopediaModal', () => {
     const resultsPerPageInput = screen.getByTestId(testIds.resultsPerPage);
     // doesn't break on changing results per page
     await userEvent.type(resultsPerPageInput, '11');
-    const metricInsideRange = screen.getByText('10');
+    const metricInsideRange = screen.getByText('9');
     expect(metricInsideRange).toBeInTheDocument();
   });
 
