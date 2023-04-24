@@ -511,5 +511,5 @@ type GetFolderChildrenCountsParams struct {
 type GetFolderChildrenCountsResponse struct {
 	// The response message
 	// in: body
-	Body folder.FolderChildrenCounts `json:"body"`
+	Body folder.ChildrenCounts `json:"body"`
 }

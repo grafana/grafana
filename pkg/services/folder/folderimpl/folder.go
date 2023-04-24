@@ -623,7 +623,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	return result, nil
 }
 
-func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.FolderChildrenCounts, error) {
+func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.ChildrenCounts, error) {
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
@@ -634,7 +634,7 @@ func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildren
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	countsMap := folder.FolderChildrenCounts{}
+	countsMap := folder.ChildrenCounts{}
 	for _, v := range s.registry {
 		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
 		if err != nil {
