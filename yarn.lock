@@ -3088,7 +3088,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.5.0, @grafana/e2e-selectors@^9.4.3, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.5.0, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -3106,6 +3106,17 @@ __metadata:
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
+
+"@grafana/e2e-selectors@npm:canary":
+  version: 10.0.0-112678pre
+  resolution: "@grafana/e2e-selectors@npm:10.0.0-112678pre"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    tslib: 2.5.0
+    typescript: 4.8.4
+  checksum: 0dc490899d63ffe82e7cfade68b36c90058a574390d64e87497c448b123fe1c9c46149049ff098b780355e49dc2d250cf41cc9cf29d3abd7103581c23ff0cbd6
+  languageName: node
+  linkType: hard
 
 "@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
@@ -3315,17 +3326,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@grafana/scenes@npm:0.2.0"
+"@grafana/scenes@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@grafana/scenes@npm:0.6.0"
   dependencies:
-    "@grafana/e2e-selectors": ^9.4.3
+    "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
     react-grid-layout: 1.3.4
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: a04fe353eec8f048de7c51079e7f7bef461b372c3c086d5ff3be46fc0e70a21e907272f0ed05a41633847a3736c5e65e441ffa20b2c18eedea813decf3eef636
+  checksum: 7197abac93ba84711900b526f0caa648b0b9f0c0e2edea2fbc125c1f192d6a3dae52389007cf82cbdf06a7b8019e5c03b5efa635f12ebc51eab5852cddf6427e
   languageName: node
   linkType: hard
 
@@ -20099,7 +20110,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.2.0
+    "@grafana/scenes": ^0.6.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
