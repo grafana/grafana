@@ -290,10 +290,10 @@ export const Pages = {
   },
   UserListPage: {
     tabs: {
-      allUsers: 'all-users-tab',
-      orgUsers: 'org-users-tab',
-      publicDashboardsUsers: 'public-dashboards-users-tab',
-      users: 'users-tab',
+      allUsers: 'data-testid all-users-tab',
+      orgUsers: 'data-testid org-users-tab',
+      publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
+      users: 'data-testid users-tab',
     },
     org: {
       url: '/org/users',
@@ -302,16 +302,16 @@ export const Pages = {
       url: '/admin/users',
     },
     publicDashboards: {
-      container: 'public-dashboards-users-list',
+      container: 'data-testid public-dashboards-users-list',
     },
     UserListAdminPage: {
-      container: 'user-list-admin-page',
+      container: 'data-testid user-list-admin-page',
     },
     UsersListPage: {
-      container: 'users-list-page',
+      container: 'data-testid users-list-page',
     },
     UsersListPublicDashboardsPage: {
-      container: 'users-list-public-dashboards-page',
+      container: 'data-testid users-list-public-dashboards-page',
     },
   },
 };
