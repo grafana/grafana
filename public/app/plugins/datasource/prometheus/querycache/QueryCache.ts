@@ -139,7 +139,7 @@ export class QueryCache {
             let fetchUrl = entryTypeCast.name;
 
             if (fetchUrl.includes('/api/ds/query')) {
-              let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
+              let match = fetchUrl.match(/requestid=([a-z\d]+)/i);
 
               if (match) {
                 let requestId = match[1];
