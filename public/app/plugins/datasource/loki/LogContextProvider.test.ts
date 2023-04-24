@@ -16,6 +16,7 @@ import { LokiQuery } from './types';
 const defaultLanguageProviderMock = {
   start: jest.fn(),
   fetchSeriesLabels: jest.fn(() => ({ bar: ['baz'], xyz: ['abc'] })),
+  getLabelKeys: jest.fn(() => ['bar', 'xyz']),
 } as unknown as LokiLanguageProvider;
 
 const defaultDatasourceMock = createLokiDatasource();
@@ -198,27 +199,57 @@ describe('LogContextProvider', () => {
   });
 
   describe('getInitContextFiltersFromLabels', () => {
-    it('should correctly create contextFilters', async () => {
-      const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, {
+    describe('query with no parser', () => {
+      const queryWithoutParser = {
         expr: '{bar="baz"}',
-      } as LokiQuery);
-      expect(filters).toEqual([
-        { enabled: true, fromParser: false, label: 'bar', value: 'baz' },
-        { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
-        { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
-      ]);
+      } as LokiQuery;
+
+      it('should correctly create contextFilters', async () => {
+        const filters = await logContextProvider.getInitContextFiltersFromLabels(
+          defaultLogRow.labels,
+          queryWithoutParser
+        );
+        expect(filters).toEqual([
+          { enabled: true, fromParser: false, label: 'bar', value: 'baz' },
+          { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+        ]);
+      });
+
+      it('should return empty contextFilters if no query', async () => {
+        const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, undefined);
+        expect(filters).toEqual([]);
+      });
+
+      it('should return empty contextFilters if no labels', async () => {
+        const filters = await logContextProvider.getInitContextFiltersFromLabels({}, queryWithoutParser);
+        expect(filters).toEqual([]);
+      });
     });
-  });
 
-  it('should return empty contextFilters if no query', async () => {
-    const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, undefined);
-    expect(filters).toEqual([]);
-  });
+    describe('query with parser', () => {
+      const queryWithParser = {
+        expr: '{bar="baz"} | logfmt',
+      } as LokiQuery;
 
-  it('should return empty contextFilters if no labels', async () => {
-    const filters = await logContextProvider.getInitContextFiltersFromLabels(undefined, {
-      expr: '{bar="baz"}',
-    } as LokiQuery);
-    expect(filters).toEqual([]);
+      it('should correctly create contextFilters', async () => {
+        const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, queryWithParser);
+        expect(filters).toEqual([
+          { enabled: true, fromParser: false, label: 'bar', value: 'baz' },
+          { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+        ]);
+      });
+
+      it('should return empty contextFilters if no query', async () => {
+        const filters = await logContextProvider.getInitContextFiltersFromLabels(defaultLogRow.labels, undefined);
+        expect(filters).toEqual([]);
+      });
+
+      it('should return empty contextFilters if no labels', async () => {
+        const filters = await logContextProvider.getInitContextFiltersFromLabels({}, queryWithParser);
+        expect(filters).toEqual([]);
+      });
+    });
   });
 });

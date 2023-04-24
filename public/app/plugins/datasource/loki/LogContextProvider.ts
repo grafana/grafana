@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash';
 import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
 import {
@@ -208,26 +209,32 @@ export class LogContextProvider {
   };
 
   getInitContextFiltersFromLabels = async (labels: Labels, query?: LokiQuery) => {
-    if (!query || !labels) {
+    if (!query || isEmpty(labels)) {
       return [];
     }
 
-    const stream = getStreamSelectorsFromQuery(query.expr);
-    // We are using stream[0] as log query can always have just 1 stream selector
-    const seriesLabels = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
+    let allLabels: string[] = [];
+    if (isQueryWithParser(query.expr).parserCount !== 1) {
+      // If there is no parser, we use getLabelKeys because it has better caching
+      // and all labels should already be fetched
+      await this.datasource.languageProvider.start();
+      allLabels = this.datasource.languageProvider.getLabelKeys();
+    } else {
+      // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
+      const stream = getStreamSelectorsFromQuery(query.expr);
+      // We are using stream[0] as log query can always have just 1 stream selector
+      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
+      allLabels = Object.keys(series);
+    }
 
     const contextFilters: ContextFilter[] = [];
     Object.entries(labels).forEach(([label, value]) => {
       const filter: ContextFilter = {
         label,
         value: value,
-        enabled: false,
-        fromParser: true,
+        enabled: allLabels.includes(label),
+        fromParser: !allLabels.includes(label),
       };
-      if (seriesLabels?.[label]) {
-        filter.enabled = true;
-        filter.fromParser = false;
-      }
 
       contextFilters.push(filter);
     });
