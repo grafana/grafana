@@ -3,6 +3,11 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { ShowModalReactEvent } from 'app/types/events';
+
+import { DeleteModal } from './DeleteModal';
+import { MoveModal } from './MoveModal';
 
 export interface Props {}
 
@@ -10,13 +15,19 @@ export function BrowseActions() {
   const styles = useStyles2(getStyles);
 
   const onMove = () => {
-    // TODO real implemenation, stub for now
-    console.log('onMoveClicked');
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: MoveModal,
+      })
+    );
   };
 
   const onDelete = () => {
-    // TODO real implementation, stub for now
-    console.log('onDeleteClicked');
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: DeleteModal,
+      })
+    );
   };
 
   return (
