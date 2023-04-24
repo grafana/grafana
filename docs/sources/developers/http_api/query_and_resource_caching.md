@@ -23,7 +23,7 @@ title: Query and Resource Caching HTTP API
 
 ## Enable caching for a data source
 
-`POST /api/:dataSourceUID/cache/enable`
+`POST /api/datasources/:dataSourceUID/cache/enable`
 
 **Required permissions**
 
@@ -38,7 +38,7 @@ See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) fo
 **Example Request**:
 
 ```http
-POST /api/jZrmlLCGka/cache/enable HTTP/1.1
+POST /api/datasources/jZrmlLCGka/cache/enable HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -74,7 +74,7 @@ Content-Type: application/json
 
 ## Disable caching for a data source
 
-`POST /api/:dataSourceUID/cache/disable`
+`POST /api/datasources/:dataSourceUID/cache/disable`
 
 **Required permissions**
 
@@ -89,7 +89,7 @@ See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) fo
 **Example Request**:
 
 ```http
-POST /api/jZrmlLCGka/cache/disable HTTP/1.1
+POST /api/datasources/jZrmlLCGka/cache/disable HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -125,7 +125,7 @@ Content-Type: application/json
 
 ## Clean cache for all data sources
 
-`POST /api/:dataSourceUID/cache/clean`
+`POST /api/datasources/:dataSourceUID/cache/clean`
 
 Will clean cached data for _all_ data sources with caching enabled. The `dataSourceUID` specified will only be used to return the configuration for that data source.
 
@@ -142,7 +142,7 @@ See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) fo
 **Example Request**:
 
 ```http
-POST /api/jZrmlLCGka/cache/clean HTTP/1.1
+POST /api/datasources/jZrmlLCGka/cache/clean HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -178,7 +178,7 @@ Content-Type: application/json
 
 ## Update cache configuration for a data source
 
-`POST /api/:dataSourceUID/cache`
+`POST /api/datasources/:dataSourceUID/cache`
 
 **Required permissions**
 
@@ -193,7 +193,7 @@ See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) fo
 **Example Request**:
 
 ```http
-POST /api/jZrmlLCGka/cache HTTP/1.1
+POST /api/datasources/jZrmlLCGka/cache HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -252,7 +252,7 @@ Content-Type: application/json
 
 ## Get cache configuration for a data source
 
-`GET /api/:dataSourceUID/cache`
+`GET /api/datasources/:dataSourceUID/cache`
 
 **Required permissions**
 
@@ -267,7 +267,7 @@ See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) fo
 **Example Request**:
 
 ```http
-GET /api/jZrmlLCGka/cache HTTP/1.1
+GET /api/datasources/jZrmlLCGka/cache HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
