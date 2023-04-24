@@ -51,7 +51,7 @@ alertingBacktesting,alpha,@grafana/alerting-squad,false,false,false,false
 editPanelCSVDragAndDrop,alpha,@grafana/grafana-bi-squad,false,false,false,true
 alertingNoNormalState,beta,@grafana/alerting-squad,false,false,false,false
 logsSampleInExplore,stable,@grafana/observability-logs,false,false,false,true
-logsContextDatasourceUi,alpha,@grafana/observability-logs,false,false,false,true
+logsContextDatasourceUi,stable,@grafana/observability-logs,false,false,false,true
 lokiQuerySplitting,alpha,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,alpha,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,alpha,@grafana/backend-platform,false,false,false,false
