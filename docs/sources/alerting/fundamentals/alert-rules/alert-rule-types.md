@@ -20,7 +20,7 @@ In addition to supporting multiple data sources, you can also add expressions to
 
 The following diagram shows how Grafana-managed alerting works.
 
-{{< figure src="/media/docs/alerting/grafana-managed-rule.png" max-width="750px" caption="How Alerting works" >}}
+{{< figure src="/media/docs/alerting/grafana-managed-rule.png" max-width="750px" caption="Grafana-managed alerting" >}}
 
 1. Alert rules are created within Grafana based on one or more data sources.
 
@@ -43,7 +43,7 @@ For more information on the Ruler API, refer to [Ruler API](docs/loki/latest/api
 
 The following diagram shows how Grafana Mimir or Grafana Loki-managed alerting works.
 
-{{< figure src="/media/docs/alerting/loki-mimir-rule.png" max-width="750px" caption="How Alerting works" >}}
+{{< figure src="/media/docs/alerting/loki-mimir-rule.png" max-width="750px" caption="Grafana Mimir/Loki-managed alerting" >}}
 
 1. Alert rules are created and stored within the data source itself.
 1. Alert rules can only be created based on Prometheus data.
