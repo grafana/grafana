@@ -2,7 +2,7 @@
 title: Package a plugin
 ---
 
-You've just built your first plugin and you're getting ready to [publish it](publish-a-plugin.md), and now you need to package it. This step follows the building and [signing](sign-a-plugin.md) steps for plugin deployment. 
+You've just built your first plugin and you're getting ready to [publish it](publish-a-plugin.md), and now you need to package it. This step follows the building and [signing](sign-a-plugin.md) steps for plugin deployment.
 
 ## Package a plugin for distribution
 
