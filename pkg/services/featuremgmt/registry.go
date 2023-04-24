@@ -532,5 +532,12 @@ var (
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},
+		{
+			Name:         "enableDatagridEditing",
+			Description:  "Enables the edit functionality in the datagrid panel",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

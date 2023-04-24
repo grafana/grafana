@@ -98,4 +98,5 @@ export interface FeatureToggles {
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
+  enableDatagridEditing?: boolean;
 }
