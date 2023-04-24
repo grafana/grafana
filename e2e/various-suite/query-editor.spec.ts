@@ -2,7 +2,7 @@ import { e2e } from '@grafana/e2e';
 
 e2e.scenario({
   describeName: 'Query editor',
-  itName: 'Undo should work in query editor for prometheus.',
+  itName: 'Undo should work in query editor for prometheus -- test CI.',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
