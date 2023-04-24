@@ -591,10 +591,10 @@ const sendClick = (el: Element | Node | Document | Window, options?: {}): void =
   fireEvent.click(el, options);
 };
 
-const Context = (p: any) => {
+const Context = (props: { children: React.ReactNode }) => {
   return (
     <>
-      {p.children}
+      {props.children}
       <div id="grafana-portal-container"></div>
     </>
   );
