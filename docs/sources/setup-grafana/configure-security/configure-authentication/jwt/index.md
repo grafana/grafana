@@ -38,7 +38,7 @@ header_name = X-JWT-Assertion
 
 To identify the user, some of the claims needs to be selected as a login info. You could specify a claim that contains either a username or an email of the Grafana user.
 
-Typically, the subject claim called `"sub"` would be used as a login but it might also be set to some application specific claim.
+The subject claim, `"sub"`, is typically used as the login, but it can also be set to an application-specific claim.
 
 ```ini
 # [auth.jwt]
@@ -58,7 +58,7 @@ If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth
 
 ## Iframe Embedding
 
-If you want to embed Grafana in an iframe while maintaning user identity and role checks,
+If you want to embed Grafana in an iframe while maintaining user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
 > **Note**: For Grafana Cloud, or scenarios where verifying viewer identity is not required,
@@ -149,7 +149,7 @@ key_file = /path/to/key.pem
 
 By default, only `"exp"`, `"nbf"` and `"iat"` claims are validated.
 
-You might also want to validate that other claims are really what you expect them to be.
+You may also want to validate that other claims are really what you expect them to be.
 
 ```ini
 # This can be seen as a required "subset" of a JWT Claims Set.
@@ -168,7 +168,7 @@ To ease configuration of a proper JMESPath expression, you can test/evaluate exp
 
 ### Role mapping
 
-If the `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+If the `role_attribute_path` property does not return a valid role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 **Basic example:**
 
@@ -218,5 +218,4 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(in
 ```
 
 ### Grafana Admin Role
-
-If the `role_attribute_path` property returns a `GrafanaAdmin` role, Grafana Admin is not assigned by default, instead the `Admin` role is assigned. To allow `Grafana Admin` role to be assigned set `allow_assign_grafana_admin = true`.
+If the `role_attribute_path` property returns a `GrafanaAdmin` role, the `Admin` role is assigned instead of the `GrafanaAdmin` role by default. To allow `Grafana Admin` role to be assigned set `allow_assign_grafana_admin = true`.
