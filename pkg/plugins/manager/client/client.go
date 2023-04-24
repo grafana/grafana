@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/textproto"
 	"strings"
 
@@ -14,6 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
+)
+
+const (
+	setCookieHeaderName   = "Set-Cookie"
+	contentTypeHeaderName = "Content-Type"
+	defaultContentType    = "application/json"
 )
 
 var _ plugins.Client = (*Service)(nil)
@@ -100,12 +108,21 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
 
+		processedStreams := 0
 		wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-			if res != nil && len(res.Headers) > 0 {
-				removeConnectionHeaders(res.Headers)
-				removeHopByHopHeaders(res.Headers)
+			// Expected that headers and status are only part of first stream
+			if processedStreams == 0 && res != nil {
+				if len(res.Headers) > 0 {
+					removeConnectionHeaders(res.Headers)
+					removeHopByHopHeaders(res.Headers)
+					removeNonAllowedHeaders(res.Headers)
+					proxyutil.SetProxyResponseHeaders(res.Headers)
+				}
+
+				ensureContentTypeHeader(res)
 			}
 
+			processedStreams++
 			return sender.Send(res)
 		})
 
@@ -290,6 +307,33 @@ func removeHopByHopHeaders(h map[string][]string) {
 				break
 			}
 		}
+	}
+}
+
+func removeNonAllowedHeaders(h map[string][]string) {
+	for k := range h {
+		if textproto.CanonicalMIMEHeaderKey(k) == setCookieHeaderName {
+			delete(h, k)
+		}
+	}
+}
+
+// ensureContentTypeHeader makes sure a content type always is returned in response.
+func ensureContentTypeHeader(res *backend.CallResourceResponse) {
+	if res == nil {
+		return
+	}
+
+	var hasContentType bool
+	for k := range res.Headers {
+		if textproto.CanonicalMIMEHeaderKey(k) == contentTypeHeaderName {
+			hasContentType = true
+			break
+		}
+	}
+
+	if !hasContentType && res.Status != http.StatusNoContent {
+		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
 }
 
