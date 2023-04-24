@@ -237,7 +237,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           displayMode={transparent ? 'transparent' : 'default'}
           onCancelQuery={panelChromeProps.onCancelQuery}
         >
-          {(width, height) => <div ref={(element) => (this.element = element)} className="panel-height-helper" />}
+          {() => <div ref={(element) => (this.element = element)} className="panel-height-helper" />}
         </PanelChrome>
       );
     } else {
