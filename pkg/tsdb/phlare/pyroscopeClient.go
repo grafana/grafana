@@ -225,6 +225,11 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, query string, start in
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("failed to close response body", "err", err)
+		}
+	}()
 
 	var names []string
 	err = json.NewDecoder(resp.Body).Decode(&names)
@@ -254,6 +259,11 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, query string, label s
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("failed to close response body", "err", err)
+		}
+	}()
 	var values []string
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
