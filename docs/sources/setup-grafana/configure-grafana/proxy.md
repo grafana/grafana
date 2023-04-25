@@ -24,7 +24,7 @@ In order to make use of this functionality, you will need to deploy a socks5 pro
 
 ## Before you begin
 
-Deploy a socks proxy server that:
+To follow this guide, you must first deploy a socks proxy server that:
 - Supports TLS
 - Is exposed to the public internet
 - Is hosted within the same network as your data source
