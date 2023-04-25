@@ -14,7 +14,7 @@ export const DataSourceDescription: React.FC<Props> = ({ dataSourceName, docsLin
 
   const styles = {
     container: css({
-      marginBottom: theme.spacing(4),
+      margin: theme.spacing(4, 0),
     }),
     text: css({
       ...theme.typography.body,
