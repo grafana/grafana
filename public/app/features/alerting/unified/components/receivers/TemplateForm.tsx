@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Location } from 'history';
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { useToggle } from 'react-use';
@@ -8,7 +8,19 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Field, FieldSet, Icon, Input, LinkButton, Spinner, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Field,
+  FieldSet,
+  Icon,
+  Input,
+  LinkButton,
+  Spinner,
+  Tab,
+  TabsBar,
+  useStyles2,
+} from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -80,6 +92,8 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const [isPayloadEditorOpen, toggleIsPayloadEditorOpen] = useToggle(false);
   const [isTemplateDataDocsOpen, toggleTemplateDataDocsOpen] = useToggle(false);
+
+  const [view, setView] = useState<'content' | 'preview'>('content');
 
   const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -163,70 +177,74 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             />
           </Field>
           <TemplatingGuideline />
+
+          <TabsBar>
+            <Tab label="Content" active={view === 'content'} onChangeTab={() => setView('content')} />
+            {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+              <Tab label="Preview" active={view === 'preview'} onChangeTab={() => setView('preview')} />
+            )}
+          </TabsBar>
           <div className={styles.contentContainer}>
-            <div>
-              <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
-                <div className={styles.editWrapper}>
-                  <AutoSizer>
-                    {({ width, height }) => (
-                      <TemplateEditor
-                        value={getValues('content')}
-                        width={width}
-                        height={height}
-                        onBlur={(value) => setValue('content', value)}
-                      />
-                    )}
-                  </AutoSizer>
+            {view === 'content' ? (
+              <div>
+                <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
+                  <div className={styles.editWrapper}>
+                    <AutoSizer>
+                      {({ width, height }) => (
+                        <TemplateEditor
+                          value={getValues('content')}
+                          width={width}
+                          height={height}
+                          onBlur={(value) => setValue('content', value)}
+                        />
+                      )}
+                    </AutoSizer>
+                  </div>
+                </Field>
+                <div className={styles.buttons}>
+                  {loading && (
+                    <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                      Saving...
+                    </Button>
+                  )}
+                  {!loading && (
+                    <Button type="submit" variant="primary">
+                      Save template
+                    </Button>
+                  )}
+                  <LinkButton
+                    disabled={loading}
+                    href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+                    variant="secondary"
+                    type="button"
+                    fill="outline"
+                  >
+                    Cancel
+                  </LinkButton>
                 </div>
-              </Field>
-              <div className={styles.buttons}>
-                {loading && (
-                  <Button disabled={true} icon="fa fa-spinner" variant="primary">
-                    Saving...
-                  </Button>
-                )}
-                {!loading && (
-                  <Button type="submit" variant="primary">
-                    Save template
-                  </Button>
-                )}
-                <LinkButton
-                  disabled={loading}
-                  href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-                  variant="secondary"
-                  type="button"
-                  fill="outline"
-                >
-                  Cancel
-                </LinkButton>
               </div>
-            </div>
-            {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME ? (
+            ) : (
               <TemplatePreview
                 payload={payload}
                 payloadFormatError={payloadFormatError}
                 setPayloadFormatError={setPayloadFormatError}
                 templateName={watch('name')}
               />
-            ) : (
-              <TemplateDataDocs />
             )}
           </div>
         </FieldSet>
-        {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
-          <>
-            <ExpandableSection
-              title="Data Cheat sheet"
-              isOpen={isTemplateDataDocsOpen}
-              toggleOpen={toggleTemplateDataDocsOpen}
-            >
-              <TemplateDataDocs />
-            </ExpandableSection>
-            <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
-              <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />
-            </ExpandableSection>
-          </>
-        )}
+        <>
+          <ExpandableSection
+            title="Data Cheat sheet"
+            isOpen={isTemplateDataDocsOpen}
+            toggleOpen={toggleTemplateDataDocsOpen}
+          >
+            <TemplateDataDocs />
+          </ExpandableSection>
+          <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
+            <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />
+          </ExpandableSection>
+        </>
       </form>
     </FormProvider>
   );
@@ -356,7 +374,7 @@ export function TemplatePreview({
 
   const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
 
-  const onPreview = () => {
+  const onPreview = useCallback(() => {
     try {
       const alertList: AlertField[] = JSON.parse(payload);
       trigger({ template: templateContent, alerts: alertList, name: templateName });
@@ -364,14 +382,12 @@ export function TemplatePreview({
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
     }
-  };
+  }, [templateContent, templateName, payload, setPayloadFormatError, trigger]);
+
+  useEffect(() => onPreview(), [onPreview]);
 
   return (
     <Stack direction="row" alignItems="center" gap={2}>
-      <Button onClick={onPreview} icon="arrow-right">
-        Preview
-      </Button>
-
       <Stack direction="column">
         {isLoading && (
           <>

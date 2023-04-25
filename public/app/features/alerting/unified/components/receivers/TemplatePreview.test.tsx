@@ -1,5 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -59,7 +58,7 @@ describe('TemplatePreview component', () => {
     });
   });
 
-  it('Should render error if payload has wrong format after clicking preview button', async () => {
+  it('Should render error if payload has wrong format rendering the preview', async () => {
     render(
       <TemplatePreview
         payload={'whatever'}
@@ -69,18 +68,13 @@ describe('TemplatePreview component', () => {
       />,
       { wrapper: getProviderWraper() }
     );
-    const button = screen.getByRole('button', {
-      name: /preview/i,
-    });
 
-    within(button).getByText(/preview/i);
-    await userEvent.click(within(button).getByText(/preview/i));
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent('ERROR IN JSON FORMAT');
     });
   });
 
-  it('Should render error in preview response , after clicking preview, if payload has correct format after clicking preview button, but preview request has been rejected', async () => {
+  it('Should render error in preview response , if payload has correct format but preview request has been rejected', async () => {
     mockPreviewTemplateResponseRejected(server);
     render(
       <TemplatePreview
@@ -91,18 +85,13 @@ describe('TemplatePreview component', () => {
       />,
       { wrapper: getProviderWraper() }
     );
-    const button = screen.getByRole('button', {
-      name: /preview/i,
-    });
 
-    within(button).getByText(/preview/i);
-    await userEvent.click(within(button).getByText(/preview/i));
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(PREVIEW_NOT_AVAILABLE);
     });
   });
 
-  it('Should render preview response , after clicking preview, if payload has correct format after clicking preview button', async () => {
+  it('Should render preview response , if payload has correct ', async () => {
     const response: TemplatesPreviewResponse = {
       results: [
         { name: 'template1', text: 'This is the template result bla bla bla' },
@@ -119,19 +108,14 @@ describe('TemplatePreview component', () => {
       />,
       { wrapper: getProviderWraper() }
     );
-    const button = screen.getByRole('button', {
-      name: /preview/i,
-    });
 
-    within(button).getByText(/preview/i);
-    await userEvent.click(within(button).getByText(/preview/i));
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
         'Preview for template1: This is the template result bla bla bla Preview for template2: This is the template2 result bla bla bla'
       );
     });
   });
-  it('Should render preview response with some errors, after clicking preview, if payload has correct format after clicking preview button', async () => {
+  it('Should render preview response with some errors,  if payload has correct format ', async () => {
     const response: TemplatesPreviewResponse = {
       results: [{ name: 'template1', text: 'This is the template result bla bla bla' }],
       errors: [
@@ -149,12 +133,6 @@ describe('TemplatePreview component', () => {
       />,
       { wrapper: getProviderWraper() }
     );
-    const button = screen.getByRole('button', {
-      name: /preview/i,
-    });
-
-    within(button).getByText(/preview/i);
-    await userEvent.click(within(button).getByText(/preview/i));
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
         'Preview for template1: This is the template result bla bla bla ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'
