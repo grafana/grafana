@@ -1,4 +1,4 @@
-import { LinkModel, PanelData, renderMarkdown } from '@grafana/data';
+import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
 import { getTemplateSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelPadding } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
@@ -7,20 +7,33 @@ import { plugin } from 'app/plugins/panel/alertGroups/module';
 
 import { DashboardModel, PanelModel } from '../state';
 
-export function getPanelChromeProps(panel: PanelModel, dashboard: DashboardModel, data: PanelData) {
+interface CommonProps {
+  panel: PanelModel;
+  data: PanelData;
+  dashboard: DashboardModel;
+  plugin: PanelPlugin;
+  isViewing: boolean;
+  isEditing: boolean;
+  isInView: boolean;
+  width: number;
+  height: number;
+  hideMenu?: boolean;
+}
+
+export function getPanelChromeProps(props: CommonProps) {
   let descriptionInteractionReported = false;
 
   function hasOverlayHeader() {
     // always show normal header if we have time override
-    if (data.request && data.request.timeInfo) {
+    if (props.data.request && props.data.request.timeInfo) {
       return false;
     }
 
-    return !panel.hasTitle();
+    return !props.panel.hasTitle();
   }
 
   const onShowPanelDescription = () => {
-    const descriptionMarkdown = getTemplateSrv().replace(panel.description, panel.scopedVars);
+    const descriptionMarkdown = getTemplateSrv().replace(props.panel.description, props.panel.scopedVars);
     const interpolatedDescription = renderMarkdown(descriptionMarkdown);
 
     if (!descriptionInteractionReported) {
@@ -33,11 +46,11 @@ export function getPanelChromeProps(panel: PanelModel, dashboard: DashboardModel
   };
 
   const onShowPanelLinks = (): LinkModel[] => {
-    const linkSupplier = getPanelLinksSupplier(panel);
+    const linkSupplier = getPanelLinksSupplier(props.panel);
     if (!linkSupplier) {
       return [];
     }
-    const panelLinks = linkSupplier && linkSupplier.getLinks(panel.replaceVariables);
+    const panelLinks = linkSupplier && linkSupplier.getLinks(props.panel.replaceVariables);
 
     return panelLinks.map((panelLink) => ({
       ...panelLink,
@@ -50,28 +63,28 @@ export function getPanelChromeProps(panel: PanelModel, dashboard: DashboardModel
 
   const onOpenInspector = (e: React.SyntheticEvent, tab: string) => {
     e.stopPropagation();
-    locationService.partial({ inspect: panel.id, inspectTab: tab });
+    locationService.partial({ inspect: props.panel.id, inspectTab: tab });
   };
 
   const onOpenErrorInspect = (e: React.SyntheticEvent) => {
     e.stopPropagation();
-    locationService.partial({ inspect: panel.id, inspectTab: InspectTab.Error });
+    locationService.partial({ inspect: props.panel.id, inspectTab: InspectTab.Error });
     reportInteraction('dashboards_panelheader_statusmessage_clicked');
   };
 
   const onCancelQuery = () => {
-    panel.getQueryRunner().cancelQuery();
-    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: data.state });
+    props.panel.getQueryRunner().cancelQuery();
+    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: props.data.state });
   };
 
   const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
   const getPanelHeaderTitleItemsProps = () => {
-    const alertState = data.alertState?.state;
+    const alertState = props.data.alertState?.state;
     const showTitleItems =
-      (panel.links && panel.links.length > 0 && onShowPanelLinks) ||
-      (data.series.length > 0 && data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
-      (data.request && data.request.timeInfo) ||
+      (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
+      (props.data.series.length > 0 && props.data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
+      (props.data.request && props.data.request.timeInfo) ||
       alertState;
 
     if (!showTitleItems) {
@@ -80,14 +93,14 @@ export function getPanelChromeProps(panel: PanelModel, dashboard: DashboardModel
 
     return {
       alertState,
-      data,
-      panelId: panel.id,
-      panelLinks: panel.links,
+      data: props.data,
+      panelId: props.panel.id,
+      panelLinks: props.panel.links,
       onShowPanelLinks: onShowPanelLinks,
     };
   };
 
-  const description = panel.description ? onShowPanelDescription() : undefined;
+  const description = props.panel.description ? onShowPanelDescription() : undefined;
 
   return {
     hasOverlayHeader,

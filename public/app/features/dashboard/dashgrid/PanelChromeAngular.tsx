@@ -185,7 +185,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const { transparent } = panel;
     const alertState = data.alertState?.state;
 
-    const panelChromeProps = getPanelChromeProps(panel, dashboard, data);
+    const panelChromeProps = getPanelChromeProps({ ...this.props, data });
     const panelHeaderTitleItemsProps = panelChromeProps.getPanelHeaderTitleItemsProps();
 
     const containerClassNames = classNames({
