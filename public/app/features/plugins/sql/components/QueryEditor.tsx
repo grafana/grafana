@@ -49,14 +49,6 @@ export function SqlQueryEditor({
 
   useEffect(() => {
     if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
-      // JEV: possible issues:
-      // - Updating a datasource config DOES NOT effect the query run for MYSQL/MSSQL data sources when loading a dashboard,
-      //   it is saved in the json model (jsondata), but the query is NOT updated. So, the change is NOT reflected upon panel load,
-      //   since the panel uses the query object to make the query.
-      // - If a default database changes for ANY data source, and the new database has a table that the previous one also had,
-      //   the query will NOT error out, but WILL be caught by my alerts
-      // - Unable to find a way to bubble editor-level errors to panel chrome
-      // - What queries are being run on dashboard load???
       /*
         If there is a preconfigured database (either through the provisioning config, or the data source configuration component),
         AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
