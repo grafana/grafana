@@ -165,7 +165,7 @@ export function EditDataSourceView({
 
       <DataSourceDescription
         dataSourceName={dataSourceMeta.name}
-        docsLink={dataSourceMeta.info.links.find((l) => l.name === 'Docs' || l.name === 'Documentation')?.url}
+        docsLink={dataSourceMeta.info?.links?.find((l) => l.name === 'Docs' || l.name === 'Documentation')?.url}
         hasRequiredFields={dataSourceMeta.hasRequiredConfigFields}
       />
 
