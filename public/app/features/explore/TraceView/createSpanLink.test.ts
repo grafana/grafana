@@ -172,7 +172,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(createTraceSpan());
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.otherLinks?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe('testSpanId');
     });
