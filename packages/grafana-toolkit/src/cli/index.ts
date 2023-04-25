@@ -4,7 +4,6 @@ import { program } from 'commander';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
-import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
@@ -128,41 +127,6 @@ export const run = (includeInternalScripts = false) => {
         'No longer supported. Use grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin\n'
       );
       process.exit(1);
-    });
-
-  program
-    .command('plugin:ci-build')
-    .option('--finish', 'move all results to the jobs folder', false)
-    .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('[deprecated] Build the plugin, leaving results in /dist and /coverage')
-    .action(async (cmd) => {
-      await execTask(ciBuildPluginTask)({
-        finish: cmd.finish,
-        maxJestWorkers: cmd.maxJestWorkers,
-      });
-    });
-
-  program
-    .command('plugin:ci-package')
-    .option('--signatureType <type>', 'Signature Type')
-    .option('--rootUrls <urls...>', 'Root URLs')
-    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
-    .description('[deprecated] Create a zip packages for the plugin')
-    .action(async (cmd) => {
-      await execTask(ciPackagePluginTask)({
-        signatureType: cmd.signatureType,
-        rootUrls: cmd.rootUrls,
-      });
-    });
-
-  program
-    .command('plugin:ci-report')
-    .description('[deprecated] Build a report for this whole process')
-    .option('--upload', 'upload packages also')
-    .action(async (cmd) => {
-      await execTask(ciPluginReportTask)({
-        upload: cmd.upload,
-      });
     });
 
   program
