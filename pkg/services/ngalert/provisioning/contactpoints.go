@@ -261,13 +261,13 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	// check that provenance is not changed in a invalid way
+	// check that provenance is not changed in an invalid way
 	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, &contactPoint, orgID)
 	if err != nil {
 		return err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	// transform to internal model
 	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
@@ -453,7 +453,7 @@ groupLoop:
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
 				// Check to see whether a different group with the name we want already exists.
-				for i, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
+				for _, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
 					// If so, put our modified receiver into that group. Done!
 					if candidateExistingGroup.Name == target.Name {
 						// Drop it from the old group...

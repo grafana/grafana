@@ -314,3 +314,11 @@ export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
   const lokiQuery = query as LokiQuery;
   return lokiQuery.expr !== undefined;
 };
+
+export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefined => {
+  if (!query || !isLokiQuery(query)) {
+    return undefined;
+  }
+
+  return query;
+};

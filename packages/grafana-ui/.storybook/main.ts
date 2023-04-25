@@ -100,7 +100,6 @@ const mainConfig: StorybookConfig = {
       savePropValueAsString: true,
     },
   },
-
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
     config.module?.rules?.push({

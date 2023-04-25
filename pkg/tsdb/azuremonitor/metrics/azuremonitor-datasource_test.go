@@ -497,6 +497,16 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "multiple time series response with multiple dimensions",
+			responseFile: "azuremonitor/10-azure-monitor-response-multi-with-dimensions.json",
+			mockQuery: &types.AzureMonitorQuery{
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+		},
 	}
 
 	datasource := &AzureMonitorDatasource{}

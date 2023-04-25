@@ -87,7 +87,6 @@
               "blobtype": "PageBlob"
             },
             "config": {
-              "displayName": "Blob Count grafana",
               "unit": "short",
               "links": [
                 {
@@ -151,7 +150,6 @@
               "blobtype": "BlockBlob"
             },
             "config": {
-              "displayName": "Blob Count grafana",
               "unit": "short",
               "links": [
                 {
@@ -215,7 +213,6 @@
               "blobtype": "Azure Data Lake Storage"
             },
             "config": {
-              "displayName": "Blob Count grafana",
               "unit": "short",
               "links": [
                 {
