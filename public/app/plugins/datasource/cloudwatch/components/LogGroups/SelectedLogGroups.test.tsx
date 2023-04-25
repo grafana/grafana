@@ -68,7 +68,7 @@ describe('SelectedLogsGroups', () => {
       await waitFor(() =>
         expect(screen.getByText('Are you sure you want to clear all log groups?')).toBeInTheDocument()
       );
-      await waitFor(() => userEvent.click(screen.getByLabelText('Confirm Modal Danger Button')));
+      await waitFor(() => userEvent.click(screen.getByRole('button', { name: 'Yes' })));
       expect(defaultProps.onChange).toHaveBeenCalledWith([]);
     });
   });

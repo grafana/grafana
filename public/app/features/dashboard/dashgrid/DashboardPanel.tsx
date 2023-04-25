@@ -99,6 +99,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
           isViewing={isViewing}
           isEditing={isEditing}
           isInView={isInView}
+          isDraggable={isDraggable}
           width={width}
           height={height}
         />
