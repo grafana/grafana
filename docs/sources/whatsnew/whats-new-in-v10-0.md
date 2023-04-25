@@ -249,6 +249,10 @@ _This is an experimental feature_
 As of Grafana 10, the Prometheus datasource supports delta (incremental) querying, in which values from data frames are cached and leveraged to modify future requests to avoid requesting duplicate values in dashboards with now-relative (i.e. any dashboard querying until "now") queries. This feature is disabled by default as it is still experimental, but can be turned on and configured in the Prometheus data source configuration.
 This will reduce network load, and speed up now-relative dashboards, especially for dashboards returning lots of data.
 
+### Phlare renamed to Grafana Pyroscope
+
+As a part of ongoing unification of Phlare and Pyroscope project we are renaming the Phlare data source to Grafana Pyroscope data source. This data source will support both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When creating new instance of the data source, backend type will be autodetected on the config page, or you can select it manually.
+
 ## Redesigned and improved Log Context
 
 Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
