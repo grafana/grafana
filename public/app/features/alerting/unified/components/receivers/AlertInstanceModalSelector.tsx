@@ -5,7 +5,7 @@ import { FixedSizeList } from 'react-window';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Button, clearButtonStyles, FilterInput, LoadingPlaceholder, Modal, Tooltip, useStyles2 } from '@grafana/ui';
-import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -18,7 +18,7 @@ export function AlertInstanceModalSelector({
   isOpen,
   onClose,
 }: {
-  onSelect: (payload: string) => void;
+  onSelect: (alerts: TestTemplateAlert[]) => void;
   isOpen: boolean;
   onClose: () => void;
 }) {
@@ -125,31 +125,19 @@ export function AlertInstanceModalSelector({
     );
   };
 
-  const parseAsPayload = () => {
-    if (!selectedInstances) {
-      return;
-    }
-    return JSON.stringify(
-      {
-        alerts: selectedInstances.map((instance) => ({
+  const handleConfirm = () => {
+    const instances: TestTemplateAlert[] =
+      selectedInstances?.map((instance: AlertmanagerAlert) => {
+        const alert: TestTemplateAlert = {
           annotations: instance.annotations,
           labels: instance.labels,
           startsAt: instance.startsAt,
           endsAt: instance.endsAt,
-        })),
-      },
-      null,
-      2
-    );
-  };
+        };
+        return alert;
+      }) || [];
 
-  const handleConfirm = () => {
-    const payload = parseAsPayload();
-    if (!payload) {
-      return;
-    }
-    onSelect(payload);
-    onClose();
+    onSelect(instances);
   };
 
   const handleSearchRules = (filter: string) => {
