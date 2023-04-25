@@ -15,10 +15,14 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
+import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
 import { DataSourceList } from './DataSourceList';
 
+const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
@@ -40,14 +44,17 @@ export function DataSourceModal({
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
+  const newDataSourceURL = config.featureToggles.dataConnectionsConsole
+    ? CONNECTIONS_ROUTES.DataSourcesNew
+    : DATASOURCES_ROUTES.New;
 
   const onDismissModal = () => {
     onDismiss();
-    reportInteraction('dashboards_dspickermodal_clicked', { item: 'dismiss', src: analyticsInteractionSrc });
+    reportInteraction(INTERACTION_EVENT_NAME, { item: 'dismiss', src: analyticsInteractionSrc });
   };
   const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
     onChange(ds);
-    reportInteraction('dashboards_dspickermodal_clicked', {
+    reportInteraction(INTERACTION_EVENT_NAME, {
       item: 'select_ds',
       ds_type: ds.type,
       src: analyticsInteractionSrc,
@@ -57,7 +64,7 @@ export function DataSourceModal({
   const reportSearchUsageOnce = React.useMemo(
     () =>
       once(() => {
-        reportInteraction('dashboards_dspickermodal_clicked', { item: 'search', src: analyticsInteractionSrc });
+        reportInteraction(INTERACTION_EVENT_NAME, { item: 'search', src: analyticsInteractionSrc });
       }),
     [analyticsInteractionSrc]
   );
@@ -117,7 +124,7 @@ export function DataSourceModal({
                 onDrop: (...args) => {
                   fileUploadOptions?.onDrop?.(...args);
                   onDismiss();
-                  reportInteraction('dashboards_dspickermodal_clicked', {
+                  reportInteraction(INTERACTION_EVENT_NAME, {
                     item: 'upload_file',
                     src: analyticsInteractionSrc,
                   });
@@ -131,9 +138,9 @@ export function DataSourceModal({
         <div className={styles.dsCTAs}>
           <LinkButton
             variant="secondary"
-            href={`datasources/new`}
+            href={newDataSourceURL}
             onClick={() => {
-              reportInteraction('dashboards_dspickermodal_clicked', { item: 'new_ds', src: analyticsInteractionSrc });
+              reportInteraction(INTERACTION_EVENT_NAME, { item: 'new_ds', src: analyticsInteractionSrc });
             }}
           >
             Configure a new data source
