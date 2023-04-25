@@ -3,6 +3,8 @@ package static
 import (
 	"context"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const publicKeyID = "7e4d0c6a708866e7"
@@ -32,9 +34,12 @@ N1c5v9v/4h6qeA==
 
 type KeyRetriever struct{}
 
+var _ plugins.KeyRetriever = (*KeyRetriever)(nil)
+
 func New() *KeyRetriever {
 	return &KeyRetriever{}
 }
+
 func (kr *KeyRetriever) GetPublicKey(ctx context.Context, keyID string) (string, error) {
 	if keyID == publicKeyID {
 		return publicKeyText, nil

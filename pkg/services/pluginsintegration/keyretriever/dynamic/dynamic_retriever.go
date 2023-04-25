@@ -39,6 +39,8 @@ type KeyRetriever struct {
 	hasKeys bool
 }
 
+var _ plugins.KeyRetriever = (*KeyRetriever)(nil)
+
 func New(cfg *config.Cfg, kv plugins.KeyStore) *KeyRetriever {
 	kr := &KeyRetriever{
 		cfg: cfg,

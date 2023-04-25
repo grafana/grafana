@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/static"
 )
 
+var _ plugins.KeyRetriever = (*Service)(nil)
+
 type Service struct {
 	static  *static.KeyRetriever
 	dynamic *dynamic.KeyRetriever
