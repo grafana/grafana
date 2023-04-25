@@ -479,7 +479,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
-    return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
+    return loadingState === LoadingState.Done || loadingState === LoadingState.Error || pluginMeta.skipDataQuery;
   }
 
   skipFirstRender(loadingState: LoadingState) {
@@ -716,7 +716,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
 
     const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
-
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
