@@ -6,7 +6,7 @@ title: Build a logs data source plugin
 
 Data logs are defined as data stored over a period of time in different systems or environments for the purpose of tracking certain events.  
 
-Grafana data source plugins support metrics , logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences. 
+Grafana data source plugins support metrics, logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences. 
 
 ## Before you begin
 
