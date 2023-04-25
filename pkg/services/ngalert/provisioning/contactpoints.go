@@ -453,7 +453,7 @@ groupLoop:
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
 				// Check to see whether a different group with the name we want already exists.
-				for i, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
+				for _, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
 					// If so, put our modified receiver into that group. Done!
 					if candidateExistingGroup.Name == target.Name {
 						// Drop it from the old group...

@@ -17,13 +17,13 @@ export function DataSourceCard({ ds, onClick, selected }: DataSourceCardProps) {
     <Card key={ds.uid} onClick={onClick} className={cx(styles.card, selected ? styles.selected : undefined)}>
       <Card.Heading className={styles.heading}>
         <div className={styles.headingContent}>
-          <span className={styles.dsName}>{ds.name}</span>
-          <span className={styles.headingSeparator}>|</span>
-          <small className={styles.dsType}>{ds.meta.name}</small>
+          <span className={styles.name}>{ds.name}</span>
+          <span className={styles.separator}>|</span>
+          <small className={styles.type}>{ds.meta.name}</small>
         </div>
       </Card.Heading>
-      <Card.Figure>
-        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} height="32" width="32" />
+      <Card.Figure className={styles.logo}>
+        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} />
       </Card.Figure>
       <Card.Tags>{ds.isDefault ? <TagList tags={['default']} /> : null}</Card.Tags>
     </Card>
@@ -57,15 +57,19 @@ function getStyles(theme: GrafanaTheme2) {
       text-overflow: ellipsis;
       white-space: nowrap;
     `,
-    dsName: css`
+    logo: css`
+      width: 32px;
+      height: 32px;
+    `,
+    name: css`
       color: ${theme.colors.text.primary};
     `,
-    dsType: css`
+    type: css`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     `,
-    headingSeparator: css`
+    separator: css`
       margin: 0 ${theme.spacing(1)};
       color: ${theme.colors.border.weak};
     `,
