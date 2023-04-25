@@ -96,7 +96,10 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 //
 // Get folder by id.
 //
-// Returns the folder identified by id.
+// Returns the folder identified by id. This is deprecated.
+// Please refer to [updated API](#/folders/getFolderByUID) instead
+//
+// Deprecated: true
 //
 // Responses:
 // 200: folderResponse
@@ -294,41 +297,82 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, "")
 }
 
-func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
-	canEdit, _ := g.CanEdit()
-	canSave, _ := g.CanSave()
-	canAdmin, _ := g.CanAdmin()
-	canDelete, _ := g.CanDelete()
-
-	// Finding creator and last updater of the folder
-	updater, creator := anonString, anonString
-	if folder.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+// swagger:route GET /folders/{folder_uid}/counts folders getFolderChildrenCounts
+//
+// Gets the count of each descendant of a folder by kind. The folder is identified by UID.
+//
+// Responses:
+// 200: getFolderChildrenCountsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetFolderChildrenCounts(c *contextmodel.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	counts, err := hs.folderService.GetChildrenCounts(c.Req.Context(), &folder.GetChildrenCountsQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
+	if err != nil {
+		return apierrors.ToFolderErrorResponse(err)
 	}
-	if folder.UpdatedBy > 0 {
-		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+
+	return response.JSON(http.StatusOK, counts)
+}
+func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, f *folder.Folder) dtos.Folder {
+	ctx := c.Req.Context()
+	toDTO := func(f *folder.Folder) dtos.Folder {
+		canEdit, _ := g.CanEdit()
+		canSave, _ := g.CanSave()
+		canAdmin, _ := g.CanAdmin()
+		canDelete, _ := g.CanDelete()
+
+		// Finding creator and last updater of the folder
+		updater, creator := anonString, anonString
+		if f.CreatedBy > 0 {
+			creator = hs.getUserLogin(ctx, f.CreatedBy)
+		}
+		if f.UpdatedBy > 0 {
+			updater = hs.getUserLogin(ctx, f.UpdatedBy)
+		}
+
+		acMetadata, _ := hs.getFolderACMetadata(c, f)
+
+		return dtos.Folder{
+			Id:            f.ID,
+			Uid:           f.UID,
+			Title:         f.Title,
+			Url:           f.URL,
+			HasACL:        f.HasACL,
+			CanSave:       canSave,
+			CanEdit:       canEdit,
+			CanAdmin:      canAdmin,
+			CanDelete:     canDelete,
+			CreatedBy:     creator,
+			Created:       f.Created,
+			UpdatedBy:     updater,
+			Updated:       f.Updated,
+			Version:       f.Version,
+			AccessControl: acMetadata,
+			ParentUID:     f.ParentUID,
+		}
 	}
 
-	acMetadata, _ := hs.getFolderACMetadata(c, folder)
+	folderDTO := toDTO(f)
 
-	return dtos.Folder{
-		Id:            folder.ID,
-		Uid:           folder.UID,
-		Title:         folder.Title,
-		Url:           folder.URL,
-		HasACL:        folder.HasACL,
-		CanSave:       canSave,
-		CanEdit:       canEdit,
-		CanAdmin:      canAdmin,
-		CanDelete:     canDelete,
-		CreatedBy:     creator,
-		Created:       folder.Created,
-		UpdatedBy:     updater,
-		Updated:       folder.Updated,
-		Version:       folder.Version,
-		AccessControl: acMetadata,
-		ParentUID:     folder.ParentUID,
+	if !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return folderDTO
 	}
+
+	parents, err := hs.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+	if err != nil {
+		// log the error instead of failing
+		hs.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
+	}
+
+	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
+	for _, f := range parents {
+		folderDTO.Parents = append(folderDTO.Parents, toDTO(f))
+	}
+
+	return folderDTO
 }
 
 func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
@@ -498,4 +542,18 @@ type DeleteFolderResponse struct {
 		// example: Folder My Folder deleted
 		Message string `json:"message"`
 	} `json:"body"`
+}
+
+// swagger:parameters getFolderChildrenCounts
+type GetFolderChildrenCountsParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+}
+
+// swagger:response getFolderChildrenCountsResponse
+type GetFolderChildrenCountsResponse struct {
+	// The response message
+	// in: body
+	Body folder.ChildrenCounts `json:"body"`
 }

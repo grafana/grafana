@@ -45,6 +45,9 @@ export interface AlertingRule extends RuleBase {
   };
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+  totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
+  totalsFiltered?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
+  activeAt?: string; // ISO timestamp
 }
 
 export interface RecordingRule extends RuleBase {
@@ -59,10 +62,16 @@ export type Rule = AlertingRule | RecordingRule;
 
 export type BaseRuleGroup = { name: string };
 
+type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
+enum FiringTotal {
+  Firing = 'firing',
+}
 export interface RuleGroup {
   name: string;
   interval: number;
   rules: Rule[];
+  // totals only exist for Grafana Managed rules
+  totals?: Partial<Record<TotalsWithoutAlerting | FiringTotal, number>>;
 }
 
 export interface RuleNamespace {
@@ -89,13 +98,30 @@ export interface CombinedRule {
   rulerRule?: RulerRuleDTO;
   group: CombinedRuleGroup;
   namespace: CombinedRuleNamespace;
+  instanceTotals: AlertInstanceTotals;
+  filteredInstanceTotals: AlertInstanceTotals;
 }
+
+// export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
+export enum AlertInstanceTotalState {
+  Alerting = 'alerting',
+  Pending = 'pending',
+  Normal = 'inactive',
+  NoData = 'nodata',
+  Error = 'error',
+}
+
+export type AlertInstanceTotals = Partial<Record<AlertInstanceTotalState, number>>;
+
+// AlertGroupTotals also contain the amount of recording and paused rules
+export type AlertGroupTotals = Partial<Record<AlertInstanceTotalState | 'paused' | 'recording', number>>;
 
 export interface CombinedRuleGroup {
   name: string;
   interval?: string;
   source_tenants?: string[];
   rules: CombinedRule[];
+  totals: AlertGroupTotals;
 }
 
 export interface CombinedRuleNamespace {

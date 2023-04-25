@@ -142,6 +142,10 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
       dashboard?.panels
+        // Filtering out rows at the moment, revisit to only include panels that support annotations
+        // However the information to know if a panel supports annotations requires it to be already loaded
+        // panel.plugin?.dataSupport?.annotations
+        .filter((panel) => config.panels[panel.type])
         .map((panel) => ({
           value: panel.id,
           label: panel.title ?? `Panel ${panel.id}`,
