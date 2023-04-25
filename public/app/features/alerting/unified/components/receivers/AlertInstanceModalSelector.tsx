@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { noop } from 'lodash';
 import React, { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
@@ -28,6 +27,8 @@ export function AlertInstanceModalSelector({
   const [selectedRule, setSelectedRule] = useState<string>();
   const [selectedInstances, setSelectedInstances] = useState<AlertmanagerAlert[] | null>(null);
 
+  const [filteredRules, setFilteredRules] = useState<Record<string, AlertmanagerAlert[]> | null>(null);
+
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
   const { loading, result, error } = alertsRequests[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState;
 
@@ -54,6 +55,7 @@ export function AlertInstanceModalSelector({
         }
         rulesWithInstances[instance.labels['alertname']].push(instance);
       });
+      setFilteredRules(rulesWithInstances);
 
       console.log(rulesWithInstances);
     }
@@ -64,7 +66,10 @@ export function AlertInstanceModalSelector({
   }
 
   const RuleRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
-    const ruleName = Object.keys(rulesWithInstances)[index];
+    if (!filteredRules) {
+      return null;
+    }
+    const ruleName = Object.keys(filteredRules)[index];
 
     const isSelected = ruleName === selectedRule;
 
@@ -76,7 +81,7 @@ export function AlertInstanceModalSelector({
         className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
         onClick={() => handleRuleChange(ruleName)}
       >
-        <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{ruleName}</div>
+        <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
       </button>
     );
   };
@@ -102,7 +107,7 @@ export function AlertInstanceModalSelector({
       <button
         type="button"
         style={style}
-        className={cx(styles.rowButton, styles.panelButton, {
+        className={cx(styles.rowButton, styles.instanceButton, {
           [styles.rowOdd]: index % 2 === 1,
           [styles.rowSelected]: isSelected,
         })}
@@ -143,6 +148,18 @@ export function AlertInstanceModalSelector({
     onClose();
   };
 
+  const handleSearchRules = (filter: string) => {
+    setRuleFilter(filter);
+    const filteredRules = Object.keys(rulesWithInstances).filter((rule) =>
+      rule.toLowerCase().includes(filter.toLowerCase())
+    );
+    const filteredRulesObject: Record<string, AlertmanagerAlert[]> = {};
+    filteredRules.forEach((rule) => {
+      filteredRulesObject[rule] = rulesWithInstances[rule];
+    });
+    setFilteredRules(filteredRulesObject);
+  };
+
   return (
     <div>
       <Modal
@@ -156,12 +173,12 @@ export function AlertInstanceModalSelector({
         <div className={styles.container}>
           <FilterInput
             value={ruleFilter}
-            onChange={setRuleFilter}
+            onChange={handleSearchRules}
             title="Search alert rule"
             placeholder="Search alert rule"
             autoFocus
           />
-          <FilterInput value={''} onChange={noop} title="Search alert instance" placeholder="Search alert instance" />
+          <div>{(selectedRule && 'Select one or more instances from the list below') || ''}</div>
 
           <div className={styles.column}>
             {loading && <LoadingPlaceholder text="Loading rules..." className={styles.loadingPlaceholder} />}
@@ -173,7 +190,7 @@ export function AlertInstanceModalSelector({
                     itemSize={50}
                     height={height}
                     width={width}
-                    itemCount={Object.keys(rulesWithInstances).length}
+                    itemCount={Object.keys(filteredRules || {}).length}
                   >
                     {RuleRow}
                   </FixedSizeList>
@@ -184,8 +201,8 @@ export function AlertInstanceModalSelector({
 
           <div className={styles.column}>
             {!selectedRule && !loading && (
-              <div className={styles.selectDashboardPlaceholder}>
-                <div>Select a alert rule to get a list of available instances</div>
+              <div className={styles.selectedRulePlaceholder}>
+                <div>Select an alert rule to get a list of available instances</div>
               </div>
             )}
             {loading && <LoadingPlaceholder text="Loading rule..." className={styles.loadingPlaceholder} />}
@@ -246,19 +263,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     alertLabels: css`
       overflow-x: auto;
     `,
-    dashboardTitle: css`
+    ruleTitle: css`
       height: 22px;
       font-weight: ${theme.typography.fontWeightBold};
-    `,
-    dashboardFolder: css`
-      height: 20px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-      column-gap: ${theme.spacing(1)};
-      align-items: center;
     `,
     rowButton: css`
       ${clearButton};
@@ -284,7 +291,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowOdd: css`
       background-color: ${theme.colors.background.secondary};
     `,
-    panelButton: css`
+    instanceButton: css`
       display: flex;
       gap: ${theme.spacing(1)};
       justify-content: space-between;
@@ -296,7 +303,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
       align-items: center;
     `,
-    selectDashboardPlaceholder: css`
+    selectedRulePlaceholder: css`
       width: 100%;
       height: 100%;
       display: flex;
