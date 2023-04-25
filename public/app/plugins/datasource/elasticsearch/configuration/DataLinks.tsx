@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -27,6 +27,15 @@ export type Props = {
 export const DataLinks = (props: Props) => {
   const { value, onChange } = props;
   const styles = useStyles2(getStyles);
+
+  const validateFieldRule = useMemo(() => {
+    return {
+      rule: (field: string) => {
+        return value ? value.filter((value) => value.field && value.field === field).length <= 1 : true;
+      },
+      errorMessage: 'Name already in use',
+    };
+  }, [value]);
 
   return (
     <>
@@ -62,6 +71,7 @@ export const DataLinks = (props: Props) => {
                     origin: VariableOrigin.Value,
                   },
                 ]}
+                validateField={validateFieldRule}
               />
             );
           })}

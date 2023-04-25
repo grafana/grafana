@@ -4,11 +4,11 @@ import { usePrevious } from 'react-use';
 
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
+import { Button, LegacyForms, DataLinkInput, stylesFactory, EventsWithValidation, ValidationRule } from '@grafana/ui';
 
 import { DataLinkConfig } from '../types';
 
-const { FormField, Switch } = LegacyForms;
+const { FormField, Switch, Input } = LegacyForms;
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`
@@ -38,9 +38,10 @@ type Props = {
   onDelete: () => void;
   suggestions: VariableSuggestion[];
   className?: string;
+  validateField: ValidationRule;
 };
 export const DataLink = (props: Props) => {
-  const { value, onChange, onDelete, suggestions, className } = props;
+  const { value, onChange, onDelete, suggestions, className, validateField } = props;
   const styles = getStyles();
   const [showInternalLink, setShowInternalLink] = useInternalLink(value.datasourceUid);
 
@@ -57,13 +58,19 @@ export const DataLink = (props: Props) => {
         <FormField
           className={styles.nameField}
           labelWidth={6}
-          // A bit of a hack to prevent using default value for the width from FormField
-          inputWidth={null}
+          inputEl={
+            <Input
+              value={value.field}
+              onChange={handleChange('field')}
+              placeholder="Field name or regex pattern"
+              validationEvents={{
+                [EventsWithValidation.onBlur]: [validateField],
+                [EventsWithValidation.onFocus]: [validateField],
+              }}
+            />
+          }
           label="Field"
-          type="text"
-          value={value.field}
           tooltip={'Can be exact field name or a regex pattern that will match on the field name.'}
-          onChange={handleChange('field')}
         />
         <Button
           variant={'destructive'}
@@ -97,6 +104,7 @@ export const DataLink = (props: Props) => {
         <FormField
           className={styles.urlDisplayLabelField}
           inputWidth={null}
+          labelWidth={7}
           label="URL Label"
           type="text"
           value={value.urlDisplayLabel}
