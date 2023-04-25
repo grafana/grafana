@@ -5490,12 +5490,13 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "tags": [
           "folders"
         ],
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5632,6 +5633,40 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
+        "operationId": "getFolderChildrenCounts",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getFolderChildrenCountsResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -13559,12 +13594,16 @@
         }
       }
     },
+    "FolderChildrenCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
     "FolderSearchHit": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -20300,6 +20339,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSourceList"
+      }
+    },
+    "getFolderChildrenCountsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/FolderChildrenCounts"
       }
     },
     "getFolderPermissionListResponse": {

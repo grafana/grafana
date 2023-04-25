@@ -623,6 +623,28 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	return result, nil
 }
 
+func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.ChildrenCounts, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
+	}
+	if *cmd.UID == "" {
+		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+	if cmd.OrgID < 1 {
+		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
+	}
+
+	countsMap := make(folder.ChildrenCounts, len(s.registry))
+	for _, v := range s.registry {
+		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		countsMap[v.Kind()] += c
+	}
+	return countsMap, nil
+}
+
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	rtEditor := org.RoleEditor

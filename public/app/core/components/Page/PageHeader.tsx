@@ -4,8 +4,9 @@ import React from 'react';
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PageInfoItem } from '../Page/types';
 import { PageInfo } from '../PageInfo/PageInfo';
+
+import { PageInfoItem } from './types';
 
 export interface Props {
   navItem: NavModelItem;
