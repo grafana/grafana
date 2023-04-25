@@ -264,7 +264,7 @@ const (
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
-	// Changes responses from Loki to be compliant with the dataplane specification.
+	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
 
 	// FlagDataplaneFrontendFallback

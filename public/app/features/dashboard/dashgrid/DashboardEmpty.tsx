@@ -36,7 +36,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             icon="plus"
             aria-label="Add new panel"
             onClick={() => {
-              reportInteraction('Create new panel');
+              reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
               const id = onCreateNewPanel(dashboard);
               locationService.partial({ editPanel: id });
             }}
@@ -58,7 +58,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               fill="outline"
               aria-label="Add new row"
               onClick={() => {
-                reportInteraction('Create new row');
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
                 onCreateNewRow(dashboard);
               }}
               disabled={!canCreate}
@@ -80,7 +80,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               fill="outline"
               aria-label="Add new panel from panel library"
               onClick={() => {
-                reportInteraction('Add a panel from the panel library');
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
                 onAddLibraryPanel(dashboard);
               }}
               disabled={!canCreate}

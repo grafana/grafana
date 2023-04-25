@@ -1,16 +1,7 @@
 import { css } from '@emotion/css';
 import { CompactSelection, GridCell, GridCellKind, GridSelection, Theme } from '@glideapps/glide-data-grid';
 
-import {
-  ArrayVector,
-  DataFrame,
-  DataFrameJSON,
-  dataFrameToJSON,
-  MutableDataFrame,
-  Field,
-  GrafanaTheme2,
-  FieldType,
-} from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameJSON, dataFrameToJSON, Field, GrafanaTheme2, FieldType } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
@@ -131,7 +122,11 @@ export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = fal
     field.values = new ArrayVector(valuesArray);
   }
 
-  return new MutableDataFrame(gridData);
+  return {
+    ...gridData,
+    fields: [...gridData.fields],
+    length: gridData.fields[0]?.values.length ?? 0,
+  };
 };
 
 export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRange): DataFrame => {
@@ -147,7 +142,11 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
     field.values = new ArrayVector(valuesArray);
   }
 
-  return new MutableDataFrame(gridData);
+  return {
+    ...gridData,
+    fields: [...gridData.fields],
+    length: gridData.fields[0]?.values.length ?? 0,
+  };
 };
 
 export const publishSnapshot = (data: DataFrame, panelID: number): void => {

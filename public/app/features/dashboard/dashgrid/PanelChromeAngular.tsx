@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, locationService } from '@grafana/runtime';
+import { PanelChrome } from '@grafana/ui';
 import config from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { setPanelAngularComponent } from 'app/features/panel/state/reducers';
@@ -15,8 +16,10 @@ import { StoreState } from 'app/types';
 import { isSoloRoute } from '../../../routes/utils';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
+import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 
 interface OwnProps {
   panel: PanelModel;
@@ -27,6 +30,7 @@ interface OwnProps {
   isInView: boolean;
   width: number;
   height: number;
+  hideMenu?: boolean;
 }
 
 interface ConnectedProps {
@@ -58,7 +62,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   scopeProps?: AngularScopeProps;
   subs = new Subscription();
-
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -179,8 +182,9 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const { dashboard, panel, isViewing, isEditing, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
-
     const alertState = data.alertState?.state;
+
+    const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
     const containerClassNames = classNames({
       'panel-container': true,
@@ -196,29 +200,63 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       'panel-content--no-padding': plugin.noPadding,
     });
 
-    return (
-      <div
-        className={containerClassNames}
-        data-testid={selectors.components.Panels.Panel.title(panel.title)}
-        aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
-      >
-        <PanelHeader
-          panel={panel}
-          dashboard={dashboard}
-          title={panel.title}
-          description={panel.description}
-          links={panel.links}
-          error={errorMessage}
-          isViewing={isViewing}
-          isEditing={isEditing}
-          data={data}
-          alertState={alertState}
-        />
-        <div className={panelContentClassNames}>
-          <div ref={(element) => (this.element = element)} className="panel-height-helper" />
+    if (config.featureToggles.newPanelChromeUI) {
+      // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+      const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
+      const menu = (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
         </div>
-      </div>
-    );
+      );
+
+      return (
+        <PanelChrome
+          width={this.props.width}
+          height={this.props.height}
+          title={panelChromeProps.title}
+          loadingState={data.state}
+          statusMessage={errorMessage}
+          statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
+          description={panelChromeProps.description}
+          titleItems={panelChromeProps.titleItems}
+          menu={this.props.hideMenu ? undefined : menu}
+          dragClass={panelChromeProps.dragClass}
+          dragClassCancel="grid-drag-cancel"
+          padding={panelChromeProps.padding}
+          hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={panelChromeProps.hasOverlayHeader()}
+          displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={panelChromeProps.onCancelQuery}
+        >
+          {() => <div ref={(element) => (this.element = element)} className="panel-height-helper" />}
+        </PanelChrome>
+      );
+    } else {
+      return (
+        <div
+          className={containerClassNames}
+          data-testid={selectors.components.Panels.Panel.title(panel.title)}
+          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
+        >
+          <PanelHeader
+            panel={panel}
+            dashboard={dashboard}
+            title={panel.title}
+            description={panel.description}
+            links={panel.links}
+            error={errorMessage}
+            isViewing={isViewing}
+            isEditing={isEditing}
+            data={data}
+            alertState={alertState}
+          />
+          <div className={panelContentClassNames}>
+            <div ref={(element) => (this.element = element)} className="panel-height-helper" />
+          </div>
+        </div>
+      );
+    }
   }
 }
 

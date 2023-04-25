@@ -5,11 +5,9 @@ import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
-import { pluginSignTask } from './tasks/plugin.sign';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
-import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { execTask } from './utils/execTask';
@@ -64,19 +62,6 @@ export const run = (includeInternalScripts = false) => {
           )
         );
         await execTask(toolkitBuildTask)({});
-      });
-
-    program
-      .command('searchTestData')
-      .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('[deprecated] Setup test data for search')
-      .action(async (cmd) => {
-        console.log(
-          chalk.yellow.bold(
-            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-          )
-        );
-        await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
   }
 
@@ -137,17 +122,12 @@ export const run = (includeInternalScripts = false) => {
       },
       []
     )
-    .description('[Deprecated] Create a plugin signature')
-    .action(async (cmd) => {
+    .description('[removed] Use grafana sign-plugin instead')
+    .action(() => {
       console.log(
-        chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️') +
-          '\nPlease migrate to grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin'
+        'No longer supported. Use grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin\n'
       );
-      await execTask(pluginSignTask)({
-        signatureType: cmd.signatureType,
-        rootUrls: cmd.rootUrls,
-        silent: true,
-      });
+      process.exit(1);
     });
 
   program

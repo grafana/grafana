@@ -5,6 +5,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -17,15 +18,28 @@ import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel } from './utils';
 
+const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+const INTERACTION_ITEM = {
+  OPEN_DROPDOWN: 'open_dspicker',
+  SELECT_DS: 'select_ds',
+  ADD_FILE: 'add_file',
+  OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
+};
+
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
+  const [filterTerm, setFilterTerm] = useState<string>();
+  const openDropdown = () => {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
+    setOpen(true);
+    markerElement?.focus();
+  };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
-  const [filterTerm, setFilterTerm] = useState<string>();
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
@@ -35,11 +49,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     setOpen(false);
     markerElement?.blur();
   }, [setOpen, markerElement]);
-
-  const onOpen = () => {
-    setOpen(true);
-    markerElement?.focus();
-  };
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
@@ -59,7 +68,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   return (
     <div className={styles.container}>
-      <div tabIndex={0} onFocus={onOpen} role={'button'} className={styles.trigger} onClick={onOpen}>
+      <div tabIndex={0} onFocus={openDropdown} role={'button'} className={styles.trigger} onClick={openDropdown}>
         <Input
           className={isOpen ? undefined : styles.input}
           prefix={
@@ -71,8 +80,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           }
           suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
           placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
-          onFocus={onOpen}
-          onClick={onOpen}
+          onFocus={openDropdown}
+          onClick={openDropdown}
           onChange={(e) => {
             setFilterTerm(e.currentTarget.value);
           }}
@@ -127,6 +136,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
     },
     [onChange]
   );
@@ -134,6 +144,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const clickAddCSVCallback = useCallback(() => {
     onClickAddCSV?.();
     onClose();
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
   }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStylesPickerContent);
@@ -168,6 +179,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 showModal(DataSourceModal, {
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
+                  reportedInteractionFrom: 'ds_picker',
                   current,
                   onDismiss: hideModal,
                   onChange: (ds) => {
@@ -175,6 +187,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                     hideModal();
                   },
                 });
+                reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
               }}
             >
               Open advanced data source picker

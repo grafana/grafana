@@ -12,7 +12,7 @@ import { buildNavModel } from '../folders/state/navModel';
 import { parseRouteParams } from '../search/utils';
 
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
-import { BrowseActions } from './components/BrowseActions';
+import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { SearchView } from './components/SearchView';

@@ -22,10 +22,10 @@ export function AppNotificationList() {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    appEvents.on(AppEvents.alertWarning, (payload) => notifyApp(createWarningNotification(...payload)));
-    appEvents.on(AppEvents.alertSuccess, (payload) => notifyApp(createSuccessNotification(...payload)));
-    appEvents.on(AppEvents.alertError, (payload) => notifyApp(createErrorNotification(...payload)));
-  }, []);
+    appEvents.on(AppEvents.alertWarning, (payload) => dispatch(notifyApp(createWarningNotification(...payload))));
+    appEvents.on(AppEvents.alertSuccess, (payload) => dispatch(notifyApp(createSuccessNotification(...payload))));
+    appEvents.on(AppEvents.alertError, (payload) => dispatch(notifyApp(createErrorNotification(...payload))));
+  }, [dispatch]);
 
   const onClearAppNotification = (id: string) => {
     dispatch(hideAppNotification(id));
