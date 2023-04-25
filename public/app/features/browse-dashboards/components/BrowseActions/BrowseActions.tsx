@@ -6,7 +6,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useSelectedItemsState } from '../../state';
+import { useDedupedSelectedItems } from '../../state';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -15,14 +15,14 @@ export interface Props {}
 
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
-  const selectedItems = useSelectedItemsState();
+  const dedupedSelectedItems = useDedupedSelectedItems();
 
   const onMove = () => {
     appEvents.publish(
       new ShowModalReactEvent({
         component: MoveModal,
         props: {
-          selectedItems,
+          selectedItems: dedupedSelectedItems,
           onConfirm: (moveTarget: string) => {
             console.log(`MoveModal onConfirm clicked with target ${moveTarget}!`);
           },
@@ -36,7 +36,7 @@ export function BrowseActions() {
       new ShowModalReactEvent({
         component: DeleteModal,
         props: {
-          selectedItems,
+          selectedItems: dedupedSelectedItems,
           onConfirm: () => {
             console.log('DeleteModal onConfirm clicked!');
           },
