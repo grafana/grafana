@@ -176,6 +176,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
                 log: v.value!,
               });
             }}
+            allowCustomValue={true}
           />
         </Field>
       )}
