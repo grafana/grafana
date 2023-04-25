@@ -66,6 +66,24 @@ describe('DerivedFields', () => {
 
     expect(await screen.findByText('Name already in use')).toBeInTheDocument();
   });
+
+  it('does not validate empty names as repeated', () => {
+    const repeatedFields = [
+      {
+        matcherRegex: '',
+        name: '',
+      },
+      {
+        matcherRegex: '',
+        name: '',
+      },
+    ];
+    render(<DerivedFields onChange={jest.fn()} fields={repeatedFields} />);
+
+    userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
+
+    expect(screen.queryByText('Name already in use')).not.toBeInTheDocument();
+  });
 });
 
 const testFields = [
