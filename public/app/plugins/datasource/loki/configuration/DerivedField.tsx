@@ -4,15 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import {
-  Button,
-  DataLinkInput,
-  EventsWithValidation,
-  LegacyForms,
-  regexValidation,
-  useStyles2,
-  ValidationRule,
-} from '@grafana/ui';
+import { Button, DataLinkInput, EventsWithValidation, LegacyForms, useStyles2, ValidationRule } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -79,6 +71,7 @@ export const DerivedField = (props: Props) => {
             <Input
               value={value.name}
               onChange={handleChange('name')}
+              placeholder="Field name"
               validationEvents={{
                 [EventsWithValidation.onBlur]: [validateName],
                 [EventsWithValidation.onFocus]: [validateName],
@@ -86,7 +79,6 @@ export const DerivedField = (props: Props) => {
             />
           }
           label="Name"
-          type="text"
         />
         <FormField
           labelWidth={10}
