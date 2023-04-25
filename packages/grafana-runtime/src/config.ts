@@ -67,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   azureAuthEnabled = false;
+  secureSocksDSProxyEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
@@ -132,7 +133,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = { minInterval: '' };
+  unifiedAlerting = { minInterval: '', alertStateHistoryBackend: undefined };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {

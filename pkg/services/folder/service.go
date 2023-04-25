@@ -26,6 +26,7 @@ type Service interface {
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error
+	GetChildrenCounts(ctx context.Context, cmd *GetChildrenCountsQuery) (ChildrenCounts, error)
 }
 
 // FolderStore is a folder store.

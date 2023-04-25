@@ -72,7 +72,7 @@ const y = frame.fields.find((field) => field.name === yField);
 const size = frame.fields.find((field) => field.name === sizeField);
 
 for (let i = 0; i < frame.length; i++) {
-  const row = [x?.values.get(i), y?.values.get(i), size?.values.get(i)];
+  const row = [x?.values[i], y?.values[i], size?.values[i]];
 
   // ...
 }
@@ -100,7 +100,7 @@ const valueField = frame.fields.find((field) => field.type === FieldType.number)
 return (
   <div>
     {valueField
-      ? valueField.values.toArray().map((value) => {
+      ? valueField.values.map((value) => {
           const displayValue = valueField.display!(value);
           return (
             <p style={{ color: displayValue.color }}>

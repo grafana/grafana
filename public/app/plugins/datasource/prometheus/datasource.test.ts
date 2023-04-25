@@ -396,9 +396,9 @@ describe('PrometheusDatasource', () => {
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
         const results = result[0].data;
-        expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
-        expect(results[0].fields[2].values.toArray()).toEqual([10, 0]);
-        expect(results[0].fields[3].values.toArray()).toEqual([5, 0]);
+        expect(results[0].fields[1].values).toEqual([10, 10]);
+        expect(results[0].fields[2].values).toEqual([10, 0]);
+        expect(results[0].fields[3].values).toEqual([5, 0]);
       });
     });
 
@@ -1018,27 +1018,27 @@ describe('PrometheusDatasource2', () => {
     });
 
     it('should fill null until first datapoint in response', () => {
-      expect(results.data[0].fields[0].values.get(0)).toBe(start * 1000);
-      expect(results.data[0].fields[1].values.get(0)).toBe(null);
-      expect(results.data[0].fields[0].values.get(1)).toBe((start + step * 1) * 1000);
-      expect(results.data[0].fields[1].values.get(1)).toBe(3846);
+      expect(results.data[0].fields[0].values[0]).toBe(start * 1000);
+      expect(results.data[0].fields[1].values[0]).toBe(null);
+      expect(results.data[0].fields[0].values[1]).toBe((start + step * 1) * 1000);
+      expect(results.data[0].fields[1].values[1]).toBe(3846);
     });
 
     it('should fill null after last datapoint in response', () => {
       const length = (end - start) / step + 1;
-      expect(results.data[0].fields[0].values.get(length - 2)).toBe((end - step * 1) * 1000);
-      expect(results.data[0].fields[1].values.get(length - 2)).toBe(3848);
-      expect(results.data[0].fields[0].values.get(length - 1)).toBe(end * 1000);
-      expect(results.data[0].fields[1].values.get(length - 1)).toBe(null);
+      expect(results.data[0].fields[0].values[length - 2]).toBe((end - step * 1) * 1000);
+      expect(results.data[0].fields[1].values[length - 2]).toBe(3848);
+      expect(results.data[0].fields[0].values[length - 1]).toBe(end * 1000);
+      expect(results.data[0].fields[1].values[length - 1]).toBe(null);
     });
 
     it('should fill null at gap between series', () => {
-      expect(results.data[0].fields[0].values.get(2)).toBe((start + step * 2) * 1000);
-      expect(results.data[0].fields[1].values.get(2)).toBe(null);
-      expect(results.data[1].fields[0].values.get(1)).toBe((start + step * 1) * 1000);
-      expect(results.data[1].fields[1].values.get(1)).toBe(null);
-      expect(results.data[1].fields[0].values.get(3)).toBe((start + step * 3) * 1000);
-      expect(results.data[1].fields[1].values.get(3)).toBe(null);
+      expect(results.data[0].fields[0].values[2]).toBe((start + step * 2) * 1000);
+      expect(results.data[0].fields[1].values[2]).toBe(null);
+      expect(results.data[1].fields[0].values[1]).toBe((start + step * 1) * 1000);
+      expect(results.data[1].fields[1].values[1]).toBe(null);
+      expect(results.data[1].fields[0].values[3]).toBe((start + step * 3) * 1000);
+      expect(results.data[1].fields[1].values[3]).toBe(null);
     });
   });
 
