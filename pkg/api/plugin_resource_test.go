@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -80,6 +81,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.log = log.New("test")
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
@@ -118,6 +120,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pc
+		hs.log = log.New("test")
 	})
 
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {
