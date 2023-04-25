@@ -316,42 +316,63 @@ func (hs *HTTPServer) GetFolderChildrenCounts(c *contextmodel.ReqContext) respon
 
 	return response.JSON(http.StatusOK, counts)
 }
+func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, f *folder.Folder) dtos.Folder {
+	ctx := c.Req.Context()
+	toDTO := func(f *folder.Folder) dtos.Folder {
+		canEdit, _ := g.CanEdit()
+		canSave, _ := g.CanSave()
+		canAdmin, _ := g.CanAdmin()
+		canDelete, _ := g.CanDelete()
 
-func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
-	canEdit, _ := g.CanEdit()
-	canSave, _ := g.CanSave()
-	canAdmin, _ := g.CanAdmin()
-	canDelete, _ := g.CanDelete()
+		// Finding creator and last updater of the folder
+		updater, creator := anonString, anonString
+		if f.CreatedBy > 0 {
+			creator = hs.getUserLogin(ctx, f.CreatedBy)
+		}
+		if f.UpdatedBy > 0 {
+			updater = hs.getUserLogin(ctx, f.UpdatedBy)
+		}
 
-	// Finding creator and last updater of the folder
-	updater, creator := anonString, anonString
-	if folder.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+		acMetadata, _ := hs.getFolderACMetadata(c, f)
+
+		return dtos.Folder{
+			Id:            f.ID,
+			Uid:           f.UID,
+			Title:         f.Title,
+			Url:           f.URL,
+			HasACL:        f.HasACL,
+			CanSave:       canSave,
+			CanEdit:       canEdit,
+			CanAdmin:      canAdmin,
+			CanDelete:     canDelete,
+			CreatedBy:     creator,
+			Created:       f.Created,
+			UpdatedBy:     updater,
+			Updated:       f.Updated,
+			Version:       f.Version,
+			AccessControl: acMetadata,
+			ParentUID:     f.ParentUID,
+		}
 	}
-	if folder.UpdatedBy > 0 {
-		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+
+	folderDTO := toDTO(f)
+
+	if !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return folderDTO
 	}
 
-	acMetadata, _ := hs.getFolderACMetadata(c, folder)
-
-	return dtos.Folder{
-		Id:            folder.ID,
-		Uid:           folder.UID,
-		Title:         folder.Title,
-		Url:           folder.URL,
-		HasACL:        folder.HasACL,
-		CanSave:       canSave,
-		CanEdit:       canEdit,
-		CanAdmin:      canAdmin,
-		CanDelete:     canDelete,
-		CreatedBy:     creator,
-		Created:       folder.Created,
-		UpdatedBy:     updater,
-		Updated:       folder.Updated,
-		Version:       folder.Version,
-		AccessControl: acMetadata,
-		ParentUID:     folder.ParentUID,
+	parents, err := hs.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+	if err != nil {
+		// log the error instead of failing
+		hs.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
 	}
+
+	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
+	for _, f := range parents {
+		folderDTO.Parents = append(folderDTO.Parents, toDTO(f))
+	}
+
+	return folderDTO
 }
 
 func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
