@@ -55,7 +55,7 @@ interface ScenarioProps {
 
 const RenderScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
-  const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'xxxl'];
+  const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
   const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 

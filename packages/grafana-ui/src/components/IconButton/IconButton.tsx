@@ -46,12 +46,19 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, size, variant);
+    let limitedIconSize: IconSize = size;
+
+    // very large icons (xl to xxxl) are unified to size xl
+    if (size === 'xxl' || size === 'xxxl') {
+      limitedIconSize = 'xl';
+    }
+
+    const styles = getStyles(theme, limitedIconSize, variant);
     const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
     const button = (
       <button ref={ref} aria-label={ariaLabel || tooltipString} {...restProps} className={cx(styles.button, className)}>
-        <Icon name={name} size={size} className={styles.icon} type={iconType} />
+        <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
       </button>
     );
 
@@ -82,12 +89,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
         return 6; // TODO: ask Staton
 
       case 'xl':
-        return 12;
-
-      case 'xxl':
-        return 12; // TODO: ask Staton
-
-      case 'xxxl':
         return 12; // TODO: ask Staton
 
       case 'md':
