@@ -157,7 +157,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     if (this.props.panel.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
       changeToSnapshotData(frames, this.props.panel);
-      deferredPromise.resolve!(true);
+      deferredPromise.resolve?.(true);
       return deferredPromise.promise;
     }
 
@@ -169,10 +169,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         icon: 'trash-alt',
         onConfirm: () => {
           changeToSnapshotData(frames, this.props.panel);
-          deferredPromise.resolve!(true);
+          deferredPromise.resolve?.(true);
         },
         onDismiss: () => {
-          deferredPromise.resolve!(false);
+          deferredPromise.resolve?.(false);
         },
       })
     );
