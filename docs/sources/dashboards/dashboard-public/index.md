@@ -47,7 +47,7 @@ If you are using Docker, use an environment variable to enable public dashboards
 
 {{% admonition type="Note" %}}
 
-For Grafana Cloud, contact support to have the feature enabled.
+For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
 
 {{% /admonition %}}
 
@@ -91,7 +91,7 @@ Email sharing allows you to share your public dashboard with only specific peopl
 
 {{% admonition type="Note" %}}
 
-For Grafana Cloud, contact support to have the feature enabled.
+For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
 
 {{% /admonition %}}
 
@@ -144,6 +144,8 @@ A single viewer cannot generate multiple valid one-time use links. When a new on
 If a Grafana user has read access to the parent dashboard, they can view the public dashboard without needing to have access granted.
 
 ## Assess public dashboard usage
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
