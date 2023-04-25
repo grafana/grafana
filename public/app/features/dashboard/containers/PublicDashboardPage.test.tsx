@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -9,6 +10,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, ThresholdsMode, Panel } from '@grafana/schema/src';
+import config from 'app/core/config';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import * as appTypes from 'app/types';
@@ -125,6 +127,9 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
 
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
+    config.featureToggles.publicDashboards = true;
+    config.featureToggles.newPanelChromeUI = true;
+
     jest.clearAllMocks();
   });
 
@@ -176,7 +181,7 @@ describe('PublicDashboardPage', () => {
       });
     });
 
-    it('Should render panel without hover widget when panel title is undefined', async () => {
+    it('Should render panel with hover widget but without drag icon when panel title is undefined', async () => {
       const fieldConfig: FieldConfigSource = {
         defaults: {
           thresholds: {
@@ -216,26 +221,25 @@ describe('PublicDashboardPage', () => {
 
       const newState = {
         dashboard: {
-          getModel: () =>
-            getTestDashboard({
-              panels,
-            }),
+          getModel: () => getTestDashboard({ panels }),
           initError: null,
           initPhase: DashboardInitPhase.Completed,
           permissions: [],
         },
       };
-
       setup(undefined, newState);
+
       await waitFor(() => {
-        expect(screen.queryByTestId('hover-header-container')).not.toBeInTheDocument();
+        expect(screen.getByTestId(selectors.Panels.Panel.HoverWidget.container)).toBeInTheDocument();
       });
+      await userEvent.hover(screen.getByTestId(selectors.Panels.Panel.HoverWidget.container));
+      expect(screen.queryByTestId(selectors.Panels.Panel.HoverWidget.dragIcon)).not.toBeInTheDocument();
     });
 
     it('Should render panel without hover widget when panel title is not undefined', async () => {
       setup(undefined, newState);
       await waitFor(() => {
-        expect(screen.queryByTestId('hover-header-container')).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
       });
     });
   });
