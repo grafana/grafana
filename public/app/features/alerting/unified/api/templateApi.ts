@@ -25,10 +25,6 @@ export interface AlertField {
   labels: KeyValueField[];
 }
 
-type AnnoField = {
-  key: string;
-  value: string;
-};
 export interface AlertFields {
   annotations: AnnoField[];
   labels: AnnoField[];
