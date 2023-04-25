@@ -96,7 +96,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                   <Checkbox
                     {...formMethods.register('firing')}
                     label="Firing alert"
-                    description="It adds firing alert data."
+                    description="Adds firing alert data"
                   />
                   <Button
                     onClick={onAdd}
@@ -124,7 +124,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           <div className={styles.onSubmitWrapper}>
             <Modal.ButtonRow>
               <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
-                Add alert data to the payload
+                Add alert data to payload
               </Button>
             </Modal.ButtonRow>
           </div>

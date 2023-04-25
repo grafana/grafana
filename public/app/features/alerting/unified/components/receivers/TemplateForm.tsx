@@ -14,7 +14,7 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 import { useDispatch } from 'app/types';
 
 import {
-  AlertFields,
+  AlertField,
   TemplatePreviewErrors,
   TemplatePreviewResult,
   TemplatesPreviewResponse,
@@ -356,7 +356,7 @@ export function TemplatePreview({
 
   const onPreview = () => {
     try {
-      const alertList: AlertFields[] = JSON.parse(payload);
+      const alertList: AlertField[] = JSON.parse(payload);
       trigger({ template: templateContent, alerts: alertList, name: templateName });
       setPayloadFormatError(null);
     } catch (e) {
