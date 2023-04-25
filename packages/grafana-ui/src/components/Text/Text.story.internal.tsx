@@ -18,7 +18,6 @@ const meta: Meta = {
     controls: { exclude: ['as'] },
   },
   argTypes: {
-    //as: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'p', 'legend', undefined] },
     variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
     weight: {
       control: 'select',
@@ -61,34 +60,6 @@ export const Example: Story = () => {
       </StoryExample>
     </VerticalGroup>
   );
-};
-
-export const Basic: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <Text
-        as={args.as}
-        variant={args.variant}
-        weight={args.weight}
-        textAlignment={args.textAlignment}
-        margin={args.margin}
-        {...args}
-      >
-        {args.children}
-      </Text>
-    </div>
-  );
-};
-
-Basic.args = {
-  variant: undefined,
-  as: 'h1',
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a text component',
-  margin: '100px auto',
 };
 
 export const ExperimentalH1: Story = (args) => {
