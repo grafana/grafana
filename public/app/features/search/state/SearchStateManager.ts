@@ -40,7 +40,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
-  initStateFromUrl(folderUid?: string) {
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
     // Force list view when conditions are specified from the URL
@@ -54,7 +54,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    if (this.hasSearchFilters()) {
+    if (doInitialSearch && this.hasSearchFilters()) {
       this.doSearch();
     }
   }
@@ -247,7 +247,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   // This gets the possible tags from within the query results
   getTagOptions = (): Promise<TermCount[]> => {
-    return getGrafanaSearcher().tags(this.lastQuery!);
+    const query = this.lastQuery ?? {
+      kind: ['dashboard', 'folder'],
+      query: '*',
+    };
+    return getGrafanaSearcher().tags(query);
   };
 
   /**
