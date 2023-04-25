@@ -1,18 +1,7 @@
 import { css } from '@emotion/css';
 import { CompactSelection, GridCell, GridCellKind, GridSelection, Theme } from '@glideapps/glide-data-grid';
 
-import {
-  ArrayVector,
-  DataFrame,
-  DataFrameJSON,
-  dataFrameToJSON,
-  MutableDataFrame,
-  Field,
-  GrafanaTheme2,
-  FieldType,
-} from '@grafana/data';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { ArrayVector, DataFrame, MutableDataFrame, Field, GrafanaTheme2, FieldType } from '@grafana/data';
 
 import { isDatagridEditEnabled } from './featureFlagUtils';
 
@@ -32,11 +21,6 @@ export const EMPTY_DF = {
   name: 'A',
   fields: [],
   length: 0,
-};
-
-export const GRAFANA_DS = {
-  type: 'grafana',
-  uid: 'grafana',
 };
 
 export const EMPTY_CELL: GridCell = {
@@ -148,30 +132,6 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
   }
 
   return new MutableDataFrame(gridData);
-};
-
-export const publishSnapshot = (data: DataFrame, panelID: number): void => {
-  if (!isDatagridEditEnabled()) {
-    return;
-  }
-
-  const snapshot: DataFrameJSON[] = [dataFrameToJSON(data)];
-  const dashboard = getDashboardSrv().getCurrent();
-  const panelModel = dashboard?.getPanelById(panelID);
-
-  const query: GrafanaQuery = {
-    refId: 'A',
-    queryType: GrafanaQueryType.Snapshot,
-    snapshot,
-    datasource: GRAFANA_DS,
-  };
-
-  panelModel!.updateQueries({
-    dataSource: GRAFANA_DS,
-    queries: [query],
-  });
-
-  panelModel!.refresh();
 };
 
 //Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func

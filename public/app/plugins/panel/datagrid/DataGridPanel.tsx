@@ -10,9 +10,9 @@ import DataEditor, {
 } from '@glideapps/glide-data-grid';
 import React, { useEffect, useReducer } from 'react';
 
-import { ArrayVector, Field, MutableDataFrame, PanelProps, FieldType } from '@grafana/data';
+import { ArrayVector, Field, MutableDataFrame, PanelProps, FieldType, DataFrame } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { usePanelContext, useTheme2 } from '@grafana/ui';
 
 import '@glideapps/glide-data-grid/dist/index.css';
 
@@ -28,7 +28,6 @@ import {
   EMPTY_CELL,
   getGridCellKind,
   getGridTheme,
-  publishSnapshot,
   RIGHT_ELEMENT_PROPS,
   TRAILING_ROW_OPTIONS,
   getStyles,
@@ -41,6 +40,8 @@ export interface DataGridProps extends PanelProps<PanelOptions> {}
 
 export function DataGridPanel({ options, data, id, fieldConfig, width, height }: DataGridProps) {
   const [state, dispatch] = useReducer(datagridReducer, initialState);
+  const { onUpdateData } = usePanelContext();
+
   const {
     columns,
     contextMenuData,
@@ -87,7 +88,9 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     values[row] = newValue.data;
     field.values = new ArrayVector(values);
 
-    publishSnapshot(new MutableDataFrame(frame), id);
+    if (onUpdateData && isDatagridEditEnabled()) {
+      onUpdateData([frameCopy]);
+    }
   };
 
   const onColumnInputBlur = (columnName: string) => {
@@ -103,7 +106,9 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
     newFrame.addField(field);
 
-    publishSnapshot(newFrame, id);
+    if (onUpdateData && isDatagridEditEnabled()) {
+      onUpdateData([newFrame]);
+    }
   };
 
   const addNewRow = () => {
@@ -114,7 +119,9 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       field.values = new ArrayVector([...field.values.toArray(), null]);
     });
 
-    publishSnapshot(newFrame, id);
+    if (onUpdateData && isDatagridEditEnabled()) {
+      onUpdateData([newFrame]);
+    }
   };
 
   const onColumnResize = (column: GridColumn, width: number, columnIndex: number, newSizeWithGrow: number) => {
@@ -131,14 +138,12 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onDeletePressed = (selection: GridSelection) => {
-    if (selection.current && selection.current.range) {
-      publishSnapshot(clearCellsFromRangeSelection(frame, selection.current.range), id);
-      return true;
+    if (selection.current && selection.current.range && onUpdateData) {
+      onUpdateData([clearCellsFromRangeSelection(frame, selection.current.range)]);
     }
 
-    if (selection.rows) {
-      publishSnapshot(deleteRows(frame, selection.rows.toArray()), id);
-      return true;
+    if (selection.rows && onUpdateData) {
+      onUpdateData([deleteRows(frame, selection.rows.toArray())]);
     }
 
     return false;
@@ -168,7 +173,10 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     newFrame.fields.splice(to, 0, field);
 
     dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
-    publishSnapshot(newFrame, id);
+
+    if (onUpdateData) {
+      onUpdateData([newFrame]);
+    }
   };
 
   const onRowMove = (from: number, to: number) => {
@@ -182,7 +190,9 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       field.values = new ArrayVector(values);
     }
 
-    publishSnapshot(newFrame, id);
+    if (onUpdateData) {
+      onUpdateData([newFrame]);
+    }
   };
 
   const onColumnRename = () => {
@@ -194,7 +204,10 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     newFrame.fields[columnIdx].name = columnName;
 
     dispatch({ type: DatagridActionType.hideColumnRenameInput });
-    publishSnapshot(newFrame, id);
+
+    if (onUpdateData) {
+      onUpdateData([newFrame]);
+    }
   };
 
   const onSearchClose = () => {
@@ -203,6 +216,12 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const onGridSelectionChange = (selection: GridSelection) => {
     dispatch({ type: DatagridActionType.multipleCellsSelected, payload: { selection } });
+  };
+
+  const onContextMenuSave = (data: DataFrame) => {
+    if (onUpdateData) {
+      onUpdateData([data]);
+    }
   };
 
   if (!frame) {
@@ -261,7 +280,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
         <DatagridContextMenu
           menuData={contextMenuData}
           data={frame}
-          saveData={(data) => publishSnapshot(data, id)}
+          saveData={onContextMenuSave}
           closeContextMenu={closeContextMenu}
           dispatch={dispatch}
           gridSelection={gridSelection}
