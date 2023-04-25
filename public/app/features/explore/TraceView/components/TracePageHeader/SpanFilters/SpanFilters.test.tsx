@@ -37,14 +37,24 @@ const trace: Trace = {
 
 describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
+  beforeEach(() => {
+    jest.useFakeTimers();
+    // Need to use delay: null here to work with fakeTimers
+    // see https://github.com/testing-library/user-event/issues/833
+    user = userEvent.setup({ delay: null });
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   const SpanFiltersWithProps = () => {
     const [search, setSearch] = useState(defaultFilters);
     const props = {
       trace: trace,
       showSpanFilters: true,
       setShowSpanFilters: jest.fn(),
-      search: search,
-      setSearch: setSearch,
+      search,
+      setSearch,
       spanFilterMatches: undefined,
       focusedSpanIdForSearch: '',
       setFocusedSpanIdForSearch: jest.fn(),
@@ -53,17 +63,6 @@ describe('SpanFilters', () => {
 
     return <SpanFilters {...props} />;
   };
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-    // Need to use delay: null here to work with fakeTimers
-    // see https://github.com/testing-library/user-event/issues/833
-    user = userEvent.setup({ delay: null });
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
 
   it('should render', () => {
     expect(() => render(<SpanFiltersWithProps />)).not.toThrow();
