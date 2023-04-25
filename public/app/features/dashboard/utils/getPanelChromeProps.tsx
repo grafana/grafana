@@ -5,7 +5,6 @@ import { getTemplateSrv, locationService, reportInteraction } from '@grafana/run
 import { PanelPadding } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { plugin } from 'app/plugins/panel/alertGroups/module';
 
 import { PanelHeaderTitleItems } from '../dashgrid/PanelHeader/PanelHeaderTitleItems';
 import { DashboardModel, PanelModel } from '../state';
@@ -80,7 +79,7 @@ export function getPanelChromeProps(props: CommonProps) {
     reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: props.data.state });
   };
 
-  const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
+  const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
   const alertState = props.data.alertState?.state;
 
   const showTitleItems =
