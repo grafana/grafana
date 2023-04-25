@@ -10,18 +10,18 @@ weight: 8
 
 {{% admonition type="Note" %}}
 
-This feature is in [public preview]({{< relref "../../release-life-cycle/" >}}).
+This feature is in [public preview](/docs/release-life-cycle/).
 
 {{% /admonition %}}
 
 {{% admonition type="Caution" %}}
 
 Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/" >}}) and/or rate limiting features.
+This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-caching" >}}) and/or rate limiting features.
 
 {{% /admonition %}}
 
-Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the to the world without giving access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be part of the same Grafana organization or provides limited information, as with a snapshot.
+Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be part of the same Grafana organization or provides limited information, as with a snapshot.
 
 ## Security implications of making your dashboard public
 
@@ -53,17 +53,17 @@ For Grafana Cloud, contact support to have the feature enabled.
 
 ## Make a dashboard public
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
-1. Acknowledge the implications of making the dashboard public by checking all the checkboxes.
+1. Acknowledge the implications of making the dashboard public by selecting all the checkboxes.
 1. Click **Generate public URL** to make the dashboard public and make your link live.
 1. Copy the public dashboard link if you'd like to share it. You can always come back later for it.
 
-Once you've made the dashboard public, a **Public** tag is added in the header of the dashboard.
+Once you've made the dashboard public, a **Public** tag is displayed in the header of the dashboard.
 
 ## Pause access
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Enable the **Pause sharing dashboard** toggle.
 
@@ -71,11 +71,11 @@ The dashboard is no longer accessible, even with the link, until you make it sha
 
 ## Revoke access
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Click **Revoke public URL** to delete the public dashboard.
 
-The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
+The link no longer works. You must create a new public URL, as in [Make a dashboard public](#make-a-dashboard-public).
 
 ## Email sharing
 
@@ -104,14 +104,14 @@ publicDashboardsEmailSharing = true
 
 ### Invite a viewer
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
-1. Acknowledge the implications of making the dashboard public by checking all the checkboxes.
+1. Acknowledge the implications of making the dashboard public by selecting all the checkboxes.
 1. Click **Generate public URL** to make the dashboard public and make your link live.
 1. Under Can view dashboard, click **Only specified people**.
 1. Enter the email you want to share the public dashboard with.
 1. Click **Invite**.
-1. The recipient(s) will receive an email with a one-time use link.
+1. The recipient will receive an email with a one-time use link.
 
 ### Viewers requesting access
 
@@ -121,7 +121,7 @@ If the viewer doesn't have an invitation or it's been revoked, you won't be noti
 
 ### Revoke access for a viewer
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Click **Revoke** on the viewer you'd like to revoke access for.
 
@@ -129,7 +129,7 @@ Immediately, the viewer no longer has access to the public dashboard, nor can th
 
 ### Reinvite a viewer
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Click **Resend** on the viewer you'd like to re-share the public dashboard with.
 
@@ -145,9 +145,9 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-You can check usage insights about your public dashboards by clicking the insights icon at the top of the dashboard:
+You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
-![Dashboard insights icon](/media/docs/grafana/dashboards/screenshot-dashboard-insights.png)
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
 Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage/#dashboard-insights" >}}).
 
@@ -264,7 +264,7 @@ If you've confirmed one of these data sources work with public dashboards, let u
 - Library panels are currently not supported, but support is planned in the future.
 - Data sources using Reverse Proxy functionality are not supported.
 
-We are excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
+We're excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
 
 ## Custom branding
 
