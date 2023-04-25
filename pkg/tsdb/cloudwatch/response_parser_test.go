@@ -145,7 +145,7 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
-					Label: aws.String("some label"),
+					Label: aws.String("lb1"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -160,7 +160,7 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 				},
 				{
 					Id:    aws.String("id2"),
-					Label: aws.String("label for lb2"),
+					Label: aws.String("lb2"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -194,11 +194,11 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 		require.NoError(t, err)
 
 		frame1 := frames[0]
-		assert.Equal(t, "label for lb1", frame1.Name)
+		assert.Equal(t, "lb1", frame1.Name)
 		assert.Equal(t, "lb1", frame1.Fields[1].Labels["LoadBalancer"])
 
 		frame2 := frames[1]
-		assert.Equal(t, "label for lb2", frame2.Name)
+		assert.Equal(t, "lb2", frame2.Name)
 		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
 	})
 
@@ -208,7 +208,7 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
-					Label: aws.String("some label"),
+					Label: aws.String("some label lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -223,7 +223,7 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 				},
 				{
 					Id:    aws.String("lb4"),
-					Label: aws.String("lb4"),
+					Label: aws.String("some label lb4"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
 						aws.Time(timestamp.Add(time.Minute)),
@@ -256,8 +256,8 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 		frames, err := buildDataFrames(startTime, endTime, *response, query)
 		require.NoError(t, err)
 
-		assert.Equal(t, "lb3 Expanded", frames[0].Name)
-		assert.Equal(t, "lb4 Expanded", frames[1].Name)
+		assert.Equal(t, "some label lb3", frames[0].Name)
+		assert.Equal(t, "some label lb4", frames[1].Name)
 	})
 
 	t.Run("when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
@@ -294,8 +294,8 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 		require.NoError(t, err)
 
 		assert.Len(t, frames, 2)
-		assert.Equal(t, "lb1 Expanded", frames[0].Name)
-		assert.Equal(t, "lb2 Expanded", frames[1].Name)
+		assert.Equal(t, "some label", frames[0].Name)
+		assert.Equal(t, "some label", frames[1].Name)
 	})
 
 	t.Run("when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
@@ -335,8 +335,8 @@ func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) 
 		require.NoError(t, err)
 
 		assert.Len(t, frames, 2)
-		assert.Equal(t, "lb1 Expanded micro - res", frames[0].Name)
-		assert.Equal(t, "lb2 Expanded micro - res", frames[1].Name)
+		assert.Equal(t, "some label", frames[0].Name)
+		assert.Equal(t, "some label", frames[1].Name)
 	})
 
 	t.Run("when using SQL queries", func(t *testing.T) {
