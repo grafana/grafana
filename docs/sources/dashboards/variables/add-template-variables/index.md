@@ -317,9 +317,9 @@ This is used in several places, including:
 
 ### $\_\_timezone
 
-The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (e.g. `America/New_York`).
+The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
 
-If the currently selected time zone is _Browser Time_, your browser time zone will be guessed.
+If the currently selected time zone is _Browser Time_, Grafana will try to determine your browser time zone.
 
 ## Chained variables
 
