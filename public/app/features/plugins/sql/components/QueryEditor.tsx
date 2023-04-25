@@ -27,8 +27,8 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
-  console.log('🚀 ~ file: QueryEditor.tsx:30 ~ query:', query);
-  console.log('🚀 ~ file: QueryEditor.tsx:30 ~ datasource:', datasource);
+  // console.log('🚀 ~ file: QueryEditor.tsx:30 ~ query:', query);
+  // console.log('🚀 ~ file: QueryEditor.tsx:30 ~ datasource:', datasource);
   const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = !!config.featureToggles.sqlDatasourceDatabaseSelection;
 
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
@@ -52,11 +52,11 @@ export function SqlQueryEditor({
       // JEV: possible issues:
       // - Updating a datasource config DOES NOT effect the query run for MYSQL/MSSQL data sources when loading a dashboard,
       //   it is saved in the json model (jsondata), but the query is NOT updated. So, the change is NOT reflected upon panel load,
-      //   since the panel used the query object to make the query.
+      //   since the panel uses the query object to make the query.
       // - If a default database changes for ANY data source, and the new database has a table that the previous one also had,
-      //   the query will NOT error out, but WILL be caught by my alerts.
-      // - Unable to find a way to bubble editor-level errors to panel chrome.
-      // - What queries are being run on dashboard load????
+      //   the query will NOT error out, but WILL be caught by my alerts
+      // - Unable to find a way to bubble editor-level errors to panel chrome
+      // - What queries are being run on dashboard load???
       /*
         If there is a preconfigured database (either through the provisioning config, or the data source configuration component),
         AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
@@ -93,16 +93,6 @@ export function SqlQueryEditor({
     preview: true,
   });
   const [queryToValidate, setQueryToValidate] = useState(queryWithDefaults);
-
-  // useEffect(() => {
-  //   if (query?.dataset !== preconfiguredDatabase) {
-  //     const updatedQuery = {
-  //       ...query,
-  //       dataset: preconfiguredDatabase,
-  //     };
-  //     onChange(updatedQuery);
-  //   }
-  // }, [query, preconfiguredDatabase, onChange]);
 
   useEffect(() => {
     return () => {

@@ -64,8 +64,13 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		}
 
 		database := jsonData.Database
+		// If the database is NOT assigned in the provisioning config via the jsonData.Database property,
 		if database == "" {
+			// then grab the database from the settings struct, assign it to dsInfo.Database,
 			database = settings.Database
+			// as well as to jsonData.Database.
+			jsonData.Database = database
+			//  Use jsonData to store information related to database. This field should only be used by Elasticsearch and Influxdb.
 		}
 
 		dsInfo := sqleng.DataSourceInfo{
