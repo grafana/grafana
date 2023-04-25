@@ -31,7 +31,7 @@ Deploy a socks proxy server that:
 
 ### Configure Grafana to proxy connections through a socks server
 
-In order for Grafana to send data source connections to the socks5 server, you will need to configure the `secure_socks_datasource_proxy` section of your config.ini with the following information:
+For Grafana to send data source connections to the socks5 server, you configure the `secure_socks_datasource_proxy` section of the `config.ini` with the following information:
 
 | Key             | Description                                | Example                         |
 | --------------- | ------------------------------------------ | ------------------------------- |
