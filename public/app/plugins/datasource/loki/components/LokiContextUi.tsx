@@ -41,9 +41,6 @@ function getStyles(theme: GrafanaTheme2) {
     hidden: css`
       visibility: hidden;
     `,
-    tag: css`
-      padding: ${theme.spacing(0.25)} ${theme.spacing(0.75)};
-    `,
     label: css`
       max-width: 100%;
       margin: ${theme.spacing(2)} 0;
