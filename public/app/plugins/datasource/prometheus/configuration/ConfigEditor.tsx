@@ -54,7 +54,7 @@ export const ConfigEditor = (props: Props) => {
       />
       <>
         <hr className={styles.hrTopSpace} />
-        <h3 className={styles.sectionHeaderPadding}>Additional Settings</h3>
+        <h3 className={styles.sectionHeaderPadding}>Additional settings</h3>
         <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
           Additional settings are optional settings that can be configured for more control over your data source.
         </p>

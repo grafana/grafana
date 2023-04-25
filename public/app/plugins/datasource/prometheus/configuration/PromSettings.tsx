@@ -172,7 +172,7 @@ export const PromSettings = (props: Props) => {
 
   return (
     <>
-      <h6 className="page-heading">Interval Behaviour</h6>
+      <h6 className="page-heading">Interval behaviour</h6>
       <div className="gf-form-group">
         {/* Scrape interval */}
         <div className="gf-form-inline">
@@ -231,7 +231,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h6 className="page-heading">Query Editor</h6>
+      <h6 className="page-heading">Query editor</h6>
       <div className="gf-form-group">
         <div className="gf-form">
           <InlineField
@@ -276,7 +276,6 @@ export const PromSettings = (props: Props) => {
       </div>
 
       <h6 className="page-heading">Performance</h6>
-      {/* <h4 className="page-heading">Type and version</h4> */}
       {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
         <div style={{ marginBottom: '12px' }}>
           For more information on configuring prometheus type and version in data sources, see the{' '}
