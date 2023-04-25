@@ -63,7 +63,7 @@ prometheusResourceBrowserCache,alpha,@grafana/observability-metrics,false,false,
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 prometheusDataplane,stable,@grafana/observability-metrics,false,false,false,false
-lokiMetricDataplane,alpha,@grafana/observability-logs,false,false,false,false
+lokiMetricDataplane,stable,@grafana/observability-logs,false,false,false,false
 dataplaneFrontendFallback,stable,@grafana/observability-metrics,false,false,false,true
 disableSSEDataplane,alpha,@grafana/observability-metrics,false,false,false,false
 alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,false

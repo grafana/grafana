@@ -435,8 +435,9 @@ var (
 		},
 		{
 			Name:        "lokiMetricDataplane",
-			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
-			State:       FeatureStateAlpha,
+			Description: "Changes metric responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateStable,
+			Expression:  "true",
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
