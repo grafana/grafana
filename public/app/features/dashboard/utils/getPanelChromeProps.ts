@@ -102,6 +102,10 @@ export function getPanelChromeProps(props: CommonProps) {
 
   const description = props.panel.description ? onShowPanelDescription() : undefined;
 
+  const dragClass = !(props.isViewing || props.isEditing) ? 'grid-drag-handle' : '';
+
+  const title = props.panel.getDisplayTitle();
+
   return {
     hasOverlayHeader,
     onShowPanelDescription,
@@ -112,5 +116,7 @@ export function getPanelChromeProps(props: CommonProps) {
     padding,
     getPanelHeaderTitleItemsProps,
     description,
+    dragClass,
+    title,
   };
 }

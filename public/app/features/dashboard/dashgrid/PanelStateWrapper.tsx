@@ -612,10 +612,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
     const panelHeaderTitleItemsProps = panelChromeProps.getPanelHeaderTitleItemsProps();
 
-    const title = panel.getDisplayTitle();
     const titleItems = panelHeaderTitleItemsProps && <PanelHeaderTitleItems {...panelHeaderTitleItemsProps} />;
 
-    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
@@ -630,14 +628,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         <PanelChrome
           width={width}
           height={height}
-          title={title}
+          title={panelChromeProps.title}
           loadingState={data.state}
           statusMessage={errorMessage}
           statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
           description={panelChromeProps.description}
           titleItems={titleItems}
           menu={this.props.hideMenu ? undefined : menu}
-          dragClass={dragClass}
+          dragClass={panelChromeProps.dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={panelChromeProps.padding}
           hoverHeaderOffset={hoverHeaderOffset}

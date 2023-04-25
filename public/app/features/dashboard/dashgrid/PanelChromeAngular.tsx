@@ -202,11 +202,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       'panel-content--no-padding': plugin.noPadding,
     });
 
-    const title = panel.getDisplayTitle();
-
     const titleItems = panelHeaderTitleItemsProps && <PanelHeaderTitleItems {...panelHeaderTitleItemsProps} />;
-
-    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
 
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
@@ -222,14 +218,14 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
         <PanelChrome
           width={this.props.width}
           height={this.props.height}
-          title={title}
+          title={panelChromeProps.title}
           loadingState={data.state}
           statusMessage={errorMessage}
           statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
           description={panelChromeProps.description}
           titleItems={titleItems}
           menu={this.props.hideMenu ? undefined : menu}
-          dragClass={dragClass}
+          dragClass={panelChromeProps.dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={panelChromeProps.padding}
           hoverHeaderOffset={hoverHeaderOffset}
