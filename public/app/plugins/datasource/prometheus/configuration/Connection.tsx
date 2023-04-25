@@ -12,6 +12,8 @@ export interface ConnectionProps extends HttpSettingsBaseProps {
   defaultUrl?: string;
 }
 
+export const VALID_URL_REGEX = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
+
 export const Connection = (props: ConnectionProps) => {
   const { defaultUrl, dataSourceConfig, onChange } = props;
 
@@ -49,8 +51,6 @@ export const Connection = (props: ConnectionProps) => {
       urlTooltip = 'Specify a complete HTTP URL (for example http://your_server:8080)';
   }
 
-  const validUrlRegex = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
-
   const urlInput = (
     <>
       <Input
@@ -63,7 +63,7 @@ export const Connection = (props: ConnectionProps) => {
         disabled={dataSourceConfig.readOnly}
         onBlur={(e) => updateValidPromUrl(e.currentTarget.value)}
       />
-      {validateInput(validPromUrl, validUrlRegex, 'Invalid Prometheus URL')}
+      {validateInput(validPromUrl, VALID_URL_REGEX, 'Invalid Prometheus URL')}
     </>
   );
 

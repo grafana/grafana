@@ -3,8 +3,10 @@ import React from 'react';
 import { FieldValidationMessage } from '@grafana/ui';
 
 import { validateInput } from './ConfigEditor';
+import { VALID_URL_REGEX } from './Connection';
 import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from './PromSettings';
 
+const error = <FieldValidationMessage>Value is not valid</FieldValidationMessage>;
 // replaces promSettingsValidationEvents to display a <FieldValidationMessage> onBlur for duration input errors
 describe('promSettings validateInput', () => {
   it.each`
@@ -38,7 +40,6 @@ describe('promSettings validateInput', () => {
     }
   );
 
-  const error = <FieldValidationMessage>Value is not valid</FieldValidationMessage>;
   it.each`
     value     | expected
     ${'1 ms'} | ${error}
@@ -50,6 +51,37 @@ describe('promSettings validateInput', () => {
     "when calling the rule with incorrect formatted value: '$value' then result should be '$expected'",
     ({ value, expected }) => {
       expect(validateInput(value, DURATION_REGEX)).toStrictEqual(expected);
+    }
+  );
+
+  it.each`
+    value          | expected
+    ${'frp://'}    | ${error}
+    ${'htp://'}    | ${error}
+    ${'httpss:??'} | ${error}
+    ${'http@//'}   | ${error}
+    ${'http:||'}   | ${error}
+    ${'http://'}   | ${error}
+    ${'https://'}  | ${error}
+    ${'ftp://'}    | ${error}
+  `(
+    "Url incorrect formatting, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
+    ({ value, expected }) => {
+      console.log(expected);
+      expect(validateInput(value, VALID_URL_REGEX)).toStrictEqual(expected);
+    }
+  );
+
+  it.each`
+    value                | expected
+    ${'ftp://example'}   | ${true}
+    ${'http://example'}  | ${true}
+    ${'https://example'} | ${true}
+  `(
+    "Url correct formatting, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
+    ({ value, expected }) => {
+      console.log(expected);
+      expect(validateInput(value, VALID_URL_REGEX)).toBe(expected);
     }
   );
 
