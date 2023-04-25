@@ -100,7 +100,12 @@ export const getCellWidth = (field: Field): number => {
 };
 
 export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = false): DataFrame => {
-  for (const field of gridData.fields) {
+  const copy = {
+    ...gridData,
+    fields: gridData.fields.map((field) => ({ ...field, values: field.values.slice() })),
+  };
+
+  for (const field of copy.fields) {
     const valuesArray = field.values.toArray();
 
     //delete from the end of the array to avoid index shifting
@@ -116,9 +121,8 @@ export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = fal
   }
 
   return {
-    ...gridData,
-    fields: [...gridData.fields],
-    length: gridData.fields[0]?.values.length ?? 0,
+    ...copy,
+    length: copy.fields[0]?.values.length ?? 0,
   };
 };
 
@@ -126,9 +130,13 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
   const colFrom: number = range.x;
   const rowFrom: number = range.y;
   const colTo: number = range.x + range.width - 1;
+  const copy = {
+    ...gridData,
+    fields: gridData.fields.map((field) => ({ ...field, values: field.values.slice() })),
+  };
 
   for (let i = colFrom; i <= colTo; i++) {
-    const field = gridData.fields[i];
+    const field = copy.fields[i];
 
     const valuesArray = field.values.toArray();
     valuesArray.splice(rowFrom, range.height, ...new Array(range.height).fill(null));
@@ -136,9 +144,8 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
   }
 
   return {
-    ...gridData,
-    fields: [...gridData.fields],
-    length: gridData.fields[0]?.values.length ?? 0,
+    ...copy,
+    length: copy.fields[0]?.values.length ?? 0,
   };
 };
 
@@ -270,9 +277,16 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
 };
 
 export const hasGridSelection = (gridSelection: GridSelection): boolean => {
-  if (!gridSelection.current) {
+  if (gridSelection.rows.length || gridSelection.columns.length) {
+    return true;
+  }
+
+  if (gridSelection.current === undefined) {
     return false;
   }
 
-  return gridSelection.current.range && gridSelection.current.range.height > 1 && gridSelection.current.range.width > 1;
+  return (
+    gridSelection.current.range &&
+    !(gridSelection.current.range.height === 1 && gridSelection.current.range.width === 1)
+  );
 };

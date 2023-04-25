@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
-import { ArrayVector, DataFrame, dateTime, EventBus, FieldType, LoadingState, MutableDataFrame } from '@grafana/data';
+import { ArrayVector, DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
+import { usePanelContext as usePanelContextMock } from '@grafana/ui';
 
 import { DataGridPanel, DataGridProps } from './DataGridPanel';
 import * as utils from './utils';
@@ -21,14 +22,19 @@ jest.mock('./utils', () => {
   };
 });
 
-jest.mock('@grafana/ui', () => {
-  const onUpdateData = jest.fn();
-  return {
-    usePanelContext: jest.fn().mockReturnValue({ onUpdateData }),
-  };
-});
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  usePanelContext: jest.fn(),
+}));
 
 describe('DataGrid', () => {
+  const onUpdateData = jest.fn();
+
+  beforeEach(() => {
+    //@ts-ignore
+    usePanelContextMock.mockImplementation(() => ({ onUpdateData }));
+  });
+
   describe('when there is no data', () => {
     it('renders without error', () => {
       window.ResizeObserver = jest.fn().mockImplementation(() => ({
@@ -65,140 +71,139 @@ describe('DataGrid', () => {
       jest.clearAllMocks();
     });
 
-    // it('converts dataframe values to cell values properly', () => {
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />);
-    //   prep(false);
+    it('converts dataframe values to cell values properly', () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />);
+      prep(false);
 
-    //   expect(screen.getByTestId('glide-cell-1-0')).toHaveTextContent('1');
-    //   expect(screen.getByTestId('glide-cell-2-1')).toHaveTextContent('b');
-    //   expect(screen.getByTestId('glide-cell-3-2')).toHaveTextContent('c');
-    //   expect(screen.getByTestId('glide-cell-3-3')).toHaveTextContent('d');
-    // });
+      expect(screen.getByTestId('glide-cell-1-0')).toHaveTextContent('1');
+      expect(screen.getByTestId('glide-cell-2-1')).toHaveTextContent('b');
+      expect(screen.getByTestId('glide-cell-3-2')).toHaveTextContent('c');
+      expect(screen.getByTestId('glide-cell-3-3')).toHaveTextContent('d');
+    });
 
-    // it('should open context menu on right click', async () => {
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   const scroller = prep();
+    it('should open context menu on right click', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      const scroller = prep();
 
-    //   if (!scroller) {
-    //     return;
-    //   }
+      if (!scroller) {
+        return;
+      }
 
-    //   screen.getByTestId('data-grid-canvas');
-    //   fireEvent.contextMenu(scroller, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16,
-    //   });
+      screen.getByTestId('data-grid-canvas');
+      fireEvent.contextMenu(scroller, {
+        clientX: 30,
+        clientY: 36 + 32 + 16,
+      });
 
-    //   expect(screen.getByLabelText('Context menu')).toBeInTheDocument();
+      expect(screen.getByLabelText('Context menu')).toBeInTheDocument();
 
-    //   // on right clicking row checkboxes, only row options should be open
-    //   expect(screen.getByText('Delete row')).toBeInTheDocument();
-    //   expect(screen.getByText('Clear row')).toBeInTheDocument();
-    //   expect(screen.getByText('Remove all data')).toBeInTheDocument();
-    //   expect(screen.getByText('Search...')).toBeInTheDocument();
+      // on right clicking row checkboxes, only row options should be open
+      expect(screen.getByText('Delete row')).toBeInTheDocument();
+      expect(screen.getByText('Clear row')).toBeInTheDocument();
+      expect(screen.getByText('Remove all data')).toBeInTheDocument();
+      expect(screen.getByText('Search...')).toBeInTheDocument();
 
-    //   // no column options should be available at this point
-    //   expect(screen.queryByText('Delete column')).not.toBeInTheDocument();
+      // no column options should be available at this point
+      expect(screen.queryByText('Delete column')).not.toBeInTheDocument();
 
-    //   // click on a column cell should show both row and column options
-    //   fireEvent.contextMenu(scroller, {
-    //     clientX: 50,
-    //     clientY: 36 + 32 + 16,
-    //   });
+      // click on a column cell should show both row and column options
+      fireEvent.contextMenu(scroller, {
+        clientX: 50,
+        clientY: 36 + 32 + 16,
+      });
 
-    //   expect(screen.getByText('Delete row')).toBeInTheDocument();
-    //   expect(screen.getByText('Clear row')).toBeInTheDocument();
-    //   expect(screen.getByText('Delete column')).toBeInTheDocument();
-    //   expect(screen.getByText('Clear column')).toBeInTheDocument();
-    //   expect(screen.getByText('Remove all data')).toBeInTheDocument();
-    //   expect(screen.getByText('Search...')).toBeInTheDocument();
+      expect(screen.getByText('Delete row')).toBeInTheDocument();
+      expect(screen.getByText('Clear row')).toBeInTheDocument();
+      expect(screen.getByText('Delete column')).toBeInTheDocument();
+      expect(screen.getByText('Clear column')).toBeInTheDocument();
+      expect(screen.getByText('Remove all data')).toBeInTheDocument();
+      expect(screen.getByText('Search...')).toBeInTheDocument();
 
-    //   // click on header cell should show only column options
-    //   fireEvent.contextMenu(scroller, {
-    //     clientX: 50,
-    //     clientY: 36,
-    //   });
+      // click on header cell should show only column options
+      fireEvent.contextMenu(scroller, {
+        clientX: 50,
+        clientY: 36,
+      });
 
-    //   expect(screen.getByText('Delete column')).toBeInTheDocument();
-    //   expect(screen.getByText('Clear column')).toBeInTheDocument();
-    //   expect(screen.getByText('Remove all data')).toBeInTheDocument();
-    //   expect(screen.getByText('Search...')).toBeInTheDocument();
+      expect(screen.getByText('Delete column')).toBeInTheDocument();
+      expect(screen.getByText('Clear column')).toBeInTheDocument();
+      expect(screen.getByText('Remove all data')).toBeInTheDocument();
+      expect(screen.getByText('Search...')).toBeInTheDocument();
 
-    //   // no row options should be available at this point
-    //   expect(screen.queryByText('Delete row')).not.toBeInTheDocument();
-    // });
-    // it('should show correct deletion values when selection multiple rows', async () => {
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   const scroller = prep();
+      // no row options should be available at this point
+      expect(screen.queryByText('Delete row')).not.toBeInTheDocument();
+    });
+    it('should show correct deletion values when selection multiple rows', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      const scroller = prep();
 
-    //   if (!scroller) {
-    //     return;
-    //   }
+      if (!scroller) {
+        return;
+      }
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
+      const canvas = screen.getByTestId('data-grid-canvas');
 
-    //   sendClick(canvas, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16,
-    //     shiftKey: true,
-    //   });
+      sendClick(canvas, {
+        clientX: 30,
+        clientY: 36 + 32 + 16,
+        shiftKey: true,
+      });
 
-    //   sendClick(canvas, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16 + 30,
-    //     shiftKey: true,
-    //   });
+      sendClick(canvas, {
+        clientX: 30,
+        clientY: 36 + 32 + 16 + 30,
+        shiftKey: true,
+      });
 
-    //   fireEvent.contextMenu(scroller, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16 + 30,
-    //   });
+      fireEvent.contextMenu(scroller, {
+        clientX: 30,
+        clientY: 36 + 32 + 16 + 30,
+      });
 
-    //   expect(screen.queryByText('Delete 2 rows')).toBeInTheDocument();
-    // });
+      expect(screen.queryByText('Delete 2 rows')).toBeInTheDocument();
+    });
 
-    // it('should show correct deletion values when selection multiple columns', async () => {
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   const scroller = prep();
+    it('should show correct deletion values when selection multiple columns', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      const scroller = prep();
 
-    //   if (!scroller) {
-    //     return;
-    //   }
+      if (!scroller) {
+        return;
+      }
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
+      const canvas = screen.getByTestId('data-grid-canvas');
 
-    //   sendClick(canvas, {
-    //     clientX: 40,
-    //     clientY: 36,
-    //     shiftKey: true,
-    //   });
+      sendClick(canvas, {
+        clientX: 40,
+        clientY: 36,
+        shiftKey: true,
+      });
 
-    //   sendClick(canvas, {
-    //     clientX: 120,
-    //     clientY: 36,
-    //     shiftKey: true,
-    //   });
+      sendClick(canvas, {
+        clientX: 120,
+        clientY: 36,
+        shiftKey: true,
+      });
 
-    //   fireEvent.contextMenu(scroller, {
-    //     clientX: 120,
-    //     clientY: 36,
-    //   });
+      fireEvent.contextMenu(scroller, {
+        clientX: 120,
+        clientY: 36,
+      });
 
-    //   expect(screen.queryByText('Delete 2 columns')).toBeInTheDocument();
-    // });
+      expect(screen.queryByText('Delete 2 columns')).toBeInTheDocument();
+    });
 
     it('editing a cell triggers publishing the snapshot', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -236,270 +241,265 @@ describe('DataGrid', () => {
           jest.runAllTimers();
         });
 
-        expect(spy).toHaveBeenCalledWith(
+        expect(onUpdateData).toHaveBeenCalledWith([
           expect.objectContaining({
             fields: expect.arrayContaining([expectedField]),
           }),
-          1
-        );
+        ]);
       });
     });
 
-    // it('should not be able to a edit cell when there is a grid selection', async () => {
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+    it('should not be able to a edit cell when there is a grid selection', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
-    //   //2 clicks with shift to select multiple cells
-    //   sendClick(canvas, {
-    //     clientX: 50,
-    //     clientY: 36 + 32 + 16,
-    //     shiftKey: true,
-    //   });
+      const canvas = screen.getByTestId('data-grid-canvas');
+      //2 clicks with shift to select multiple cells
+      sendClick(canvas, {
+        clientX: 50,
+        clientY: 36 + 32 + 16,
+        shiftKey: true,
+      });
 
-    //   sendClick(canvas, {
-    //     clientX: 120,
-    //     clientY: 36 + 32 + 40,
-    //     shiftKey: true,
-    //   });
+      sendClick(canvas, {
+        clientX: 120,
+        clientY: 36 + 32 + 40,
+        shiftKey: true,
+      });
 
-    //   // keydown to trigger overlay input on cell edit. since
-    //   // there is a selection the overlay should not be visible
-    //   fireEvent.keyDown(canvas, {
-    //     keyCode: 74,
-    //     key: '1',
-    //   });
+      // keydown to trigger overlay input on cell edit. since
+      // there is a selection the overlay should not be visible
+      fireEvent.keyDown(canvas, {
+        keyCode: 74,
+        key: '1',
+      });
 
-    //   await waitFor(() => {
-    //     expect(screen.queryByDisplayValue('1')).not.toBeInTheDocument();
-    //   });
-    // });
-    // it('should add a new column', async () => {
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+      await waitFor(() => {
+        expect(screen.queryByDisplayValue('1')).not.toBeInTheDocument();
+      });
+    });
+    it('should add a new column', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   const addColumnBtn = screen.getByText('+');
+      const addColumnBtn = screen.getByText('+');
 
-    //   fireEvent.click(addColumnBtn);
+      fireEvent.click(addColumnBtn);
 
-    //   const columnInput = screen.getByTestId('column-input');
+      const columnInput = screen.getByTestId('column-input');
 
-    //   fireEvent.change(columnInput, {
-    //     target: { value: 'newColumn' },
-    //   });
+      fireEvent.change(columnInput, {
+        target: { value: 'newColumn' },
+      });
 
-    //   fireEvent.blur(columnInput);
+      fireEvent.blur(columnInput);
 
-    //   expect(spy).toBeCalledWith(
-    //     expect.objectContaining({
-    //       fields: expect.arrayContaining([
-    //         expect.objectContaining({
-    //           name: 'newColumn',
-    //           type: 'string',
-    //           values: new ArrayVector(['', '', '', '']),
-    //         }),
-    //       ]),
-    //     }),
-    //     1
-    //   );
-    // });
-    // it('should not add a new column if input is empty', async () => {
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+      expect(onUpdateData).toBeCalledWith([
+        expect.objectContaining({
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'newColumn',
+              type: 'string',
+              values: new ArrayVector(['', '', '', '']),
+            }),
+          ]),
+        }),
+      ]);
+    });
 
-    //   const addColumnBtn = screen.getByText('+');
+    it('should not add a new column if input is empty', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   fireEvent.click(addColumnBtn);
+      const addColumnBtn = screen.getByText('+');
 
-    //   const columnInput = screen.getByTestId('column-input');
+      fireEvent.click(addColumnBtn);
 
-    //   fireEvent.blur(columnInput);
+      const columnInput = screen.getByTestId('column-input');
 
-    //   expect(spy).not.toBeCalled();
-    // });
-    // it('should add a new row', async () => {
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+      fireEvent.blur(columnInput);
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
+      expect(onUpdateData).not.toBeCalled();
+    });
 
-    //   sendClick(canvas, {
-    //     clientX: 60,
-    //     clientY: 36 + 32 * 5, //click add row
-    //   });
+    it('should add a new row', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   expect(spy).toBeCalled();
-    // });
+      const canvas = screen.getByTestId('data-grid-canvas');
 
-    // it('should close context menu on right click', async () => {
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   const scroller = prep();
+      sendClick(canvas, {
+        clientX: 60,
+        clientY: 36 + 32 * 5, //click add row
+      });
 
-    //   if (!scroller) {
-    //     return;
-    //   }
+      expect(onUpdateData).toBeCalled();
+    });
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
-    //   fireEvent.contextMenu(scroller, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16,
-    //   });
+    it('should close context menu on right click', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      const scroller = prep();
 
-    //   expect(screen.getByLabelText('Context menu')).toBeInTheDocument();
+      if (!scroller) {
+        return;
+      }
 
-    //   sendClick(canvas, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16,
-    //   });
+      const canvas = screen.getByTestId('data-grid-canvas');
+      fireEvent.contextMenu(scroller, {
+        clientX: 30,
+        clientY: 36 + 32 + 16,
+      });
 
-    //   expect(screen.queryByLabelText('Context menu')).not.toBeInTheDocument();
-    // });
+      expect(screen.getByLabelText('Context menu')).toBeInTheDocument();
 
-    // it('should clear cell when cell is selected and delete button clicked', async () => {
-    //   const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
-    //   const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
+      sendClick(canvas, {
+        clientX: 30,
+        clientY: 36 + 32 + 16,
+      });
 
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   const scroller = prep();
+      expect(screen.queryByLabelText('Context menu')).not.toBeInTheDocument();
+    });
 
-    //   if (!scroller) {
-    //     return;
-    //   }
+    it('should clear cell when cell is selected and delete button clicked', async () => {
+      const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
+      const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
-    //   sendClick(canvas, {
-    //     clientX: 60,
-    //     clientY: 36 + 32 + 16,
-    //   });
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      const scroller = prep();
 
-    //   fireEvent.keyDown(canvas, {
-    //     key: 'Delete',
-    //   });
+      if (!scroller) {
+        return;
+      }
 
-    //   expect(spy).toBeCalled();
-    //   expect(spyClearingCells).toBeCalled();
-    //   expect(spyDeleteRows).not.toBeCalled();
-    // });
+      const canvas = screen.getByTestId('data-grid-canvas');
+      sendClick(canvas, {
+        clientX: 60,
+        clientY: 36 + 32 + 16,
+      });
 
-    // it('should clear row when row is selected delete button clicked', async () => {
-    //   const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
-    //   const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
+      fireEvent.keyDown(canvas, {
+        key: 'Delete',
+      });
 
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+      expect(onUpdateData).toBeCalled();
+      expect(spyClearingCells).toBeCalled();
+      expect(spyDeleteRows).not.toBeCalled();
+    });
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
-    //   sendClick(canvas, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 16,
-    //   });
+    it('should clear row when row is selected delete button clicked', async () => {
+      const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
+      const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
 
-    //   fireEvent.keyDown(canvas, {
-    //     key: 'Delete',
-    //   });
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   expect(spy).toBeCalled();
-    //   expect(spyClearingCells).not.toBeCalled();
-    //   expect(spyDeleteRows).toBeCalled();
-    // });
+      const canvas = screen.getByTestId('data-grid-canvas');
+      sendClick(canvas, {
+        clientX: 30,
+        clientY: 36 + 32 + 16,
+      });
 
-    // it('should move column when column dragged and dropped', async () => {
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
+      fireEvent.keyDown(canvas, {
+        key: 'Delete',
+      });
 
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+      expect(onUpdateData).toBeCalled();
+      expect(spyClearingCells).not.toBeCalled();
+      expect(spyDeleteRows).toBeCalled();
+    });
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
+    it('should move column when column dragged and dropped', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   fireEvent.mouseDown(canvas, {
-    //     clientX: 50,
-    //     clientY: 36,
-    //   });
+      const canvas = screen.getByTestId('data-grid-canvas');
 
-    //   fireEvent.mouseMove(canvas, {
-    //     clientX: 120,
-    //     clientY: 36,
-    //   });
+      fireEvent.mouseDown(canvas, {
+        clientX: 50,
+        clientY: 36,
+      });
 
-    //   fireEvent.mouseUp(canvas);
+      fireEvent.mouseMove(canvas, {
+        clientX: 120,
+        clientY: 36,
+      });
 
-    //   const df = new MutableDataFrame(props.data.series[0]);
+      fireEvent.mouseUp(canvas);
 
-    //   df.fields = [df.fields[1], df.fields[0], df.fields[2]];
-    //   const received = spy.mock.calls[spy.mock.calls.length - 1][0].fields.map((f) => f.name);
+      const df = {
+        ...props.data.series[0],
+      };
 
-    //   expect(received).toEqual(df.fields.map((f) => f.name));
-    // });
+      df.fields = [df.fields[1], df.fields[0], df.fields[2]];
+      const received = onUpdateData.mock.calls[onUpdateData.mock.calls.length - 1][0][0].fields.map(
+        (f: Field) => f.name
+      );
 
-    // it('should move row when row dragged and dropped', async () => {
-    //   const spy = jest.spyOn(utils, 'publishSnapshot');
+      expect(received).toEqual(df.fields.map((f) => f.name));
+    });
 
-    //   jest.useFakeTimers();
-    //   render(<DataGridPanel {...props} />, {
-    //     wrapper: Context,
-    //   });
-    //   prep();
+    it('should move row when row dragged and dropped', async () => {
+      jest.useFakeTimers();
+      render(<DataGridPanel {...props} />, {
+        wrapper: Context,
+      });
+      prep();
 
-    //   const canvas = screen.getByTestId('data-grid-canvas');
+      const canvas = screen.getByTestId('data-grid-canvas');
 
-    //   fireEvent.mouseDown(canvas, {
-    //     clientX: 30,
-    //     clientY: 36 + 16,
-    //   });
+      fireEvent.mouseDown(canvas, {
+        clientX: 30,
+        clientY: 36 + 16,
+      });
 
-    //   fireEvent.mouseMove(canvas, {
-    //     clientX: 30,
-    //     clientY: 36 + 32 + 32 + 16,
-    //   });
+      fireEvent.mouseMove(canvas, {
+        clientX: 30,
+        clientY: 36 + 32 + 32 + 16,
+      });
 
-    //   fireEvent.mouseUp(canvas);
+      fireEvent.mouseUp(canvas);
 
-    //   const received: DataFrame = spy.mock.calls[spy.mock.calls.length - 1][0];
+      const received: DataFrame = onUpdateData.mock.calls[onUpdateData.mock.calls.length - 1][0][0];
 
-    //   expect(received.fields[0].values[0]).toEqual(2);
-    //   expect(received.fields[0].values[1]).toEqual(3);
-    //   expect(received.fields[0].values[2]).toEqual(1);
-    //   expect(received.fields[0].values[3]).toEqual(4);
+      expect(received.fields[0].values[0]).toEqual(2);
+      expect(received.fields[0].values[1]).toEqual(3);
+      expect(received.fields[0].values[2]).toEqual(1);
+      expect(received.fields[0].values[3]).toEqual(4);
 
-    //   expect(received.fields[1].values[0]).toEqual('b');
-    //   expect(received.fields[1].values[1]).toEqual('c');
-    //   expect(received.fields[1].values[2]).toEqual('a');
-    //   expect(received.fields[1].values[3]).toEqual('d');
+      expect(received.fields[1].values[0]).toEqual('b');
+      expect(received.fields[1].values[1]).toEqual('c');
+      expect(received.fields[1].values[2]).toEqual('a');
+      expect(received.fields[1].values[3]).toEqual('d');
 
-    //   expect(received.fields[2].values[0]).toEqual('b');
-    //   expect(received.fields[2].values[1]).toEqual('c');
-    //   expect(received.fields[2].values[2]).toEqual('a');
-    //   expect(received.fields[2].values[3]).toEqual('d');
-    // });
+      expect(received.fields[2].values[0]).toEqual('b');
+      expect(received.fields[2].values[1]).toEqual('c');
+      expect(received.fields[2].values[2]).toEqual('a');
+      expect(received.fields[2].values[3]).toEqual('d');
+    });
   });
 });
 

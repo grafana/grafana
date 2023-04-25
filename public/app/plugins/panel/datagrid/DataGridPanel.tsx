@@ -76,6 +76,11 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onCellEdited = async (cell: Item, newValue: EditableGridCell) => {
+    // if there are rows selected, return early, we don't want to edit any cell
+    if (hasGridSelection(gridSelection)) {
+      return;
+    }
+
     const [col, row] = cell;
     const frameCopy = {
       ...frame,
@@ -150,10 +155,12 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const onDeletePressed = (selection: GridSelection) => {
     if (selection.current && selection.current.range && onUpdateData) {
       onUpdateData([clearCellsFromRangeSelection(frame, selection.current.range)]);
+      return true;
     }
 
     if (selection.rows && onUpdateData) {
       onUpdateData([deleteRows(frame, selection.rows.toArray())]);
+      return true;
     }
 
     return false;
@@ -176,16 +183,18 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     });
   };
 
-  const onColumnMove = (from: number, to: number) => {
+  const onColumnMove = async (from: number, to: number) => {
     const fields = frame.fields.map((f) => f);
     const field = fields[from];
     fields.splice(from, 1);
     fields.splice(to, 0, field);
 
-    dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
-
     if (onUpdateData) {
-      onUpdateData([{ ...frame, fields }]);
+      const hasUpdated = await onUpdateData([{ ...frame, fields }]);
+
+      if (hasUpdated) {
+        dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
+      }
     }
   };
 
