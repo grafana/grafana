@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,6 +36,19 @@ import (
 
 var orgID = int64(1)
 var usr = &user.SignedInUser{UserID: 1, OrgID: orgID}
+
+func TestIntegrationProvideFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	t.Run("should register scope resolvers", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		ac := acmock.New()
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
+
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
+	})
+}
 
 func TestIntegrationFolderService(t *testing.T) {
 	if testing.Short() {
