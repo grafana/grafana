@@ -10,9 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,8 +51,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := ProvideService(&config.Cfg{})
-		manifest, err := s.readPluginManifest([]byte(txt))
+		s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -66,8 +68,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		s := ProvideService(&config.Cfg{})
-		_, err := s.readPluginManifest([]byte(modified))
+		s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		_, err := s.readPluginManifest(context.Background(), []byte(modified))
 		require.Error(t, err)
 	})
 }
@@ -104,8 +106,8 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := ProvideService(&config.Cfg{})
-		manifest, err := s.readPluginManifest([]byte(txt))
+		s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -158,7 +160,7 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			s := ProvideService(&config.Cfg{})
+			s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
 			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.External
@@ -189,7 +191,7 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		s := ProvideService(&config.Cfg{})
+		s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.External
@@ -238,7 +240,7 @@ func TestCalculate(t *testing.T) {
 
 				basePath := "../testdata/app-with-child/dist"
 
-				s := ProvideService(&config.Cfg{})
+				s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
 				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.External
@@ -683,8 +685,8 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			s := ProvideService(&config.Cfg{})
-			err := s.validateManifest(*tc.manifest, nil)
+			s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
+			err := s.validateManifest(context.Background(), *tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})
 	}

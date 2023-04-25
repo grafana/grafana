@@ -378,7 +378,9 @@ export const PromSettings = (props: Props) => {
                   width={40}
                   onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
                   options={cacheValueOptions}
-                  value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                  value={
+                    cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
+                  }
                 />
               </InlineField>
             </div>

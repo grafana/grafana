@@ -866,10 +866,10 @@ export class PrometheusDatasource
       const timeValueTuple: Array<[number, number]> = [];
 
       let idx = 0;
-      valueField.values.toArray().forEach((value: string) => {
+      valueField.values.forEach((value: string) => {
         let timeStampValue: number;
         let valueValue: number;
-        const time = timeField.values.get(idx);
+        const time = timeField.values[idx];
 
         // If we want to use value as a time, we use value as timeStampValue and valueValue will be 1
         if (options.annotation.useValueForTime) {

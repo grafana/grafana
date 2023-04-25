@@ -5,7 +5,7 @@ import { useToggle } from 'react-use';
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Icon, useStyles2, RadioButtonGroup, MultiSelect } from '@grafana/ui';
 
-import { Query, SeriesMessage } from '../types';
+import { Query } from '../types';
 
 import { EditorField } from './EditorField';
 import { Stack } from './Stack';
@@ -14,7 +14,7 @@ export interface Props {
   query: Query;
   onQueryChange: (query: Query) => void;
   app?: CoreApp;
-  series?: SeriesMessage;
+  labels?: string[];
 }
 
 const typeOptions: Array<{ value: Query['queryType']; label: string; description: string }> = [
@@ -30,28 +30,19 @@ function getTypeOptions(app?: CoreApp) {
   return typeOptions.filter((option) => option.value !== 'both');
 }
 
-function getGroupByOptions(series?: SeriesMessage) {
-  let options: SelectableValue[] = [];
-  if (series) {
-    const labels = series.flatMap((val) => {
-      return val.labels.map((l) => l.name);
-    });
-    options = Array.from(new Set(labels)).map((l) => ({
-      label: l,
-      value: l,
-    }));
-  }
-  return options;
-}
-
 /**
  * Base on QueryOptionGroup component from grafana/ui but that is not available yet.
  */
-export function QueryOptions({ query, onQueryChange, app, series }: Props) {
+export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
   const typeOptions = getTypeOptions(app);
-  const groupByOptions = getGroupByOptions(series);
+  const groupByOptions = labels
+    ? labels.map((l) => ({
+        label: l,
+        value: l,
+      }))
+    : [];
 
   return (
     <Stack gap={0} direction="column">
