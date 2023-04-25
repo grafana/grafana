@@ -1,8 +1,8 @@
 import { DataSourceJsonData } from '@grafana/data';
 
-import { Phlare as PhlareBase, PhlareQueryType } from './dataquery.gen';
+import { GrafanaPyroscope, PhlareQueryType } from './dataquery.gen';
 
-export interface Query extends PhlareBase {
+export interface Query extends GrafanaPyroscope {
   queryType: PhlareQueryType;
 }
 
