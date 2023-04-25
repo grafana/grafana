@@ -20,6 +20,12 @@ import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+const INTERACTION_ITEM = {
+  OPEN_DROPDOWN: 'open_dspicker',
+  SELECT_DS: 'select_ds',
+  ADD_FILE: 'add_file',
+  OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
+};
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
@@ -29,7 +35,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
   const openDropdown = () => {
-    reportInteraction(INTERACTION_EVENT_NAME, { item: 'open_dspicker' });
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
     setOpen(true);
   };
 
@@ -135,7 +141,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
-      reportInteraction(INTERACTION_EVENT_NAME, { item: 'select_ds' });
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
     },
     [onChange]
   );
@@ -143,7 +149,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const clickAddCSVCallback = useCallback(() => {
     onClickAddCSV?.();
     onClose();
-    reportInteraction(INTERACTION_EVENT_NAME, { item: 'add_file' });
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
   }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStylesPickerContent);
@@ -186,7 +192,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                     hideModal();
                   },
                 });
-                reportInteraction(INTERACTION_EVENT_NAME, { item: 'open_advanced_ds_picker' });
+                reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
               }}
             >
               Open advanced data source picker

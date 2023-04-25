@@ -23,6 +23,13 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { DataSourceList } from './DataSourceList';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
+const INTERACTION_ITEM = {
+  SELECT_DS: 'select_ds',
+  UPLOAD_FILE: 'upload_file',
+  CONFIG_NEW_DS: 'config_new_ds',
+  SEARCH: 'search',
+  DISMISS: 'dismiss',
+};
 
 interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
@@ -51,12 +58,12 @@ export function DataSourceModal({
 
   const onDismissModal = () => {
     onDismiss();
-    reportInteraction(INTERACTION_EVENT_NAME, { item: 'dismiss', src: analyticsInteractionSrc });
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DISMISS, src: analyticsInteractionSrc });
   };
   const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
     onChange(ds);
     reportInteraction(INTERACTION_EVENT_NAME, {
-      item: 'select_ds',
+      item: INTERACTION_ITEM.SELECT_DS,
       ds_type: ds.type,
       src: analyticsInteractionSrc,
     });
@@ -126,7 +133,7 @@ export function DataSourceModal({
                   fileUploadOptions?.onDrop?.(...args);
                   onDismiss();
                   reportInteraction(INTERACTION_EVENT_NAME, {
-                    item: 'upload_file',
+                    item: INTERACTION_ITEM.UPLOAD_FILE,
                     src: analyticsInteractionSrc,
                   });
                 },
@@ -141,7 +148,10 @@ export function DataSourceModal({
             variant="secondary"
             href={newDataSourceURL}
             onClick={() => {
-              reportInteraction(INTERACTION_EVENT_NAME, { item: 'new_ds', src: analyticsInteractionSrc });
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS,
+                src: analyticsInteractionSrc,
+              });
             }}
           >
             Configure a new data source
