@@ -96,7 +96,7 @@ The PostgreSQL query builder is available when editing a panel using a PostgreSQ
 
 The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
-### Dataset and Table selection
+### Dataset and table selection
 
 The dataset dropdown will be disabled by default, and is populated with the configured database to which the user has access.
 The table dropdown is populated with the tables that are available within that database.

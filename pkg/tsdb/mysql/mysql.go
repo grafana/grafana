@@ -70,7 +70,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			database = settings.Database
 			// as well as to jsonData.Database.
 			jsonData.Database = database
-			//  Use jsonData to store information related to database. This field should only be used by Elasticsearch and Influxdb.
+			// Use jsonData to store information related to database. This field should only be used by Elasticsearch and Influxdb.
 		}
 
 		dsInfo := sqleng.DataSourceInfo{
