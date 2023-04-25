@@ -21,8 +21,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
-import store from 'app/core/store';
-import { lastUsedDatasourceKeyForOrgId } from 'app/core/utils/explore';
+import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
@@ -57,7 +56,7 @@ export function setupExplore(options?: SetupOptions): {
   }
 
   if (options?.prevUsedDatasource) {
-    store.set(lastUsedDatasourceKeyForOrgId(options?.prevUsedDatasource.orgId), options?.prevUsedDatasource.datasource);
+    setLastUsedDatasourceUID(options?.prevUsedDatasource.orgId, options?.prevUsedDatasource.datasource);
   }
 
   // Create this here so any mocks are recreated on setup and don't retain state

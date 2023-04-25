@@ -19,7 +19,7 @@ import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
@@ -112,7 +112,7 @@ export async function loadAndInitDatasource(
   const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
+  setLastUsedDatasourceUID(orgId, instance.uid);
   return { history, instance };
 }
 

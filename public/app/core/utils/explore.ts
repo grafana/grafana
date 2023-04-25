@@ -43,8 +43,12 @@ export const DEFAULT_UI_STATE = {
 
 const MAX_HISTORY_ITEMS = 100;
 
-export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
-export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
+const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
+const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
+export const getLastUsedDatasourceUID = (orgId: number) =>
+  store.getObject<string>(lastUsedDatasourceKeyForOrgId(orgId));
+export const setLastUsedDatasourceUID = (orgId: number, datasourceUID: string) =>
+  store.setObject(lastUsedDatasourceKeyForOrgId(orgId), datasourceUID);
 
 export interface GetExploreUrlArguments {
   panel: PanelModel;

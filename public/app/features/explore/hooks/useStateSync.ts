@@ -4,8 +4,7 @@ import { useEffect, useRef } from 'react';
 import { CoreApp, serializeStateToUrlParam } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import store from 'app/core/store';
-import { lastUsedDatasourceKeyForOrgId, parseUrlState } from 'app/core/utils/explore';
+import { getLastUsedDatasourceUID, parseUrlState } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { addListener, ExploreId, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
@@ -325,7 +324,7 @@ async function getPaneDatasource(
   }
 
   // If none of the queries specify a avalid datasource, we use the last used one
-  const lastUsedDSUID = store.get(lastUsedDatasourceKeyForOrgId(orgId));
+  const lastUsedDSUID = getLastUsedDatasourceUID(orgId);
 
   return (
     getDatasourceSrv()
