@@ -19,6 +19,8 @@ import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel } from './utils';
 
+const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
 
@@ -27,7 +29,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
   const openDropdown = () => {
-    reportInteraction('dashboards_dspicker_clicked', { item: 'open_dspicker' });
+    reportInteraction(INTERACTION_EVENT_NAME, { item: 'open_dspicker' });
     setOpen(true);
   };
 
@@ -133,7 +135,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
-      reportInteraction('dashboards_dspicker_clicked', { item: 'select_ds' });
+      reportInteraction(INTERACTION_EVENT_NAME, { item: 'select_ds' });
     },
     [onChange]
   );
@@ -141,7 +143,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const clickAddCSVCallback = useCallback(() => {
     onClickAddCSV?.();
     onClose();
-    reportInteraction('dashboards_dspicker_clicked', { item: 'add_file' });
+    reportInteraction(INTERACTION_EVENT_NAME, { item: 'add_file' });
   }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStylesPickerContent);
@@ -184,7 +186,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                     hideModal();
                   },
                 });
-                reportInteraction('dashboards_dspicker_clicked', { item: 'open_advanced_ds_picker' });
+                reportInteraction(INTERACTION_EVENT_NAME, { item: 'open_advanced_ds_picker' });
               }}
             >
               Open advanced data source picker
