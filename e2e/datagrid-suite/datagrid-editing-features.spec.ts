@@ -1,6 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
-const DASHBOARD_ID = 'a70ecb44-6c31-412d-ae74-d6306303ce37';
+const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_CANVAS = 'data-grid-canvas';
 
 e2e.scenario({
