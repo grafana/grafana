@@ -105,13 +105,18 @@ export function DataSourceModal({
           )}
         </div>
 
-        {hasCreateRights && (
+        {
           <div className={styles.dsCTAs}>
-            <LinkButton variant="secondary" href={newDataSourceURL}>
+            <LinkButton
+              variant="secondary"
+              disabled={!hasCreateRights}
+              href={newDataSourceURL}
+              tooltip={!hasCreateRights ? 'You do not have permission to configure new data sources' : undefined}
+            >
               Configure a new data source
             </LinkButton>
           </div>
-        )}
+        }
       </div>
     </Modal>
   );
