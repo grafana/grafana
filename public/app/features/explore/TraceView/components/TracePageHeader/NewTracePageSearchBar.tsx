@@ -13,31 +13,44 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import React, { memo, Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
 import { convertTimeFilter } from '../utils/filter-spans';
 
 export type TracePageSearchBarProps = {
   search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   spanFilterMatches: Set<string> | undefined;
   focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
   reset: () => void;
+  totalSpans: number;
 };
 
 export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
-  const { search, spanFilterMatches, focusedSpanIdForSearch, setFocusedSpanIdForSearch, datasourceType, reset } = props;
+  const {
+    search,
+    spanFilterMatches,
+    focusedSpanIdForSearch,
+    setFocusedSpanIdForSearch,
+    datasourceType,
+    reset,
+    totalSpans,
+  } = props;
+  const [currentSpanIndex, setCurrentSpanIndex] = useState<number>();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     setFocusedSpanIdForSearch('');
   }, [search, setFocusedSpanIdForSearch]);
+
+  useEffect(() => {
+    setCurrentSpanIndex(undefined);
+  }, [spanFilterMatches?.size]);
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
@@ -52,11 +65,13 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     // new query || at end, go to start
     if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
       setFocusedSpanIdForSearch(spanMatches[0]);
+      setCurrentSpanIndex(1);
       return;
     }
 
     // get next
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setCurrentSpanIndex(prevMatchedIndex + 2);
   };
 
   const prevResult = () => {
@@ -72,13 +87,16 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     // new query || at start, go to end
     if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
       setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setCurrentSpanIndex(spanMatches.length);
       return;
     }
 
     // get prev
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setCurrentSpanIndex(prevMatchedIndex);
   };
 
+  const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
   const resetEnabled = useMemo(() => {
     return (
       (search.serviceName && search.serviceName !== '') ||
@@ -91,7 +109,28 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
       })
     );
   }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
-  const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
+
+  const matchesText = () => {
+    if (spanFilterMatches?.size === 0) {
+      return (
+        <>
+          <span>0 matches</span>
+          <Tooltip
+            content="There are 0 span matches for the filters selected. Please try removing some of the selected filters."
+            placement="left"
+          >
+            <span className={styles.matchesTooltip}>
+              <Icon name="info-circle" size="lg" />
+            </span>
+          </Tooltip>
+        </>
+      );
+    }
+    const amountText = spanFilterMatches?.size === 1 ? 'match' : 'matches';
+    return currentSpanIndex
+      ? `${currentSpanIndex}/${spanFilterMatches?.size} ${amountText}`
+      : `${spanFilterMatches?.size} ${amountText}`;
+  };
 
   return (
     <div className={styles.searchBar}>
@@ -110,6 +149,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
             </Button>
           </div>
           <div className={styles.nextPrevButtons}>
+            <span className={styles.matches}>{spanFilterMatches ? matchesText() : `${totalSpans} spans`}</span>
             <Button
               variant="secondary"
               disabled={!buttonEnabled}
@@ -157,6 +197,13 @@ export const getStyles = () => {
       button {
         margin-left: 8px;
       }
+    `,
+    matches: css`
+      margin-right: 5px;
+    `,
+    matchesTooltip: css`
+      color: #aaa;
+      margin: -2px 0 0 10px;
     `,
   };
 };
