@@ -125,6 +125,7 @@ export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = fal
   return {
     ...gridData,
     fields: [...gridData.fields],
+    length: gridData.fields[0]?.values.length ?? 0,
   };
 };
 
@@ -144,6 +145,7 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
   return {
     ...gridData,
     fields: [...gridData.fields],
+    length: gridData.fields[0]?.values.length ?? 0,
   };
 };
 
