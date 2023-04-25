@@ -1,5 +1,6 @@
-import { logger } from '@percona/platform-core';
 import { SerializedError } from '@reduxjs/toolkit';
+
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { PERCONA_CANCELLED_ERROR_NAME } from '../../core/constants';
 import { isApiCancelError } from '../../helpers/api';

@@ -1,4 +1,4 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { useRecurringCall } from './recurringCall.hook';
@@ -19,8 +19,8 @@ const Dummy = () => {
   );
 };
 
-jest.mock('@percona/platform-core', () => {
-  const originalModule = jest.requireActual('@percona/platform-core');
+jest.mock('app/percona/shared/helpers/logger', () => {
+  const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
   return {
     ...originalModule,
     logger: {

@@ -1,5 +1,4 @@
 /* eslint-disable react/display-name */
-import { Chip, logger } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Cell, Row } from 'react-table';
 
@@ -7,13 +6,15 @@ import { useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Severity } from 'app/percona/integrated-alerting/components/Severity';
-import { ExtendedColumn, Table } from 'app/percona/integrated-alerting/components/Table';
-import { useStoredTablePageSize } from 'app/percona/integrated-alerting/components/Table/Pagination';
+import { Chip } from 'app/percona/shared/components/Elements/Chip';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
+import { ExtendedColumn, Table } from 'app/percona/shared/components/Elements/Table';
+import { useStoredTablePageSize } from 'app/percona/shared/components/Elements/Table/Pagination';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { CheckService } from '../../Check.service';
 import { ServiceFailedCheck } from '../../types';

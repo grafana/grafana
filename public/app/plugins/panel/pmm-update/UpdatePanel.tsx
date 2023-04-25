@@ -1,13 +1,13 @@
-import { logger } from '@percona/platform-core';
-import React, { useEffect, useState, FC, MouseEvent } from 'react';
+import React, { FC, MouseEvent, useEffect, useState } from 'react';
 
 import { Button, IconName, Spinner } from '@grafana/ui';
 import { SettingsService } from 'app/percona/settings/Settings.service';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { Messages } from './UpdatePanel.messages';
 import * as styles from './UpdatePanel.styles';
 import { AvailableUpdate, CurrentVersion, InfoBox, LastCheck, ProgressModal } from './components';
-import { useVersionDetails, usePerformUpdate } from './hooks';
+import { usePerformUpdate, useVersionDetails } from './hooks';
 
 export const UpdatePanel: FC<{}> = () => {
   const isOnline = navigator.onLine;

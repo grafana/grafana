@@ -1,26 +1,87 @@
-import { ChangeEvent, ReactNode } from 'react';
-import { Column } from 'react-table';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  Cell,
+  Column,
+  ColumnInstance,
+  HeaderGroup,
+  Row,
+  TableCellProps,
+  TableHeaderProps,
+  TableInstance,
+  TableOptions,
+  TableRowProps,
+  TableState,
+} from 'react-table';
 
-export interface SelectedTableRows<T> {
-  id: string;
-  original: T;
+import { SelectableValue } from '@grafana/data';
+
+export interface ExtendedTableRowProps extends TableRowProps {
+  onClick?: () => void;
+}
+
+export interface ExtendedTableCellProps extends TableCellProps {
+  onClick?: () => void;
+}
+
+export interface ExtendedTableHeaderProps extends TableHeaderProps {
+  onClick?: () => void;
+}
+
+export type ExtendedColumn<D extends object = {}> = Column<D> & {
+  type?: FilterFieldTypes;
+  options?: Array<SelectableValue<any>>;
+  label?: string;
+  noHiddenOverflow?: boolean;
+};
+
+export enum FilterFieldTypes {
+  TEXT,
+  RADIO_BUTTON,
+  DROPDOWN,
 }
 
 export interface TableProps {
-  className?: string;
-  rowSelection?: boolean;
-  onRowSelection?: (selected: any) => void;
-  columns: Array<Column<any>>;
   data: object[];
-  noData?: ReactNode;
-  loading?: boolean;
-  rowKey?: (rec: any) => any;
+  columns: Array<ExtendedColumn<any>>;
+  pendingRequest?: boolean;
+  emptyMessage?: React.ReactNode;
+  showPagination?: boolean;
+  totalItems: number;
+  totalPages?: number;
+  tableHash?: string;
+  pageSize?: number;
+  pageIndex?: number;
+  pagesPerView?: number;
+  autoResetPage?: boolean;
+  autoResetExpanded?: boolean;
+  emptyMessageClassName?: string;
+  overlayClassName?: string;
+  autoResetSelectedRows?: boolean;
+  rowSelection?: boolean;
+  allRowsSelectionMode?: 'all' | 'page';
+  onRowSelection?: (rows: Array<Row<any>>) => void;
+  onPaginationChanged?: (pageSize: number, pageIndex: number) => void;
+  children?: (rows: Row[], table: TableInstance) => React.ReactNode;
+  renderExpandedRow?: (row: Row<any>) => React.ReactNode;
+  getHeaderProps?: (column: HeaderGroup) => ExtendedTableHeaderProps;
+  getRowProps?: (row: Row<any>) => ExtendedTableRowProps;
+  getColumnProps?: (column: ColumnInstance) => ExtendedTableCellProps;
+  getCellProps?: (cell: Cell<any, any>) => ExtendedTableCellProps;
+  getRowId?: (originalRow: any, relativeIndex: number, parent?: Row<any>) => string;
+  showFilter?: boolean;
+  hasBackendFiltering?: boolean;
+  tableKey?: string;
 }
 
-export interface TableCheckboxProps {
-  className: string;
-  checked: boolean;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  style: any;
-  title: string;
+export interface PaginatedTableState extends TableState {
+  pageIndex: number;
+  pageSize: number;
+}
+
+export interface PaginatedTableOptions extends TableOptions<object> {
+  manualPagination?: boolean;
+  pageCount?: number;
+  autoResetPage?: boolean;
+  autoResetExpanded?: boolean;
+  autoResetSelectedRows?: boolean;
 }

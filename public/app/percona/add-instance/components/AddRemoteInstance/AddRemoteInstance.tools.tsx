@@ -1,8 +1,8 @@
-import { logger } from '@percona/platform-core';
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Databases } from 'app/percona/shared/core';
+import { logger } from 'app/percona/shared/helpers/logger';
 
-import { INSTANCE_TYPES_LABELS, InstanceAvailableType } from '../../panel.types';
+import { InstanceAvailableType, INSTANCE_TYPES_LABELS } from '../../panel.types';
 
 import { DEFAULT_PORTS } from './AddRemoteInstance.constants';
 import { InstanceData } from './AddRemoteInstance.types';

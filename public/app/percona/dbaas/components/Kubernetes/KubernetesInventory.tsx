@@ -1,5 +1,4 @@
 /* eslint-disable react/display-name */
-import { CheckboxField, Modal } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
 import { Column } from 'react-table';
@@ -7,8 +6,10 @@ import { Column } from 'react-table';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import { Table } from 'app/percona/shared/components/Elements/AnotherTableInstance';
+import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table';
+import { Modal } from 'app/percona/shared/components/Elements/Modal';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { useCatchCancellationError } from 'app/percona/shared/components/hooks/catchCancellationError';

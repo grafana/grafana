@@ -1,125 +1,262 @@
-/* eslint-disable react/display-name */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cx } from '@emotion/css';
-import React, { FC, useEffect } from 'react';
-import { useRowSelect, useTable } from 'react-table';
+import React, { FC, useEffect, useMemo, useState } from 'react';
+import {
+  ColumnInstance,
+  PluginHook,
+  Row,
+  useExpanded,
+  usePagination,
+  useRowSelect,
+  UseRowSelectInstanceProps,
+  UseRowSelectRowProps,
+  useTable,
+} from 'react-table';
 
-import { Checkbox, Spinner, useTheme } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
+import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
 
+import { Filter } from './Filter/Filter';
+import { Pagination } from './Pagination';
+import { PAGE_SIZES } from './Pagination/Pagination.constants';
+import { TableCheckbox } from './Selection';
 import { getStyles } from './Table.styles';
-import { TableCheckboxProps, TableProps } from './Table.types';
+import { PaginatedTableOptions, PaginatedTableState, TableProps } from './Table.types';
+import { TableContent } from './TableContent';
 
-const TableCheckbox = ({ className, checked, onChange, title }: TableCheckboxProps) => (
-  <div className={className}>
-    <Checkbox name="table-checkbox" checked={checked} title={title} onChange={onChange} />
-  </div>
-);
+const defaultPropGetter = () => ({});
 
 export const Table: FC<TableProps> = ({
-  className,
+  pendingRequest = false,
+  data: rawData,
   columns,
-  rowSelection = false,
+  showPagination,
+  rowSelection,
+  totalPages,
+  onPaginationChanged = () => null,
+  emptyMessage = '',
+  emptyMessageClassName,
+  overlayClassName,
+  totalItems,
+  pageSize: propPageSize,
+  pageIndex: propPageIndex = 0,
+  pagesPerView,
+  children,
+  autoResetExpanded = true,
+  autoResetPage = true,
+  autoResetSelectedRows = true,
+  renderExpandedRow = () => <></>,
   onRowSelection,
-  data,
-  noData,
-  loading,
-  rowKey,
+  allRowsSelectionMode = 'all',
+  getHeaderProps = defaultPropGetter,
+  getRowProps = defaultPropGetter,
+  getColumnProps = defaultPropGetter,
+  getCellProps = defaultPropGetter,
+  showFilter = false,
+  hasBackendFiltering = false,
+  getRowId,
+  tableKey,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const [filterData, setFilteredData] = useState<Object[]>([]);
+  const data = useMemo(() => (showFilter ? filterData : rawData), [showFilter, filterData, rawData]);
+  const style = useStyles(getStyles);
+  const manualPagination = !!(totalPages && totalPages >= 0);
+  const initialState: Partial<PaginatedTableState> = {
+    pageIndex: propPageIndex,
+  };
+  const tableOptions: PaginatedTableOptions = {
+    columns,
+    data,
+    initialState,
+    manualPagination,
+    autoResetExpanded,
+    autoResetPage,
+    autoResetSelectedRows,
+    getRowId,
+  };
+  const plugins: Array<PluginHook<any>> = [useExpanded];
+
+  if (showPagination) {
+    plugins.push(usePagination);
+
+    if (manualPagination) {
+      tableOptions.pageCount = totalPages;
+    }
+
+    if (propPageSize) {
+      initialState.pageSize = propPageSize;
+    }
+  }
+
+  if (rowSelection) {
+    plugins.push(useRowSelect);
+    plugins.push((hooks: any) => {
+      hooks.visibleColumns.push((cols: Array<ColumnInstance<any>>) => [
+        {
+          id: 'selection',
+          width: '50px',
+          Header: ({
+            getToggleAllRowsSelectedProps,
+            getToggleAllPageRowsSelectedProps,
+          }: UseRowSelectInstanceProps<any>) => (
+            <div data-testid="select-all">
+              <TableCheckbox
+                id="all"
+                {...(allRowsSelectionMode === 'all' || !showPagination
+                  ? getToggleAllRowsSelectedProps()
+                  : getToggleAllPageRowsSelectedProps())}
+              />
+            </div>
+          ),
+          Cell: ({ row }: { row: UseRowSelectRowProps<any> & Row<any> }) => (
+            <div data-testid="select-row">
+              <TableCheckbox id={row.id} {...row.getToggleRowSelectedProps()} />
+            </div>
+          ),
+        },
+        ...cols,
+      ]);
+    });
+  }
+
+  const tableInstance = useTable(tableOptions, ...plugins);
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
+    page,
     rows,
     prepareRow,
-    // @ts-ignore
+    visibleColumns,
+    pageCount,
+    setPageSize,
+    gotoPage,
     selectedFlatRows,
-  } = useTable(
-    {
-      columns,
-      data,
-    },
-    useRowSelect,
-    (hooks) => {
-      if (rowSelection) {
-        hooks.visibleColumns.push((columns) => [
-          {
-            id: 'selection',
-            Header: ({ getToggleAllRowsSelectedProps }: any) => (
-              <div data-testid="select-all">
-                <TableCheckbox className={styles.checkbox} {...getToggleAllRowsSelectedProps()} />
-              </div>
-            ),
-            Cell: ({ row }: { row: any }) => (
-              <div data-testid="select-row">
-                <TableCheckbox className={styles.checkbox} {...row.getToggleRowSelectedProps()} />
-              </div>
-            ),
-          },
-          ...columns,
-        ]);
-      }
-    }
-  );
+    state: { pageSize, pageIndex },
+  } = tableInstance;
+  const hasData = data.length > 0;
+
+  const onPageChanged = (newPageIndex: number) => {
+    gotoPage(newPageIndex);
+    onPaginationChanged(pageSize, newPageIndex);
+  };
+
+  const onPageSizeChanged = (newPageSize: number) => {
+    gotoPage(0);
+    setPageSize(newPageSize);
+    onPaginationChanged(newPageSize, 0);
+  };
 
   useEffect(() => {
     if (onRowSelection) {
       onRowSelection(selectedFlatRows);
     }
-  }, [selectedFlatRows, onRowSelection]);
+  }, [onRowSelection, selectedFlatRows]);
 
   return (
-    <div className={cx(styles.table, className)}>
-      <div className={styles.tableWrap}>
-        {loading ? (
-          <div data-testid="table-loading" className={styles.empty}>
-            <Spinner />
-          </div>
-        ) : null}
-        {!rows.length && !loading ? (
-          <div data-testid="table-no-data" className={styles.empty}>
-            {noData || <h1>No data</h1>}
-          </div>
-        ) : null}
-        {rows.length && !loading ? (
-          <table {...getTableProps()}>
-            <thead>
-              {headerGroups.map((headerGroup, i) => (
-                <tr data-testid="table-header" {...headerGroup.getHeaderGroupProps()} key={i}>
-                  {headerGroup.headers.map((column, index) => (
-                    <th
-                      {...column.getHeaderProps()}
-                      className={index === 0 && rowSelection ? styles.checkboxColumn : ''}
-                      key={index}
-                    >
-                      {column.render('Header')}
-                    </th>
+    <>
+      <Overlay dataTestId="table-loading" isPending={pendingRequest} overlayClassName={overlayClassName}>
+        {showFilter && (
+          <Filter
+            columns={columns}
+            rawData={rawData}
+            setFilteredData={setFilteredData}
+            hasBackendFiltering={hasBackendFiltering}
+            tableKey={tableKey}
+          />
+        )}
+        <div className={style.tableWrap} data-testid="table-outer-wrapper">
+          <div className={style.table} data-testid="table-inner-wrapper">
+            <TableContent
+              loading={pendingRequest}
+              hasData={hasData}
+              emptyMessage={emptyMessage}
+              emptyMessageClassName={emptyMessageClassName}
+            >
+              <table {...getTableProps()} data-testid="table">
+                <thead data-testid="table-thead">
+                  {headerGroups.map((headerGroup) => (
+                    /* eslint-disable-next-line react/jsx-key */
+                    <tr data-testid="table-tbody-tr" {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column) => (
+                        /* eslint-disable-next-line react/jsx-key */
+                        <th
+                          className={style.tableHeader(column.width)}
+                          {...column.getHeaderProps([
+                            {
+                              className: column.className,
+                              style: column.style,
+                            },
+                            getColumnProps(column),
+                            getHeaderProps(column),
+                          ])}
+                        >
+                          {column.render('Header')}
+                        </th>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {rows.map((row, i) => {
-                prepareRow(row);
-
-                return (
-                  <tr data-testid="table-row" {...row.getRowProps()} key={i}>
-                    {row.cells.map((cell, index) => (
-                      <td
-                        {...cell.getCellProps()}
-                        className={index === 0 && rowSelection ? styles.checkboxColumn : ''}
-                        key={index}
-                      >
-                        {cell.render('Cell')}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : null}
-      </div>
-    </div>
+                </thead>
+                <tbody {...getTableBodyProps()} data-testid="table-tbody">
+                  {children
+                    ? children(showPagination ? page : rows, tableInstance)
+                    : (showPagination ? page : rows).map((row) => {
+                        prepareRow(row);
+                        return (
+                          <React.Fragment key={row.id}>
+                            <tr data-testid="table-tbody-tr" {...row.getRowProps(getRowProps(row))}>
+                              {row.cells.map((cell) => {
+                                return (
+                                  <td
+                                    title={
+                                      typeof cell.value === 'string' || typeof cell.value === 'number'
+                                        ? cell.value.toString()
+                                        : undefined
+                                    }
+                                    {...cell.getCellProps([
+                                      {
+                                        className: cx(
+                                          cell.column.className,
+                                          style.tableCell(!!cell.column.noHiddenOverflow)
+                                        ),
+                                        style: cell.column.style,
+                                      },
+                                      getCellProps(cell),
+                                    ])}
+                                    key={cell.column.id}
+                                  >
+                                    {cell.render('Cell')}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                            {row.isExpanded ? (
+                              <tr>
+                                <td colSpan={visibleColumns.length}>{renderExpandedRow(row)}</td>
+                              </tr>
+                            ) : null}
+                          </React.Fragment>
+                        );
+                      })}
+                </tbody>
+              </table>
+            </TableContent>
+          </div>
+        </div>
+      </Overlay>
+      {showPagination && hasData && (
+        <Pagination
+          pagesPerView={pagesPerView}
+          pageCount={pageCount}
+          initialPageIndex={pageIndex}
+          totalItems={totalItems}
+          pageSizeOptions={PAGE_SIZES}
+          pageSize={pageSize}
+          nrRowsOnCurrentPage={page.length}
+          onPageChange={(pageIndex) => onPageChanged(pageIndex)}
+          onPageSizeChange={(pageSize) => onPageSizeChanged(pageSize)}
+        />
+      )}
+    </>
   );
 };

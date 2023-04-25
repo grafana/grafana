@@ -1,9 +1,10 @@
-import { CheckboxField, TextInputField } from '@percona/platform-core';
 import React, { FC } from 'react';
 import { Field } from 'react-final-form';
 import { FieldArray } from 'react-final-form-arrays';
 
 import { Switch, useStyles, Button, Icon, Tooltip } from '@grafana/ui';
+import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 
 import FieldSet from '../../../../../shared/components/Form/FieldSet/FieldSet';
 

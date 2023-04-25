@@ -17,8 +17,8 @@ import { formatDBClusterVersion } from './DBCluster.utils';
 jest.mock('app/core/app_events');
 jest.mock('app/percona/dbaas/components/Kubernetes/Kubernetes.service');
 jest.mock('app/percona/dbaas/components/DBCluster/DBCluster.service');
-jest.mock('@percona/platform-core', () => {
-  const originalModule = jest.requireActual('@percona/platform-core');
+jest.mock('app/percona/shared/helpers/logger', () => {
+  const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
   return {
     ...originalModule,
     logger: {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { FormApi } from 'final-form';
 
 import { Databases } from 'app/percona/shared/core';

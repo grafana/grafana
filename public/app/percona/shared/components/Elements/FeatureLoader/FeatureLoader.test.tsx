@@ -7,8 +7,8 @@ import { StoreState } from 'app/types';
 
 import { FeatureLoader } from './FeatureLoader';
 
-jest.mock('@percona/platform-core', () => {
-  const originalModule = jest.requireActual('@percona/platform-core');
+jest.mock('app/percona/shared/helpers/logger', () => {
+  const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
   return {
     ...originalModule,
     logger: {

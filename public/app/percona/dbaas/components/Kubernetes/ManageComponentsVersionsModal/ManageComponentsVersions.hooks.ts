@@ -1,8 +1,9 @@
-import { logger } from '@percona/platform-core';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { DATABASE_OPERATORS } from '../../DBCluster/DBCluster.constants';
 import { DBClusterVersion } from '../../DBCluster/DBCluster.types';
@@ -24,12 +25,12 @@ import { Messages } from './ManageComponentsVersionsModal.messages';
 import {
   ManageComponentsVersionsRenderProps,
   ManageComponentVersionsFields,
-  SupportedComponents,
   PossibleComponentOptions,
   SetComponentOptionsAction,
-  SetVersionsOptionsAction,
-  SetVersionsFieldNameAction,
   SetDefaultFieldNameAction,
+  SetVersionsFieldNameAction,
+  SetVersionsOptionsAction,
+  SupportedComponents,
 } from './ManageComponentsVersionsModal.types';
 
 export const useOperatorsComponentsVersions = (

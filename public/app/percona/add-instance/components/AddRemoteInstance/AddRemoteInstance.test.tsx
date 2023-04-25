@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { Databases } from 'app/percona/shared/core';
@@ -7,8 +7,8 @@ import { InstanceTypesExtra } from '../../panel.types';
 
 import AddRemoteInstance from './AddRemoteInstance';
 
-jest.mock('@percona/platform-core', () => {
-  const originalModule = jest.requireActual('@percona/platform-core');
+jest.mock('app/percona/shared/helpers/logger', () => {
+  const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
   return {
     ...originalModule,
     logger: {

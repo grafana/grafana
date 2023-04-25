@@ -1,7 +1,6 @@
 /* eslint-disable react/display-name */
-import { logger } from '@percona/platform-core';
 import { format } from 'date-fns';
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Column } from 'react-table';
 
 import { Button, useStyles2 } from '@grafana/ui';
@@ -12,10 +11,11 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
 
+import { useStoredTablePageSize } from '../../../shared/components/Elements/Table/Pagination';
+import { Table } from '../../../shared/components/Elements/Table/Table';
 import { Messages } from '../../IntegratedAlerting.messages';
-import { useStoredTablePageSize } from '../Table/Pagination';
-import { Table } from '../Table/Table';
 
 import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
 import { ALERT_RULE_TEMPLATES_TABLE_ID, GET_TEMPLATES_CANCEL_TOKEN } from './AlertRuleTemplate.constants';

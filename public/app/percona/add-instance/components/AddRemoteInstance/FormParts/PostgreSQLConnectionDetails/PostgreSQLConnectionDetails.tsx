@@ -1,9 +1,11 @@
-import { PasswordInputField, TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useMemo } from 'react';
 
 import { useTheme } from '@grafana/ui';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
+import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import Validators from 'app/percona/shared/helpers/validators';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';

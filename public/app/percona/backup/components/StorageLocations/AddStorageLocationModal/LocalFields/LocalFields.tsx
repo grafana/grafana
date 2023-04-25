@@ -1,5 +1,7 @@
-import { TextInputField, validators } from '@percona/platform-core';
 import React, { FC } from 'react';
+
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { Messages } from './LocalFields.messages';
 import { LocalFieldsProps } from './LocalFields.types';

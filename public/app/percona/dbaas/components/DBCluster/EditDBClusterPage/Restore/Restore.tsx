@@ -1,8 +1,9 @@
-import { AsyncSelectField, validators } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 import { Field } from 'react-final-form';
 
-import { FieldSet, useStyles, Switch } from '@grafana/ui';
+import { FieldSet, Switch, useStyles } from '@grafana/ui';
+import { AsyncSelectFieldCore } from 'app/percona/shared/components/Form/AsyncSelectFieldCore';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { useSelector } from '../../../../../../types';
 import { SelectField } from '../../../../../shared/components/Form/SelectField';
@@ -63,7 +64,7 @@ export const Restore: FC<RestoreFromProps> = ({ form }) => {
               )}
             </Field>
             {restoreFromValue !== undefined && restoreFromValue ? (
-              <AsyncSelectField
+              <AsyncSelectFieldCore
                 name={RestoreFields.backupArtifact}
                 loadOptions={() => RestoreService.loadBackupArtifacts(restoreFromValue)}
                 defaultOptions
@@ -77,7 +78,7 @@ export const Restore: FC<RestoreFromProps> = ({ form }) => {
           </div>
           {kubernetesCluster?.value && (
             <div className={styles.line}>
-              <AsyncSelectField
+              <AsyncSelectFieldCore
                 name={RestoreFields.secretsName}
                 loadOptions={() => RestoreService.loadSecretsNames(kubernetesCluster?.value)}
                 defaultOptions

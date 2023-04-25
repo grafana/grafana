@@ -1,8 +1,8 @@
 /* eslint-disable react/display-name */
-import { Dropdown } from '@percona/platform-core';
 import React, { FC, Fragment } from 'react';
 
 import { IconButton, Tooltip, useTheme } from '@grafana/ui';
+import { Dropdown } from 'app/percona/shared/components/Elements/Dropdown';
 
 import { getStyles } from './MultipleActions.styles';
 import { MultipleActionsProps } from './MultipleActions.types';

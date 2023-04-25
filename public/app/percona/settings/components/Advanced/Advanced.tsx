@@ -1,14 +1,15 @@
 import { cx } from '@emotion/css';
-import { TextInputField, NumberInputField } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
-import { Button, Spinner, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
+import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
@@ -21,12 +22,12 @@ import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 import { AdvancedChangePayload } from '../../Settings.types';
 
 import {
-  SECONDS_IN_DAY,
-  MIN_DAYS,
   MAX_DAYS,
+  MIN_DAYS,
   MIN_STT_CHECK_INTERVAL,
-  STT_CHECK_INTERVAL_STEP,
+  SECONDS_IN_DAY,
   STT_CHECK_INTERVALS,
+  STT_CHECK_INTERVAL_STEP,
   TECHNICAL_PREVIEW_DOC_URL,
 } from './Advanced.constants';
 import { getStyles } from './Advanced.styles';

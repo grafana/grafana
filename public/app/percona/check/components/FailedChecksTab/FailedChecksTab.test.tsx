@@ -1,16 +1,16 @@
-import { logger } from '@percona/platform-core';
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
 import { CheckService } from 'app/percona/check/Check.service';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
 import { FailedChecksTab } from './FailedChecksTab';
 
-jest.mock('@percona/platform-core', () => {
-  const originalModule = jest.requireActual('@percona/platform-core');
+jest.mock('app/percona/shared/helpers/logger', () => {
+  const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
   return {
     ...originalModule,
     logger: {

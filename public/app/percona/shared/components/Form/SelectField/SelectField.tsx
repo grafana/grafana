@@ -1,9 +1,10 @@
-import { Label } from '@percona/platform-core';
-import { LabeledFieldProps } from '@percona/platform-core/dist/shared/types';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import React, { FC } from 'react';
 
 import { Select } from '@grafana/ui';
 import { SelectCommonProps } from '@grafana/ui/src/components/Select/types';
+import { LabelCore } from 'app/percona/shared/components/Form/LabelCore';
+import { LabeledFieldProps } from 'app/percona/shared/helpers/types';
 
 import { withSelectStyles } from '../withSelectStyles/withSelectStyles';
 
@@ -21,7 +22,7 @@ const SelectFieldWrapper: FC<LabeledFieldProps & SelectCommonProps<any>> = ({
   ...props
 }) => (
   <>
-    <Label
+    <LabelCore
       name={name}
       label={label}
       required={required}

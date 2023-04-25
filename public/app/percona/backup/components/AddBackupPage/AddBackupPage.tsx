@@ -1,14 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { cx } from '@emotion/css';
-import {
-  LoaderButton,
-  logger,
-  Overlay,
-  RadioButtonGroupField,
-  TextareaInputField,
-  TextInputField,
-  validators,
-} from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
@@ -18,18 +9,25 @@ import { CollapsableSection, CustomScrollbar, LinkButton, PageToolbar, useStyles
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
+import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
+import { PageSwitcherValue } from 'app/percona/shared/components/Elements/PageSwitcherCard/PageSwitcherCard.types';
 import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelectField';
+import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
-import { PageSwitcherValue } from 'app/percona/shared/components/PageSwitcherCard/PageSwitcherCard.types';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
+import { TextareaInputField } from 'app/percona/shared/components/Form/TextareaInput';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { ApiVerboseError, Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations } from 'app/percona/shared/core/selectors';
 import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
-import { PageSwitcherCard } from '../../../shared/components/PageSwitcherCard/PageSwitcherCard';
+import { PageSwitcherCard } from '../../../shared/components/Elements/PageSwitcherCard/PageSwitcherCard';
 import { BACKUP_INVENTORY_URL, BACKUP_SCHEDULED_URL } from '../../Backup.constants';
 import { Messages as MessagesBackup } from '../../Backup.messages';
 import { BackupService } from '../../Backup.service';

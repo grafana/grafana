@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import Table from 'app/percona/shared/components/Table';
+import Table from 'app/percona/rbac/AccessRoles/components/AccessRolesTable/Table';
 
 import { Messages } from '../../AccessRole.messages';
 

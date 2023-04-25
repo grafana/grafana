@@ -1,4 +1,3 @@
-import { LoaderButton, logger } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
 import { AppEvents, UrlQueryMap } from '@grafana/data';
@@ -10,12 +9,14 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
-import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/integrated-alerting/components/Table';
 import { CustomCollapsableSection } from 'app/percona/shared/components/Elements/CustomCollapsableSection/CustomCollapsableSection';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
+import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { fetchAdvisors } from 'app/percona/shared/core/reducers/advisors/advisors';
 import { getAdvisors, getCategorizedAdvisors, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 

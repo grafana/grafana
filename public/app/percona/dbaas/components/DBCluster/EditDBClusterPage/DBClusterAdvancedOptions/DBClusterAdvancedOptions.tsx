@@ -1,11 +1,13 @@
 import { cx } from '@emotion/css';
-import { logger, NumberInputField, SelectField } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormRenderProps } from 'react-final-form';
 
 import { useStyles } from '@grafana/ui/src';
-import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
+import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
+import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
+import { SelectField } from 'app/percona/shared/components/Form/SelectFieldCore';
 import { Databases } from 'app/percona/shared/core';
+import { logger } from 'app/percona/shared/helpers/logger';
 import validators from 'app/percona/shared/helpers/validators';
 
 import FieldSet from '../../../../../shared/components/Form/FieldSet/FieldSet';

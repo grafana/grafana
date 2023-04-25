@@ -1,12 +1,14 @@
-import { CheckboxField, LoaderButton, Modal } from '@percona/platform-core';
 import React, { FC } from 'react';
 import { withTypes } from 'react-final-form';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
+import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
+import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
+import { Modal } from 'app/percona/shared/components/Elements/Modal';
 
 import { Messages } from './DeleteModal.messages';
 import { getStyles } from './DeleteModal.styles';
-import { DeleteModalProps, DeleteModalFormProps } from './DeleteModal.types';
+import { DeleteModalFormProps, DeleteModalProps } from './DeleteModal.types';
 
 const { defaultTitle, defaultMessage, defaultConfirm, defaultCancel } = Messages;
 const { Form } = withTypes<DeleteModalFormProps>();

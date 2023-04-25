@@ -1,12 +1,16 @@
-import { Modal, LoaderButton, TextareaInputField, validators, logger } from '@percona/platform-core';
 import { FormApi } from 'final-form';
-import React, { FC, ChangeEvent, useCallback, useRef } from 'react';
+import React, { ChangeEvent, FC, useCallback, useRef } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Messages } from 'app/percona/integrated-alerting/IntegratedAlerting.messages';
+import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
+import { Modal } from 'app/percona/shared/components/Elements/Modal';
+import { TextareaInputField } from 'app/percona/shared/components/Form/TextareaInput';
+import { logger } from 'app/percona/shared/helpers/logger';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
 

@@ -1,4 +1,3 @@
-import { logger } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
@@ -8,12 +7,13 @@ import { OldPage } from 'app/core/components/Page/Page';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
 import { FailedCheckSummary } from 'app/percona/check/types';
-import { ExtendedTableCellProps, ExtendedTableRowProps, Table } from 'app/percona/integrated-alerting/components/Table';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { ExtendedTableCellProps, ExtendedTableRowProps, Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { Messages as mainChecksMessages } from '../../CheckPanel.messages';
 import { ChecksInfoAlert } from '../CheckInfoAlert/CheckInfoAlert';

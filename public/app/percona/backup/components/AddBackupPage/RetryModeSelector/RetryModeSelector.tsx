@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
-import { NumberInputField, RadioButtonGroupField } from '@percona/platform-core';
 import React from 'react';
 
 import { useStyles } from '@grafana/ui';
 import { RetryMode } from 'app/percona/backup/Backup.types';
+import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
+import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 
 import { RETRY_MODE_OPTIONS } from '../AddBackupPage.constants';
 import { Messages } from '../AddBackupPage.messages';
 
 import { getStyles } from './RetryModeSelector.styles';
 import { RetryModeSelectorProps } from './RetryModeSelector.types';
-import { retryTimesValidator, retryIntervalValidator } from './RetryModeSelector.utils';
+import { retryIntervalValidator, retryTimesValidator } from './RetryModeSelector.utils';
 
 export const RetryModeSelector = ({ retryMode, disabled = false }: RetryModeSelectorProps) => {
   const disabledNumberInputs = retryMode === RetryMode.MANUAL || disabled;

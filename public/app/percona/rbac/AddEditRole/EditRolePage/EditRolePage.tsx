@@ -1,4 +1,3 @@
-import { logger } from '@percona/platform-core';
 import React, { FC, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -7,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { appEvents } from 'app/core/core';
 import { updateRoleAction } from 'app/percona/shared/core/reducers/roles/roles';
+import { logger } from 'app/percona/shared/helpers/logger';
 import RolesService from 'app/percona/shared/services/roles/Roles.service';
 import { useAppDispatch } from 'app/store/store';
 

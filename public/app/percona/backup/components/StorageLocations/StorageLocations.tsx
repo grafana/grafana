@@ -1,16 +1,16 @@
 /* eslint-disable react/display-name, @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
-import { logger } from '@percona/platform-core';
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Column, Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OldPage } from 'app/core/components/Page/Page';
-import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { Table } from 'app/percona/shared/components/Elements/Table';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { Messages } from '../../Backup.messages';
 

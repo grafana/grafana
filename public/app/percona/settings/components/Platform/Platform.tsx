@@ -1,7 +1,5 @@
-import { logger } from '@percona/platform-core';
 import { AxiosError } from 'axios';
 import React, { FC, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -12,6 +10,8 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { fetchServerInfoAction, fetchSettingsAction, updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaServer, getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { logger } from 'app/percona/shared/helpers/logger';
+import { useDispatch, useSelector } from 'app/types';
 
 import { Connect } from './Connect/Connect';
 import { Connected } from './Connected/Connected';

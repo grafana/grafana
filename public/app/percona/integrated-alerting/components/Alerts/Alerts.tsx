@@ -19,12 +19,12 @@ import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { useAppDispatch } from 'app/store/store';
 
+import { Table } from '../../../shared/components/Elements/Table/Table';
 import { Messages } from '../../IntegratedAlerting.messages';
 import { Severity } from '../Severity';
-import { Table } from '../Table/Table';
 
 import { AlertDetails } from './AlertDetails/AlertDetails';
-import { DATA_INTERVAL, ACTIONS_COLUMN, SILENCES_URL } from './Alerts.constants';
+import { ACTIONS_COLUMN, DATA_INTERVAL, SILENCES_URL } from './Alerts.constants';
 import { Messages as AlertMessages } from './Alerts.messages';
 import { getStyles } from './Alerts.styles';
 

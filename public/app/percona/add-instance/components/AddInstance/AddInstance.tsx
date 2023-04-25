@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import React, { FC, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 

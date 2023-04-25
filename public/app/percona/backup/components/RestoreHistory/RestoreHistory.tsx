@@ -1,18 +1,18 @@
 /* eslint-disable react/display-name */
-import { logger } from '@percona/platform-core';
 import { CancelToken } from 'axios';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Column, Row } from 'react-table';
 
 import { OldPage } from 'app/core/components/Page/Page';
-import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 

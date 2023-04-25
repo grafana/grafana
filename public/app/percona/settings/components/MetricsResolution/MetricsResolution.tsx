@@ -1,8 +1,6 @@
-import { NumberInputField, RadioButtonGroupField } from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import React, { FC, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
-import { useSelector } from 'react-redux';
 
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
@@ -11,12 +9,15 @@ import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { MetricsResolutions } from 'app/percona/settings/Settings.types';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
+import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
+import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 import { MAX_DAYS, MIN_DAYS } from '../Advanced/Advanced.constants';

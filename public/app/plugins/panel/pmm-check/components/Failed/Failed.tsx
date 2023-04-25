@@ -1,11 +1,11 @@
 import { cx } from '@emotion/css';
-import { logger } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { CheckService } from 'app/percona/check/Check.service';
 import { FailedCheckSummary } from 'app/percona/check/types';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { useSelector } from 'app/types';
 
 import { PMM_DATABASE_CHECKS_PANEL_URL, PMM_SETTINGS_URL } from '../../CheckPanel.constants';

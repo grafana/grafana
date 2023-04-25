@@ -5,68 +5,142 @@ import { Table } from './Table';
 
 const columns = [
   {
-    Header: 'ID',
-    accessor: 'id',
-  },
-  {
-    Header: 'Test column',
-    accessor: 'test',
-  },
-  {
-    Header: 'Another test column',
-    accessor: 'test2',
+    Header: 'test col 1',
+    accessor: 'value',
   },
 ];
 
-const rows = [
-  { id: 1, test: 1, test2: 1 },
-  { id: 2, test: 1, test2: 1 },
-  { id: 3, test: 1, test2: 1 },
-  { id: 4, test: 1, test2: 1 },
+const data = [
+  {
+    value: 'test value 1',
+  },
+  {
+    value: 'test value 2',
+  },
 ];
+
+const onPaginationChanged = jest.fn();
 
 describe('Table', () => {
-  it('Render correct amount of rows', () => {
-    render(<Table columns={columns} data={rows} />);
+  it('should render the table', async () => {
+    render(
+      <Table
+        totalItems={data.length}
+        data={data}
+        columns={columns}
+        onPaginationChanged={onPaginationChanged}
+        pageSize={10}
+      />
+    );
 
-    expect(screen.getAllByTestId('table-row')).toHaveLength(rows.length);
-    expect(screen.getAllByTestId('table-header')).toHaveLength(1);
+    expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(2);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
 
-  it('Render no data section if empty rows passed', () => {
-    render(<Table columns={columns} data={[]} />);
-
-    expect(screen.queryByTestId('table-row')).not.toBeInTheDocument();
-    expect(screen.getAllByTestId('table-no-data')).toHaveLength(1);
-  });
-
-  it('Render checkboxes if rowSelection is passed', () => {
-    render(<Table columns={columns} data={rows} rowSelection />);
-
-    expect(screen.getAllByTestId('select-all')).toHaveLength(1);
-    expect(screen.getAllByTestId('select-row')).toHaveLength(rows.length);
-  });
-
-  it('Render custom no data section if its passed', () => {
-    const noData = <div data-testid="custom-no-data">123</div>;
-    render(<Table columns={columns} data={[]} noData={noData} />);
-
-    expect(screen.getAllByTestId('table-no-data')).toHaveLength(1);
-    expect(screen.getAllByTestId('custom-no-data')).toHaveLength(1);
-  });
-
-  it('Render default no data section if no noData passed', () => {
-    render(<Table columns={columns} data={[]} />);
-
-    expect(screen.getAllByTestId('table-no-data')).toHaveLength(1);
-  });
-
-  it('Render spinner if table is loading', () => {
-    const noData = <div data-testid="custom-no-data">123</div>;
-    render(<Table columns={columns} data={[]} noData={noData} loading />);
+  it('should render the loader when data fetch is pending', async () => {
+    render(
+      <Table
+        totalItems={data.length}
+        data={data}
+        columns={columns}
+        onPaginationChanged={onPaginationChanged}
+        pendingRequest
+        pageSize={10}
+      />
+    );
 
     expect(screen.getAllByTestId('table-loading')).toHaveLength(1);
+    expect(screen.getAllByTestId('table')).toHaveLength(1);
     expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('custom-no-data')).not.toBeInTheDocument();
+  });
+
+  it('should display the noData section when no data is passed', async () => {
+    render(
+      <Table
+        totalItems={data.length}
+        data={[]}
+        columns={columns}
+        onPaginationChanged={onPaginationChanged}
+        emptyMessage="empty"
+        pageSize={10}
+      />
+    );
+    const noData = screen.getByTestId('table-no-data');
+
+    expect(screen.queryByTestId('table-loading')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('table')).not.toBeInTheDocument();
+    expect(noData).toBeInTheDocument();
+    expect(noData.textContent).toEqual('empty');
+  });
+
+  it('should display all data without showPagination', () => {
+    const mockData = [];
+
+    for (let i = 0; i < 100; i++) {
+      mockData.push({ value: i });
+    }
+
+    render(
+      <Table
+        totalItems={mockData.length}
+        data={mockData}
+        columns={columns}
+        onPaginationChanged={onPaginationChanged}
+        emptyMessage="empty"
+      />
+    );
+
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(100);
+  });
+
+  it('should display partial data with showPagination using controlled pagination', () => {
+    const mockData = [];
+
+    for (let i = 0; i < 100; i++) {
+      mockData.push({ value: i });
+    }
+
+    render(
+      <Table
+        showPagination
+        totalItems={mockData.length}
+        totalPages={10}
+        pagesPerView={50}
+        data={mockData.slice(0, 10)}
+        columns={columns}
+        onPaginationChanged={jest.fn()}
+        emptyMessage="empty"
+      />
+    );
+
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(10);
+    expect(screen.getAllByTestId('page-button')).toHaveLength(9);
+    expect(screen.getAllByTestId('page-button-active')).toHaveLength(1);
+  });
+
+  it('should display partial data with showPagination using uncontrolled pagination', () => {
+    const mockData = [];
+
+    for (let i = 0; i < 100; i++) {
+      mockData.push({ value: i });
+    }
+
+    render(
+      <Table
+        showPagination
+        totalItems={mockData.length}
+        pageSize={5}
+        pagesPerView={50}
+        data={mockData}
+        columns={columns}
+        onPaginationChanged={jest.fn()}
+        emptyMessage="empty"
+      />
+    );
+
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(5);
+    expect(screen.getAllByTestId('page-button')).toHaveLength(19);
+    expect(screen.getAllByTestId('page-button-active')).toHaveLength(1);
   });
 });

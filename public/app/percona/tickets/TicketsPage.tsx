@@ -1,14 +1,14 @@
-import { logger } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { logger } from 'app/percona/shared/helpers/logger';
+import { useSelector } from 'app/types';
 
-import { Table } from '../integrated-alerting/components/Table';
 import { PlatformConnectedLoader } from '../shared/components/Elements/PlatformConnectedLoader';
+import { Table } from '../shared/components/Elements/Table';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { getPerconaUser } from '../shared/core/selectors';
 import { isApiCancelError } from '../shared/helpers/api';

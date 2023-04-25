@@ -1,9 +1,9 @@
-import { dataTestId } from '@percona/platform-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
+import { dataTestId } from 'app/percona/shared/helpers/utils';
 
 import { formattedTemplateStubs } from '../__mocks__/alertRuleTemplateStubs';
 

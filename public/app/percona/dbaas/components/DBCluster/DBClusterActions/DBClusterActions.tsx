@@ -1,9 +1,9 @@
-import { logger } from '@percona/platform-core';
 import React, { FC, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { useDispatch } from 'app/types';
 
 import { selectDBCluster } from '../../../../shared/core/reducers/dbaas/dbaas';

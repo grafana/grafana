@@ -1,6 +1,7 @@
-import { FormWrapper } from '@percona/platform-core';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+
+import { FormWrapper } from 'app/percona/shared/helpers/utils';
 
 import { SwitchField } from './Switch';
 

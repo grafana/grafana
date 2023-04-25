@@ -1,5 +1,6 @@
-import { AsyncSelectField } from '@percona/platform-core';
 import React, { FC } from 'react';
+
+import { AsyncSelectFieldCore } from 'app/percona/shared/components/Form/AsyncSelectFieldCore';
 
 import { AdvancedOptionsFields } from '../DBClusterAdvancedOptions.types';
 
@@ -9,7 +10,7 @@ import { TemplatesProps } from './Templates.types';
 
 export const Templates: FC<TemplatesProps> = ({ k8sClusterName, databaseType }) => {
   return (
-    <AsyncSelectField
+    <AsyncSelectFieldCore
       name={AdvancedOptionsFields.template}
       label={Messages.labels.templates}
       loadOptions={() => TemplatesService.loadTemplatesOptions(k8sClusterName, databaseType)}

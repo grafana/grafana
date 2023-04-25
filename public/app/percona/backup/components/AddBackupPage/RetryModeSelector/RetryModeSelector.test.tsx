@@ -1,8 +1,8 @@
-import { FormWrapper } from '@percona/platform-core';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { RetryMode } from 'app/percona/backup/Backup.types';
+import { FormWrapper } from 'app/percona/shared/helpers/utils';
 
 import { RetryModeSelector } from './RetryModeSelector';
 

@@ -1,4 +1,3 @@
-import { logger, RadioButtonGroupField, LoaderButton, Modal } from '@percona/platform-core';
 import React, { FC } from 'react';
 import { withTypes } from 'react-final-form';
 
@@ -6,11 +5,15 @@ import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { CheckService } from 'app/percona/check/Check.service';
+import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
+import { Modal } from 'app/percona/shared/components/Elements/Modal';
+import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { checkIntervalOptions } from './ChangeCheckIntervalModal.constants';
 import { Messages } from './ChangeCheckIntervalModal.messages';
 import { getStyles } from './ChangeCheckIntervalModal.styles';
-import { ChangeCheckIntervalModalProps, ChangeCheckIntervalFormValues } from './types';
+import { ChangeCheckIntervalFormValues, ChangeCheckIntervalModalProps } from './types';
 
 const { Form } = withTypes<ChangeCheckIntervalFormValues>();
 

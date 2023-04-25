@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { OPERATOR_COMPONENT_TO_UPDATE_MAP } from '../../../../../dbaas/components/Kubernetes/Kubernetes.constants';
 import {
   CheckOperatorUpdateAPI,

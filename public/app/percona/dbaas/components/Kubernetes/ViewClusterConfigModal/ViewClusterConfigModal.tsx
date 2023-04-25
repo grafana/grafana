@@ -1,12 +1,13 @@
-import { Modal, logger } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Button, ClipboardButton, HorizontalGroup, useTheme } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
+import { Modal } from 'app/percona/shared/components/Elements/Modal';
+import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { Messages } from '../../../DBaaS.messages';
 import { KubernetesService } from '../Kubernetes.service';

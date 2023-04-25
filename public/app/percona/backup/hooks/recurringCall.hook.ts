@@ -1,5 +1,6 @@
-import { logger } from '@percona/platform-core';
-import { useRef, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+
+import { logger } from 'app/percona/shared/helpers/logger';
 
 type hookRecurringCallback = () => void;
 

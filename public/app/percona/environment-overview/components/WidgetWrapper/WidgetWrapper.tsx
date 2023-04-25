@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
-import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
+import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
 
 import { getStyles } from './WidgetWrapper.styles';
 import { WidgetWrapperProps } from './WidgetWrapper.types';

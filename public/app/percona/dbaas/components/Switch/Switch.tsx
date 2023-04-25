@@ -1,12 +1,12 @@
 import { cx } from '@emotion/css';
-import { compose } from '@percona/platform-core/dist/shared/validators';
 import React, { FC, useMemo } from 'react';
 import { Field } from 'react-final-form';
 
-import { Icon, Tooltip, Switch, useStyles } from '@grafana/ui';
+import { Icon, Switch, Tooltip, useStyles } from '@grafana/ui';
+import { compose } from 'app/percona/shared/helpers/validatorsForm';
 
 import { getStyles } from './Switch.styles';
-import { SwitchFieldRenderProps, SwitchFieldProps } from './Switch.types';
+import { SwitchFieldProps, SwitchFieldRenderProps } from './Switch.types';
 
 export const SwitchField: FC<SwitchFieldProps> = ({
   disabled,

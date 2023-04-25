@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { Table } from 'app/percona/shared/components/Elements/Table/Table';
+import { Table } from 'app/percona/shared/components/Elements/AnotherTableInstance/Table';
 
 import { styles } from './Instances.styles';
 import { InstancesTableProps } from './Instances.types';

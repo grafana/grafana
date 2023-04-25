@@ -1,8 +1,9 @@
-import { TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { Button, useStyles } from '@grafana/ui';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { Messages } from './TestEmailSettings.messages';
 import { getStyles } from './TestEmailSettings.styles';

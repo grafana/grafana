@@ -6,8 +6,8 @@ import { SettingsService } from 'app/percona/settings/Settings.service';
 import { CheckPermissions } from './CheckPermissions';
 
 jest.mock('app/percona/settings/Settings.service');
-jest.mock('@percona/platform-core', () => {
-  const originalModule = jest.requireActual('@percona/platform-core');
+jest.mock('app/percona/shared/helpers/logger', () => {
+  const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
   return {
     ...originalModule,
     logger: {

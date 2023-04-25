@@ -1,14 +1,14 @@
-import { logger } from '@percona/platform-core';
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 
-import { useStyles, ClipboardButton } from '@grafana/ui';
+import { ClipboardButton, useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { logger } from 'app/percona/shared/helpers/logger';
 
 import { BackupLogChunk } from '../../Backup.types';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
 
-import { LIMIT, STREAM_INTERVAL, LOGS_CANCEL_TOKEN } from './ChunkedLogsViewer.constants';
+import { LIMIT, LOGS_CANCEL_TOKEN, STREAM_INTERVAL } from './ChunkedLogsViewer.constants';
 import { Messages } from './ChunkedLogsViewer.messages';
 import { getStyles } from './ChunkedLogsViewer.styles';
 import { ChunkedLogsViewerProps } from './ChunkedLogsViewer.types';

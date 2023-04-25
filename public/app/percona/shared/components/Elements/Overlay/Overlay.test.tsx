@@ -11,7 +11,9 @@ describe('Overlay::', () => {
         <p>Child 2</p>
       </Overlay>
     );
-    expect(screen.getByTestId('pmm-overlay-wrapper').children).toHaveLength(2);
+    const wrapper = screen.getByTestId('pmm-overlay-wrapper');
+
+    expect(wrapper.children).toHaveLength(2);
   });
 
   it('Renders overlay and spinner while pending', () => {
@@ -22,16 +24,16 @@ describe('Overlay::', () => {
     );
 
     expect(screen.getByTestId('pmm-overlay-wrapper').children).toHaveLength(2);
-    expect(screen.getByTestId('pmm-overlay-wrapper').children[0].querySelector('i')).toBeTruthy();
+    expect(screen.queryByTestId('overlay-spinner')).toBeInTheDocument();
   });
 
   it('Doesnt render overlay if not pending', () => {
-    const { container } = render(
+    render(
       <Overlay isPending={false}>
         <p>Test</p>
       </Overlay>
     );
 
-    expect(container.querySelector('i')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('overlay-spinner')).not.toBeInTheDocument();
   });
 });

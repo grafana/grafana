@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import { CheckboxField, Table, logger } from '@percona/platform-core';
+
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
 import { Column, Row } from 'react-table';
@@ -10,9 +10,11 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { formatServiceId } from 'app/percona/check/components/FailedChecksTab/FailedChecksTab.utils';
 import { Agent, ServiceAgentStatus } from 'app/percona/inventory/Inventory.types';
+import { SelectedTableRows } from 'app/percona/shared/components/Elements/AnotherTableInstance/Table.types';
+import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { DetailsRow } from 'app/percona/shared/components/Elements/DetailsRow/DetailsRow';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
+import { Table } from 'app/percona/shared/components/Elements/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
@@ -21,6 +23,7 @@ import { getServices } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { getExpandAndActionsCol } from 'app/percona/shared/helpers/getExpandAndActionsCol';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpers/promises';
 import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';

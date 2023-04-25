@@ -1,10 +1,10 @@
-import { logger } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 import { fetchSettingsAction } from 'app/percona/shared/core/reducers';
 import { setAsDefaultRoleAction } from 'app/percona/shared/core/reducers/roles/roles';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { useAppDispatch } from 'app/store/store';
 
 import { Messages } from '../../AccessRole.messages';

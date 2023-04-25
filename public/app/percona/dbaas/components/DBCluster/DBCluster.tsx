@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { CancelToken } from 'axios';
-import React, { FC, useCallback, useMemo, useState, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { Messages as DBaaSMessages } from 'app/percona/dbaas/DBaaS.messages';
+import { Table } from 'app/percona/shared/components/Elements/AnotherTableInstance';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { useCatchCancellationError } from 'app/percona/shared/components/hooks/catchCancellationError';
@@ -27,12 +27,12 @@ import { isKubernetesListUnavailable } from '../Kubernetes/Kubernetes.utils';
 import { KubernetesClusterStatus } from '../Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 
 import {
+  clusterActionsRender,
+  clusterNameRender,
   clusterStatusRender,
   connectionRender,
   databaseTypeRender,
   parametersRender,
-  clusterNameRender,
-  clusterActionsRender,
 } from './ColumnRenderers/ColumnRenderers';
 import { GET_CLUSTERS_CANCEL_TOKEN } from './DBCluster.constants';
 import { Messages } from './DBCluster.messages';

@@ -1,4 +1,3 @@
-import { TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Field } from 'react-final-form';
 
@@ -8,6 +7,8 @@ import {
   AsyncSelectFieldAdapter,
   SelectFieldAdapter,
 } from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { Kubernetes, Operator } from '../../../Kubernetes/Kubernetes.types';
 import { getDatabaseOptionFromOperator } from '../../../Kubernetes/Kubernetes.utils';

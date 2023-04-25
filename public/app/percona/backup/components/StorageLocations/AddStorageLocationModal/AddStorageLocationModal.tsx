@@ -1,17 +1,15 @@
 import { cx } from '@emotion/css';
-import {
-  Modal,
-  TextInputField,
-  TextareaInputField,
-  RadioButtonGroupField,
-  validators,
-  LoaderButton,
-} from '@percona/platform-core';
 import React, { FC } from 'react';
 import { withTypes } from 'react-final-form';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
+import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
+import { Modal } from 'app/percona/shared/components/Elements/Modal';
+import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
+import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
+import { TextareaInputField } from 'app/percona/shared/components/Form/TextareaInput';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { LocationType } from '../StorageLocations.types';
 
@@ -31,6 +29,7 @@ const TypeField: FC<TypeFieldProps> = ({ values }) => {
   const { type, client, endpoint, accessKey, secretKey, bucketName } = values;
   const fieldMap = {
     [LocationType.S3]: (
+      // eslint-disable-next-line jsx-a11y/no-access-key
       <S3Fields endpoint={endpoint} bucketName={bucketName} accessKey={accessKey} secretKey={secretKey} />
     ),
     [LocationType.CLIENT]: <LocalFields name="client" path={client} />,
