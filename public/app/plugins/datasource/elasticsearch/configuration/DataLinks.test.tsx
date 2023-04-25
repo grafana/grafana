@@ -8,7 +8,7 @@ import { DataLinks, Props } from './DataLinks';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    value: [],
+    links: [],
     onChange: jest.fn(),
     ...propOverrides,
   };
@@ -26,7 +26,7 @@ describe('DataLinks tests', () => {
   });
 
   it('should render correctly when passed fields', async () => {
-    setup({ value: testValue });
+    setup({ links: testLinks });
 
     expect(await screen.findAllByRole('button', { name: 'Remove field' })).toHaveLength(2);
     expect(await screen.findAllByRole('checkbox', { name: 'Internal link' })).toHaveLength(2);
@@ -45,7 +45,7 @@ describe('DataLinks tests', () => {
 
   it('should call onChange to remove a field when the remove button is clicked', async () => {
     const onChangeMock = jest.fn();
-    setup({ value: testValue, onChange: onChangeMock });
+    setup({ links: testLinks, onChange: onChangeMock });
 
     expect(onChangeMock).not.toHaveBeenCalled();
     const removeButton = await screen.findAllByRole('button', { name: 'Remove field' });
@@ -55,7 +55,7 @@ describe('DataLinks tests', () => {
   });
 });
 
-const testValue: DataLinkConfig[] = [
+const testLinks: DataLinkConfig[] = [
   {
     field: 'regex1',
     url: 'localhost1',

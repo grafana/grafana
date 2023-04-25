@@ -21,21 +21,21 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export type Props = {
-  value?: DataLinkConfig[];
+  links?: DataLinkConfig[];
   onChange: (value: DataLinkConfig[]) => void;
 };
 export const DataLinks = (props: Props) => {
-  const { value, onChange } = props;
+  const { links, onChange } = props;
   const styles = useStyles2(getStyles);
 
   const validateFieldRule = useMemo(() => {
     return {
       rule: (field: string) => {
-        return value ? value.filter((value) => value.field && value.field === field).length <= 1 : true;
+        return links ? links.filter((link) => link.field && link.field === field).length <= 1 : true;
       },
-      errorMessage: 'Name already in use',
+      errorMessage: 'Field already in use',
     };
-  }, [value]);
+  }, [links]);
 
   return (
     <>
@@ -45,21 +45,21 @@ export const DataLinks = (props: Props) => {
         Add links to existing fields. Links will be shown in log row details next to the field value.
       </div>
 
-      {value && value.length > 0 && (
+      {links && links.length > 0 && (
         <div className="gf-form-group">
-          {value.map((field, index) => {
+          {links.map((link, index) => {
             return (
               <DataLink
                 className={styles.dataLink}
                 key={index}
-                value={field}
+                value={link}
                 onChange={(newField) => {
-                  const newDataLinks = [...value];
+                  const newDataLinks = [...links];
                   newDataLinks.splice(index, 1, newField);
                   onChange(newDataLinks);
                 }}
                 onDelete={() => {
-                  const newDataLinks = [...value];
+                  const newDataLinks = [...links];
                   newDataLinks.splice(index, 1);
                   onChange(newDataLinks);
                 }}
@@ -87,7 +87,7 @@ export const DataLinks = (props: Props) => {
         icon="plus"
         onClick={(event) => {
           event.preventDefault();
-          const newDataLinks = [...(value || []), { field: '', url: '' }];
+          const newDataLinks = [...(links || []), { field: '', url: '' }];
           onChange(newDataLinks);
         }}
       >

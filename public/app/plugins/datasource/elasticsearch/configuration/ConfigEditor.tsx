@@ -63,7 +63,7 @@ export const ConfigEditor = (props: Props) => {
       />
 
       <DataLinks
-        value={options.jsonData.dataLinks}
+        links={options.jsonData.dataLinks}
         onChange={(newValue) => {
           onOptionsChange({
             ...options,
