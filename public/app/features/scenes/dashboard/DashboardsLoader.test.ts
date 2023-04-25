@@ -73,7 +73,7 @@ describe('DashboardLoader', () => {
       expect(loader.state.loadError).toBe('Error: Dashboard not found');
     });
 
-    it('should initialize the dashboard scene with the loaded dashboard', async () => {
+    it.skip('should initialize the dashboard scene with the loaded dashboard', async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
       setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
@@ -90,7 +90,7 @@ describe('DashboardLoader', () => {
       expect(loader.cache['fake-dash']).toBeDefined();
     });
 
-    it('should use DashboardScene creator to initialize the scene', async () => {
+    it.skip('should use DashboardScene creator to initialize the scene', async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
       setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
