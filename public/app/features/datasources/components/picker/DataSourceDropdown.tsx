@@ -104,6 +104,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
             suffix={<Icon name="angle-down" />}
             value={dataSourceLabel(currentDataSourceInstanceSettings)}
+            readOnly
             onFocus={() => {
               setOpen(true);
             }}
