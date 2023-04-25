@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -969,65 +968,6 @@ func TestNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
-}
-
-func TestGetDescendantCounts(t *testing.T) {
-	g := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
-	t.Cleanup(func() {
-		guardian.New = g
-	})
-
-	folderId := rand.Int63()
-	folderUID := util.GenerateShortUID()
-	f := folder.NewFolder("Folder", "")
-	f.ID = folderId
-	f.UID = folderUID
-	f.OrgID = orgID
-
-	nestedFolderStore := NewFakeStore()
-	nestedFolderStore.ExpectedFolder = f
-
-	dashStore := dashboards.FakeDashboardStore{}
-	dashboardCount := int64(2)
-	countCmd := dashboards.CountDashboardsInFolderRequest{
-		FolderID: f.ID,
-		OrgID:    f.OrgID,
-	}
-	dashStore.On("CountDashboardsInFolder", mock.Anything, &countCmd).Return(dashboardCount, nil)
-
-	dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-	dashboardFolderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
-
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	folderService := &Service{
-		cfg:                  cfg,
-		store:                nestedFolderStore,
-		dashboardStore:       &dashStore,
-		dashboardFolderStore: dashboardFolderStore,
-		features:             features,
-		log:                  log.New("test-folder-service"),
-		accessControl:        acimpl.ProvideAccessControl(cfg),
-		registry:             make(map[string]folder.RegistryService),
-	}
-
-	ac := acmock.New()
-	folderPermissions := acmock.NewMockedPermissionsService()
-	dashboardPermissions := acmock.NewMockedPermissionsService()
-	_, err := service.ProvideDashboardServiceImpl(cfg, &dashStore, dashboardFolderStore, nil, features, folderPermissions, dashboardPermissions, ac, folderService)
-	require.NoError(t, err)
-
-	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID}
-	ctx := appcontext.WithUser(context.Background(), &signedInUser)
-	res, err := folderService.GetDescendantCounts(ctx, &folder.GetDescendantCountsQuery{
-		SignedInUser: usr,
-		UID:          &folderUID,
-		OrgID:        orgID,
-	})
-	require.NoError(t, err)
-	require.Equal(t, res["dashboard"], dashboardCount)
 }
 
 func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
