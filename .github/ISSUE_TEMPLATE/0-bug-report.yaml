@@ -1,0 +1,311 @@
+name: New Bug Report
+description: File a bug report
+title: "Product-Area-Here: short description of bug here"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        Please try to give your issue a good title. Try using the product-area where you are having an issue and a brief description of the problem. Like this: 
+        - `Dashboards: Template Variables break when I do X` or 
+        - `Alerting: message templating plus Slack channel breaks when I do X`
+  - type: markdown
+    attributes:
+      value: |
+        **HINT:** Have you tried [searching](https://github.com/grafana/grafana/issues) for similar issues? Duplicate issues are common.
+
+        **Are you reporting a security vulnerability?** [Submit it here instead](https://github.com/grafana/grafana/security/policy).
+  - type: markdown
+    attributes:
+      value: |
+       #
+  - type: textarea
+    id: bug-describe
+    attributes:
+      label: |
+        
+        # 1 / 3: What went wrong?
+        
+      description: |
+        #
+        Describe your bug. What happened? What did you expect to happen?
+
+        **Hot Tip:** Record your screen and add it here as a gif. 
+      placeholder: Tell us what you see!
+      value: |
+        **What happened**:
+
+          - 
+
+        **What did you expect to happen**:
+
+          - 
+
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+       #
+  - type: textarea
+    id: bug-repro
+    attributes:
+      label: |
+        
+        # 2 / 3: How do we reproduce it?
+        
+      description: |
+        #
+
+        Whenever possible, please provide **detailed** steps for reproducing your bug.
+
+        **This is very helpful info** 
+      placeholder: "Step 1:..."
+      value: |
+        **Step 1**:
+        
+        - Open Grafana and do X 
+
+        **Step 2**:
+
+        - Now click button Y
+
+        **Step 3**:
+
+        - Wait for the browser to crash. Error message says: "Error..."
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+       #
+  - type: dropdown
+    id: gf-version
+    attributes:
+      label: |
+        
+        # 3 / 3: What Grafana version are you using?
+        
+      description: |
+        #
+        - You can find your Grafana version:
+          - inside the UI [here](https://share.cleanshot.com/wVTvrKhy), [here](https://share.cleanshot.com/5qg3RKF1), or [here](https://share.cleanshot.com/988MQZz1), depending on your platform and access level.
+          - using the Grafana HTTP API's `health` endpoint [like this](https://share.cleanshot.com/H7gcj2Lj): `curl your-grafana-url/api/health` 
+          - or running the `grafana-server -v` command from Grafana's root directory [like this](https://share.cleanshot.com/LHXfmtZx): `./bin/grafana-server -v`
+      multiple: false
+      options:
+        - I don't know my version
+        - Whatever Grafana Cloud is running
+        - Building from `main`
+        - 9.5.0
+        - 9.4.7
+        - 9.4.3
+        - 9.4.2
+        - 9.4.1
+        - 9.4.0
+        - 9.3.6
+        - 9.3.4
+        - 9.3.2
+        - 9.3.1
+        - 9.3.0
+        - 9.2.10
+        - 9.2.8
+        - 9.2.7
+        - 9.2.6
+        - 9.2.5
+        - 9.2.4
+        - 9.2.3
+        - 9.2.2
+        - 9.2.1
+        - 9.2.0
+        - 9.1.x
+        - 9.0.x
+        - 8.5.x
+        - 8.4.x
+        - 8.3.x
+        - 8.2.x
+        - 8.1.x
+        - 8.0.x
+        - 7.x.x or older
+    validations:
+      required: true  
+  - type: markdown
+    attributes:
+      value: |
+       
+       # Is the bug inside a Dashboard Panel?
+
+  - type: textarea
+    id: get-help
+    attributes:
+      label: |
+        
+        ## Optional Questions:
+        
+        ### Is the bug inside a Dashboard Panel?
+
+      description: |
+        If the bug appears inside a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations), please use the ["Get-Help" feature](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/). Select **copy to clipboard** and paste the data below.
+        No need for backticks--this text will get formatted as a code-block.
+
+        What's a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations)?
+      placeholder: Copy "get-help" data here
+      value: Copy the panel's ["get-help" data](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) here  
+  - type: markdown
+    attributes:
+      value: |
+        #
+        #
+        # Optional Questions:
+        #
+  - type: markdown
+    attributes:
+      value: |
+       #
+       # Did you check your grafana server logs?
+  - type: textarea
+    id: logs
+    attributes:
+      label: |
+        
+        ## Optional Questions:
+
+        ### Any relevant logs?
+
+      description: |
+        Please copy and paste any relevant log output. You might want to increase your Grafana log's verbosity to 'Debug'
+        No need for backticks--this text will get formatted as a code-block.
+        [How do I find my grafana server logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#logs)?
+        [How do I increase my grafana server logs to 'debug'](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#log)?
+      render: sh
+      placeholder: Copy your grafana server logs here
+      value: Copy your grafana server logs here  
+  - type: markdown
+    attributes:
+      value: |
+        
+        # Can you share more configuration details?
+        
+  - type: dropdown
+    id: gf-deployment
+    attributes:
+      label: Grafana Platform?
+      description: |
+        **How** are you running/deploying Grafana?
+      options:
+        - I use Grafana Cloud
+        - Docker
+        - Kubernetes
+        - A package manager (APT, YUM, BREW, etc.)
+        - A downloaded binary
+        - Other
+        - I don't know
+    validations:
+      required: false
+  - type: dropdown
+    id: user-os
+    attributes:
+      label: User's OS?
+      description: What operating system are you running locally?
+      options:
+        - MacOS
+        - Windows
+        - Ubuntu
+        - Debian
+        - RHEL
+        - CentOS Stream
+        - Fedora
+        - Manjaro
+        - OpenSUSE
+        - Rocky
+        - Linux Mint
+        - Arch Linux
+        - Raspberry Pi OS
+        - Other Linux distro
+        - Other (non-Linux)
+        - I don't know
+  - type: dropdown
+    id: user-browser
+    attributes:
+      label: User's Browser?
+      description: Is the bug occuring in Grafana's user-interface? If so, what browsers are you seeing the problem on? You may choose more than one.
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
+        - Brave
+        - Chromium
+        - Other
+        - N/A
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Is this a Regression?
+      description: |
+        A regression means that the feature was working, then you upgraded, and now it's broken.
+      options:
+        - 'No'
+        - 'Yes'
+    validations:
+      required: false
+  - type: dropdown
+    id: gf-datasource
+    attributes:
+      label: Are Datasources involved?
+      description: |
+        Is this issue specific to a datasource plugin / plugins? Please list all that apply:
+      multiple: true
+      options:
+        - N/A
+        - All
+        - Alertmanager
+        - AppDynamics
+        - AWS IoT Sitewise
+        - Azure Devops
+        - Azure Monitor
+        - Clickhouse
+        - Cloudwatch
+        - Datadog
+        - Dynatrace
+        - Elasticsearch
+        - Gitlab
+        - Google Cloud Monitoring
+        - Graphite
+        - Honeycomb
+        - InfluxDB
+        - Prometheus
+        - Jaeger
+        - Jira
+        - Loki
+        - MongoDB
+        - MSSQL
+        - MySQL/MariaDB
+        - New Relic
+        - OpenTSDB
+        - Oracle
+        - Postgres
+        - SAP HANA
+        - Salesforce
+        - ServiceNow
+        - Snowflake
+        - Tempo
+        - Wavefront
+        - Zabbix
+        - Zipkin
+        - Other
+  - type: markdown
+    attributes:
+      value: |
+        #
+        #
+        ## Anything else to add?
+        #
+  - type: textarea
+    id: extra
+    attributes:
+      label: |
+              Anything else to add?
+      description: Add any extra information here
