@@ -41,7 +41,12 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   }, [scene.panel.context.instanceState?.selectedConnection]);
 
   const onKeyUp = (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
+    const target = e.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
     if (htmlElementTypes.indexOf(target.nodeName.toLowerCase()) > -1) {
       return;
     }
