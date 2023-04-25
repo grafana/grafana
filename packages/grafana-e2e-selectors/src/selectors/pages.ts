@@ -177,6 +177,9 @@ export const Pages = {
         },
       },
     },
+    Annotations: {
+      marker: 'data-testid annotation-marker',
+    },
   },
   Dashboards: {
     url: '/dashboards',
@@ -249,9 +252,6 @@ export const Pages = {
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
-    Annotations: {
-      marker: 'data-testid annotation-marker',
-    },
   },
   PluginsList: {
     page: 'Plugins list page',
