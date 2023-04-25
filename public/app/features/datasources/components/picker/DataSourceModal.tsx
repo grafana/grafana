@@ -14,9 +14,11 @@ import {
   Icon,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { AccessControlAction } from 'app/types';
 
 import { DataSourceList } from './DataSourceList';
 
@@ -38,6 +40,7 @@ export function DataSourceModal({
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
+  const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const newDataSourceURL = config.featureToggles.dataConnectionsConsole
     ? CONNECTIONS_ROUTES.DataSourcesNew
     : DATASOURCES_ROUTES.New;
@@ -101,11 +104,14 @@ export function DataSourceModal({
             </FileDropzone>
           )}
         </div>
-        <div className={styles.dsCTAs}>
-          <LinkButton variant="secondary" href={newDataSourceURL}>
-            Configure a new data source
-          </LinkButton>
-        </div>
+
+        {hasCreateRights && (
+          <div className={styles.dsCTAs}>
+            <LinkButton variant="secondary" href={newDataSourceURL}>
+              Configure a new data source
+            </LinkButton>
+          </div>
+        )}
       </div>
     </Modal>
   );
