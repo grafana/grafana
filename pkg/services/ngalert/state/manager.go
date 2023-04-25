@@ -307,7 +307,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
-	if shouldTakeImage(currentState.State, oldState, currentState.ImageURI, currentState.Resolved) {
+	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
 		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
@@ -315,7 +315,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
-			currentState.ImageURI = generateImageURI(image)
+			currentState.Image = image
 		}
 	}
 
@@ -446,7 +446,7 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 					"panel", alertRule.GetPanelID(),
 					"error", err)
 			} else if image != nil {
-				s.ImageURI = generateImageURI(image)
+				s.Image = image
 			}
 		}
 
@@ -462,14 +462,4 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
-}
-
-// generateImageURI returns a string that serves as an identifier for the image.
-// It first checks if there is an image URL available, and if not,
-// it prefixes the image token with `token://` and uses it as the URI.
-func generateImageURI(image *ngModels.Image) string {
-	if image.URL != "" {
-		return image.URL
-	}
-	return "token://" + image.Token
 }

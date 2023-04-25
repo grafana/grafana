@@ -21,19 +21,20 @@ func newImageStore(store store.ImageStore) images.ImageStore {
 }
 
 func (i imageStore) GetImage(ctx context.Context, uri string) (*images.Image, error) {
-	var image *models.Image
-	var err error
-	// Check whether the uri is a token or a URL to know how to query the DB.
-	token := strings.TrimPrefix(uri, "token://")
-	if len(token) < len(uri) {
-		// If the final string is shorter, that means it was prefixed.
-		if image, err = i.store.GetImage(ctx, token); err != nil {
-			return nil, err
-		}
+	var (
+		image *models.Image
+		err   error
+	)
+
+	// Check whether the uri is a URL or a token to know how to query the DB.
+	if strings.HasPrefix(uri, "http") {
+		image, err = i.store.GetImageByURL(ctx, uri)
 	} else {
-		if image, err = i.store.GetImageByURL(ctx, uri); err != nil {
-			return nil, err
-		}
+		token := strings.TrimPrefix(uri, "token://")
+		image, err = i.store.GetImage(ctx, token)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return &images.Image{
