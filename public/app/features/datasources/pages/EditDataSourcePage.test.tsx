@@ -54,7 +54,7 @@ describe('<EditDataSourcePage>', () => {
   const uid = 'foo';
   const name = 'My DataSource';
   const dataSource = getMockDataSource<{}>({ uid, name });
-  const dataSourceMeta = getMockDataSourceMeta();
+  const dataSourceMeta = getMockDataSourceMeta({ id: dataSource.type });
   const dataSourceSettings = getMockDataSourceSettingsState();
   let store: Store;
 
