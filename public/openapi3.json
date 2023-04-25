@@ -792,11 +792,11 @@
         },
         "description": "(empty)"
       },
-      "getFolderChildrenCountsResponse": {
+      "getFolderDescendantCountsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ChildrenCounts"
+              "$ref": "#/components/schemas/DescendantCounts"
             }
           }
         },
@@ -4162,6 +4162,13 @@
           "instance": {
             "type": "string"
           }
+        },
+        "type": "object"
+      },
+      "DescendantCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
         },
         "type": "object"
       },
@@ -17026,7 +17033,7 @@
     },
     "/folders/{folder_uid}/counts": {
       "get": {
-        "operationId": "getFolderChildrenCounts",
+        "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
             "in": "path",
@@ -17039,7 +17046,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getFolderChildrenCountsResponse"
+            "$ref": "#/components/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
