@@ -29,6 +29,7 @@ import { DataSourceRights } from '../types';
 import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
+import { DataSourceDescription } from './DataSourceDescription';
 import { DataSourceLoadError } from './DataSourceLoadError';
 import { DataSourceMissingRightsMessage } from './DataSourceMissingRightsMessage';
 import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
@@ -160,6 +161,12 @@ export function EditDataSourceView({
         onNameChange={onNameChange}
         alertingSupported={alertingSupported}
         disabled={readOnly || !hasWriteRights}
+      />
+
+      <DataSourceDescription
+        dataSourceName={dataSourceMeta.name}
+        docsLink={dataSourceMeta.info.links.find((l) => l.name === 'Docs' || l.name === 'Documentation')?.url}
+        hasRequiredFields={dataSourceMeta.hasRequiredConfigFields}
       />
 
       {plugin && (

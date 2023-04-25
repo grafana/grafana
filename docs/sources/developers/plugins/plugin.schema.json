@@ -477,6 +477,10 @@
     "tracing": {
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins."
+    },
+    "hasRequiredConfigFields": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin has required fields marked with * in the config. Used to render info about required fields on top of the config page."
     }
   }
 }
