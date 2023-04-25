@@ -3,11 +3,13 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
+	"github.com/grafana/kindsys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -870,6 +872,192 @@ func Test_ParseMetricDataQueries_sets_label_when_label_is_present_in_json_query(
 	require.Len(t, res, 1)
 	require.NotNil(t, res[0])
 	assert.Equal(t, "some label", res[0].Label)
+}
+
+func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
+	testCases := map[string]struct {
+		inputAlias    string
+		expectedLabel string
+	}{
+		"one known alias pattern: metric":             {inputAlias: "{{metric}}", expectedLabel: "${PROP('MetricName')}"},
+		"one known alias pattern: namespace":          {inputAlias: "{{namespace}}", expectedLabel: "${PROP('Namespace')}"},
+		"one known alias pattern: period":             {inputAlias: "{{period}}", expectedLabel: "${PROP('Period')}"},
+		"one known alias pattern: region":             {inputAlias: "{{region}}", expectedLabel: "${PROP('Region')}"},
+		"one known alias pattern: stat":               {inputAlias: "{{stat}}", expectedLabel: "${PROP('Stat')}"},
+		"one known alias pattern: label":              {inputAlias: "{{label}}", expectedLabel: "${LABEL}"},
+		"one unknown alias pattern becomes dimension": {inputAlias: "{{any_other_word}}", expectedLabel: "${PROP('Dim.any_other_word')}"},
+		"one known alias pattern with spaces":         {inputAlias: "{{ metric   }}", expectedLabel: "${PROP('MetricName')}"},
+		"multiple alias patterns":                     {inputAlias: "some {{combination }}{{ label}} and {{metric}}", expectedLabel: "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}"},
+		"empty alias still migrates to empty label":   {inputAlias: "", expectedLabel: ""},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			average := "Average"
+			false := false
+
+			queryToMigrate := metricsDataQuery{
+				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
+					Region:     "us-east-1",
+					Namespace:  "ec2",
+					MetricName: kindsys.Ptr("CPUUtilization"),
+					Alias:      kindsys.Ptr(tc.inputAlias),
+					Dimensions: map[string]interface{}{
+						"InstanceId": []interface{}{"test"},
+					},
+					Statistic: &average,
+					Period:    kindsys.Ptr("600"),
+					Hide:      &false,
+				},
+			}
+
+			assert.Equal(t, tc.expectedLabel, getLabel(queryToMigrate))
+		})
+	}
+}
+func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
+	t.Run("migrates alias to label when label does not already exist", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: []byte(`{
+				   "refId":"A",
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{period}} {{any_other_word}}",
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", logger, false)
+		assert.NoError(t, err)
+
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+
+		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
+		assert.Equal(t, "${PROP('Period')} ${PROP('Dim.any_other_word')}", res[0].Label)
+		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
+		assert.Equal(t, true, res[0].ReturnData)
+		assert.Equal(t, "CPUUtilization", res[0].MetricName)
+		assert.Equal(t, "ec2", res[0].Namespace)
+		assert.Equal(t, 600, res[0].Period)
+		assert.Equal(t, "us-east-1", res[0].Region)
+		assert.Equal(t, "Average", res[0].Statistic)
+	})
+
+	t.Run("successfully migrates alias to dynamic label for multiple queries", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON: json.RawMessage(`{
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{period}} {{any_other_word}}",
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+			{
+				RefID: "B",
+				JSON: json.RawMessage(`{
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{  label }}",
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`),
+			},
+		}
+
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", logger, false)
+		assert.NoError(t, err)
+		require.Len(t, res, 2)
+
+		sort.Slice(res, func(i, j int) bool {
+			return res[i].RefId < res[j].RefId
+		})
+
+		require.NotNil(t, res[0])
+		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
+		assert.Equal(t, "${PROP('Period')} ${PROP('Dim.any_other_word')}", res[0].Label)
+		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
+		assert.Equal(t, true, res[0].ReturnData)
+		assert.Equal(t, "CPUUtilization", res[0].MetricName)
+		assert.Equal(t, "ec2", res[0].Namespace)
+		assert.Equal(t, 600, res[0].Period)
+		assert.Equal(t, "us-east-1", res[0].Region)
+		assert.Equal(t, "Average", res[0].Statistic)
+
+		require.NotNil(t, res[1])
+		assert.Equal(t, "{{  label }}", res[1].Alias)
+		assert.Equal(t, "${LABEL}", res[1].Label)
+		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[1].Dimensions)
+		assert.Equal(t, true, res[1].ReturnData)
+		assert.Equal(t, "CPUUtilization", res[1].MetricName)
+		assert.Equal(t, "ec2", res[1].Namespace)
+		assert.Equal(t, 600, res[1].Period)
+		assert.Equal(t, "us-east-1", res[1].Region)
+		assert.Equal(t, "Average", res[1].Statistic)
+	})
+
+	t.Run("does not migrate alias to label", func(t *testing.T) {
+		testCases := map[string]struct {
+			labelJson                         string
+			dynamicLabelsFeatureToggleEnabled bool
+			expectedLabel                     string
+		}{
+			"when label already exists": {
+				labelJson:                         `"label":"some label",`,
+				dynamicLabelsFeatureToggleEnabled: true,
+				expectedLabel:                     "some label",
+			},
+		}
+		for name, tc := range testCases {
+			t.Run(name, func(t *testing.T) {
+				query := []backend.DataQuery{
+					{
+						JSON: json.RawMessage(fmt.Sprintf(`{
+				   "refId":"A",
+				   "region":"us-east-1",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "alias":"{{period}} {{any_other_word}}",
+				   %s
+				   "dimensions":{"InstanceId":["test"]},
+				   "statistic":"Average",
+				   "period":"600",
+				   "hide":false
+				}`, tc.labelJson)),
+					},
+				}
+				res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", logger, false)
+				assert.NoError(t, err)
+
+				require.Len(t, res, 1)
+				require.NotNil(t, res[0])
+
+				assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
+				assert.Equal(t, tc.expectedLabel, res[0].Label)
+				assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
+				assert.Equal(t, true, res[0].ReturnData)
+				assert.Equal(t, "CPUUtilization", res[0].MetricName)
+				assert.Equal(t, "ec2", res[0].Namespace)
+				assert.Equal(t, 600, res[0].Period)
+				assert.Equal(t, "us-east-1", res[0].Region)
+				assert.Equal(t, "Average", res[0].Statistic)
+			})
+		}
+	})
 }
 
 func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchExact_initialization(t *testing.T) {
