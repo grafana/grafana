@@ -36,7 +36,6 @@ func (c *PhlareClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error)
 				ID:    pType.ID,
 				Label: pType.Name + " - " + pType.SampleType,
 			}
-
 		}
 		return pTypes, nil
 	}

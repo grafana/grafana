@@ -7,13 +7,11 @@ import (
 	"math"
 	"time"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 	"github.com/xlab/treeprint"
 )
 
@@ -105,17 +103,6 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	return response
 }
 
-func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeStacktracesRequest] {
-	return &connect.Request[querierv1.SelectMergeStacktracesRequest]{
-		Msg: &querierv1.SelectMergeStacktracesRequest{
-			ProfileTypeID: qm.ProfileTypeId,
-			LabelSelector: qm.LabelSelector,
-			Start:         query.TimeRange.From.UnixMilli(),
-			End:           query.TimeRange.To.UnixMilli(),
-		},
-	}
-}
-
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
@@ -151,7 +138,7 @@ type ProfileTree struct {
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
 // dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
 func levelsToTree(levels []*Level, names []string) *ProfileTree {
-	if levels == nil || len(levels) == 0 {
+	if len(levels) == 0 {
 		return nil
 	}
 

@@ -31,6 +31,12 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, err
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("failed to close response body", "err", err)
+		}
+	}()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -83,7 +89,7 @@ func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID stri
 	params.Add("until", strconv.FormatInt(end, 10))
 	params.Add("query", profileTypeID+labelSelector)
 	params.Add("format", "json")
-	if groupBy != nil && len(groupBy) > 0 {
+	if len(groupBy) > 0 {
 		params.Add("groupBy", groupBy[0])
 	}
 
@@ -94,6 +100,11 @@ func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID stri
 	if err != nil {
 		return nil, fmt.Errorf("error calling /render api: %v", err)
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("failed to close response body", "err", err)
+		}
+	}()
 
 	var respData *PyroscopeProfileResponse
 

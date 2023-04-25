@@ -168,6 +168,15 @@ func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallRes
 	body := &BackendTypeRespBody{BackendType: "phlare"}
 	logger.Debug("calling backendType", "url", d.settings.URL)
 	resp, err := d.httpClient.Get(d.settings.URL + "/api/apps")
+	defer func() {
+		if resp != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				logger.Error("failed to close response body", "err", err)
+			}
+		}
+	}()
+
 	// TODO: probably should check for 404 specifically
 	if err == nil && resp.StatusCode == 200 {
 		body.BackendType = "pyroscope"
