@@ -123,7 +123,7 @@ export function useStateSync(params: ExploreQueryParams) {
         // TODO: perform the migration here
         const exploreId = id as ExploreId;
 
-        const paneDatasource = await getPaneDatasource(datasource, queries, orgId, exploreMixedDatasource);
+        const paneDatasource = await getPaneDatasource(datasource, queries, orgId, !!exploreMixedDatasource);
 
         initPromises.push(
           Promise.resolve(
@@ -281,61 +281,59 @@ export function useStateSync(params: ExploreQueryParams) {
 }
 
 /**
- * Returns the datasource for a pane.
- * if the urls specifies a datasource and the datasource exists, it will be used,
- * otherwise the first query's datasource (where the datasource actually exists) will be used.
- * if the urls does not specify a datasource and there are no queries with a valid datasource, the last used datasource will be used.
+ * Returns the datasource UID that an explore pane should be using.
+ * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed and `allowMixed` is false.
+ * Otherwise the datasource will be extracetd from the the first query specifying a valid datasource.
+ *
+ * If there's no datasource in the queries, the last used datasource will be used.
  * if there's no last used datasource, the default datasource will be used.
- * If there's no default, returns undefined.
+ *
+ * @param rootDatasource the top-level datasource specified in the URL
+ * @param queries the queries in the pane
+ * @param orgId the orgId of the user
+ * @param allowMixed whether mixed datasources are allowed
+ *
+ * @returns the datasource UID that the pane should use
  */
 async function getPaneDatasource(
   rootDatasource: DataSourceRef | string | null | undefined,
   queries: DataQuery[],
   orgId: number,
-  allowMixed = false
+  allowMixed: boolean
 ) {
-  if (typeof rootDatasource === 'string' && rootDatasource === MIXED_DATASOURCE_NAME && allowMixed) {
-    return MIXED_DATASOURCE_NAME;
-  }
-  if (
-    rootDatasource &&
-    typeof rootDatasource !== 'string' &&
-    rootDatasource.uid === MIXED_DATASOURCE_NAME &&
-    allowMixed
-  ) {
-    return MIXED_DATASOURCE_NAME;
-  }
-
+  // If there's a root datasource, use it unless it's mixed and we don't allow mixed.
   if (rootDatasource) {
     try {
-      return (await getDatasourceSrv().get(rootDatasource)).uid;
-    } catch (e) {}
+      const ds = await getDatasourceSrv().get(rootDatasource);
+
+      if ((ds.meta.mixed && allowMixed) || !ds.meta.mixed) {
+        return ds.uid;
+      }
+    } catch (_) {}
   }
 
-  // FIXME: we should get the first query that has a datasource that actually exists
-  const firstQueryDs = queries.find((q) => q.datasource)?.datasource;
-  if (firstQueryDs) {
-    if (typeof firstQueryDs === 'string') {
-      return firstQueryDs;
-    }
-    if (firstQueryDs.uid) {
-      return firstQueryDs.uid;
-    }
+  // Else we try to find a datasource in the queries, returning the first one that exists
+  const queriesWithDS = queries.filter((q) => q.datasource);
+  for (const query of queriesWithDS) {
+    try {
+      const ds = await getDatasourceSrv().get(query.datasource);
+
+      if ((ds.meta.mixed && allowMixed) || !ds.meta.mixed) {
+        return ds.uid;
+      }
+    } catch (_) {}
   }
 
+  // If none of the queries specify a avalid datasource, we use the last used one
   const lastUsedDSUID = store.get(lastUsedDatasourceKeyForOrgId(orgId));
 
-  if (lastUsedDSUID) {
-    try {
-      return (await getDatasourceSrv().get(lastUsedDSUID)).uid;
-    } catch (e) {}
-  }
-
-  try {
-    return (await getDatasourceSrv().get()).uid;
-  } catch (_) {
-    return undefined;
-  }
+  return (
+    getDatasourceSrv()
+      .get(lastUsedDSUID)
+      // Or the default one
+      .catch(() => getDatasourceSrv().get())
+      .then((ds) => ds.uid)
+  );
 }
 
 const isFulfilled = <T>(input: PromiseSettledResult<T>): input is PromiseFulfilledResult<T> =>
