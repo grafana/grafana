@@ -2,13 +2,13 @@
 aliases:
   - ../plugins/developing/
 description: Resources for creating Grafana plugins
-title: Build a plugin
+title: Welcome to the Grafana plugin developer's guide
 weight: 200
 ---
 
-# Welcome to the Grafana plugin developer's guide
+# Grafana plugin developer's guide
 
-Grafana is an open source software project for creating, exploring, and sharing all of your data through beautiful, flexible dashboards. Plugins extend its built-in functionality so that users can accomplish specialized tasks to make Grafana even more useful for them. 
+Grafana is an open source software project for creating, exploring, and sharing data through dashboards. Plugins extend Grafana's built-in functionality so that users can accomplish specialized tasks to make Grafana even more useful for them. 
 
 Many plugins are available in the [Catalog](https://grafana.com/grafana/plugins/) and others are built by developers for private use or to contribute them to the open source community. 
 
@@ -18,7 +18,7 @@ If you are a Grafana plugin developer or want to become one, this documentation 
 
 These are among the types of plugins you can create:
 
-- **Panel plugins** - Visualize data and navigating between dashboards.
+- **Panel plugins** - Visualize data and navigate between dashboards.
 - **Data source plugins** - Link to new databases or other sources of data.
 - **App plugins** - Bundle panels and data sources together to create a better user experience.
 
@@ -28,11 +28,11 @@ These are among the types of plugins you can create:
 
 The following topics give you an idea of what to expect from this guide:
 
-- **[Get started with plugins](get-started-with-plugins/)** - The easiest way to start developing Grafana plugins is to use the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool. Use it to get your plugin up and running as fast as possible. 
-- **[Introduction to plugin development](introduction-to-plugin-development/)** - Ground yourself by learning the key concepts involved in Grafana plugin development. For example, learn about frontend and backend development processes, data frames, and error handling. 
+- **[Get started with plugins](get-started-with-plugins/)** - The easiest way to start developing Grafana plugins is to use the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool. 
+- **[Introduction to plugin development](introduction-to-plugin-development/)** - Ground yourself by learning the key concepts involved in Grafana plugin development: frontend and backend development processes, data frames, error handling, and more. 
 - **[Create a Grafana plugin](create-a-grafana-plugin)** - If you're already familiar with plugin creation basics, then it's time to dive deeper into specific development scenarios. You'll find tutorials for creating panel plugins, data source plugins, and more. 
 - **[Migrate a plugin](migration-guide)** - Learn how to upgrade from a previous version of a Grafana plugin, rewrite an old Angular plugin in React, or update to a newer version. 
-- **[Publish a Grafana plugin](publish-a-plugin/)**  - Here you'll find what you need to know if you want to publish a plugin to the Grafana Catalog, including publishing criteria, signing process, and publishing.
+- **[Publish a Grafana plugin](publish-a-plugin/)**  -  Learn about publishing a plugin to the Grafana plugin catalog, including publishing criteria, signing process, and publishing.
 - **[Legacy plugins](legacy/)** - If you find yourself needing to work with Legacy plugins, check here for recommendations.
 - **[Reference](reference/)** - Description of the `plugin.json` schema and plugin metadata.
 
