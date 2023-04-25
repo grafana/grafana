@@ -5,10 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
@@ -21,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -815,29 +817,32 @@ type permissionScenarioFunc func(t *testing.T, sc *permissionScenarioContext)
 func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionScenarioFunc) {
 	t.Helper()
 
-	mock := &guardian.FakeDashboardGuardian{
+	guardianMock := &guardian.FakeDashboardGuardian{
 		CanSaveValue: canSave,
 	}
 
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
 		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
+		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		service, err := ProvideDashboardServiceImpl(
+		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+		dashboardService, err := ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
-			accesscontrolmock.NewMockedPermissionsService(),
-			accesscontrolmock.NewMockedPermissionsService(),
-			accesscontrolmock.New(),
+			folderPermissions,
+			dashboardPermissions,
+			ac,
 			foldertest.NewFakeService(),
 		)
 		require.NoError(t, err)
-		guardian.InitLegacyGuardian(cfg, sqlStore, service, &teamtest.FakeService{})
+		guardian.InitAccessControlGuardian(cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashboardService)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.ID, sqlStore)
@@ -863,10 +868,10 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		t.Cleanup(func() {
 			guardian.New = origNewDashboardGuardian
 		})
-		guardian.MockDashboardGuardian(mock)
+		guardian.MockDashboardGuardian(guardianMock)
 
 		sc := &permissionScenarioContext{
-			dashboardGuardianMock:    mock,
+			dashboardGuardianMock:    guardianMock,
 			sqlStore:                 sqlStore,
 			savedDashInFolder:        savedDashInFolder,
 			otherSavedFolder:         otherSavedFolder,
@@ -884,18 +889,22 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.New(),
+		folderPermissions,
+		dashboardPermissions,
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
@@ -908,7 +917,6 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) error {
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -919,7 +927,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.New(),
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
@@ -948,24 +956,25 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 			OrgRole: org.RoleAdmin,
 		},
 	}
-
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.New(),
+		dashboardPermissions,
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
+
 	require.NoError(t, err)
 
 	return res
@@ -987,24 +996,29 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		OrgID:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
+			OrgID:   orgID,
 			UserID:  1,
 			OrgRole: org.RoleAdmin,
+			Permissions: map[int64]map[string][]string{
+				orgID: {dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}, dashboards.ActionDashboardsWrite: {dashboards.ScopeDashboardsAll}},
+			},
 		},
 	}
 
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
+		folderPermissions,
 		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.New(),
+		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, err)

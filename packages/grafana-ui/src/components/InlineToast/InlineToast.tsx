@@ -15,7 +15,7 @@ export interface InlineToastProps {
   suffixIcon?: IconName;
   referenceElement: HTMLElement | null;
   placement: BasePlacement;
-  // Placement to use if there is not enough space to show the full toast with the original placement
+  /** Placement to use if there is not enough space to show the full toast with the original placement*/
   alternativePlacement?: BasePlacement;
 }
 

@@ -13,7 +13,10 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
+import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
 import { DataSourceList } from './DataSourceList';
 
@@ -35,6 +38,9 @@ export function DataSourceModal({
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
+  const newDataSourceURL = config.featureToggles.dataConnectionsConsole
+    ? CONNECTIONS_ROUTES.DataSourcesNew
+    : DATASOURCES_ROUTES.New;
 
   return (
     <Modal
@@ -96,7 +102,7 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.dsCTAs}>
-          <LinkButton variant="secondary" href={`datasources/new`}>
+          <LinkButton variant="secondary" href={newDataSourceURL}>
             Configure a new data source
           </LinkButton>
         </div>
@@ -123,7 +129,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       width: 50%;
       height: 100%;
-      padding-right: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(4)};
       border-right: 1px solid ${theme.colors.border.weak};
     `,
     rightColumn: css`
@@ -133,7 +139,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 100%;
       justify-items: space-evenly;
       align-items: stretch;
-      padding-left: ${theme.spacing(1)};
+      padding-left: ${theme.spacing(4)};
     `,
     builtInDataSources: css`
       flex: 1;
