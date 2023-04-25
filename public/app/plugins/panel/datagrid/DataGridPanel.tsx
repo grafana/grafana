@@ -10,7 +10,7 @@ import DataEditor, {
 } from '@glideapps/glide-data-grid';
 import React, { useEffect, useReducer } from 'react';
 
-import { ArrayVector, Field, MutableDataFrame, PanelProps, FieldType, DataFrame } from '@grafana/data';
+import { ArrayVector, Field, PanelProps, FieldType, DataFrame } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { usePanelContext, useTheme2 } from '@grafana/ui';
 
@@ -75,9 +75,18 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     return getGridCellKind(field, row, hasGridSelection(gridSelection));
   };
 
-  const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
+  const onCellEdited = async (cell: Item, newValue: EditableGridCell) => {
     const [col, row] = cell;
-    const field: Field = frame.fields[col];
+    const frameCopy = {
+      ...frame,
+      fields: frame.fields.map((f) => {
+        return {
+          ...f,
+          values: new ArrayVector(f.values),
+        };
+      }),
+    };
+    const field: Field = frameCopy.fields[col];
 
     if (!field) {
       return;
@@ -95,32 +104,33 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const onColumnInputBlur = (columnName: string) => {
     const len = frame.length ?? 0;
-    const newFrame = new MutableDataFrame(frame);
-
-    const field: Field = {
-      name: columnName,
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(new Array(len).fill('')),
-    };
-
-    newFrame.addField(field);
-
     if (onUpdateData && isDatagridEditEnabled()) {
-      onUpdateData([newFrame]);
+      onUpdateData([
+        {
+          ...frame,
+          fields: [
+            ...frame.fields,
+            {
+              name: columnName,
+              type: FieldType.string,
+              config: {},
+              values: new Array(len).fill(''),
+            },
+          ],
+        },
+      ]);
     }
   };
 
   const addNewRow = () => {
-    //TODO use .appendRow() after fieldValues refactor is finished
-    const newFrame = new MutableDataFrame(frame);
-
-    newFrame.fields.map((field) => {
-      field.values = new ArrayVector([...field.values.toArray(), null]);
+    const fields = frame.fields.map((f) => {
+      const values = f.values.slice(); // copy
+      values.push(null);
+      return { ...f, values };
     });
 
-    if (onUpdateData && isDatagridEditEnabled()) {
-      onUpdateData([newFrame]);
+    if (onUpdateData) {
+      onUpdateData([{ ...frame, fields, length: frame.length + 1 }]);
     }
   };
 
@@ -167,31 +177,29 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onColumnMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(frame);
-    const field = newFrame.fields[from];
-    newFrame.fields.splice(from, 1);
-    newFrame.fields.splice(to, 0, field);
+    const fields = frame.fields.map((f) => f);
+    const field = fields[from];
+    fields.splice(from, 1);
+    fields.splice(to, 0, field);
 
     dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
 
     if (onUpdateData) {
-      onUpdateData([newFrame]);
+      onUpdateData([{ ...frame, fields }]);
     }
   };
 
   const onRowMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(frame);
+    const fields = frame.fields.map((f) => ({ ...f, values: f.values.slice() }));
 
-    for (const field of newFrame.fields) {
-      const values = field.values.toArray();
-      const value = values[from];
-      values.splice(from, 1);
-      values.splice(to, 0, value);
-      field.values = new ArrayVector(values);
+    for (const field of fields) {
+      const value = field.values[from];
+      field.values.splice(from, 1);
+      field.values.splice(to, 0, value);
     }
 
     if (onUpdateData) {
-      onUpdateData([newFrame]);
+      onUpdateData([{ ...frame, fields }]);
     }
   };
 
@@ -200,13 +208,13 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
-    const newFrame = new MutableDataFrame(frame);
-    newFrame.fields[columnIdx].name = columnName;
+    const fields = frame.fields.map((f) => f);
+    fields[columnIdx].name = columnName;
 
     dispatch({ type: DatagridActionType.hideColumnRenameInput });
 
     if (onUpdateData) {
-      onUpdateData([newFrame]);
+      onUpdateData([{ ...frame, fields }]);
     }
   };
 
