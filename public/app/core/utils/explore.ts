@@ -222,7 +222,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   }
 
   if (!Array.isArray(parsed)) {
-    return { ...parsed, queries: parsed.queries ?? [] };
+    return { queries: [], range: DEFAULT_RANGE, ...parsed };
   }
 
   if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
