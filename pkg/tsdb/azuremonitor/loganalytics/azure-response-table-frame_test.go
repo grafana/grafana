@@ -63,16 +63,6 @@ func TestLogTableToFrame(t *testing.T) {
 	}
 }
 
-func marshalJSONData(v interface{}) *json.RawMessage {
-	marshalled, err := json.Marshal(v)
-	if err != nil {
-		panic(fmt.Errorf("error marshalling data: %s", err))
-	}
-
-	raw := json.RawMessage(marshalled)
-	return &raw
-}
-
 func TestTraceTableToFrame(t *testing.T) {
 	tests := []struct {
 		name          string
