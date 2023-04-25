@@ -23,6 +23,7 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { DataSourceList } from './DataSourceList';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
+
 interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
