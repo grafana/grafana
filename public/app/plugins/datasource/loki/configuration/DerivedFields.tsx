@@ -20,11 +20,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 type Props = {
-  value?: DerivedFieldConfig[];
+  fields?: DerivedFieldConfig[];
   onChange: (value: DerivedFieldConfig[]) => void;
 };
 
-export const DerivedFields = ({ value = [], onChange }: Props) => {
+export const DerivedFields = ({ fields = [], onChange }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -33,11 +33,11 @@ export const DerivedFields = ({ value = [], onChange }: Props) => {
   const validateNameRule = useMemo(() => {
     return {
       rule: (name: string) => {
-        return value.filter((field) => field.name === name).length <= 1;
+        return fields.filter((field) => field.name === name).length <= 1;
       },
       errorMessage: 'Name already in use',
     };
-  }, [value]);
+  }, [fields]);
 
   return (
     <>
@@ -48,19 +48,19 @@ export const DerivedFields = ({ value = [], onChange }: Props) => {
       </div>
 
       <div className="gf-form-group">
-        {value.map((field, index) => {
+        {fields.map((field, index) => {
           return (
             <DerivedField
               className={styles.derivedField}
               key={index}
               value={field}
               onChange={(newField) => {
-                const newDerivedFields = [...value];
+                const newDerivedFields = [...fields];
                 newDerivedFields.splice(index, 1, newField);
                 onChange(newDerivedFields);
               }}
               onDelete={() => {
-                const newDerivedFields = [...value];
+                const newDerivedFields = [...fields];
                 newDerivedFields.splice(index, 1);
                 onChange(newDerivedFields);
               }}
@@ -85,14 +85,14 @@ export const DerivedFields = ({ value = [], onChange }: Props) => {
             icon="plus"
             onClick={(event) => {
               event.preventDefault();
-              const newDerivedFields = [...value, { name: '', matcherRegex: '' }];
+              const newDerivedFields = [...fields, { name: '', matcherRegex: '' }];
               onChange(newDerivedFields);
             }}
           >
             Add
           </Button>
 
-          {value.length > 0 && (
+          {fields.length > 0 && (
             <Button variant="secondary" type="button" onClick={() => setShowDebug(!showDebug)}>
               {showDebug ? 'Hide example log message' : 'Show example log message'}
             </Button>
@@ -106,7 +106,7 @@ export const DerivedFields = ({ value = [], onChange }: Props) => {
             className={css`
               margin-bottom: 10px;
             `}
-            derivedFields={value}
+            derivedFields={fields}
           />
         </div>
       )}
