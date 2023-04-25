@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -39,7 +39,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     // Clear the search results when we leave SearchView to prevent old results flashing
     // when starting a new search
     if (!isSearching && searchState.result) {
-      stateManager.setState({ result: undefined });
+      stateManager.setState({ result: undefined, includePanels: undefined });
     }
   }, [isSearching, searchState.result, stateManager]);
 
