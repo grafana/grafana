@@ -28,7 +28,7 @@ const AddPanelButton = ({ dashboard }: Props) => {
         size="lg"
         fill="outline"
         className={cx(styles.button, styles.buttonIcon, styles.buttonText)}
-        data-testid={selectors.components.PageToolbar.itemButton('Add panel button')}
+        data-testid={selectors.components.PageToolbar.itemButton('Add button')}
       >
         Add
         <Icon name={isMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />

@@ -24,7 +24,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
       <Menu.Item
         key="add-visualisation"
         label="Visualization"
-        testId={selectors.components.PageToolbar.itemButton('Add new visualization menu item')}
+        testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
         onClick={() => {
           reportInteraction('Create new panel');
           const id = onCreateNewPanel(dashboard);
@@ -34,7 +34,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
       <Menu.Item
         key="add-row"
         label="Row"
-        testId={selectors.components.PageToolbar.itemButton('Add new row menu item')}
+        testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
         onClick={() => {
           reportInteraction('Create new row');
           onCreateNewRow(dashboard);
@@ -43,7 +43,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
       <Menu.Item
         key="add-panel-lib"
         label="Import from library"
-        testId={selectors.components.PageToolbar.itemButton('Add new panel from panel library menu item')}
+        testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
         onClick={() => {
           reportInteraction('Add a panel from the panel library');
           onAddLibraryPanel(dashboard);
@@ -52,7 +52,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
       <Menu.Item
         key="add-panel-clipboard"
         label="Paste panel"
-        testId={selectors.components.PageToolbar.itemButton('Add new panel from clipboard menu item')}
+        testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
         onClick={() => {
           reportInteraction('Paste panel from clipboard');
           onPasteCopiedPanel(dashboard, copiedPanelPlugin);

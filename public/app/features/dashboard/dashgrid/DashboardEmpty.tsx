@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -29,6 +30,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           <Button
             size="lg"
             icon="plus"
+            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
             onClick={() => {
               reportInteraction('Create new panel');
               const id = onCreateNewPanel(dashboard);
@@ -48,6 +50,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
+              data-testid={selectors.pages.AddDashboard.itemButton('Create new row button')}
               onClick={() => {
                 reportInteraction('Create new row');
                 onCreateNewRow(dashboard);
@@ -65,6 +68,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
+              data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
               onClick={() => {
                 reportInteraction('Add a panel from the panel library');
                 onAddLibraryPanel(dashboard);
