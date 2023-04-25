@@ -634,13 +634,24 @@ func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildren
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	countsMap := make(folder.ChildrenCounts, len(s.registry))
-	for _, v := range s.registry {
-		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
+	result := []string{*cmd.UID}
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
 			return nil, err
 		}
-		countsMap[v.Kind()] += c
+		result = append(result, subfolders...)
+	}
+
+	countsMap := make(folder.ChildrenCounts, len(s.registry))
+	for _, v := range s.registry {
+		for _, folder := range result {
+			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
+			if err != nil {
+				return nil, err
+			}
+			countsMap[v.Kind()] += c
+		}
 	}
 	return countsMap, nil
 }
