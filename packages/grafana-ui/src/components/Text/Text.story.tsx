@@ -5,8 +5,8 @@ import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
-import { H1, H2, H3, H4, H5, H6, P, Span, Legend } from './Text.experimental';
 import mdx from './Text.mdx';
+import { H1, H2, H3, H4, H5, H6, P, Span, Legend } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
