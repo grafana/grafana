@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { ButtonGroup, ButtonSelect, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { ButtonGroup, ButtonSelect, InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => {
   return {
-    logSamplesButton: css`
+    buttonGroup: css`
       display: inline-flex;
     `,
   };
@@ -24,14 +25,36 @@ export type Props = {
   option: SelectableValue<number>;
   onChangeOption: (item: SelectableValue<number>) => void;
   position?: 'top' | 'bottom';
+
+  wrapLines?: boolean;
+  onChangeWrapLines?: (wrapLines: boolean) => void;
 };
 
 export const LogContextButtons = (props: Props) => {
-  const { option, onChangeOption } = props;
+  const { option, onChangeOption, wrapLines, onChangeWrapLines, position } = props;
+  const internalOnChangeWrapLines = useCallback(
+    (event: React.FormEvent<HTMLInputElement>) => {
+      if (onChangeWrapLines) {
+        const state = event.currentTarget.checked;
+        reportInteraction('grafana_explore_logs_log_context_toggle_lines_clicked', {
+          state,
+        });
+        onChangeWrapLines(state);
+      }
+    },
+    [onChangeWrapLines]
+  );
   const styles = useStyles2(getStyles);
 
   return (
-    <ButtonGroup className={styles.logSamplesButton}>
+    <ButtonGroup className={styles.buttonGroup}>
+      {position === 'top' && onChangeWrapLines && (
+        <InlineFieldRow>
+          <InlineField label="Wrap lines">
+            <InlineSwitch value={wrapLines} onChange={internalOnChangeWrapLines} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       <ButtonSelect variant="canvas" value={option} options={LoadMoreOptions} onChange={onChangeOption} />
     </ButtonGroup>
   );

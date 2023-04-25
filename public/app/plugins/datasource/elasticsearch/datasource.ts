@@ -52,7 +52,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
-import { trackQuery } from './tracking';
+import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
   BucketAggregation,
@@ -321,7 +321,8 @@ export class ElasticDatasource
       ignore_unavailable: true,
     };
 
-    // old elastic annotations had index specified on them
+    // @deprecated
+    // Field annotation.index is deprecated and will be removed in the future
     if (annotation.index) {
       header.index = annotation.index;
     } else {
@@ -330,6 +331,7 @@ export class ElasticDatasource
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
+    trackAnnotationQuery(annotation);
     return lastValueFrom(
       this.post('_msearch', payload).pipe(
         map((res) => {
@@ -528,7 +530,7 @@ export class ElasticDatasource
       );
     } else {
       const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
-      const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
+      const searchAfter = sortField?.values[row.rowIndex] || [row.timeEpochMs];
       const sort = options?.direction === LogRowContextQueryDirection.Forward ? 'asc' : 'desc';
 
       const header =
@@ -1125,7 +1127,7 @@ export class ElasticDatasource
         // Sorting of results in the context query
         sortDirection: direction === LogRowContextQueryDirection.Backward ? 'desc' : 'asc',
         // Used to get the next log lines before/after the current log line using sort field of selected log line
-        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values[row.rowIndex] ?? [row.timeEpochMs],
       },
     };
 
