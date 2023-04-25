@@ -25,8 +25,12 @@ export function SearchView({ width, height }: SearchViewProps) {
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
-      if (!kind || kind === '*') {
+      if (!kind) {
         return false;
+      }
+
+      if (kind === '*') {
+        return selectedItems.$all;
       }
 
       return selectedItems[assertDashboardViewItemKind(kind)][uid] ?? false;
@@ -40,6 +44,7 @@ export function SearchView({ width, height }: SearchViewProps) {
 
   const handleItemSelectionChange = useCallback(
     (kind: string, uid: string) => {
+      console.log('handleItemSelectionChange', kind, uid);
       const newIsSelected = !selectionChecker(kind, uid);
 
       dispatch(

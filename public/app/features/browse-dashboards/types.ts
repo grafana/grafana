@@ -1,6 +1,8 @@
 import { DashboardViewItem as DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
-export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>>;
+export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>> & {
+  $all: boolean;
+};
 
 export interface BrowseDashboardsState {
   rootItems: DashboardViewItem[];

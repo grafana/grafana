@@ -82,6 +82,24 @@ export function setItemSelectionState(
   }
 }
 
+export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<{ isSelected: boolean }>) {
+  const { isSelected } = action.payload;
+
+  state.selectedItems.$all = isSelected;
+
+  for (const folderUID in state.childrenByParentUID) {
+    const children = state.childrenByParentUID[folderUID] ?? [];
+
+    for (const child of children) {
+      state.selectedItems[child.kind][child.uid] = isSelected;
+    }
+  }
+
+  for (const child of state.rootItems) {
+    state.selectedItems[child.kind][child.uid] = isSelected;
+  }
+}
+
 function findItem(
   rootItems: DashboardViewItem[],
   childrenByUID: Record<string, DashboardViewItem[] | undefined>,

@@ -9,6 +9,7 @@ import {
   fetchChildren,
   setFolderOpenState,
   setItemSelectionState,
+  setAllSelection,
 } from '../state';
 
 import { DashboardsTree } from './DashboardsTree';
@@ -53,6 +54,7 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
       height={height}
       selectedItems={selectedItems}
       onFolderClick={handleFolderClick}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
       onItemSelectionChange={handleItemSelectionChange}
     />
   );
