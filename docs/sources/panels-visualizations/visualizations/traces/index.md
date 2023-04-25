@@ -23,4 +23,4 @@ For more information about traces and how to use them, refer to the following do
 - [Tracing in Explore]({{< relref "../../../explore/trace-integration/" >}})
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
 
-{{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+{{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
