@@ -292,7 +292,7 @@ export function useStateSync(params: ExploreQueryParams) {
  * @param orgId the orgId of the user
  * @param allowMixed whether mixed datasources are allowed
  *
- * @returns the datasource UID that the pane should use
+ * @returns the datasource UID that the pane should use, undefined if no suitable datasource is found
  */
 async function getPaneDatasource(
   rootDatasource: DataSourceRef | string | null | undefined,
@@ -332,6 +332,7 @@ async function getPaneDatasource(
       // Or the default one
       .catch(() => getDatasourceSrv().get())
       .then((ds) => ds.uid)
+      .catch(() => undefined)
   );
 }
 
