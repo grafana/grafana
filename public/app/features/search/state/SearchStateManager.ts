@@ -54,8 +54,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    this.doSearch();
+    if (this.hasSearchFilters()) {
+      this.doSearch();
+    }
   }
+
   /**
    * Updates internal and url state, then triggers a new search
    */
@@ -162,7 +165,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type;
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type || this.state.sort;
   }
 
   getSearchQuery() {
@@ -298,4 +301,11 @@ export function getSearchStateManager() {
   }
 
   return stateManager;
+}
+
+export function useSearchStateManager() {
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+
+  return [state, stateManager] as const;
 }
