@@ -347,6 +347,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 		db:                   db,
 		accessControl:        acimpl.ProvideAccessControl(cfg),
+		registry:             make(map[string]folder.RegistryService),
 	}
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -357,16 +358,36 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		ParentUID:    "",
 		SignedInUser: &signedInUser,
 	}
-	t.Run("Should get nested folders", func(t *testing.T) {
+
+	t.Run("Should get descendant counts", func(t *testing.T) {
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-		serviceWithFlagOn.store = nestedFolderStore
-		ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "getNestedFolders", createCmd)
-
-		folders, err := serviceWithFlagOn.getNestedFolders(context.Background(), orgID, ancestorUIDs[0])
+		ac := acmock.New()
+		folderPermissions := acmock.NewMockedPermissionsService()
+		dashboardPermissions := acmock.NewMockedPermissionsService()
+		_, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
 		require.NoError(t, err)
-		require.Equal(t, folders, ancestorUIDs[1:])
+
+		depth := 5
+		ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCounts", createCmd)
+
+		parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+		require.NoError(t, err)
+		subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+		require.NoError(t, err)
+		_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, "prod")
+		_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, "prod")
+
+		countCmd := folder.GetDescendantCountsQuery{
+			UID:          &ancestorUIDs[0],
+			OrgID:        orgID,
+			SignedInUser: &signedInUser,
+		}
+		m, err := serviceWithFlagOn.GetDescendantCounts(context.Background(), &countCmd)
+		require.NoError(t, err)
+		require.Equal(t, m["folder"], int64(depth-1))
+		require.Equal(t, m["dashboard"], int64(2))
 
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
@@ -382,7 +403,6 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-			serviceWithFlagOn.store = nestedFolderStore
 			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
 
 			deleteCmd := folder.DeleteFolderCommand{
