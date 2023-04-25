@@ -1,12 +1,11 @@
 ---
 aliases:
   - ../../../enterprise/access-control/troubleshooting/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 description: RBAC troubleshooting guide.
 menuTitle: Troubleshooting RBAC
 title: Troubleshooting RBAC
