@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
 import { getTemplateSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelPadding } from '@grafana/ui';
@@ -5,6 +7,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { plugin } from 'app/plugins/panel/alertGroups/module';
 
+import { PanelHeaderTitleItems } from '../dashgrid/PanelHeader/PanelHeaderTitleItems';
 import { DashboardModel, PanelModel } from '../state';
 
 interface CommonProps {
@@ -78,27 +81,23 @@ export function getPanelChromeProps(props: CommonProps) {
   };
 
   const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
+  const alertState = props.data.alertState?.state;
 
-  const getPanelHeaderTitleItemsProps = () => {
-    const alertState = props.data.alertState?.state;
-    const showTitleItems =
-      (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
-      (props.data.series.length > 0 && props.data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
-      (props.data.request && props.data.request.timeInfo) ||
-      alertState;
+  const showTitleItems =
+    (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
+    (props.data.series.length > 0 && props.data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
+    (props.data.request && props.data.request.timeInfo) ||
+    alertState;
 
-    if (!showTitleItems) {
-      return null;
-    }
-
-    return {
-      alertState,
-      data: props.data,
-      panelId: props.panel.id,
-      panelLinks: props.panel.links,
-      onShowPanelLinks: onShowPanelLinks,
-    };
-  };
+  const titleItems = showTitleItems && (
+    <PanelHeaderTitleItems
+      alertState={alertState}
+      data={props.data}
+      panelId={props.panel.id}
+      panelLinks={props.panel.links}
+      onShowPanelLinks={onShowPanelLinks}
+    />
+  );
 
   const description = props.panel.description ? onShowPanelDescription() : undefined;
 
@@ -114,9 +113,9 @@ export function getPanelChromeProps(props: CommonProps) {
     onOpenErrorInspect,
     onCancelQuery,
     padding,
-    getPanelHeaderTitleItemsProps,
     description,
     dragClass,
     title,
+    titleItems,
   };
 }

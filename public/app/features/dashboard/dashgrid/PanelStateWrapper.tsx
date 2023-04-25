@@ -51,7 +51,6 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
-import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -610,9 +609,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     });
 
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
-    const panelHeaderTitleItemsProps = panelChromeProps.getPanelHeaderTitleItemsProps();
-
-    const titleItems = panelHeaderTitleItemsProps && <PanelHeaderTitleItems {...panelHeaderTitleItemsProps} />;
 
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
@@ -633,7 +629,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           statusMessage={errorMessage}
           statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
           description={panelChromeProps.description}
-          titleItems={titleItems}
+          titleItems={panelChromeProps.titleItems}
           menu={this.props.hideMenu ? undefined : menu}
           dragClass={panelChromeProps.dragClass}
           dragClassCancel="grid-drag-cancel"
