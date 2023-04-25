@@ -85,7 +85,8 @@ export interface PanelContext {
   onToggleLegendSort?: (sortBy: string) => void;
 
   /**
-   * Optional, only some contexts support this. This can fail / be cancelled. Which is why it returns a promise.
+   * Optional, only some contexts support this. This action can be cancelled by user which will result
+   * in a the Promise resolving to a false value.
    */
   onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
 }

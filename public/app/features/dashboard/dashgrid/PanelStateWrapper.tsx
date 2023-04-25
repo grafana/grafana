@@ -36,20 +36,17 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
-import { Deferred } from 'app/core/utils/deferred';
-import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
-import { changeToSnapshotData } from 'app/plugins/datasource/grafana/utils';
+import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
-import { RenderEvent, ShowConfirmModalEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 
 import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
@@ -153,31 +150,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
-    const deferredPromise = new Deferred<boolean>();
-
-    if (this.props.panel.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
-      changeToSnapshotData(frames, this.props.panel);
-      deferredPromise.resolve?.(true);
-      return deferredPromise.promise;
-    }
-
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: 'Delete',
-        text: 'Are you sure you want to permanently delete your starred query?',
-        yesText: 'Delete',
-        icon: 'trash-alt',
-        onConfirm: () => {
-          changeToSnapshotData(frames, this.props.panel);
-          deferredPromise.resolve?.(true);
-        },
-        onDismiss: () => {
-          deferredPromise.resolve?.(false);
-        },
-      })
-    );
-
-    return deferredPromise.promise;
+    return onUpdatePanelSnapshotData(this.props.panel, frames);
   };
 
   onSeriesColorChange = (label: string, color: string) => {
