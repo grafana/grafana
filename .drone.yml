@@ -2639,7 +2639,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-    DRONE_TARGET_BRANCH: release-8.5.24
+    GRAFANA_BRANCH: release-8.5.24
   image: grafana/ci-wix:0.1.1
   name: clone
 - commands:
@@ -2654,7 +2654,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-    DRONE_TARGET_BRANCH: release-8.5.24
+    GRAFANA_BRANCH: release-8.5.24
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -2679,7 +2679,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    DRONE_TARGET_BRANCH: release-8.5.24
+    GRAFANA_BRANCH: release-8.5.24
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
