@@ -1,1 +1,1 @@
-export * from './components/Text/Text.experimental';
+export * from './components/Text/TextElements';
