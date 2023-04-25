@@ -53,6 +53,44 @@ describe('DataLinks tests', () => {
 
     expect(onChangeMock).toHaveBeenCalled();
   });
+
+  it('should validate duplicated data links', async () => {
+    const duplicatedLinks = [
+      {
+        field: 'regex1',
+        url: '',
+      },
+      {
+        field: 'regex1',
+        url: '',
+      },
+    ];
+
+    setup({ links: duplicatedLinks });
+
+    userEvent.click(screen.getAllByPlaceholderText('Field name or regex pattern')[0]);
+
+    expect(await screen.findByText('Field already in use')).toBeInTheDocument();
+  });
+
+  it('should not validate empty data links as duplicated', () => {
+    const duplicatedLinks = [
+      {
+        field: '',
+        url: '',
+      },
+      {
+        field: '',
+        url: '',
+      },
+    ];
+
+    setup({ links: duplicatedLinks });
+
+    userEvent.click(screen.getAllByPlaceholderText('Field name or regex pattern')[0]);
+
+    expect(screen.queryByText('Field already in use')).not.toBeInTheDocument();
+  });
 });
 
 const testLinks: DataLinkConfig[] = [
