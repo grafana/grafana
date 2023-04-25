@@ -90,7 +90,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  const [isPayloadEditorOpen, toggleIsPayloadEditorOpen] = useToggle(false);
   const [isTemplateDataDocsOpen, toggleTemplateDataDocsOpen] = useToggle(false);
 
   const [view, setView] = useState<'content' | 'preview'>('content');
@@ -177,61 +176,67 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             />
           </Field>
           <TemplatingGuideline />
-
-          <TabsBar>
-            <Tab label="Content" active={view === 'content'} onChangeTab={() => setView('content')} />
-            {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
-              <Tab label="Preview" active={view === 'preview'} onChangeTab={() => setView('preview')} />
-            )}
-          </TabsBar>
-          <div className={styles.contentContainer}>
-            {view === 'content' ? (
-              <div>
-                <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
-                  <div className={styles.editWrapper}>
-                    <AutoSizer>
-                      {({ width, height }) => (
-                        <TemplateEditor
-                          value={getValues('content')}
-                          width={width}
-                          height={height}
-                          onBlur={(value) => setValue('content', value)}
-                        />
+          <Stack direction="row" alignItems={'center'}>
+            <div>
+              <TabsBar>
+                <Tab label="Content" active={view === 'content'} onChangeTab={() => setView('content')} />
+                {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+                  <Tab label="Preview" active={view === 'preview'} onChangeTab={() => setView('preview')} />
+                )}
+              </TabsBar>
+              <div className={styles.contentContainer}>
+                {view === 'content' ? (
+                  <div>
+                    <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
+                      <div className={styles.editWrapper}>
+                        <AutoSizer>
+                          {({ width, height }) => (
+                            <TemplateEditor
+                              value={getValues('content')}
+                              width={width}
+                              height={height}
+                              onBlur={(value) => setValue('content', value)}
+                            />
+                          )}
+                        </AutoSizer>
+                      </div>
+                    </Field>
+                    <div className={styles.buttons}>
+                      {loading && (
+                        <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                          Saving...
+                        </Button>
                       )}
-                    </AutoSizer>
+                      {!loading && (
+                        <Button type="submit" variant="primary">
+                          Save template
+                        </Button>
+                      )}
+                      <LinkButton
+                        disabled={loading}
+                        href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+                        variant="secondary"
+                        type="button"
+                        fill="outline"
+                      >
+                        Cancel
+                      </LinkButton>
+                    </div>
                   </div>
-                </Field>
-                <div className={styles.buttons}>
-                  {loading && (
-                    <Button disabled={true} icon="fa fa-spinner" variant="primary">
-                      Saving...
-                    </Button>
-                  )}
-                  {!loading && (
-                    <Button type="submit" variant="primary">
-                      Save template
-                    </Button>
-                  )}
-                  <LinkButton
-                    disabled={loading}
-                    href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-                    variant="secondary"
-                    type="button"
-                    fill="outline"
-                  >
-                    Cancel
-                  </LinkButton>
-                </div>
+                ) : (
+                  <TemplatePreview
+                    payload={payload}
+                    payloadFormatError={payloadFormatError}
+                    setPayloadFormatError={setPayloadFormatError}
+                    templateName={watch('name')}
+                  />
+                )}
               </div>
-            ) : (
-              <TemplatePreview
-                payload={payload}
-                payloadFormatError={payloadFormatError}
-                setPayloadFormatError={setPayloadFormatError}
-                templateName={watch('name')}
-              />
+            </div>
+            {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+              <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />
             )}
-          </div>
+          </Stack>
         </FieldSet>
         <>
           <ExpandableSection
@@ -240,9 +245,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             toggleOpen={toggleTemplateDataDocsOpen}
           >
             <TemplateDataDocs />
-          </ExpandableSection>
-          <ExpandableSection title="Edit Payload" isOpen={isPayloadEditorOpen} toggleOpen={toggleIsPayloadEditorOpen}>
-            <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />
           </ExpandableSection>
         </>
       </form>
