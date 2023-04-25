@@ -4,7 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Button, clearButtonStyles, FilterInput, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { Button, clearButtonStyles, FilterInput, LoadingPlaceholder, Modal, Tooltip, useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
@@ -114,8 +114,12 @@ export function AlertInstanceModalSelector({
         onClick={handleSelectInstances}
       >
         <div className={styles.rowButtonTitle} title={alert.labels['alertname']}>
-          Starts at: {dateTimeFormat(alert.startsAt, { format: 'YYYY-MM-DD HH:mm:ss' })} - Ends at:{' '}
-          {dateTimeFormat(alert.startsAt, { format: 'YYYY-MM-DD HH:mm:ss' })}
+          <Tooltip placement="bottom" content={<pre>{JSON.stringify(alert, null, 2)}</pre>} theme={'info'}>
+            <span>
+              Starts at: {dateTimeFormat(alert.startsAt, { format: 'YYYY-MM-DD HH:mm:ss' })} - Ends at:{' '}
+              {dateTimeFormat(alert.startsAt, { format: 'YYYY-MM-DD HH:mm:ss' })}
+            </span>
+          </Tooltip>
         </div>
       </button>
     );
