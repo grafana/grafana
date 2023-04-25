@@ -1256,7 +1256,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -1842,7 +1842,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -1889,7 +1889,7 @@ steps:
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
   environment:
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.5-go1.19.8
@@ -1907,7 +1907,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment:
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.5-go1.19.8
@@ -2266,7 +2266,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment:
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.5-go1.19.8
@@ -2402,7 +2402,7 @@ steps:
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
   environment:
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/ci-wix:0.1.1
@@ -2417,9 +2417,9 @@ steps:
   depends_on:
   - clone
   environment:
+    DRONE_TARGET_BRANCH: v8.5.x
     GITHUB_TOKEN:
       from_secret: github_token
-    DRONE_TARGET_BRANCH: release-8.5.24
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -2444,7 +2444,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3555,7 +3555,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -4243,7 +4243,7 @@ steps:
   depends_on:
   - clone
   environment:
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/ci-wix:0.1.1
@@ -4265,7 +4265,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    DRONE_TARGET_BRANCH: release-8.5.24
+    DRONE_TARGET_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
