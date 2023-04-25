@@ -47,7 +47,6 @@ export { List } from './List/List';
 export { InteractiveTable } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { AutoSaveField } from './AutoSaveField/AutoSaveField';
-export { Text } from './Text/Text';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
