@@ -351,6 +351,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
+  // Todo: Remove this when we remove the emptyDashboardPage toggle
   onAddPanel = () => {
     const { dashboard } = this.props;
 
@@ -551,7 +552,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
+    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
   }
 
   if (state.editPanel || state.viewPanel) {

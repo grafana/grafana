@@ -25,7 +25,7 @@ export default class PrometheusMetricFindQuery {
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
     const labelNamesQuery = this.query.match(labelNamesRegex);
     if (labelNamesQuery) {
-      return this.datasource.getLabelNames();
+      return this.datasource.getTagKeys();
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
