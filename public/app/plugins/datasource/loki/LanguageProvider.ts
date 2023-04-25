@@ -399,8 +399,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
     let value = this.seriesCache.get(cacheKey);
     if (!value) {
-      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-      this.seriesCache.set(cacheKey, {});
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);

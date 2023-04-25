@@ -2984,6 +2984,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@glideapps/glide-data-grid@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "@glideapps/glide-data-grid@npm:5.2.1"
+  dependencies:
+    canvas-hypertxt: ^0.0.7
+    react-number-format: ^5.0.0
+  peerDependencies:
+    lodash: ^4.17.19
+    marked: ^4.0.10
+    react: ^16.12.0 || 17.x || 18.x
+    react-dom: ^16.12.0 || 17.x || 18.x
+    react-responsive-carousel: ^3.2.7
+  checksum: a91d4049e7c6e1db8a8c00326adbc71c52f90d66398e9ea4b85218b8cf9ffd421a18188cb6e5abf6765ebcc73b376389222e42a87dd5ec441a22f8f197775e7c
+  languageName: node
+  linkType: hard
+
 "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
@@ -9795,7 +9811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:4.0.8":
+"@types/marked@npm:4.0.8, @types/marked@npm:^4":
   version: 4.0.8
   resolution: "@types/marked@npm:4.0.8"
   checksum: 68278fa7acaa5d920cdc239d675b5daf842e0ad4779e4848cd617d9baf2ac1afccb5a264c331e37d80031d647e1640cb983cd31e73d45b28552670b4853fad8e
@@ -13658,6 +13674,13 @@ __metadata:
   version: 1.0.30001469
   resolution: "caniuse-lite@npm:1.0.30001469"
   checksum: 8e496509d7e9ff189c72205675b5db0c5f1b6a09917027441e835efae0848a468a8c4e7d2b409ffc202438fcd23ae53e017f976a03c22c04d12d3c0e1e33e5de
+  languageName: node
+  linkType: hard
+
+"canvas-hypertxt@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "canvas-hypertxt@npm:0.0.7"
+  checksum: 161ee134a4c7f0f75d569c432ee906b19661824cb8b959a7ce932b9cca0eb05cd42937a40ac6b6105f2f591046d714c5f13c1f8bbb0b1d0002eb600ee2dbb9a3
   languageName: node
   linkType: hard
 
@@ -20132,6 +20155,7 @@ __metadata:
     "@emotion/css": 11.10.6
     "@emotion/eslint-plugin": 11.10.0
     "@emotion/react": 11.10.6
+    "@glideapps/glide-data-grid": ^5.2.1
     "@grafana/aws-sdk": 0.0.44
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
@@ -20210,6 +20234,7 @@ __metadata:
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.191
     "@types/logfmt": ^1.2.3
+    "@types/marked": ^4
     "@types/mousetrap": 1.6.11
     "@types/node": 18.14.6
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.9"
@@ -20334,6 +20359,7 @@ __metadata:
     logfmt: ^1.3.2
     lru-cache: 7.17.0
     lru-memoize: ^1.1.0
+    marked: ^4.3.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.7.2
     moment: 2.29.4
@@ -20384,6 +20410,7 @@ __metadata:
     react-redux: 7.2.6
     react-refresh: 0.14.0
     react-resizable: 3.0.4
+    react-responsive-carousel: ^3.2.23
     react-router-dom: 5.3.3
     react-select: 5.7.0
     react-select-event: 5.5.1
@@ -25340,6 +25367,15 @@ __metadata:
   bin:
     marked: bin/marked.js
   checksum: bd551cd61028ee639d4ca2ccdfcc5a6ba4227c1b143c4538f3cde27f569dcb57df8e6313560394645b418b84a7336c07ab1e438b89b6324c29d7d8cdd3102d63
+  languageName: node
+  linkType: hard
+
+"marked@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "marked@npm:4.3.0"
+  bin:
+    marked: bin/marked.js
+  checksum: 0db6817893952c3ec710eb9ceafb8468bf5ae38cb0f92b7b083baa13d70b19774674be04db5b817681fa7c5c6a088f61300815e4dd75a59696f4716ad69f6260
   languageName: node
   linkType: hard
 
@@ -30849,6 +30885,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-easy-swipe@npm:^0.0.21":
+  version: 0.0.21
+  resolution: "react-easy-swipe@npm:0.0.21"
+  dependencies:
+    prop-types: ^15.5.8
+  checksum: 225f12a9dd410db1c790220867ab1eb58e2ef0a2bdae8541330805fc5b9905e242ab307b019f9aaed76473849a753f363baff03fa8a77e7a1860d7b41dc83ec0
+  languageName: node
+  linkType: hard
+
 "react-element-to-jsx-string@npm:^14.3.4":
   version: 14.3.4
   resolution: "react-element-to-jsx-string@npm:14.3.4"
@@ -31059,6 +31104,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-number-format@npm:^5.0.0":
+  version: 5.1.4
+  resolution: "react-number-format@npm:5.1.4"
+  dependencies:
+    prop-types: ^15.7.2
+  peerDependencies:
+    react: ^0.14 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^0.14 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: 770a1e86cd05d9df28aa5e6a12c5731351dd4a301464edd0ac5dcbc68d2f07eae37781ff14f6153566cbb7cccb28f13f0826d1844600d25ae6e12da060814282
+  languageName: node
+  linkType: hard
+
 "react-popper-tooltip@npm:4.4.2":
   version: 4.4.2
   resolution: "react-popper-tooltip@npm:4.4.2"
@@ -31152,6 +31209,17 @@ __metadata:
   peerDependencies:
     react: ">= 16.3"
   checksum: cbf86ad04be0f073102489ad25a2ba101779f0f00e580d48e1be73c4057c36a4e8ee8308b020ad3dd91555bb24082ceeef674d5035a38d33a2d43aed192db7fa
+  languageName: node
+  linkType: hard
+
+"react-responsive-carousel@npm:^3.2.23":
+  version: 3.2.23
+  resolution: "react-responsive-carousel@npm:3.2.23"
+  dependencies:
+    classnames: ^2.2.5
+    prop-types: ^15.5.8
+    react-easy-swipe: ^0.0.21
+  checksum: 8a5b915f140a05425554a0c108c60a0b103dae49808486d39147df09c832ad712c7d7f4a66f0d0c39529ca095b4a327f0cc440d91b5f7a39ab13076931f74bd0
   languageName: node
   linkType: hard
 
