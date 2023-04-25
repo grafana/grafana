@@ -3,7 +3,7 @@ import React from 'react';
 import { FieldValidationMessage } from '@grafana/ui';
 
 import { validateInput } from './ConfigEditor';
-import { DURATION_REGEX } from './PromSettings';
+import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from './PromSettings';
 
 // replaces promSettingsValidationEvents to display a <FieldValidationMessage> onBlur for duration input errors
 describe('promSettings validateInput', () => {
@@ -18,9 +18,23 @@ describe('promSettings validateInput', () => {
     ${'1s'}  | ${true}
     ${'1y'}  | ${true}
   `(
-    "when calling the rule with correct formatted value: '$value' then result should be '$expected'",
+    "Single duration regex, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
     ({ value, expected }) => {
       expect(validateInput(value, DURATION_REGEX)).toBe(expected);
+    }
+  );
+
+  it.each`
+    value      | expected
+    ${'1M 2s'} | ${true}
+    ${'1w 2d'} | ${true}
+    ${'1d 2m'} | ${true}
+    ${'1h 2m'} | ${true}
+    ${'1m 2s'} | ${true}
+  `(
+    "Multiple duration regex, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
+    ({ value, expected }) => {
+      expect(validateInput(value, MULTIPLE_DURATION_REGEX)).toBe(expected);
     }
   );
 

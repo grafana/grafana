@@ -50,7 +50,12 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
+// single duration input
 export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
+
+// multiple duration input
+export const MULTIPLE_DURATION_REGEX = /(\d+)(.+)/;
+
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
@@ -429,7 +434,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
                   spellCheck={false}
                 />
-                {validateInput(validDuration.incrementalQueryOverlapWindow, DURATION_REGEX, durationError)}
+                {validateInput(validDuration.incrementalQueryOverlapWindow, MULTIPLE_DURATION_REGEX, durationError)}
               </>
             </InlineField>
           )}
