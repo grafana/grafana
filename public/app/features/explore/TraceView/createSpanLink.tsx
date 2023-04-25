@@ -54,13 +54,9 @@ export function createSpanLinkFactory({
 
   let scopedVars = scopedVarsFromTrace(trace);
   const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
-  const legacyFormat = dataFrame.fields.length === 1;
 
-  if (legacyFormat || !hasLinks) {
-    // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
-    // let's try to use the old legacy path.
-    // TODO: This was mainly a backward compatibility thing but at this point can probably be removed.
-    return legacyCreateSpanLinkFactory(
+  return function SpanLink(span: TraceSpan): SpanLinks | undefined {
+    let spanLinks = legacyCreateSpanLinkFactory(
       splitOpenFn,
       // We need this to make the types happy but for this branch of code it does not matter which field we supply.
       dataFrame.fields[0],
@@ -68,11 +64,9 @@ export function createSpanLinkFactory({
       traceToMetricsOptions,
       createFocusSpanLink,
       scopedVars
-    );
-  }
+    )(span);
 
-  if (hasLinks) {
-    return function SpanLink(span: TraceSpan): SpanLinks | undefined {
+    if (hasLinks) {
       scopedVars = {
         ...scopedVars,
         ...scopedVarsFromSpan(span),
@@ -89,7 +83,8 @@ export function createSpanLinkFactory({
           vars: scopedVars,
         });
 
-        return {
+        spanLinks = {
+          ...spanLinks,
           otherLinks: links.map((link) => {
             return {
               title: link.title,
@@ -103,12 +98,12 @@ export function createSpanLinkFactory({
       } catch (error) {
         // It's fairly easy to crash here for example if data source defines wrong interpolation in the data link
         console.error(error);
-        return undefined;
+        return spanLinks;
       }
-    };
-  }
+    }
 
-  return undefined;
+    return spanLinks;
+  };
 }
 
 /**
