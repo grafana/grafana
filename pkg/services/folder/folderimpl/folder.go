@@ -625,6 +625,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 }
 
 func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
@@ -640,6 +641,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
+			logger.Error("failed to get subfolders", "error", err)
 			return nil, err
 		}
 		result = append(result, subfolders...)
@@ -650,6 +652,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 		for _, folder := range result {
 			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
 			if err != nil {
+				logger.Error("failed to count folder descendants", "error", err)
 				return nil, err
 			}
 			countsMap[v.Kind()] += c
