@@ -240,7 +240,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
         </FieldSet>
         <>
           <ExpandableSection
-            title="Data Cheat sheet"
+            title="Data cheat sheet"
             isOpen={isTemplateDataDocsOpen}
             toggleOpen={toggleTemplateDataDocsOpen}
           >
