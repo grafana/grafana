@@ -12,7 +12,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -24,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/static"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1422,7 +1421,7 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(),
-		signature.ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore())))
+		signature.ProvideService(cfg, static.New()))
 
 	for _, cb := range cbs {
 		cb(l)

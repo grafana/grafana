@@ -1,6 +1,7 @@
 package signature
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -15,12 +16,13 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/manifestverifier"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,26 +54,18 @@ func (m *PluginManifest) isV2() bool {
 }
 
 type Signature struct {
-	verifier *manifestverifier.ManifestVerifier
-	mlog     log.Logger
+	mlog log.Logger
+	kr   plugins.KeyRetriever
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.Cfg, kv plugins.KeyStore) *Signature {
+func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
 	log := log.New("plugin.signature")
 	return &Signature{
-		verifier: manifestverifier.New(cfg, log, kv),
-		mlog:     log,
+		mlog: log,
+		kr:   kr,
 	}
-}
-
-func (s *Signature) IsDisabled() bool {
-	return s.verifier.IsDisabled()
-}
-
-func (s *Signature) Run(ctx context.Context) error {
-	return s.verifier.Run(ctx)
 }
 
 // readPluginManifest attempts to read and verify the plugin manifest
@@ -322,5 +316,25 @@ func (s *Signature) validateManifest(ctx context.Context, m PluginManifest, bloc
 		}
 	}
 
-	return s.verifier.Verify(ctx, m.KeyID, block)
+	return s.Verify(ctx, m.KeyID, block)
+}
+
+func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.Block) error {
+	publicKey, err := s.kr.GetPublicKey(ctx, keyID)
+	if err != nil {
+		return err
+	}
+
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKey))
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse public key", err)
+	}
+
+	if _, err = openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
+		return fmt.Errorf("%v: %w", "failed to check signature", err)
+	}
+
+	return nil
 }
