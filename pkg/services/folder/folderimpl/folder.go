@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -635,15 +636,16 @@ func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildren
 	}
 
 	result := []string{*cmd.UID}
+	countsMap := make(folder.ChildrenCounts, len(s.registry)+1)
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, subfolders...)
+		countsMap[entity.StandardKindFolder] = int64(len(subfolders))
 	}
 
-	countsMap := make(folder.ChildrenCounts, len(s.registry))
 	for _, v := range s.registry {
 		for _, folder := range result {
 			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
