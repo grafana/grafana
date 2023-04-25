@@ -27,7 +27,7 @@ func (m *ResourceResponseMiddleware) QueryData(ctx context.Context, req *backend
 }
 
 func (m *ResourceResponseMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if req == nil {
+	if req == nil || sender == nil {
 		return m.next.CallResource(ctx, req, sender)
 	}
 
