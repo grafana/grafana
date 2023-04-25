@@ -1889,6 +1889,7 @@ steps:
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
   environment:
+    DRONE_TARGET_BRANCH: release-8.5.24
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.5-go1.19.8
@@ -1906,6 +1907,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment:
+    DRONE_TARGET_BRANCH: release-8.5.24
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.5-go1.19.8
@@ -2264,6 +2266,7 @@ steps:
   depends_on:
   - clone-enterprise
   environment:
+    DRONE_TARGET_BRANCH: release-8.5.24
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.5-go1.19.8
@@ -2399,6 +2402,7 @@ steps:
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
   environment:
+    DRONE_TARGET_BRANCH: release-8.5.24
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/ci-wix:0.1.1
