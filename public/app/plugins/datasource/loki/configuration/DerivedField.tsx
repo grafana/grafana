@@ -4,11 +4,19 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, LegacyForms, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  DataLinkInput,
+  EventsWithValidation,
+  LegacyForms,
+  regexValidation,
+  useStyles2,
+  ValidationRule,
+} from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
 
-const { Switch, FormField } = LegacyForms;
+const { Switch, FormField, Input } = LegacyForms;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
@@ -36,9 +44,10 @@ type Props = {
   onDelete: () => void;
   suggestions: VariableSuggestion[];
   className?: string;
+  validateName: ValidationRule;
 };
 export const DerivedField = (props: Props) => {
-  const { value, onChange, onDelete, suggestions, className } = props;
+  const { value, onChange, onDelete, suggestions, className, validateName } = props;
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
   const previousUid = usePrevious(value.datasourceUid);
@@ -66,12 +75,18 @@ export const DerivedField = (props: Props) => {
         <FormField
           labelWidth={10}
           className={styles.nameField}
-          // A bit of a hack to prevent using default value for the width from FormField
-          inputWidth={null}
+          inputEl={
+            <Input
+              value={value.name}
+              onChange={handleChange('name')}
+              validationEvents={{
+                [EventsWithValidation.onBlur]: [validateName],
+                [EventsWithValidation.onFocus]: [validateName],
+              }}
+            />
+          }
           label="Name"
           type="text"
-          value={value.name}
-          onChange={handleChange('name')}
         />
         <FormField
           labelWidth={10}
