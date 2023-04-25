@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -59,6 +60,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	for _, ap := range availablePlugins[plugins.Panel] {
 		panel := ap.Plugin
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
+			continue
+		}
+
+		// Hide the datagrid until we remove the feature flag
+		if panel.ID == "datagrid" && !hs.Features.IsEnabled(featuremgmt.FlagEnableDatagridEditing) {
 			continue
 		}
 

@@ -24,6 +24,7 @@ composableKinds: PanelCfg: {
 					{
 						PanelOptions: {
 							selectedSeries: int32 & >=0 | *0
+							enableEditing:  bool | *true
 						} @cuetsy(kind="interface")
 					},
 				]

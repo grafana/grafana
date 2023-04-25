@@ -5,8 +5,6 @@ import { ArrayVector, DataFrame, DataFrameJSON, dataFrameToJSON, Field, GrafanaT
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { isDatagridEditEnabled } from './featureFlagUtils';
-
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
 const TEXT_CANVAS = document.createElement('canvas');
@@ -150,10 +148,6 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
 };
 
 export const publishSnapshot = (data: DataFrame, panelID: number): void => {
-  if (!isDatagridEditEnabled()) {
-    return;
-  }
-
   const snapshot: DataFrameJSON[] = [dataFrameToJSON(data)];
   const dashboard = getDashboardSrv().getCurrent();
   const panelModel = dashboard?.getPanelById(panelID);
@@ -202,7 +196,12 @@ export function getGridTheme(theme: GrafanaTheme2): Partial<Theme> {
   };
 }
 
-export const getGridCellKind = (field: Field, row: number, hasGridSelection = false): GridCell => {
+export const getGridCellKind = (
+  field: Field,
+  row: number,
+  hasGridSelection = false,
+  editingEnabled = false
+): GridCell => {
   const value = field.values.get(row);
 
   switch (field.type) {
@@ -217,7 +216,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Number,
         data: value ? value : 0,
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: editingEnabled && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -225,7 +224,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: editingEnabled && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -233,7 +232,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: editingEnabled && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };

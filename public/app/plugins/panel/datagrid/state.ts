@@ -10,7 +10,6 @@ import {
 
 import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
-import { isDatagridEditEnabled } from './featureFlagUtils';
 import {
   DatagridContextMenuData,
   DEFAULT_CONTEXT_MENU,
@@ -21,6 +20,7 @@ import {
 } from './utils';
 
 interface DatagridState {
+  editingEnabled: boolean;
   columns: SizedGridColumn[];
   contextMenuData: DatagridContextMenuData;
   renameColumnInputData: RenameColumnInputData;
@@ -162,6 +162,7 @@ export const initialState: DatagridState = {
   columnFreezeIndex: 0,
   toggleSearch: false,
   isResizeInProgress: false,
+  editingEnabled: false,
 };
 
 const typeToIconMap: Map<string, GridColumnIcon> = new Map([
@@ -224,7 +225,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
             title: displayName,
             width: state.columns[index]?.width ?? getCellWidth(field),
             icon: typeToIconMap.get(field.type),
-            hasMenu: isDatagridEditEnabled(),
+            hasMenu: state.editingEnabled,
             trailingRowOptions: { targetColumn: --index },
           };
         }),

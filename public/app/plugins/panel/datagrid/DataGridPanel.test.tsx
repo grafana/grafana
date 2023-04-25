@@ -510,7 +510,10 @@ const buildPanelProps = (...df: DataFrame[]) => {
   return {
     id: 1,
     title: 'DataGrid',
-    options: { selectedSeries: 0 },
+    options: {
+      selectedSeries: 0,
+      enableEditing: true,
+    },
     data: {
       series: df,
       state: LoadingState.Done,

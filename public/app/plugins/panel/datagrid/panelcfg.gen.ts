@@ -11,9 +11,11 @@
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions {
+  enableEditing: boolean;
   selectedSeries: number;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
+  enableEditing: true,
   selectedSeries: 0,
 };
