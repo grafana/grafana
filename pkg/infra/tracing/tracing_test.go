@@ -1,109 +1,91 @@
 package tracing
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestInitJaegerCfg_Default(t *testing.T) {
-	ts := &Opentracing{}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
+// TODO(zserge) Add proper tests for opentelemetry
 
-	assert.True(t, cfg.Disabled)
+func TestSplitCustomAttribs(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []attribute.KeyValue
+	}{
+		{
+			input:    "key1:value:1",
+			expected: []attribute.KeyValue{attribute.String("key1", "value:1")},
+		},
+		{
+			input: "key1:value1,key2:value2",
+			expected: []attribute.KeyValue{
+				attribute.String("key1", "value1"),
+				attribute.String("key2", "value2"),
+			},
+		},
+		{
+			input:    "",
+			expected: []attribute.KeyValue{},
+		},
+	}
+
+	for _, test := range tests {
+		attribs, err := splitCustomAttribs(test.input)
+		assert.NoError(t, err)
+		assert.EqualValues(t, test.expected, attribs)
+	}
 }
 
-func TestInitJaegerCfg_Enabled(t *testing.T) {
-	ts := &Opentracing{enabled: true}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
+func TestSplitCustomAttribs_Malformed(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []attribute.KeyValue
+	}{
+		{input: "key1=value1"},
+		{input: "key1"},
+	}
 
-	assert.False(t, cfg.Disabled)
-	assert.Equal(t, "localhost:6831", cfg.Reporter.LocalAgentHostPort)
+	for _, test := range tests {
+		_, err := splitCustomAttribs(test.input)
+		assert.Error(t, err)
+	}
 }
 
-func TestInitJaegerCfg_DisabledViaEnv(t *testing.T) {
-	err := os.Setenv("JAEGER_DISABLED", "true")
-	require.NoError(t, err)
-	defer func() {
-		err := os.Unsetenv("JAEGER_DISABLED")
-		require.NoError(t, err)
-	}()
-
-	ts := &Opentracing{enabled: true}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
-
-	assert.True(t, cfg.Disabled)
-}
-
-func TestInitJaegerCfg_EnabledViaEnv(t *testing.T) {
-	err := os.Setenv("JAEGER_DISABLED", "false")
-	require.NoError(t, err)
-	defer func() {
-		err := os.Unsetenv("JAEGER_DISABLED")
-		require.NoError(t, err)
-	}()
-
-	ts := &Opentracing{enabled: false}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
-
-	assert.False(t, cfg.Disabled)
-}
-
-func TestInitJaegerCfg_InvalidEnvVar(t *testing.T) {
-	err := os.Setenv("JAEGER_DISABLED", "totallybogus")
-	require.NoError(t, err)
-	defer func() {
-		err := os.Unsetenv("JAEGER_DISABLED")
-		require.NoError(t, err)
-	}()
-
-	ts := &Opentracing{}
-	_, err = ts.initJaegerCfg()
-	require.EqualError(t, err, "cannot parse env var JAEGER_DISABLED=totallybogus: strconv.ParseBool: parsing \"totallybogus\": invalid syntax")
-}
-
-func TestInitJaegerCfg_EnabledViaHost(t *testing.T) {
-	require.NoError(t, os.Setenv("JAEGER_AGENT_HOST", "example.com"))
-	defer func() {
-		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
-	}()
-
+func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 	cfg := setting.NewCfg()
-	ts := &Opentracing{Cfg: cfg}
-	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
-	require.NoError(t, err)
-	require.NoError(t, ts.parseSettings())
-	jaegerCfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
+	otel := &Opentelemetry{Cfg: cfg}
 
-	assert.False(t, jaegerCfg.Disabled)
-	assert.Equal(t, "example.com:6831", jaegerCfg.Reporter.LocalAgentHostPort)
-}
+	otelsect := cfg.Raw.Section("tracing.opentelemetry")
+	jaegersect := cfg.Raw.Section("tracing.opentelemetry.jaeger")
+	otlpsect := cfg.Raw.Section("tracing.opentelemetry.otlp")
 
-func TestInitJaegerCfg_EnabledViaHostPort(t *testing.T) {
-	require.NoError(t, os.Setenv("JAEGER_AGENT_HOST", "example.com"))
-	require.NoError(t, os.Setenv("JAEGER_AGENT_PORT", "12345"))
-	defer func() {
-		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
-		require.NoError(t, os.Unsetenv("JAEGER_AGENT_PORT"))
-	}()
+	assert.NoError(t, otel.parseSettings())
+	assert.Equal(t, noopExporter, otel.enabled)
 
-	cfg := setting.NewCfg()
-	ts := &Opentracing{Cfg: cfg}
-	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
-	require.NoError(t, err)
-	require.NoError(t, ts.parseSettings())
-	jaegerCfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
+	otelsect.Key("custom_attributes")
+	assert.NoError(t, otel.parseSettings())
+	assert.Empty(t, otel.customAttribs)
 
-	assert.False(t, jaegerCfg.Disabled)
-	assert.Equal(t, "example.com:12345", jaegerCfg.Reporter.LocalAgentHostPort)
+	otelsect.Key("custom_attributes").SetValue("key1:value1,key2:value2")
+	assert.NoError(t, otel.parseSettings())
+	expected := []attribute.KeyValue{
+		attribute.String("key1", "value1"),
+		attribute.String("key2", "value2"),
+	}
+	assert.Equal(t, expected, otel.customAttribs)
+
+	jaegersect.Key("address").SetValue("somehost:6831")
+	assert.NoError(t, otel.parseSettings())
+	assert.Equal(t, "somehost:6831", otel.Address)
+	assert.Equal(t, jaegerExporter, otel.enabled)
+
+	jaegersect.Key("address").SetValue("")
+	otlpsect.Key("address").SetValue("somehost:4317")
+	assert.NoError(t, otel.parseSettings())
+	assert.Equal(t, "somehost:4317", otel.Address)
+	assert.Equal(t, otlpExporter, otel.enabled)
 }
