@@ -136,7 +136,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 }
 
-func Test_buildDataFrames_should_use_response_label_as_frame_name(t *testing.T) {
+func Test_buildDataFrames_uses_response_label_as_frame_name(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
 	t.Run("using exact match", func(t *testing.T) {
