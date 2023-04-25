@@ -105,8 +105,8 @@ var (
 			Owner:        grafanaExploreSquad,
 		},
 		{
-			Name:         "newTraceView",
-			Description:  "Shows the new trace view design",
+			Name:         "newTraceViewHeader",
+			Description:  "Shows the new trace view header",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
@@ -311,12 +311,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:        "secureSocksDatasourceProxy",
-			Description: "Enable secure socks tunneling for supported core datasources",
-			State:       FeatureStateAlpha,
-			Owner:       hostedGrafanaTeam,
-		},
-		{
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
@@ -360,9 +354,10 @@ var (
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplitting",
@@ -434,14 +429,30 @@ var (
 		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
-			State:       FeatureStateAlpha,
+			Expression:  "true",
+			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "lokiMetricDataplane",
-			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
-			State:       FeatureStateAlpha,
+			Description: "Changes metric responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateStable,
+			Expression:  "true",
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true",
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "alertStateHistoryLokiSecondary",
@@ -460,12 +471,6 @@ var (
 			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "disableSSEDataplane",
-			Description: "Disables dataplane specific processing in server side expressions.",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "unifiedRequestLog",
@@ -493,13 +498,6 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
-			Name:         "dataplaneFrontendFallback",
-			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:            "useCachingService",
 			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
 			State:           FeatureStateStable,
@@ -519,6 +517,12 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
+			Name:        "pluginsAPIManifestKey",
+			Description: "Use grafana.com API to retrieve the public manifest key",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "advancedDataSourcePicker",
 			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
 			State:        FeatureStateAlpha,
@@ -531,6 +535,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:         "enableDatagridEditing",
+			Description:  "Enables the edit functionality in the datagrid panel",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

@@ -8,6 +8,7 @@ import {
   AnnotationEventUIModel,
   CoreApp,
   DashboardCursorSync,
+  DataFrame,
   EventFilterOptions,
   FieldConfigSource,
   getDataSourceRef,
@@ -37,6 +38,7 @@ import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
+import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
@@ -110,6 +112,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
+        onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -139,6 +142,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return CoreApp.Dashboard;
   }
+
+  onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
+    return onUpdatePanelSnapshotData(this.props.panel, frames);
+  };
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
@@ -439,7 +446,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
-    return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
+    return loadingState === LoadingState.Done || loadingState === LoadingState.Error || pluginMeta.skipDataQuery;
   }
 
   skipFirstRender(loadingState: LoadingState) {

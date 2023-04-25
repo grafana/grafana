@@ -1,31 +1,18 @@
 import { Vector } from '../types/vector';
 import { BinaryOperation } from '../utils/binaryOperators';
 
-import { FunctionalVector } from './FunctionalVector';
-import { vectorToArray } from './vectorToArray';
-
 /**
  * @public
- * @deprecated use a simple Arrays
+ * @deprecated use a simple Arrays.  NOTE: Not used in grafana core
  */
-export class BinaryOperationVector extends FunctionalVector<number> {
-  constructor(private left: Vector<number>, private right: Vector<number>, private operation: BinaryOperation) {
+export class BinaryOperationVector extends Array<number> {
+  constructor(left: Vector<number>, right: Vector<number>, operation: BinaryOperation) {
     super();
-  }
 
-  get length(): number {
-    return this.left.length;
-  }
-
-  get(index: number): number {
-    return this.operation(this.left.get(index), this.right.get(index));
-  }
-
-  toArray(): number[] {
-    return vectorToArray(this);
-  }
-
-  toJSON(): number[] {
-    return vectorToArray(this);
+    const arr = new Array(left.length);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = operation(left[i], right[i]);
+    }
+    return arr as BinaryOperationVector;
   }
 }

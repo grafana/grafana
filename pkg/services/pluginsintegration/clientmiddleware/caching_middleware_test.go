@@ -97,10 +97,30 @@ func TestCachingMiddleware(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/resource/blah", nil)
 		require.NoError(t, err)
 
+		// This is the response returned by the HandleResourceRequest call
+		// Track whether the update cache fn was called, depending on what the response headers are in the cache request
+		var updateCacheCalled bool
+		dataResponse := caching.CachedResourceDataResponse{
+			Response: &backend.CallResourceResponse{
+				Status: 200,
+				Body:   []byte("bogus"),
+			},
+			UpdateCacheFn: func(ctx context.Context, rdr *backend.CallResourceResponse) {
+				updateCacheCalled = true
+			},
+		}
+
+		// This is the response sent via the passed-in sender when there is a cache miss
+		simulatedPluginResponse := &backend.CallResourceResponse{
+			Status: 201,
+			Body:   []byte("bogus"),
+		}
+
 		cs := caching.NewFakeOSSCachingService()
 		cdt := clienttest.NewClientDecoratorTest(t,
 			clienttest.WithReqContext(req, &user.SignedInUser{}),
 			clienttest.WithMiddlewares(NewCachingMiddleware(cs)),
+			clienttest.WithResourceResponses([]*backend.CallResourceResponse{simulatedPluginResponse}),
 		)
 
 		jsonDataMap := map[string]interface{}{}
@@ -121,11 +141,6 @@ func TestCachingMiddleware(t *testing.T) {
 			PluginContext: pluginCtx,
 		}
 
-		resourceResponse := &backend.CallResourceResponse{
-			Status: 200,
-			Body:   []byte("bogus"),
-		}
-
 		var sentResponse *backend.CallResourceResponse
 		var storeOneResponseCallResourceSender = callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			sentResponse = res
@@ -139,32 +154,37 @@ func TestCachingMiddleware(t *testing.T) {
 			})
 
 			cs.ReturnHit = true
-			cs.ReturnResourceResponse = resourceResponse
+			cs.ReturnResourceResponse = dataResponse
 
 			err := cdt.Decorator.CallResource(req.Context(), crr, storeOneResponseCallResourceSender)
 			assert.NoError(t, err)
 			// Cache service is called once
 			cs.AssertCalls(t, "HandleResourceRequest", 1)
-			// Equals the mocked response was sent
+			// The mocked cached response was sent
 			assert.NotNil(t, sentResponse)
-			assert.Equal(t, resourceResponse, sentResponse)
+			assert.Equal(t, dataResponse.Response, sentResponse)
+			// Cache was not updated by the middleware
+			assert.False(t, updateCacheCalled)
 		})
 
-		t.Run("If cache returns a miss, resource call is issued", func(t *testing.T) {
+		t.Run("If cache returns a miss, resource call is issued and the update cache function is called", func(t *testing.T) {
 			t.Cleanup(func() {
 				sentResponse = nil
 				cs.Reset()
 			})
 
 			cs.ReturnHit = false
-			cs.ReturnResourceResponse = resourceResponse
+			cs.ReturnResourceResponse = dataResponse
 
 			err := cdt.Decorator.CallResource(req.Context(), crr, storeOneResponseCallResourceSender)
 			assert.NoError(t, err)
 			// Cache service is called once
 			cs.AssertCalls(t, "HandleResourceRequest", 1)
-			// Nil response was sent
-			assert.Nil(t, sentResponse)
+			// Simulated plugin response was sent
+			assert.NotNil(t, sentResponse)
+			assert.Equal(t, simulatedPluginResponse, sentResponse)
+			// Since it was a miss, the middleware called the update func
+			assert.True(t, updateCacheCalled)
 		})
 	})
 
