@@ -67,7 +67,6 @@ describe('promSettings validateInput', () => {
   `(
     "Url incorrect formatting, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
     ({ value, expected }) => {
-      console.log(expected);
       expect(validateInput(value, VALID_URL_REGEX)).toStrictEqual(expected);
     }
   );
@@ -80,7 +79,6 @@ describe('promSettings validateInput', () => {
   `(
     "Url correct formatting, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
     ({ value, expected }) => {
-      console.log(expected);
       expect(validateInput(value, VALID_URL_REGEX)).toBe(expected);
     }
   );
