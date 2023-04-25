@@ -9,8 +9,6 @@ import {
   CoreApp,
   DashboardCursorSync,
   DataFrame,
-  DataFrameJSON,
-  dataFrameToJSON,
   EventFilterOptions,
   FieldConfigSource,
   getDataSourceRef,
@@ -37,20 +35,21 @@ import {
   PanelPadding,
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
-  ConfirmModal,
 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
+import { Deferred } from 'app/core/utils/deferred';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { changeToSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
-import { RenderEvent } from 'app/types/events';
+import { RenderEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
@@ -89,8 +88,6 @@ export interface State {
   context: PanelContext;
   data: PanelData;
   liveTime?: TimeRange;
-  updateDataCallback: () => void;
-  showDataChangeModal: boolean;
 }
 
 export class PanelStateWrapper extends PureComponent<Props, State> {
@@ -109,8 +106,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
-      updateDataCallback: () => {},
-      showDataChangeModal: false,
       context: {
         eventBus,
         app: this.getPanelContextApp(),
@@ -157,37 +152,32 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return CoreApp.Dashboard;
   }
 
-  changeToSnapshotData = (frames: DataFrame[]) => {
-    const snapshot: DataFrameJSON[] = frames.map((f) => dataFrameToJSON(f));
+  onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
+    const deferredPromise = new Deferred<boolean>();
 
-    const query: GrafanaQuery = {
-      refId: 'A',
-      queryType: GrafanaQueryType.Snapshot,
-      snapshot,
-      datasource: { uid: GRAFANA_DATASOURCE_NAME },
-    };
-
-    this.props.panel.updateQueries({
-      dataSource: { uid: GRAFANA_DATASOURCE_NAME },
-      queries: [query],
-    });
-
-    this.props.panel.refresh();
-
-    this.closeConfirmationModal();
-  };
-
-  onUpdateData = (frames: DataFrame[]) => {
     if (this.props.panel.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
-      this.changeToSnapshotData(frames);
-      return;
+      changeToSnapshotData(frames, this.props.panel);
+      deferredPromise.resolve!(true);
+      return deferredPromise.promise;
     }
 
-    this.setState({ updateDataCallback: () => this.changeToSnapshotData(frames), showDataChangeModal: true });
-  };
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Are you sure you want to permanently delete your starred query?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          changeToSnapshotData(frames, this.props.panel);
+          deferredPromise.resolve!(true);
+        },
+        onDismiss: () => {
+          deferredPromise.resolve!(false);
+        },
+      })
+    );
 
-  closeConfirmationModal = () => {
-    this.setState({ updateDataCallback: () => {}, showDataChangeModal: false });
+    return deferredPromise.promise;
   };
 
   onSeriesColorChange = (label: string, color: string) => {
@@ -489,7 +479,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
-    return loadingState === LoadingState.Done || loadingState === LoadingState.Error || pluginMeta.skipDataQuery;
+    return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
   }
 
   skipFirstRender(loadingState: LoadingState) {
@@ -691,7 +681,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
-    const { errorMessage, data, showDataChangeModal, updateDataCallback } = this.state;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const alertState = data.alertState?.state;
@@ -727,17 +717,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
 
-    const dataChangeConfirmationModal = (
-      <ConfirmModal
-        isOpen={showDataChangeModal}
-        title="Data Change Confirmation"
-        body="This action will change your queries and replace your existing data. Are you sure you want to continue?"
-        confirmText="Yes"
-        onConfirm={updateDataCallback}
-        onDismiss={this.closeConfirmationModal}
-      />
-    );
-
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
@@ -749,79 +728,73 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       );
 
       return (
-        <>
-          <PanelChrome
-            width={width}
-            height={height}
-            title={title}
-            loadingState={data.state}
-            statusMessage={errorMessage}
-            statusMessageOnClick={this.onOpenErrorInspect}
-            description={!!panel.description ? this.onShowPanelDescription : undefined}
-            titleItems={titleItems}
-            menu={this.props.hideMenu ? undefined : menu}
-            dragClass={dragClass}
-            dragClassCancel="grid-drag-cancel"
-            padding={padding}
-            hoverHeaderOffset={hoverHeaderOffset}
-            hoverHeader={this.hasOverlayHeader()}
-            displayMode={transparent ? 'transparent' : 'default'}
-            onCancelQuery={this.onCancelQuery}
-          >
-            {(innerWidth, innerHeight) => (
-              <>
-                <ErrorBoundary
-                  dependencies={[data, plugin, panel.getOptions()]}
-                  onError={this.onPanelError}
-                  onRecover={this.onPanelErrorRecover}
-                >
-                  {({ error }) => {
-                    if (error) {
-                      return null;
-                    }
-                    return this.renderPanelContent(innerWidth, innerHeight);
-                  }}
-                </ErrorBoundary>
-              </>
-            )}
-          </PanelChrome>
-          {dataChangeConfirmationModal}
-        </>
+        <PanelChrome
+          width={width}
+          height={height}
+          title={title}
+          loadingState={data.state}
+          statusMessage={errorMessage}
+          statusMessageOnClick={this.onOpenErrorInspect}
+          description={!!panel.description ? this.onShowPanelDescription : undefined}
+          titleItems={titleItems}
+          menu={this.props.hideMenu ? undefined : menu}
+          dragClass={dragClass}
+          dragClassCancel="grid-drag-cancel"
+          padding={padding}
+          hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={this.hasOverlayHeader()}
+          displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={this.onCancelQuery}
+        >
+          {(innerWidth, innerHeight) => (
+            <>
+              <ErrorBoundary
+                dependencies={[data, plugin, panel.getOptions()]}
+                onError={this.onPanelError}
+                onRecover={this.onPanelErrorRecover}
+              >
+                {({ error }) => {
+                  if (error) {
+                    return null;
+                  }
+                  return this.renderPanelContent(innerWidth, innerHeight);
+                }}
+              </ErrorBoundary>
+            </>
+          )}
+        </PanelChrome>
       );
     } else {
       return (
-        <>
-          <section
-            className={containerClassNames}
-            aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
+        <section
+          className={containerClassNames}
+          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
+        >
+          <PanelHeader
+            panel={panel}
+            dashboard={dashboard}
+            title={panel.title}
+            description={panel.description}
+            links={panel.links}
+            error={errorMessage}
+            isEditing={isEditing}
+            isViewing={isViewing}
+            alertState={alertState}
+            data={data}
+          />
+          <ErrorBoundary
+            dependencies={[data, plugin, panel.getOptions()]}
+            onError={this.onPanelError}
+            onRecover={this.onPanelErrorRecover}
           >
-            <PanelHeader
-              panel={panel}
-              dashboard={dashboard}
-              title={panel.title}
-              description={panel.description}
-              links={panel.links}
-              error={errorMessage}
-              isEditing={isEditing}
-              isViewing={isViewing}
-              alertState={alertState}
-              data={data}
-            />
-            <ErrorBoundary
-              dependencies={[data, plugin, panel.getOptions()]}
-              onError={this.onPanelError}
-              onRecover={this.onPanelErrorRecover}
-            >
-              {({ error }) => {
-                if (error) {
-                  return null;
-                }
-                return this.renderPanel(width, height);
-              }}
-            </ErrorBoundary>
-          </section>
-          {dataChangeConfirmationModal}
-        </>
+            {({ error }) => {
+              if (error) {
+                return null;
+              }
+              return this.renderPanel(width, height);
+            }}
+          </ErrorBoundary>
+        </section>
       );
     }
   }

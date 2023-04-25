@@ -87,7 +87,7 @@ export interface PanelContext {
   /**
    * Optional, only some contexts support this. This can fail / be cancelled. Which is why it returns a promise.
    */
-  onUpdateData?: (frames: DataFrame[]) => void;
+  onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
