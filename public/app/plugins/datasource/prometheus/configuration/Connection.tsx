@@ -78,7 +78,7 @@ export const Connection = (props: ConnectionProps) => {
         <div className="gf-form">
           <InlineField
             interactive={true}
-            label="Prometheus Server URL"
+            label="Prometheus server URL"
             labelWidth={PROM_CONFIG_LABEL_WIDTH}
             tooltip={urlTooltip}
             required={true}

@@ -184,6 +184,7 @@ export const PromSettings = (props: Props) => {
                 </>
               }
               interactive={true}
+              disabled={options.readOnly}
             >
               <>
                 <Input
@@ -193,7 +194,6 @@ export const PromSettings = (props: Props) => {
                   placeholder="15s"
                   onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
                   onBlur={(e) => updateValidDuration({ ...validDuration, timeInterval: e.currentTarget.value })}
-                  disabled={options.readOnly}
                 />
                 {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
               </>
@@ -208,6 +208,7 @@ export const PromSettings = (props: Props) => {
               labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
               interactive={true}
+              disabled={options.readOnly}
             >
               <>
                 <Input
@@ -217,7 +218,6 @@ export const PromSettings = (props: Props) => {
                   spellCheck={false}
                   placeholder="60s"
                   onBlur={(e) => updateValidDuration({ ...validDuration, queryTimeout: e.currentTarget.value })}
-                  disabled={options.readOnly}
                 />
                 {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
               </>
@@ -234,6 +234,7 @@ export const PromSettings = (props: Props) => {
             labelWidth={PROM_CONFIG_LABEL_WIDTH}
             tooltip={<>Set default editor option for all users of this data source. {docsTip()}</>}
             interactive={true}
+            disabled={options.readOnly}
           >
             <Select
               aria-label={`Default Editor (Code or Builder)`}
@@ -244,7 +245,6 @@ export const PromSettings = (props: Props) => {
               }
               onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
               width={40}
-              disabled={options.readOnly}
             />
           </InlineField>
         </div>
@@ -301,6 +301,7 @@ export const PromSettings = (props: Props) => {
                 </>
               }
               interactive={true}
+              disabled={options.readOnly}
             >
               <Select
                 aria-label="Prometheus type"
@@ -322,7 +323,6 @@ export const PromSettings = (props: Props) => {
                   }
                 )}
                 width={40}
-                disabled={options.readOnly}
               />
             </InlineField>
           </div>
@@ -340,6 +340,7 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
+                disabled={options.readOnly}
               >
                 <Select
                   aria-label={`${options.jsonData.prometheusType} type`}
@@ -349,7 +350,6 @@ export const PromSettings = (props: Props) => {
                   )}
                   onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                   width={40}
-                  disabled={options.readOnly}
                 />
               </InlineField>
             </div>
@@ -368,6 +368,7 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
+                disabled={options.readOnly}
               >
                 <Select
                   width={40}
@@ -394,11 +395,11 @@ export const PromSettings = (props: Props) => {
               }
               interactive={true}
               className={styles.switchField}
+              disabled={options.readOnly}
             >
               <Switch
                 value={options.jsonData.incrementalQuerying ?? false}
                 onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
-                disabled={options.readOnly}
               />
             </InlineField>
           </div>
@@ -416,6 +417,7 @@ export const PromSettings = (props: Props) => {
                 </>
               }
               interactive={true}
+              disabled={options.readOnly}
             >
               <>
                 <Input
@@ -426,7 +428,6 @@ export const PromSettings = (props: Props) => {
                   value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
                   onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
                   spellCheck={false}
-                  disabled={options.readOnly}
                 />
                 {validateInput(validDuration.incrementalQueryOverlapWindow, DURATION_REGEX, durationError)}
               </>
@@ -449,6 +450,7 @@ export const PromSettings = (props: Props) => {
                 </>
               }
               interactive={true}
+              disabled={options.readOnly}
             >
               <Input
                 className="width-20"
@@ -456,7 +458,6 @@ export const PromSettings = (props: Props) => {
                 onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                 spellCheck={false}
                 placeholder="Example: max_source_resolution=5m&timeout=10"
-                disabled={options.readOnly}
               />
             </InlineField>
           </div>
@@ -475,6 +476,7 @@ export const PromSettings = (props: Props) => {
               }
               interactive={true}
               label="HTTP method"
+              disabled={options.readOnly}
             >
               <Select
                 width={40}
@@ -482,7 +484,6 @@ export const PromSettings = (props: Props) => {
                 options={httpOptions}
                 value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
                 onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-                disabled={options.readOnly}
               />
             </InlineField>
           </div>
