@@ -184,7 +184,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
         return query;
       }
 
-      const ds = this.pseudoDatasource[query.queryType];
+      const queryType = query.queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : query.queryType;
+      const ds = this.pseudoDatasource[queryType];
       return {
         datasource: ds?.getRef(),
         ...(ds?.applyTemplateVariables(query, scopedVars) ?? query),
