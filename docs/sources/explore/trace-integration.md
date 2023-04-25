@@ -18,25 +18,30 @@ Supported data sources are:
 - [Zipkin]({{< relref "../datasources/zipkin/" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
-For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
+For information on how to query the data sources listed above, refer to the documentation for the specific data source.
+Once you've obtained a trace as the result of a query, there's multiple ways to visualize it.
+
+* Trace View
+* Node Graph
+* Service Graph
 
 ## Trace View
 
 This section explains the elements of the Trace View.
 
-{{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+{{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
 ### Header
 
-{{< figure src="/static/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot of the trace view header" >}}
+{{< figure src="/static/img/docs/explore/trace-view-9-4-header.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot of the trace view header" >}}
 
-- Header title: Shows the name of the root span and trace ID.
 - Search: Highlights spans containing the searched text.
+- Header title: Shows the name of the root span and trace ID.
 - Metadata: Various metadata about the trace.
 
 ### Minimap
 
-{{< figure src="/static/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view minimap" >}}
+{{< figure src="/static/img/docs/explore/trace-view-9-4-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view minimap" >}}
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
@@ -56,9 +61,9 @@ You can add one or more of the following filters:
 - Duration
 - Tags (which include tags, process tags, and log fields)
 
-### Timeline
+### Service and Operation Timeline
 
-{{< figure src="/static/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view timeline" >}}
+{{< figure src="/static/img/docs/explore/trace-view-9-4-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view timeline" >}}
 
 Shows list of spans within the trace. Each span row consists of these components:
 
@@ -71,35 +76,25 @@ Clicking anywhere on the span row shows span details.
 
 ### Span details
 
-{{< figure src="/static/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view span details" >}}
+{{< figure src="/static/img/docs/explore/trace-view-9-4-spandetails.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view span details" >}}
 
-- Operation name.
-- Span metadata.
-- Tags: Any tags associated with this span.
-- Process metadata: Metadata about the process that logged this span.
-- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
-
-### Trace to logs
-
-> **Note:** Available in Grafana 7.4 and later versions.
-
-You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
-
-{{< figure src="/static/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
+- Operation name (1)
+- Span Metrics Button (2): You can open a sub-menu to show the configured span metrics and visualize them. Refer to their [relevant documentation] {{< relref "../datasources/tempo/#configure-trace-to-metrics" >}} for configuration instructions.
+- Span metadata. (3)
+- Span Attributes (4): Any attributes associated with this span.
+- Resource Attributes (5): Metadata about the resource that logged this span.
+- Trace to Logs Button (6): (Available in Grafana 7.4 and later versions). You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation] {{< relref "../datasources/tempo/#configure-trace-to-logs" >}} for configuration instructions.
+- Link to current Span (7)
+- Logs (not in screenshot): List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
+- References (not in screenshot): Links to other spans from the same or different traces. This is useful to link async processes.
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
-
-### Trace to metrics
-
-> **Note:** This feature is currently in beta & behind the `traceToMetrics` feature toggle.
-
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-metrics) for configuration instructions.
 
 ## Node Graph
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
 
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
+![Node graph](/static/img/docs/explore/trace-view-9-4-nodegraph.png 'Node graph')
 
 ## Service Graph
 
