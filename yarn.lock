@@ -3005,18 +3005,20 @@ __metadata:
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
     "@grafana/data": 10.0.0-pre
-    "@grafana/toolkit": 10.0.0-pre
     "@grafana/ui": 10.0.0-pre
     "@types/jest": 26.0.15
-    "@types/lodash": 4.14.149
     "@types/react": 18.0.28
-    jquery: 3.5.1
-    lodash: 4.17.21
+    copy-webpack-plugin: 11.0.0
+    eslint-webpack-plugin: 4.0.0
+    fork-ts-checker-webpack-plugin: 8.0.0
+    jest: 29.3.1
+    jest-environment-jsdom: 29.3.1
     react: 18.2.0
-    react-dom: 18.2.0
-    react-hook-form: 7.5.3
-    react-router-dom: 5.3.3
-    tslib: 2.4.0
+    ts-jest: 29.0.5
+    ts-loader: 9.3.1
+    ts-node: 10.9.1
+    tslib: 2.5.0
+    webpack: 5.76.0
   languageName: unknown
   linkType: soft
 
@@ -3375,7 +3377,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/toolkit@10.0.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -9757,13 +9759,6 @@ __metadata:
   version: 1.2.30
   resolution: "@types/jsurl@npm:1.2.30"
   checksum: c51ff0d159f9e97ca7069cb5aa934ab4f94b1738250cddd1f3e19d12bdb0f6bca7b7ed2579b5de274778d1c3b26b3a89b21f0c108814383cf32f150ff74ca15a
-  languageName: node
-  linkType: hard
-
-"@types/lodash@npm:4.14.149":
-  version: 4.14.149
-  resolution: "@types/lodash@npm:4.14.149"
-  checksum: 6caf68cf38d9672851490cdb0a9ef25a90495c05903ca16e62d1d78ebb8b12ee46b20c2a5e29b7667612baedca0087c10f56debc305e486aba08b3dbefb93865
   languageName: node
   linkType: hard
 
@@ -24033,13 +24028,6 @@ __metadata:
   version: 3.1.1
   resolution: "joycon@npm:3.1.1"
   checksum: 8003c9c3fc79c5c7602b1c7e9f7a2df2e9916f046b0dbad862aa589be78c15734d11beb9fe846f5e06138df22cb2ad29961b6a986ba81c4920ce2b15a7f11067
-  languageName: node
-  linkType: hard
-
-"jquery@npm:3.5.1":
-  version: 3.5.1
-  resolution: "jquery@npm:3.5.1"
-  checksum: 813047b852511ca1ecfaa7b2568aba1d7270a92e5c74962b308792a401adf041869a3b2a6858b0b7a02f6684947fb93171e40cbb4460831977a937b40b0e15ce
   languageName: node
   linkType: hard
 
