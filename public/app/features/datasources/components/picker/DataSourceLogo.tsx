@@ -17,13 +17,11 @@ export function DataSourceLogo(props: DataSourceLogoProps) {
   }
 
   return (
-    <div className={styles.pickerDSLogo}>
-      <img
-        className={styles.pickerDSLogo}
-        alt={`${dataSource.meta.name} logo`}
-        src={dataSource.meta.info.logos.small}
-      ></img>
-    </div>
+    <img
+      className={styles.pickerDSLogo}
+      alt={`${dataSource.meta.name} logo`}
+      src={dataSource.meta.info.logos.small}
+    ></img>
   );
 }
 
