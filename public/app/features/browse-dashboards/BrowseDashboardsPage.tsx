@@ -9,6 +9,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { buildNavModel } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
+import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
@@ -51,7 +52,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     <Page navId="dashboards/browse" pageNav={navModel}>
       <Page.Contents className={styles.pageContents}>
         <FilterInput
-          placeholder="Search dashboards"
+          placeholder={getSearchPlaceholder(searchState.includePanels)}
           value={searchState.query}
           escapeRegex={false}
           onChange={(e) => stateManager.onQueryChange(e)}
