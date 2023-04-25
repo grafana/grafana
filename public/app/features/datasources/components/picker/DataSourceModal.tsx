@@ -29,12 +29,6 @@ interface DataSourceModalProps {
   reportedInteractionFrom?: string;
 }
 
-const MAP_BUILT_IN_DS_TO_EVENT_ITEM: Record<string, string> = {
-  grafana: 'use_mock_data_ds',
-  '-- Mixed --': 'use_mixed_ds',
-  '-- Dashboard --': 'use_dashboard_ds',
-};
-
 export function DataSourceModal({
   enableFileUpload,
   fileUploadOptions,
@@ -46,34 +40,27 @@ export function DataSourceModal({
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
-  const reportSearchUsageOnce = once(() => {
-    reportInteraction('dashboards_dspickermodal_clicked', { item: 'search', src: analyticsInteractionSrc });
-  });
-  const onDismissCallback = React.useCallback(() => {
+
+  const onDismissModal = () => {
     onDismiss();
     reportInteraction('dashboards_dspickermodal_clicked', { item: 'dismiss', src: analyticsInteractionSrc });
-  }, [onDismiss, analyticsInteractionSrc]);
-  const onChangeCallback = React.useCallback(
-    (ds: DataSourceInstanceSettings) => {
-      onChange(ds);
-      reportInteraction('dashboards_dspickermodal_clicked', {
-        item: ds.meta.builtIn ? MAP_BUILT_IN_DS_TO_EVENT_ITEM[ds.uid] : 'select_ds',
-        src: analyticsInteractionSrc,
-      });
-    },
-    [onChange, analyticsInteractionSrc]
+  };
+  const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
+    onChange(ds);
+    reportInteraction('dashboards_dspickermodal_clicked', {
+      item: 'select_ds',
+      ds_type: ds.type,
+      src: analyticsInteractionSrc,
+    });
+  };
+  // Memoizing to keep once() cached so it avoids reporting multiple times
+  const reportSearchUsageOnce = React.useMemo(
+    () =>
+      once(() => {
+        reportInteraction('dashboards_dspickermodal_clicked', { item: 'search', src: analyticsInteractionSrc });
+      }),
+    [analyticsInteractionSrc]
   );
-  const onDropCallback = React.useCallback(
-    (...args) => {
-      fileUploadOptions?.onDrop?.(...args);
-      onDismiss();
-      reportInteraction('dashboards_dspickermodal_clicked', { item: 'upload_file', src: analyticsInteractionSrc });
-    },
-    [fileUploadOptions, onDismiss, analyticsInteractionSrc]
-  );
-  const onClickNewDSCallback = React.useCallback(() => {
-    reportInteraction('dashboards_dspickermodal_clicked', { item: 'new_ds', src: analyticsInteractionSrc });
-  }, [analyticsInteractionSrc]);
 
   return (
     <Modal
@@ -83,8 +70,8 @@ export function DataSourceModal({
       isOpen={true}
       className={styles.modal}
       contentClassName={styles.modalContent}
-      onClickBackdrop={onDismissCallback}
-      onDismiss={onDismissCallback}
+      onClickBackdrop={onDismissModal}
+      onDismiss={onDismissModal}
     >
       <div className={styles.leftColumn}>
         <Input
@@ -103,7 +90,7 @@ export function DataSourceModal({
             mixed={false}
             variables
             filter={(ds) => ds.name.includes(search) && !ds.meta.builtIn}
-            onChange={onChangeCallback}
+            onChange={onChangeDataSource}
             current={current}
           />
         </CustomScrollbar>
@@ -115,7 +102,7 @@ export function DataSourceModal({
             filter={(ds) => !!ds.meta.builtIn}
             dashboard
             mixed
-            onChange={onChangeCallback}
+            onChange={onChangeDataSource}
             current={current}
           />
           {enableFileUpload && (
@@ -127,7 +114,14 @@ export function DataSourceModal({
                 multiple: false,
                 accept: DFImport.acceptedFiles,
                 ...fileUploadOptions,
-                onDrop: onDropCallback,
+                onDrop: (...args) => {
+                  fileUploadOptions?.onDrop?.(...args);
+                  onDismiss();
+                  reportInteraction('dashboards_dspickermodal_clicked', {
+                    item: 'upload_file',
+                    src: analyticsInteractionSrc,
+                  });
+                },
               }}
             >
               <FileDropzoneDefaultChildren />
@@ -135,7 +129,13 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.dsCTAs}>
-          <LinkButton variant="secondary" href={`datasources/new`} onClick={onClickNewDSCallback}>
+          <LinkButton
+            variant="secondary"
+            href={`datasources/new`}
+            onClick={() => {
+              reportInteraction('dashboards_dspickermodal_clicked', { item: 'new_ds', src: analyticsInteractionSrc });
+            }}
+          >
             Configure a new data source
           </LinkButton>
         </div>
