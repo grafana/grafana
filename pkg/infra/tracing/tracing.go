@@ -203,26 +203,23 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) parseSettings() error {
-	legacyCfg := struct {
-		Address string
-		Tags    string
-	}{}
+	legacyAddress, legacyTags := "", ""
 	if section, err := ots.Cfg.Raw.GetSection("tracing.jaeger"); err == nil {
-		legacyCfg.Address = section.Key("address").MustString("")
-		if legacyCfg.Address == "" {
+		legacyAddress = section.Key("address").MustString("")
+		if legacyAddress == "" {
 			host, port := os.Getenv(envJaegerAgentHost), os.Getenv(envJaegerAgentPort)
 			if host != "" || port != "" {
-				legacyCfg.Address = fmt.Sprintf("%s:%s", host, port)
+				legacyAddress = fmt.Sprintf("%s:%s", host, port)
 			}
 		}
-		legacyCfg.Tags = section.Key("always_included_tag").MustString("")
+		legacyTags = section.Key("always_included_tag").MustString("")
 		ots.sampler = section.Key("sampler_type").MustString("")
 		ots.samplerParam = section.Key("sampler_param").MustFloat64(1)
 		ots.samplerRemoteURL = section.Key("sampling_server_url").MustString("")
 	}
 	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
 	var err error
-	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(legacyCfg.Tags))
+	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(legacyTags))
 	if err != nil {
 		return err
 	}
@@ -230,7 +227,7 @@ func (ots *Opentelemetry) parseSettings() error {
 	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	ots.enabled = noopExporter
 
-	ots.Address = section.Key("address").MustString(legacyCfg.Address)
+	ots.Address = section.Key("address").MustString(legacyAddress)
 	ots.Propagation = section.Key("propagation").MustString("")
 	if ots.Address != "" {
 		ots.enabled = jaegerExporter
