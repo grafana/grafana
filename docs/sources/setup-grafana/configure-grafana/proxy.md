@@ -13,7 +13,7 @@ weight: 1110
 
 Grafana provides support for proxying data source connections through a Secure Socks5 Tunnel. This enables you to securely connect to data sources hosted in a different network than Grafana.
 
-In order to make use of this functionality, you will need to deploy a socks5 proxy server that supports TLS on a machine exposed to the public internet within the same network as your data source. From there, Grafana will set up a mutually trusted connection from Grafana to the Proxy, and then the Proxy can proxy the Grafana connection to your private server, without exposing your data sources to the public internet.
+To make use of this functionality, you need to deploy a socks5 proxy server that supports TLS on a machine exposed to the public internet within the same network as your data source. From there, Grafana establishes a mutually trusted connection from Grafana to the Proxy. Then the Proxy can proxy the Grafana connection to your private server without exposing your data sources to the public internet.
 
 ## Known limitations
 
