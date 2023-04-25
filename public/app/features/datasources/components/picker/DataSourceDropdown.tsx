@@ -37,6 +37,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     {
       onClose: () => {
         setFilterTerm(undefined);
+        markerElement?.blur();
         setOpen(false);
       },
       isDismissable: true,
@@ -53,23 +54,25 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   return (
     <div className={styles.container}>
-      {isOpen ? (
-        <FocusScope contain autoFocus restoreFocus>
-          <Input
-            prefix={
-              filterTerm ? (
-                <DataSourceLogoPlaceHolder />
-              ) : (
-                <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
-              )
-            }
-            suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
-            placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
-            onChange={(e) => {
-              setFilterTerm(e.currentTarget.value);
-            }}
-            ref={setMarkerElement}
-          ></Input>
+      <FocusScope contain={isOpen} restoreFocus={isOpen} autoFocus={isOpen}>
+        <Input
+          prefix={
+            filterTerm ? (
+              <DataSourceLogoPlaceHolder />
+            ) : (
+              <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
+            )
+          }
+          suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
+          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          onChange={(e) => {
+            setFilterTerm(e.currentTarget.value);
+          }}
+          ref={setMarkerElement}
+        ></Input>
+        {isOpen ? (
           <Portal>
             <div {...underlayProps} />
             <div ref={ref} {...overlayProps} {...dialogProps}>
@@ -82,35 +85,20 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
                 }}
                 onClose={() => {
                   setOpen(false);
+                  markerElement?.blur();
                 }}
                 current={currentDataSourceInstanceSettings}
                 style={popper.styles.popper}
                 ref={setSelectorElement}
                 {...restProps}
-                onDismiss={() => {}}
+                onDismiss={() => {
+                  markerElement?.blur();
+                }}
               ></PickerContent>
             </div>
           </Portal>
-        </FocusScope>
-      ) : (
-        <div
-          className={styles.trigger}
-          onClick={() => {
-            setOpen(true);
-          }}
-        >
-          <Input
-            className={styles.input}
-            prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
-            suffix={<Icon name="angle-down" />}
-            value={dataSourceLabel(currentDataSourceInstanceSettings)}
-            readOnly
-            onFocus={() => {
-              setOpen(true);
-            }}
-          />
-        </div>
-      )}
+        ) : null}
+      </FocusScope>
     </div>
   );
 }
