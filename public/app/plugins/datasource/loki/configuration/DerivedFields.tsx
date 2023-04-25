@@ -33,7 +33,7 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
   const validateNameRule = useMemo(() => {
     return {
       rule: (name: string) => {
-        return fields.filter((field) => field.name === name).length <= 1;
+        return fields.filter((field) => field.name && field.name === name).length <= 1;
       },
       errorMessage: 'Name already in use',
     };
