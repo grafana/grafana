@@ -90,7 +90,7 @@ export const Connection = (props: ConnectionProps) => {
       <div className={`${styles.sectionBottomPadding} ${styles.secondaryGrey}`}>
         For more information on configuring the Grafana Prometheus data source see the{' '}
         <a
-          style={{ textDecoration: 'underline' }}
+          className={styles.textUnderline}
           href="https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source"
           target="_blank"
           rel="noopener noreferrer"

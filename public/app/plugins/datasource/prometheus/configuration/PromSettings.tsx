@@ -277,10 +277,10 @@ export const PromSettings = (props: Props) => {
 
       <h6 className="page-heading">Performance</h6>
       {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
-        <div style={{ marginBottom: '12px' }}>
+        <div className={styles.versionMargin}>
           For more information on configuring prometheus type and version in data sources, see the{' '}
           <a
-            style={{ textDecoration: 'underline' }}
+            className={styles.textUnderline}
             href="https://grafana.com/docs/grafana/latest/administration/provisioning/"
           >
             provisioning documentation

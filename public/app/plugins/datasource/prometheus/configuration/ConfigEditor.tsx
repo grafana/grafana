@@ -124,5 +124,11 @@ export function overhaulStyles(theme: GrafanaTheme2) {
     hrTopSpace: css`
       margin-top: 50px;
     `,
+    textUnderline: css`
+      text-decoration: underline;
+    `,
+    versionMargin: css`
+      margin-bottom: 12px;
+    `,
   };
 }
