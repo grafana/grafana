@@ -96,7 +96,10 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 //
 // Get folder by id.
 //
-// Returns the folder identified by id.
+// Returns the folder identified by id. This is deprecated.
+// Please refer to [updated API](#/folders/getFolderByUID) instead
+//
+// Deprecated: true
 //
 // Responses:
 // 200: folderResponse
