@@ -9,7 +9,8 @@ type: docs
 
 # Publish a plugin
 
-You've just built your first plugin, and now you want to share it with the world.
+You've just built your first plugin; now you want to share it with the world.
+
 In this guide, you'll learn how to package and share your plugin with others.
 
 For Grafana to be able to load a plugin, it first needs to be built.
@@ -110,29 +111,29 @@ To speed up the time it takes to review your plugin:
 
 - No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
 
-**Can I see metrics of my plugin installs, downloads or usage?**
+**Can I see metrics of my plugin installs, downloads, or usage?**
 
-- No. We don't offer this information at the moment to plugin authors.
+- No. We don't offer this information to plugin authors at the moment.
 
 **How can I update my plugin's catalog page?**
 
 - The plugin's catalog page content is extracted from the plugin README file.
   To update the plugin's catalog page, it is necessary to submit an updated plugin with the new content included in the README file.
 
-**Can I unlist my plugin from the Grafana Plugin's Catalog in case of a bug?**
+**Can I unlist my plugin from the Grafana plugin catalog in case of a bug?**
 
-- In the event of a bug, unlisting the plugin from the Grafana Plugin's Catalog may be possible in exceptional cases, such as security concerns.
+- In the event of a bug, unlisting the plugin from the Grafana plugin catalog may be possible in exceptional cases, such as security concerns.
   However, we do not have control over the specific instances where the plugin is installed.
 
 **Can I distribute my plugin somewhere else than the Grafana Catalog?**
 
-- The official method for distributing Grafana plugins is through the Grafana Catalog.
+- The official method for distributing Grafana plugins is through our catalog.
   Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide]({{< relref "../../administration/plugin-management#install-plugin-on-local-grafana" >}}).
 
 **Can I still use Angular for my plugin?**
 
-- No. We will not accept any new plugin submissions written in angular.
-  Please take a look at our [angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
+- No. We won't accept any new plugin submissions written in Angular.
+  Please take a look at our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
 
 ### Publishing your plugin for the first time
 

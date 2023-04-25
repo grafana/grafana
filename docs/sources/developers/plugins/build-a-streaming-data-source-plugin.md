@@ -20,7 +20,7 @@ Enable _streaming_ for your data source plugin to update your dashboard as soon 
 
 For example, a streaming data source plugin can connect to a websocket, or subscribe to a message bus, and update the visualization whenever a new message is available.
 
-### Step 1: Edit the plugin.json file
+### Step 1: Edit the `plugin.json` file
 
 Enable streaming for your data source in the `plugin.json` file.
 
