@@ -39,6 +39,7 @@ export const browseDashboardsAPI = createApi({
       query: (folderUID) => ({ url: `/folders/${folderUID}` }),
     }),
     getAffectedItems: builder.query<
+      // TODO move to folder types file once structure is finalised
       {
         folder: number;
         dashboard: number;

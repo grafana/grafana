@@ -24,11 +24,11 @@ const hasSelectionSelector = createSelector(
   }
 );
 
-const dedupedSelectedItemsSelector = createSelector(
+const selectedItemsForBackendSelector = createSelector(
   (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
   (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
   (selectedItems, childrenByParentUID) => {
-    return getDedupedSelectedItems(selectedItems, childrenByParentUID);
+    return getSelectedItemsForBackend(selectedItems, childrenByParentUID);
   }
 );
 
@@ -44,8 +44,8 @@ export function useSelectedItemsState() {
   return useSelector((wholeState: StoreState) => wholeState.browseDashboards.selectedItems);
 }
 
-export function useDedupedSelectedItems() {
-  return useSelector((state) => dedupedSelectedItemsSelector(state));
+export function useSelectedItemsForBackendState() {
+  return useSelector((state) => selectedItemsForBackendSelector(state));
 }
 
 /**
@@ -103,7 +103,7 @@ function createFlatTree(
  * @param selectedItems Overall selection state
  * @param childrenByParentUID Arrays of children keyed by their parent UID
  */
-function getDedupedSelectedItems(
+function getSelectedItemsForBackend(
   selectedItems: DashboardTreeSelection,
   childrenByParentUID: Record<string, DashboardViewItem[] | undefined>
 ): Omit<DashboardTreeSelection, 'panel'> {
