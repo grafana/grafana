@@ -65,7 +65,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           // group for a given field.
           const valuesByGroupKey = new Map<string, Record<string, MutableField>>();
           for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-            const groupKey = String(groupByFields.map((field) => field.values.get(rowIndex)));
+            const groupKey = String(groupByFields.map((field) => field.values[rowIndex]));
             const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
 
             if (!valuesByGroupKey.has(groupKey)) {
@@ -84,7 +84,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
                 };
               }
 
-              valuesByField[fieldName].values.add(field.values.get(rowIndex));
+              valuesByField[fieldName].values.push(field.values[rowIndex]);
             }
           }
 
@@ -95,7 +95,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             const fieldName = getFieldDisplayName(field);
 
             valuesByGroupKey.forEach((value) => {
-              values.add(value[fieldName].values.get(0));
+              values.push(value[fieldName].values[0]);
             });
 
             fields.push({

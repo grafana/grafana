@@ -89,7 +89,7 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
       if (f.values.length === maxLength) {
         return f;
       }
-      const values = f.values.toArray();
+      const values = f.values;
       values.length = maxLength;
       return {
         ...f,

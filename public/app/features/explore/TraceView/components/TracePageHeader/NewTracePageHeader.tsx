@@ -77,18 +77,14 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
     return null;
   }
 
-  const { method, status, url } = getHeaderTags(trace.spans);
-
   const title = (
     <h1 className={cx(styles.title)}>
       <TraceName traceName={getTraceName(trace.spans)} />
-      <small>
-        <span className={styles.divider}>|</span>
-        {formatDuration(trace.duration)}
-      </small>
+      <small className={styles.duration}>{formatDuration(trace.duration)}</small>
     </h1>
   );
 
+  const { method, status, url } = getHeaderTags(trace.spans);
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
     if (status[0].value.toString().charAt(0) === '4') {
@@ -107,27 +103,28 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
       </div>
 
       <div className={styles.subtitle}>
-        {timestamp(trace, timeZone, styles)}
-        {method || status || url ? <span className={styles.divider}>|</span> : undefined}
-        {method && method.length > 0 && (
-          <Tooltip content={'http.method'} interactive={true}>
-            <span className={styles.tag}>
-              <Badge text={method[0].value} color="blue" />
-            </span>
-          </Tooltip>
-        )}
-        {status && status.length > 0 && (
-          <Tooltip content={'http.status_code'} interactive={true}>
-            <span className={styles.tag}>
-              <Badge text={status[0].value} color={statusColor} />
-            </span>
-          </Tooltip>
-        )}
-        {url && url.length > 0 && (
-          <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
-            <span className={styles.url}>{url[0].value}</span>
-          </Tooltip>
-        )}
+        <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
+        <span className={styles.tagMeta}>
+          {method && method.length > 0 && (
+            <Tooltip content={'http.method'} interactive={true}>
+              <span className={styles.tag}>
+                <Badge text={method[0].value} color="blue" />
+              </span>
+            </Tooltip>
+          )}
+          {status && status.length > 0 && (
+            <Tooltip content={'http.status_code'} interactive={true}>
+              <span className={styles.tag}>
+                <Badge text={status[0].value} color={statusColor} />
+              </span>
+            </Tooltip>
+          )}
+          {url && url.length > 0 && (
+            <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
+              <span className={styles.url}>{url[0].value}</span>
+            </Tooltip>
+          )}
+        </span>
       </div>
 
       <SpanFilters
@@ -171,10 +168,21 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     subtitle: css`
       flex: 1;
       line-height: 1em;
-      margin: -0.5em 8px 0.75em 8px;
+      margin: -0.5em 0.5em 0.75em 0.5em;
     `,
     tag: css`
       margin: 0 0.5em 0 0;
+    `,
+    duration: css`
+      color: #aaa;
+      margin: 0 0.75em;
+    `,
+    timestamp: css`
+      vertical-align: middle;
+    `,
+    tagMeta: css`
+      margin: 0 0.75em;
+      vertical-align: text-top;
     `,
     url: css`
       margin: -2.5px 0.3em;
@@ -183,9 +191,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       text-overflow: ellipsis;
       max-width: 30%;
       display: inline-block;
-    `,
-    divider: css`
-      margin: 0 0.75em;
     `,
   };
 };

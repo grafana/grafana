@@ -100,12 +100,12 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
             for (let index = 0; index < frame.length; index++) {
               if (include && rows.has(index)) {
-                buffer.push(field.values.get(index));
+                buffer.push(field.values[index]);
                 continue;
               }
 
               if (!include && !rows.has(index)) {
-                buffer.push(field.values.get(index));
+                buffer.push(field.values[index]);
                 continue;
               }
             }

@@ -36,6 +36,6 @@ We encourage you to locate the repository of the corresponding plugin and create
 
 ### Links
 
-- [Migrate Angular to React](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/#migrate-a-plugin-from-angular-to-react)
+- [Migrate Angular to React]({{< relref "./plugins/migration-guide/angular-react/" >}})
 - [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
 - [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)

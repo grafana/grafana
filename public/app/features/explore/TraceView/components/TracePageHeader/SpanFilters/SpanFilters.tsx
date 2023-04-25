@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import React, { useState, memo } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
@@ -30,7 +30,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { randomId, SearchProps, Tag } from '../../../useSearch';
+import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import { Trace } from '../../types';
 import NewTracePageSearchBar from '../NewTracePageSearchBar';
 
@@ -63,6 +63,18 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [spanNames, setSpanNames] = useState<Array<SelectableValue<string>>>();
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
+
+  const reset = useCallback(() => {
+    setServiceNames(undefined);
+    setSpanNames(undefined);
+    setTagKeys(undefined);
+    setTagValues({});
+    setSearch(defaultFilters);
+  }, [setSearch]);
+
+  useEffect(() => {
+    reset();
+  }, [reset, trace]);
 
   if (!trace) {
     return null;
@@ -100,7 +112,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
   const getTagKeys = () => {
     if (!tagKeys) {
-      const keys: string[] = [];
+      let keys: string[] = [];
+      let logKeys: string[] = [];
 
       trace.spans.forEach((span) => {
         span.tags.forEach((tag) => {
@@ -112,18 +125,18 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         if (span.logs !== null) {
           span.logs.forEach((log) => {
             log.fields.forEach((field) => {
-              keys.push(field.key);
+              logKeys.push(field.key);
             });
           });
         }
       });
+      keys = uniq(keys).sort();
+      logKeys = uniq(logKeys).sort();
 
       setTagKeys(
-        uniq(keys)
-          .sort()
-          .map((name) => {
-            return toOption(name);
-          })
+        [...keys, ...logKeys].map((name) => {
+          return toOption(name);
+        })
       );
     }
   };
@@ -237,7 +250,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 onOpenMenu={getServiceNames}
                 options={serviceNames}
                 placeholder="All service names"
-                value={search.serviceName}
+                value={search.serviceName || null}
               />
             </HorizontalGroup>
           </InlineField>
@@ -258,7 +271,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 onOpenMenu={getSpanNames}
                 options={spanNames}
                 placeholder="All span names"
-                value={search.spanName}
+                value={search.spanName || null}
               />
             </HorizontalGroup>
           </InlineField>
@@ -309,7 +322,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       onOpenMenu={getTagKeys}
                       options={tagKeys}
                       placeholder="Select tag"
-                      value={tag.key}
+                      value={tag.key || null}
                     />
                     <Select
                       aria-label={`Select tag operator`}
@@ -374,6 +387,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
+          reset={reset}
         />
       </Collapse>
     </div>

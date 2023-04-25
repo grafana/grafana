@@ -115,6 +115,8 @@ import (
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
@@ -310,6 +312,7 @@ var wireBasicSet = wire.NewSet(
 	cuectx.GrafanaCUEContext,
 	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
+	wire.Bind(new(csrf.Service), new(*csrf.CSRF)),
 	ossaccesscontrol.ProvideTeamPermissions,
 	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
 	ossaccesscontrol.ProvideFolderPermissions,
@@ -359,6 +362,8 @@ var wireBasicSet = wire.NewSet(
 	supportbundlesimpl.ProvideService,
 	loggermw.Provide,
 	modules.WireSet,
+	signingkeysimpl.ProvideEmbeddedSigningKeysService,
+	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 )
 
 var wireSet = wire.NewSet(

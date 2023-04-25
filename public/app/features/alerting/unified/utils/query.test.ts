@@ -16,6 +16,7 @@ describe('alertRuleToQueries', () => {
       group: {
         name: 'Prom up alert',
         rules: [],
+        totals: {},
       },
       namespace: {
         rulesSource: GRAFANA_RULES_SOURCE_NAME,
@@ -28,6 +29,8 @@ describe('alertRuleToQueries', () => {
         labels: {},
         grafana_alert: grafanaAlert,
       },
+      instanceTotals: {},
+      filteredInstanceTotals: {},
     };
 
     const result = alertRuleToQueries(combinedRule);
@@ -43,6 +46,7 @@ describe('alertRuleToQueries', () => {
       group: {
         name: 'test',
         rules: [],
+        totals: {},
       },
       namespace: {
         name: 'prom test alerts',
@@ -58,6 +62,8 @@ describe('alertRuleToQueries', () => {
           readOnly: false,
         },
       },
+      instanceTotals: {},
+      filteredInstanceTotals: {},
     };
 
     const result = alertRuleToQueries(combinedRule);

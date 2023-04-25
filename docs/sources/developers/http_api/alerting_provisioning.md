@@ -96,9 +96,10 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description    |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID  | `path` | string | `string` |           |    ✓     |         | Alert rule UID |
+| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description    |
+| -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
+| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID |
+| X-Disable-Provenance | `header` | string | `string` |           |          |         |                |
 
 #### All responses
 
@@ -637,9 +638,10 @@ POST /api/v1/provisioning/contact-points
 
 #### Parameters
 
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
 
 #### All responses
 
@@ -678,9 +680,10 @@ POST /api/v1/provisioning/mute-timings
 
 #### Parameters
 
-| Name | Source | Type                                    | Go type                   | Separator | Required | Default | Description |
-| ---- | ------ | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |             |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
 
 #### All responses
 
@@ -762,11 +765,12 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 #### Parameters
 
-| Name      | Source | Type                                | Go type                 | Separator | Required | Default | Description |
-| --------- | ------ | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| FolderUID | `path` | string                              | `string`                |           |    ✓     |         |             |
-| Group     | `path` | string                              | `string`                |           |    ✓     |         |             |
-| Body      | `body` | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description |
+| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
+| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |             |
+| Group                | `path`   | string                              | `string`                |           |    ✓     |         |             |
+| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         |             |
+| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
 
 #### All responses
 
@@ -805,10 +809,11 @@ PUT /api/v1/provisioning/contact-points/{UID}
 
 #### Parameters
 
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description                                |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
-| UID  | `path` | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
-| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
+| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                                            |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
 
 #### All responses
 
@@ -847,10 +852,11 @@ PUT /api/v1/provisioning/mute-timings/{name}
 
 #### Parameters
 
-| Name | Source | Type                                    | Go type                   | Separator | Required | Default | Description      |
-| ---- | ------ | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
-| name | `path` | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
-| Body | `body` | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description      |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
+| name                 | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |                  |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
 
 #### All responses
 
@@ -889,9 +895,10 @@ PUT /api/v1/provisioning/policies
 
 #### Parameters
 
-| Name | Source | Type            | Go type        | Separator | Required | Default | Description                              |
-| ---- | ------ | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
-| Body | `body` | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
+| Name                 | Source   | Type            | Go type        | Separator | Required | Default | Description                              |
+| -------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
+| X-Disable-Provenance | `header` | string          | `string`       |           |          |         |                                          |
+| Body                 | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
 
 #### All responses
 
@@ -930,10 +937,11 @@ PUT /api/v1/provisioning/templates/{name}
 
 #### Parameters
 
-| Name | Source | Type                                                          | Go type                              | Separator | Required | Default | Description   |
-| ---- | ------ | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
-| name | `path` | string                                                        | `string`                             |           |    ✓     |         | Template Name |
-| Body | `body` | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
+| Name                 | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description   |
+| -------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
+| name                 | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name |
+| X-Disable-Provenance | `header` | string                                                        | `string`                             |           |          |         |               |
+| Body                 | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
 
 #### All responses
 
