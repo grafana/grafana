@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -633,18 +632,13 @@ func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int6
 	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }
 
-func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, query *dashboards.CountDashboardsInFolderQuery) (int64, error) {
-	u, err := appcontext.User(ctx)
+func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
+	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &uid, OrgID: orgID, SignedInUser: u})
 	if err != nil {
 		return 0, err
 	}
 
-	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &query.FolderUID, OrgID: u.OrgID, SignedInUser: u})
-	if err != nil {
-		return 0, err
-	}
-
-	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: u.OrgID})
+	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: orgID})
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, UID string) error {

@@ -60,12 +60,12 @@ func TestCallResource(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	reg := registry.ProvideService()
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg))
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
@@ -78,7 +78,6 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
-		hs.cachingService = &caching.OSSCachingService{}
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {

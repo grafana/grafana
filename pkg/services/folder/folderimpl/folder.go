@@ -558,7 +558,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 
 	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
 	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached
+		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
 	// if the current folder is already a parent of newparent, we should return error
@@ -621,6 +621,28 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return result, err
 	}
 	return result, nil
+}
+
+func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.ChildrenCounts, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
+	}
+	if *cmd.UID == "" {
+		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+	if cmd.OrgID < 1 {
+		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
+	}
+
+	countsMap := make(folder.ChildrenCounts, len(s.registry))
+	for _, v := range s.registry {
+		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		countsMap[v.Kind()] += c
+	}
+	return countsMap, nil
 }
 
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin
@@ -775,7 +797,7 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 	}
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {
-		return folder.ErrMaximumDepthReached
+		return folder.ErrMaximumDepthReached.Errorf("failed to validate parent folder")
 	}
 
 	// Create folder under itself is not allowed
