@@ -645,6 +645,24 @@ func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildren
 	return countsMap, nil
 }
 
+func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string) ([]string, error) {
+	result := []string{}
+	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range folders {
+		result = append(result, f.UID)
+		subfolders, err := s.getNestedFolders(ctx, f.OrgID, f.UID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, subfolders...)
+	}
+	return result, nil
+}
+
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	rtEditor := org.RoleEditor
