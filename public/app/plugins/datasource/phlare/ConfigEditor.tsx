@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAsync } from 'react-use';
+import { useAsyncFn, useDebounce } from 'react-use';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataSourceHttpSettings, EventsWithValidation, LegacyForms, regexValidation } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, EventsWithValidation, LegacyForms, regexValidation } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PhlareDataSource } from './datasource';
@@ -13,13 +13,12 @@ interface Props extends DataSourcePluginOptionsEditorProps<PhlareDataSourceOptio
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const [mismatchedBackendType, setMismatchedBackendType] = React.useState<BackendType | undefined>();
 
   const dataSourceSrv = getDataSourceSrv();
 
-  const { value: datasource } = useAsync(async (): Promise<PhlareDataSource | void> => {
-    // If backend type is already set don't try to autodetect.
-    // TODO: maybe we should check anyway and show a warning if it does not match?
-    if (options.jsonData.backendType) {
+  const [, getBackendType] = useAsyncFn(async () => {
+    if (!options.url) {
       return;
     }
     const ds = await dataSourceSrv.get({ type: options.type, uid: options.uid });
@@ -27,16 +26,27 @@ export const ConfigEditor = (props: Props) => {
       // Should not happen, makes TS happy
       throw new Error('Datasource is not a PhlareDataSource');
     }
-    return ds;
-  }, [dataSourceSrv, options]);
 
-  useAsync(async () => {
-    if (!datasource || !options.url) {
+    const { backendType } = await ds.getBackendType(options.url);
+    if (backendType === 'unknown') {
+      setMismatchedBackendType(undefined);
       return;
     }
-    const { backendType } = await datasource.getBackendType();
+
+    // If user already has something selected don't overwrite but show warning.
+    if (options.jsonData.backendType) {
+      if (backendType !== options.jsonData.backendType) {
+        setMismatchedBackendType(backendType);
+      } else {
+        setMismatchedBackendType(undefined);
+      }
+      return;
+    }
+
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, backendType } });
-  }, [datasource]);
+  }, [options]);
+
+  useDebounce(getBackendType, 500, [options]);
 
   return (
     <>
@@ -84,9 +94,7 @@ export const ConfigEditor = (props: Props) => {
             />
           </div>
         </div>
-      </div>
 
-      <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
             <LegacyForms.FormField
@@ -94,6 +102,7 @@ export const ConfigEditor = (props: Props) => {
               labelWidth={13}
               inputEl={
                 <LegacyForms.Select<BackendType>
+                  allowCustomValue={false}
                   value={options.jsonData.backendType ? backendTypeOptions[options.jsonData.backendType] : undefined}
                   options={Object.values(backendTypeOptions)}
                   onChange={(option) => {
@@ -111,6 +120,12 @@ export const ConfigEditor = (props: Props) => {
             />
           </div>
         </div>
+        {mismatchedBackendType && (
+          <Alert
+            title={`"${options.jsonData.backendType}" option is selected but it seems like you are using "${mismatchedBackendType}" backend.`}
+            severity="warning"
+          />
+        )}
       </div>
     </>
   );

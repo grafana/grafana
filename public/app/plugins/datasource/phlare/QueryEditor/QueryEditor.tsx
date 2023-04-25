@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
-import { defaultPhlare, defaultPhlareQueryType, Phlare } from '../dataquery.gen';
+import { defaultGrafanaPyroscope, defaultPhlareQueryType, GrafanaPyroscope } from '../dataquery.gen';
 import { PhlareDataSource } from '../datasource';
 import { BackendType, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
@@ -16,8 +16,8 @@ import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
 
-export const defaultQuery: Partial<Phlare> = {
-  ...defaultPhlare,
+export const defaultQuery: Partial<GrafanaPyroscope> = {
+  ...defaultGrafanaPyroscope,
   queryType: defaultPhlareQueryType,
 };
 

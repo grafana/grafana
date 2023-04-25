@@ -60,8 +60,9 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('labelValues', { label, query, start, end });
   }
 
-  async getBackendType(): Promise<{ backendType: BackendType }> {
-    return await super.getResource('backendType');
+  // We need the URL here because it may not be saved on the backend yet when used from config page.
+  async getBackendType(url: string): Promise<{ backendType: BackendType | 'unknown' }> {
+    return await super.getResource('backendType', { url });
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {

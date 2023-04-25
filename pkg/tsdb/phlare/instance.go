@@ -165,21 +165,24 @@ type BackendTypeRespBody struct {
 
 // backendType is a simplistic test to figure out if we are speaking to phlare or pyroscope backend
 func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	body := &BackendTypeRespBody{BackendType: "phlare"}
-	logger.Debug("calling backendType", "url", d.settings.URL)
-	resp, err := d.httpClient.Get(d.settings.URL + "/api/apps")
-	defer func() {
-		if resp != nil {
-			err := resp.Body.Close()
-			if err != nil {
-				logger.Error("failed to close response body", "err", err)
-			}
-		}
-	}()
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+	query := u.Query()
+	body := &BackendTypeRespBody{BackendType: "unknown"}
 
-	// TODO: probably should check for 404 specifically
-	if err == nil && resp.StatusCode == 200 {
+	pyroClient := getClient("pyroscope", d.httpClient, query["url"][0])
+	_, err = pyroClient.ProfileTypes(ctx)
+
+	if err == nil {
 		body.BackendType = "pyroscope"
+	} else {
+		phlareClient := getClient("phlare", d.httpClient, d.settings.URL)
+		_, err := phlareClient.ProfileTypes(ctx)
+		if err == nil {
+			body.BackendType = "phlare"
+		}
 	}
 
 	data, err := json.Marshal(body)
