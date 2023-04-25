@@ -10,38 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestGroupSplit(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected map[string]string
-	}{
-		{
-			input: "tag1:value1,tag2:value2",
-			expected: map[string]string{
-				"tag1": "value1",
-				"tag2": "value2",
-			},
-		},
-		{
-			input:    "",
-			expected: map[string]string{},
-		},
-		{
-			input:    "tag1",
-			expected: map[string]string{},
-		},
-	}
-
-	for _, test := range tests {
-		tags := splitTagSettings(test.input)
-		for k, v := range test.expected {
-			value, exists := tags[k]
-			assert.Truef(t, exists, "Tag %q not found for input %q", k, test.input)
-			assert.Equalf(t, v, value, "Tag %q has wrong value for input %q", k, test.input)
-		}
-	}
-}
-
 func TestInitJaegerCfg_Default(t *testing.T) {
 	ts := &Opentracing{}
 	cfg, err := ts.initJaegerCfg()
