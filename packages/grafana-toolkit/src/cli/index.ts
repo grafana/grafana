@@ -4,9 +4,7 @@ import { program } from 'commander';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
-import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
-import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { execTask } from './utils/execTask';
@@ -130,18 +128,6 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:bundle-managed')
-    .description('[Deprecated] Builds managed plugins')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-        )
-      );
-      await execTask(bundleManagedTask)({});
-    });
-
-  program
     .command('plugin:github-publish')
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
@@ -159,18 +145,6 @@ export const run = (includeInternalScripts = false) => {
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
       });
-    });
-
-  program
-    .command('plugin:update-circleci')
-    .description('[Deprecated] Update plugin')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-        )
-      );
-      await execTask(pluginUpdateTask)({});
     });
 
   program.on('command:*', () => {
