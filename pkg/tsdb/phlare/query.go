@@ -17,7 +17,7 @@ import (
 
 type queryModel struct {
 	WithStreaming bool
-	dataquery.PhlareDataQuery
+	dataquery.GrafanaPyroscopeDataQuery
 }
 
 type dsJsonModel struct {
