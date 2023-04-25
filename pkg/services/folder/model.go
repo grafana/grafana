@@ -156,7 +156,7 @@ type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 }
 
 // GetDescendantCountsQuery captures the information required by the folder service
-// to return the count of children in a folder.
+// to return the count of descendants (direct and indirect) in a folder.
 type GetDescendantCountsQuery struct {
 	UID   *string
 	OrgID int64
