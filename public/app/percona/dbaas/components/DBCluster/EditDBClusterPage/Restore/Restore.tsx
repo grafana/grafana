@@ -1,12 +1,13 @@
 import { AsyncSelectField, validators } from '@percona/platform-core';
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import { Field } from 'react-final-form';
 
 import { FieldSet, useStyles, Switch } from '@grafana/ui';
+import { fetchBackupArtifacts } from 'app/percona/shared/core/reducers/backups/backupArtifacts';
+import { useDispatch, useSelector } from 'app/types';
 
-import { useSelector } from '../../../../../../types';
 import { SelectField } from '../../../../../shared/components/Form/SelectField';
-import { getBackupLocations } from '../../../../../shared/core/selectors';
+import { getBackupLocations, getBackupArtifacts } from '../../../../../shared/core/selectors';
 
 import { Messages } from './Restore.messages';
 import { RestoreService } from './Restore.service';
@@ -16,6 +17,8 @@ import { RestoreFields, RestoreFromProps } from './Restore.types';
 export const Restore: FC<RestoreFromProps> = ({ form }) => {
   const styles = useStyles(getStyles);
 
+  const dispatch = useDispatch();
+
   const [enableRestore, setEnableRestore] = useState(false);
   const { result: locations = [], loading: locationsLoading } = useSelector(getBackupLocations);
   const locationsOptions = locations.map((location) => ({
@@ -23,8 +26,18 @@ export const Restore: FC<RestoreFromProps> = ({ form }) => {
     value: location.locationID,
   }));
 
+  const { result: backupArtifacts = [], loading: backupArtifactsLoading } = useSelector(getBackupArtifacts);
+
   const { restoreFrom, kubernetesCluster } = form.getState().values;
   const restoreFromValue = restoreFrom?.value;
+
+  useEffect(() => {
+    if (restoreFromValue && enableRestore) {
+      dispatch(fetchBackupArtifacts({ locationId: restoreFromValue }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restoreFromValue, enableRestore]);
+
   return (
     <FieldSet
       label={
@@ -63,14 +76,19 @@ export const Restore: FC<RestoreFromProps> = ({ form }) => {
               )}
             </Field>
             {restoreFromValue !== undefined && restoreFromValue ? (
-              <AsyncSelectField
-                name={RestoreFields.backupArtifact}
-                loadOptions={() => RestoreService.loadBackupArtifacts(restoreFromValue)}
-                defaultOptions
-                placeholder={Messages.placeholders.backupArtifact}
-                label={Messages.labels.backupArtifact}
-                validate={validators.required}
-              />
+              <Field name={RestoreFields.backupArtifact} validate={validators.required}>
+                {({ input }) => (
+                  <div data-testid="backup-select-wrapper">
+                    <SelectField
+                      label={Messages.labels.backupArtifact}
+                      isSearchable={false}
+                      options={backupArtifacts}
+                      isLoading={backupArtifactsLoading}
+                      {...input}
+                    />
+                  </div>
+                )}
+              </Field>
             ) : (
               <div />
             )}
