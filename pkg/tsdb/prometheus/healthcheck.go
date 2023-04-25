@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -36,28 +35,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return getHealthCheckMessage(logger, "", errors.New("invalid datasource info received"))
 	}
 
-	// https://prometheus.io/docs/prometheus/latest/management_api/#health-check
-	resp, err := ds.resource.Execute(ctx, &backend.CallResourceRequest{
-		PluginContext: req.PluginContext,
-		Path:          "/-/healthy",
-		Method:        http.MethodGet,
-	})
-
-	// all errors from the health check + incorrect url strings longer than 1 character
-	if err != nil {
-		return getHealthCheckMessage(logger, "Prometheus healthcheck error.", err)
-	}
-
-	// if the prometheus instance does not have the healthy check
-	// fallback to making a simple query to check the setup
-	if resp.Status != 200 {
-		return healthcheckFallback(ctx, req, ds)
-	}
-
-	return getHealthCheckMessage(logger, string(resp.Body), nil)
+	return healthcheck(ctx, req, ds)
 }
 
-func healthcheckFallback(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
+func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
 		LegendFormat: "",
 		UtcOffsetSec: 0,
@@ -83,27 +64,27 @@ func healthcheckFallback(ctx context.Context, req *backend.CheckHealthRequest, i
 	})
 
 	if err != nil {
-		return getHealthCheckMessage(logger, "Prometheus datasource error", err)
+		return getHealthCheckMessage(logger, "Your configuration has been saved but there is an error.", err)
 	}
 
 	if resp.Responses[refID].Error != nil {
-		return getHealthCheckMessage(logger, "Prometheus datasource configuration error",
+		return getHealthCheckMessage(logger, "Your configuration has been saved but there is an error.",
 			errors.New(resp.Responses[refID].Error.Error()))
 	}
 
-	return getHealthCheckMessage(logger, "A successful query has been made.", nil)
+	return getHealthCheckMessage(logger, "Successfully saved the configuration and queried the Prometheus API.", nil)
 }
 
 func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
 	if err == nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
-			Message: fmt.Sprintf("Prometheus datasource is working. %s", message),
+			Message: message,
 		}, nil
 	}
 
 	logger.Warn("error performing prometheus healthcheck", "err", err.Error())
-	errorMessage := fmt.Sprintf("%s %s", err.Error(), message)
+	errorMessage := fmt.Sprintf("%s - %s", err.Error(), message)
 
 	return &backend.CheckHealthResult{
 		Status:  backend.HealthStatusError,
