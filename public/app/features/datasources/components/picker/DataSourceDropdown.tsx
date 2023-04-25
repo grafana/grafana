@@ -25,23 +25,21 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
 
   const currentDataSourceInstanceSettings = useDatasource(current);
-  const [filterTerm, setFilterTerm] = useState<string>(dataSourceLabel(currentDataSourceInstanceSettings));
+  const [filterTerm, setFilterTerm] = useState<string>();
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
   });
 
   const onClose = useCallback(() => {
-    setFilterTerm(dataSourceLabel(currentDataSourceInstanceSettings));
     setOpen(false);
     markerElement?.blur();
-  }, [setOpen, markerElement, setFilterTerm, currentDataSourceInstanceSettings]);
+  }, [setOpen, markerElement]);
 
-  const onOpen = useCallback(() => {
+  const onOpen = () => {
     setOpen(true);
-    setFilterTerm('');
     markerElement?.focus();
-  }, [setOpen, setFilterTerm, markerElement]);
+  };
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
@@ -75,7 +73,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
           onFocus={onOpen}
           onClick={onOpen}
-          value={filterTerm}
           onChange={(e) => {
             setFilterTerm(e.currentTarget.value);
           }}
@@ -97,9 +94,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               style={popper.styles.popper}
               ref={setSelectorElement}
               {...restProps}
-              onDismiss={() => {
-                markerElement?.blur();
-              }}
+              onDismiss={onClose}
             ></PickerContent>
           </div>
         </Portal>
@@ -119,6 +114,9 @@ function getStylesDropdown(theme: GrafanaTheme2) {
     input: css`
       input {
         cursor: pointer;
+      }
+      input::placeholder {
+        color: ${theme.colors.text.primary};
       }
     `,
   };
