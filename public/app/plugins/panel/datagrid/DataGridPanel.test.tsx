@@ -1,14 +1,14 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
-import { ArrayVector, DataFrame, dateTime, EventBus, FieldType, LoadingState, MutableDataFrame } from '@grafana/data';
+import { DataFrame, dateTime, EventBus, FieldType, LoadingState, MutableDataFrame } from '@grafana/data';
 
 import { DataGridPanel, DataGridProps } from './DataGridPanel';
 import * as utils from './utils';
 
 jest.mock('./featureFlagUtils', () => {
   return {
-    isDatagridEditEnabled: jest.fn().mockReturnValue(true),
+    isDatagridEnabled: jest.fn().mockReturnValue(true),
   };
 });
 
@@ -215,7 +215,7 @@ describe('DataGrid', () => {
       const expectedField = {
         ...props.data.series[0].fields[0],
       };
-      expectedField.values = new ArrayVector([1, 9, 3, 4]);
+      expectedField.values = [1, 9, 3, 4];
 
       await waitFor(() => {
         const overlay = screen.getByDisplayValue('9');
@@ -297,7 +297,7 @@ describe('DataGrid', () => {
             expect.objectContaining({
               name: 'newColumn',
               type: 'string',
-              values: new ArrayVector(['', '', '', '']),
+              values: ['', '', '', ''],
             }),
           ]),
         }),
