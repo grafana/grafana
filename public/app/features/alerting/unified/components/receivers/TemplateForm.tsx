@@ -317,10 +317,12 @@ function getPreviewTorender(
   payloadFormatError: string | null,
   data: TemplatesPreviewResponse | undefined
 ) {
+  // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
   const previewErrorRequest = isPreviewError ? PREVIEW_NOT_AVAILABLE : undefined;
   const somethingWasWrong: boolean = isPreviewError || Boolean(payloadFormatError);
   const errorToRender = payloadFormatError || previewErrorRequest;
 
+  //PREVIEW : RESULTS AND ERRORS
   const previewResponseResults = data?.results;
   const previewResponseErrors = data?.errors;
 

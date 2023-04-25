@@ -36,8 +36,10 @@ const defaultValues: FormFields = {
 
 export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) => {
   const styles = useStyles2(getStyles);
-  const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
+
   const [alerts, setAlerts] = useState<TestTemplateAlert[]>([]);
+
+  const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
   const annotations = formMethods.watch('annotations');
   const labels = formMethods.watch('labels');
   const firing = formMethods.watch('firing');
@@ -55,7 +57,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           return { ...acc, [key]: value };
         }, {}),
       startsAt: '2023-04-01T00:00:00Z',
-      endsAt: firing ? addDays(new Date(), 2).toISOString() : '2023-12-01T00:05:00Z',
+      endsAt: firing ? addDays(new Date(), 1).toISOString() : addDays(new Date(), -1).toISOString(),
     };
     setAlerts((alerts) => [...alerts, alert]);
     formMethods.reset();
