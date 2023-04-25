@@ -8,7 +8,7 @@ import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
-export const RESET_TO_DEFAULT = 'Reset to default payload';
+export const RESET_TO_DEFAULT = 'Reset to default';
 
 export function PayloadEditor({
   payload,
@@ -67,7 +67,7 @@ export function PayloadEditor({
               type="button"
               variant="secondary"
             >
-              Add alerts to this payload
+              Add alert data
             </Button>
           </Stack>
         </Stack>

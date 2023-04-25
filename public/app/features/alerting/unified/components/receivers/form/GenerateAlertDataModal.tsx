@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import addDays from 'date-fns/addDays';
-import pluralize from 'pluralize';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -75,7 +74,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   };
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Generate alert data'}>
+    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add alert data'}>
       <FormProvider {...formMethods}>
         <form
           onSubmit={(e) => {
@@ -96,8 +95,8 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                 <div className={styles.flexWrapper}>
                   <Checkbox
                     {...formMethods.register('firing')}
-                    label="Firing"
-                    description="Creates a firing alert in case of checked."
+                    label="Firing alert"
+                    description="It adds firing alert data."
                   />
                   <Button
                     onClick={onAdd}
@@ -107,30 +106,28 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                     variant="secondary"
                     disabled={!labelsOrAnnotationsAdded()}
                   >
-                    Add alert
+                    Add alert data
                   </Button>
                 </div>
               </Stack>
             </Card>
           </>
-          <div className={styles.onSubmitWrapper}>
-            <div className={styles.section}>
-              You have created {alerts.length} {pluralize('alert', alerts.length)} in the list.
-            </div>
-            <Modal.ButtonRow>
-              <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
-                Add this alert list to the payload
-              </Button>
-            </Modal.ButtonRow>
-          </div>
+          <div className={styles.onSubmitWrapper}></div>
           {alerts.length > 0 && (
             <Stack direction="column" gap={1}>
-              <h5> You have this alert data prepared to be added to the payload:</h5>
+              <h5> Review alert data to add to the payload:</h5>
               <pre className={styles.result} data-testid="payloadJSON">
                 {JSON.stringify(alerts, null, 2)}
               </pre>
             </Stack>
           )}
+          <div className={styles.onSubmitWrapper}>
+            <Modal.ButtonRow>
+              <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
+                Add alert data to the payload
+              </Button>
+            </Modal.ButtonRow>
+          </div>
         </form>
       </FormProvider>
     </Modal>
