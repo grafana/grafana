@@ -260,5 +260,16 @@ describe('<EditDataSource>', () => {
       expect(screen.queryByText(detailsMessage)).not.toBeInTheDocument();
       expect(screen.queryByText(detailsVerboseMessage)).toBeInTheDocument();
     });
+
+    it('should render generic description', () => {
+      const dataSourceMeta = getMockDataSourceMeta();
+      setup({ dataSourceMeta });
+
+      expect(
+        screen.queryByText(
+          `Before you can use the ${dataSourceMeta.name} data source, you must configure it below or in the config file.`
+        )
+      ).toBeInTheDocument();
+    });
   });
 });
