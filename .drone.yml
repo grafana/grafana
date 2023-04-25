@@ -2615,10 +2615,6 @@ volumes:
 ---
 clone:
   disable: true
-depends_on:
-- enterprise-build-e2e-publish-release
-- enterprise-test-release
-- enterprise-integration-tests-release
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
