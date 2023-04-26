@@ -20,7 +20,7 @@ To make use of this functionality, you need to deploy a socks5 proxy server that
 - You can configure only one socks5 proxy per Grafana instance
 - All built-in core data sources are compatible, but not all external data sources are. For a list of supported data sources, refer to [private data source connect]({{< ref "/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/#known-limitations" >}}).
 
-## Start proxying connections
+## Before you begin
 
 Before configuring Grafana, you must first deploy a socks proxy server that:
 
@@ -28,7 +28,7 @@ Before configuring Grafana, you must first deploy a socks proxy server that:
 - Is exposed to the public internet
 - Is hosted within the same network as your data source
 
-### Grafana Configuration Steps
+### Steps
 
 1. For Grafana to send data source connections to the socks5 server, you configure the `secure_socks_datasource_proxy` section of the `config.ini` with the following information:
 
