@@ -77,6 +77,10 @@ export const Components = {
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
       loadingBar: () => `Panel loading bar`,
+      HoverWidget: {
+        container: 'data-test-id hover-header-container',
+        dragIcon: 'data-testid drag-icon',
+      },
     },
     Visualization: {
       Graph: {

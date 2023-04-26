@@ -65,6 +65,7 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
