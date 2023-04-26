@@ -1,4 +1,4 @@
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 
@@ -40,7 +40,7 @@ function genFrame() {
         config: {
           interval: i === 0 ? step : null,
         },
-        values: new ArrayVector(values),
+        values: values,
       };
     }),
   };
@@ -59,9 +59,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold({ frame: df });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
+    expect(result.fields[0].values).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(result.fields[1].values).toEqual([4, null, 6, null, null, null, null, null, null, 8]);
+    expect(result.fields[2].values).toEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
   });
 
   test('should insert nulls at +threshold between adjacent > threshold: 2', () => {
@@ -76,9 +76,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold({ frame: df });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
+    expect(result.fields[0].values).toEqual([5, 7, 9, 11]);
+    expect(result.fields[1].values).toEqual([4, 6, null, 8]);
+    expect(result.fields[2].values).toEqual(['a', 'b', null, 'c']);
   });
 
   test('should insert nulls at +interval between adjacent > interval: 1', () => {
@@ -93,9 +93,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold({ frame: df });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
+    expect(result.fields[0].values).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(result.fields[1].values).toEqual([4, null, 6, null, null, null, null, null, null, 8]);
+    expect(result.fields[2].values).toEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
   });
 
   test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold', () => {
@@ -115,8 +115,8 @@ describe('nullInsertThreshold Transformer', () => {
       refFieldPseudoMax: 13,
     });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([
+    expect(result.fields[0].values).toEqual([-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.fields[1].values).toEqual([
       null,
       null,
       null,
@@ -133,7 +133,7 @@ describe('nullInsertThreshold Transformer', () => {
       null,
       8,
     ]);
-    expect(result.fields[2].values.toArray()).toStrictEqual([
+    expect(result.fields[2].values).toEqual([
       null,
       null,
       null,
@@ -164,35 +164,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold({ frame: df, refFieldName: null, refFieldPseudoMax: 13 });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([
-      4,
-      null,
-      6,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      8,
-      null,
-      null,
-    ]);
-    expect(result.fields[2].values.toArray()).toStrictEqual([
-      'a',
-      null,
-      'b',
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      'c',
-      null,
-      null,
-    ]);
+    expect(result.fields[0].values).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(result.fields[1].values).toEqual([4, null, 6, null, null, null, null, null, null, 8, null, null]);
+    expect(result.fields[2].values).toEqual(['a', null, 'b', null, null, null, null, null, null, 'c', null, null]);
 
     // should work for frames with 1 datapoint
     const df2 = new MutableDataFrame({
@@ -208,9 +182,9 @@ describe('nullInsertThreshold Transformer', () => {
     // we get 12 nulls instead of the additional 1
     const result2 = applyNullInsertThreshold({ frame: df2, refFieldName: null, refFieldPseudoMax: 2.5 });
 
-    expect(result2.fields[0].values.toArray()).toStrictEqual([1, 2]);
-    expect(result2.fields[1].values.toArray()).toStrictEqual([1, null]);
-    expect(result2.fields[2].values.toArray()).toStrictEqual(['a', null]);
+    expect(result2.fields[0].values).toEqual([1, 2]);
+    expect(result2.fields[1].values).toEqual([1, null]);
+    expect(result2.fields[2].values).toEqual(['a', null]);
   });
 
   test('should not insert trailing null at end +interval when timeRange.to.valueOf() equals threshold', () => {
@@ -225,9 +199,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold({ frame: df, refFieldName: null, refFieldPseudoMax: 2 });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([1]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a']);
+    expect(result.fields[0].values).toEqual([1]);
+    expect(result.fields[1].values).toEqual([1]);
+    expect(result.fields[2].values).toEqual(['a']);
   });
 
   // TODO: make this work
@@ -243,9 +217,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold({ frame: df });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 6, 7, 8, 11]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
+    expect(result.fields[0].values).toEqual([5, 6, 7, 8, 11]);
+    expect(result.fields[1].values).toEqual([4, null, 6, null, 8]);
+    expect(result.fields[2].values).toEqual(['a', null, 'b', null, 'c']);
   });
 
   test('should noop on 0 datapoints', () => {

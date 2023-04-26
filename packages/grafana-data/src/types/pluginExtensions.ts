@@ -1,70 +1,85 @@
-/**
- * These types are exposed when rendering extension points
- */
+import { DataQuery } from '@grafana/schema';
 
-export enum PluginExtensionPlacements {
-  DashboardPanelMenu = 'grafana/dashboard/panel/menu',
-}
+import { RawTimeRange, TimeZone } from './time';
+
+// Plugin Extensions types
+// ---------------------------------------
 
 export enum PluginExtensionTypes {
   link = 'link',
-  command = 'command',
 }
 
 export type PluginExtension = {
+  id: string;
   type: PluginExtensionTypes;
   title: string;
   description: string;
-  key: number;
+  pluginId: string;
 };
 
 export type PluginExtensionLink = PluginExtension & {
   type: PluginExtensionTypes.link;
-  path: string;
-};
-
-export type PluginExtensionCommand = PluginExtension & {
-  type: PluginExtensionTypes.command;
-  callHandlerWithContext: () => void;
-};
-
-export function isPluginExtensionLink(extension: PluginExtension | undefined): extension is PluginExtensionLink {
-  if (!extension) {
-    return false;
-  }
-  return extension.type === PluginExtensionTypes.link && 'path' in extension;
-}
-
-export function assertPluginExtensionLink(
-  extension: PluginExtension | undefined
-): asserts extension is PluginExtensionLink {
-  if (!isPluginExtensionLink(extension)) {
-    throw new Error(`extension is not a link extension`);
-  }
-}
-
-export function isPluginExtensionCommand(extension: PluginExtension | undefined): extension is PluginExtensionCommand {
-  if (!extension) {
-    return false;
-  }
-  return extension.type === PluginExtensionTypes.command;
-}
-
-export function assertPluginExtensionCommand(
-  extension: PluginExtension | undefined
-): asserts extension is PluginExtensionCommand {
-  if (!isPluginExtensionCommand(extension)) {
-    throw new Error(`extension is not a command extension`);
-  }
-}
-
-export function extensionLinkConfigIsValid(props: {
   path?: string;
-  description?: string;
-  title?: string;
-  placement?: string;
-}) {
-  const valuesAreStrings = Object.values(props).every((val) => typeof val === 'string' && val.length);
-  const placementIsValid = props.placement?.startsWith('grafana/') || props.placement?.startsWith('plugins/');
-  return valuesAreStrings && placementIsValid;
+  onClick?: (event?: React.MouseEvent) => void;
+};
+
+// Objects used for registering extensions (in app plugins)
+// --------------------------------------------------------
+
+export type PluginExtensionConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
+  PluginExtension,
+  'title' | 'description'
+> &
+  ExtraProps & {
+    // The unique identifier of the Extension Point
+    // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+    extensionPointId: string;
+
+    // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
+    configure?: (
+      context?: Readonly<Context>
+    ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
+  };
+
+export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
+  Context,
+  Pick<PluginExtensionLink, 'path'> & {
+    type: PluginExtensionTypes.link;
+    onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+  }
+>;
+
+export type PluginExtensionEventHelpers<Context extends object = object> = {
+  context?: Readonly<Context>;
+  // Opens a modal dialog and renders the provided React component inside it
+  openModal: (options: {
+    // The title of the modal
+    title: string;
+    // A React element that will be rendered inside the modal
+    body: React.ElementType<{ onDismiss?: () => void }>;
+  }) => void;
+};
+
+// Extension Points & Contexts
+// --------------------------------------------------------
+
+// Extension Points available in core Grafana
+export enum PluginExtensionPoints {
+  DashboardPanelMenu = 'grafana/dashboard/panel/menu',
 }
+
+export type PluginExtensionPanelContext = {
+  pluginId: string;
+  id: number;
+  title: string;
+  timeRange: RawTimeRange;
+  timeZone: TimeZone;
+  dashboard: Dashboard;
+  targets: DataQuery[];
+};
+
+type Dashboard = {
+  uid: string;
+  title: string;
+  tags: string[];
+};

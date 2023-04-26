@@ -10,11 +10,14 @@ import { DataFrame, Labels, roundDecimals } from '@grafana/data';
  */
 
 const getSeriesName = (frame: DataFrame): string => {
-  return frame.name ?? formatLabels(frame.fields[0]?.labels ?? {});
+  const firstField = frame.fields[0];
+
+  const displayNameFromDS = firstField?.config?.displayNameFromDS;
+  return displayNameFromDS ?? frame.name ?? formatLabels(firstField?.labels ?? {});
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  const value = frame.fields[0]?.values.get(0);
+  const value = frame.fields[0]?.values[0];
 
   if (Number.isFinite(value)) {
     return roundDecimals(value, 5);
@@ -30,9 +33,7 @@ const formatLabels = (labels: Labels): string => {
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
-  const isEmpty = series.every((serie) =>
-    serie.fields.every((field) => field.values.toArray().every((value) => value == null))
-  );
+  const isEmpty = series.every((serie) => serie.fields.every((field) => field.values.every((value) => value == null)));
 
   return isEmpty;
 };

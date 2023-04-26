@@ -29,7 +29,7 @@ A namespace contains one or more groups. The rules within a group are run sequen
 
 To rename a namespace:
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Alert rules** to view the list of existing alerts.
 1. Find a Grafana Mimir or Loki managed rule with the group that belongs to the namespace you want to edit.
 1. Click the **Edit** (pen) icon.
@@ -41,7 +41,7 @@ A new namespace is created and all groups are copied into this namespace from th
 
 The rules within a group are run sequentially at a regular interval, the default interval is one (1) minute. You can modify this interval using the following instructions.
 
-1. In the left-side menu, click the **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click the **Alerts & IRM** and then **Alerting**.
 1. Click **Alert rules** to view the list of existing alerts.
 1. Find a Grafana Mimir or Loki managed rule with the group you want to edit.
 1. Click **Edit** (pen) icon.

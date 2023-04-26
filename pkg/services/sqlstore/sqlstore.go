@@ -535,7 +535,6 @@ type InitTestDBOpt struct {
 }
 
 var featuresEnabledDuringTests = []string{
-	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagPanelTitleSearch,
 	featuremgmt.FlagEntityStore,
 }

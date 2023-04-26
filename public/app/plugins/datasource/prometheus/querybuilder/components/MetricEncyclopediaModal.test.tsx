@@ -22,7 +22,7 @@ describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Browse Metrics')).toBeInTheDocument();
+      expect(screen.getByText('Browse metrics')).toBeInTheDocument();
     });
   });
 

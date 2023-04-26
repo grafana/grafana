@@ -1,10 +1,8 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"sort"
 	"testing"
 
@@ -193,7 +191,7 @@ func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Con
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
 			return &dashboards.GetPluginDashboardFileContentsResult{
-				Content: io.NopCloser(bytes.NewReader(content)),
+				Content: content,
 			}, nil
 		}
 	} else if !exists {

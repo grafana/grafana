@@ -85,7 +85,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFrames(queryRes, target)
+			nameFields(queryRes, target)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -806,7 +806,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFrames(queryResult backend.DataResponse, target *Query) {
+func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -825,7 +825,10 @@ func nameFrames(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			frame.Name = fieldName
+			if valueField.Config == nil {
+				valueField.Config = &data.FieldConfig{}
+			}
+			valueField.Config.DisplayNameFromDS = fieldName
 		}
 	}
 }
@@ -895,7 +898,7 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 				found := false
 				for _, metric := range target.Metrics {
 					if metric.ID == field {
-						metricName += " " + describeMetric(metric.Type, field)
+						metricName += " " + describeMetric(metric.Type, metric.Field)
 						found = true
 					}
 				}
@@ -1252,13 +1255,24 @@ func addOtherMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, met
 	otherMetrics := make([]*MetricAgg, 0)
 
 	for _, m := range target.Metrics {
-		if m.Type == metric.Type {
+		// To other metrics we add metric of the same type that are not the current metric
+		if m.ID != metric.ID && m.Type == metric.Type {
 			otherMetrics = append(otherMetrics, m)
 		}
 	}
 
-	if len(otherMetrics) > 1 {
+	if len(otherMetrics) > 0 {
 		metricName += " " + metric.Field
+
+		// We check if we have metric with the same type and same field name
+		// If so, append metric.ID to the metric name
+		for _, m := range otherMetrics {
+			if m.Field == metric.Field {
+				metricName += " " + metric.ID
+				break
+			}
+		}
+
 		if metric.Type == "bucket_script" {
 			// Use the formula in the column name
 			metricName = metric.Settings.Get("script").MustString("")

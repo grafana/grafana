@@ -66,8 +66,7 @@ function getMessageFor(
     return message;
   }
 
-  // In some cases there is a data frame but with no fields
-  if (!data.series || data.series.length === 0 || (data.series.length === 1 && data.series[0].length === 0)) {
+  if (!data.series || data.series.length === 0 || data.series.every((frame) => frame.length === 0)) {
     return fieldConfig?.defaults.noValue ?? 'No data';
   }
 

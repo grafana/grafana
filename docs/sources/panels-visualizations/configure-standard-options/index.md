@@ -27,10 +27,9 @@ For a complete list of field formatting options, refer to [Standard options defi
 
 > You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
-1. Open a dashboard, click the panel title, and click **Edit**.
-
+1. Open a dashboard. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
 1. In the panel display options pane, locate the **Standard options** section.
-
 1. Select the standard options you want to apply.
 
    For more information about standard options, refer to [Standard options definitions]({{< relref "#standard-options-definitions" >}}).
@@ -117,17 +116,19 @@ Select one of the following palettes:
 
 <div class="clearfix"></div>
 
-| Color mode                      | Description                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Single color**                | Specify a single color, useful in an override rule                                                                                                       |
-| **From thresholds**             | Informs Grafana to take the color from the matching threshold                                                                                            |
-| **Classic palette**             | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
-| **Green-Yellow-Red (by value)** | Continuous color scheme                                                                                                                                  |
-| **Blue-Yellow-Red (by value)**  | Continuous color scheme                                                                                                                                  |
-| **Blues (by value)**            | Continuous color scheme (panel background to blue)                                                                                                       |
-| **Reds (by value)**             | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Greens (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Purple (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
+| Color mode                           | Description                                                                                                                                              |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single color**                     | Specify a single color, useful in an override rule                                                                                                       |
+| **Shades of a color**                | Selects shades of a single color, useful in an override rule                                                                                             |
+| **From thresholds**                  | Informs Grafana to take the color from the matching threshold                                                                                            |
+| **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
+| **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                   |
+| **Green-Yellow-Red (by value)**      | Continuous color scheme                                                                                                                                  |
+| **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                  |
+| **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                       |
+| **Reds (by value)**                  | Continuous color scheme (panel background color to blue)                                                                                                 |
+| **Greens (by value)**                | Continuous color scheme (panel background color to blue)                                                                                                 |
+| **Purple (by value)**                | Continuous color scheme (panel background color to blue)                                                                                                 |
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}}
 

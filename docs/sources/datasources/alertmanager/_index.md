@@ -28,24 +28,25 @@ When using Prometheus, contact points and notification policies are read-only in
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Select the **Data sources** section from the **Administration** menu
-2. Select the **Alertmanager** data source
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Alertmanager` in the search bar.
+1. Click **Alertmanager**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
 
-| Name                       | Description                                                                                                                                                                                                   |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                   | Sets the name you use to refer to the data source                                                                                                                                                             |
-| **Default**                | Sets whether the data source is pre-selected for new panels and queries                                                                                                                                       |
-| **Alertmanager**           |                                                                                                                                                                                                               |
-| **Implementation**         | Alertmanager implementation. **Mimir**, **Cortex,** and **Prometheus** are supported                                                                                                                          |
-| **Receive Grafana Alerts** | When enabled the Alertmanager receives alert instances from Grafana-managed alert rules. **Important:** It works only if Grafana alerting is configured to send its alert instances to external Alertmanagers |
-| **HTTP**                   |                                                                                                                                                                                                               |
-| **URL**                    | Sets the HTTP protocol, IP, and port of your Alertmanager instance, such as `https://alertmanager.example.org:9093`                                                                                           |
-| **Access**                 | Only **Server** access mode is functional                                                                                                                                                                     |
-|                            |                                                                                                                                                                                                               |
+1. Set the data source's basic configuration options:
+
+   | Name                            | Description                                                                                                                                                                                                   |
+   | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Name**                        | Sets the name you use to refer to the data source                                                                                                                                                             |
+   | **Default**                     | Sets whether the data source is pre-selected for new panels and queries                                                                                                                                       |
+   | **Alertmanager Implementation** | Alertmanager implementation. **Mimir**, **Cortex,** and **Prometheus** are supported                                                                                                                          |
+   | **Receive Grafana Alerts**      | When enabled the Alertmanager receives alert instances from Grafana-managed alert rules. **Important:** It works only if Grafana alerting is configured to send its alert instances to external Alertmanagers |
+   | **HTTP URL**                    | Sets the HTTP protocol, IP, and port of your Alertmanager instance, such as `https://alertmanager.example.org:9093`                                                                                           |
+   | **Access**                      | Only **Server** access mode is functional                                                                                                                                                                     |
 
 ## Provision the Alertmanager data source
 

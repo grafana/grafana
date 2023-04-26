@@ -72,6 +72,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 9
 
+- [What's new in 9.5]({{< relref "whats-new-in-v9-5/" >}})
 - [What's new in 9.4]({{< relref "whats-new-in-v9-4/" >}})
 - [What's new in 9.3]({{< relref "whats-new-in-v9-3/" >}})
 - [What's new in 9.2]({{< relref "whats-new-in-v9-2/" >}})
@@ -86,12 +87,3 @@ For a complete list of every change, with links to pull requests and related iss
 - [What's new in 8.2]({{< relref "whats-new-in-v8-2/" >}})
 - [What's new in 8.1]({{< relref "whats-new-in-v8-1/" >}})
 - [What's new in 8.0]({{< relref "whats-new-in-v8-0/" >}})
-
-## Grafana 7
-
-- [What's new in 7.5]({{< relref "whats-new-in-v7-5/" >}})
-- [What's new in 7.4]({{< relref "whats-new-in-v7-4/" >}})
-- [What's new in 7.3]({{< relref "whats-new-in-v7-3/" >}})
-- [What's new in 7.2]({{< relref "whats-new-in-v7-2/" >}})
-- [What's new in 7.1]({{< relref "whats-new-in-v7-1/" >}})
-- [What's new in 7.0]({{< relref "whats-new-in-v7-0/" >}})

@@ -4,8 +4,9 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
+import { Trans } from 'app/core/internationalization';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -13,36 +14,6 @@ export interface Props {
 }
 
 export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
-  const onCreateNewPanel = () => {
-    const newPanel: Partial<PanelModel> = {
-      type: 'timeseries',
-      title: 'Panel Title',
-      gridPos: calculateNewPanelGridPos(dashboard),
-    };
-
-    dashboard.addPanel(newPanel);
-    locationService.partial({ editPanel: newPanel.id });
-  };
-
-  const onCreateNewRow = () => {
-    const newRow = {
-      type: 'row',
-      title: 'Row title',
-      gridPos: { x: 0, y: 0 },
-    };
-
-    dashboard.addPanel(newRow);
-  };
-
-  const onAddLibraryPanel = () => {
-    const newPanel = {
-      type: 'add-library-panel',
-      gridPos: calculateNewPanelGridPos(dashboard),
-    };
-
-    dashboard.addPanel(newPanel);
-  };
-
   const styles = useStyles2(getStyles);
 
   return (
@@ -50,60 +21,71 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
           <h1 className={cx(styles.headerSection, styles.headerBig)}>
-            Start your new dashboard by adding a visualization
+            <Trans i18nKey="dashboard.empty.add-visualization-header">
+              Start your new dashboard by adding a visualization
+            </Trans>
           </h1>
-          <h4 className={cx(styles.bodySection, styles.bodyBig)}>
-            Select a data source and then query and visualize your data with charts, stats and tables or create lists,
-            markdowns and other widgets.
-          </h4>
+          <div className={cx(styles.bodySection, styles.bodyBig)}>
+            <Trans i18nKey="dashboard.empty.add-visualization-body">
+              Select a data source and then query and visualize your data with charts, stats and tables or create lists,
+              markdowns and other widgets.
+            </Trans>
+          </div>
           <Button
             size="lg"
             icon="plus"
             aria-label="Add new panel"
             onClick={() => {
-              reportInteraction('Create new panel');
-              onCreateNewPanel();
+              reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
+              const id = onCreateNewPanel(dashboard);
+              locationService.partial({ editPanel: id });
             }}
             disabled={!canCreate}
           >
-            Add visualization
+            <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
           </Button>
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <h2 className={cx(styles.headerSection, styles.headerSmall)}>Add a row</h2>
-            <h5 className={cx(styles.bodySection, styles.bodySmall)}>
-              Group your visualizations into expandable sections.
-            </h5>
+            <h3 className={cx(styles.headerSection, styles.headerSmall)}>
+              <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
+            </h3>
+            <div className={cx(styles.bodySection, styles.bodySmall)}>
+              <Trans i18nKey="dashboard.empty.add-row-body">Group your visualizations into expandable sections.</Trans>
+            </div>
             <Button
               icon="plus"
               fill="outline"
               aria-label="Add new row"
               onClick={() => {
-                reportInteraction('Create new row');
-                onCreateNewRow();
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
+                onCreateNewRow(dashboard);
               }}
               disabled={!canCreate}
             >
-              Add row
+              <Trans i18nKey="dashboard.empty.add-row-button">Add row</Trans>
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <h2 className={cx(styles.headerSection, styles.headerSmall)}>Import panel</h2>
-            <h5 className={cx(styles.bodySection, styles.bodySmall)}>
-              Import visualizations that are shared with other dashboards.
-            </h5>
+            <h3 className={cx(styles.headerSection, styles.headerSmall)}>
+              <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
+            </h3>
+            <div className={cx(styles.bodySection, styles.bodySmall)}>
+              <Trans i18nKey="dashboard.empty.add-import-body">
+                Import visualizations that are shared with other dashboards.
+              </Trans>
+            </div>
             <Button
               icon="plus"
               fill="outline"
               aria-label="Add new panel from panel library"
               onClick={() => {
-                reportInteraction('Add a panel from the panel library');
-                onAddLibraryPanel();
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
+                onAddLibraryPanel(dashboard);
               }}
               disabled={!canCreate}
             >
-              Import library panel
+              <Trans i18nKey="dashboard.empty.add-import-button">Import library panel</Trans>
             </Button>
           </div>
         </div>
@@ -112,7 +94,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
@@ -159,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     headerSection: css({
       label: 'header-section',
-      fontWeight: 600,
+      fontWeight: theme.typography.fontWeightMedium,
       textAlign: 'center',
     }),
     headerBig: css({
@@ -171,6 +153,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     bodySection: css({
       label: 'body-section',
       fontWeight: theme.typography.fontWeightRegular,
+      fontSize: theme.typography.body.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
       color: theme.colors.text.secondary,
       textAlign: 'center',
     }),
@@ -182,4 +166,4 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing.gridSize * 3,
     }),
   };
-};
+}

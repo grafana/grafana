@@ -38,10 +38,11 @@ export const Pages = {
     dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
-    delete: 'Confirm Modal Danger Button',
+    delete: 'data-testid Confirm Modal Danger Button',
   },
   AddDashboard: {
     url: '/dashboard/new',
+    itemButton: (title: string) => `data-testid ${title}`,
     addNewPanel: 'Add new panel',
     addNewRow: 'Add new row',
     addNewPanelLibrary: 'Add new panel from panel library',
@@ -65,8 +66,16 @@ export const Pages = {
       submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
+      Annotations: {
+        annotationsWrapper: 'data-testid annotation-wrapper',
+        annotationLabel: (label: string) => `data-testid Dashboard annotations submenu Label ${label}`,
+        annotationToggle: (label: string) => `data-testid Dashboard annotations submenu Toggle ${label}`,
+      },
     },
     Settings: {
+      Actions: {
+        close: 'data-testid dashboard-settings-close',
+      },
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
@@ -88,6 +97,11 @@ export const Pages = {
         },
         Settings: {
           name: 'Annotations settings name input',
+        },
+        NewAnnotation: {
+          panelFilterSelect: 'data-testid annotations-panel-filter',
+          showInLabel: 'show-in-label',
+          previewInDashboard: 'data-testid annotations-preview',
         },
       },
       Variables: {
@@ -162,6 +176,9 @@ export const Pages = {
           },
         },
       },
+    },
+    Annotations: {
+      marker: 'data-testid annotation-marker',
     },
   },
   Dashboards: {
@@ -251,6 +268,12 @@ export const Pages = {
     name: 'Playlist name',
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
+  },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
   },
   Search: {
     url: '/?search=openn',

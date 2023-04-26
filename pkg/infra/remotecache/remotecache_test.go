@@ -95,7 +95,8 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	assert.Equal(t, err, nil)
 
 	_, err = client.Get(context.Background(), "key1")
-	assert.Equal(t, err, ErrCacheItemNotFound)
+	// redis client returns redis.Nil error when key does not exist.
+	assert.Error(t, err)
 }
 
 func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
@@ -109,7 +110,8 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 
 	// should not be able to read that value since its expired
 	_, err = client.Get(context.Background(), "key1")
-	assert.Equal(t, err, ErrCacheItemNotFound)
+	// redis client returns redis.Nil error when key does not exist.
+	assert.Error(t, err)
 }
 
 func TestCollectUsageStats(t *testing.T) {

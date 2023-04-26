@@ -113,7 +113,7 @@ export interface LocationFields {
   h3?: Field;
   wkt?: Field;
   lookup?: Field;
-  geo?: Field<Geometry>;
+  geo?: Field<Geometry | undefined>;
 }
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -23,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -350,24 +348,13 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
 func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	f, err := plugin.File(assetPath)
+	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
 			return
 		}
 		c.JsonApiErr(500, "Could not open plugin file", err)
-		return
-	}
-	defer func() {
-		if err = f.Close(); err != nil {
-			hs.log.Error("Failed to close plugin file", "err", err)
-		}
-	}()
-
-	fi, err := f.Stat()
-	if err != nil {
-		c.JsonApiErr(500, "Plugin file exists but could not open", err)
 		return
 	}
 
@@ -377,17 +364,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin p
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	if rs, ok := f.(io.ReadSeeker); ok {
-		http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), rs)
-		return
-	}
-
-	b, err := io.ReadAll(f)
-	if err != nil {
-		c.JsonApiErr(500, "Plugin file exists but could not read", err)
-		return
-	}
-	http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), bytes.NewReader(b))
+	http.ServeContent(c.Resp, c.Req, assetPath, f.ModTime, bytes.NewReader(f.Content))
 }
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
@@ -491,6 +468,10 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
 		}
+		var archError repo.ErrArcNotFound
+		if errors.As(err, &archError) {
+			return response.Error(http.StatusNotFound, archError.Error(), nil)
+		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
@@ -509,10 +490,6 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
-			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
-		}
-
 		return response.Error(http.StatusInternalServerError, "Failed to uninstall plugin", err)
 	}
 	return response.JSON(http.StatusOK, []byte{})
@@ -538,34 +515,24 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name string) ([]byte, error) {
-	plugin, exists := hs.pluginStore.Plugin(ctx, pluginId)
-	if !exists {
-		return make([]byte, 0), plugins.NotFoundError{PluginID: pluginId}
-	}
-
+func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {
 	file, err := mdFilepath(strings.ToUpper(name))
 	if err != nil {
 		return make([]byte, 0), err
 	}
 
-	md, err := plugin.File(file)
+	md, err := hs.pluginFileStore.File(ctx, pluginID, file)
 	if err != nil {
-		md, err = plugin.File(strings.ToLower(file))
+		if errors.Is(err, plugins.ErrPluginNotInstalled) {
+			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginID}
+		}
+
+		md, err = hs.pluginFileStore.File(ctx, pluginID, strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
 	}
-	defer func() {
-		if err = md.Close(); err != nil {
-			hs.log.Error("Failed to close plugin markdown file", "err", err)
-		}
-	}()
-	d, err := io.ReadAll(md)
-	if err != nil {
-		return make([]byte, 0), nil
-	}
-	return d, nil
+	return md.Content, nil
 }
 
 func mdFilepath(mdFilename string) (string, error) {

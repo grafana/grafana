@@ -135,20 +135,12 @@ interface ExpressionResultProps {
 }
 export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
-  const { page, pageItems, onPageChange, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
+  const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
-
-  const previousPage = useCallback(() => {
-    onPageChange(page - 1);
-  }, [page, onPageChange]);
-
-  const nextPage = useCallback(() => {
-    onPageChange(page + 1);
-  }, [page, onPageChange]);
 
   const shouldShowPagination = numberOfPages > 1;
 
@@ -331,13 +323,16 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
-  const hasLabels = frame.fields[1].labels;
-  const name = hasLabels ? formatLabels(frame.fields[1].labels ?? {}) : 'Series ' + index;
+  const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
 
-  const timestamps = frame.fields[0].values.toArray();
+  const hasLabels = valueField.labels;
+  const displayNameFromDS = valueField.config?.displayNameFromDS;
+  const name = displayNameFromDS ?? (hasLabels ? formatLabels(valueField.labels ?? {}) : 'Series ' + index);
 
-  const getTimestampFromIndex = (index: number) => frame.fields[0].values.get(index);
-  const getValueFromIndex = (index: number) => frame.fields[1].values.get(index);
+  const timestamps = frame.fields[0].values;
+
+  const getTimestampFromIndex = (index: number) => frame.fields[0].values[index];
+  const getValueFromIndex = (index: number) => frame.fields[1].values[index];
 
   return (
     <div className={styles.expression.resultsRow}>

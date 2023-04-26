@@ -351,18 +351,19 @@ func (hs *HTTPServer) SyncUser(
 		},
 	}
 
-	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
+	upsertedUser, err := hs.Login.UpsertUser(ctx.Req.Context(), cmd)
+	if err != nil {
 		return nil, err
 	}
 
 	// Do not expose disabled status,
 	// just show incorrect user credentials error (see #17947)
-	if cmd.Result.IsDisabled {
-		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
+	if upsertedUser.IsDisabled {
+		oauthLogger.Warn("User is disabled", "user", upsertedUser.Login)
 		return nil, login.ErrInvalidCredentials
 	}
 
-	return cmd.Result, nil
+	return upsertedUser, nil
 }
 
 func (hs *HTTPServer) hashStatecode(code, seed string) string {

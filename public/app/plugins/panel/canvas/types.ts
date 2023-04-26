@@ -20,6 +20,7 @@ export interface DropNode extends DragNode {
 export enum InlineEditTabs {
   ElementManagement = 'element-management',
   SelectedElement = 'selected-element',
+  SelectedConnection = 'selected-connection',
 }
 
 export type AnchorPoint = {
@@ -33,7 +34,8 @@ export interface CanvasTooltipPayload {
   isOpen?: boolean;
 }
 
-export interface ConnectionInfo {
+export interface ConnectionState {
+  index: number; // array index from the source
   source: ElementState;
   target: ElementState;
   info: CanvasConnection;

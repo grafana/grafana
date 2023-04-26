@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/provisioning/alerting/file"
 )
 
 // swagger:route GET /api/v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
@@ -217,4 +215,41 @@ type AlertRuleGroup struct {
 
 // AlertingFileExport is the full provisioned file export.
 // swagger:model
-type AlertingFileExport = file.AlertingFileExport
+type AlertingFileExport struct {
+	APIVersion int64                  `json:"apiVersion" yaml:"apiVersion"`
+	Groups     []AlertRuleGroupExport `json:"groups" yaml:"groups"`
+}
+
+// AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.
+type AlertRuleGroupExport struct {
+	OrgID    int64             `json:"orgId" yaml:"orgId"`
+	Name     string            `json:"name" yaml:"name"`
+	Folder   string            `json:"folder" yaml:"folder"`
+	Interval model.Duration    `json:"interval" yaml:"interval"`
+	Rules    []AlertRuleExport `json:"rules" yaml:"rules"`
+}
+
+// AlertRuleExport is the provisioned file export of models.AlertRule.
+type AlertRuleExport struct {
+	UID          string              `json:"uid" yaml:"uid"`
+	Title        string              `json:"title" yaml:"title"`
+	Condition    string              `json:"condition" yaml:"condition"`
+	Data         []AlertQueryExport  `json:"data" yaml:"data"`
+	DashboardUID string              `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
+	PanelID      int64               `json:"panelId,omitempty" yaml:"panelId,omitempty"`
+	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState"`
+	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState"`
+	For          model.Duration      `json:"for" yaml:"for"`
+	Annotations  map[string]string   `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+	Labels       map[string]string   `json:"labels,omitempty" yaml:"labels,omitempty"`
+	IsPaused     bool                `json:"isPaused" yaml:"isPaused"`
+}
+
+// AlertQueryExport is the provisioned export of models.AlertQuery.
+type AlertQueryExport struct {
+	RefID             string                 `json:"refId" yaml:"refId"`
+	QueryType         string                 `json:"queryType,omitempty" yaml:"queryType,omitempty"`
+	RelativeTimeRange RelativeTimeRange      `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty"`
+	DatasourceUID     string                 `json:"datasourceUid" yaml:"datasourceUid"`
+	Model             map[string]interface{} `json:"model" yaml:"model"`
+}
