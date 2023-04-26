@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
-import { useEffectOnce } from 'react-use';
+import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
@@ -18,9 +18,11 @@ import {
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
+import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
@@ -37,14 +39,26 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
-import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
 import { filterAlerts } from './util';
 
+function getStateList(state: StateFilter) {
+  const reducer = (list: string[], [stateKey, value]: [string, boolean]) => {
+    if (Boolean(value)) {
+      return [...list, stateKey];
+    } else {
+      return list;
+    }
+  };
+  return Object.entries(state).reduce(reducer, []);
+}
+
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [limitInstances, toggleLimit] = useToggle(true);
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -60,14 +74,74 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     dashboard = getDashboardSrv().getCurrent();
   });
 
+  const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
+  const { options, replaceVariables } = props;
+  const parsedOptions: UnifiedAlertListOptions = {
+    ...props.options,
+    alertName: replaceVariables(options.alertName),
+    alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+  };
+
+  const matcherList = useMemo(
+    () => parseMatchers(parsedOptions.alertInstanceLabelFilter),
+    [parsedOptions.alertInstanceLabelFilter]
+  );
+
+  useEffect(() => {
+    if (props.options.groupMode === GroupMode.Default) {
+      dispatch(
+        fetchAllPromAndRulerRulesAction(false, {
+          limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+          matcher: matcherList,
+          state: stateList,
+        })
+      );
+    }
+  }, [props.options.groupMode, limitInstances, dispatch, matcherList, stateList]);
+
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
-    dispatch(fetchAllPromAndRulerRulesAction());
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromAndRulerRulesAction()));
+    dispatch(
+      fetchAllPromAndRulerRulesAction(false, {
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        matcher: matcherList,
+        state: stateList,
+      })
+    );
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
+      dispatch(
+        fetchAllPromAndRulerRulesAction(false, {
+          limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+          matcher: matcherList,
+          state: stateList,
+        })
+      )
+    );
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard]);
+  }, [dispatch, dashboard, matcherList, stateList, toggleLimit, limitInstances]);
+
+  const handleInstancesLimit = (limit: boolean) => {
+    if (limit) {
+      dispatch(
+        fetchAllPromAndRulerRulesAction(false, {
+          limitAlerts: INSTANCES_DISPLAY_LIMIT,
+          matcher: matcherList,
+          state: stateList,
+        })
+      );
+      toggleLimit(true);
+    } else {
+      dispatch(
+        fetchAllPromAndRulerRulesAction(false, {
+          matcher: matcherList,
+          state: stateList,
+        })
+      );
+      toggleLimit(false);
+    }
+  };
 
   const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
     prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
@@ -106,13 +180,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     );
   }
 
-  const { options, replaceVariables } = props;
-  const parsedOptions: UnifiedAlertListOptions = {
-    ...props.options,
-    alertName: replaceVariables(options.alertName),
-    alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
-  };
-
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
@@ -134,7 +201,12 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             <GroupedModeView rules={rules} options={parsedOptions} />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView rules={rules} options={parsedOptions} />
+            <UngroupedModeView
+              rules={rules}
+              options={parsedOptions}
+              handleInstancesLimit={handleInstancesLimit}
+              limitInstances={limitInstances}
+            />
           )}
         </section>
       </div>

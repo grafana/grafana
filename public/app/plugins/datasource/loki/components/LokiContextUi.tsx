@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Icon, Label, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
@@ -40,9 +40,6 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     hidden: css`
       visibility: hidden;
-    `,
-    tag: css`
-      padding: ${theme.spacing(0.25)} ${theme.spacing(0.75)};
     `,
     label: css`
       max-width: 100%;
@@ -190,14 +187,6 @@ export function LokiContextUi(props: LokiContextUiProps) {
         }
       >
         <div className={styles.ui}>
-          <Tooltip
-            content={
-              'This feature is experimental and may change in the future. Currently it supports using a parser and extracted labels for queries with no more than 1 parser (for example, logfmt, json). Please report any issues in the grafana GitHub repository.'
-            }
-            placement="top"
-          >
-            <Tag className={styles.tag} name={'Experimental feature'} colorIndex={1} />
-          </Tooltip>{' '}
           <Label
             className={styles.label}
             description="The initial log context query is created from all labels defining the stream for the selected log line. You can broaden your search by removing one or more of the label filters."
