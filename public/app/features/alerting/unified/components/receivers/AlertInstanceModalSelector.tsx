@@ -4,7 +4,16 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Button, clearButtonStyles, FilterInput, LoadingPlaceholder, Modal, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  clearButtonStyles,
+  FilterInput,
+  LoadingPlaceholder,
+  Modal,
+  Tooltip,
+  useStyles2,
+  Icon,
+} from '@grafana/ui';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
@@ -82,6 +91,11 @@ export function AlertInstanceModalSelector({
         onClick={() => handleRuleChange(ruleName)}
       >
         <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
+        <div className={styles.alertFolder}>
+          <>
+            <Icon name="folder" /> {filteredRules[ruleName][0].labels['grafana_folder'] ?? ''}
+          </>
+        </div>
       </button>
     );
   };
@@ -320,6 +334,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     labels: css`
       justify-content: flex-start;
+    `,
+    alertFolder: css`
+      height: 20px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      column-gap: ${theme.spacing(1)};
+      align-items: center;
     `,
   };
 };
