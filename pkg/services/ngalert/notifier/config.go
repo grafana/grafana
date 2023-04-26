@@ -95,14 +95,12 @@ type AlertingConfiguration struct {
 	AlertmanagerConfig    api.PostableApiAlertingConfig
 	RawAlertmanagerConfig []byte
 
-	AlertmanagerTemplates *alertingTemplates.Template
-
-	IntegrationsFunc         func(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error)
-	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (*alertingNotify.Integration, error)
+	ReceiverMap              map[string]*alertingNotify.APIReceiver
+	ReceiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (alertingNotify.Notifier, error) {
-	return func(next *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (alertingNotify.Notifier, error) {
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+	return func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
 		return a.ReceiverIntegrationsFunc(next, tmpl)
 	}
 }
@@ -119,16 +117,16 @@ func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInte
 	return a.AlertmanagerConfig.MuteTimeIntervals
 }
 
-func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
-	return a.IntegrationsFunc(PostableApiAlertingConfigToApiReceivers(a.AlertmanagerConfig), a.AlertmanagerTemplates)
+func (a AlertingConfiguration) Receivers() map[string]*alertingNotify.APIReceiver {
+	return a.ReceiverMap
 }
 
 func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
 	return a.AlertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() *alertingTemplates.Template {
-	return a.AlertmanagerTemplates
+func (a AlertingConfiguration) Templates() []string {
+	return a.AlertmanagerConfig.Templates
 }
 
 func (a AlertingConfiguration) Hash() [16]byte {

@@ -39,7 +39,6 @@ type Alertmanager interface {
 	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
 	AppURL() string
-	WorkingDirPath() string
 
 	// Silences
 	CreateSilence(ps *apimodels.PostableSilence) (string, error)
@@ -54,6 +53,7 @@ type Alertmanager interface {
 	// Receivers
 	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error)
 }
 
 type AlertingStore interface {
