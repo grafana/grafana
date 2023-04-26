@@ -3,7 +3,6 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
@@ -11,6 +10,7 @@ import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from 
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
+import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
@@ -43,8 +43,6 @@ export function QueryHeader({
   query,
   queryRowFilter,
 }: QueryHeaderProps) {
-  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
-
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -98,9 +96,9 @@ export function QueryHeader({
   };
 
   const isDatasetDropdownEnabled = () => {
-    // If the feature flag is DISABLED, && the datasource is Postgres (disable),
+    // If the feature flag is DISABLED, && the datasource is Postgres (isPostgresInstance),
     // we want to hide the dropdown - as per previous behavior.
-    if (!sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled && isPostgresInstance) {
+    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {
       return false;
     }
 

@@ -2,10 +2,11 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps, toOption } from '../types';
+
+import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 
 export interface DatasetSelectorProps extends ResourceSelectorProps {
   db: DB;
@@ -30,7 +31,6 @@ export const DatasetSelector = ({
     NOTE: Postgres is NOT configured to be able to connect WITHOUT a default database, so if the datasource is Postgres (isPostgresInstance),
     this component will also become disabled.
   */
-  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = config.featureToggles.sqlDatasourceDatabaseSelection;
   const usePreconfiguredDataset = !!preconfiguredDataset;
   // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
   // OR if 2) the datasource is Postgres, in which case this component should be disabled by default.
@@ -38,7 +38,7 @@ export const DatasetSelector = ({
 
   const state = useAsync(async () => {
     // If a default database is already configured for a MSSQL or MYSQL data source, OR the data source is Postgres, no need to fetch other databases.
-    if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
+    if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       if (hasPreconfigCondition) {
         return [];
       }
@@ -74,7 +74,7 @@ export const DatasetSelector = ({
       options={state.value}
       onChange={onChange}
       disabled={
-        sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled ? hasPreconfigCondition || state.loading : state.loading
+        isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() ? hasPreconfigCondition || state.loading : state.loading
       }
       isLoading={state.loading}
       menuShouldPortal={true}

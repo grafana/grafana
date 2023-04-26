@@ -3,7 +3,6 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
 import { EditorMode, Space } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
@@ -11,6 +10,7 @@ import { applyQueryDefaults } from '../defaults';
 import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
+import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
@@ -29,7 +29,6 @@ export function SqlQueryEditor({
 }: SqlQueryEditorProps) {
   // console.log('🚀 ~ file: QueryEditor.tsx:30 ~ query:', query);
   // console.log('🚀 ~ file: QueryEditor.tsx:30 ~ datasource:', datasource);
-  const sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled = !!config.featureToggles.sqlDatasourceDatabaseSelection;
 
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
   const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
@@ -48,7 +47,7 @@ export function SqlQueryEditor({
   }, [datasource]);
 
   useEffect(() => {
-    if (sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled) {
+    if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       /*
         If there is a preconfigured database (either through the provisioning config, or the data source configuration component),
         AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
@@ -69,13 +68,7 @@ export function SqlQueryEditor({
         setHasNoPostgresDefaultDatabaseConfig(true);
       }
     }
-  }, [
-    datasource,
-    isPostgresInstance,
-    preconfiguredDatabase,
-    query,
-    sqlDatasourceDatabaseSelectionFeatureFlagIsEnabled,
-  ]);
+  }, [datasource, isPostgresInstance, preconfiguredDatabase, query]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
