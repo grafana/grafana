@@ -105,19 +105,18 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
     for (const child of state.rootItems) {
       state.selectedItems[child.kind][child.uid] = isSelected;
     }
+  } else {
+    // if deselecting only need to loop over what we've already selected
+    for (const kind in state.selectedItems) {
+      if (!(kind === 'dashboard' || kind === 'panel' || kind === 'folder')) {
+        continue;
+      }
 
-    return;
-  }
+      const selection = state.selectedItems[kind];
 
-  for (const kind in state.selectedItems) {
-    if (!(kind === 'dashboard' || kind === 'panel' || kind === 'folder')) {
-      continue;
-    }
-
-    const selection = state.selectedItems[kind];
-
-    for (const uid in selection) {
-      selection[uid] = isSelected;
+      for (const uid in selection) {
+        selection[uid] = isSelected;
+      }
     }
   }
 }

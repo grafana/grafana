@@ -93,5 +93,5 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
-export const { useGetFolderQuery, useGetAffectedItemsQuery } = browseDashboardsAPI;
+export const { useGetFolderQuery, useLazyGetFolderQuery, useGetAffectedItemsQuery } = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

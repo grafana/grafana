@@ -90,6 +90,7 @@ describe('browse-dashboards reducers', () => {
       extraReducerFetchChildrenFulfilled(state, action);
 
       expect(state.selectedItems).toEqual({
+        $all: false,
         dashboard: {
           [childDashboard.uid]: true,
         },
@@ -120,6 +121,7 @@ describe('browse-dashboards reducers', () => {
       setItemSelectionState(state, { type: 'setItemSelectionState', payload: { item: dashboard, isSelected: true } });
 
       expect(state.selectedItems).toEqual({
+        $all: false,
         dashboard: {
           [dashboard.uid]: true,
         },
@@ -145,6 +147,7 @@ describe('browse-dashboards reducers', () => {
       });
 
       expect(state.selectedItems).toEqual({
+        $all: false,
         dashboard: {
           [childDashboard.uid]: true,
           [grandchildDashboard.uid]: true,
@@ -181,6 +184,7 @@ describe('browse-dashboards reducers', () => {
       });
 
       expect(state.selectedItems).toEqual({
+        $all: false,
         dashboard: {
           [childDashboard.uid]: true,
           [grandchildDashboard.uid]: false,
@@ -195,15 +199,70 @@ describe('browse-dashboards reducers', () => {
   });
 
   describe('setAllSelection', () => {
-    const state = createInitialState();
+    it('selects all loaded items', () => {
+      const state = createInitialState();
 
-    setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true } });
+      let seed = 1;
+      const topLevelDashboard = wellFormedDashboard(seed++).item;
+      const topLevelFolder = wellFormedFolder(seed++).item;
+      const childDashboard = wellFormedDashboard(seed++, {}, { parentUID: topLevelFolder.uid }).item;
+      const childFolder = wellFormedFolder(seed++, {}, { parentUID: topLevelFolder.uid }).item;
+      const grandchildDashboard = wellFormedDashboard(seed++, {}, { parentUID: childFolder.uid }).item;
 
-    expect(state.selectedItems).toEqual({
-      $all: true,
-      dashboard: {},
-      folder: {},
-      panel: {},
+      state.rootItems = [topLevelFolder, topLevelDashboard];
+      state.childrenByParentUID[topLevelFolder.uid] = [childDashboard, childFolder];
+      state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
+
+      state.selectedItems.folder[childFolder.uid] = false;
+      state.selectedItems.dashboard[grandchildDashboard.uid] = true;
+
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true } });
+
+      expect(state.selectedItems).toEqual({
+        $all: true,
+        dashboard: {
+          [topLevelDashboard.uid]: true,
+          [childDashboard.uid]: true,
+          [grandchildDashboard.uid]: true,
+        },
+        folder: {
+          [topLevelFolder.uid]: true,
+          [childFolder.uid]: true,
+        },
+        panel: {},
+      });
+    });
+
+    it('deselects all items', () => {
+      const state = createInitialState();
+
+      let seed = 1;
+      const topLevelDashboard = wellFormedDashboard(seed++).item;
+      const topLevelFolder = wellFormedFolder(seed++).item;
+      const childDashboard = wellFormedDashboard(seed++, {}, { parentUID: topLevelFolder.uid }).item;
+      const childFolder = wellFormedFolder(seed++, {}, { parentUID: topLevelFolder.uid }).item;
+      const grandchildDashboard = wellFormedDashboard(seed++, {}, { parentUID: childFolder.uid }).item;
+
+      state.rootItems = [topLevelFolder, topLevelDashboard];
+      state.childrenByParentUID[topLevelFolder.uid] = [childDashboard, childFolder];
+      state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
+
+      state.selectedItems.folder[childFolder.uid] = false;
+      state.selectedItems.dashboard[grandchildDashboard.uid] = true;
+
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: false } });
+
+      // Deselecting only sets selection = false for things already selected
+      expect(state.selectedItems).toEqual({
+        $all: false,
+        dashboard: {
+          [grandchildDashboard.uid]: false,
+        },
+        folder: {
+          [childFolder.uid]: false,
+        },
+        panel: {},
+      });
     });
   });
 });
