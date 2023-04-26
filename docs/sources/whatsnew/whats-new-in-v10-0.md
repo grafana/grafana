@@ -202,7 +202,7 @@ Weâ€™ve improved the way you can configure annotations by adding the possibility
 
 Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
 
-Notably, we've added the follwoing new features that streamline the log context experience:
+Notably, we've added the following new features that streamline the log context experience:
 
 1. Log details with actions including a "copy" button for easily copying lines and an eye icon for displaying only selected labels, allowing users to focus on specific information without leaving the log context panel.
 2. A "Wrap Lines" toggle to automatically wrap long lines of text for easier reading and analysis of log entry context directly in log context.
@@ -256,7 +256,7 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If youâ€
 
 The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
-This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insigts resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
+This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insights resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
 
 ### Prometheus dashboard performance improvements
 
