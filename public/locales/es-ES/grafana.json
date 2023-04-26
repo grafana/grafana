@@ -439,8 +439,8 @@
       "type-header": "Tipo"
     },
     "search-input": {
-      "include-panels-placeholder": "Buscar paneles de control y paneles",
-      "placeholder": "Buscar paneles de control"
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
