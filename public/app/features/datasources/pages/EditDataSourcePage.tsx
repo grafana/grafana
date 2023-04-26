@@ -22,7 +22,7 @@ export function EditDataSourcePage(props: Props) {
     <Page
       navId="datasources"
       pageNav={nav.main}
-      renderTitle={(title) => <EditDataSourceTitle title={title} uid={uid} />}
+      renderTitle={(title) => <EditDataSourceTitle title={title} />}
       subTitle={<EditDataSourceSubtitle uid={uid} />}
       actions={config.featureToggles.topnav ? <EditDataSourceActions uid={uid} /> : undefined}
     >

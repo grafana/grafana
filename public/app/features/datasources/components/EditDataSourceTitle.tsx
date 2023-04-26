@@ -13,11 +13,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 interface Props {
-  uid: string;
   title: string;
 }
 
-export function EditDataSourceTitle({ title, uid }: Props) {
+export function EditDataSourceTitle({ title }: Props) {
   const styles = useStyles2(getStyles);
 
   return <div>{title} - This is going to be title, which is now long but can be edited later.</div>;

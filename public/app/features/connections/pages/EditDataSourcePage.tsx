@@ -5,6 +5,8 @@ import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { EditDataSource } from 'app/features/datasources/components/EditDataSource';
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
+import { EditDataSourceTitle } from 'app/features/datasources/components/EditDataSourceTitle';
+import { EditDataSourceSubtitle } from 'app/features/datasources/components/EditDatasSourceSubtitle';
 
 import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
 
@@ -19,6 +21,8 @@ export function EditDataSourcePage() {
     <Page
       navId={navId}
       pageNav={pageNav}
+      renderTitle={(title) => <EditDataSourceTitle title={title} />}
+      subTitle={<EditDataSourceSubtitle uid={uid} />}
       actions={config.featureToggles.topnav ? <EditDataSourceActions uid={uid} /> : undefined}
     >
       <Page.Contents>
