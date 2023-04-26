@@ -51,18 +51,19 @@ const (
 )
 
 type CloudWatchQuery struct {
-	logger            log.Logger
-	RefId             string
-	Region            string
-	Id                string
-	Namespace         string
-	MetricName        string
-	Statistic         string
-	Expression        string
-	SqlExpression     string
-	ReturnData        bool
-	Dimensions        map[string][]string
-	Period            int
+	logger        log.Logger
+	RefId         string
+	Region        string
+	Id            string
+	Namespace     string
+	MetricName    string
+	Statistic     string
+	Expression    string
+	SqlExpression string
+	ReturnData    bool
+	Dimensions    map[string][]string
+	Period        int
+	// Deprecated: use Label
 	Alias             string
 	Label             string
 	MatchExact        bool
