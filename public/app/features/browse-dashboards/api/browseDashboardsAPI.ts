@@ -3,6 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { isTruthy } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { FolderDTO } from 'app/types';
 
 import { DashboardTreeSelection } from '../types';
@@ -35,6 +36,18 @@ export const browseDashboardsAPI = createApi({
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
+    deleteDashboard: builder.mutation<DeleteDashboardResponse, string>({
+      query: (dashboardUID) => ({
+        url: `/dashboards/uid/${dashboardUID}`,
+        method: 'DELETE',
+      }),
+    }),
+    deleteFolder: builder.mutation<void, string>({
+      query: (folderUID) => ({
+        url: `/folders/${folderUID}?forceDeleteRules=true`,
+        method: 'DELETE',
+      }),
+    }),
     getFolder: builder.query<FolderDTO, string>({
       query: (folderUID) => ({ url: `/folders/${folderUID}` }),
     }),
@@ -93,5 +106,6 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
-export const { useGetFolderQuery, useGetAffectedItemsQuery } = browseDashboardsAPI;
+export const { useDeleteDashboardMutation, useDeleteFolderMutation, useGetFolderQuery, useGetAffectedItemsQuery } =
+  browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';
