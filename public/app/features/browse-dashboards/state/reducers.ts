@@ -60,25 +60,36 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // If we're unselecting an item, unselect all ancestors (parent, grandparent, etc) also
-  // so we can later show a UI-only 'mixed' checkbox
-  if (!isSelected) {
-    let nextParentUID = item.parentUID;
+  // Then we need to reconcile the parents to make them in the correct state
+  // If all items in a folder are selected, then the folder itself should also be selected
+  // The inverse is partially true - if a child item is selected, then all its parents
+  // should be deselected
 
-    // this is like a recursive climb up the parents of the tree while we have a
-    // parentUID (we've hit a root dashboard/folder)
-    while (nextParentUID) {
-      const parent = findItem(state.rootItems, state.childrenByParentUID, nextParentUID);
+  let nextParentUID = item.parentUID;
 
-      // This case should not happen, but a find can theortically return undefined, and it
-      // helps limit infinite loops
-      if (!parent) {
-        break;
-      }
+  while (nextParentUID) {
+    const parent = findItem(state.rootItems, state.childrenByParentUID, nextParentUID);
 
-      state.selectedItems[parent.kind][parent.uid] = false;
-      nextParentUID = parent.parentUID;
+    // This case should not happen, but a find can theortically return undefined, and it
+    // helps limit infinite loops
+    if (!parent) {
+      break;
     }
+
+    if (isSelected) {
+      // If we're selecting an item, check all ancestors and see if all their children are
+      // now selected and update them appropriately
+      const children = state.childrenByParentUID[parent.uid];
+
+      const allChildrenSelected = children?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
+      state.selectedItems[parent.kind][parent.uid] = allChildrenSelected;
+    } else {
+      // If we're unselecting an item, unselect all ancestors (parent, grandparent, etc) also
+      // so we can show a UI-only 'mixed' checkbox
+      state.selectedItems[parent.kind][parent.uid] = false;
+    }
+
+    nextParentUID = parent.parentUID;
   }
 }
 
