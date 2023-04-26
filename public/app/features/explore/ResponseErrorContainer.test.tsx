@@ -2,14 +2,14 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DataQueryError, LoadingState, getDefaultTimeRange } from '@grafana/data';
+import { DataQueryError, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../store/configureStore';
 
 import { ResponseErrorContainer } from './ResponseErrorContainer';
-import { makeExplorePaneState } from './state/utils';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
 describe('ResponseErrorContainer', () => {
   it('shows error message if it does not contain refId', async () => {
@@ -51,24 +51,13 @@ function setup(error: DataQueryError) {
     left: {
       ...makeExplorePaneState(),
       queryResponse: {
-        timeRange: getDefaultTimeRange(),
-        series: [],
+        ...createEmptyQueryResponse(),
         state: LoadingState.Error,
         error,
-        graphFrames: [],
-        logsFrames: [],
-        tableFrames: [],
-        traceFrames: [],
-        nodeGraphFrames: [],
-        rawPrometheusFrames: [],
-        flameGraphFrames: [],
-        graphResult: null,
-        logsResult: null,
-        tableResult: null,
-        rawPrometheusResult: null,
       },
     },
   };
+
   render(
     <TestProvider store={store}>
       <ResponseErrorContainer exploreId={ExploreId.left} />
