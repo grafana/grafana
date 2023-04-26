@@ -10,8 +10,8 @@ const DeleteUserModal = ({ user, onDismiss }: { user: SessionUser; onDismiss: ()
 
   const body = (
     <p className={styles.description}>
-      The user {user.email} is currently present in {user.totalDashboards} public dashboards. If you wish to remove this
-      user, please navigate to the settings of the corresponding public dashboard.
+      The user {user.email} is currently present in {user.totalDashboards} public dashboard(s). If you wish to remove
+      this user, please navigate to the settings of the corresponding public dashboard.
     </p>
   );
 

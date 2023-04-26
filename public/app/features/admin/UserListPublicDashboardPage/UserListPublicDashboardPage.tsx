@@ -42,7 +42,7 @@ export const UserListPublicDashboardPage = () => {
               <td className="max-width-10">{user.firstSeenAtAge}</td>
               <td className="max-width-10">
                 <HorizontalGroup spacing="sm">
-                  <span>{user.totalDashboards} dashboards</span>
+                  <span>{user.totalDashboards} dashboard(s)</span>
                   <DashboardsListModalButton email={user.email} />
                 </HorizontalGroup>
               </td>
