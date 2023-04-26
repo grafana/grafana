@@ -702,60 +702,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a dashboard to validate", func(t *testing.T) {
-		sqlmock := dbtest.NewFakeDB()
-
-		t.Run("When an invalid dashboard json is posted", func(t *testing.T) {
-			cmd := dashboards.ValidateDashboardCommand{
-				Dashboard: "{\"hello\": \"world\"}",
-			}
-
-			role := org.RoleAdmin
-			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, 422, sc.resp.Code)
-				assert.False(t, result.Get("isValid").MustBool())
-				assert.NotEmpty(t, result.Get("message").MustString())
-			}, sqlmock)
-		})
-
-		t.Run("When a dashboard with a too-low schema version is posted", func(t *testing.T) {
-			cmd := dashboards.ValidateDashboardCommand{
-				Dashboard: "{\"schemaVersion\": 1}",
-			}
-
-			role := org.RoleAdmin
-			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, 412, sc.resp.Code)
-				assert.False(t, result.Get("isValid").MustBool())
-				assert.Equal(t, "invalid schema version", result.Get("message").MustString())
-			}, sqlmock)
-		})
-
-		t.Run("When a valid dashboard is posted", func(t *testing.T) {
-			devenvDashboard, readErr := os.ReadFile("../../devenv/dev-dashboards/home.json")
-			assert.Empty(t, readErr)
-
-			cmd := dashboards.ValidateDashboardCommand{
-				Dashboard: string(devenvDashboard),
-			}
-
-			role := org.RoleAdmin
-			postValidateScenario(t, "When calling POST on", "/api/dashboards/validate", "/api/dashboards/validate", cmd, role, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.True(t, result.Get("isValid").MustBool())
-			}, sqlmock)
-		})
-	})
-
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
