@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Button, ButtonGroup, Dropdown, Menu, MenuItem } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { getNewDashboardPhrase, getNewFolderPhrase, getImportPhrase } from 'app/features/search/tempI18nPhrases';
 
 interface Props {
   /**
@@ -13,18 +13,9 @@ interface Props {
 export function CreateNewButton({ inFolder }: Props) {
   const newMenu = (
     <Menu>
-      <MenuItem
-        url={addFolderUidToUrl('/dashboard/new', inFolder)}
-        label={t('search.dashboard-actions.new-dashboard', 'New Dashboard')}
-      />
-      <MenuItem
-        url={addFolderUidToUrl('/dashboards/folder/new', inFolder)}
-        label={t('search.dashboard-actions.new-folder', 'New Folder')}
-      />
-      <MenuItem
-        url={addFolderUidToUrl('/dashboard/import', inFolder)}
-        label={t('search.dashboard-actions.import', 'Import')}
-      />
+      <MenuItem url={addFolderUidToUrl('/dashboard/new', inFolder)} label={getNewDashboardPhrase()} />
+      <MenuItem url={addFolderUidToUrl('/dashboards/folder/new', inFolder)} label={getNewFolderPhrase()} />
+      <MenuItem url={addFolderUidToUrl('/dashboard/import', inFolder)} label={getImportPhrase()} />
     </Menu>
   );
 
