@@ -382,17 +382,19 @@ var aliasPatterns = map[string]string{
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
 func getLabel(query metricsDataQuery) string {
+	deprecatedAlias := query.Alias //nolint:staticcheck
+
 	if query.Label != nil {
 		return *query.Label
 	}
-	if query.Alias != nil && *query.Alias == "" {
+	if deprecatedAlias != nil && *deprecatedAlias == "" {
 		return ""
 	}
 
 	var result string
 	fullAliasField := ""
-	if query.Alias != nil {
-		fullAliasField = *query.Alias
+	if deprecatedAlias != nil {
+		fullAliasField = *deprecatedAlias
 	}
 	matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
 
