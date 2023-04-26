@@ -17,7 +17,3 @@ type logWrapper struct {
 func (l logWrapper) New(ctx ...interface{}) alertingLogging.Logger {
 	return logWrapper{l.ConcreteLogger.New(ctx...)}
 }
-
-func NewLogger(l log.Logger, ctx ...interface{}) alertingLogging.Logger {
-	return logWrapper{l.New(ctx...)}
-}
