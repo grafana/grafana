@@ -7,7 +7,7 @@ import { usePopper } from 'react-popper';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
-import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { useDatasource } from '../../hooks';
@@ -43,6 +43,14 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [0, 4],
+        },
+      },
+    ],
   });
 
   const onClose = useCallback(() => {
@@ -154,14 +162,12 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   return (
     <div style={props.style} ref={ref} className={styles.container}>
       <div className={styles.dataSourceList}>
-        <CustomScrollbar>
-          <DataSourceList
-            {...props}
-            current={current}
-            onChange={changeCallback}
-            filter={(ds) => ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
-          ></DataSourceList>
-        </CustomScrollbar>
+        <DataSourceList
+          {...props}
+          current={current}
+          onChange={changeCallback}
+          filter={(ds) => ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
+        ></DataSourceList>
       </div>
 
       <div className={styles.footer}>
@@ -209,7 +215,6 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       display: flex;
       flex-direction: column;
       height: 412px;
-      box-shadow: ${theme.shadows.z3};
       width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
@@ -219,7 +224,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     `,
     dataSourceList: css`
       flex: 1;
-      height: 100%;
+      overflow: scroll;
     `,
     footer: css`
       flex: 0;

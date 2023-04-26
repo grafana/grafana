@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 
 import { Spinner } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { getSearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -12,20 +12,16 @@ import { setItemSelectionState } from '../state';
 interface SearchViewProps {
   height: number;
   width: number;
-  folderUID: string | undefined;
 }
 
-export function SearchView({ folderUID, width, height }: SearchViewProps) {
+export function SearchView({ width, height }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
 
   const { keyboardEvents } = useKeyNavigationListener();
+  const [searchState, stateManager] = useSearchStateManager();
 
-  const stateManager = getSearchStateManager();
-  useEffect(() => stateManager.initStateFromUrl(folderUID), [folderUID, stateManager]);
-
-  const state = stateManager.useState();
-  const value = state.result;
+  const value = searchState.result;
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
@@ -55,10 +51,14 @@ export function SearchView({ folderUID, width, height }: SearchViewProps) {
 
   if (!value) {
     return (
-      <div>
+      <div style={{ width }}>
         <Spinner />
       </div>
     );
+  }
+
+  if (value.totalRows === 0) {
+    return <div style={{ width }}>No search results</div>;
   }
 
   const props: SearchResultsProps = {
@@ -70,7 +70,7 @@ export function SearchView({ folderUID, width, height }: SearchViewProps) {
     height: height,
     onTagSelected: stateManager.onAddTag,
     keyboardEvents,
-    onDatasourceChange: state.datasource ? stateManager.onDatasourceChange : undefined,
+    onDatasourceChange: searchState.datasource ? stateManager.onDatasourceChange : undefined,
     onClickItem: stateManager.onSearchItemClicked,
   };
 

@@ -91,13 +91,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "k8s",
-			Description:     "Explore native k8s integrations",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateBeta,

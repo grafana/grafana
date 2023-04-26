@@ -10,7 +10,7 @@ import {
 
 import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
-import { isDatagridEditEnabled } from './featureFlagUtils';
+import { isDatagridEnabled } from './featureFlagUtils';
 import {
   DatagridContextMenuData,
   DEFAULT_CONTEXT_MENU,
@@ -224,7 +224,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
             title: displayName,
             width: state.columns[index]?.width ?? getCellWidth(field),
             icon: typeToIconMap.get(field.type),
-            hasMenu: isDatagridEditEnabled(),
+            hasMenu: isDatagridEnabled(),
             trailingRowOptions: { targetColumn: --index },
           };
         }),

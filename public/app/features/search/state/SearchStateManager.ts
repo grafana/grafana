@@ -40,7 +40,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
-  initStateFromUrl(folderUid?: string) {
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
     // Force list view when conditions are specified from the URL
@@ -54,8 +54,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    this.doSearch();
+    if (doInitialSearch && this.hasSearchFilters()) {
+      this.doSearch();
+    }
   }
+
   /**
    * Updates internal and url state, then triggers a new search
    */
@@ -162,7 +165,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type;
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type || this.state.sort;
   }
 
   getSearchQuery() {
@@ -244,7 +247,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   // This gets the possible tags from within the query results
   getTagOptions = (): Promise<TermCount[]> => {
-    return getGrafanaSearcher().tags(this.lastQuery!);
+    const query = this.lastQuery ?? {
+      kind: ['dashboard', 'folder'],
+      query: '*',
+    };
+    return getGrafanaSearcher().tags(query);
   };
 
   /**
@@ -298,4 +305,11 @@ export function getSearchStateManager() {
   }
 
   return stateManager;
+}
+
+export function useSearchStateManager() {
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+
+  return [state, stateManager] as const;
 }

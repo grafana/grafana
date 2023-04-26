@@ -49,6 +49,18 @@ func (s *FakeImageStore) GetImage(_ context.Context, token string) (*models.Imag
 	return nil, models.ErrImageNotFound
 }
 
+func (s *FakeImageStore) GetImageByURL(_ context.Context, url string) (*models.Image, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	for _, image := range s.images {
+		if image.URL == url {
+			return image, nil
+		}
+	}
+
+	return nil, models.ErrImageNotFound
+}
+
 func (s *FakeImageStore) GetImages(_ context.Context, tokens []string) ([]models.Image, []string, error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
