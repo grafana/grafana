@@ -9,7 +9,6 @@ import (
 	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
 	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
 	"github.com/grafana/thema/encoding/openapi"
 )
@@ -116,28 +115,4 @@ func typeNameFromKey(key string) string {
 		return strings.ToUpper(key[:1]) + key[1:]
 	}
 	return strings.ToUpper(key)
-}
-
-type subresourceInfo struct {
-	TypeName  string
-	FieldName string
-}
-
-func getSubresources(sch thema.Schema) []subresourceInfo {
-	subs := make([]subresourceInfo, 0)
-	i, err := sch.Underlying().Fields()
-	if err != nil {
-		return nil
-	}
-	for i.Next() {
-		str, _ := i.Value().Label()
-		if str == "spec" {
-			continue
-		}
-		subs = append(subs, subresourceInfo{
-			FieldName: str,
-			TypeName:  typeNameFromKey(str),
-		})
-	}
-	return subs
 }
