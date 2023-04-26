@@ -13,7 +13,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataSourceConfigEvents, DataQueryErrorType } from '@grafana/data';
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -298,14 +298,7 @@ export class BackendSrv implements BackendService {
     const { config } = response;
     const data: { message: string } = response.data as any;
 
-    // for data source configs we want to handle the app errors separately so emit a different event
-    // that will be handled outside of current notifications
     if (config.showSuccessAlert === false) {
-      // We don't need to show this to the user as the test status will be updated anyway and
-      // this causes flickering of the alert box when states are changing rapidly
-      if (data?.message && data.message !== 'Datasource updated') {
-        this.dependencies.appEvents.emit(DataSourceConfigEvents.success, ['success', data.message]);
-      }
       return;
     }
 
@@ -338,16 +331,6 @@ export class BackendSrv implements BackendService {
     }
 
     if (config.showErrorAlert === false) {
-      // for data source configs we want to handle the app errors separately so emit a different event
-      // that will be handled outside of current notifications
-      this.dependencies.appEvents.emit(DataSourceConfigEvents.error, [
-        'error',
-        err.data.error || message,
-        message,
-        err.data.traceID,
-        err.status,
-      ]);
-
       return;
     }
 
@@ -408,6 +391,7 @@ export class BackendSrv implements BackendService {
     }
 
     this.inspectorStream.next(err);
+
     return err;
   }
 

@@ -31,7 +31,6 @@ export * from './flot';
 export * from './trace';
 export * from './explore';
 export * from './legacyEvents';
-export { DataSourceConfigEvents } from './datasource';
 export * from './live';
 export * from './variables';
 export * from './geometry';

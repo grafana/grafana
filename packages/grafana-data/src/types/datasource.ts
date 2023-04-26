@@ -1,7 +1,6 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
-import { eventFactory } from '../events/eventFactory';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 import { ScopedVars } from './ScopedVars';
@@ -16,16 +15,6 @@ import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
-
-// err.statusText,err.data.message
-export type DataSourceConfigMessagePayload = [string, string, string?];
-// err.statusText,err.data.error,err.data.message,err.data.traceID, err.status
-export type DataSourceConfigErrorMessagePayload = [string, string, (string | Error)?, string?, string?];
-
-export const DataSourceConfigEvents = {
-  success: eventFactory<DataSourceConfigMessagePayload>('datasource-config-success'),
-  error: eventFactory<DataSourceConfigErrorMessagePayload>('datasource-config-error'),
-};
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -271,7 +260,7 @@ abstract class DataSourceApi<
    * a TestingStatus object. Unknown errors and HTTP errors can be re-thrown and will be handled here:
    * public/app/features/datasources/state/actions.ts
    */
-  abstract testDatasource(): Promise<any>;
+  abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
    * Override to skip executing a query
@@ -482,6 +471,12 @@ export interface DataQueryResponse {
    * traceIds related to the response, if available
    */
   traceIds?: string[];
+}
+
+export interface TestDataSourceResponse {
+  status: string;
+  // string in case of a success, Error object in case of error
+  message: string | Error;
 }
 
 export enum DataQueryErrorType {

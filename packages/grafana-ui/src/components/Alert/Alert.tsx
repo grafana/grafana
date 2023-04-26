@@ -22,6 +22,9 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  additionalContent?: React.ReactNode;
+  /** data source config page design has a narrower icon section */
+  useNewErrorIcon?: boolean;
 }
 
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
@@ -35,14 +38,16 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       bottomSpacing,
       topSpacing,
       className,
+      additionalContent,
       severity = 'error',
+      useNewErrorIcon,
       ...restProps
     },
     ref
   ) => {
     const theme = useTheme2();
     const hasTitle = Boolean(title);
-    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing, useNewErrorIcon);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
       warning: 'alert',
@@ -62,12 +67,13 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         {...restProps}
       >
         <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity)} />
+          <Icon size="xl" name={getIconFromSeverity(severity, useNewErrorIcon)} />
         </div>
 
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
+          {additionalContent}
         </div>
 
         {/* If onRemove is specified, giving preference to onRemove */}
@@ -91,7 +97,11 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-export const getIconFromSeverity = (severity: AlertVariant): IconName => {
+export const getIconFromSeverity = (severity: AlertVariant, useNewError?: boolean): IconName => {
+  if ((severity === 'error' || severity === 'warning') && useNewError) {
+    return 'times-circle';
+  }
+
   switch (severity) {
     case 'error':
     case 'warning':
@@ -109,7 +119,8 @@ const getStyles = (
   hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
-  topSpacing?: number
+  topSpacing?: number,
+  useNewErrorIcon?: boolean
 ) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();
@@ -139,7 +150,7 @@ const getStyles = (
       }
     `,
     icon: css`
-      padding: ${theme.spacing(2, 3)};
+      padding: ${useNewErrorIcon ? theme.spacing(2, 2) : theme.spacing(2, 3)};
       background: ${color.main};
       border-radius: ${borderRadius} 0 0 ${borderRadius};
       color: ${color.contrastText};

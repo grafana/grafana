@@ -1,14 +1,12 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import React, { useEffect, useCallback } from 'react';
+import React from 'react';
 
 import {
   DataSourcePluginContextProvider,
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
-  DataSourceConfigEvents,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -25,9 +23,8 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
-  handleBackendTest,
 } from '../state';
-import { DataSourceRights, ConfigTestPayload } from '../types';
+import { DataSourceRights } from '../types';
 
 import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
@@ -62,12 +59,6 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
-  const onConfigTest = useCallback((payload: ConfigTestPayload) => dispatch(handleBackendTest(payload)), [dispatch]);
-
-  useEffect((): void => {
-    appEvents.on(DataSourceConfigEvents.success, (payload: ConfigTestPayload) => onConfigTest(payload));
-    appEvents.on(DataSourceConfigEvents.error, (payload: ConfigTestPayload) => onConfigTest(payload));
-  }, [onConfigTest]);
 
   return (
     <EditDataSourceView
@@ -128,7 +119,11 @@ export function EditDataSourceView({
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onUpdate({ ...dataSource });
+    try {
+      await onUpdate({ ...dataSource });
+    } catch (err) {
+      return;
+    }
 
     onTest();
   };
