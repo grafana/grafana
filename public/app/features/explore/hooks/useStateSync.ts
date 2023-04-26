@@ -61,19 +61,19 @@ export function useStateSync(params: ExploreQueryParams) {
           cancelActiveListeners();
           await delay(200);
 
-          const panesState = Object.entries(getState().explore.panes).reduce<Record<string, string>>(
+          const panesQueryParams = Object.entries(getState().explore.panes).reduce<Record<string, string>>(
             (acc, [id, paneState]) => ({ ...acc, [id]: serializeStateToUrlParam(getUrlStateFromPaneState(paneState)) }),
             {}
           );
 
-          if (!isEqual(panesState, prevParams.current)) {
+          if (!isEqual(prevParams.current, panesQueryParams)) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
-            const replace = Object.entries(prevParams.current).length === 0;
+            const replace = Object.values(prevParams.current).filter(Boolean).length === 0;
 
-            prevParams.current = panesState;
+            prevParams.current = panesQueryParams;
 
-            location.partial({ ...panesState, orgId: getState().user.orgId }, replace);
+            location.partial({ ...panesQueryParams, orgId: getState().user.orgId }, replace);
           }
         },
       })
@@ -209,8 +209,10 @@ export function useStateSync(params: ExploreQueryParams) {
 
     prevParams.current = {
       left: params.left,
-      right: params.right,
     };
+    if (params.right) {
+      prevParams.current.right = params.right;
+    }
 
     isURLOutOfSync && initState.current === 'done' && sync();
   }, [params.left, params.right, dispatch, statePanes, exploreMixedDatasource, orgId, location]);
