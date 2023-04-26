@@ -49,47 +49,31 @@ export function useStateSync(params: ExploreQueryParams) {
       addListener({
         predicate: (action) =>
           // We want to update the URL when:
-          [
-            // - a pane is opened or closed
-            splitClose.type,
-            splitOpen.fulfilled.type,
-            // - a query is run
-            runQueries.pending.type,
-            // - range is changed
-            changeRangeAction.type,
-            // - queries are committed
-          ].includes(action.type),
+          // - a pane is opened or closed
+          // - a query is run
+          // - range is changed
+          [splitClose.type, splitOpen.fulfilled.type, runQueries.pending.type, changeRangeAction.type].includes(
+            action.type
+          ),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
-          // The following 2 lines will throttle the URL updates to 200ms.
-          // This is because we don't want to update the URL multiple times when for instance multiple
-          // panes trigger a query run at the same time or when queries are executed in very rapid succession.
+          // The following 2 lines will throttle updates to avoid  creating history entries when rapid changes
+          // are committed to the store.
           cancelActiveListeners();
           await delay(200);
 
-          const { left, right } = getState().explore.panes;
-          const orgId = getState().user.orgId.toString();
-          const panesState: { [index: string]: string | undefined } = { orgId };
+          const panesState = Object.entries(getState().explore.panes).reduce<Record<string, string>>(
+            (acc, [id, paneState]) => ({ ...acc, [id]: serializeStateToUrlParam(getUrlStateFromPaneState(paneState)) }),
+            {}
+          );
 
-          if (left) {
-            panesState.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
-          }
+          if (!isEqual(panesState, prevParams.current)) {
+            // If there's no previous state it means we are mounting explore for the first time,
+            // in this case we want to replace the URL instead of pushing a new entry to the history.
+            const replace = Object.entries(prevParams.current).length === 0;
 
-          if (right) {
-            panesState.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
-          } else {
-            panesState.right = undefined;
-          }
+            prevParams.current = panesState;
 
-          if (prevParams.current.right !== panesState.right || prevParams.current.left !== panesState.left) {
-            // If there's no state in the URL it means we are mounting explore for the first time.
-            // In that case we want to replace the URL instead of pushing a new entry to the history.
-            const replace = !prevParams.current.right && !prevParams.current.left;
-
-            prevParams.current = {
-              left: panesState.left,
-              right: panesState.right,
-            };
-            location.partial({ ...panesState }, replace);
+            location.partial({ ...panesState, orgId: getState().user.orgId }, replace);
           }
         },
       })
