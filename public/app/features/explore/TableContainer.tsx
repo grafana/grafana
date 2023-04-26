@@ -103,7 +103,6 @@ export class TableContainer extends PureComponent<Props> {
                 subData={subFrames}
                 width={innerWidth}
                 height={innerHeight}
-                maxHeight={600}
                 onCellFilterAdded={onCellFilterAdded}
               />
             ) : (
