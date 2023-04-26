@@ -18,6 +18,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  refCount?: number;
 }
 
 export enum PrometheusCacheLevel {

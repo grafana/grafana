@@ -237,6 +237,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     } else if (wrapperClasses.includes('context-labels')) {
       // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
       return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
+    } else if (wrapperClasses.includes('keyword')) {
+      return this.getReferenceCompletionItems(context);
     } else if (wrapperClasses.includes('context-aggregation')) {
       // Suggestions for sum(metric) by (|)
       return this.getAggregationCompletionItems(value);
@@ -255,12 +257,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getBeginningCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
+    console.log('getBeginningCompletionItems');
     return {
       suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
     };
   };
 
   getEmptyCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
+    console.log('getEmptyCompletionItems');
     const { history } = context;
     const suggestions: CompletionItemGroup[] = [];
 
@@ -286,6 +290,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getTermCompletionItems = (): TypeaheadOutput => {
+    console.log('getTermCompletionItems');
     const { metrics, metricsMetadata } = this;
     const suggestions: CompletionItemGroup[] = [];
 
@@ -307,6 +312,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getRangeCompletionItems(): TypeaheadOutput {
+    console.log('getRangeCompletionItems');
     return {
       context: 'context-range',
       suggestions: [
@@ -319,6 +325,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
+    console.log('getAggregationCompletionItems');
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -384,12 +391,36 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return result;
   };
 
+  getReferenceCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
+    console.log('getReferenceCompletionItems', context);
+    return {
+      context: 'keyword',
+      suggestions: [
+        {
+          label: 'Query reference',
+          items: [
+            {
+              label: '@A',
+            },
+            {
+              label: '@B',
+            },
+            {
+              label: '@C',
+            },
+          ],
+        },
+      ],
+    };
+  };
+
   getLabelCompletionItems = async ({
     text,
     wrapperClasses,
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    console.log('getLabelCompletionItems');
     if (!value) {
       return { suggestions: [] };
     }

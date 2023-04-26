@@ -20,6 +20,7 @@ export enum PromVisualQueryOperationCategory {
   BinaryOps = 'Binary operations',
   Trigonometric = 'Trigonometric',
   Time = 'Time Functions',
+  Reference = 'Grafana query reference',
 }
 
 export enum PromOperationId {

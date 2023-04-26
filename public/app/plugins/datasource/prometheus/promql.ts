@@ -529,6 +529,9 @@ export const promqlGrammar: Grammar = {
   comment: {
     pattern: /#.*/,
   },
+  keyword: {
+    pattern: /@([A-Z])/g,
+  },
   'context-aggregation': {
     pattern: /((by|without)\s*)\([^)]*\)/, // by ()
     lookbehind: true,

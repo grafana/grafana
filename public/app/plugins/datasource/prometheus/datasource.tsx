@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { cloneDeep, defaults, each, keyBy } from 'lodash';
 import LRU from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
@@ -301,8 +301,9 @@ export class PrometheusDatasource
     ); // toPromise until we change getTagValues, getLabelNames to Observable
   }
 
+  // "#" denotes a valid comment in promQL, to avoid introducing breaking changes, we're gonna use "$"
   replaceNestedQuery(query: string, request: DataQueryRequest<PromQuery>): string {
-    return query.replace(/\#([A-Z])/g, (match, g1) => {
+    return query.replace(/\@([A-Z])/g, (match, g1) => {
       let replaceTarget = request.targets.find((t) => {
         return t.refId === g1;
       });
@@ -429,11 +430,56 @@ export class PrometheusDatasource
     return false;
   }
 
+  updateRenderedTarget(target: PromQuery, targets: PromQuery[]) {
+    // render nested query
+    const targetsByRefId = keyBy(targets, 'refId');
+
+    // no references to self
+    delete targetsByRefId[target.refId];
+
+    const nestedSeriesRefRegex = /\@([A-Z])/g;
+    let targetWithNestedQueries = target;
+
+    // Use ref count to track circular references
+    each(targetsByRefId, (t, id) => {
+      const regex = RegExp(`\@(${id})`, 'g');
+      const refMatches = targetWithNestedQueries.expr.match(regex);
+      t.refCount = refMatches?.length ?? 0;
+    });
+
+    // Keep interpolating until there are no query references
+    // The reason for the loop is that the referenced query might contain another reference to another query
+    while (targetWithNestedQueries.expr.match(nestedSeriesRefRegex)) {
+      const updated = targetWithNestedQueries.expr.replace(nestedSeriesRefRegex, (match: string, g1: string) => {
+        const t = targetsByRefId[g1];
+        if (!t) {
+          return match;
+        }
+
+        // no circular references
+        if (t.refCount === 0) {
+          delete targetsByRefId[g1];
+        }
+        t.refCount ? t.refCount-- : (t.refCount = 0);
+
+        return t.expr;
+      });
+
+      if (updated === targetWithNestedQueries.expr) {
+        break;
+      }
+
+      targetWithNestedQueries.expr = updated;
+    }
+  }
+
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
     const processedTargets: PromQuery[] = [];
 
     console.log('before', target.expr);
-    target.expr = this.replaceNestedQuery(target.expr, request);
+    // This won't work because there could be circular refs or self referential
+    // target.expr = this.replaceNestedQuery(target.expr, request);
+    this.updateRenderedTarget(target, request.targets);
     console.log('after', target.expr);
 
     const processedTarget = {

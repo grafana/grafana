@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { clone } from 'lodash';
 import React, { useEffect, useReducer } from 'react';
 
 import { PanelData } from '@grafana/data';
@@ -14,6 +15,7 @@ import { QueryPreview } from './QueryPreview';
 
 export interface Props {
   query: PromQuery;
+  queries: PromQuery[];
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
@@ -30,7 +32,9 @@ export interface State {
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function PromQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, data, showExplain } = props;
+  const { query, onChange, onRunQuery, datasource, data, showExplain, queries } = props;
+  const queryWithReferencesInterpolated = clone(query);
+  datasource.updateRenderedTarget(queryWithReferencesInterpolated, queries);
   const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
 
   // Only rebuild visual query if expr changes from outside
@@ -58,7 +62,7 @@ export function PromQueryBuilderContainer(props: Props) {
         data={data}
         showExplain={showExplain}
       />
-      {<QueryPreview query={query.expr} />}
+      {<QueryPreview query={queryWithReferencesInterpolated.expr} />}
     </>
   );
 }

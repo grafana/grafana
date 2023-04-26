@@ -36,6 +36,8 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 type Props = PromQueryEditorProps;
 
 export const PromQueryEditorSelector = React.memo<Props>((props) => {
+  console.log('PromQueryEditorSelector', props);
+
   const {
     onChange,
     onRunQuery,
@@ -146,6 +148,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}
+            queries={queries}
             datasource={props.datasource}
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
