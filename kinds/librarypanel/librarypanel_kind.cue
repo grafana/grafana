@@ -15,8 +15,6 @@ lineage: seqs: [
 			// 0.0
 			{
 				spec: {
-					@grafana(TSVeneer="type")
-
 					// Folder UID
 					folderUid?: string @grafanamaturity(ToMetadata="sys")
 
@@ -44,25 +42,25 @@ lineage: seqs: [
 
 					// Object storage metadata
 					meta?: #LibraryElementDTOMeta @grafanamaturity(ToMetadata="sys")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-					#LibraryElementDTOMetaUser: {
-						id:        int64
-						name:      string
-						avatarUrl: string
-					} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+				#LibraryElementDTOMetaUser: {
+					id:        int64
+					name:      string
+					avatarUrl: string
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-					#LibraryElementDTOMeta: {
-						folderName:          string
-						folderUid:           string @grafanamaturity(ToMetadata="sys")
-						connectedDashboards: int64
+				#LibraryElementDTOMeta: {
+					folderName:          string
+					folderUid:           string @grafanamaturity(ToMetadata="sys")
+					connectedDashboards: int64
 
-						created: string & time.Time
-						updated: string & time.Time
+					created: string & time.Time
+					updated: string & time.Time
 
-						createdBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
-						updatedBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
-					} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
-				}
+					createdBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
+					updatedBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 			},
 		]
 	},

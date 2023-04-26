@@ -26,15 +26,6 @@ const (
 	LinkTypeLink       LinkType = "link"
 )
 
-// Defines values for FieldColorModeId.
-const (
-	FieldColorModeIdContinuousGrYlRd FieldColorModeId = "continuous-GrYlRd"
-	FieldColorModeIdFixed            FieldColorModeId = "fixed"
-	FieldColorModeIdPaletteClassic   FieldColorModeId = "palette-classic"
-	FieldColorModeIdPaletteSaturated FieldColorModeId = "palette-saturated"
-	FieldColorModeIdThresholds       FieldColorModeId = "thresholds"
-)
-
 // Defines values for FieldColorSeriesByMode.
 const (
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
@@ -114,16 +105,6 @@ const (
 	SpecialValueMapTypeRegex   SpecialValueMapType = "regex"
 	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
 	SpecialValueMapTypeValue   SpecialValueMapType = "value"
-)
-
-// Defines values for SpecialValueMatch.
-const (
-	SpecialValueMatchEmpty   SpecialValueMatch = "empty"
-	SpecialValueMatchFalse   SpecialValueMatch = "false"
-	SpecialValueMatchNan     SpecialValueMatch = "nan"
-	SpecialValueMatchNull    SpecialValueMatch = "null"
-	SpecialValueMatchNullNan SpecialValueMatch = "null+nan"
-	SpecialValueMatchTrue    SpecialValueMatch = "true"
 )
 
 // Defines values for ThresholdsMode.
@@ -289,9 +270,6 @@ type FieldColor struct {
 	// TODO docs
 	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
-
-// TODO docs
-type FieldColorModeId string
 
 // TODO docs
 type FieldColorSeriesByMode string
@@ -709,9 +687,6 @@ type SpecialValueMapOptionsMatch string
 
 // SpecialValueMapType defines model for SpecialValueMap.Type.
 type SpecialValueMapType string
-
-// TODO docs
-type SpecialValueMatch string
 
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go

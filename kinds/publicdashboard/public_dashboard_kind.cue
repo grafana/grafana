@@ -22,7 +22,7 @@ lineage: seqs: [
 					annotationsEnabled: bool
 					// Flag that indicates if the time range picker is enabled
 					timeSelectionEnabled: bool
-				}
+				} @cuetsy(kind="interface")
 			},
 		]
 	},

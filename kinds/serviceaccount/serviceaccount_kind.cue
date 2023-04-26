@@ -35,10 +35,10 @@ lineage: seqs: [
 
 					// Teams is a list of teams the service account belongs to.
 					teams?: [...string] @grafanamaturity(ToMetadata="sys")
+				} @cuetsy(kind="interface")
 
-					// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-					#OrgRole: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type")
-				}
+				// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+				#OrgRole: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type")
 			},
 		]
 	},

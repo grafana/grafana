@@ -8,13 +8,98 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 // Raw generated types from Dashboard kind.
-export type { Dashboard } from './raw/dashboard/x/dashboard_types.gen';
+export type {
+  Dashboard,
+  AnnotationTarget,
+  AnnotationPanelFilter,
+  DashboardLink,
+  DashboardLinkType,
+  VariableType,
+  FieldColorSeriesByMode,
+  FieldColor,
+  GridPos,
+  Threshold,
+  ThresholdsConfig,
+  ValueMapping,
+  ValueMap,
+  RangeMap,
+  RegexMap,
+  SpecialValueMap,
+  ValueMappingResult,
+  LibraryPanelRef,
+  RowPanel,
+  GraphPanel,
+  HeatmapPanel
+} from './raw/dashboard/x/dashboard_types.gen';
+
+// Raw generated enums and default consts from dashboard kind.
+export {
+  defaultAnnotationTarget,
+  defaultAnnotationPanelFilter,
+  LoadingState,
+  defaultDashboardLink,
+  FieldColorModeId,
+  defaultGridPos,
+  ThresholdsMode,
+  defaultThresholdsConfig,
+  MappingType,
+  SpecialValueMatch,
+  DashboardCursorSync,
+  defaultDashboardCursorSync,
+  defaultRowPanel
+} from './raw/dashboard/x/dashboard_types.gen';
+
+// The following exported declarations correspond to types in the dashboard@0.0 kind's
+// schema with attribute @grafana(TSVeneer="type").
+//
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/dashboard.types.ts.
+// This re-export declaration enforces that the handwritten veneer file exists,
+// and exports all the symbols in the list.
+//
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
+export type {
+  AnnotationQuery,
+  VariableModel,
+  DataSourceRef,
+  DataTransformerConfig,
+  Panel,
+  FieldConfigSource,
+  MatcherConfig,
+  FieldConfig
+} from './veneer/dashboard.types';
+
+// The following exported declarations correspond to types in the dashboard@0.0 kind's
+// schema with attribute @grafana(TSVeneer="type").
+//
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/dashboard.types.ts.
+// This re-export declaration enforces that the handwritten veneer file exists,
+// and exports all the symbols in the list.
+//
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
+export {
+  defaultAnnotationQuery,
+  defaultVariableModel,
+  VariableHide,
+  defaultPanel,
+  defaultFieldConfigSource,
+  defaultMatcherConfig,
+  defaultFieldConfig
+} from './veneer/dashboard.types';
 
 // Raw generated types from LibraryPanel kind.
-export type { LibraryPanel } from './raw/librarypanel/x/librarypanel_types.gen';
+export type {
+  LibraryPanel,
+  LibraryElementDTOMetaUser,
+  LibraryElementDTOMeta
+} from './raw/librarypanel/x/librarypanel_types.gen';
 
 // Raw generated types from Playlist kind.
-export type { Playlist } from './raw/playlist/x/playlist_types.gen';
+export type {
+  Playlist,
+  PlaylistItem
+} from './raw/playlist/x/playlist_types.gen';
 
 // Raw generated types from Preferences kind.
 export type { Preferences } from './raw/preferences/x/preferences_types.gen';
@@ -23,7 +108,13 @@ export type { Preferences } from './raw/preferences/x/preferences_types.gen';
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
 
 // Raw generated types from ServiceAccount kind.
-export type { ServiceAccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
+export type {
+  ServiceAccount,
+  OrgRole
+} from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
+
+// Raw generated enums and default consts from team kind.
+export { Permission } from './raw/team/x/team_types.gen';

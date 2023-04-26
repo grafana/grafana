@@ -64,14 +64,14 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
-| Property   | Type                                        | Required | Default | Description                                                                                                                                                          |
-|------------|---------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `interval` | string                                      | **Yes**  | `5m`    | Interval sets the time between switching views in a playlist.<br/>FIXME: Is this based on a standardized format or what options are available? Can datemath be used? |
-| `name`     | string                                      | **Yes**  |         | Name of the playlist.                                                                                                                                                |
-| `uid`      | string                                      | **Yes**  |         | Unique playlist identifier. Generated on creation, either by the<br/>creator of the playlist of by the application.                                                  |
-| `items`    | [spec.#PlaylistItem](#spec.#playlistitem)[] | No       |         | The ordered list of items that the playlist will iterate over.<br/>FIXME! This should not be optional, but changing it makes the godegen awkward                     |
+| Property   | Type                            | Required | Default | Description                                                                                                                                                          |
+|------------|---------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `interval` | string                          | **Yes**  | `5m`    | Interval sets the time between switching views in a playlist.<br/>FIXME: Is this based on a standardized format or what options are available? Can datemath be used? |
+| `name`     | string                          | **Yes**  |         | Name of the playlist.                                                                                                                                                |
+| `uid`      | string                          | **Yes**  |         | Unique playlist identifier. Generated on creation, either by the<br/>creator of the playlist of by the application.                                                  |
+| `items`    | [PlaylistItem](#playlistitem)[] | No       |         | The ordered list of items that the playlist will iterate over.<br/>FIXME! This should not be optional, but changing it makes the godegen awkward                     |
 
-### Spec.#PlaylistItem
+### PlaylistItem
 
 | Property | Type   | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 |----------|--------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

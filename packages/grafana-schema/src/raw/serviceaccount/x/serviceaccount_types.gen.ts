@@ -4,13 +4,9 @@
 //     kinds/gen.go
 // Using jennies:
 //     TSResourceJenny
+//     LatestMajorsOrXJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
-
-/**
- * OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
- */
-export type OrgRole = ('Admin' | 'Editor' | 'Viewer');
 
 export interface ServiceAccount {
   /**
@@ -60,3 +56,8 @@ export interface ServiceAccount {
 export const defaultServiceAccount: Partial<ServiceAccount> = {
   teams: [],
 };
+
+/**
+ * OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+ */
+export type OrgRole = ('Admin' | 'Editor' | 'Viewer');

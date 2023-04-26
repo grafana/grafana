@@ -4,15 +4,9 @@
 //     kinds/gen.go
 // Using jennies:
 //     TSResourceJenny
+//     LatestMajorsOrXJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
-
-export enum Permission {
-  Admin = 4,
-  Editor = 2,
-  Member = 0,
-  Viewer = 1,
-}
 
 export interface Team {
   /**
@@ -43,4 +37,11 @@ export interface Team {
    * TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
    */
   permission: Permission;
+}
+
+export enum Permission {
+  Admin = 4,
+  Editor = 2,
+  Member = 0,
+  Viewer = 1,
 }

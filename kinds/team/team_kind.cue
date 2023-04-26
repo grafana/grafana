@@ -26,9 +26,9 @@ lineage: seqs: [
 					accessControl?: {
 						[string]: bool @grafanamaturity(ToMetadata="sys")
 					}
+				} @cuetsy(kind="interface")
 
-					#Permission: 0 | 1 | 2 | 4 @cuetsy(kind="enum",memberNames="Member|Viewer|Editor|Admin")
-				}
+				#Permission: 0 | 1 | 2 | 4 @cuetsy(kind="enum",memberNames="Member|Viewer|Editor|Admin")
 			},
 		]
 	},

@@ -32,7 +32,7 @@ lineage: seqs: [
 									// one of: '' | 'query' | 'starred';
 									homeTab?: string
 					} @cuetsy(kind="interface") //0.0
-				}
+				} @cuetsy(kind="interface")
 			},
 		]
 	},
