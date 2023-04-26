@@ -439,8 +439,8 @@
       "type-header": "Typ"
     },
     "search-input": {
-      "include-panels-placeholder": "Nach Dashboards und Panels suchen",
-      "placeholder": "Nach Dashboards suchen"
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
