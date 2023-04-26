@@ -206,7 +206,7 @@ Notably, we've added the follwoing new features that streamline the log context 
 
 1. Log details with actions including a "copy" button for easily copying lines and an eye icon for displaying only selected labels, allowing users to focus on specific information without leaving the log context panel.
 2. A "Wrap Lines" toggle to automatically wrap long lines of text for easier reading and analysis of log entry context directly in log context.
-3. To execute the context query for a log entry in a split screen in the Explore view we've added a "Open in split view" button.
+3. An "Open in split view" button to execute the context query for a log entry in a split screen in the Explore view.
 4. Only for Loki: A quick filter menu that let's you easily refine the context query by selecting and removing labels.
 
 {{< figure src="/media/docs/grafana/log-context-new-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
