@@ -155,6 +155,8 @@ func (f LocalFS) Files() ([]string, error) {
 	return relFiles, nil
 }
 
+// Remove removes a plugin from the local filesystem by deleting all files in the folder.
+// It returns ErrUninstallInvalidPluginDir is the plugin does not contain plugin.json nor dist/plugin.json.
 func (f LocalFS) Remove() error {
 	// extra security check to ensure we only remove a directory that looks like a plugin
 	if _, err := os.Stat(filepath.Join(f.basePath, "plugin.json")); os.IsNotExist(err) {
