@@ -328,14 +328,13 @@ export function transform(
 
   // Return early if result type is scalar
   if (prometheusResult.resultType === 'scalar') {
-    return [
-      {
-        meta: options.meta,
-        refId: options.refId,
-        length: 1,
-        fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
-      },
-    ];
+    const df: DataFrame = {
+      meta: options.meta,
+      refId: options.refId,
+      length: 1,
+      fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
+    };
+    return [df];
   }
 
   // Return early again if the format is table, this needs special transformation.
