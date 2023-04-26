@@ -18,17 +18,15 @@ export interface TextProps {
   truncate?: boolean;
   /** Whether to align the text to left, center or right */
   textAlignment?: CSSProperties['textAlign'];
-  /** Margin to set on the component. Remember, it does not work with inline elements such as 'span'. */
-  margin?: string | number;
   children: React.ReactNode;
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ as = 'span', variant = 'bodySmall', weight, color, truncate, textAlignment, margin, children }, ref) => {
+  ({ as = 'span', variant = 'bodySmall', weight, color, truncate, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment, margin),
-        [color, margin, textAlignment, truncate, weight, variant]
+        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment),
+        [color, textAlignment, truncate, weight, variant]
       )
     );
 
@@ -51,8 +49,7 @@ const getTextStyles = (
   color?: TextProps['color'],
   weight?: TextProps['weight'],
   truncate?: TextProps['truncate'],
-  textAlignment?: TextProps['textAlignment'],
-  margin?: TextProps['margin']
+  textAlignment?: TextProps['textAlignment']
 ) => {
   return css([
     {
@@ -72,9 +69,6 @@ const getTextStyles = (
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-    },
-    margin && {
-      margin,
     },
     textAlignment && {
       textAlign: textAlignment,
