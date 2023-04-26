@@ -63,7 +63,7 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-export const DEFAULT_PAYLOAD = `[
+const DEFAULT_PAYLOAD = `[
   {
     "annotations": {
       "summary": "Instance instance1 has been down for more than 5 minutes"

@@ -91,6 +91,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
             e.preventDefault();
             e.stopPropagation();
             formMethods.reset();
+            setStatus('firing');
           }}
         >
           <>

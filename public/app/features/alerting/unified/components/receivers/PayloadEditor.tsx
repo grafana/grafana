@@ -40,6 +40,7 @@ export function PayloadEditor({
     try {
       JSON.parse(payload);
       setIsEditingAlertData(true);
+      setPayloadFormatError(null);
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
       onPayloadError();
