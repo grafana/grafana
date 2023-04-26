@@ -715,7 +715,6 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type())
 		require.Equal(t, "A", frame.Fields[0].Name)
 	})
-
 }
 
 func TestProcessBuckets(t *testing.T) {
@@ -1462,7 +1461,6 @@ func TestProcessBuckets(t *testing.T) {
 			requireFloatAt(t, 2, f3, 0)
 			requireFloatAt(t, 2, f3, 1)
 		})
-
 	})
 
 	t.Run("Group by", func(t *testing.T) {
@@ -1890,7 +1888,6 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "0 Count and {{not_exist}} 0")
 		})
-
 	})
 
 	t.Run("Extended stats", func(t *testing.T) {
@@ -2424,7 +2421,6 @@ func TestProcessBuckets(t *testing.T) {
 	})
 
 	t.Run("With multiple metrics", func(t *testing.T) {
-
 		t.Run("Multiple metrics with the same type", func(t *testing.T) {
 			query := []byte(`
 	[
@@ -2759,7 +2755,6 @@ func TestProcessBuckets(t *testing.T) {
 	})
 
 	t.Run("Bucket script", func(t *testing.T) {
-
 		t.Run("With bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
