@@ -98,6 +98,9 @@ export type {
 // Raw generated types from Playlist kind.
 export type { PlaylistItem } from './raw/playlist/x/playlist_types.gen';
 
+// Raw generated types from Preferences kind.
+export type { QueryHistoryPreference } from './raw/preferences/x/preferences_types.gen';
+
 // Raw generated types from ServiceAccount kind.
 export type { OrgRole } from './raw/serviceaccount/x/serviceaccount_types.gen';
 

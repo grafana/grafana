@@ -64,16 +64,16 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
-| Property           | Type                                                          | Required | Default | Description                                                                     |
-|--------------------|---------------------------------------------------------------|----------|---------|---------------------------------------------------------------------------------|
-| `homeDashboardUID` | string                                                        | No       |         | UID for the home dashboard                                                      |
-| `language`         | string                                                        | No       |         | Selected language (beta)                                                        |
-| `queryHistory`     | [spec.#QueryHistoryPreference](#spec.#queryhistorypreference) | No       |         |                                                                                 |
-| `theme`            | string                                                        | No       |         | light, dark, empty is default                                                   |
-| `timezone`         | string                                                        | No       |         | The timezone selection<br/>TODO: this should use the timezone defined in common |
-| `weekStart`        | string                                                        | No       |         | day of the week (sunday, monday, etc)                                           |
+| Property           | Type                                              | Required | Default | Description                                                                     |
+|--------------------|---------------------------------------------------|----------|---------|---------------------------------------------------------------------------------|
+| `homeDashboardUID` | string                                            | No       |         | UID for the home dashboard                                                      |
+| `language`         | string                                            | No       |         | Selected language (beta)                                                        |
+| `queryHistory`     | [QueryHistoryPreference](#queryhistorypreference) | No       |         |                                                                                 |
+| `theme`            | string                                            | No       |         | light, dark, empty is default                                                   |
+| `timezone`         | string                                            | No       |         | The timezone selection<br/>TODO: this should use the timezone defined in common |
+| `weekStart`        | string                                            | No       |         | day of the week (sunday, monday, etc)                                           |
 
-### Spec.#QueryHistoryPreference
+### QueryHistoryPreference
 
 | Property  | Type   | Required | Default | Description                                 |
 |-----------|--------|----------|---------|---------------------------------------------|

@@ -27,11 +27,11 @@ lineage: seqs: [
 
 					// Explore query history preferences
 					queryHistory?: #QueryHistoryPreference
+				} @cuetsy(kind="interface")
 
-					#QueryHistoryPreference: {
-									// one of: '' | 'query' | 'starred';
-									homeTab?: string
-					} @cuetsy(kind="interface") //0.0
+				#QueryHistoryPreference: {
+					// one of: '' | 'query' | 'starred';
+					homeTab?: string
 				} @cuetsy(kind="interface")
 			},
 		]

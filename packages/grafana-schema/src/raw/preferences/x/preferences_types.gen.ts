@@ -8,6 +8,13 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+export interface QueryHistoryPreference {
+  /**
+   * one of: '' | 'query' | 'starred';
+   */
+  homeTab?: string;
+}
+
 export interface Preferences {
   /**
    * UID for the home dashboard
