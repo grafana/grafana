@@ -284,7 +284,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 			folders = append(folders, f)
 			uid = f.ParentUID
 			if len(folders) > folder.MaxNestedFolderDepth {
-				return folder.ErrFolderTooDeep
+				return folder.ErrMaximumDepthReached.Errorf("failed to get parent folders iteratively")
 			}
 		}
 		return nil
