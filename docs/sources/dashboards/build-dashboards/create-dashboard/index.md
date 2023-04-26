@@ -33,7 +33,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. Click the Refresh dashboard icon to query the data source.
 
-   ![Refresh dashboard icon](img here)
+   ![Refresh dashboard icon](/media/docs/grafana/dashboards/screenshot-refresh-dashboard-9.5.png)
 
 1. In the visualization list, select a visualization type.
 
