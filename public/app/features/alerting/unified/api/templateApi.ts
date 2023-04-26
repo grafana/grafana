@@ -16,13 +16,13 @@ export interface TemplatePreviewResponse {
   errors?: TemplatePreviewErrors[];
 }
 
-type AnnoField = {
+export interface KeyValueField {
   key: string;
   value: string;
-};
+}
 export interface AlertField {
-  annotations: AnnoField[];
-  labels: AnnoField[];
+  annotations: KeyValueField[];
+  labels: KeyValueField[];
 }
 
 export const templatesApi = alertingApi.injectEndpoints({

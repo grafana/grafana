@@ -5,9 +5,10 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Card, Checkbox, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Card, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { KeyValueField } from '../../../api/templateApi';
 import AnnotationsField from '../../rule-editor/AnnotationsField';
 import LabelsField from '../../rule-editor/LabelsField';
 
@@ -17,21 +18,16 @@ interface Props {
   onAccept: (alerts: TestTemplateAlert[]) => void;
 }
 
-type AnnoField = {
-  key: string;
-  value: string;
-};
-
 interface FormFields {
-  annotations: AnnoField[];
-  labels: AnnoField[];
-  firing: boolean;
+  annotations: KeyValueField[];
+  labels: KeyValueField[];
+  status: 'firing' | 'resolved';
 }
 
 const defaultValues: FormFields = {
   annotations: [{ key: '', value: '' }],
   labels: [{ key: '', value: '' }],
-  firing: true,
+  status: 'firing',
 };
 
 export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) => {
@@ -42,7 +38,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
   const annotations = formMethods.watch('annotations');
   const labels = formMethods.watch('labels');
-  const firing = formMethods.watch('firing');
+  const [status, setStatus] = useState<'firing' | 'resolved'>('firing');
 
   const onAdd = () => {
     const alert: TestTemplateAlert = {
@@ -57,7 +53,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           return { ...acc, [key]: value };
         }, {}),
       startsAt: '2023-04-01T00:00:00Z',
-      endsAt: firing ? addDays(new Date(), 1).toISOString() : addDays(new Date(), -1).toISOString(),
+      endsAt: status === 'firing' ? addDays(new Date(), 1).toISOString() : addDays(new Date(), -1).toISOString(),
     };
     setAlerts((alerts) => [...alerts, alert]);
     formMethods.reset();
@@ -74,6 +70,18 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
     const someAnnotations = annotations.some((ann) => ann.key !== '' && ann.value !== '');
     return someLabels || someAnnotations;
   };
+
+  type AlertOption = {
+    label: string;
+    value: 'firing' | 'resolved';
+  };
+  const alertOptions: AlertOption[] = [
+    {
+      label: 'Firing',
+      value: 'firing',
+    },
+    { label: 'Resolved', value: 'resolved' },
+  ];
 
   return (
     <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add alert data'}>
@@ -95,11 +103,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                   <LabelsField />
                 </div>
                 <div className={styles.flexWrapper}>
-                  <Checkbox
-                    {...formMethods.register('firing')}
-                    label="Firing alert"
-                    description="Adds firing alert data"
-                  />
+                  <RadioButtonGroup value={status} options={alertOptions} onChange={(value) => setStatus(value)} />
                   <Button
                     onClick={onAdd}
                     className={styles.onAddButton}

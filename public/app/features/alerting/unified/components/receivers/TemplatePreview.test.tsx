@@ -43,25 +43,49 @@ afterAll(() => {
 
 describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format', async () => {
-    render(<TemplatePreview payload={'bla bla bla'} templateName="potato" />, { wrapper: getProviderWraper() });
+    render(
+      <TemplatePreview
+        payload={'bla bla bla'}
+        templateName="potato"
+        payloadFormatError={'Unexpected token b in JSON at position 0'}
+        setPayloadFormatError={jest.fn()}
+      />,
+      { wrapper: getProviderWraper() }
+    );
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token b in JSON at position 0');
     });
   });
 
   it('Should render error if payload has wrong format rendering the preview', async () => {
-    render(<TemplatePreview payload={'potatos and cherries'} templateName="potato" />, {
-      wrapper: getProviderWraper(),
-    });
+    render(
+      <TemplatePreview
+        payload={'potatos and cherries'}
+        templateName="potato"
+        payloadFormatError={'Unexpected token b in JSON at position 0'}
+        setPayloadFormatError={jest.fn()}
+      />,
+      {
+        wrapper: getProviderWraper(),
+      }
+    );
 
     await waitFor(() => {
-      expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token p in JSON at position 0');
+      expect(screen.getByTestId('payloadJSON')).toHaveTextContent('Unexpected token b in JSON at position 0');
     });
   });
 
   it('Should render error in preview response , if payload has correct format but preview request has been rejected', async () => {
     mockPreviewTemplateResponseRejected(server);
-    render(<TemplatePreview payload={'{"a":"b"}'} templateName="potato" />, { wrapper: getProviderWraper() });
+    render(
+      <TemplatePreview
+        payload={'{"a":"b"}'}
+        templateName="potato"
+        payloadFormatError={null}
+        setPayloadFormatError={jest.fn()}
+      />,
+      { wrapper: getProviderWraper() }
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(PREVIEW_NOT_AVAILABLE);
@@ -76,7 +100,15 @@ describe('TemplatePreview component', () => {
       ],
     };
     mockPreviewTemplateResponse(server, response);
-    render(<TemplatePreview payload={'{"a":"b"}'} templateName="potato" />, { wrapper: getProviderWraper() });
+    render(
+      <TemplatePreview
+        payload={'{"a":"b"}'}
+        templateName="potato"
+        payloadFormatError={null}
+        setPayloadFormatError={jest.fn()}
+      />,
+      { wrapper: getProviderWraper() }
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
@@ -93,7 +125,15 @@ describe('TemplatePreview component', () => {
       ],
     };
     mockPreviewTemplateResponse(server, response);
-    render(<TemplatePreview payload={'{"a":"b"}'} templateName="potato" />, { wrapper: getProviderWraper() });
+    render(
+      <TemplatePreview
+        payload={'{"a":"b"}'}
+        templateName="potato"
+        payloadFormatError={null}
+        setPayloadFormatError={jest.fn()}
+      />,
+      { wrapper: getProviderWraper() }
+    );
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
         'Preview for template1: This is the template result bla bla bla ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'

@@ -12,7 +12,16 @@ import { DEFAULT_PAYLOAD } from './TemplateForm';
 
 const PayloadEditorWithState = () => {
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
-  return <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />;
+  return (
+    <PayloadEditor
+      payload={payload}
+      setPayload={setPayload}
+      defaultPayload={DEFAULT_PAYLOAD}
+      setPayloadFormatError={jest.fn()}
+      payloadFormatError={null}
+      onPayloadError={jest.fn()}
+    />
+  );
 };
 const renderWithProvider = () => {
   const store = configureStore();

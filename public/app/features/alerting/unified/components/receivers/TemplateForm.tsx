@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
+import { addDays } from 'date-fns';
 import { Location } from 'history';
-import React, { ReactElement, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
-import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,9 +11,9 @@ import { Stack } from '@grafana/experimental';
 import {
   Alert,
   Button,
+  CollapsableSection,
   Field,
   FieldSet,
-  Icon,
   Input,
   LinkButton,
   Spinner,
@@ -71,8 +71,7 @@ export const DEFAULT_PAYLOAD = `[
     "labels": {
       "instance": "instance1"
     },
-    "startsAt": "2023-04-01T00:00:00Z",
-    "endsAt": "2023-12-01T00:05:00Z"
+    "startsAt": "${addDays(new Date(), -1).toISOString()}"
   }]
 `;
 
@@ -88,10 +87,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const isduplicating = isDuplicating(location);
 
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
-
-  const [isTemplateDataDocsOpen, toggleTemplateDataDocsOpen] = useToggle(false);
+  const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
   const [view, setView] = useState<'content' | 'preview'>('content');
+
+  const onPayloadError = () => setView('preview');
 
   const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -151,6 +151,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       ? true
       : 'Another template with this name already exists.';
   };
+  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   return (
     <FormProvider {...formApi}>
@@ -179,7 +180,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             <div>
               <TabsBar>
                 <Tab label="Content" active={view === 'content'} onChangeTab={() => setView('content')} />
-                {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+                {isGrafanaAlertManager && (
                   <Tab label="Preview" active={view === 'preview'} onChangeTab={() => setView('preview')} />
                 )}
               </TabsBar>
@@ -223,24 +224,30 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     </div>
                   </div>
                 ) : (
-                  <TemplatePreview payload={payload} templateName={watch('name')} />
+                  <TemplatePreview
+                    payload={payload}
+                    templateName={watch('name')}
+                    setPayloadFormatError={setPayloadFormatError}
+                    payloadFormatError={payloadFormatError}
+                  />
                 )}
               </div>
             </div>
-            {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
-              <PayloadEditor payload={payload} setPayload={setPayload} defaultPayload={DEFAULT_PAYLOAD} />
+            {isGrafanaAlertManager && (
+              <PayloadEditor
+                payload={payload}
+                setPayload={setPayload}
+                defaultPayload={DEFAULT_PAYLOAD}
+                setPayloadFormatError={setPayloadFormatError}
+                payloadFormatError={payloadFormatError}
+                onPayloadError={onPayloadError}
+              />
             )}
           </Stack>
         </FieldSet>
-        <>
-          <ExpandableSection
-            title="Data cheat sheet"
-            isOpen={isTemplateDataDocsOpen}
-            toggleOpen={toggleTemplateDataDocsOpen}
-          >
-            <TemplateDataDocs />
-          </ExpandableSection>
-        </>
+        <CollapsableSection label="Data cheat sheet" isOpen={false}>
+          <TemplateDataDocs />
+        </CollapsableSection>
       </form>
     </FormProvider>
   );
@@ -277,28 +284,6 @@ function TemplatingGuideline() {
         </div>
       </div>
     </Alert>
-  );
-}
-
-interface ExpandableSectionProps {
-  title: string;
-  isOpen: boolean;
-  toggleOpen: React.MouseEventHandler<HTMLDivElement> | undefined;
-  children: ReactElement;
-}
-
-function ExpandableSection({ isOpen, toggleOpen, children, title }: ExpandableSectionProps) {
-  const styles = useStyles2(getStyles);
-  return (
-    <Stack gap={2} direction="column">
-      <div className={styles.previewHeader} onClick={toggleOpen}>
-        <div className={styles.toggle}>
-          <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-        </div>
-        <div className={styles.previewHeaderTitle}>{title}</div>
-      </div>
-      {isOpen && <>{children}</>}
-    </Stack>
   );
 }
 
@@ -350,13 +335,23 @@ function getPreviewTorender(
   }
 }
 
-export function TemplatePreview({ payload, templateName }: { payload: string; templateName: string }) {
+export function TemplatePreview({
+  payload,
+  templateName,
+  payloadFormatError,
+  setPayloadFormatError,
+}: {
+  payload: string;
+  templateName: string;
+  payloadFormatError: string | null;
+  setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
+}) {
   const styles = useStyles2(getStyles);
 
   const { watch } = useFormContext<TemplateFormValues>();
 
   const templateContent = watch('content');
-  const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
+
   const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewTemplateMutation();
 
   const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);

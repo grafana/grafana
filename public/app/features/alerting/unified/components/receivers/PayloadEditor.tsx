@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Icon, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
@@ -14,10 +14,16 @@ export function PayloadEditor({
   payload,
   setPayload,
   defaultPayload,
+  setPayloadFormatError,
+  payloadFormatError,
+  onPayloadError,
 }: {
   payload: string;
   defaultPayload: string;
   setPayload: React.Dispatch<React.SetStateAction<string>>;
+  setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
+  payloadFormatError: string | null;
+  onPayloadError: () => void;
 }) {
   const styles = useStyles2(getStyles);
   const onReset = () => {
@@ -30,8 +36,15 @@ export function PayloadEditor({
     setIsEditingAlertData(false);
   };
 
-  const onOpenEditAlertModal = () => setIsEditingAlertData(true);
-
+  const onOpenEditAlertModal = () => {
+    try {
+      JSON.parse(payload);
+      setIsEditingAlertData(true);
+    } catch (e) {
+      setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
+      onPayloadError();
+    }
+  };
   const onAddAlertList = (alerts: TestTemplateAlert[]) => {
     onCloseEditAlertModal();
     setPayload((payload) => {
@@ -73,6 +86,14 @@ export function PayloadEditor({
           >
             Add alert data
           </Button>
+          {payloadFormatError !== null && (
+            <Badge
+              color="orange"
+              icon="exclamation-triangle"
+              text={'There are some errors in payload JSON'}
+              tooltip={'Fix errors in existing payload before adding more data'}
+            />
+          )}
         </Stack>
       </Stack>
       <GenerateAlertDataModal isOpen={isEditingAlertData} onDismiss={onCloseEditAlertModal} onAccept={onAddAlertList} />
