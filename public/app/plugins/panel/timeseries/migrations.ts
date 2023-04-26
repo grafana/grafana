@@ -12,6 +12,7 @@ import {
   FieldType,
   NullValueMode,
   PanelTypeChangedHandler,
+  ReducerID,
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
@@ -30,6 +31,7 @@ import {
   StackingMode,
   SortOrder,
   GraphTransform,
+  ComparisonOperation,
 } from '@grafana/schema';
 
 import { defaultGraphConfig } from './config';
@@ -350,6 +352,14 @@ export function graphToTimeseriesOptions(angular: any): { fieldConfig: FieldConf
     if (angular.legend.sideWidth) {
       options.legend.width = angular.legend.sideWidth;
     }
+
+    if (legendConfig.hideZero) {
+      overrides.push(getLegendHideFromOverride(ReducerID.allIsZero));
+    }
+
+    if (legendConfig.hideEmpty) {
+      overrides.push(getLegendHideFromOverride(ReducerID.allIsNull));
+    }
   }
 
   const tooltipConfig = angular.tooltip;
@@ -613,4 +623,27 @@ function migrateHideFrom(panel: {
       return fr;
     });
   }
+}
+
+function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allIsNull) {
+  return {
+    matcher: {
+      id: FieldMatcherID.byValue,
+      options: {
+        reducer: reducer,
+        op: ComparisonOperation.GTE,
+        value: 0,
+      },
+    },
+    properties: [
+      {
+        id: 'custom.hideFrom',
+        value: {
+          tooltip: true,
+          viz: false,
+          legend: true,
+        },
+      },
+    ],
+  };
 }
