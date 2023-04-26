@@ -59,6 +59,7 @@ export {
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
+  AnnotationContainer,
   AnnotationQuery,
   VariableModel,
   DataSourceRef,
@@ -79,6 +80,7 @@ export type {
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export {
+  defaultAnnotationContainer,
   defaultAnnotationQuery,
   defaultVariableModel,
   VariableHide,

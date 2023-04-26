@@ -8,6 +8,22 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+export interface LibraryElementDTOMetaUser {
+  avatarUrl: string;
+  id: number;
+  name: string;
+}
+
+export interface LibraryElementDTOMeta {
+  connectedDashboards: number;
+  created: string;
+  createdBy: LibraryElementDTOMetaUser;
+  folderName: string;
+  folderUid: string;
+  updated: string;
+  updatedBy: LibraryElementDTOMetaUser;
+}
+
 export interface LibraryPanel {
   /**
    * Panel description
@@ -46,20 +62,4 @@ export interface LibraryPanel {
    * panel version, incremented each time the dashboard is updated.
    */
   version: number;
-}
-
-export interface LibraryElementDTOMetaUser {
-  avatarUrl: string;
-  id: number;
-  name: string;
-}
-
-export interface LibraryElementDTOMeta {
-  connectedDashboards: number;
-  created: string;
-  createdBy: LibraryElementDTOMetaUser;
-  folderName: string;
-  folderUid: string;
-  updated: string;
-  updatedBy: LibraryElementDTOMetaUser;
 }

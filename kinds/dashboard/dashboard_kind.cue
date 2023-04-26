@@ -85,14 +85,6 @@ lineage: seqs: [
 						list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 					}
 
-					// TODO -- should not be a public interface on its own, but required for Veneer
-					#AnnotationContainer: {
-						// annoying... but required so that the list is defined using the nested Veneer
-						@grafana(TSVeneer="type")
-
-						list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
-					} @cuetsy(kind="interface")
-
 					// TODO docs
 					annotations?: #AnnotationContainer
 
@@ -129,6 +121,14 @@ lineage: seqs: [
 
 					// Panel IDs that should be included or excluded
 					ids: [...uint8]
+				} @cuetsy(kind="interface")
+
+				// TODO -- should not be a public interface on its own, but required for Veneer
+				#AnnotationContainer: {
+					// annoying... but required so that the list is defined using the nested Veneer
+					@grafana(TSVeneer="type")
+
+					list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
 				// TODO docs
