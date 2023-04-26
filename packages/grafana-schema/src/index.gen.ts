@@ -9,7 +9,6 @@
 
 // Raw generated types from Dashboard kind.
 export type {
-  Dashboard,
   AnnotationTarget,
   AnnotationPanelFilter,
   DashboardLink,
@@ -92,31 +91,15 @@ export {
 
 // Raw generated types from LibraryPanel kind.
 export type {
-  LibraryPanel,
   LibraryElementDTOMetaUser,
   LibraryElementDTOMeta
 } from './raw/librarypanel/x/librarypanel_types.gen';
 
 // Raw generated types from Playlist kind.
-export type {
-  Playlist,
-  PlaylistItem
-} from './raw/playlist/x/playlist_types.gen';
-
-// Raw generated types from Preferences kind.
-export type { Preferences } from './raw/preferences/x/preferences_types.gen';
-
-// Raw generated types from PublicDashboard kind.
-export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
+export type { PlaylistItem } from './raw/playlist/x/playlist_types.gen';
 
 // Raw generated types from ServiceAccount kind.
-export type {
-  ServiceAccount,
-  OrgRole
-} from './raw/serviceaccount/x/serviceaccount_types.gen';
-
-// Raw generated types from Team kind.
-export type { Team } from './raw/team/x/team_types.gen';
+export type { OrgRole } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated enums and default consts from team kind.
 export { Permission } from './raw/team/x/team_types.gen';
