@@ -8,7 +8,8 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "scripts": {
-    "build": "webpack -c webpack.config.ts --env production",
+    "build": "yarn test && webpack -c webpack.config.ts --env production",
+    "dev": "webpack -w -c webpack.config.ts --env development",
     "test": "jest -c jest.config.js"
   },
   "author": "Grafana Labs",
