@@ -224,8 +224,6 @@ func TestCalculate(t *testing.T) {
 			{"windows", "\\", toSlashWindows},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
-				t.Skip()
-
 				// Replace toSlash for cross-platform testing
 				oldToSlash := toSlash
 				t.Cleanup(func() {
@@ -236,7 +234,7 @@ func TestCalculate(t *testing.T) {
 				basePath := "../testdata/app-with-child/dist"
 
 				s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
-				fs, err := newPathSeparatorOverrideFS(tc.sep, basePath)
+				fs, err := newPathSeparatorOverrideFS(tc.sep, plugins.NewLocalFS(basePath))
 				require.NoError(t, err)
 				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -291,7 +289,7 @@ func TestNewToSlash(t *testing.T) {
 	})
 }
 
-// fsPathSeparatorFiles embeds plugins.LocalFS and overrides the Files() behaviour so all the returned elements
+// fsPathSeparatorFiles embeds a plugins.FS and overrides the Files() behaviour so all the returned elements
 // have the specified path separator. This can be used to test Files() behaviour cross-platform.
 type fsPathSeparatorFiles struct {
 	plugins.FS
@@ -300,20 +298,16 @@ type fsPathSeparatorFiles struct {
 }
 
 // newPathSeparatorOverrideFS returns a new fsPathSeparatorFiles. Sep is the separator that will be used ONLY for
-// the elements returned by Files(). basePath MUST use the os-specific path separator (filepath.Separator)
-// if Open() is required to work for the test case.
-func newPathSeparatorOverrideFS(sep string, basePath string) (fsPathSeparatorFiles, error) {
-	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(basePath))
-	if err != nil {
-		return fsPathSeparatorFiles{}, err
-	}
+// the elements returned by Files().
+func newPathSeparatorOverrideFS(sep string, ufs plugins.FS) (fsPathSeparatorFiles, error) {
 	return fsPathSeparatorFiles{
-		FS:        sfs,
+		FS:        ufs,
 		separator: sep,
 	}, nil
 }
 
-// Files returns LocalFS.Files(), but all path separators (filepath.Separator) are replaced with f.separator.
+// Files returns LocalFS.Files(), but all path separators for the current platform (filepath.Separator)
+// are replaced with f.separator.
 func (f fsPathSeparatorFiles) Files() ([]string, error) {
 	files, err := f.FS.Files()
 	if err != nil {
@@ -327,9 +321,6 @@ func (f fsPathSeparatorFiles) Files() ([]string, error) {
 }
 
 func TestFSPathSeparatorFiles(t *testing.T) {
-	t.Log("to be fixed")
-	t.Fail()
-
 	for _, tc := range []struct {
 		name string
 		sep  string
@@ -338,19 +329,18 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 		{"windows", "\\"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			/* fs, err := newPathSeparatorOverrideFS(
-				"/", ".",
-				"a", strings.Join([]string{"a", "b", "c"}, tc.sep),
+			fs, err := newPathSeparatorOverrideFS(
+				"/", plugins.NewInMemoryFS(
+					map[string][]byte{"a": nil, strings.Join([]string{"a", "b", "c"}, tc.sep): nil},
+				),
 			)
 			require.NoError(t, err)
 			files, err := fs.Files()
 			require.NoError(t, err)
-			filesMap := make(map[string]struct{}, len(files))
-			// Re-convert to map as the key order is not stable
-			for _, f := range files {
-				filesMap[f] = struct{}{}
-			}
-			require.Equal(t, filesMap, map[string]struct{}{"a": {}, strings.Join([]string{"a", "b", "c"}, tc.sep): {}}) */
+			exp := []string{"a", strings.Join([]string{"a", "b", "c"}, tc.sep)}
+			sort.Strings(files)
+			sort.Strings(exp)
+			require.Equal(t, exp, files)
 		})
 	}
 }

@@ -8,13 +8,18 @@ import (
 )
 
 var (
-	_ FS = &inMemoryFS{}
+	_ FS          = &inMemoryFS{}
+	_ fs.File     = &inMemoryFile{}
+	_ fs.FileInfo = &inMemoryFileInfo{}
 )
 
+// inMemoryFS is an FS that stores files in-memory.
 type inMemoryFS struct {
 	files map[string][]byte
 }
 
+// NewInMemoryFS returns a new FS with the specified files and content.
+// The provided value is a map from file name (keys) to file content (values).
 func NewInMemoryFS(files map[string][]byte) FS {
 	return &inMemoryFS{files: files}
 }
@@ -38,6 +43,12 @@ func (f inMemoryFS) Open(fn string) (fs.File, error) {
 	return &inMemoryFile{path: fn, reader: bytes.NewReader(f.files[fn])}, nil
 }
 
+// NewFakeFS returns a new FS that always returns ErrFileNotExist when trying to Open() and empty Files().
+func NewFakeFS() FS {
+	return NewInMemoryFS(nil)
+}
+
+// inMemoryFile is a fs.File whose content is stored in memory.
 type inMemoryFile struct {
 	path   string
 	reader *bytes.Reader
