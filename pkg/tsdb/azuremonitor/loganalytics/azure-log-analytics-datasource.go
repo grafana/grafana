@@ -652,6 +652,9 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 			if tagsMap[i] {
 				continue
 			}
+			if i == "cloud_RoleInstance" || i == "cloud_RoleName" || i == "customDimensions" || i == "customMeasurements" {
+				continue
+			}
 			tags = append(tags, i)
 			tagsMap[i] = true
 		}
@@ -683,14 +686,26 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		}
 	}
 
+	propertiesFunc := "bag_merge(customDimensions, customMeasurements)"
+	if len(tags) > 0 {
+		propertiesFunc = fmt.Sprintf("bag_merge(bag_pack_columns(%s), customDimensions, customMeasurements)", strings.Join(tags, ","))
+	}
+
+	errorProperty := ""
+	if slices.Contains(filteredTypes, "exceptions") {
+		errorProperty = `| extend error = iff(itemType == "exceptions", true, false)`
+	}
+
 	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s | where $__timeFilter()`, strings.Join(filteredTypes, ","))
 	propertiesStaticQuery := `| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 		`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
-		`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))`
-	propertiesQuery := fmt.Sprintf(`| extend tags = bag_pack_columns(%s)`, strings.Join(tags, ","))
-	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
+		`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+		`| extend serviceName = cloud_RoleName` +
+		`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)`
+	propertiesQuery := fmt.Sprintf(`| extend tags = %s`, propertiesFunc)
+	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 		`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
 		`| order by startTime asc`
 
-	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + filtersClause + projectClause
+	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + errorProperty + filtersClause + projectClause
 }
