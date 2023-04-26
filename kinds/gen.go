@@ -38,7 +38,6 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		//codegen.LatestJenny(cuectx.GoCoreKindParentPath, codegen.GoTypesJenny{}),
 		&codegen.ResourceGoTypesJenny{},
 		&codegen.SubresourceGoTypesJenny{},
 		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
