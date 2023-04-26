@@ -938,7 +938,6 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
 
-		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 		assert.Equal(t, "${PROP('Period')} ${PROP('Dim.any_other_word')}", res[0].Label)
 		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
 		assert.Equal(t, true, res[0].ReturnData)
@@ -988,7 +987,6 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		})
 
 		require.NotNil(t, res[0])
-		assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 		assert.Equal(t, "${PROP('Period')} ${PROP('Dim.any_other_word')}", res[0].Label)
 		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
 		assert.Equal(t, true, res[0].ReturnData)
@@ -999,7 +997,6 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, "Average", res[0].Statistic)
 
 		require.NotNil(t, res[1])
-		assert.Equal(t, "{{  label }}", res[1].Alias)
 		assert.Equal(t, "${LABEL}", res[1].Label)
 		assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[1].Dimensions)
 		assert.Equal(t, true, res[1].ReturnData)
@@ -1046,7 +1043,6 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				require.Len(t, res, 1)
 				require.NotNil(t, res[0])
 
-				assert.Equal(t, "{{period}} {{any_other_word}}", res[0].Alias)
 				assert.Equal(t, tc.expectedLabel, res[0].Label)
 				assert.Equal(t, map[string][]string{"InstanceId": {"test"}}, res[0].Dimensions)
 				assert.Equal(t, true, res[0].ReturnData)

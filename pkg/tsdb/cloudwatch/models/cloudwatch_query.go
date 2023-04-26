@@ -63,8 +63,6 @@ type CloudWatchQuery struct {
 	ReturnData    bool
 	Dimensions    map[string][]string
 	Period        int
-	// Deprecated: use Label
-	Alias             string
 	Label             string
 	MatchExact        bool
 	UsedExpression    string
@@ -246,10 +244,6 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Region:            mdq.Region,
 			Namespace:         mdq.Namespace,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
-		}
-
-		if mdq.Alias != nil {
-			cwQuery.Alias = *mdq.Alias
 		}
 
 		if mdq.MetricName != nil {
