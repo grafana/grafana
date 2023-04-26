@@ -84,8 +84,7 @@ export function setItemSelectionState(
       const allChildrenSelected = children?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
       state.selectedItems[parent.kind][parent.uid] = allChildrenSelected;
     } else {
-      // If we're unselecting an item, unselect all ancestors (parent, grandparent, etc) also
-      // so we can show a UI-only 'mixed' checkbox
+      // A folder cannot be selected if any of it's children are unselected
       state.selectedItems[parent.kind][parent.uid] = false;
     }
 
