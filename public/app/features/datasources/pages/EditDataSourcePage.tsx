@@ -6,6 +6,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
+import { EditDataSourceTitle } from '../components/EditDataSourceTitle';
+import { EditDataSourceSubtitle } from '../components/EditDatasSourceSubtitle';
 import { useDataSourceSettingsNav } from '../state';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
@@ -20,6 +22,8 @@ export function EditDataSourcePage(props: Props) {
     <Page
       navId="datasources"
       pageNav={nav.main}
+      renderTitle={(title) => <EditDataSourceTitle title={title} uid={uid} />}
+      subTitle={<EditDataSourceSubtitle uid={uid} />}
       actions={config.featureToggles.topnav ? <EditDataSourceActions uid={uid} /> : undefined}
     >
       <Page.Contents>

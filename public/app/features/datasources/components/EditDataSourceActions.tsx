@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -14,7 +14,7 @@ import { constructDataSourceExploreUrl } from '../utils';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css({
-      marginLeft: theme.spacing(2),
+      marginLeft: theme.spacing(1),
     }),
   };
 };
@@ -35,25 +35,8 @@ export function EditDataSourceActions({ uid }: Props) {
 
   return (
     <>
-      <LinkButton
-        icon="apps"
-        fill="outline"
-        variant="secondary"
-        href={`dashboard/new-with-ds/${dataSource.uid}`}
-        onClick={() => {
-          trackCreateDashboardClicked({
-            grafana_version: config.buildInfo.version,
-            datasource_uid: dataSource.uid,
-            plugin_name: dataSource.typeName,
-            path: location.pathname,
-          });
-        }}
-      >
-        Build a dashboard
-      </LinkButton>
-
       {hasExploreRights && (
-        <LinkButton
+        <Button
           icon="compass"
           fill="outline"
           variant="secondary"
@@ -69,8 +52,26 @@ export function EditDataSourceActions({ uid }: Props) {
           }}
         >
           Explore
-        </LinkButton>
+        </Button>
       )}
+
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={!canDelete}
+        onClick={() => {
+          trackCreateDashboardClicked({
+            grafana_version: config.buildInfo.version,
+            datasource_uid: dataSource.uid,
+            plugin_name: dataSource.typeName,
+            path: location.pathname,
+          });
+          location.href = `dashboard/new-with-ds/${dataSource.uid}`;
+        }}
+        className={styles.button}
+      >
+        View dashboards
+      </Button>
 
       <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete} className={styles.button}>
         Delete
