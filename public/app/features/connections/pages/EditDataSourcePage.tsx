@@ -7,6 +7,8 @@ import { EditDataSource } from 'app/features/datasources/components/EditDataSour
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
 import { EditDataSourceTitle } from 'app/features/datasources/components/EditDataSourceTitle';
 import { EditDataSourceSubtitle } from 'app/features/datasources/components/EditDatasSourceSubtitle';
+import { setDataSourceName, setIsDefault } from 'app/features/datasources/state';
+import { useDispatch } from 'app/types';
 
 import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
 
@@ -16,13 +18,16 @@ export function EditDataSourcePage() {
   const params = new URLSearchParams(location.search);
   const pageId = params.get('page');
   const { navId, pageNav } = useDataSourceSettingsNav();
+  const dispatch = useDispatch();
+  const onNameChange = (name: string) => dispatch(setDataSourceName(name));
+  const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
 
   return (
     <Page
       navId={navId}
       pageNav={pageNav}
-      renderTitle={(title) => <EditDataSourceTitle title={title} />}
-      subTitle={<EditDataSourceSubtitle uid={uid} />}
+      renderTitle={(title) => <EditDataSourceTitle title={title} onNameChange={onNameChange} />}
+      subTitle={<EditDataSourceSubtitle uid={uid} onDefaultChange={onDefaultChange} />}
       actions={config.featureToggles.topnav ? <EditDataSourceActions uid={uid} /> : undefined}
     >
       <Page.Contents>
