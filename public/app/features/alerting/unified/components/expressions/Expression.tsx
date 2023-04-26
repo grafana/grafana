@@ -314,7 +314,7 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
-        <div className={cx(styles.expression.resultLabel)} title={title}>
+        <div className={styles.expression.resultLabel} title={title}>
           <span>{hasLabels ? '' : name}</span>
           {hasLabels && (
             <>
