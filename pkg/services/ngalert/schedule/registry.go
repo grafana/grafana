@@ -259,6 +259,14 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		_, _ = sum.Write(fingerprintSeparator)
 	}
 	writeString := func(s string) {
+		if len(s) == 0 {
+			writeBytes(nil)
+			return
+		}
+		// TODO fix it when upgraded to in GO1.20 to
+		/*
+			writeBytes(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		*/
 		// avoid allocation when converting string to byte slice
 		writeBytes(*(*[]byte)(unsafe.Pointer(&s))) //nolint:gosec
 	}
