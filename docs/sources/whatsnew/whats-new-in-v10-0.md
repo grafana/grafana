@@ -196,6 +196,21 @@ Weâ€™ve improved the way you can configure annotations by adding the possibility
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
+### Redesigned and improved Log Context
+
+Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
+
+Notably, we've added the following new features that streamline the log context experience:
+
+1. Log details with actions including a **Copy** button to easily copy lines and an eye icon to display only selected labels, allowing users to focus on specific information without leaving the log context panel.
+2. A **Wrap Lines** toggle to automatically wrap long lines of text for easier reading and analysis of log entry context directly in log context.
+3. An **Open in split view** button to execute the context query for a log entry in a split screen in the Explore view.
+4. Only for Loki: A quick filter menu that lets you easily refine the context query by selecting and removing labels.
+
+{{< figure src="/media/docs/grafana/log-context-loki-new-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
+
+These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
+
 ## Scenes
 
 _This is an experimental library_
@@ -239,7 +254,7 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If youâ€
 
 The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
-This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insigts resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
+This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insights resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
 
 ### Prometheus dashboard performance improvements
 
@@ -251,20 +266,6 @@ This will reduce network load, and speed up now-relative dashboards, especially 
 ### Phlare renamed to Grafana Pyroscope
 
 As a part of ongoing unification of Phlare and Pyroscope project we are renaming the Phlare data source to Grafana Pyroscope data source. This data source will support both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When creating new instance of the data source, backend type will be autodetected on the config page, or you can select it manually.
-
-## Redesigned and improved Log Context
-
-Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
-
-Notably, we've added two new features that streamline the log context experience:
-
-First, we've included a "copy" button that allows users to easily copy lines without having to navigate away from the log context panel.
-
-Second, we've implemented an eye icon that lets users display only the selected labels, making it easier to focus on specific information.
-
-{{< figure src="/media/docs/grafana/log-context-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
-
-These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
 
 ## Alerting
 
