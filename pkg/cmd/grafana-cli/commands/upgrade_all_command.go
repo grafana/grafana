@@ -3,11 +3,12 @@ package commands
 import (
 	"context"
 
+	"github.com/hashicorp/go-version"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/hashicorp/go-version"
 )
 
 func shouldUpgrade(installed string, remote *models.Plugin) bool {
@@ -60,6 +61,10 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if len(pluginsToUpgrade) > 0 {
+		logRestartNotice()
 	}
 
 	return nil

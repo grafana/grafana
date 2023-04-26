@@ -30,7 +30,7 @@ interface ObjectType extends Object {
 export const deepFreeze = <T>(obj: T): T => {
   Object.freeze(obj);
 
-  const isNotException = (object: any, propertyName: any) =>
+  const isNotException = (object: unknown, propertyName: string) =>
     typeof object === 'function'
       ? propertyName !== 'caller' && propertyName !== 'callee' && propertyName !== 'arguments'
       : true;
@@ -39,7 +39,7 @@ export const deepFreeze = <T>(obj: T): T => {
   if (obj && obj instanceof Object) {
     const object: ObjectType = obj;
     Object.getOwnPropertyNames(object).forEach((propertyName) => {
-      const objectProperty: any = object[propertyName];
+      const objectProperty = object[propertyName];
       if (
         hasOwnProp.call(object, propertyName) &&
         isNotException(object, propertyName) &&

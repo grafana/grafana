@@ -1,0 +1,54 @@
+@top AlertRuleSearch { expression+ }
+
+@dialects { dataSourceFilter, nameSpaceFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter, healthFilter }
+
+expression { (FilterExpression | FreeFormExpression) expression }
+
+FreeFormExpression { word (colon word)* | stringWithQuotes }
+
+FilterExpression {
+ filter<DataSourceToken> |
+ filter<NameSpaceToken> |
+ filter<LabelToken> |
+ filter<GroupToken> |
+ filter<RuleToken> |
+ filter<StateToken> |
+ filter<TypeToken> |
+ filter<HealthToken>
+}
+
+filter<token> { token FilterValue }
+
+@tokens {
+  colon { ":" }
+
+  // Special characters (except colon, quotes and space), Latin characters, extended latin and emoji
+  allowedInputChar { $[!#$%&'()*+,-./] | $[\u{0030}-\u{0039}] | $[\u{003b}-\u{1eff}] | $[\u{2030}-\u{1faff}] }
+  word { allowedInputChar+ }
+
+  allowedInputCharOrColon { allowedInputChar | colon }
+  allowedInputCharOrColonOrWhitespace { allowedInputCharOrColon | @whitespace }
+  stringWithQuotes { ("\"" allowedInputCharOrColonOrWhitespace+ "\"") }
+
+  FilterValue { allowedInputCharOrColon+ | stringWithQuotes }
+  filterToken<type> { type colon }
+
+  DataSourceToken[@dialect=dataSourceFilter] { filterToken<"datasource"> }
+  NameSpaceToken[@dialect=nameSpaceFilter] { filterToken<"namespace"> }
+  LabelToken[@dialect=labelFilter] { filterToken<"label"> }
+  GroupToken[@dialect=groupFilter] { filterToken<"group"> }
+  RuleToken[@dialect=ruleFilter] { filterToken<"rule"> }
+  StateToken[@dialect=stateFilter] { filterToken<"state"> }
+  TypeToken[@dialect=typeFilter] { filterToken<"type"> }
+  HealthToken[@dialect=healthFilter] { filterToken<"health"> }
+
+  @precedence { DataSourceToken, word }
+  @precedence { NameSpaceToken, word }
+  @precedence { LabelToken, word }
+  @precedence { GroupToken, word }
+  @precedence { RuleToken, word }
+  @precedence { StateToken, word }
+  @precedence { TypeToken, word }
+  @precedence { HealthToken, word }
+}
+

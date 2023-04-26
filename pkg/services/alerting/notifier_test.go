@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -181,28 +182,26 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		store := evalCtx.Store.(*AlertStoreMock)
 
-		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
-			query.Result = []*models.AlertNotification{
+		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *alertmodels.GetAlertNotificationsWithUidToSendQuery) (res []*alertmodels.AlertNotification, err error) {
+			return []*alertmodels.AlertNotification{
 				{
-					Id:   1,
+					ID:   1,
 					Type: "test",
 					Settings: simplejson.NewFromAny(map[string]interface{}{
 						"uploadImage": uploadImage,
 					}),
 				},
-			}
-			return nil
+			}, nil
 		}
 
-		store.getOrCreateNotificationState = func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
-			query.Result = &models.AlertNotificationState{
-				AlertId:                      evalCtx.Rule.ID,
+		store.getOrCreateNotificationState = func(ctx context.Context, query *alertmodels.GetOrCreateNotificationStateQuery) (res *alertmodels.AlertNotificationState, err error) {
+			return &alertmodels.AlertNotificationState{
+				AlertID:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
-				Id:                           1,
-				OrgId:                        evalCtx.Rule.OrgID,
-				State:                        models.AlertNotificationStateUnknown,
-			}
-			return nil
+				ID:                           1,
+				OrgID:                        evalCtx.Rule.OrgID,
+				State:                        alertmodels.AlertNotificationStateUnknown,
+			}, nil
 		}
 
 		setting.AlertingNotificationTimeout = 30 * time.Second
@@ -275,7 +274,7 @@ type testNotifier struct {
 	Frequency             time.Duration
 }
 
-func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
+func newTestNotifier(model *alertmodels.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
 	uploadImage := true
 	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {
@@ -283,7 +282,7 @@ func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn, ns 
 	}
 
 	return &testNotifier{
-		UID:                   model.Uid,
+		UID:                   model.UID,
 		Name:                  model.Name,
 		IsDefault:             model.IsDefault,
 		Type:                  model.Type,
@@ -301,7 +300,7 @@ func (n *testNotifier) Notify(evalCtx *EvalContext) error {
 	return nil
 }
 
-func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *models.AlertNotificationState) bool {
+func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *alertmodels.AlertNotificationState) bool {
 	return true
 }
 

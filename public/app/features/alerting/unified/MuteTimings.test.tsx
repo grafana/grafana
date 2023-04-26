@@ -1,13 +1,11 @@
 import { render, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 
 import MuteTimings from './MuteTimings';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
@@ -24,15 +22,12 @@ const mocks = {
 };
 
 const renderMuteTimings = (location = '/alerting/routes/mute-timing/new') => {
-  const store = configureStore();
   locationService.push(location);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <MuteTimings />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <MuteTimings />
+    </TestProvider>
   );
 };
 

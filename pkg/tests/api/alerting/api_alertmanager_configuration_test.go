@@ -10,14 +10,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
@@ -101,7 +102,7 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
-		require.Equal(t, `failed to save and apply Alertmanager configuration: failed to build integration map: the receiver is invalid: failed to validate receiver "slack.receiver" of type "slack": token must be specified when using the Slack chat API`, res["message"])
+		require.Regexp(t, `^failed to save and apply Alertmanager configuration: failed to build integration map: failed to validate integration "slack.receiver" \(UID [^\)]+\) of type "slack": token must be specified when using the Slack chat API`, res["message"])
 		resp = getRequest(t, alertConfigURL, http.StatusOK) // nolint
 
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, getBody(t, resp.Body))

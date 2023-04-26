@@ -4,22 +4,31 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authn.ProxyClient = new(LDAP)
 var _ authn.PasswordClient = new(LDAP)
 
-func ProvideLDAP(cfg *setting.Cfg) *LDAP {
-	return &LDAP{cfg, &ldapServiceImpl{cfg}}
+type ldapService interface {
+	Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	User(username string) (*login.ExternalUserInfo, error)
+}
+
+func ProvideLDAP(cfg *setting.Cfg, ldapService ldapService) *LDAP {
+	return &LDAP{cfg, ldapService}
 }
 
 type LDAP struct {
 	cfg     *setting.Cfg
 	service ldapService
+}
+
+func (c *LDAP) String() string {
+	return "ldap"
 }
 
 func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
@@ -32,11 +41,11 @@ func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username
 		return nil, err
 	}
 
-	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+	return c.identityFromLDAPInfo(r.OrgID, info), nil
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
-	info, err := c.service.Login(&models.LoginUserQuery{
+	info, err := c.service.Login(&login.LoginUserQuery{
 		Username: username,
 		Password: password,
 	})
@@ -57,39 +66,10 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 		return nil, err
 	}
 
-	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+	return c.identityFromLDAPInfo(r.OrgID, info), nil
 }
 
-type ldapService interface {
-	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	User(username string) (*models.ExternalUserInfo, error)
-}
-
-// FIXME: remove the implementation if we convert ldap to an actual service
-type ldapServiceImpl struct {
-	cfg *setting.Cfg
-}
-
-func (s *ldapServiceImpl) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	cfg, err := multildap.GetConfig(s.cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return multildap.New(cfg.Servers).Login(query)
-}
-
-func (s *ldapServiceImpl) User(username string) (*models.ExternalUserInfo, error) {
-	cfg, err := multildap.GetConfig(s.cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	user, _, err := multildap.New(cfg.Servers).User(username)
-	return user, err
-}
-
-func identityFromLDAPInfo(orgID int64, info *models.ExternalUserInfo, allowSignup bool) *authn.Identity {
+func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *authn.Identity {
 	return &authn.Identity{
 		OrgID:          orgID,
 		OrgRoles:       info.OrgRoles,
@@ -102,10 +82,13 @@ func identityFromLDAPInfo(orgID int64, info *models.ExternalUserInfo, allowSignu
 		Groups:         info.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
-			SyncTeamMembers:     true,
-			AllowSignUp:         allowSignup,
+			SyncTeams:           true,
 			EnableDisabledUsers: true,
-			LookUpParams: models.UserLookupParams{
+			FetchSyncedUser:     true,
+			SyncPermissions:     true,
+			SyncOrgRoles:        !c.cfg.LDAPSkipOrgRoleSync,
+			AllowSignUp:         c.cfg.LDAPAllowSignup,
+			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,
 			},

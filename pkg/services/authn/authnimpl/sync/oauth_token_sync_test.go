@@ -8,21 +8,22 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
+func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
 		desc     string
 		identity *authn.Identity
 
-		expectedHasEntryToken *models.UserAuth
+		expectedHasEntryToken *login.UserAuth
 		expectHasEntryCalled  bool
 
 		expectedTryRefreshErr       error
@@ -52,26 +53,26 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 			desc:                  "should skip sync for when access token don't have expire time",
 			identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:  true,
-			expectedHasEntryToken: &models.UserAuth{},
+			expectedHasEntryToken: &login.UserAuth{},
 		},
 		{
 			desc:                  "should skip sync when access token has no expired yet",
 			identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:  true,
-			expectedHasEntryToken: &models.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
+			expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
 		{
 			desc:                  "should skip sync when access token has no expired yet",
 			identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:  true,
-			expectedHasEntryToken: &models.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
+			expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
 		{
 			desc:                        "should refresh access token when is has expired",
 			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:        true,
 			expectTryRefreshTokenCalled: true,
-			expectedHasEntryToken:       &models.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
 		},
 		{
 			desc:                              "should invalidate access token and session token if access token can't be refreshed",
@@ -81,7 +82,7 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 			expectTryRefreshTokenCalled:       true,
 			expectInvalidateOauthTokensCalled: true,
 			expectRevokeTokenCalled:           true,
-			expectedHasEntryToken:             &models.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
 			expectedErr:                       errExpiredAccessToken,
 		},
 	}
@@ -96,15 +97,15 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				HasOAuthEntryFunc: func(ctx context.Context, usr *user.SignedInUser) (*models.UserAuth, bool, error) {
+				HasOAuthEntryFunc: func(ctx context.Context, usr *user.SignedInUser) (*login.UserAuth, bool, error) {
 					hasEntryCalled = true
 					return tt.expectedHasEntryToken, tt.expectedHasEntryToken != nil, nil
 				},
-				InvalidateOAuthTokensFunc: func(ctx context.Context, usr *models.UserAuth) error {
+				InvalidateOAuthTokensFunc: func(ctx context.Context, usr *login.UserAuth) error {
 					invalidateTokensCalled = true
 					return nil
 				},
-				TryTokenRefreshFunc: func(ctx context.Context, usr *models.UserAuth) error {
+				TryTokenRefreshFunc: func(ctx context.Context, usr *login.UserAuth) error {
 					tryRefreshCalled = true
 					return tt.expectedTryRefreshErr
 				},
@@ -117,13 +118,14 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 				},
 			}
 
-			sync := &OauthTokenSync{
+			sync := &OAuthTokenSync{
 				log:            log.NewNopLogger(),
+				cache:          localcache.New(0, 0),
 				service:        service,
 				sessionService: sessionService,
 			}
 
-			err := sync.SyncOauthToken(context.Background(), tt.identity, nil)
+			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.Equal(t, tt.expectHasEntryCalled, hasEntryCalled)
 			assert.Equal(t, tt.expectTryRefreshTokenCalled, tryRefreshCalled)

@@ -4,9 +4,9 @@ import React, { useCallback, useRef } from 'react';
 import { CodeEditor, Monaco } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
-import language from '../metric-math/definition';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
-import { registerLanguage } from '../monarch/register';
+import language from '../language/metric-math/definition';
+import { TRIGGER_SUGGEST } from '../language/monarch/commands';
+import { registerLanguage } from '../language/monarch/register';
 
 export interface Props {
   onChange: (query: string) => void;

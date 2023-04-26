@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
 
-import { getNavTitle } from '../../NavBar/navBarItem-translations';
-import { enrichConfigItems, enrichWithInteractionTracking } from '../../NavBar/utils';
+import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 
 export interface TopNavBarMenuProps {
   node: NavModelItem;
@@ -15,9 +13,7 @@ export interface TopNavBarMenuProps {
 
 export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
-  const location = useLocation();
-  const enriched = enrichConfigItems([cloneDeep(nodePlain)], location);
-  const node = enrichWithInteractionTracking(enriched[0], false);
+  const node = enrichWithInteractionTracking(cloneDeep(nodePlain), false);
 
   if (!node) {
     return null;
@@ -30,24 +26,16 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
         // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
         <div onClick={(e) => e.stopPropagation()} className={styles.header}>
-          <div>{getNavTitle(node.id) ?? node.text}</div>
+          <div>{node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
         </div>
       }
     >
       {node.children?.map((item) => {
-        const itemText = getNavTitle(item.id) ?? item.text;
-        const showExternalLinkIcon = /^https?:\/\//.test(item.url || '');
         return item.url ? (
-          <MenuItem
-            url={item.url}
-            label={itemText}
-            icon={showExternalLinkIcon ? 'external-link-alt' : undefined}
-            target={item.target}
-            key={item.id}
-          />
+          <MenuItem url={item.url} label={item.text} icon={item.icon} target={item.target} key={item.id} />
         ) : (
-          <MenuItem icon={item.icon} onClick={item.onClick} label={itemText} key={item.id} />
+          <MenuItem icon={item.icon} onClick={item.onClick} label={item.text} key={item.id} />
         );
       })}
     </Menu>

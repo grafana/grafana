@@ -79,6 +79,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('annotation-filtering', import '../dev-dashboards/annotations/annotation-filtering.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('auto_decimals', import '../dev-dashboards/panel-common/auto_decimals.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -149,6 +156,20 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('datagrid_metric_values', import '../dev-dashboards/panel-datagrid/datagrid_metric_values.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('demo1', import '../dev-dashboards/datasource-testdata/demo1.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -156,21 +177,21 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_compare', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_compare.json') +
+    dashboard.new('elasticsearch_complex', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_complex.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_v7', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_v7.json') +
+    dashboard.new('elasticsearch_migration', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_migration.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_v7_filebeat', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_v7_filebeat.json') +
+    dashboard.new('elasticsearch_simple', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_simple.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -178,6 +199,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('extract-json-paths', import '../dev-dashboards/transforms/extract-json-paths.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('filter', import '../dev-dashboards/transforms/filter.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -296,6 +324,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('heatmap-x', import '../dev-dashboards/panel-heatmap/heatmap-x.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('histogram_tests', import '../dev-dashboards/panel-histogram/histogram_tests.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -353,6 +388,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('loki_fakedata', import '../dev-dashboards/datasource-loki/loki_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('migrations', import '../dev-dashboards/migrations/migrations.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -626,6 +668,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeline-modes', import '../dev-dashboards/panel-timeline/timeline-modes.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('timeline-thresholds-mappings', import '../dev-dashboards/panel-timeline/timeline-thresholds-mappings.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

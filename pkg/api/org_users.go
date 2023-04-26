@@ -9,8 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -32,7 +33,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -55,7 +56,7 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Resp
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AddOrgUser(c *contextmodel.ReqContext) response.Response {
 	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -69,7 +70,7 @@ func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
 	return hs.addOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
@@ -114,7 +115,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserC
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: c.OrgID,
 		Query: c.Query("query"),
@@ -143,7 +144,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 403: forbiddenError
 // 500: internalServerError
 
-func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
 	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
@@ -184,7 +185,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgUsers(c *contextmodel.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
@@ -219,7 +220,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Response {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
@@ -252,7 +253,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
 
 // SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
-func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -279,7 +280,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
 	if err != nil {
 		return nil, err
@@ -296,10 +297,11 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.Sear
 
 		userIDs[fmt.Sprint(user.UserID)] = true
 		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
+
 		filteredUsers = append(filteredUsers, user)
 	}
 
-	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
+	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), login.GetUserLabelsQuery{
 		UserIDs: authLabelsUserIDs,
 	})
 
@@ -313,6 +315,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.Sear
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
+			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module)
 		}
 	}
 
@@ -335,7 +338,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.Sear
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -362,7 +365,7 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgUser(c *contextmodel.ReqContext) response.Response {
 	cmd := org.UpdateOrgUserCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -379,18 +382,41 @@ func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
 	return hs.updateOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
-		return response.Error(400, "Invalid role specified", nil)
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
 	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
+	if hs.Features.IsEnabled(featuremgmt.FlagOnlyExternalOrgRoleSync) {
+		// we do not allow to change role for external synced users
+		qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
+		authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				hs.log.Debug("Failed to get user auth info for basic auth user", cmd.UserID, nil)
+			} else {
+				hs.log.Error("Failed to get user auth info for external sync check", cmd.UserID, err)
+				return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
+			}
+		}
+		if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
+			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
+		}
+	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
-			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
+			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
 		}
-		return response.Error(500, "Failed update org user", err)
+		return response.Error(http.StatusInternalServerError, "Failed update org user", err)
+	}
+
+	if !hs.accesscontrolService.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(&user.SignedInUser{
+			UserID: cmd.UserID,
+			OrgID:  cmd.OrgID,
+		})
 	}
 
 	return response.Success("Organization user updated")
@@ -409,7 +435,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd org.UpdateOr
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
@@ -435,7 +461,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RemoveOrgUser(c *contextmodel.ReqContext) response.Response {
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)

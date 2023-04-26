@@ -41,15 +41,32 @@ var (
 		Name:  "dry-run",
 		Usage: "Only simulate actions",
 	}
-	gcpKeyFlag = cli.StringFlag{
-		Name:     "gcp-key",
-		Usage:    "Google Cloud Platform key file",
-		Required: true,
-	}
 	gitHubTokenFlag = cli.StringFlag{
 		Name:    "github-token",
 		Value:   "",
 		EnvVars: []string{"GITHUB_TOKEN"},
 		Usage:   "GitHub token",
+	}
+	tagFlag = cli.StringFlag{
+		Name:  "tag",
+		Usage: "Grafana version tag",
+	}
+	securityFlag = cli.BoolFlag{
+		Name:  "security",
+		Usage: "Security release",
+	}
+	srcFlag = cli.StringFlag{
+		Name:  "src-bucket",
+		Value: "grafana-prerelease",
+		Usage: "Google Cloud Storage bucket",
+	}
+	securityDestBucketFlag = cli.StringFlag{
+		Name:  "security-dest-bucket",
+		Usage: "Google Cloud Storage bucket for security packages (or $SECURITY_DEST_BUCKET)",
+	}
+	destFlag = cli.StringFlag{
+		Name:  "dest-bucket",
+		Value: "grafana-downloads",
+		Usage: "Google Cloud Storage bucket for published packages",
 	}
 )

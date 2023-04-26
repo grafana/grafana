@@ -3,12 +3,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { e2e } from '@grafana/e2e';
 
-import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
+import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
   AzureQueryType,
-} from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
+} from '../../public/app/plugins/datasource/azuremonitor/types';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
@@ -44,11 +44,12 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
       // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
-      e2e().wait(15000);
+      e2e().wait(30000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
     timeout: 10000,
+    awaitHealth: true,
   });
 }
 
@@ -56,7 +57,7 @@ const addAzureMonitorVariable = (
   name: string,
   type: AzureQueryType,
   isFirst: boolean,
-  options?: { subscription?: string; resourceGroup?: string; namespace?: string; resource?: string }
+  options?: { subscription?: string; resourceGroup?: string; namespace?: string; resource?: string; region?: string }
 ) => {
   e2e.components.PageToolbar.item('Dashboard settings').click();
   e2e.components.Tab.title('Variables').click();
@@ -75,6 +76,9 @@ const addAzureMonitorVariable = (
     case AzureQueryType.ResourceGroupsQuery:
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       break;
+    case AzureQueryType.LocationsQuery:
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      break;
     case AzureQueryType.NamespacesQuery:
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
@@ -83,6 +87,7 @@ const addAzureMonitorVariable = (
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
       e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.region.input().find('input').type(`${options?.region}{enter}`);
       break;
     case AzureQueryType.MetricNamesQuery:
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
@@ -92,7 +97,7 @@ const addAzureMonitorVariable = (
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-  e2e.components.PageToolbar.item('Go Back').click();
+  e2e.pages.Dashboard.Settings.Actions.close().click();
 };
 
 e2e.scenario({
@@ -139,8 +144,8 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
+        from: 'now-6h',
+        to: 'now',
         zone: 'Coordinated Universal Time',
       },
     });
@@ -210,8 +215,8 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
+        from: 'now-6h',
+        to: 'now',
         zone: 'Coordinated Universal Time',
       },
     });
@@ -223,10 +228,14 @@ e2e.scenario({
       subscription: '$subscription',
       resourceGroup: '$resourceGroups',
     });
+    addAzureMonitorVariable('region', AzureQueryType.LocationsQuery, false, {
+      subscription: '$subscription',
+    });
     addAzureMonitorVariable('resource', AzureQueryType.ResourceNamesQuery, false, {
       subscription: '$subscription',
       resourceGroup: '$resourceGroups',
       namespace: '$namespace',
+      region: '$region',
     });
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('subscription').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('grafanalabs-datasources-dev').click();
@@ -240,6 +249,8 @@ e2e.scenario({
       .parent()
       .find('input')
       .type('microsoft.storage/storageaccounts{downArrow}{enter}');
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('region').parent().find('button').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('region').parent().find('input').type('uk south{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
       .parent()
@@ -254,6 +265,7 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.advanced.subscription.input().find('input').type('$subscription');
         e2eSelectors.queryEditor.resourcePicker.advanced.resourceGroup.input().find('input').type('$resourceGroups');
         e2eSelectors.queryEditor.resourcePicker.advanced.namespace.input().find('input').type('$namespaces');
+        e2eSelectors.queryEditor.resourcePicker.advanced.region.input().find('input').type('$region');
         e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');

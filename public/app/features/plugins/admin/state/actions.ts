@@ -5,7 +5,7 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
-import { invalidatePluginInCache } from '../../pluginCacheBuster';
+import { invalidatePluginInCache } from '../../systemjsPlugins/pluginCacheBuster';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -87,11 +87,16 @@ export const install = createAsyncThunk(
       return { id, changes } as Update<CatalogPlugin>;
     } catch (e) {
       console.error(e);
+      if (isFetchError(e)) {
+        return thunkApi.rejectWithValue(e.data);
+      }
 
       return thunkApi.rejectWithValue('Unknown error.');
     }
   }
 );
+
+export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
 
 export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id: string, thunkApi) => {
   try {

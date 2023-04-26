@@ -5,12 +5,13 @@ import (
 	"io"
 	"log"
 
-	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/hashicorp/go-hclog"
+
+	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type logWrapper struct {
-	Logger glog.Logger
+	Logger plog.Logger
 
 	name        string
 	impliedArgs []interface{}

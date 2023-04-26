@@ -26,8 +26,15 @@ import {
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { isGraphable } from './dims';
-import { defaultScatterConfig, ScatterFieldConfig, ScatterShow, XYChartOptions } from './models.gen';
-import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
+import {
+  DimensionValues,
+  ScatterFieldConfig,
+  defaultScatterFieldConfig,
+  ScatterHoverCallback,
+  ScatterSeries,
+  PanelOptions,
+  ScatterShow,
+} from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
@@ -39,7 +46,7 @@ export interface ScatterPanelInfo {
  * This is called when options or structure rev changes
  */
 export function prepScatter(
-  options: XYChartOptions,
+  options: PanelOptions,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
   ttip: ScatterHoverCallback,
@@ -100,7 +107,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: ScatterFieldConfig = { ...defaultScatterConfig, ...y.config.custom };
+  const fieldConfig: ScatterFieldConfig = { ...defaultScatterFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
@@ -116,10 +123,10 @@ function getScatterSeries(
         const index = dims.pointColorIndex;
         pointColor = (frame: DataFrame) => {
           // Yes we can improve this later
-          return frame.fields[index].values.toArray().map((v) => disp(v).color!);
+          return frame.fields[index].values.map((v) => disp(v).color!);
         };
       } else {
-        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values.get(0), 1);
+        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);
         pointColor = () => seriesColor;
       }
     }
@@ -195,7 +202,7 @@ function getScatterSeries(
   };
 }
 
-function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
+function prepSeries(options: PanelOptions, frames: DataFrame[]): ScatterSeries[] {
   let seriesIndex = 0;
   if (!frames.length) {
     throw 'Missing data';
@@ -668,8 +675,8 @@ const prepConfig = (
       let { fields } = frames[i];
 
       return f.y.map((yIndex, frameSeriesIndex) => {
-        let xValues = fields[f.x[frameSeriesIndex]].values.toArray();
-        let yValues = fields[f.y[frameSeriesIndex]].values.toArray();
+        let xValues = fields[f.x[frameSeriesIndex]].values;
+        let yValues = fields[f.y[frameSeriesIndex]].values;
         let sizeValues = f.size![frameSeriesIndex](frames[i]);
 
         if (!Array.isArray(sizeValues)) {
@@ -712,8 +719,8 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
         colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
       }
       return [
-        s.x(frame).values.toArray(), // X
-        s.y(frame).values.toArray(), // Y
+        s.x(frame).values, // X
+        s.y(frame).values, // Y
         asArray(frame, s.pointSize),
         colorValues,
         colorAlphaValues,

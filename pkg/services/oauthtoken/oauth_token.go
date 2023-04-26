@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -38,9 +37,9 @@ type Service struct {
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
-	HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error)
-	TryTokenRefresh(context.Context, *models.UserAuth) error
-	InvalidateOAuthTokens(context.Context, *models.UserAuth) error
+	HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error)
+	TryTokenRefresh(context.Context, *login.UserAuth) error
+	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg) *Service {
@@ -59,8 +58,9 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 		return nil
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserID}
-	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.UserID}
+	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
 			logger.Debug("no oauth token for user found", "userId", usr.UserID, "username", usr.Login)
@@ -70,10 +70,10 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 		return nil
 	}
 
-	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfoQuery.Result)
+	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfo)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
-			return buildOAuthTokenFromAuthInfo(authInfoQuery.Result)
+			return buildOAuthTokenFromAuthInfo(authInfo)
 		}
 
 		return nil
@@ -88,14 +88,14 @@ func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 }
 
 // HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
-func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*models.UserAuth, bool, error) {
+func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*login.UserAuth, bool, error) {
 	if usr == nil {
 		// No user, therefore no token
 		return nil, false, nil
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserID}
-	err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.UserID}
+	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
@@ -104,15 +104,15 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*m
 		logger.Error("failed to fetch oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		return nil, false, err
 	}
-	if !strings.Contains(authInfoQuery.Result.AuthModule, "oauth") {
+	if !strings.Contains(authInfo.AuthModule, "oauth") {
 		return nil, false, nil
 	}
-	return authInfoQuery.Result, true, nil
+	return authInfo, true, nil
 }
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
-func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+func (o *Service) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", usr.UserId)
 	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (interface{}, error) {
 		logger.Debug("singleflight request for getting a new access token", "key", lockKey)
@@ -122,7 +122,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 	return err
 }
 
-func buildOAuthTokenFromAuthInfo(authInfo *models.UserAuth) *oauth2.Token {
+func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
 	token := &oauth2.Token{
 		AccessToken:  authInfo.OAuthAccessToken,
 		Expiry:       authInfo.OAuthExpiry,
@@ -137,7 +137,7 @@ func buildOAuthTokenFromAuthInfo(authInfo *models.UserAuth) *oauth2.Token {
 	return token
 }
 
-func checkOAuthRefreshToken(authInfo *models.UserAuth) error {
+func checkOAuthRefreshToken(authInfo *login.UserAuth) error {
 	if !strings.Contains(authInfo.AuthModule, "oauth") {
 		logger.Warn("the specified user's auth provider is not oauth",
 			"authmodule", authInfo.AuthModule, "userid", authInfo.UserId)
@@ -154,8 +154,8 @@ func checkOAuthRefreshToken(authInfo *models.UserAuth) error {
 }
 
 // InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero
-func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
-	return o.AuthInfoService.UpdateAuthInfo(ctx, &models.UpdateAuthInfoCommand{
+func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth) error {
+	return o.AuthInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 		UserId:     usr.UserId,
 		AuthModule: usr.AuthModule,
 		AuthId:     usr.AuthId,
@@ -167,7 +167,7 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAut
 	})
 }
 
-func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.UserAuth) (*oauth2.Token, error) {
+func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
 	if err := checkOAuthRefreshToken(usr); err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
-		updateAuthCommand := &models.UpdateAuthInfoCommand{
+		updateAuthCommand := &login.UpdateAuthInfoCommand{
 			UserId:     usr.UserId,
 			AuthModule: usr.AuthModule,
 			AuthId:     usr.AuthId,

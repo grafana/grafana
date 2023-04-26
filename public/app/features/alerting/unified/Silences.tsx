@@ -5,7 +5,6 @@ import { Alert, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { alertmanagerApi } from './api/alertmanagerApi';
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -26,7 +25,6 @@ const Silences = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const dispatch = useDispatch();
-  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
   const alertsRequest = alertManagerSourceName
@@ -41,8 +39,6 @@ const Silences = () => {
     { amSourceName: alertManagerSourceName ?? '' },
     { skip: !alertManagerSourceName }
   );
-
-  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   useEffect(() => {
     function fetchAll() {
@@ -84,10 +80,7 @@ const Silences = () => {
         onChange={setAlertManagerSourceName}
         dataSources={alertManagers}
       />
-      <GrafanaAlertmanagerDeliveryWarning
-        currentAlertmanager={alertManagerSourceName}
-        alertmanagerChoice={alertmanagerChoice}
-      />
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
 
       {mimirLazyInitError && (
         <Alert title="The selected Alertmanager has no configuration" severity="warning">

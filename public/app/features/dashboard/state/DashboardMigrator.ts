@@ -6,7 +6,6 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataSourceRef,
-  DataTransformerConfig,
   FieldConfigSource,
   FieldMatcherID,
   FieldType,
@@ -26,6 +25,7 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -825,14 +825,14 @@ export class DashboardMigrator {
           }
 
           // Update any overrides referencing the cell display mode
-          for (let i = 0; i < panel.fieldConfig.overrides.length; i++) {
-            for (let j = 0; j < panel.fieldConfig.overrides[i].properties.length; j++) {
-              let overrideDisplayMode = panel.fieldConfig.overrides[i].properties[j].value;
-
-              if (panel.fieldConfig.overrides[i].properties[j].id === 'custom.displayMode') {
-                panel.fieldConfig.overrides[i].properties[j].id = 'custom.cellOptions';
-                panel.fieldConfig.overrides[i].properties[j].value =
-                  migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+          if (panel.fieldConfig?.overrides) {
+            for (const override of panel.fieldConfig.overrides) {
+              for (let j = 0; j < override.properties?.length ?? 0; j++) {
+                let overrideDisplayMode = override.properties[j].value;
+                if (override.properties[j].id === 'custom.displayMode') {
+                  override.properties[j].id = 'custom.cellOptions';
+                  override.properties[j].value = migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+                }
               }
             }
           }

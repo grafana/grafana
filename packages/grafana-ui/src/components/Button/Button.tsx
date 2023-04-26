@@ -44,6 +44,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       className,
       type = 'button',
+      tooltip,
+      tooltipPlacement,
       ...otherProps
     },
     ref
@@ -58,12 +60,22 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
-    return (
+    const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} placement={tooltipPlacement}>
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
   }
 );
 
@@ -309,5 +321,20 @@ export const clearButtonStyles = (theme: GrafanaTheme2) => {
     color: ${theme.colors.text.primary};
     border: none;
     padding: 0;
+  `;
+};
+
+export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
+  return css`
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    color: inherit;
+    height: 100%;
+    &:hover {
+      background: transparent;
+      color: inherit;
+    }
   `;
 };

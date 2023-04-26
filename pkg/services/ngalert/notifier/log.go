@@ -1,19 +1,19 @@
 package notifier
 
 import (
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	alertingLogging "github.com/grafana/alerting/logging"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-var LoggerFactory channels.LoggerFactory = func(ctx ...interface{}) channels.Logger {
-	return &logWrapper{log.New(ctx...)}
+var LoggerFactory alertingLogging.LoggerFactory = func(logger string, ctx ...interface{}) alertingLogging.Logger {
+	return &logWrapper{log.New(append([]interface{}{logger}, ctx...)...)}
 }
 
 type logWrapper struct {
 	*log.ConcreteLogger
 }
 
-func (l logWrapper) New(ctx ...interface{}) channels.Logger {
+func (l logWrapper) New(ctx ...interface{}) alertingLogging.Logger {
 	return logWrapper{l.ConcreteLogger.New(ctx...)}
 }

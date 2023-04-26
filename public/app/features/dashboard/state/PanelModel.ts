@@ -5,7 +5,6 @@ import {
   DataConfigSource,
   DataFrameDTO,
   DataLink,
-  DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
   EventBusSrv,
@@ -13,7 +12,6 @@ import {
   PanelPlugin,
   PanelPluginDataSupport,
   ScopedVars,
-  urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
   CoreApp,
@@ -23,10 +21,10 @@ import {
   restoreCustomOverrideRules,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -35,10 +33,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { LibraryElementDTO, LibraryPanelRef } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
-import { getTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
 
 export interface GridPos {
@@ -50,8 +45,6 @@ export interface GridPos {
 }
 
 type RunPanelQueryOptions = {
-  /** @deprecate */
-  dashboardId: number;
   dashboardUID: string;
   dashboardTimezone: string;
   timeData: TimeOverrideResult;
@@ -73,6 +66,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   getDisplayTitle: true,
   dataSupport: true,
   key: true,
+  isNew: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -104,6 +98,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
+  queryCachingTTL: true,
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
@@ -130,7 +125,19 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
-  savedQueryLink: null,
+};
+
+export const autoMigrateAngular: Record<string, string> = {
+  graph: 'timeseries',
+  'table-old': 'table',
+  singlestat: 'stat', // also automigrated if dashboard schemaVerion < 27
+  'grafana-singlestat-panel': 'stat',
+  'grafana-piechart-panel': 'piechart',
+  'grafana-worldmap-panel': 'geomap',
+};
+
+const autoMigratePanelType: Record<string, string> = {
+  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -155,8 +162,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
-  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
-
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
@@ -172,7 +177,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: LibraryPanelRef | LibraryElementDTO;
+  libraryPanel?: LibraryPanelRef | LibraryPanel;
 
   autoMigrateFrom?: string;
 
@@ -184,6 +189,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   hasSavedPanelEditChange?: boolean;
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
+  isNew?: boolean;
+
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
@@ -236,23 +244,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    switch (this.type) {
-      case 'graph':
-        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'timeseries';
-        }
-        break;
-      case 'table-old':
-        if (!config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'table';
-        }
-        break;
-      case 'heatmap-new':
-        this.autoMigrateFrom = this.type;
-        this.type = 'heatmap';
-        break;
+    const newType = autoMigratePanelType[this.type];
+    if (newType) {
+      this.autoMigrateFrom = this.type;
+      this.type = newType;
     }
 
     // defaults
@@ -339,10 +334,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (manuallyUpdated) {
       this.configRev++;
     }
+
+    // Maybe a bit heavy. Could add a "GridPosChanged" event instead?
+    this.render();
   }
 
   runAllPanelQueries({
-    dashboardId,
     dashboardUID,
     dashboardTimezone,
     timeData,
@@ -353,7 +350,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
-      dashboardId: dashboardId,
       dashboardUID: dashboardUID,
       publicDashboardAccessToken,
       timezone: dashboardTimezone,
@@ -363,6 +359,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
+      queryCachingTTL: this.queryCachingTTL,
       transformations: this.transformations,
       app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
     });
@@ -421,18 +418,22 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = this.autoMigrateFrom === 'graph' || this.autoMigrateFrom === 'table-old';
-      this.callPanelTypeChangeHandler(
-        plugin,
-        this.autoMigrateFrom,
-        this.getOptionsToRemember(), // old options
-        wasAngular
-      );
+      const wasAngular = autoMigrateAngular[this.autoMigrateFrom] != null;
+      const oldOptions = this.getOptionsToRemember();
+      const prevPluginId = this.autoMigrateFrom;
+      const newPluginId = this.type;
 
-      delete this.autoMigrateFrom;
+      this.clearPropertiesBeforePluginChange();
+
+      // Need to set these again as they get cleared by the above function
+      this.type = newPluginId;
+      this.plugin = plugin;
+
+      this.callPanelTypeChangeHandler(plugin, prevPluginId, oldOptions, wasAngular);
     }
 
     if (plugin.onPanelMigration) {
@@ -517,18 +518,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       type: dataSource.type,
     };
 
-    if (options.savedQueryUid) {
-      this.savedQueryLink = {
-        ref: {
-          uid: options.savedQueryUid,
-        },
-        variables: [],
-      };
-    } else {
-      this.savedQueryLink = null;
-    }
-
     this.cacheTimeout = options.cacheTimeout;
+    this.queryCachingTTL = options.queryCachingTTL;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
@@ -646,21 +637,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     const lastRequest = this.getQueryRunner().getLastRequest();
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
-
-    const allVariablesParams = getVariablesUrlParams(vars);
-    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
-    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
-
-    vars[DataLinkBuiltInVars.keepTime] = {
-      text: timeRangeUrl,
-      value: timeRangeUrl,
-    };
-
-    vars[DataLinkBuiltInVars.includeVars] = {
-      text: variablesQuery,
-      value: variablesQuery,
-    };
-
     return getTemplateSrv().replace(value, vars, format);
   }
 
@@ -680,7 +656,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return this.replaceVariables(this.title, undefined, 'text');
   }
 
-  initLibraryPanel(libPanel: LibraryElementDTO) {
+  initLibraryPanel(libPanel: LibraryPanel) {
     for (const [key, val] of Object.entries(libPanel.model)) {
       switch (key) {
         case 'id':

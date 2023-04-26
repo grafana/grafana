@@ -1,9 +1,11 @@
+import { AlertRulesState, StoreState } from 'app/types';
+
 import { getSearchQuery, getAlertRuleItems } from './selectors';
 
 describe('Get search query', () => {
   it('should get search query', () => {
-    const state = { searchQuery: 'dashboard' };
-    const result = getSearchQuery(state as any);
+    const state: AlertRulesState = { searchQuery: 'dashboard', items: [], isLoading: false };
+    const result = getSearchQuery(state);
 
     expect(result).toEqual(state.searchQuery);
   });
@@ -29,9 +31,9 @@ describe('Get alert rule items', () => {
         ],
         searchQuery: '',
       },
-    };
+    } as unknown as StoreState;
 
-    const result = getAlertRuleItems(state as any);
+    const result = getAlertRuleItems(state);
     expect(result.length).toEqual(1);
   });
 
@@ -90,9 +92,9 @@ describe('Get alert rule items', () => {
         ],
         searchQuery: 'dashboard',
       },
-    };
+    } as unknown as StoreState;
 
-    const result = getAlertRuleItems(state as any);
+    const result = getAlertRuleItems(state);
     expect(result.length).toEqual(3);
   });
 });

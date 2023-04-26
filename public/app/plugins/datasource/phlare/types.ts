@@ -1,32 +1,22 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 
-export interface Query extends DataQuery {
-  labelSelector: string;
-  profileTypeId: string;
-  queryType: 'metrics' | 'profile' | 'both';
-  groupBy: string[];
+import { GrafanaPyroscope, PhlareQueryType } from './dataquery.gen';
+
+export interface Query extends GrafanaPyroscope {
+  queryType: PhlareQueryType;
 }
 
 export interface ProfileTypeMessage {
-  ID: string;
-  name: string;
-  period_type: string;
-  period_unit: string;
-  sample_type: string;
-  sample_unit: string;
+  id: string;
+  label: string;
 }
-
-export type SeriesMessage = Array<{ labels: Array<{ name: string; value: string }> }>;
-
-export const defaultQuery: Partial<Query> = {
-  labelSelector: '{}',
-  queryType: 'both',
-  groupBy: [],
-};
 
 /**
  * These are options configured for each DataSource instance.
  */
 export interface PhlareDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
+  backendType?: BackendType; // if not set we assume it's phlare
 }
+
+export type BackendType = 'phlare' | 'pyroscope';

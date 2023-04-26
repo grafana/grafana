@@ -6,7 +6,7 @@ import { SeriesColorPicker, SeriesIcon } from '@grafana/ui';
 import { TimeSeries } from 'app/core/core';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'] as const;
-export type LegendStat = typeof LEGEND_STATS[number];
+export type LegendStat = (typeof LEGEND_STATS)[number];
 
 export interface LegendLabelProps {
   series: TimeSeries;

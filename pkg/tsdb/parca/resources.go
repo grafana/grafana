@@ -28,7 +28,7 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 		return err
 	}
 
-	var types []*ProfileType
+	types := make([]*ProfileType, 0, len(res.Msg.Types))
 	for _, t := range res.Msg.Types {
 		var id string
 		if t.Delta {

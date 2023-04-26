@@ -9,9 +9,9 @@ import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { defaultView, GeomapPanelOptions, TooltipMode, GeomapInstanceState } from './types';
+import { defaultMapViewConfig, PanelOptions, TooltipMode, GeomapInstanceState } from './types';
 
-export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
+export const plugin = new PanelPlugin<PanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .setMigrationHandler(mapMigrationHandler)
@@ -29,7 +29,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       name: 'Initial view', // don't show it
       description: 'This location will show when the panel first loads.',
       editor: MapViewEditor,
-      defaultValue: defaultView,
+      defaultValue: defaultMapViewConfig,
     });
 
     builder.addBooleanSwitch({
@@ -37,7 +37,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       path: 'view.shared',
       description: 'Use the same view across multiple panels.  Note: this may require a dashboard reload.',
       name: 'Share view',
-      defaultValue: defaultView.shared,
+      defaultValue: defaultMapViewConfig.shared,
     });
 
     // eslint-disable-next-line

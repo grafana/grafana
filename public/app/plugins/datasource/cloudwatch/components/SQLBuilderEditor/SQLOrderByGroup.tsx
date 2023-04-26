@@ -4,8 +4,8 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
-import { ASC, DESC, STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
+import { ASC, DESC, STATISTICS } from '../../language/cloudwatch-sql/language';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 
@@ -22,7 +22,7 @@ const orderByDirections: Array<SelectableValue<string>> = [
   { label: DESC, value: DESC },
 ];
 
-const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryChange, datasource }) => {
+const SQLOrderByGroup = ({ query, onQueryChange, datasource }: SQLBuilderSelectRowProps) => {
   const sql = query.sql ?? {};
   const orderBy = sql.orderBy?.name;
   const orderByDirection = sql.orderByDirection;

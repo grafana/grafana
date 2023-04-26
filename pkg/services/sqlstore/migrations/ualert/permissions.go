@@ -7,13 +7,11 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type roleType string
@@ -103,12 +101,7 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 		}),
 	}
 	dash := cmd.getDashboardModel()
-
-	uid, err := m.generateNewDashboardUid(dash.OrgId)
-	if err != nil {
-		return nil, err
-	}
-	dash.setUid(uid)
+	dash.setUid(util.GenerateShortUID())
 
 	parentVersion := dash.Version
 	dash.setVersion(1)
@@ -118,7 +111,7 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 	dash.UpdatedBy = FOLDER_CREATED_BY
 	metrics.MApiDashboardInsert.Inc()
 
-	if _, err = m.sess.Insert(dash); err != nil {
+	if _, err := m.sess.Insert(dash); err != nil {
 		return nil, err
 	}
 
@@ -138,23 +131,6 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 		return nil, err
 	}
 	return dash, nil
-}
-
-func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&dashboards.Dashboard{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", dashboards.ErrDashboardFailedGenerateUniqueUid
 }
 
 // based on SQLStore.UpdateDashboardACL()
@@ -206,7 +182,7 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 	seen := make(map[keyType]struct{}, len(items))
 	for _, item := range items {
 		if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-			return models.ErrDashboardACLInfoMissing
+			return dashboards.ErrDashboardACLInfoMissing
 		}
 
 		// ignore duplicate user permissions

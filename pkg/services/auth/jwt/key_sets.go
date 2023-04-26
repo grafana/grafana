@@ -14,9 +14,10 @@ import (
 	"os"
 	"time"
 
+	jose "github.com/go-jose/go-jose/v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	jose "gopkg.in/square/go-jose.v2"
 )
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
@@ -171,7 +172,7 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 
 	if ks.cacheExpiration > 0 {
 		if val, err := ks.cache.Get(ctx, ks.cacheKey); err == nil {
-			err := json.Unmarshal(val.([]byte), &jwks)
+			err := json.Unmarshal(val, &jwks)
 			return jwks, err
 		}
 	}

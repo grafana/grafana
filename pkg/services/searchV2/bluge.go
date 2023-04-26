@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 const (
@@ -68,6 +71,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 
 	// First index the folders to construct folderIdLookup.
 	folderIdLookup := make(map[int64]string, 50)
+	folderIdLookup[0] = folder.GeneralFolderUID
 	for _, dash := range dashboards {
 		if !dash.isFolder {
 			continue
@@ -81,9 +85,6 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 			return nil, err
 		}
 		uid := dash.uid
-		if uid == "" {
-			uid = "general"
-		}
 		folderIdLookup[dash.id] = uid
 	}
 
@@ -168,15 +169,15 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	}
 
 	for _, ref := range dash.summary.References {
-		if ref.Kind == models.StandardKindDataSource {
+		if ref.Family == entity.StandardKindDataSource {
 			if ref.Type != "" {
 				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 					StoreValue().
 					Aggregatable().
 					SearchTermPositions())
 			}
-			if ref.UID != "" {
-				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.UID).
+			if ref.Identifier != "" {
+				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.Identifier).
 					StoreValue().
 					Aggregatable().
 					SearchTermPositions())
@@ -188,38 +189,46 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 }
 
 func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
+	dashURL := fmt.Sprintf("/d/%s/%s", dash.uid, slugify.Slugify(dash.summary.Name))
+
 	var docs []*bluge.Document
 	for _, panel := range dash.summary.Nested {
-		if panel.Kind == "panel-row" {
-			continue // for now, we are excluding rows from the search index
+		if panel.Fields["type"] == "row" {
+			continue // skip rows
+		}
+		idx := strings.LastIndex(panel.UID, "#")
+		panelId, err := strconv.Atoi(panel.UID[idx+1:])
+		if err != nil {
+			continue
 		}
 
-		doc := newSearchDocument(panel.UID, panel.Name, panel.Description, panel.URL).
+		url := fmt.Sprintf("%s?viewPanel=%d", dashURL, panelId)
+		doc := newSearchDocument(panel.UID, panel.Name, panel.Description, url).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 
-		for _, ref := range dash.summary.References {
-			switch ref.Kind {
-			case models.StandardKindDashboard:
+		for _, ref := range panel.References {
+			switch ref.Family {
+			case entity.StandardKindDashboard:
 				if ref.Type != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 						StoreValue().
 						Aggregatable().
 						SearchTermPositions())
 				}
-				if ref.UID != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.UID).
+				if ref.Identifier != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.Identifier).
 						StoreValue().
 						Aggregatable().
 						SearchTermPositions())
 				}
-			case models.ExternalEntityReferencePlugin:
-				if ref.Type == models.StandardKindPanel && ref.UID != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.UID).Aggregatable().StoreValue())
+			case entity.ExternalEntityReferencePlugin:
+				if ref.Type == entity.StandardKindPanel && ref.Identifier != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.Identifier).Aggregatable().StoreValue())
 				}
-			case models.ExternalEntityReferenceRuntime:
-				if ref.Type == models.ExternalEntityReferenceRuntime_Transformer && ref.UID != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.UID).Aggregatable())
+			case entity.ExternalEntityReferenceRuntime:
+				if ref.Type == entity.ExternalEntityReferenceRuntime_Transformer && ref.Identifier != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.Identifier).Aggregatable())
 				}
 			}
 		}

@@ -3,7 +3,7 @@ package quota
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type Service interface {
@@ -16,7 +16,7 @@ type Service interface {
 	// If the cmd.UseID is set, then the user quota are updated.
 	Update(ctx context.Context, cmd *UpdateQuotaCmd) error
 	// QuotaReached is called by the quota middleware for applying quota enforcement to API handlers
-	QuotaReached(c *models.ReqContext, targetSrv TargetSrv) (bool, error)
+	QuotaReached(c *contextmodel.ReqContext, targetSrv TargetSrv) (bool, error)
 	// CheckQuotaReached checks if the quota limitations have been reached for a specific service
 	CheckQuotaReached(ctx context.Context, targetSrv TargetSrv, scopeParams *ScopeParameters) (bool, error)
 	// DeleteQuotaForUser deletes custom quota limitations for the user

@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -161,6 +161,77 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 	}
 }
 
+func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
+	tests := []struct {
+		name         string
+		registration accesscontrol.RoleRegistration
+		overrides    map[string][]string
+		wantGrants   []string
+		wantErr      bool
+	}{
+		{
+			name: "no grant override",
+			registration: accesscontrol.RoleRegistration{
+				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
+				Grants:              []string{"Admin"},
+				AllowGrantsOverride: true,
+			},
+			wantGrants: []string{"Admin"},
+			wantErr:    false,
+		},
+		{
+			name: "should account for grant overrides",
+			registration: accesscontrol.RoleRegistration{
+				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
+				Grants:              []string{"Admin"},
+				AllowGrantsOverride: true,
+			},
+			overrides:  map[string][]string{"fixed_test_test": {"Viewer", "Grafana Admin"}},
+			wantGrants: []string{"Viewer", "Grafana Admin"},
+			wantErr:    false,
+		},
+		{
+			name: "should not account for grant overrides",
+			registration: accesscontrol.RoleRegistration{
+				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
+				Grants:              []string{"Admin"},
+				AllowGrantsOverride: false,
+			},
+			overrides:  map[string][]string{"fixed_test_test": {"Viewer", "Grafana Admin"}},
+			wantGrants: []string{"Admin"},
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t)
+
+			// Reset the registations
+			ac.registrations = accesscontrol.RegistrationList{}
+			ac.cfg.RBACGrantOverrides = tt.overrides
+
+			// Test
+			err := ac.DeclareFixedRoles(tt.registration)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			registrationCnt := 0
+			grants := []string{}
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				grants = registration.Grants
+				return true
+			})
+			require.Equal(t, 1, registrationCnt,
+				"expected service registration list to contain the registration")
+			require.ElementsMatch(t, tt.wantGrants, grants)
+		})
+	}
+}
+
 func TestService_DeclarePluginRoles(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -278,7 +349,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 func TestService_RegisterFixedRoles(t *testing.T) {
 	tests := []struct {
 		name          string
-		token         models.Licensing
+		token         licensing.Licensing
 		registrations []accesscontrol.RoleRegistration
 		wantErr       bool
 	}{

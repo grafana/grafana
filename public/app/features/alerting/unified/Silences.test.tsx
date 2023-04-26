@@ -1,19 +1,19 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
-import { locationService, setDataSourceSrv, config } from '@grafana/runtime';
+import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
+import { SilenceState } from '../../../plugins/datasource/alertmanager/types';
+
 import Silences from './Silences';
-import { fetchSilences, fetchAlerts, createOrUpdateSilence } from './api/alertmanager';
+import { createOrUpdateSilence, fetchAlerts, fetchSilences } from './api/alertmanager';
 import { mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv, mockSilence } from './mocks';
 import { parseMatchers } from './utils/alertmanager';
 import { DataSourceType } from './utils/datasource';
@@ -33,15 +33,12 @@ const mocks = {
 };
 
 const renderSilences = (location = '/alerting/silences/') => {
-  const store = configureStore();
   locationService.push(location);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Silences />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Silences />
+    </TestProvider>
   );
 };
 
@@ -53,10 +50,12 @@ const dataSources = {
 };
 
 const ui = {
-  silencesTable: byTestId('dynamic-table'),
+  notExpiredTable: byTestId('not-expired-table'),
+  expiredTable: byTestId('expired-table'),
+  expiredCaret: byText(/expired/i),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
-  addSilenceButton: byRole('button', { name: /new silence/i }),
+  addSilenceButton: byRole('link', { name: /add silence/i }),
   queryBar: byPlaceholderText('Search'),
   editor: {
     timeRange: byLabelText('Timepicker', { exact: false }),
@@ -80,6 +79,7 @@ const resetMocks = () => {
     return Promise.resolve([
       mockSilence({ id: '12345' }),
       mockSilence({ id: '67890', matchers: parseMatchers('foo!=bar'), comment: 'Catch all' }),
+      mockSilence({ id: '1111', status: { state: SilenceState.Expired } }),
     ]);
   });
 
@@ -133,9 +133,19 @@ describe('Silences', () => {
       await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
       await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
-      expect(ui.silencesTable.query()).not.toBeNull();
+      await userEvent.click(ui.expiredCaret.get());
+      expect(ui.notExpiredTable.get()).not.toBeNull();
+      expect(ui.expiredTable.get()).not.toBeNull();
+      let silences = ui.silenceRow.queryAll();
+      expect(silences).toHaveLength(3);
+      expect(silences[0]).toHaveTextContent('foo=bar');
+      expect(silences[1]).toHaveTextContent('foo!=bar');
+      expect(silences[2]).toHaveTextContent('foo=bar');
 
-      const silences = ui.silenceRow.queryAll();
+      await userEvent.click(ui.expiredCaret.getAll()[0]);
+      expect(ui.notExpiredTable.get()).not.toBeNull();
+      expect(ui.expiredTable.query()).toBeNull();
+      silences = ui.silenceRow.queryAll();
       expect(silences).toHaveLength(2);
       expect(silences[0]).toHaveTextContent('foo=bar');
       expect(silences[1]).toHaveTextContent('foo!=bar');
@@ -163,7 +173,7 @@ describe('Silences', () => {
       await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
       await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
-      const silencedAlertRows = ui.silencedAlertCell.getAll(ui.silencesTable.get());
+      const silencedAlertRows = ui.silencedAlertCell.getAll(ui.notExpiredTable.get());
       expect(silencedAlertRows).toHaveLength(2);
       expect(silencedAlertRows[0]).toHaveTextContent('2');
       expect(silencedAlertRows[1]).toHaveTextContent('0');
@@ -182,7 +192,7 @@ describe('Silences', () => {
       await userEvent.click(queryBar);
       await userEvent.paste('foo=bar');
 
-      await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(1));
+      await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(2));
     },
     TEST_TIMEOUT
   );

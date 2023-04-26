@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -38,7 +38,7 @@ func NewLotexProm(proxy *AlertingProxy, log log.Logger) *LotexProm {
 	}
 }
 
-func (p *LotexProm) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+func (p *LotexProm) RouteGetAlertStatuses(ctx *contextmodel.ReqContext) response.Response {
 	endpoints, err := p.getEndpoints(ctx)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -57,7 +57,7 @@ func (p *LotexProm) RouteGetAlertStatuses(ctx *models.ReqContext) response.Respo
 	)
 }
 
-func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+func (p *LotexProm) RouteGetRuleStatuses(ctx *contextmodel.ReqContext) response.Response {
 	endpoints, err := p.getEndpoints(ctx)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -76,18 +76,18 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 	)
 }
 
-func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error) {
+func (p *LotexProm) getEndpoints(ctx *contextmodel.ReqContext) (*promEndpoints, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := p.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := p.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
 	if err != nil {
 		return nil, err
 	}
 
-	if ds.Url == "" {
+	if ds.URL == "" {
 		return nil, fmt.Errorf("URL for this data source is empty")
 	}
 

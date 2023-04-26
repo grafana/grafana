@@ -12,7 +12,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
 import { PanelOptions } from './models.gen';
-import { AnchorPoint } from './types';
+import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -21,11 +21,13 @@ interface State {
   openInlineEdit: boolean;
   openSetBackground: boolean;
   contextMenuAnchorPoint: AnchorPoint;
+  moveableAction: boolean;
 }
 
 export interface InstanceState {
   scene: Scene;
   selected: ElementState[];
+  selectedConnection?: ConnectionState;
 }
 
 export interface SelectionAction {
@@ -56,6 +58,7 @@ export class CanvasPanel extends Component<Props, State> {
       openInlineEdit: false,
       openSetBackground: false,
       contextMenuAnchorPoint: { x: 0, y: 0 },
+      moveableAction: false,
     };
 
     // Only the initial options are ever used.
@@ -71,6 +74,8 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
     this.scene.setBackgroundCallback = this.openSetBackground;
+    this.scene.tooltipCallback = this.tooltipCallback;
+    this.scene.moveableActionCallback = this.moveableActionCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -109,19 +114,55 @@ export class CanvasPanel extends Component<Props, State> {
       this.subs.add(
         this.scene.selection.subscribe({
           next: (v) => {
+            if (v.length) {
+              activeCanvasPanel = this;
+              activePanelSubject.next({ panel: this });
+            }
+
+            canvasInstances.forEach((canvasInstance) => {
+              if (canvasInstance !== activeCanvasPanel) {
+                canvasInstance.scene.clearCurrentSelection(true);
+                canvasInstance.scene.connections.select(undefined);
+              }
+            });
+
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
               selected: v,
               layer: this.scene.root,
             });
+          },
+        })
+      );
 
-            activeCanvasPanel = this;
-            activePanelSubject.next({ panel: this });
+      this.subs.add(
+        this.scene.connections.selection.subscribe({
+          next: (v) => {
+            if (!this.context.instanceState) {
+              return;
+            }
+
+            this.panelContext.onInstanceStateChange!({
+              scene: this.scene,
+              selected: this.context.instanceState.selected,
+              selectedConnection: v,
+              layer: this.scene.root,
+            });
+
+            if (v) {
+              activeCanvasPanel = this;
+              activePanelSubject.next({ panel: this });
+            }
 
             canvasInstances.forEach((canvasInstance) => {
               if (canvasInstance !== activeCanvasPanel) {
                 canvasInstance.scene.clearCurrentSelection(true);
+                canvasInstance.scene.connections.select(undefined);
               }
+            });
+
+            setTimeout(() => {
+              this.forceUpdate();
             });
           },
         })
@@ -153,7 +194,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {
-    const { width, height, data } = this.props;
+    const { width, height, data, options } = this.props;
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
@@ -162,6 +203,11 @@ export class CanvasPanel extends Component<Props, State> {
     }
 
     if (data !== nextProps.data && !this.scene.ignoreDataUpdate) {
+      this.scene.updateData(nextProps.data);
+      changed = true;
+    }
+
+    if (options !== nextProps.options && !this.scene.ignoreDataUpdate) {
       this.scene.updateData(nextProps.data);
       changed = true;
     }
@@ -178,12 +224,15 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
+    if (this.state.moveableAction !== nextState.moveableAction) {
+      changed = true;
+    }
+
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
-    const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
+    if (this.needsReload || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
         this.scene.revId++;
@@ -223,6 +272,16 @@ export class CanvasPanel extends Component<Props, State> {
     this.setState({ contextMenuAnchorPoint: anchorPoint });
 
     isSetBackgroundOpen = true;
+  };
+
+  tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
+    this.scene.tooltip = tooltip;
+    this.forceUpdate();
+  };
+
+  moveableActionCallback = (updated: boolean) => {
+    this.setState({ moveableAction: updated });
+    this.forceUpdate();
   };
 
   closeInlineEdit = () => {

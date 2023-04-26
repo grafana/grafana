@@ -22,8 +22,8 @@ In the Contact points tab, you can see a list of your contact points.
 
 2. Execute a template from one or more fields such as Message and Subject:
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/use-notification-template-9-4.png" caption="Use notification template" >}}
+   {{< figure max-width="940px" src="/static/img/docs/alerting/unified/use-notification-template-9-4.png" caption="Use notification template" >}}
 
-For more information on how to write and execute templates, refer to [Using Go's templating language]({{< relref "./using-go-templating-language" >}}) and [Create notification templates]({{< relref "./create-notification-templates" >}}).
+   For more information on how to write and execute templates, refer to [Using Go's templating language]({{< relref "./using-go-templating-language" >}}) and [Create notification templates]({{< relref "./create-notification-templates" >}}).
 
-4. Click Save template.
+3. Click Save template.

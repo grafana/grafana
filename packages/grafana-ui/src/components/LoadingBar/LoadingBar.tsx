@@ -1,48 +1,46 @@
 import { css, keyframes } from '@emotion/css';
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
+import React, { CSSProperties } from 'react';
 
 import { useStyles2 } from '../../themes';
 
 export interface LoadingBarProps {
-  width?: string;
-  height?: string;
+  width: number;
   ariaLabel?: string;
 }
 
-export function LoadingBar({ width, height, ariaLabel = 'Loading bar' }: LoadingBarProps) {
-  const styles = useStyles2(getStyles(width, height));
+const MILLISECONDS_PER_PIXEL = 2.4;
+const MIN_DURATION_MS = 500;
+const MAX_DURATION_MS = 4000;
+
+export function LoadingBar({ width, ariaLabel = 'Loading bar' }: LoadingBarProps) {
+  const styles = useStyles2(getStyles);
+  const durationMs = Math.min(Math.max(Math.round(width * MILLISECONDS_PER_PIXEL), MIN_DURATION_MS), MAX_DURATION_MS);
+  const containerStyles: CSSProperties = {
+    width: '100%',
+    animation: `${styles.animation} ${durationMs}ms infinite linear`,
+    willChange: 'transform',
+  };
 
   return (
-    <div className={styles.container}>
+    <div style={containerStyles}>
       <div aria-label={ariaLabel} className={styles.bar} />
     </div>
   );
 }
 
-const getStyles = (width?: string, height?: string) => (_: GrafanaTheme2) => {
-  const barWidth = width ?? '128px';
-  const loadingHeigth = height ?? '2px';
-
-  const loadingAnimation = keyframes({
-    '0%': {
-      transform: 'translateX(0)',
-    },
-    '100%': {
-      transform: `translateX(100%)`,
-    },
-  });
-
+const getStyles = () => {
   return {
-    container: css({
-      width: '100%',
-      animation: `${loadingAnimation} 1s infinite linear`,
-      willChange: 'transform',
+    animation: keyframes({
+      '0%': {
+        transform: 'translateX(-50%)',
+      },
+      '100%': {
+        transform: `translateX(100%)`,
+      },
     }),
     bar: css({
-      width: barWidth,
-      height: loadingHeigth,
+      width: '28%',
+      height: 1,
       background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
     }),
   };

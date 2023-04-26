@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 )
 
 func TestDashboardUpdater(t *testing.T) {
@@ -202,7 +202,7 @@ func TestDashboardUpdater(t *testing.T) {
 	t.Run("handlePluginStateChanged", func(t *testing.T) {
 		scenario(t, "When app plugin is disabled that doesn't have any imported dashboards shouldn't delete any",
 			scenarioInput{}, func(ctx *scenarioContext) {
-				err := ctx.bus.Publish(context.Background(), &models.PluginStateChangedEvent{
+				err := ctx.bus.Publish(context.Background(), &pluginsettings.PluginStateChangedEvent{
 					PluginId: "test",
 					OrgId:    2,
 					Enabled:  false,
@@ -250,7 +250,7 @@ func TestDashboardUpdater(t *testing.T) {
 				},
 			},
 		}, func(ctx *scenarioContext) {
-			err := ctx.bus.Publish(context.Background(), &models.PluginStateChangedEvent{
+			err := ctx.bus.Publish(context.Background(), &pluginsettings.PluginStateChangedEvent{
 				PluginId: "test",
 				OrgId:    2,
 				Enabled:  false,
@@ -307,7 +307,7 @@ func TestDashboardUpdater(t *testing.T) {
 				},
 			},
 		}, func(ctx *scenarioContext) {
-			err := ctx.bus.Publish(context.Background(), &models.PluginStateChangedEvent{
+			err := ctx.bus.Publish(context.Background(), &pluginsettings.PluginStateChangedEvent{
 				PluginId: "test",
 				OrgId:    2,
 				Enabled:  true,
@@ -478,8 +478,8 @@ type scenarioContext struct {
 	dashboardPluginService         *dashboardPluginServiceMock
 	dashboardService               *dashboardServiceMock
 	importDashboardArgs            []*dashboardimport.ImportDashboardRequest
-	getPluginSettingsByIdArgs      []*models.GetPluginSettingByIdQuery
-	updatePluginSettingVersionArgs []*models.UpdatePluginSettingVersionCmd
+	getPluginSettingsByIdArgs      []*pluginsettings.GetPluginSettingByIdQuery
+	updatePluginSettingVersionArgs []*pluginsettings.UpdatePluginSettingVersionCmd
 	dashboardUpdater               *DashboardUpdater
 }
 
@@ -492,8 +492,8 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		t:                              t,
 		bus:                            bus.ProvideBus(tracer),
 		importDashboardArgs:            []*dashboardimport.ImportDashboardRequest{},
-		getPluginSettingsByIdArgs:      []*models.GetPluginSettingByIdQuery{},
-		updatePluginSettingVersionArgs: []*models.UpdatePluginSettingVersionCmd{},
+		getPluginSettingsByIdArgs:      []*pluginsettings.GetPluginSettingByIdQuery{},
+		updatePluginSettingVersionArgs: []*pluginsettings.UpdatePluginSettingVersionCmd{},
 	}
 
 	getPlugin := func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {

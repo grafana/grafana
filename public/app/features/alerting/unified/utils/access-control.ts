@@ -47,6 +47,11 @@ export const notificationsPermissions = {
   },
 };
 
+export const provisioningPermissions = {
+  read: AccessControlAction.AlertingProvisioningRead,
+  write: AccessControlAction.AlertingProvisioningWrite,
+};
+
 const rulesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingRuleRead,
@@ -118,5 +123,6 @@ export function getRulesAccess() {
         rulesSourceName === GRAFANA_RULES_SOURCE_NAME ? contextSrv.hasEditPermissionInFolders : contextSrv.isEditor;
       return contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, permissionFallback);
     },
+    canReadProvisioning: contextSrv.hasAccess(provisioningPermissions.read, contextSrv.isGrafanaAdmin),
   };
 }

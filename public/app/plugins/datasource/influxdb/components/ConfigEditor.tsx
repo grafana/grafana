@@ -3,19 +3,21 @@ import React, { PureComponent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
-  SelectableValue,
-  onUpdateDatasourceOption,
-  updateDatasourcePluginResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
+  onUpdateDatasourceOption,
   onUpdateDatasourceSecureJsonDataOption,
+  SelectableValue,
   updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+import { config } from 'app/core/config';
 
-const { Input, SecretFormField } = LegacyForms;
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
+
+const { Input, SecretFormField } = LegacyForms;
 
 const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
@@ -189,8 +191,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <Input
                 id={`${htmlPrefix}-db`}
                 className="width-20"
-                value={options.database || ''}
-                onChange={onUpdateDatasourceOption(this.props, 'database')}
+                value={options.jsonData.dbName ?? options.database}
+                onChange={(event) => {
+                  this.props.onOptionsChange({
+                    ...options,
+                    database: '',
+                    jsonData: {
+                      ...options.jsonData,
+                      dbName: event.target.value,
+                    },
+                  });
+                }}
               />
             </div>
           </div>
@@ -314,6 +325,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           dataSourceConfig={options}
           defaultUrl="http://localhost:8086"
           onChange={onOptionsChange}
+          secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
         />
 
         <div className="gf-form-group">

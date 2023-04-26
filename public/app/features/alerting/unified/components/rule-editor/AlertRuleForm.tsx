@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
@@ -73,7 +73,7 @@ type Props = {
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
+export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -122,7 +122,18 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
 
+  const [conditionErrorMsg, setConditionErrorMsg] = useState('');
+
+  const checkAlertCondition = (msg = '') => {
+    setConditionErrorMsg(msg);
+  };
+
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
+    if (conditionErrorMsg !== '') {
+      notifyApp.error(conditionErrorMsg);
+      return;
+    }
+
     dispatch(
       saveRuleFormAction({
         values: {
@@ -236,7 +247,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               <AlertRuleNameInput />
-              <QueryAndExpressionsStep editingExistingRule={!!existing} />
+              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? (
@@ -244,6 +255,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
                       initialFolder={defaultValues.folder}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
+                      existing={Boolean(existing)}
                     />
                   ) : (
                     <CloudEvaluationBehavior />

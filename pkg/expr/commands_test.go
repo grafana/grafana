@@ -11,10 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -105,9 +105,9 @@ func TestReduceExecute(t *testing.T) {
 
 	t.Run("should noop if Number", func(t *testing.T) {
 		var numbers mathexp.Values = []mathexp.Value{
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
 		}
 
 		vars := map[string]mathexp.Results{
@@ -116,7 +116,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		execute, err := cmd.Execute(context.Background(), time.Now(), vars)
+		execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.NewFakeTracer())
 		require.NoError(t, err)
 
 		require.Len(t, execute.Values, len(numbers))
@@ -151,7 +151,7 @@ func TestReduceExecute(t *testing.T) {
 			},
 		}
 
-		results, err := cmd.Execute(context.Background(), time.Now(), vars)
+		results, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.NewFakeTracer())
 		require.NoError(t, err)
 
 		require.Len(t, results.Values, 1)
@@ -169,7 +169,7 @@ func TestReduceExecute(t *testing.T) {
 
 func randomReduceFunc() string {
 	res := mathexp.GetSupportedReduceFuncs()
-	return res[rand.Intn(len(res)-1)]
+	return res[rand.Intn(len(res))]
 }
 
 func TestResampleCommand_Execute(t *testing.T) {
@@ -202,7 +202,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 			isError: true,
 		}, {
 			name:    "should return error when input Scalar",
-			vals:    mathexp.NewScalar("test", ptr.Float64(rand.Float64())),
+			vals:    mathexp.NewScalar("test", util.Pointer(rand.Float64())),
 			isError: true,
 		},
 	}
@@ -210,7 +210,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 				varToReduce: mathexp.Results{Values: mathexp.Values{test.vals}},
-			})
+			}, tracing.NewFakeTracer())
 			if test.isError {
 				require.Error(t, err)
 			} else {
@@ -225,7 +225,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 	t.Run("should return empty result if input is nil Value", func(t *testing.T) {
 		result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 			varToReduce: mathexp.Results{Values: mathexp.Values{nil}},
-		})
+		}, tracing.NewFakeTracer())
 		require.Empty(t, result.Values)
 		require.NoError(t, err)
 	})

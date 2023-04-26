@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { TestDataQuery } from '../types';
+import { TestData } from '../dataquery.gen';
 
 const randomWalkFields = [
   { label: 'Series count', id: 'seriesCount', placeholder: '1', min: 1, step: 1 },
@@ -41,7 +41,7 @@ export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
               id={`randomWalk-${id}-${query.refId}`}
               min={min}
               step={step}
-              value={(query as any)[id as keyof TestDataQuery] || placeholder}
+              value={(query as any)[id as keyof TestData] || placeholder}
               placeholder={placeholder}
               onChange={onChange}
             />

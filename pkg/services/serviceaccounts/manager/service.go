@@ -78,7 +78,13 @@ func ProvideServiceAccountsService(
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
 		Key("interval").MustDuration(defaultSecretScanInterval)
 	if s.secretScanEnabled {
-		s.secretScanService = secretscan.NewService(s.store, cfg)
+		var errSecret error
+		s.secretScanService, errSecret = secretscan.NewService(s.store, cfg)
+		if errSecret != nil {
+			s.secretScanEnabled = false
+			s.log.Warn("failed to initialize secret scan service. secret scan is disabled",
+				"error", errSecret.Error())
+		}
 	}
 
 	return s, nil
@@ -200,9 +206,9 @@ func (sa *ServiceAccountsService) ListTokens(ctx context.Context, query *service
 	return sa.store.ListTokens(ctx, query)
 }
 
-func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) error {
+func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	if err := validServiceAccountID(serviceAccountID); err != nil {
-		return err
+		return nil, err
 	}
 	return sa.store.AddServiceAccountToken(ctx, serviceAccountID, query)
 }
@@ -220,20 +226,6 @@ func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context,
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
-func (sa *ServiceAccountsService) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
-	if err := validOrgID(orgID); err != nil {
-		return nil, err
-	}
-	return sa.store.GetAPIKeysMigrationStatus(ctx, orgID)
-}
-
-func (sa *ServiceAccountsService) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	if err := validOrgID(orgID); err != nil {
-		return err
-	}
-	return sa.store.HideApiKeysTab(ctx, orgID)
-}
-
 func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
 	if err := validOrgID(orgID); err != nil {
 		return err
@@ -249,37 +241,28 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 	}
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
 }
-func (sa *ServiceAccountsService) RevertApiKey(ctx context.Context, orgID, keyID int64) error {
-	if err := validOrgID(orgID); err != nil {
-		return err
-	}
-	if err := validAPIKeyID(keyID); err != nil {
-		return err
-	}
-	return sa.store.RevertApiKey(ctx, orgID, keyID)
-}
 
 func validOrgID(orgID int64) error {
 	if orgID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidOrgID
+		return serviceaccounts.ErrServiceAccountInvalidOrgID.Errorf("invalid org ID 0 has been specified")
 	}
 	return nil
 }
 func validServiceAccountID(serviceaccountID int64) error {
 	if serviceaccountID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidID
+		return serviceaccounts.ErrServiceAccountInvalidID.Errorf("invalid service account ID 0 has been specified")
 	}
 	return nil
 }
 func validServiceAccountTokenID(tokenID int64) error {
 	if tokenID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidTokenID
+		return serviceaccounts.ErrServiceAccountInvalidTokenID.Errorf("invalid service account token ID 0 has been specified")
 	}
 	return nil
 }
 func validAPIKeyID(apiKeyID int64) error {
 	if apiKeyID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID
+		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID.Errorf("invalid API key ID 0 has been specified")
 	}
 	return nil
 }

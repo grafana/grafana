@@ -11,8 +11,8 @@ var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.m
 var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
-var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
+var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusInternal, "folder.target-registry-srv-conflict")
 
 const (
 	GeneralFolderUID     = "general"
@@ -36,16 +36,16 @@ type Folder struct {
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
 	Version   int
-	Url       string
+	URL       string
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
 }
 
-type FolderDTO struct {
-	Folder
+var GeneralFolder = Folder{ID: 0, Title: "General"}
 
-	Children []FolderDTO
+func (f *Folder) IsGeneral() bool {
+	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -95,8 +95,8 @@ type UpdateFolderCommand struct {
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
-	UID          string `json:"uid"`
-	NewParentUID string `json:"newParentUid"`
+	UID          string `json:"-"`
+	NewParentUID string `json:"parentUid"`
 	OrgID        int64  `json:"-"`
 
 	SignedInUser *user.SignedInUser `json:"-"`
@@ -146,3 +146,22 @@ type GetChildrenQuery struct {
 
 	SignedInUser *user.SignedInUser `json:"-"`
 }
+
+type HasEditPermissionInFoldersQuery struct {
+	SignedInUser *user.SignedInUser
+}
+
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+	SignedInUser *user.SignedInUser
+}
+
+// GetChildrenCountsQuery captures the information required by the folder service
+// to return the count of children in a folder.
+type GetChildrenCountsQuery struct {
+	UID   *string
+	OrgID int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
+}
+
+type ChildrenCounts map[string]int64

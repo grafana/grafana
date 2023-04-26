@@ -7,13 +7,13 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
-import { XYChartOptions, ScatterSeriesConfig, defaultScatterConfig } from './models.gen';
+import { PanelOptions, ScatterSeriesConfig, defaultScatterFieldConfig } from './types';
 
 export const ManualEditor = ({
   value,
   onChange,
   context,
-}: StandardEditorProps<ScatterSeriesConfig[], any, XYChartOptions>) => {
+}: StandardEditorProps<ScatterSeriesConfig[], any, PanelOptions>) => {
   const [selected, setSelected] = useState(0);
   const style = useStyles2(getStyles);
 
@@ -33,7 +33,7 @@ export const ManualEditor = ({
       ...value,
       {
         pointColor: {} as any,
-        pointSize: defaultScatterConfig.pointSize,
+        pointSize: defaultScatterFieldConfig.pointSize,
       },
     ]);
     setSelected(value.length);

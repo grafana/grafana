@@ -6,10 +6,11 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/hashicorp/go-plugin"
+
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/hashicorp/go-plugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type pluginClient interface {
@@ -118,6 +119,10 @@ func (p *grpcPlugin) Decommission() error {
 
 func (p *grpcPlugin) IsDecommissioned() bool {
 	return p.decommissioned
+}
+
+func (p *grpcPlugin) Target() backendplugin.Target {
+	return backendplugin.TargetLocal
 }
 
 func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {

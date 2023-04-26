@@ -1,38 +1,32 @@
-import { regexp } from '@betterer/regexp';
 import { BettererFileTest } from '@betterer/betterer';
+import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
-import { existsSync } from 'fs';
-import { exec } from 'child_process';
 import path from 'path';
 import glob from 'glob';
 
 export default {
-  'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
-  'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
+  'better eslint': () =>
+    countEslintErrors()
+      .include('**/*.{ts,tsx}')
+      .exclude(/public\/app\/angular/),
   'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
 };
 
 function countUndocumentedStories() {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
-    filePaths.forEach((filePath) => {
-      if (!existsSync(filePath.replace(/\.story.tsx$/, '.mdx'))) {
-        // In this case the file contents don't matter:
-        const file = fileTestResult.addFile(filePath, '');
-        // Add the issue to the first character of the file:
-        file.addIssue(0, 0, 'No undocumented stories are allowed, please add an .mdx file with some documentation');
-      }
-    });
-  });
-}
-
-async function findEslintConfigFiles(): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    glob('**/.eslintrc', (err, files) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(files);
-    });
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        // look for .mdx import in the story file
+        const regex = new RegExp("^import.*.mdx';$", 'gm');
+        const fileText = await fs.readFile(filePath, 'utf8');
+        if (!regex.test(fileText)) {
+          // In this case the file contents don't matter:
+          const file = fileTestResult.addFile(filePath, '');
+          // Add the issue to the first character of the file:
+          file.addIssue(0, 0, 'No undocumented stories are allowed, please add an .mdx file with some documentation');
+        }
+      })
+    );
   });
 }
 
@@ -41,7 +35,7 @@ function countEslintErrors() {
     const { baseDirectory } = resolver;
     const cli = new ESLint({ cwd: baseDirectory });
 
-    const eslintConfigFiles = await findEslintConfigFiles();
+    const eslintConfigFiles = await glob('**/.eslintrc');
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
 
     const baseRules: Partial<Linter.RulesRecord> = {

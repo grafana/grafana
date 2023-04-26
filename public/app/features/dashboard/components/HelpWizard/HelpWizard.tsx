@@ -24,6 +24,7 @@ import {
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { AccessControlAction } from 'app/types';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
@@ -41,7 +42,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     currentTab,
     loading,
     error,
-    iframeLoading,
     options,
     showMessage,
     snapshotSize,
@@ -49,17 +49,12 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     snapshotText,
     randomize,
     panelTitle,
-    snapshotUpdate,
+    scene,
   } = service.useState();
 
   useEffect(() => {
     service.buildDebugDashboard();
   }, [service, plugin, randomize]);
-
-  useEffect(() => {
-    // Listen for messages from loaded iframe
-    return service.subscribeToIframeLoadingMessage();
-  }, [service]);
 
   if (!plugin) {
     return null;
@@ -69,6 +64,10 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
     { label: 'Snapshot', value: SnapshotTab.Support },
     { label: 'Data', value: SnapshotTab.Data },
   ];
+
+  const hasSupportBundleAccess =
+    config.supportBundlesEnabled &&
+    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin);
 
   return (
     <Drawer
@@ -94,6 +93,12 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
             snapshot contains query response data and panel settings.
           </span>
+          {hasSupportBundleAccess && (
+            <span className="muted">
+              You can also retrieve a support bundle containing information concerning your Grafana instance and
+              configured datasources in the <a href="/support-bundles">support bundles section</a>.
+            </span>
+          )}
         </Stack>
       }
       tabs={
@@ -200,20 +205,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
           <AutoSizer disableWidth>
             {({ height }) => (
-              <>
-                <iframe
-                  title="Support snapshot preview"
-                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
-                  width="100%"
-                  height={height - 100}
-                  frameBorder="0"
-                  style={{
-                    display: iframeLoading ? 'block' : 'none',
-                    marginTop: 16,
-                  }}
-                />
-                {!iframeLoading && <div>&nbsp;</div>}
-              </>
+              <div style={{ height, overflow: 'auto' }}>{scene && <scene.Component model={scene} />}</div>
             )}
           </AutoSizer>
         </>

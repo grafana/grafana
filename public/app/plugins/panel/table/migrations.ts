@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
@@ -163,8 +163,10 @@ const migrateTableStyleToOverride = (style: Style) => {
 
   if (style.colorMode) {
     override.properties.push({
-      id: 'custom.displayMode',
-      value: colorModeMap[style.colorMode],
+      id: 'custom.cellOptions',
+      value: {
+        type: colorModeMap[style.colorMode],
+      },
     });
   }
 
@@ -200,17 +202,23 @@ const migrateDefaults = (prevDefaults: Style) => {
         displayName: prevDefaults.alias,
         custom: {
           align: prevDefaults.align === 'auto' ? null : prevDefaults.align,
-          displayMode: colorModeMap[prevDefaults.colorMode],
         },
       },
       isNil
     );
+
     if (prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),
       };
       defaults.thresholds = thresholds;
+    }
+
+    if (prevDefaults.colorMode) {
+      defaults.custom.cellOptions = {
+        type: colorModeMap[prevDefaults.colorMode],
+      };
     }
   }
   return defaults;

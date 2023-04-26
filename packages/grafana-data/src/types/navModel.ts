@@ -7,17 +7,13 @@ export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
-  section?: NavSection;
   subTitle?: string;
   icon?: IconName;
   img?: string;
   url?: string;
   target?: LinkTarget;
   sortWeight?: number;
-  divider?: boolean;
-  hideFromMenu?: boolean;
   hideFromTabs?: boolean;
-  showIconInNavbar?: boolean;
   roundIcon?: boolean;
   /**
    * This is true for some sections that have no children (but is still a section)
@@ -44,12 +40,7 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
-}
-
-export enum NavSection {
-  Core = 'core',
-  Plugin = 'plugin',
-  Config = 'config',
+  emptyMessage?: string;
 }
 
 export enum NavMenuItemType {

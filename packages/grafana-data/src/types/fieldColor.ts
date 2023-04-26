@@ -4,9 +4,20 @@
 export enum FieldColorModeId {
   Thresholds = 'thresholds',
   PaletteClassic = 'palette-classic',
+  PaletteClassicByName = 'palette-classic-by-name',
   PaletteSaturated = 'palette-saturated',
   ContinuousGrYlRd = 'continuous-GrYlRd',
+  ContinuousRdYlGr = 'continuous-RdYlGr',
+  ContinuousBlYlRd = 'continuous-BlYlRd',
+  ContinuousYlRd = 'continuous-YlRd',
+  ContinuousBlPu = 'continuous-BlPu',
+  ContinuousYlBl = 'continuous-YlBl',
+  ContinuousBlues = 'continuous-blues',
+  ContinuousReds = 'continuous-reds',
+  ContinuousGreens = 'continuous-greens',
+  ContinuousPurples = 'continuous-purples',
   Fixed = 'fixed',
+  Shades = 'shades',
 }
 
 /**

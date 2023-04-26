@@ -1,6 +1,6 @@
 {
   "type": "datasource",
-  "name": "TestData DB",
+  "name": "TestData",
   "id": "testdata",
 
   "metrics": true,

@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -7,12 +8,15 @@ import { byRole } from 'testing-library-selector';
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
+import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 
 import { RuleDetails } from './RuleDetails';
 
@@ -32,9 +36,25 @@ const ui = {
 
 jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
+const server = setupServer();
+
+const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
+  alertmanagersChoice: AlertmanagerChoice.Internal,
+  numExternalAlertmanagers: 0,
+};
+
 beforeAll(() => {
   setBackendSrv(backendSrv);
+  server.listen({ onUnhandledRequest: 'error' });
   jest.clearAllMocks();
+});
+
+afterAll(() => {
+  server.close();
+});
+
+beforeEach(() => {
+  server.resetHandlers();
 });
 
 describe('RuleDetails RBAC', () => {
@@ -68,6 +88,7 @@ describe('RuleDetails RBAC', () => {
     it('Should not render Silence button for users wihout the instance create permission', async () => {
       // Arrange
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -78,6 +99,8 @@ describe('RuleDetails RBAC', () => {
     });
 
     it('Should render Silence button for users with the instance create permissions', async () => {
+      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
+
       // Arrange
       jest
         .spyOn(contextSrv, 'hasPermission')
@@ -91,6 +114,7 @@ describe('RuleDetails RBAC', () => {
       await waitFor(() => screen.queryByRole('button', { name: 'Declare incident' }));
     });
   });
+
   describe('Cloud rules action buttons', () => {
     const cloudRule = getCloudRule({ name: 'Cloud' });
 

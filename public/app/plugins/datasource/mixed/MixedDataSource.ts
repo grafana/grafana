@@ -1,4 +1,4 @@
-import { cloneDeep, groupBy, omit } from 'lodash';
+import { cloneDeep, groupBy } from 'lodash';
 import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
 import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
@@ -31,7 +31,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     });
 
     if (!queries.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
+      return of({ data: [] }); // nothing
     }
 
     // Build groups of queries to run in parallel
@@ -49,7 +49,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     // Missing UIDs?
     if (!mixed.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
+      return of({ data: [] }); // nothing
     }
 
     return this.batchQueries(mixed, request);
@@ -70,7 +70,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                 data: response.data || [],
                 state: LoadingState.Loading,
                 key: `mixed-${i}-${response.key || ''}`,
-              } as DataQueryResponse;
+              };
             }),
             toArray(),
             catchError((err) => {
@@ -96,13 +96,6 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
   testDatasource() {
     return Promise.resolve({});
-  }
-
-  getQueryDisplayText(query: DataQuery) {
-    const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
-    const strippedQueryJSON = JSON.stringify(strippedQuery);
-    const prefix = query.datasource?.type ? `${query.datasource?.type}: ` : '';
-    return `${prefix}${strippedQueryJSON}`;
   }
 
   private isQueryable(query: BatchedQueries): boolean {

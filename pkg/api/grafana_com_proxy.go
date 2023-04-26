@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,15 +23,15 @@ var grafanaComProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
-func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *httputil.ReverseProxy {
-	url, _ := url.Parse(setting.GrafanaComUrl)
+func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string, grafanaComAPIUrl string) *httputil.ReverseProxy {
+	url, _ := url.Parse(grafanaComAPIUrl)
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = url.Scheme
 		req.URL.Host = url.Host
 		req.Host = url.Host
 
-		req.URL.Path = util.JoinURLFragments(url.Path+"/api", proxyPath)
+		req.URL.Path = util.JoinURLFragments(url.Path, proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")
@@ -46,9 +45,9 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *h
 	return proxyutil.NewReverseProxy(logger, director)
 }
 
-func (hs *HTTPServer) ProxyGnetRequest(c *models.ReqContext) {
+func (hs *HTTPServer) ProxyGnetRequest(c *contextmodel.ReqContext) {
 	proxyPath := web.Params(c.Req)["*"]
-	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion)
+	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion, hs.Cfg.GrafanaComAPIURL)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)
 }

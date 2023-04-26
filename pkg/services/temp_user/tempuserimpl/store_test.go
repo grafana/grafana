@@ -32,6 +32,13 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		require.Nil(t, err)
 	}
 
+	t.Run("Can create multiple temp users", func(t *testing.T) {
+		setup(t)
+		created, err := store.CreateTempUser(context.Background(), &cmd)
+		require.Nil(t, err)
+		require.Equal(t, int64(2), created.ID)
+	})
+
 	t.Run("Should be able to get temp users by org id", func(t *testing.T) {
 		setup(t)
 		query := tempuser.GetTempUsersQuery{OrgID: 2256, Status: tempuser.TmpUserInvitePending}

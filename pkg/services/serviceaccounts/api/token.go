@@ -1,18 +1,15 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/components/satokengen"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -66,7 +63,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -98,7 +95,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		}
 
 		result[i] = TokenDTO{
-			Id:                     token.Id,
+			Id:                     token.ID,
 			Name:                   token.Name,
 			Created:                &token.Created,
 			Expiration:             expiration,
@@ -127,24 +124,19 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	// confirm service account exists
-	if _, err := api.service.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
-		default:
-			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
-		}
+	if _, err = api.service.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	if err = web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
@@ -168,26 +160,21 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		}
 	}
 
-	newKeyInfo, err := apikeygenprefix.New(ServiceID)
+	newKeyInfo, err := satokengen.New(ServiceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Generating service account token failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
-		if errors.Is(err, database.ErrInvalidTokenExpiration) {
-			return response.Error(http.StatusBadRequest, err.Error(), nil)
-		}
-		if errors.Is(err, database.ErrDuplicateToken) {
-			return response.Error(http.StatusConflict, err.Error(), nil)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to add service account token", err)
+	apiKey, err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to add service account token", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   cmd.Result.Id,
-		Name: cmd.Result.Name,
+		ID:   apiKey.ID,
+		Name: apiKey.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
 
@@ -210,7 +197,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) DeleteToken(c *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -218,12 +205,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 
 	// confirm service account exists
 	if _, err := api.service.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
-		default:
-			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
 
 	tokenID, err := strconv.ParseInt(web.Params(c.Req)[":tokenId"], 10, 64)
@@ -232,14 +214,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	}
 
 	if err = api.service.DeleteServiceAccountToken(c.Req.Context(), c.OrgID, saID, tokenID); err != nil {
-		status := http.StatusNotFound
-		if err != nil && !errors.Is(err, apikey.ErrNotFound) {
-			status = http.StatusInternalServerError
-		} else {
-			err = apikey.ErrNotFound
-		}
-
-		return response.Error(status, failedToDeleteMsg, err)
+		return response.ErrOrFallback(http.StatusInternalServerError, failedToDeleteMsg, err)
 	}
 
 	return response.Success("Service account token deleted")

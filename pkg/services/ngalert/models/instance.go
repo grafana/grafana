@@ -34,7 +34,7 @@ const (
 	InstanceStatePending InstanceStateType = "Pending"
 	// InstanceStateNoData is for an alert with no data.
 	InstanceStateNoData InstanceStateType = "NoData"
-	// InstanceStateError is for a erroring alert.
+	// InstanceStateError is for an erroring alert.
 	InstanceStateError InstanceStateType = "Error"
 )
 
@@ -52,8 +52,6 @@ func (i InstanceStateType) IsValid() bool {
 type ListAlertInstancesQuery struct {
 	RuleUID   string
 	RuleOrgID int64 `json:"-"`
-
-	Result []*AlertInstance
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,

@@ -59,7 +59,7 @@ You can obtain a jwt token by using the following command for oauth-admin:
 
 ```sh
 curl --request POST \
-  --url http://localhost:8087/auth/realms/grafana/protocol/openid-connect/token \
+  --url http://localhost:8087/realms/grafana/protocol/openid-connect/token \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data client_id=grafana-oauth \
   --data grant_type=password \

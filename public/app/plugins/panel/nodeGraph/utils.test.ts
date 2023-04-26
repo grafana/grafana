@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 
 import { NodeDatum, NodeGraphOptions } from './types';
 import {
@@ -63,8 +63,8 @@ describe('processNodes', () => {
       expect.objectContaining(makeNodeFromEdgeDatum({ dataFrameRowIndex: 2, id: '2', incoming: 2, title: '2' })),
     ]);
 
-    expect(nodes[0].mainStat?.values).toEqual(new ArrayVector([undefined, 1, 2]));
-    expect(nodes[0].secondaryStat?.values).toEqual(new ArrayVector([undefined, 1, 2]));
+    expect(nodes[0].mainStat?.values).toEqual([undefined, 1, 2]);
+    expect(nodes[0].secondaryStat?.values).toEqual([undefined, 1, 2]);
 
     expect(nodes[0].mainStat).toEqual(nodes[1].mainStat);
     expect(nodes[0].mainStat).toEqual(nodes[2].mainStat);
@@ -265,7 +265,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
     index: 7,
     name: 'color',
     type: 'number',
-    values: new ArrayVector([0.5, 0.5, 0.5]),
+    values: [0.5, 0.5, 0.5],
   };
 
   return {
@@ -278,7 +278,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
         },
         name: 'arc__success',
         type: 'number',
-        values: new ArrayVector([0.5, 0.5, 0.5]),
+        values: [0.5, 0.5, 0.5],
       },
       {
         config: {
@@ -288,7 +288,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
         },
         name: 'arc__errors',
         type: 'number',
-        values: new ArrayVector([0.5, 0.5, 0.5]),
+        values: [0.5, 0.5, 0.5],
       },
     ],
     color: colorField,
@@ -300,17 +300,18 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
       index: 3,
       name: 'mainstat',
       type: 'number',
-      values: new ArrayVector([0.1, 0.1, 0.1]),
+      values: [0.1, 0.1, 0.1],
     },
     secondaryStat: {
       config: {},
       index: 4,
       name: 'secondarystat',
       type: 'number',
-      values: new ArrayVector([2, 2, 2]),
+      values: [2, 2, 2],
     },
     subTitle: 'service',
     title: 'service:0',
+    icon: 'database',
     ...options,
   };
 }

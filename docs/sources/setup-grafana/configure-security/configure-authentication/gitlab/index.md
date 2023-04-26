@@ -159,8 +159,8 @@ For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/ap
 
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+> enable the `skip_org_role_sync` option.
+> See [configure-grafana]({{< relref "../../../configure-grafana#authgitlab-skip-org-role-sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
@@ -223,3 +223,16 @@ the correct teams.
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from GitLab, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitLab.
+
+```ini
+[auth.gitlab]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```

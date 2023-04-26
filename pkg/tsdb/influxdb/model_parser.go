@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -70,9 +71,10 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 }
 
 func (qp *InfluxdbQueryParser) parseSelects(model *simplejson.Json) ([]*Select, error) {
-	var result []*Select
+	selectObjs := model.Get("select").MustArray()
+	result := make([]*Select, 0, len(selectObjs))
 
-	for _, selectObj := range model.Get("select").MustArray() {
+	for _, selectObj := range selectObjs {
 		selectJson := simplejson.NewFromAny(selectObj)
 		var parts Select
 
@@ -93,8 +95,9 @@ func (qp *InfluxdbQueryParser) parseSelects(model *simplejson.Json) ([]*Select, 
 }
 
 func (*InfluxdbQueryParser) parseTags(model *simplejson.Json) ([]*Tag, error) {
-	var result []*Tag
-	for _, t := range model.Get("tags").MustArray() {
+	tags := model.Get("tags").MustArray()
+	result := make([]*Tag, 0, len(tags))
+	for _, t := range tags {
 		tagJson := simplejson.NewFromAny(t)
 		tag := &Tag{}
 		var err error
@@ -159,8 +162,9 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 }
 
 func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPart, error) {
-	var result []*QueryPart
-	for _, groupObj := range model.Get("groupBy").MustArray() {
+	groupBy := model.Get("groupBy").MustArray()
+	result := make([]*QueryPart, 0, len(groupBy))
+	for _, groupObj := range groupBy {
 		groupJson := simplejson.NewFromAny(groupObj)
 		queryPart, err := qp.parseQueryPart(groupJson)
 		if err != nil {

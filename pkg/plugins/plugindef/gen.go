@@ -10,11 +10,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/dave/dst"
-	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -41,8 +39,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
-	grootp := strings.Split(cwd, string(os.PathSeparator))
-	groot := filepath.Join(string(os.PathSeparator), filepath.Join(grootp[:len(grootp)-3]...))
+
+	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
 
 	jfs := elsedie(jl.GenerateFS(lin))("plugindef jenny pipeline failed")
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
@@ -62,9 +60,7 @@ func (j *jennytypego) JennyName() string {
 }
 
 func (j *jennytypego) Generate(lin thema.Lineage) (*codejen.File, error) {
-	f, err := codegen.GoTypesJenny{ApplyFuncs: []dstutil.ApplyFunc{
-		codegen.PrefixReplacer("Plugindef", "PluginDef"),
-	}}.Generate(codegen.SchemaForGen{
+	f, err := codegen.GoTypesJenny{}.Generate(codegen.SchemaForGen{
 		Name:    "PluginDef",
 		Schema:  lin.Latest(),
 		IsGroup: false,

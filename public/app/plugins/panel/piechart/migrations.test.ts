@@ -1,7 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
 
 import { PieChartPanelChangedHandler } from './migrations';
-import { PieChartLabels } from './models.gen';
+import { PieChartLabels } from './panelcfg.gen';
 
 describe('PieChart -> PieChartV2 migrations', () => {
   it('only migrates old piechart', () => {
@@ -60,13 +60,13 @@ describe('PieChart -> PieChartV2 migrations', () => {
     expect(options).toMatchObject({ displayLabels: [PieChartLabels.Name, PieChartLabels.Value] });
   });
 
-  it('hides the legend when no legend values are selected', () => {
+  it('hides the legend when show is false', () => {
     const panel = { options: {} } as PanelModel;
 
     const oldPieChartOptions = {
       angular: {
         legendType: 'On graph',
-        legend: {},
+        legend: { show: false },
       },
     };
     const options = PieChartPanelChangedHandler(panel, 'grafana-piechart-panel', oldPieChartOptions);

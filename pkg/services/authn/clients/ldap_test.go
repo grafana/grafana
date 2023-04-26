@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestLDAP_AuthenticateProxy(t *testing.T) {
@@ -19,7 +20,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 		desc             string
 		username         string
 		expectedLDAPErr  error
-		expectedLDAPInfo *models.ExternalUserInfo
+		expectedLDAPInfo *login.ExternalUserInfo
 		expectedErr      error
 		expectedIdentity *authn.Identity
 	}
@@ -28,7 +29,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 		{
 			desc:     "should return valid identity when found by ldap service",
 			username: "test",
-			expectedLDAPInfo: &models.ExternalUserInfo{
+			expectedLDAPInfo: &login.ExternalUserInfo{
 				AuthModule: login.LDAPAuthModule,
 				AuthId:     "123",
 				Email:      "test@test.com",
@@ -48,10 +49,12 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				Groups:     []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
-					SyncTeamMembers:     true,
-					AllowSignUp:         false,
+					SyncTeams:           true,
 					EnableDisabledUsers: true,
-					LookUpParams: models.UserLookupParams{
+					FetchSyncedUser:     true,
+					SyncOrgRoles:        true,
+					SyncPermissions:     true,
+					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
 					},
@@ -68,7 +71,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := &LDAP{cfg: setting.NewCfg(), service: fakeLDAPService{ExpectedInfo: tt.expectedLDAPInfo, ExpectedErr: tt.expectedLDAPErr}}
+			c := &LDAP{cfg: setting.NewCfg(), service: &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr}}
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
@@ -83,7 +86,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 		password         string
 		expectedErr      error
 		expectedLDAPErr  error
-		expectedLDAPInfo *models.ExternalUserInfo
+		expectedLDAPInfo *login.ExternalUserInfo
 		expectedIdentity *authn.Identity
 	}
 
@@ -92,7 +95,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 			desc:     "should successfully authenticate with correct username and password",
 			username: "test",
 			password: "test123",
-			expectedLDAPInfo: &models.ExternalUserInfo{
+			expectedLDAPInfo: &login.ExternalUserInfo{
 				AuthModule: login.LDAPAuthModule,
 				AuthId:     "123",
 				Email:      "test@test.com",
@@ -112,10 +115,12 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				Groups:     []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
-					SyncTeamMembers:     true,
-					AllowSignUp:         false,
+					SyncTeams:           true,
 					EnableDisabledUsers: true,
-					LookUpParams: models.UserLookupParams{
+					FetchSyncedUser:     true,
+					SyncOrgRoles:        true,
+					SyncPermissions:     true,
+					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
 					},
@@ -140,7 +145,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := &LDAP{cfg: setting.NewCfg(), service: fakeLDAPService{ExpectedInfo: tt.expectedLDAPInfo, ExpectedErr: tt.expectedLDAPErr}}
+			c := &LDAP{cfg: setting.NewCfg(), service: &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr}}
 
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -151,19 +156,4 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 
 func strPtr(s string) *string {
 	return &s
-}
-
-var _ ldapService = new(fakeLDAPService)
-
-type fakeLDAPService struct {
-	ExpectedErr  error
-	ExpectedInfo *models.ExternalUserInfo
-}
-
-func (f fakeLDAPService) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	return f.ExpectedInfo, f.ExpectedErr
-}
-
-func (f fakeLDAPService) User(username string) (*models.ExternalUserInfo, error) {
-	return f.ExpectedInfo, f.ExpectedErr
 }

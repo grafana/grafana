@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -21,6 +21,20 @@ const (
 	ActionDelete           = "serviceaccounts:delete"
 	ActionPermissionsRead  = "serviceaccounts.permissions:read"
 	ActionPermissionsWrite = "serviceaccounts.permissions:write"
+)
+
+var (
+	ErrServiceAccountNotFound            = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrNotFound", errutil.WithPublicMessage("service account not found"))
+	ErrServiceAccountInvalidRole         = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidRoleSpecified", errutil.WithPublicMessage("invalid role specified"))
+	ErrServiceAccountRolePrivilegeDenied = errutil.NewBase(errutil.StatusForbidden, "serviceaccounts.ErrRoleForbidden", errutil.WithPublicMessage("can not assign a role higher than user's role"))
+	ErrServiceAccountInvalidOrgID        = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidOrgId", errutil.WithPublicMessage("invalid org id specified"))
+	ErrServiceAccountInvalidID           = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidId", errutil.WithPublicMessage("invalid service account id specified"))
+	ErrServiceAccountInvalidAPIKeyID     = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidAPIKeyId", errutil.WithPublicMessage("invalid api key id specified"))
+	ErrServiceAccountInvalidTokenID      = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidTokenId", errutil.WithPublicMessage("invalid service account token id specified"))
+	ErrServiceAccountAlreadyExists       = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
+	ErrServiceAccountTokenNotFound       = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
+	ErrInvalidTokenExpiration            = errutil.NewBase(errutil.StatusValidationFailed, "serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
+	ErrDuplicateToken                    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
 )
 
 type ServiceAccount struct {
@@ -72,11 +86,10 @@ type GetSATokensQuery struct {
 }
 
 type AddServiceAccountTokenCommand struct {
-	Name          string         `json:"name" binding:"Required"`
-	OrgId         int64          `json:"-"`
-	Key           string         `json:"-"`
-	SecondsToLive int64          `json:"secondsToLive"`
-	Result        *apikey.APIKey `json:"-"`
+	Name          string `json:"name" binding:"Required"`
+	OrgId         int64  `json:"-"`
+	Key           string `json:"-"`
+	SecondsToLive int64  `json:"secondsToLive"`
 }
 
 type SearchOrgServiceAccountsQuery struct {
@@ -132,10 +145,6 @@ type ServiceAccountProfileDTO struct {
 
 type ServiceAccountFilter string // used for filtering
 
-type APIKeysMigrationStatus struct {
-	Migrated bool `json:"migrated"`
-}
-
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
@@ -143,8 +152,9 @@ const (
 )
 
 type Stats struct {
-	ServiceAccounts int64 `xorm:"serviceaccounts"`
-	Tokens          int64 `xorm:"serviceaccount_tokens"`
+	ServiceAccounts     int64 `xorm:"serviceaccounts"`
+	Tokens              int64 `xorm:"serviceaccount_tokens"`
+	ForcedExpiryEnabled bool  `xorm:"-"`
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

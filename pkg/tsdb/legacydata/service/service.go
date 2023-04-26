@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -79,9 +79,9 @@ func generateRequest(ctx context.Context, ds *datasources.DataSource, decryptedJ
 	}
 
 	instanceSettings := &backend.DataSourceInstanceSettings{
-		ID:                      ds.Id,
+		ID:                      ds.ID,
 		Name:                    ds.Name,
-		URL:                     ds.Url,
+		URL:                     ds.URL,
 		Database:                ds.Database,
 		User:                    ds.User,
 		BasicAuthEnabled:        ds.BasicAuth,
@@ -89,7 +89,7 @@ func generateRequest(ctx context.Context, ds *datasources.DataSource, decryptedJ
 		JSONData:                jsonDataBytes,
 		DecryptedSecureJSONData: decryptedJsonData,
 		Updated:                 ds.Updated,
-		UID:                     ds.Uid,
+		UID:                     ds.UID,
 	}
 
 	if query.Headers == nil {
@@ -98,7 +98,7 @@ func generateRequest(ctx context.Context, ds *datasources.DataSource, decryptedJ
 
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			OrgID:                      ds.OrgId,
+			OrgID:                      ds.OrgID,
 			PluginID:                   ds.Type,
 			User:                       adapters.BackendUserFromSignedInUser(query.User),
 			DataSourceInstanceSettings: instanceSettings,

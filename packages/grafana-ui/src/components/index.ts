@@ -46,6 +46,7 @@ export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker'
 export { List } from './List/List';
 export { InteractiveTable } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
+export { AutoSaveField } from './AutoSaveField/AutoSaveField';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
@@ -147,10 +148,6 @@ export { Alert, type AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
-export { LogLabels } from './Logs/LogLabels';
-export { LogMessageAnsi } from './Logs/LogMessageAnsi';
-export { LogRows } from './Logs/LogRows';
-export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
 export { FieldLinkList } from './DataLinks/FieldLinkList';
 // Panel editors
@@ -184,7 +181,9 @@ export {
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { CustomHeadersSettings } from './DataSourceSettings/CustomHeadersSettings';
 export { AlertingSettings } from './DataSourceSettings/AlertingSettings';
+export { SecureSocksProxySettings } from './DataSourceSettings/SecureSocksProxySettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';

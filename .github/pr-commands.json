@@ -83,7 +83,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/grafana-azure-monitor-datasource/**/*", "pkg/tsdb/azuremonitor/**/*"],
+    "matches": [ "public/app/plugins/datasource/azuremonitor/**/*", "pkg/tsdb/azuremonitor/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/Azure"
   },
@@ -190,5 +190,13 @@
     "ignoreList": ["renovate[bot]","dependabot[bot]"],
     "action": "updateLabel",
     "addLabel": "pr/external"
+  },
+  {
+    "type":"label",
+    "name":"type/docs",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/69"
+    }
   }
 ]

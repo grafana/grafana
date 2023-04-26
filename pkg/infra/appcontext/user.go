@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -33,7 +33,7 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 	}
 
 	// Set by incoming HTTP request
-	c, ok := ctxkey.Get(ctx).(*models.ReqContext)
+	c, ok := ctxkey.Get(ctx).(*contextmodel.ReqContext)
 	if ok && c.SignedInUser != nil {
 		return c.SignedInUser, nil
 	}

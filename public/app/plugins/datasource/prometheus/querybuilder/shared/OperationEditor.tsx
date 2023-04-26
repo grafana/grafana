@@ -4,7 +4,9 @@ import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
+import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
+import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
@@ -42,9 +44,14 @@ export function OperationEditor({
   flash,
   highlight,
 }: Props) {
-  const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
+
+  const isConflicting =
+    operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, query.operations);
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, isConflicting);
 
   if (!def) {
     return <span>Operation {operation.id} not found</span>;
@@ -126,33 +133,51 @@ export function OperationEditor({
     }
   }
 
+  const isInvalid = (isDragging: boolean) => {
+    if (isDragging) {
+      return undefined;
+    }
+
+    return isConflicting ? true : undefined;
+  };
+
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
-      {(provided) => (
-        <div
-          className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          data-testid={`operations.${index}.wrapper`}
+      {(provided, snapshot) => (
+        <InlineField
+          error={'You have conflicting label filters'}
+          invalid={isInvalid(snapshot.isDragging)}
+          className={cx(styles.error, styles.cardWrapper)}
         >
-          <OperationHeader
-            operation={operation}
-            dragHandleProps={provided.dragHandleProps}
-            def={def}
-            index={index}
-            onChange={onChange}
-            onRemove={onRemove}
-            queryModeller={queryModeller}
-          />
-          <div className={styles.body}>{operationElements}</div>
-          {restParam}
-          {index < query.operations.length - 1 && (
-            <div className={styles.arrow}>
-              <div className={styles.arrowLine} />
-              <div className={styles.arrowArrow} />
-            </div>
-          )}
-        </div>
+          <div
+            className={cx(
+              styles.card,
+              (shouldFlash || highlight) && styles.cardHighlight,
+              isConflicting && styles.cardError
+            )}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            data-testid={`operations.${index}.wrapper`}
+          >
+            <OperationHeader
+              operation={operation}
+              dragHandleProps={provided.dragHandleProps}
+              def={def}
+              index={index}
+              onChange={onChange}
+              onRemove={onRemove}
+              queryModeller={queryModeller}
+            />
+            <div className={styles.body}>{operationElements}</div>
+            {restParam}
+            {index < query.operations.length - 1 && (
+              <div className={styles.arrow}>
+                <div className={styles.arrowLine} />
+                <div className={styles.arrowArrow} />
+              </div>
+            )}
+          </div>
+        </InlineField>
       )}
     </Draggable>
   );
@@ -218,8 +243,14 @@ function callParamChangedThenOnChange(
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
   return {
+    cardWrapper: css({
+      alignItems: 'stretch',
+    }),
+    error: css({
+      marginBottom: theme.spacing(1),
+    }),
     card: css({
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.medium}`,
@@ -227,9 +258,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       cursor: 'grab',
       borderRadius: theme.shape.borderRadius(1),
-      marginBottom: theme.spacing(1),
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
+      height: isConflicting ? 'auto' : '100%',
+    }),
+    cardError: css({
+      boxShadow: `0px 0px 4px 0px ${theme.colors.warning.main}`,
+      border: `1px solid ${theme.colors.warning.main}`,
     }),
     cardHighlight: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,

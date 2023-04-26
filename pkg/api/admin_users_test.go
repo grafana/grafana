@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -209,7 +209,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				require.NoError(t, err)
-				assert.Equal(t, "organization not found", respJSON.Get("message").MustString())
+				assert.Equal(t, org.ErrOrgNotFound.Error(), respJSON.Get("message").MustString())
 			})
 		})
 	})
@@ -242,7 +242,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -267,7 +267,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			t.Log("Route handler invoked", "url", c.Req.URL)
 
 			sc.context = c
@@ -295,7 +295,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -323,7 +323,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
 			sc.context.OrgID = testOrgID
@@ -355,7 +355,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 		sc.sqlStore = hs.SQLStore
 		sc.authInfoService = authInfoService
 		sc.userService = hs.userService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
 
@@ -381,7 +381,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
 
@@ -402,7 +402,7 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c

@@ -57,6 +57,8 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
           Add
         </Button>
       )}
+
+      {disabled && !options && <i>No exemplars configurations</i>}
     </>
   );
 }

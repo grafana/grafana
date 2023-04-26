@@ -4,10 +4,10 @@ import React, { useCallback, useRef } from 'react';
 
 import { CodeEditor, getInputStyles, Monaco, useTheme2 } from '@grafana/ui';
 
-import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/CompletionItemProvider';
-import language from '../dynamic-labels/definition';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
-import { registerLanguage } from '../monarch/register';
+import { DynamicLabelsCompletionItemProvider } from '../language/dynamic-labels/CompletionItemProvider';
+import language from '../language/dynamic-labels/definition';
+import { TRIGGER_SUGGEST } from '../language/monarch/commands';
+import { registerLanguage } from '../language/monarch/register';
 
 const dynamicLabelsCompletionItemProvider = new DynamicLabelsCompletionItemProvider();
 

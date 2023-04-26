@@ -76,6 +76,10 @@ type Span interface {
 	//
 	// Panics if the length of keys is shorter than the length of values.
 	AddEvents(keys []string, values []EventValue)
+
+	// contextWithSpan returns a context.Context that holds the parent
+	// context plus a reference to this span.
+	contextWithSpan(ctx context.Context) context.Context
 }
 
 func ProvideService(cfg *setting.Cfg) (Tracer, error) {
@@ -100,25 +104,35 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 }
 
 func parseSettings(cfg *setting.Cfg) (*Opentracing, *Opentelemetry, error) {
+	ts, err := parseSettingsOpentracing(cfg)
+	if err != nil {
+		return ts, nil, err
+	}
+	ots, err := ParseSettingsOpentelemetry(cfg)
+	return ts, ots, err
+}
+
+func parseSettingsOpentracing(cfg *setting.Cfg) (*Opentracing, error) {
 	ts := &Opentracing{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
-	err := ts.parseSettings()
-	if err != nil {
-		return ts, nil, err
+	if err := ts.parseSettings(); err != nil {
+		return ts, err
 	}
 	if ts.enabled {
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'tracing.jaeger' is deprecated, please use 'tracing.opentelemetry.jaeger' instead")
-		return ts, nil, nil
 	}
+	return ts, nil
+}
 
+func ParseSettingsOpentelemetry(cfg *setting.Cfg) (*Opentelemetry, error) {
 	ots := &Opentelemetry{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
-	err = ots.parseSettingsOpentelemetry()
-	return ts, ots, err
+	err := ots.parseSettingsOpentelemetry()
+	return ots, err
 }
 
 type traceKey struct{}
@@ -134,6 +148,29 @@ func TraceIDFromContext(c context.Context, requireSampled bool) string {
 		return trace.ID
 	}
 	return ""
+}
+
+// SpanFromContext returns the Span previously associated with ctx, or nil, if no such span could be found.
+// It is the equivalent of opentracing.SpanFromContext and trace.SpanFromContext.
+func SpanFromContext(ctx context.Context) Span {
+	// Look for both opentracing and opentelemetry spans.
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		return OpentracingSpan{span: span}
+	}
+	if span := trace.SpanFromContext(ctx); span != nil {
+		return OpentelemetrySpan{span: span}
+	}
+	return nil
+}
+
+// ContextWithSpan returns a new context.Context that holds a reference to the given span.
+// If span is nil, a new context without an active span is returned.
+// It is the equivalent of opentracing.ContextWithSpan and trace.ContextWithSpan.
+func ContextWithSpan(ctx context.Context, span Span) context.Context {
+	if span != nil {
+		return span.contextWithSpan(ctx)
+	}
+	return ctx
 }
 
 type Opentracing struct {
@@ -312,6 +349,18 @@ func (s OpentracingSpan) AddEvents(keys []string, values []EventValue) {
 		}
 	}
 	s.span.LogFields(fields...)
+}
+
+func (s OpentracingSpan) contextWithSpan(ctx context.Context) context.Context {
+	if s.span != nil {
+		ctx = opentracing.ContextWithSpan(ctx, s.span)
+		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
+		// It's derived from the span. Ensure that we propagate this too.
+		if sctx, ok := s.span.Context().(jaeger.SpanContext); ok {
+			ctx = context.WithValue(ctx, traceKey{}, traceValue{sctx.TraceID().String(), sctx.IsSampled()})
+		}
+	}
+	return ctx
 }
 
 func splitTagSettings(input string) map[string]string {

@@ -48,13 +48,13 @@ export function getColorDimensionForField(
     }
 
     const disp = getDisplayProcessor({ field, theme });
-    const getColor = (value: any): string => {
+    const getColor = (value: unknown): string => {
       return disp(value).color ?? '#ccc';
     };
 
     return {
       field,
-      get: (index: number): string => getColor(field!.values.get(index)),
+      get: (index: number): string => getColor(field!.values[index]),
       value: () => getColor(getLastNotNullFieldValue(field!)),
     };
   }

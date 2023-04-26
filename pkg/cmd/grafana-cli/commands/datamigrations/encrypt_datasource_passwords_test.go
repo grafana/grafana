@@ -27,10 +27,10 @@ func TestPasswordMigrationCommand(t *testing.T) {
 
 func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
 	ds := []*datasources.DataSource{
-		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
-		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
-		{Type: "prometheus", Name: "prometheus", Uid: "prom"},
-		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", Uid: "elastic"},
+		{Type: "influxdb", Name: "influxdb", Password: "foobar", UID: "influx"},
+		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", UID: "graphite"},
+		{Type: "prometheus", Name: "prometheus", UID: "prom"},
+		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", UID: "elastic"},
 	}
 
 	// set required default values

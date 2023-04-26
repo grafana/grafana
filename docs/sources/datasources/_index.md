@@ -2,18 +2,34 @@
 aliases:
   - data-sources/
   - overview/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 title: Data sources
 weight: 60
 ---
 
 # Data sources
 
-Grafana can query and integrate with many different types of databases. This is done by adding a **data source** of the type you want to query or integrate with.
-When you have created and configured a data source you are ready to start exploring and visualizing data, either in Explore or in a new Dashboard. A dashboard is composed of [panels]({{< relref "../panels-visualizations/" >}}), each panel contains a set of queries to one or more data sources.
+Grafana comes with built-in support for many _data sources_.
+If you need other data sources, you can also install one of the many data source plugins.
+If the plugin you need doesn't exist, you can develop a custom plugin.
 
-You can also create new a alert rule from a data source query and have Grafana continuously evaluate it and notify you when things change.
+Each data source comes with a _query editor_,
+which formulates custom queries according to the source's structure.
+After you add and configure a data source, you can use it as an input for many operations, including:
 
-You can also query data sources without building a dashboard by using the [Explore]({{< relref "../explore/" >}}) feature.
+- Query the data with [Explore]({{< relref "../explore" >}}).
+- Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
+- Create rules for [alerts]({{< relref "../alerting" >}}).
+
+This documentation describes how to manage data sources in general,
+and how to configure or query the built-in data sources.
+For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
+To develop a custom plugin, refer to [Build a plugin]({{< relref "../developers/plugins/" >}}).
 
 ## Manage data sources
 
@@ -38,9 +54,21 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data]({{< relref "../panels-visualizations/query-transform-data/" >}}).
 
+## Special data sources
+
+Grafana includes three special data sources:
+
+- **Grafana:** A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+- **Mixed:** An abstraction that lets you query multiple data sources in the same panel.
+  When you select Mixed, you can then select a different data source for each new query that you add.
+  - The first query uses the data source that was selected before you selected **Mixed**.
+  - You can't change an existing query to use the **Mixed** data source.
+  - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
+- **Dashboard:** A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
+
 ## Built-in core data sources
 
-These built-in core data sources are included in the Grafana documentation:
+These built-in core data sources are also included in the Grafana documentation:
 
 - [Alertmanager]({{< relref "./alertmanager/" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
@@ -59,16 +87,3 @@ These built-in core data sources are included in the Grafana documentation:
 - [Tempo]({{< relref "./tempo/" >}})
 - [Testdata]({{< relref "./testdata/" >}})
 - [Zipkin]({{< relref "./zipkin/" >}})
-
-## Special data sources
-
-Grafana also includes three special data sources:
-
-- **Grafana:** A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source.
-  This helps you test visualizations and run experiments.
-- **Mixed:** An abstraction that lets you query multiple data sources in the same panel.
-  When you select Mixed, you can then select a different data source for each new query that you add.
-  - The first query uses the data source that was selected before you selected **Mixed**.
-  - You can't change an existing query to use the Mixed data source.
-  - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
-- **Dashboard:** A data source that uses the result set from another panel in the same dashboard.

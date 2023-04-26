@@ -63,9 +63,7 @@ export function PanelHeader({ panel, error, isViewing, isEditing, data, alertSta
                   {!dashboard.meta.publicDashboardAccessToken && (
                     <div data-testid="panel-dropdown">
                       <Icon name="angle-down" className="panel-menu-toggle" />
-                      {panelMenuOpen ? (
-                        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} onClose={closeMenu} />
-                      ) : null}
+                      {panelMenuOpen ? <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} /> : null}
                     </div>
                   )}
                   {data.request && data.request.timeInfo && (

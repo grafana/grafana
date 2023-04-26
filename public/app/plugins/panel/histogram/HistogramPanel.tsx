@@ -5,7 +5,7 @@ import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transf
 import { useTheme2 } from '@grafana/ui';
 
 import { Histogram, getBucketSize } from './Histogram';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 type Props = PanelProps<PanelOptions>;
 

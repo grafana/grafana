@@ -144,7 +144,8 @@ export class GraphCtrl extends MetricsPanelCtrl {
     },
   };
 
-  /** @ngInject */
+  static $inject = ['$scope', '$injector'];
+
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
 

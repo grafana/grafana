@@ -2,6 +2,7 @@
 aliases:
   - ../../http_api/data_source/
   - ../../http_api/datasource/
+canonical: /docs/grafana/latest/developers/http_api/data_source/
 description: Grafana Data source HTTP API
 keywords:
   - grafana
@@ -14,7 +15,7 @@ title: Data source HTTP API
 
 # Data source API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Get all data sources
 
@@ -61,7 +62,6 @@ Content-Type: application/json
      "basicAuth": false,
      "isDefault": false,
      "jsonData": {
-         "esVersion": 5,
          "logLevelField": "",
          "logMessageField": "",
          "maxConcurrentShardRequests": 256,

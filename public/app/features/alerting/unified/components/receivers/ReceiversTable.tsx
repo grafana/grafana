@@ -1,13 +1,12 @@
-import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
+import { AccessControlAction, ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
 import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
@@ -85,11 +84,13 @@ interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
   showErrorCount: boolean;
+  tooltip?: string;
 }
 
-function ReceiverError({ errorCount, errorDetail, showErrorCount }: ReceiverErrorProps) {
+function ReceiverError({ errorCount, errorDetail, showErrorCount, tooltip }: ReceiverErrorProps) {
   const text = showErrorCount ? `${errorCount} ${pluralize('error', errorCount)}` : 'Error';
-  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={errorDetail ?? 'Error'} />;
+  const tooltipToRender = tooltip ?? errorDetail ?? 'Error';
+  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={tooltipToRender} />;
 }
 interface NotifierHealthProps {
   errorsByNotifier: number;
@@ -116,7 +117,11 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
   const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
   const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
   return errorsByReceiver > 0 ? (
-    <ReceiverError errorCount={errorsByReceiver} showErrorCount={true} />
+    <ReceiverError
+      errorCount={errorsByReceiver}
+      showErrorCount={true}
+      tooltip="Expand the contact point to see error details."
+    />
   ) : (
     <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
@@ -239,9 +244,8 @@ interface Props {
   alertManagerName: string;
 }
 
-export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
+export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
@@ -299,11 +303,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
-      className={styles.section}
       title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel={'New contact point'}
+      addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <DynamicTable
@@ -436,23 +439,3 @@ function useGetColumns(
     },
   ];
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-top: ${theme.spacing(4)};
-  `,
-  warning: css`
-    color: ${theme.colors.warning.text};
-  `,
-  countMessage: css``,
-  onCallBadgeWrapper: css`
-    text-align: left;
-    height: 22px;
-    display: inline-flex;
-    padding: 1px 4px;
-    border-radius: 3px;
-    border: 1px solid rgba(245, 95, 62, 1);
-    color: rgba(245, 95, 62, 1);
-    font-weight: ${theme.typography.fontWeightRegular};
-  `,
-});

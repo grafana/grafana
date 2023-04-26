@@ -121,7 +121,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 
 		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
 		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
-		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
+		if err := m.validateAlertmanagerConfig(amConfig); err != nil {
 			return nil, fmt.Errorf("failed to validate AlertmanagerConfig in orgId %d: %w", orgID, err)
 		}
 	}

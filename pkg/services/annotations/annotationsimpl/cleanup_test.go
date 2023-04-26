@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -91,7 +92,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = 1
-			cleaner := ProvideCleanupService(fakeSQL, cfg)
+			cleaner := ProvideCleanupService(fakeSQL, cfg, featuremgmt.WithFeatures())
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
@@ -124,11 +125,11 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	// create some test annotations
 	a := annotations.Item{
-		DashboardId: 1,
-		OrgId:       1,
-		UserId:      1,
-		PanelId:     1,
-		AlertId:     10,
+		DashboardID: 1,
+		OrgID:       1,
+		UserID:      1,
+		PanelID:     1,
+		AlertID:     10,
 		Text:        "",
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
 	}
@@ -139,14 +140,14 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		_, err = sess.Insert(a)
 		require.NoError(t, err, "cannot insert annotation")
 
-		a.AlertId = 20
+		a.AlertID = 20
 		_, err = sess.Insert(a)
 		require.NoError(t, err, "cannot insert annotation")
 
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
 		cfg.AnnotationCleanupJobBatchSize = 1
-		cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL}
+		cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL, features: featuremgmt.WithFeatures()}
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
 
@@ -195,23 +196,23 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 
 	for i := 0; i < expectedCount; i++ {
 		a := &annotations.Item{
-			DashboardId: 1,
-			OrgId:       1,
-			UserId:      1,
-			PanelId:     1,
+			DashboardID: 1,
+			OrgID:       1,
+			UserID:      1,
+			PanelID:     1,
 			Text:        "",
 		}
 
 		// mark every third as an API annotation
 		// that does not belong to a dashboard
 		if i%3 == 1 {
-			a.DashboardId = 0
+			a.DashboardID = 0
 		}
 
 		// mark every third annotation as an alert annotation
 		if i%3 == 0 {
-			a.AlertId = 10
-			a.DashboardId = 2
+			a.AlertID = 10
+			a.DashboardID = 2
 		}
 
 		// create epoch as int annotations.go line 40
@@ -229,7 +230,7 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 			// mimick the SQL annotation Save logic by writing records to the annotation_tag table
 			// we need to ensure they get deleted when we clean up annotations
 			for tagID := range []int{1, 2} {
-				_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
+				_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.ID, tagID)
 				require.NoError(t, err, "should be able to save annotation tag ID", err)
 			}
 			return err

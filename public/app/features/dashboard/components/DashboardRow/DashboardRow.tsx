@@ -101,6 +101,9 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
           </div>
         )}
         {this.props.panel.collapsed === true && (
+          /* disabling the a11y rules here as the button handles keyboard interactions */
+          /* this is just to provide a better experience for mouse users */
+          /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
           <div className="dashboard-row__toggle-target" onClick={this.onToggle}>
             &nbsp;
           </div>

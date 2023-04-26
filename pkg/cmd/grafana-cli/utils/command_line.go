@@ -3,8 +3,9 @@ package utils
 import (
 	"os"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
 type CommandLine interface {

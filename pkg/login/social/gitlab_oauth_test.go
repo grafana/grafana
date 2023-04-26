@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -27,16 +28,19 @@ const (
 )
 
 func TestSocialGitlab_UserInfo(t *testing.T) {
+	var nilPointer *bool
 	provider := SocialGitlab{
 		SocialBase: &SocialBase{
 			log: newLogger("gitlab_oauth_test", "debug"),
 		},
+		skipOrgRoleSync: false,
 	}
 
 	type conf struct {
 		AllowAssignGrafanaAdmin bool
 		RoleAttributeStrict     bool
 		AutoAssignOrgRole       org.RoleType
+		SkipOrgRoleSync         bool
 	}
 
 	tests := []struct {
@@ -83,6 +87,17 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedRole:         "Editor",
 			ExpectedGrafanaAdmin: falseBoolPtr(),
 		},
+		{
+			Name:                 "Should not sync role, return empty role and nil pointer for GrafanaAdmin for skip org role sync set to true",
+			Cfg:                  conf{SkipOrgRoleSync: true},
+			UserRespBody:         editorUserRespBody,
+			GroupsRespBody:       "[" + strings.Join([]string{viewerGroup, editorGroup}, ",") + "]",
+			RoleAttributePath:    gitlabAttrPath,
+			ExpectedLogin:        "gitlab-editor",
+			ExpectedEmail:        "gitlab-editor@example.org",
+			ExpectedRole:         "",
+			ExpectedGrafanaAdmin: nilPointer,
+		},
 		{ // Case that's going to change with Grafana 10
 			Name:              "No fallback to default org role (will change in Grafana 10)",
 			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
@@ -126,6 +141,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		provider.allowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
 		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
 		provider.roleAttributeStrict = test.Cfg.RoleAttributeStrict
+		provider.skipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

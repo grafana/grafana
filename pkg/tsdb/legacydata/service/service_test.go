@@ -40,12 +40,12 @@ func TestHandleRequest(t *testing.T) {
 
 		s := ProvideService(client, nil, dsService)
 
-		ds := &datasources.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
+		ds := &datasources.DataSource{ID: 12, Type: "unregisteredType", JsonData: simplejson.New()}
 		req := legacydata.DataQuery{
 			TimeRange: &legacydata.DataTimeRange{},
 			Queries: []legacydata.DataSubQuery{
-				{RefID: "A", DataSource: &datasources.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
-				{RefID: "B", DataSource: &datasources.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "A", DataSource: &datasources.DataSource{ID: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "B", DataSource: &datasources.DataSource{ID: 1, Type: "test"}, Model: simplejson.New()},
 			},
 		}
 		res, err := s.HandleRequest(context.Background(), ds, req)

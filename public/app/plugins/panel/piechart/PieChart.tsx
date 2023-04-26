@@ -29,7 +29,7 @@ import {
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 
-import { PieChartType, PieChartLabels } from './models.gen';
+import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
@@ -84,7 +84,7 @@ export const PieChart = ({
 
   return (
     <div className={styles.container}>
-      <svg width={layout.size} height={layout.size} ref={containerRef}>
+      <svg width={layout.size} height={layout.size} ref={containerRef} style={{ overflow: 'visible' }}>
         <Group top={layout.position} left={layout.position}>
           {colors.map((color) => {
             return (

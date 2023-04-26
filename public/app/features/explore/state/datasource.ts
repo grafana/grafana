@@ -8,9 +8,11 @@ import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
+
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
-import { createEmptyQueryResponse, loadAndInitDatasource, loadSupplementaryQueries } from './utils';
+import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
 
 //
 // Actions and Payloads
@@ -39,7 +41,7 @@ export function changeDatasource(
   exploreId: ExploreId,
   datasourceUid: string,
   options?: { importQueries: boolean }
-): ThunkResult<void> {
+): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
     const { history, instance } = await loadAndInitDatasource(orgId, { uid: datasourceUid });

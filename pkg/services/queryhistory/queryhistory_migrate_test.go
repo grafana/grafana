@@ -3,10 +3,10 @@ package queryhistory
 import (
 	"encoding/json"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
@@ -24,7 +24,7 @@ func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 						}),
 						Comment:   "",
 						Starred:   false,
-						CreatedAt: time.Now().Unix(),
+						CreatedAt: sc.service.now().Unix(),
 					},
 				},
 			}
@@ -50,7 +50,7 @@ func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 						}),
 						Comment:   "",
 						Starred:   false,
-						CreatedAt: time.Now().Unix(),
+						CreatedAt: sc.service.now().Unix(),
 					},
 					{
 						DatasourceUID: "NCzh67i",
@@ -59,7 +59,7 @@ func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 						}),
 						Comment:   "",
 						Starred:   false,
-						CreatedAt: time.Now().Unix() - int64(100),
+						CreatedAt: sc.service.now().Unix() - int64(100),
 					},
 					{
 						DatasourceUID: "ABch68f",
@@ -68,7 +68,7 @@ func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 						}),
 						Comment:   "",
 						Starred:   false,
-						CreatedAt: time.Now().Unix() - int64(1000),
+						CreatedAt: sc.service.now().Unix() - int64(1000),
 					},
 				},
 			}
@@ -94,7 +94,7 @@ func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 						}),
 						Comment:   "",
 						Starred:   true,
-						CreatedAt: time.Now().Unix(),
+						CreatedAt: sc.service.now().Unix(),
 					},
 					{
 						DatasourceUID: "NCzh67i",
@@ -103,7 +103,7 @@ func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 						}),
 						Comment:   "",
 						Starred:   false,
-						CreatedAt: time.Now().Unix() - int64(100),
+						CreatedAt: sc.service.now().Unix() - int64(100),
 					},
 				},
 			}

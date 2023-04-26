@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -74,7 +76,8 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 	if expStatusCode != resp.StatusCode {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		t.Fatal(string(b))
+		t.Log(string(b))
+		require.Equal(t, expStatusCode, resp.StatusCode)
 	}
 	return resp
 }
@@ -98,14 +101,14 @@ func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     fmt.Sprintf("rule-%s", util.GenerateShortUID()),
 				Condition: "A",
-				Data: []ngmodels.AlertQuery{
+				Data: []apimodels.AlertQuery{
 					{
 						RefID: "A",
-						RelativeTimeRange: ngmodels.RelativeTimeRange{
-							From: ngmodels.Duration(time.Duration(5) * time.Hour),
-							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: apimodels.RelativeTimeRange{
+							From: apimodels.Duration(time.Duration(5) * time.Hour),
+							To:   apimodels.Duration(time.Duration(3) * time.Hour),
 						},
-						DatasourceUID: "-100",
+						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -159,6 +162,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		UID:          gettable.UID,
 		NoDataState:  gettable.NoDataState,
 		ExecErrState: gettable.ExecErrState,
+		IsPaused:     &gettable.IsPaused,
 	}
 }
 

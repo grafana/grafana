@@ -9,12 +9,12 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -87,7 +87,7 @@ export interface ExploreState {
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
 
 export interface ExploreItemState {
   /**
@@ -175,6 +175,12 @@ export interface ExploreItemState {
    */
   isPaused: boolean;
 
+  /**
+   * Index of the last item in the list of logs
+   * when the live tailing views gets cleared.
+   */
+  clearedAtIndex: number | null;
+
   querySubscription?: Unsubscribable;
 
   queryResponse: ExplorePanelData;
@@ -230,11 +236,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
@@ -267,7 +270,7 @@ export enum TABLE_RESULTS_STYLE {
   raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
-export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
+export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
 export interface SupplementaryQuery {
   enabled: boolean;
@@ -279,7 +282,3 @@ export interface SupplementaryQuery {
 export type SupplementaryQueries = {
   [key in SupplementaryQueryType]: SupplementaryQuery;
 };
-
-export enum SupplementaryQueryType {
-  LogsVolume = 'LogsVolume',
-}

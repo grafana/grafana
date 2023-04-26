@@ -82,7 +82,7 @@ We've compiled the following permissions rollout scenarios based on current Graf
 ### Provide internal viewer employees with the ability to use Explore, but prevent external viewer contractors from using Explore
 
 1. In Grafana, create a team with the name `Internal employees`.
-1. Assign the `fixed:datasources:querier` role to the `Internal employees` team.
+1. Assign the `fixed:datasources:explorer` role to the `Internal employees` team.
 1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../../../../setup-grafana/configure-security/configure-team-sync/" >}}).
 1. Assign the viewer role to both internal employees and contractors.
 

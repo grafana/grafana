@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { match } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { User } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 
 import { OrgRole, Team, TeamMember } from '../../types';
 
@@ -64,7 +64,6 @@ jest.mock('./TeamGroupSync', () => {
 });
 
 const setup = (propOverrides?: object) => {
-  const store = configureStore();
   const props: Props = {
     ...getRouteComponentProps({
       match: {
@@ -72,7 +71,7 @@ const setup = (propOverrides?: object) => {
           id: '1',
           page: null,
         },
-      } as any,
+      } as unknown as match,
     }),
     pageNav: { text: 'Cool team ' },
     teamId: 1,
@@ -93,9 +92,9 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   render(
-    <Provider store={store}>
+    <TestProvider>
       <TeamPages {...props} />
-    </Provider>
+    </TestProvider>
   );
 };
 

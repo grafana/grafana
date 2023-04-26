@@ -1,12 +1,16 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
-//  | Name: time                    | Name: value        |
+//  | Name: Time                    | Name: Value        |
 //  | Labels:                       | Labels: label=val3 |
 //  | Type: []time.Time             | Type: []*float64   |
 //  +-------------------------------+--------------------+
@@ -18,12 +22,16 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
-//  | Name: time                    | Name: value        |
+//  | Name: Time                    | Name: Value        |
 //  | Labels:                       | Labels: label=val3 |
 //  | Type: []time.Time             | Type: []*float64   |
 //  +-------------------------------+--------------------+
@@ -35,12 +43,16 @@
 //  
 //  
 //  Frame[2] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
-//  | Name: time                    | Name: value        |
+//  | Name: Time                    | Name: Value        |
 //  | Labels:                       | Labels: label=val2 |
 //  | Type: []time.Time             | Type: []*float64   |
 //  +-------------------------------+--------------------+
@@ -52,12 +64,16 @@
 //  
 //  
 //  Frame[3] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
-//  | Name: time                    | Name: value        |
+//  | Name: Time                    | Name: Value        |
 //  | Labels:                       | Labels: label=val2 |
 //  | Type: []time.Time             | Type: []*float64   |
 //  +-------------------------------+--------------------+
@@ -69,12 +85,16 @@
 //  
 //  
 //  Frame[4] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
-//  | Name: time                    | Name: value        |
+//  | Name: Time                    | Name: Value        |
 //  | Labels:                       | Labels: label=val1 |
 //  | Type: []time.Time             | Type: []*float64   |
 //  +-------------------------------+--------------------+
@@ -86,12 +106,16 @@
 //  
 //  
 //  Frame[5] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
-//  | Name: time                    | Name: value        |
+//  | Name: Time                    | Name: Value        |
 //  | Labels:                       | Labels: label=val1 |
 //  | Type: []time.Time             | Type: []*float64   |
 //  +-------------------------------+--------------------+
@@ -108,18 +132,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -152,18 +180,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -196,18 +228,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -240,18 +276,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -284,18 +324,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -328,18 +372,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",

@@ -14,25 +14,30 @@ weight: 1150
 
 # Phlare data source
 
-> **Note:** This feature is behind the `flameGraph` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
-> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
-
 Grafana ships with built-in support for Phlare, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation system from Grafana Labs. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 
 ## Configure the Phlare data source
 
-To access Phlare settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Phlare**.
+To configure basic settings for the data source, complete the following steps:
 
-| Name           | Description                                                                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                             |
-| `Default`      | The default data source will be pre-selected for new panels.                                                                                                                   |
-| `URL`          | The URL of the Tempo instance, e.g., `http://localhost:4100`                                                                                                                   |
-| `Basic Auth`   | Enable basic authentication to the Tempo data source.                                                                                                                          |
-| `User`         | User name for basic authentication.                                                                                                                                            |
-| `Password`     | Password for basic authentication.                                                                                                                                             |
-| `Minimal step` | Similar to Prometheus, Phlare scrapes profiles at certain intervals. To prevent querying at smaller interval use Minimal step same or higher than your Phlare scrape interval. |
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Phlare` in the search bar.
+1. Click **Phlare**.
+
+   The **Settings** tab of the data source is displayed.
+
+1. Set the data source's basic configuration options:
+
+   | Name           | Description                                                                                                                                                                    |
+   | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                             |
+   | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                   |
+   | `URL`          | The URL of the Phlare instance, e.g., `http://localhost:4100`                                                                                                                  |
+   | `Basic Auth`   | Enable basic authentication to the Phlare data source.                                                                                                                         |
+   | `User`         | User name for basic authentication.                                                                                                                                            |
+   | `Password`     | Password for basic authentication.                                                                                                                                             |
+   | `Minimal step` | Similar to Prometheus, Phlare scrapes profiles at certain intervals. To prevent querying at smaller interval use Minimal step same or higher than your Phlare scrape interval. |
 
 ## Querying
 

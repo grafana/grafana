@@ -8,48 +8,38 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ authn.Client = new(Session)
+var _ authn.HookClient = new(Session)
+var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
-	cookieName string, maxLifetime time.Duration) *Session {
+func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService, features *featuremgmt.FeatureManager) *Session {
 	return &Session{
-		loginCookieName:  cookieName,
-		loginMaxLifetime: maxLifetime,
-		sessionService:   sessionService,
-		userService:      userService,
-		log:              log.New(authn.ClientSession),
+		cfg:            cfg,
+		features:       features,
+		sessionService: sessionService,
+		log:            log.New(authn.ClientSession),
 	}
 }
 
 type Session struct {
-	loginCookieName  string
-	loginMaxLifetime time.Duration // jguer: should be returned by session Service on rotate
-	sessionService   auth.UserTokenService
-	userService      user.Service
-	log              log.Logger
+	cfg            *setting.Cfg
+	features       *featuremgmt.FeatureManager
+	sessionService auth.UserTokenService
+	log            log.Logger
 }
 
-func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
-	if s.loginCookieName == "" {
-		return false
-	}
-
-	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
-		return false
-	}
-
-	return true
+func (s *Session) Name() string {
+	return authn.ClientSession
 }
 
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	unescapedCookie, err := r.HTTPRequest.Cookie(s.loginCookieName)
+	unescapedCookie, err := r.HTTPRequest.Cookie(s.cfg.LoginCookieName)
 	if err != nil {
 		return nil, err
 	}
@@ -61,26 +51,43 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 
 	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
 	if err != nil {
-		s.log.Warn("failed to look up session from cookie", "error", err)
 		return nil, err
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx,
-		&user.GetSignedInUserQuery{UserID: token.UserId, OrgID: r.OrgID})
-	if err != nil {
-		s.log.Error("failed to get user with id", "userId", token.UserId, "error", err)
-		return nil, err
+	if s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
+		}
 	}
 
-	// FIXME (jguer): oauth token refresh not implemented
-	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{})
-	identity.SessionToken = token
-
-	return identity, nil
+	return &authn.Identity{
+		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
+		SessionToken: token,
+		ClientParams: authn.ClientParams{
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+		},
+	}, nil
 }
 
-func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.SessionToken == nil {
+func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
+	if s.cfg.LoginCookieName == "" {
+		return false
+	}
+
+	if _, err := r.HTTPRequest.Cookie(s.cfg.LoginCookieName); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (s *Session) Priority() uint {
+	return 60
+}
+
+func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if identity.SessionToken == nil || s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
 		return nil
 	}
 
@@ -99,20 +106,17 @@ func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity
 			s.log.Debug("failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
+		rotated, newToken, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
 		if err != nil {
 			s.log.Error("failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
+			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
-			maxAge := int(s.loginMaxLifetime.Seconds())
-			if s.loginMaxLifetime <= 0 {
-				maxAge = -1
-			}
-			cookies.WriteCookie(r.Resp, s.loginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
+			authn.WriteSessionCookie(w, s.cfg, identity.SessionToken)
 		}
 	})
 

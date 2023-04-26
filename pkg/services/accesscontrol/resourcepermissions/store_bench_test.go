@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -82,15 +83,15 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
 		addDSCommand := &datasources.AddDataSourceCommand{
-			OrgId:  0,
+			OrgID:  0,
 			Name:   fmt.Sprintf("ds_%d", i),
 			Type:   datasources.DS_GRAPHITE,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 		}
 		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
-		_ = dsStore.AddDataSource(context.Background(), addDSCommand)
-		dataSources = append(dataSources, addDSCommand.Result.Id)
+		dataSource, _ := dsStore.AddDataSource(context.Background(), addDSCommand)
+		dataSources = append(dataSources, dataSource.ID)
 	}
 
 	userIds, teamIds := generateTeamsAndUsers(b, db, usersNum)
@@ -143,7 +144,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 	qs := quotatest.New(false, nil)
 	orgSvc, err := orgimpl.ProvideService(db, db.Cfg, qs)
 	require.NoError(b, err)
-	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, qs)
+	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)

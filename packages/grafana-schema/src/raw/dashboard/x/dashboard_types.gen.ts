@@ -9,12 +9,40 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 /**
- * TODO docs
+ * TODO -- should not be a public interface on its own, but required for Veneer
+ */
+export interface AnnotationContainer {
+  list?: Array<AnnotationQuery>;
+}
+
+export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
+  list: [],
+};
+
+/**
+ * TODO: this should be a regular DataQuery that depends on the selected dashboard
+ * these match the properties of the "grafana" datasouce that is default in most dashboards
  */
 export interface AnnotationTarget {
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   limit: number;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   matchAny: boolean;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   tags: Array<string>;
+  /**
+   * Only required/valid for the grafana datasource...
+   * but code+tests is already depending on it so hard to change
+   */
   type: string;
 }
 
@@ -22,51 +50,77 @@ export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
   tags: [],
 };
 
+export interface AnnotationPanelFilter {
+  /**
+   * Should the specified panels be included or excluded
+   */
+  exclude?: boolean;
+  /**
+   * Panel IDs that should be included or excluded
+   */
+  ids: Array<number>;
+}
+
+export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
+  exclude: false,
+  ids: [],
+};
+
 /**
  * TODO docs
  * FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
  */
 export interface AnnotationQuery {
-  builtIn: number;
   /**
-   * Datasource to use for annotation.
+   * TODO: Should be DataSourceRef
    */
   datasource: {
     type?: string;
     uid?: string;
   };
   /**
-   * Whether annotation is enabled.
+   * When enabled the annotation query is issued with every dashboard refresh
    */
   enable: boolean;
   /**
-   * Whether to hide annotation.
+   * Optionally
+   */
+  filter?: AnnotationPanelFilter;
+  /**
+   * Annotation queries can be toggled on or off at the top of the dashboard.
+   * When hide is true, the toggle is not shown in the dashboard.
    */
   hide?: boolean;
   /**
-   * Annotation icon color.
+   * Color to use for the annotation event markers
    */
-  iconColor?: string;
+  iconColor: string;
   /**
    * Name of annotation.
    */
-  name?: string;
+  name: string;
   /**
-   * Query for annotation data.
+   * TODO.. this should just be a normal query target
    */
-  rawQuery?: string;
-  showIn: number;
   target?: AnnotationTarget;
-  type: string;
+  /**
+   * TODO -- this should not exist here, it is based on the --grafana-- datasource
+   */
+  type?: string;
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
-  builtIn: 0,
   enable: true,
   hide: false,
-  showIn: 0,
-  type: 'dashboard',
 };
+
+export enum LoadingState {
+  Done = 'Done',
+  Error = 'Error',
+  Loading = 'Loading',
+  NotStarted = 'NotStarted',
+  Streaming = 'Streaming',
+}
 
 /**
  * FROM: packages/grafana-data/src/types/templateVars.ts
@@ -105,14 +159,6 @@ export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
-}
-
-export enum LoadingState {
-  Done = 'Done',
-  Error = 'Error',
-  Loading = 'Loading',
-  NotStarted = 'NotStarted',
-  Streaming = 'Streaming',
 }
 
 /**
@@ -193,7 +239,7 @@ export interface FieldColor {
   /**
    * The main color scheme mode
    */
-  mode: FieldColorModeId;
+  mode: (FieldColorModeId | string);
   /**
    * Some visualizations need to know how to assign a series color from by value color schemes
    */
@@ -238,6 +284,10 @@ export interface Threshold {
    * TODO docs
    */
   color: string;
+  /**
+   * Threshold index, an old property that is not needed an should only appear in older dashboards
+   */
+  index?: number;
   /**
    * TODO docs
    * TODO are the values here enumerable into a disjunction?
@@ -353,11 +403,25 @@ export interface ValueMappingResult {
 
 /**
  * TODO docs
- * FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
  */
-export interface Transformation {
+export interface DataTransformerConfig {
+  /**
+   * Disabled transformations are skipped
+   */
+  disabled?: boolean;
+  /**
+   * Optional frame matcher.  When missing it will be applied to all results
+   */
+  filter?: MatcherConfig;
+  /**
+   * Unique identifier of transformer
+   */
   id: string;
-  options: Record<string, unknown>;
+  /**
+   * Options to be passed to the transformer
+   * Valid options depend on the transformer id
+   */
+  options: unknown;
 }
 
 /**
@@ -404,6 +468,10 @@ export interface Panel {
    * TODO tighter constraint
    */
   interval?: string;
+  /**
+   * Dynamically load the panel
+   */
+  libraryPanel?: LibraryPanelRef;
   /**
    * Panel links.
    * TODO fill this out - seems there are a couple variants?
@@ -466,7 +534,7 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
-  transformations: Array<Transformation>;
+  transformations: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
@@ -502,6 +570,11 @@ export interface FieldConfigSource {
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
   overrides: [],
 };
+
+export interface LibraryPanelRef {
+  name: string;
+  uid: string;
+}
 
 export interface MatcherConfig {
   id: string;
@@ -635,9 +708,7 @@ export interface Dashboard {
   /**
    * TODO docs
    */
-  annotations?: {
-    list?: Array<AnnotationQuery>;
-  };
+  annotations?: AnnotationContainer;
   /**
    * Description of dashboard.
    */
@@ -647,10 +718,16 @@ export interface Dashboard {
    */
   editable: boolean;
   /**
-   * TODO docs
+   * The month that the fiscal year starts on.  0 = January, 11 = December
    */
   fiscalYearStartMonth?: number;
+  /**
+   * For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+   */
   gnetId?: string;
+  /**
+   * Configuration of dashboard cursor sync behavior.
+   */
   graphTooltip: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
@@ -662,18 +739,22 @@ export interface Dashboard {
    */
   links?: Array<DashboardLink>;
   /**
-   * TODO docs
+   * When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+   * This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+   * avoid dashboards presenting stale live data
    */
   liveNow?: boolean;
   panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
   /**
-   * TODO docs
+   * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
   refresh?: (string | false);
   /**
-   * Version of the current dashboard data
+   * This property should only be used in dashboards defined by plugins.  It is a quick check
+   * to see if the version has changed since the last time.  Unclear why using the version property
+   * is insufficient.
    */
-  revision: number;
+  revision?: number;
   /**
    * Version of the JSON schema, incremented each time a Grafana update brings
    * changes to said schema.
@@ -774,9 +855,9 @@ export interface Dashboard {
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard,
+   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: ('browser' | 'utc' | '');
+  timezone?: string;
   /**
    * Title of dashboard.
    */
@@ -797,10 +878,10 @@ export interface Dashboard {
 
 export const defaultDashboard: Partial<Dashboard> = {
   editable: true,
+  fiscalYearStartMonth: 0,
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  revision: -1,
   schemaVersion: 36,
   style: 'dark',
   tags: [],

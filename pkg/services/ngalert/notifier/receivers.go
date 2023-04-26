@@ -3,20 +3,15 @@ package notifier
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 
-	"github.com/grafana/alerting/alerting"
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/go-openapi/strfmt"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/types"
-)
 
-var (
-	ErrNoReceivers = errors.New("no receivers")
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 type TestReceiversResult struct {
@@ -37,63 +32,33 @@ type TestReceiverConfigResult struct {
 	Error  error
 }
 
-type InvalidReceiverError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
-	Err      error
-}
-
-func (e InvalidReceiverError) Error() string {
-	return fmt.Sprintf("the receiver is invalid: %s", e.Err)
-}
-
-type ReceiverTimeoutError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
-	Err      error
-}
-
-func (e ReceiverTimeoutError) Error() string {
-	return fmt.Sprintf("the receiver timed out: %s", e.Err)
-}
-
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
-	receivers := make([]*alerting.APIReceiver, 0, len(c.Receivers))
+	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
-		greceivers := make([]*alerting.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
+		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			var settings map[string]string
-			//TODO: We shouldn't need to do this marshalling.
-			j, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings to JSON: %v", err)
-			}
-
-			err = json.Unmarshal(j, &settings)
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings into map: %v", err)
-			}
-
-			greceivers = append(greceivers, &alerting.GrafanaReceiver{
+			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
 				DisableResolveMessage: gr.DisableResolveMessage,
-				Settings:              settings,
+				Settings:              json.RawMessage(gr.Settings),
 				SecureSettings:        gr.SecureSettings,
 			})
 		}
-		receivers = append(receivers, &alerting.APIReceiver{
+		receivers = append(receivers, &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
-			GrafanaReceivers: alerting.GrafanaReceivers{
-				Receivers: greceivers,
+			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+				Integrations: integrations,
 			},
 		})
 	}
-	var alert *alerting.TestReceiversConfigAlertParams
+	var alert *alertingNotify.TestReceiversConfigAlertParams
 	if c.Alert != nil {
-		alert = &alerting.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
 	}
 
-	result, err := am.Base.TestReceivers(ctx, alerting.TestReceiversConfigBodyParams{
+	result, err := am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
 		Alert:     alert,
 		Receivers: receivers,
 	})
@@ -126,10 +91,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}, err
 }
 
-func (am *Alertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
-	am.reloadConfigMtx.RLock()
-	defer am.reloadConfigMtx.RUnlock()
-
+func (am *Alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
 	apiReceivers := make([]apimodels.Receiver, 0, len(am.Base.GetReceivers()))
 	for _, rcv := range am.Base.GetReceivers() {
 		// Build integrations slice for each receiver.

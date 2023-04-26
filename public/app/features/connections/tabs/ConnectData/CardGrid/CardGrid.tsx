@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
@@ -15,7 +15,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   card: css`
     height: 90px;
     padding: 0px 24px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.6);
+    margin-bottom: 0;
   `,
   cardContent: css`
     display: flex;
@@ -45,7 +45,7 @@ export interface CardGridProps {
   onClickItem?: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
 }
 
-export const CardGrid: FC<CardGridProps> = ({ items, onClickItem }) => {
+export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
 
   return (

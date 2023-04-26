@@ -19,6 +19,22 @@ Grafana plugins must adhere to the following criteria when being reviewed for pu
 - Abuse: plugins should not perform actions beyond the scope of the intended use.
   - Do not include hidden files
   - Do not manipulate the underlying environment, privileges, or related processes
+- Security:
+  - Should not access the filesystem
+  - Should not access environment variables
+
+## Plugin licensing
+
+Plugins must be licensed under one of the following AGPL compliant licenses for publishing to the catalog:
+
+- AGPL-3.0
+- Apache-2.0
+- BSD
+- GPL-3.0
+- LGPL-3.0
+- MIT
+
+If contributing a plugin on behalf of an organization, be sure to seek guidance from your legal team.
 
 ## Commercial
 

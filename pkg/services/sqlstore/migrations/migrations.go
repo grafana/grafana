@@ -53,14 +53,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveConfig) {
-			addLiveChannelMigrations(mg)
-		}
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardPreviews) {
-			addDashboardThumbsMigrations(mg)
-		}
-	}
 
 	ualert.RerunDashAlertMigration(mg)
 	addSecretsMigration(mg)
@@ -69,6 +61,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 
+	accesscontrol.AddDisabledMigrator(mg)
 	accesscontrol.AddTeamMembershipMigrations(mg)
 	accesscontrol.AddDashboardPermissionsMigrator(mg)
 	accesscontrol.AddAlertingPermissionsMigrator(mg)
@@ -78,11 +71,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addCorrelationsMigrations(mg)
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardComments) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationComments) {
-			addCommentGroupMigrations(mg)
-			addCommentMigrations(mg)
-		}
-
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagEntityStore) {
 			addEntityStoreMigrations(mg)
 		}
@@ -107,12 +95,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
-	// TODO: This migration will be enabled later in the nested folder feature
-	// implementation process. It is on hold so we can continue working on the
-	// store implementation without impacting any grafana instances built off
-	// main.
-	//
-	// addFolderMigrations(mg)
+	addFolderMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

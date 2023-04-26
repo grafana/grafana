@@ -11,15 +11,17 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strings"
 
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/kindsys"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 func main() {
@@ -30,16 +32,16 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
-		return decl.Properties.Common().MachineName
+	coreKindsGen := codejen.JennyListWithNamer(func(def kindsys.Kind) string {
+		return def.Props().Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
+		codegen.LatestJenny(cuectx.GoCoreKindParentPath, codegen.GoTypesJenny{}),
+		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
+		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
+		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
@@ -55,39 +57,38 @@ func main() {
 	groot := filepath.Dir(cwd)
 
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*codegen.DeclForGen
+	var all []kindsys.Kind
 
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	for _, ent := range kinddirs {
-		if !ent.IsDir() {
+	for _, kinddir := range kinddirs {
+		if !kinddir.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
+		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
+		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
-		if decl.Properties.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
+		if def.Properties.MachineName != kinddir.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, def.Properties.Name, kinddir.Name()))
 		}
 
-		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
+		all = append(all, elsedie(kindsys.BindCore(rt, def))(rel))
 	}
 
 	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
+		return nameFor(all[i].Props()) < nameFor(all[j].Props())
 	})
 
 	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
-	sharedf, err := dummyCommonJenny{}.Generate(nil)
-	if err != nil {
-		die(fmt.Errorf("common schemas failed"))
-	}
-	if err = jfs.Add(elsedie(header(*sharedf))("couldn't inject header")); err != nil {
+
+	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
+	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
+	if err = jfs.Merge(commfsys); err != nil {
 		die(err)
 	}
 
@@ -116,25 +117,48 @@ func nameFor(m kindsys.SomeKindProperties) string {
 
 type dummyCommonJenny struct{}
 
-func (j dummyCommonJenny) JennyName() string {
-	return "CommonSchemaJenny"
-}
+func genCommon(kp string) (*codejen.FS, error) {
+	fsys := codejen.NewFS()
 
-func (j dummyCommonJenny) Generate(dummy any) (*codejen.File, error) {
+	// kp := filepath.Join("pkg", "kindsys")
 	path := filepath.Join("packages", "grafana-schema", "src", "common")
+	// Grab all the common_* files from kindsys and load them in
+	dfsys := os.DirFS(kp)
+	matches := elsedie(fs.Glob(dfsys, "common_*.cue"))("could not glob kindsys cue files")
+	for _, fname := range matches {
+		fpath := filepath.Join(path, strings.TrimPrefix(fname, "common_"))
+		fpath = fpath[:len(fpath)-4] + "_gen.cue"
+		data := elsedie(fs.ReadFile(dfsys, fname))("error reading " + fname)
+		_ = fsys.Add(*codejen.NewFile(fpath, data, dummyCommonJenny{}))
+	}
+	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
+
 	v, err := cuectx.BuildGrafanaInstance(nil, path, "", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := cuetsy.Generate(v, cuetsy.Config{
+	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
 		Export: true,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate TS: %w", err)
-	}
+	}))("failed to generate common schema TS")
 
-	return codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}), nil
+	_ = fsys.Add(*codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}))
+	return fsys, nil
+}
+
+func (j dummyCommonJenny) JennyName() string {
+	return "CommonSchemaJenny"
+}
+
+func (j dummyCommonJenny) Generate(dummy any) ([]codejen.File, error) {
+	return nil, nil
+}
+
+var pkgReplace = regexp.MustCompile("^package kindsys")
+
+func packageMapper(f codejen.File) (codejen.File, error) {
+	f.Data = pkgReplace.ReplaceAllLiteral(f.Data, []byte("package common"))
+	return f, nil
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {

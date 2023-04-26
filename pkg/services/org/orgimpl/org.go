@@ -58,7 +58,7 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 		return -1, nil
 	}
 
-	if setting.AutoAssignOrg && cmd.OrgID != 0 {
+	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
 		_, err := s.store.Get(ctx, cmd.OrgID)
 		if err != nil {
 			return -1, err
@@ -73,7 +73,7 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 	}
 	orga.Name = orgName
 
-	if setting.AutoAssignOrg {
+	if s.cfg.AutoAssignOrg {
 		orga, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
 		if err != nil {
 			return 0, err
@@ -81,14 +81,14 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 		if orga.ID != 0 {
 			return orga.ID, nil
 		}
-		if setting.AutoAssignOrgId != 1 {
+		if s.cfg.AutoAssignOrgId != 1 {
 			s.log.Error("Could not create user: organization ID does not exist", "orgID",
-				setting.AutoAssignOrgId)
+				s.cfg.AutoAssignOrgId)
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
-				setting.AutoAssignOrgId)
+				s.cfg.AutoAssignOrgId)
 		}
 		orga.Name = MainOrgName
-		orga.ID = int64(setting.AutoAssignOrgId)
+		orga.ID = int64(s.cfg.AutoAssignOrgId)
 	} else {
 		orga.Name = orgName
 	}

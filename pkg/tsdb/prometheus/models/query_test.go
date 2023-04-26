@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -375,6 +376,7 @@ func TestParse(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 1,
 			"interval": "$__rate_interval",
+			"intervalMs": 60000,
 			"refId": "A"
 		}`, timeRange)
 

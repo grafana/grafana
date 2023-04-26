@@ -1,12 +1,16 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+---------------------+
-//  | Name: time                    | Name: value         |
+//  | Name: Time                    | Name: Value         |
 //  | Labels:                       | Labels:             |
 //  | Type: []time.Time             | Type: []*float64    |
 //  +-------------------------------+---------------------+
@@ -23,18 +27,22 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
-            "name": "time",
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "value",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",

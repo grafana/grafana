@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './models.gen';
+import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -47,7 +47,7 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  return frame.fields[1].values[0] - frame.fields[0].values[0];
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -221,7 +221,7 @@ const preparePlotData = (frame: DataFrame) => {
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values.toArray());
+      data.push(field.values);
     }
   }
 

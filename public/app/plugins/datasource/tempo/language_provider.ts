@@ -74,7 +74,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
     let tagName = tags[tags.length - 1] ?? '';
     tagName = tagName.split('=')[0];
 
-    const response = await this.request(`/api/search/tag/${tagName}/values`, []);
+    const response = await this.request(`/api/v2/search/tag/${tagName}/values`, []);
 
     const suggestions: CompletionItemGroup[] = [];
 
@@ -87,17 +87,28 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return { suggestions };
   }
 
-  async getOptions(tag: string): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV1(tag: string): Promise<Array<SelectableValue<string>>> {
     const response = await this.request(`/api/search/tag/${tag}/values`);
     let options: Array<SelectableValue<string>> = [];
-
     if (response && response.tagValues) {
       options = response.tagValues.map((v: string) => ({
         value: v,
         label: v,
       }));
     }
+    return options;
+  }
 
+  async getOptionsV2(tag: string): Promise<Array<SelectableValue<string>>> {
+    const response = await this.request(`/api/v2/search/tag/${tag}/values`);
+    let options: Array<SelectableValue<string>> = [];
+    if (response && response.tagValues) {
+      options = response.tagValues.map((v: { type: string; value: string }) => ({
+        type: v.type,
+        value: v.value,
+        label: v.value,
+      }));
+    }
     return options;
   }
 }

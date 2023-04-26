@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
-import { CodeLanguage, defaultCodeOptions, defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
+import { CodeLanguage, defaultCodeOptions, defaultPanelOptions, PanelOptions, TextMode } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<PanelOptions>(TextPanel)

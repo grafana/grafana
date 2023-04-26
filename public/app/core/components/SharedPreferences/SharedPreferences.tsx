@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 import { FeatureState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 import {
   Button,
   Field,
@@ -21,7 +22,6 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
-import { UserPreferencesDTO } from 'app/types';
 
 export interface Props {
   resourceUri: string;
@@ -71,6 +71,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
       { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
       { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
+      { value: 'system', label: t('shared-preferences.theme.system-label', 'System') },
     ];
   }
 
@@ -130,6 +131,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { disabled } = this.props;
     const styles = getStyles();
     const languages = getLanguageOptions();
+    let currentThemeOption = this.themeOptions[0].value;
+    if (theme?.length) {
+      currentThemeOption = this.themeOptions.find((item) => item.value === theme)?.value;
+    }
 
     return (
       <Form onSubmit={this.onSubmitForm}>
@@ -139,7 +144,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
                 <RadioButtonGroup
                   options={this.themeOptions}
-                  value={this.themeOptions.find((item) => item.value === theme)?.value}
+                  value={currentThemeOption}
                   onChange={this.onThemeChanged}
                 />
               </Field>
@@ -181,7 +186,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 data-testid={selectors.components.WeekStartPicker.containerV2}
               >
                 <WeekStartPicker
-                  value={weekStart}
+                  value={weekStart || ''}
                   onChange={this.onWeekStartChanged}
                   inputId={'shared-preferences-week-start-picker'}
                 />

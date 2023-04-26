@@ -3,12 +3,12 @@ package resourcepermissions
 import (
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func disableMiddleware(shouldDisable bool) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if shouldDisable {
 			c.Resp.WriteHeader(http.StatusNotFound)
 			return
@@ -16,4 +16,4 @@ func disableMiddleware(shouldDisable bool) web.Handler {
 	}
 }
 
-func nopMiddleware(c *models.ReqContext) {}
+func nopMiddleware(c *contextmodel.ReqContext) {}

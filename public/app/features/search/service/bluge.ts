@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   DataFrameJSON,
   DataFrameView,
@@ -42,11 +41,23 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     // get the starred dashboards
     const starsUIDS = await getBackendSrv().get('api/user/stars');
-    const starredQuery = {
-      uid: starsUIDS,
-      query: query.query ?? '*',
+    if (starsUIDS?.length) {
+      return this.doSearchQuery({
+        uid: starsUIDS,
+        query: query.query ?? '*',
+      });
+    }
+    // Nothing is starred
+    return {
+      view: new DataFrameView({ length: 0, fields: [] }),
+      totalRows: 0,
+      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+        return;
+      },
+      isItemLoaded: (index: number): boolean => {
+        return true;
+      },
     };
-    return this.doSearchQuery(starredQuery);
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -169,8 +180,8 @@ export class BlugeSearcher implements GrafanaSearcher {
         // Append the raw values to the same array buffer
         const length = frame.length + view.dataFrame.length;
         for (let i = 0; i < frame.fields.length; i++) {
-          const values = (view.dataFrame.fields[i].values as ArrayVector).buffer;
-          values.push(...frame.fields[i].values.toArray());
+          const values = view.dataFrame.fields[i].values;
+          values.push(...frame.fields[i].values);
         }
         view.dataFrame.length = length;
 
@@ -215,7 +226,7 @@ function getTermCountsFrom(frame: DataFrame): TermCount[] {
   const vals = frame.fields[1].values;
   const counts: TermCount[] = [];
   for (let i = 0; i < frame.length; i++) {
-    counts.push({ term: keys.get(i), count: vals.get(i) });
+    counts.push({ term: keys[i], count: vals[i] });
   }
   return counts;
 }
