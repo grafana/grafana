@@ -122,7 +122,7 @@ By using data links, you can turn any part of a log message into an internal or 
 
 Log context is a feature that allows you to display additional lines of context surrounding a log entry that matches a particular search query. This can be helpful in understanding the log entry's context, and is similar to the `-C` parameter in the `grep` command.
 
-When using log context in Grafana, you can configure the number of lines of context to display before and after the matching log entry. By default, the Log Context feature will show the log entry itself along with the 50 lines before and after it. However, this can be adjusted as needed depending on the specific use case.
+When using Log context in Grafana, you can configure the number of lines of context to display before and after the matching log entry. By default, the Log context feature will show the log entry itself along with the 50 lines before and after it. However, this can be adjusted as needed depending on the specific use case.
 
 You may encounter long lines of text that make it difficult to read and analyze the context around each log entry. This is where the "Wrap Lines" toggle can come in handy. By enabling this toggle, Grafana will automatically wrap long lines of text so that they fit within the visible width of the viewer. This can make it easier to read and understand the log entries.
 
