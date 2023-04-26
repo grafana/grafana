@@ -35,7 +35,6 @@ import {
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getDashboardQueryRunner } from 'app/features/query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
@@ -68,11 +67,8 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
       if (dashboardRefreshDebouncer == null) {
         dashboardRefreshDebouncer = setTimeout(() => {
           dashboardRefreshDebouncer = null;
-          getDashboardQueryRunner().run({
-            dashboard,
-            range: getTimeSrv().timeRange(),
-          });
-        }, 250);
+          getTimeSrv().refreshTimeModel();
+        });
       }
     }
 
