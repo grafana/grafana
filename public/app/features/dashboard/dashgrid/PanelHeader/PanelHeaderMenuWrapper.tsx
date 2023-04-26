@@ -26,14 +26,17 @@ export function PanelHeaderMenuWrapper({
 }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items }) => (
-        <PanelHeaderMenu
-          className={menuWrapperClassName}
-          itemsClassName={menuItemsClassName}
-          style={style}
-          items={items}
-        />
-      )}
+      {({ items, reportMenuInteraction }) => {
+        reportMenuInteraction();
+        return (
+          <PanelHeaderMenu
+            className={menuWrapperClassName}
+            itemsClassName={menuItemsClassName}
+            style={style}
+            items={items}
+          />
+        );
+      }}
     </PanelHeaderMenuProvider>
   );
 }
@@ -41,7 +44,10 @@ export function PanelHeaderMenuWrapper({
 export function PanelHeaderMenuWrapperNew({ style, panel, dashboard, loadingState }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items }) => <PanelHeaderMenuNew style={style} items={items} />}
+      {({ items, reportMenuInteraction }) => {
+        reportMenuInteraction();
+        return <PanelHeaderMenuNew style={style} items={items} />;
+      }}
     </PanelHeaderMenuProvider>
   );
 }
