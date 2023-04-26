@@ -43,7 +43,7 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     label: css`
       max-width: 100%;
-      margin: ${theme.spacing(2)} 0;
+      margin-bottom: ${theme.spacing(2)};
     `,
     query: css`
       text-align: start;
