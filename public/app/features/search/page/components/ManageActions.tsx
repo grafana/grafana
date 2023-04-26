@@ -43,17 +43,15 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
 
   return (
     <div className={styles.actionRow} data-testid="manage-actions">
-      <div className={styles.rowContainer}>
-        <HorizontalGroup spacing="md" width="auto">
-          <IconButton name="check-square" onClick={clearSelection} title="Uncheck everything" />
-          <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
-            Move
-          </Button>
-          <Button disabled={!canDelete} onClick={onDelete} icon="trash-alt" variant="destructive">
-            Delete
-          </Button>
-        </HorizontalGroup>
-      </div>
+      <HorizontalGroup spacing="md" width="auto">
+        <IconButton name="check-square" onClick={clearSelection} title="Uncheck everything" />
+        <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
+          Move
+        </Button>
+        <Button disabled={!canDelete} onClick={onDelete} icon="trash-alt" variant="destructive">
+          Delete
+        </Button>
+      </HorizontalGroup>
 
       {isDeleteModalOpen && (
         <ConfirmDeleteModal onDeleteItems={onChange} results={items} onDismiss={() => setIsDeleteModalOpen(false)} />

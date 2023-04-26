@@ -66,6 +66,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   getDisplayTitle: true,
   dataSupport: true,
   key: true,
+  isNew: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -189,6 +190,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
+  isNew?: boolean;
 
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
