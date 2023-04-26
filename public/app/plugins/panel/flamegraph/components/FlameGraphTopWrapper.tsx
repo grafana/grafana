@@ -17,8 +17,14 @@ type Props = {
 };
 
 export const FlameGraphTopWrapper = (props: Props) => {
+  const profile = React.useMemo(() => {
+    if (!props.data || !config.featureToggles.pyroscopeFlameGraph) {
+      return undefined;
+    }
+    return dataFrameToFlameBearer(props.data);
+  }, [props.data]);
+
   if (config.featureToggles.pyroscopeFlameGraph) {
-    const profile = props.data ? dataFrameToFlameBearer(props.data) : undefined;
     return <FlamegraphRenderer profile={profile} />;
   }
 
