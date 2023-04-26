@@ -2,7 +2,7 @@ import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { HorizontalGroup, Icon, Tag, Tooltip } from '@grafana/ui/src';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 
 import { useGetActiveUsersQuery } from '../../dashboard/api/publicDashboardApi';
 
