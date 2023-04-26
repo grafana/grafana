@@ -246,7 +246,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Namespace:         mdq.Namespace,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
-		
+
 		if mdq.Alias != nil {
 			cwQuery.Alias = *mdq.Alias
 		}
