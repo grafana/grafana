@@ -1,11 +1,9 @@
 import { css } from '@emotion/css';
 import { CompactSelection, GridCell, GridCellKind, GridSelection, Theme } from '@glideapps/glide-data-grid';
 
-import { ArrayVector, DataFrame, DataFrameJSON, dataFrameToJSON, Field, GrafanaTheme2, FieldType } from '@grafana/data';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { DataFrame, Field, GrafanaTheme2, FieldType } from '@grafana/data';
 
-import { isDatagridEditEnabled } from './featureFlagUtils';
+import { isDatagridEnabled } from './featureFlagUtils';
 
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
@@ -23,11 +21,6 @@ export const EMPTY_DF = {
   name: 'A',
   fields: [],
   length: 0,
-};
-
-export const GRAFANA_DS = {
-  type: 'grafana',
-  uid: 'grafana',
 };
 
 export const EMPTY_CELL: GridCell = {
@@ -79,6 +72,17 @@ interface CellRange {
   height: number;
 }
 
+export async function updateSnapshot(
+  frame: DataFrame,
+  updateData?: (frames: DataFrame[]) => Promise<boolean>
+): Promise<boolean> {
+  if (updateData && isDatagridEnabled()) {
+    return await updateData([frame]);
+  }
+
+  return false;
+}
+
 export const getTextWidth = (text: string, isHeader = false): number => {
   const context = TEXT_CANVAS.getContext('2d');
   context!.font = isHeader ? HEADER_FONT_FAMILY : CELL_FONT_FAMILY;
@@ -107,7 +111,12 @@ export const getCellWidth = (field: Field): number => {
 };
 
 export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = false): DataFrame => {
-  for (const field of gridData.fields) {
+  const copy = {
+    ...gridData,
+    fields: gridData.fields.map((field) => ({ ...field, values: field.values.slice() })),
+  };
+
+  for (const field of copy.fields) {
     const valuesArray = field.values.toArray();
 
     //delete from the end of the array to avoid index shifting
@@ -119,13 +128,12 @@ export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = fal
       }
     }
 
-    field.values = new ArrayVector(valuesArray);
+    field.values = [...valuesArray];
   }
 
   return {
-    ...gridData,
-    fields: [...gridData.fields],
-    length: gridData.fields[0]?.values.length ?? 0,
+    ...copy,
+    length: copy.fields[0]?.values.length ?? 0,
   };
 };
 
@@ -133,50 +141,29 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
   const colFrom: number = range.x;
   const rowFrom: number = range.y;
   const colTo: number = range.x + range.width - 1;
+  const copy = {
+    ...gridData,
+    fields: gridData.fields.map((field) => ({ ...field, values: field.values.slice() })),
+  };
 
   for (let i = colFrom; i <= colTo; i++) {
-    const field = gridData.fields[i];
+    const field = copy.fields[i];
 
     const valuesArray = field.values.toArray();
     valuesArray.splice(rowFrom, range.height, ...new Array(range.height).fill(null));
-    field.values = new ArrayVector(valuesArray);
+    field.values = [...valuesArray];
   }
 
   return {
-    ...gridData,
-    fields: [...gridData.fields],
-    length: gridData.fields[0]?.values.length ?? 0,
+    ...copy,
+    length: copy.fields[0]?.values.length ?? 0,
   };
-};
-
-export const publishSnapshot = (data: DataFrame, panelID: number): void => {
-  if (!isDatagridEditEnabled()) {
-    return;
-  }
-
-  const snapshot: DataFrameJSON[] = [dataFrameToJSON(data)];
-  const dashboard = getDashboardSrv().getCurrent();
-  const panelModel = dashboard?.getPanelById(panelID);
-
-  const query: GrafanaQuery = {
-    refId: 'A',
-    queryType: GrafanaQueryType.Snapshot,
-    snapshot,
-    datasource: GRAFANA_DS,
-  };
-
-  panelModel!.updateQueries({
-    dataSource: GRAFANA_DS,
-    queries: [query],
-  });
-
-  panelModel!.refresh();
 };
 
 //Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func
 export const cleanStringFieldAfterConversion = (field: Field): void => {
   const valuesArray = field.values.toArray();
-  field.values = new ArrayVector(valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val)));
+  field.values = valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val));
   return;
 };
 
@@ -217,7 +204,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Number,
         data: value ? value : 0,
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: isDatagridEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -225,7 +212,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: isDatagridEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -233,7 +220,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: isDatagridEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -301,9 +288,16 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
 };
 
 export const hasGridSelection = (gridSelection: GridSelection): boolean => {
-  if (!gridSelection.current) {
+  if (gridSelection.rows.length || gridSelection.columns.length) {
+    return true;
+  }
+
+  if (gridSelection.current === undefined) {
     return false;
   }
 
-  return gridSelection.current.range && gridSelection.current.range.height > 1 && gridSelection.current.range.width > 1;
+  return (
+    gridSelection.current.range &&
+    !(gridSelection.current.range.height === 1 && gridSelection.current.range.width === 1)
+  );
 };

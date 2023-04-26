@@ -54,7 +54,7 @@ describe('when deleting rows', () => {
     expect(newDf.fields[2].values.toArray()).toEqual(['a', 'c', 'e']);
     expect(newDf.length).toEqual(3);
 
-    newDf = deleteRows(df, [2], true);
+    newDf = deleteRows(newDf, [2], true);
 
     expect(newDf.fields[0].values.toArray()).toEqual(['a', 'c']);
     expect(newDf.fields[1].values.toArray()).toEqual([1, 3]);
