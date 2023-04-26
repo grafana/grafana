@@ -494,6 +494,292 @@ func TestStitchReceivers(t *testing.T) {
 			},
 		},
 		{
+			name: "rename to another, larger group",
+			initial: &definitions.PostableUserConfig{
+				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+					Config: definitions.Config{
+						Route: &definitions.Route{
+							Receiver: "receiver-1",
+							Routes: []*definitions.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
+					Receivers: []*definitions.PostableApiReceiver{
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-1",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "1",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+									{
+										UID:  "2",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-2",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "3",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+									{
+										UID:  "4",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+									{
+										UID:  "5",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			new: &definitions.PostableGrafanaReceiver{
+				UID:  "2",
+				Name: "receiver-2",
+				Type: "slack",
+			},
+			expModified: true,
+			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "4",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "5",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename when there are many groups",
+			initial: &definitions.PostableUserConfig{
+				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+					Config: definitions.Config{
+						Route: &definitions.Route{
+							Receiver: "receiver-1",
+							Routes: []*definitions.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
+					Receivers: []*definitions.PostableApiReceiver{
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-1",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "1",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+									{
+										UID:  "2",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-2",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "3",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-3",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "4",
+										Name: "receiver-4",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-4",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "5",
+										Name: "receiver-4",
+										Type: "slack",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			new: &definitions.PostableGrafanaReceiver{
+				UID:  "2",
+				Name: "receiver-4",
+				Type: "slack",
+			},
+			expModified: true,
+			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-3",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "4",
+									Name: "receiver-4",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-4",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "5",
+									Name: "receiver-4",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-4",
+									Type: "slack",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "rename to a name that doesn't exist, creates new group and moves",
 			new: &definitions.PostableGrafanaReceiver{
 				UID:  "jkl",

@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import { once } from 'lodash';
 import React, { useState } from 'react';
 import { DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Modal,
   FileDropzone,
@@ -13,9 +15,21 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
+import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
 import { DataSourceList } from './DataSourceList';
+
+const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
+const INTERACTION_ITEM = {
+  SELECT_DS: 'select_ds',
+  UPLOAD_FILE: 'upload_file',
+  CONFIG_NEW_DS: 'config_new_ds',
+  SEARCH: 'search',
+  DISMISS: 'dismiss',
+};
 
 interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
@@ -24,6 +38,7 @@ interface DataSourceModalProps {
   recentlyUsed?: string[];
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
+  reportedInteractionFrom?: string;
 }
 
 export function DataSourceModal({
@@ -32,9 +47,35 @@ export function DataSourceModal({
   onChange,
   current,
   onDismiss,
+  reportedInteractionFrom,
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
+  const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
+  const newDataSourceURL = config.featureToggles.dataConnectionsConsole
+    ? CONNECTIONS_ROUTES.DataSourcesNew
+    : DATASOURCES_ROUTES.New;
+
+  const onDismissModal = () => {
+    onDismiss();
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DISMISS, src: analyticsInteractionSrc });
+  };
+  const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
+    onChange(ds);
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.SELECT_DS,
+      ds_type: ds.type,
+      src: analyticsInteractionSrc,
+    });
+  };
+  // Memoizing to keep once() cached so it avoids reporting multiple times
+  const reportSearchUsageOnce = React.useMemo(
+    () =>
+      once(() => {
+        reportInteraction(INTERACTION_EVENT_NAME, { item: 'search', src: analyticsInteractionSrc });
+      }),
+    [analyticsInteractionSrc]
+  );
 
   return (
     <Modal
@@ -44,8 +85,8 @@ export function DataSourceModal({
       isOpen={true}
       className={styles.modal}
       contentClassName={styles.modalContent}
-      onClickBackdrop={onDismiss}
-      onDismiss={onDismiss}
+      onClickBackdrop={onDismissModal}
+      onDismiss={onDismissModal}
     >
       <div className={styles.leftColumn}>
         <Input
@@ -53,7 +94,10 @@ export function DataSourceModal({
           value={search}
           prefix={<Icon name="search" />}
           placeholder="Search data source"
-          onChange={(e) => setSearch(e.currentTarget.value)}
+          onChange={(e) => {
+            setSearch(e.currentTarget.value);
+            reportSearchUsageOnce();
+          }}
         />
         <CustomScrollbar>
           <DataSourceList
@@ -61,7 +105,7 @@ export function DataSourceModal({
             mixed={false}
             variables
             filter={(ds) => ds.name.includes(search) && !ds.meta.builtIn}
-            onChange={onChange}
+            onChange={onChangeDataSource}
             current={current}
           />
         </CustomScrollbar>
@@ -73,7 +117,7 @@ export function DataSourceModal({
             filter={(ds) => !!ds.meta.builtIn}
             dashboard
             mixed
-            onChange={onChange}
+            onChange={onChangeDataSource}
             current={current}
           />
           {enableFileUpload && (
@@ -88,6 +132,10 @@ export function DataSourceModal({
                 onDrop: (...args) => {
                   fileUploadOptions?.onDrop?.(...args);
                   onDismiss();
+                  reportInteraction(INTERACTION_EVENT_NAME, {
+                    item: INTERACTION_ITEM.UPLOAD_FILE,
+                    src: analyticsInteractionSrc,
+                  });
                 },
               }}
             >
@@ -96,7 +144,16 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.dsCTAs}>
-          <LinkButton variant="secondary" href={`datasources/new`}>
+          <LinkButton
+            variant="secondary"
+            href={newDataSourceURL}
+            onClick={() => {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS,
+                src: analyticsInteractionSrc,
+              });
+            }}
+          >
             Configure a new data source
           </LinkButton>
         </div>
@@ -123,7 +180,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       width: 50%;
       height: 100%;
-      padding-right: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(4)};
       border-right: 1px solid ${theme.colors.border.weak};
     `,
     rightColumn: css`
@@ -133,7 +190,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 100%;
       justify-items: space-evenly;
       align-items: stretch;
-      padding-left: ${theme.spacing(1)};
+      padding-left: ${theme.spacing(4)};
     `,
     builtInDataSources: css`
       flex: 1;
