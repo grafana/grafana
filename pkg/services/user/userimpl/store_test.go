@@ -87,6 +87,9 @@ func TestIntegrationUserGet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			if !tc.caseInsensitive && db.IsTestDbMySQL() {
+				t.Skip("mysql is always case insensitive")
+			}
 			cfg.CaseInsensitiveLogin = tc.caseInsensitive
 			usr, err := userStore.Get(context.Background(),
 				&user.User{
