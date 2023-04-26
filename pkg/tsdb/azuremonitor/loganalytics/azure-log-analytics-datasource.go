@@ -221,7 +221,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 				return dataResponse
 			}
 		}
-		if queryJSONModel.AzureTraces.ResultFormat != nil && *queryJSONModel.AzureTraces.ResultFormat == dataquery.AzureMonitorQueryAzureTracesResultFormat(dataquery.ResultFormatTrace) && queryJSONModel.AzureTraces.Query != nil && *queryJSONModel.AzureTraces.Query == "" {
+		if dataquery.ResultFormat(query.ResultFormat) == (dataquery.ResultFormatTrace) && query.Query == "" {
 			return dataResponseErrorWithExecuted(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
 		}
 	}
