@@ -718,7 +718,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 
 }
 
-func TestTimeSeriesResponseParser(t *testing.T) {
+func TestProcessBuckets(t *testing.T) {
 	t.Run("Percentiles", func(t *testing.T) {
 		t.Run("Percentiles without date histogram", func(t *testing.T) {
 			query := []byte(`
@@ -2997,11 +2997,12 @@ func TestTimeSeriesResponseParser(t *testing.T) {
 			requireNumberValue(t, 12, frames[2], 1)
 		})
 	})
+}
 
-	t.Run("RefId matching", func(t *testing.T) {
-		t.Run("Correctly matches refId to response", func(t *testing.T) {
-			require.NoError(t, nil)
-			query := []byte(`
+func TestParseResponse(t *testing.T) {
+	t.Run("Correctly matches refId to response", func(t *testing.T) {
+		require.NoError(t, nil)
+		query := []byte(`
 			[
 				{
 					"refId": "COUNT_GROUPBY_DATE_HISTOGRAM",
@@ -3051,7 +3052,7 @@ func TestTimeSeriesResponseParser(t *testing.T) {
 			]
 			`)
 
-			response := []byte(`
+		response := []byte(`
 			{
 				"responses": [
 				  {
@@ -3164,23 +3165,22 @@ func TestTimeSeriesResponseParser(t *testing.T) {
 			  }
 			`)
 
-			result, err := queryDataTest(query, response)
-			require.NoError(t, err)
+		result, err := queryDataTest(query, response)
+		require.NoError(t, err)
 
-			verifyFrames := func(name string, expectedLength int) {
-				r, found := result.response.Responses[name]
-				require.True(t, found, "not found: "+name)
-				require.NoError(t, r.Error)
-				require.Len(t, r.Frames, expectedLength, "length wrong for "+name)
-			}
+		verifyFrames := func(name string, expectedLength int) {
+			r, found := result.response.Responses[name]
+			require.True(t, found, "not found: "+name)
+			require.NoError(t, r.Error)
+			require.Len(t, r.Frames, expectedLength, "length wrong for "+name)
+		}
 
-			verifyFrames("COUNT_GROUPBY_DATE_HISTOGRAM", 1)
-			verifyFrames("COUNT_GROUPBY_HISTOGRAM", 1)
-			verifyFrames("RAW_DOC", 1)
-			verifyFrames("PERCENTILE", 2)
-			verifyFrames("EXTENDEDSTATS", 4)
-			verifyFrames("RAWDATA", 1)
-		})
+		verifyFrames("COUNT_GROUPBY_DATE_HISTOGRAM", 1)
+		verifyFrames("COUNT_GROUPBY_HISTOGRAM", 1)
+		verifyFrames("RAW_DOC", 1)
+		verifyFrames("PERCENTILE", 2)
+		verifyFrames("EXTENDEDSTATS", 4)
+		verifyFrames("RAWDATA", 1)
 	})
 }
 
