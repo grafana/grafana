@@ -31,6 +31,7 @@ import {
   StackingMode,
   SortOrder,
   GraphTransform,
+  ComparisonOperation,
 } from '@grafana/schema';
 
 import { defaultGraphConfig } from './config';
@@ -630,7 +631,7 @@ function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allI
       id: FieldMatcherID.byValue,
       options: {
         reducer: reducer,
-        op: 'gte',
+        op: ComparisonOperation.GTE,
         value: 0,
       },
     },
