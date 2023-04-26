@@ -1,11 +1,11 @@
 ---
-aliases:
-  - ../features/datasources/proxy/
-description: Proxy datasource connections through a secure socks proxy.
+description: Learn about proxy datasource connections through a secure socks proxy.
 keywords:
   - proxy
   - guide
-title: Proxying data source connections
+  - Grafana
+title: Configure a data source connection proxy
+menuTitle: Configure data source proxy
 weight: 1110
 ---
 
@@ -22,25 +22,23 @@ To make use of this functionality, you need to deploy a socks5 proxy server that
 
 ## Before you begin
 
-Before configuring Grafana, you must first deploy a socks proxy server that:
+To complete this task, you must first deploy a socks proxy server that supports TLS, is publically accessible, and is hosted within the same network as the data source.
 
-- Supports TLS
-- Is exposed to the public internet
-- Is hosted within the same network as your data source
+## Steps
 
-### Steps
+1. For Grafana to send data source connections to the socks5 server, use the following table to configure the `secure_socks_datasource_proxy` section of the `config.ini`:
 
-1. For Grafana to send data source connections to the socks5 server, you configure the `secure_socks_datasource_proxy` section of the `config.ini` with the following information:
+   | Key             | Description                                | Example                         |
+   | --------------- | ------------------------------------------ | ------------------------------- |
+   | `enabled`       | Enable this feature in Grafana             | true                            |
+   | `root_ca_cert`  | The file path of the root ca cert          | /etc/ca.crt                     |
+   | `client_key`    | The file path of the client private key    | /etc/client.key                 |
+   | `client_cert`   | The file path of the client public key     | /etc/client.crt                 |
+   | `server_name`   | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
+   | `proxy_address` | the address of the proxy                   | localhost:9090                  |
 
-| Key             | Description                                | Example                         |
-| --------------- | ------------------------------------------ | ------------------------------- |
-| `enabled`       | Enable this feature in Grafana             | true                            |
-| `root_ca_cert`  | The file path of the root ca cert          | /etc/ca.crt                     |
-| `client_key`    | The file path of the client private key    | /etc/client.key                 |
-| `client_cert`   | The file path of the client public key     | /etc/client.crt                 |
-| `server_name`   | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
-| `proxy_address` | the address of the proxy                   | localhost:9090                  |
+1. Set up a data source and configure it to send data source connections through the proxy. 
 
-2. Set up a data source and configure it to send data source connections through the proxy. To configure your data sources to send connections through the proxy, `enableSecureSocksProxy=true` must be specified in the data source json. You can do this in the [API]({{< relref "../developers/http_api/data_source" >}}) or using [file based provisioning]({{< relref "../administration/provisioning/#data-sources" >}}).
+   To configure your data sources to send connections through the proxy, `enableSecureSocksProxy=true` must be specified in the data source json. You can do this in the [API]({{< relref "../../../developers/http_api/data_source" >}}) or use [file based provisioning]({{< relref "../../../administration/provisioning/#data-sources" >}}).
 
-Additionally, socks5 username and password can be set by adding `secureSocksProxyUsername` in the data source json and `secureSocksProxyPassword` in the secure data source json.
+   Additionally, you can set the socks5 username and password by adding `secureSocksProxyUsername` in the data source json and `secureSocksProxyPassword` in the secure data source json.
