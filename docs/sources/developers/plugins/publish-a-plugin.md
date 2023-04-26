@@ -19,9 +19,7 @@ By having your plugin published on Grafana.com, more users will be able to disco
 
 Before you begin to publish a plugin, it needs to be built and packaged. 
 
-To build a plugin from source, Grafana creates a `dist` directory that contains the production build, or _plugin assets_, for your plugin.
-
-When the Grafana server starts, it recursively looks in the plugin directory for any directory that contains a `plugin.json` file, and then it tries to load the plugin assets in the same directory.
+When you build a plugin from source, a `dist` folder is created. This folder contains the production build or _plugin assets_ for your plugin.
 
 To package a plugin, refer to [Package a plugin](package-a-plugin.md).
 
@@ -79,47 +77,53 @@ To submit an **update** for an already published plugin:
      - Select **Multiple** if you'd like to submit separate plugin archives for each architecture.
        This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
-   - **Source Code URL:** A URL that points to a public Git repository or ZIP archive of your complete plugin source code.
+   - **Source Code URL:** A URL that points to a public Git repository or ZIP archive of your complete plugin source code. See [examples](#what-source-code-url-formats-are-supported).
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
 1. Click **Submit**.
 
 ## Frequently asked questions
 
-**Do I need to submit a private plugin?**
+### Do I need to submit a private plugin?
 
 - No. Please only submit plugins that you wish to make publicly available for the Grafana community.
 
-**How long does it take to review my submission?**
+### How long does it take to review my submission?
 
 - We're not able to give an estimate at this time, though we're constantly working on improving the time it takes to review a plugin.
 
-**Can I decide a date when my plugin will be published?**
+### an I decide a date when my plugin will be published?
 
 - No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
 
-**Can I see metrics of my plugin installs, downloads or usage?**
+### Can I see metrics of my plugin installs, downloads or usage?
 
 - No. We don't offer this information at the moment to plugin authors.
 
-**How can I update my plugin's catalog page?**
+### How can I update my plugin's catalog page?
 
 - The plugin's catalog page content is extracted from the plugin README file.
   To update the plugin's catalog page, submit an updated plugin with the new content included in the README file.
 
-**Can I unlist my plugin from the Grafana plugin catalog in case of a bug?**
+### Can I unlist my plugin from the Grafana plugin catalog in case of a bug?
 
 - In the event of a bug, unlisting the plugin from our catalog may be possible in exceptional cases, such as security concerns. However, we don't have control over the specific instances where the plugin is installed.
 
-**Can I distribute my plugin somewhere else other than the Grafana plugin catalog?**
+### Can I distribute my plugin somewhere else other than the Grafana plugin catalog?
 
 - The official method for distributing Grafana plugins is through our catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide]({{< relref "../../administration/plugin-management#install-plugin-on-local-grafana" >}}).
 
-**Can I still use Angular for my plugin?**
+### an I still use Angular for my plugin?
 
 - No. We will not accept any new plugin submissions written in angular. For more information, refer to our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
 
-**Do plugin signatures expire?**
+### Do plugin signatures expire?
 
 - Plugin signatures do not currently expire.
 
 {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
+
+### What source code URL formats are supported?
+
+- Using a tag or branch: `https://github.com/grafana/clock-panel/tree/v2.1.3`
+- A tag or branch and the code is in a subdirectory (important for mono repos): `https://github.com/grafana/clock-panel/tree/v2.1.3/plugin/` (here, the plugin contains the plugin code)
+- Using the latest main or master branch commit: `https://github.com/grafana/clock-panel/` (not recommended, it's better to pass a tag or branch)
