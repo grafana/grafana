@@ -1,10 +1,8 @@
 import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
-import { ExploreUrlState } from '@grafana/data';
+import { ExploreUrlState, TimeRange, RawTimeRange, isDateTime } from '@grafana/data';
 import { clearQueryKeys } from 'app/core/utils/explore';
 import { ExploreItemState } from 'app/types';
-
-import { toRawTimeRange } from '../utils/time';
 
 /**
  * recursively walks an object, removing keys where the value is undefined
@@ -30,3 +28,20 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     panelsState: pruneObject(pane.panelsState),
   };
 }
+
+export const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+  let from = range.raw.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString(10);
+  }
+
+  let to = range.raw.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString(10);
+  }
+
+  return {
+    from,
+    to,
+  };
+};
