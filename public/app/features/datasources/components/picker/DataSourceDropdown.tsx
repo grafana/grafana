@@ -78,7 +78,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
             )
           }
-          suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
+          suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
           onFocus={openDropdown}
           onClick={openDropdown}
