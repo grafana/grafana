@@ -12,7 +12,11 @@ import { Tables } from './consts';
 import { setTraceTypes } from './setQueryValue';
 
 const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQueryEditorFieldProps) => {
-  const tables: AzureMonitorOption[] = Object.entries(Tables).map(([key, value]) => ({ label: value, value: key }));
+  const tables: AzureMonitorOption[] = Object.entries(Tables).map(([key, value]) => ({
+    label: value.label,
+    description: value.description,
+    value: key,
+  }));
   const handleChange = useCallback(
     (change: Array<SelectableValue<string>>) => {
       const newQuery = setTraceTypes(

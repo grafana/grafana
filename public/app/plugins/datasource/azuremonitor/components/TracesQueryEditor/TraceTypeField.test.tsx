@@ -34,7 +34,7 @@ describe('TraceTypeField', () => {
     openMenu(menu);
 
     Object.values(Tables).forEach((table) => {
-      expect(screen.getByText(table)).toBeInTheDocument();
+      expect(screen.getByText(table.label)).toBeInTheDocument();
     });
   });
 

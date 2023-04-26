@@ -70,7 +70,6 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
-
 		{
 			name: "Legacy queries with a workspace GUID should use workspace-centric url",
 			queryModel: []backend.DataQuery{
@@ -107,7 +106,6 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
-
 		{
 			name: "Legacy workspace queries with a resource URI (from a template variable) should use resource-centric url",
 			queryModel: []backend.DataQuery{
@@ -144,7 +142,6 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
-
 		{
 			name: "Queries with multiple resources",
 			queryModel: []backend.DataQuery{
@@ -593,6 +590,147 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
 						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
 						`| order by startTime asc`,
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "trace query with trace result format",
+			queryModel: []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"resources":     ["/subscriptions/r1"],
+								"resultFormat": "%s"
+							}
+						}`, dataquery.ResultFormatTrace)),
+					RefID:     "A",
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
+				{
+					RefID:        "A",
+					ResultFormat: string(dataquery.ResultFormatTrace),
+					URL:          "v1/subscriptions/r1/query",
+					JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"resources":     ["/subscriptions/r1"],
+								"resultFormat": "%s"
+							}
+						}`, dataquery.ResultFormatTrace)),
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests | where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend tags = bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,cloud_RoleInstance,cloud_RoleName,customDimensions,customMeasurements,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id)| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
+						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| order by startTime asc`,
+					Resources: []string{"/subscriptions/r1"},
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces | where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')` +
+						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend tags = bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,cloud_RoleInstance,cloud_RoleName,customDimensions,customMeasurements,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id)| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
+						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| order by startTime asc`,
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "trace query with trace result format and operation ID",
+			queryModel: []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"operationId": 	"test-op-id",
+								"resources":    ["/subscriptions/r1"],
+								"resultFormat": "%s"
+							}
+						}`, dataquery.ResultFormatTrace)),
+					RefID:     "A",
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
+				{
+					RefID:        "A",
+					ResultFormat: string(dataquery.ResultFormatTrace),
+					URL:          "v1/subscriptions/r1/query",
+					JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"operationId": 	"test-op-id",
+								"resources":    ["/subscriptions/r1"],
+								"resultFormat": "%s"
+							}
+						}`, dataquery.ResultFormatTrace)),
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests | where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend tags = bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,cloud_RoleInstance,cloud_RoleName,customDimensions,customMeasurements,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id)| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
+						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| order by startTime asc`,
+					Resources: []string{"/subscriptions/r1"},
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests | where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend tags = bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,cloud_RoleInstance,cloud_RoleName,customDimensions,customMeasurements,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id)| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
+						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| order by startTime asc`,
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "trace query with trace result format and only trace type",
+			queryModel: []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"operationId": 	"test-op-id",
+								"resources":    ["/subscriptions/r1"],
+								"resultFormat": "%s",
+								"traceTypes":		["traces"]
+							}
+						}`, dataquery.ResultFormatTrace)),
+					RefID:     "A",
+					TimeRange: timeRange,
+					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
+				{
+					RefID:        "A",
+					ResultFormat: string(dataquery.ResultFormatTrace),
+					URL:          "v1/subscriptions/r1/query",
+					JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"operationId": 	"test-op-id",
+								"resources":    ["/subscriptions/r1"],
+								"resultFormat": "%s",
+								"traceTypes":		["traces"]
+							}
+						}`, dataquery.ResultFormatTrace)),
+					Query:             "",
+					Resources:         []string{"/subscriptions/r1"},
+					TimeRange:         timeRange,
+					QueryType:         string(dataquery.AzureQueryTypeAzureTraces),
+					TraceExploreQuery: "",
 				},
 			},
 			Err: require.NoError,

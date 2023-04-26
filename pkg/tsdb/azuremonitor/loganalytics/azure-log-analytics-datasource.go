@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -147,10 +148,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 				operationId = *queryJSONModel.AzureTraces.OperationId
 			}
 
-			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
+			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat)
 			traceIdVariable := "${__data.fields.traceID}"
 			if operationId == "" {
-				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
+				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, nil)
 			} else {
 				traceExploreQuery = queryString
 			}
@@ -212,11 +213,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponse
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
-		query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
-		if err != nil {
-			dataResponse.Error = err
-			return dataResponse
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+		if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
+			query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
+			if err != nil {
+				dataResponse.Error = err
+				return dataResponse
+			}
+		}
+		if queryJSONModel.AzureTraces.ResultFormat != nil && *queryJSONModel.AzureTraces.ResultFormat == dataquery.AzureMonitorQueryAzureTracesResultFormat(dataquery.ResultFormatTrace) && queryJSONModel.AzureTraces.Query != nil && *queryJSONModel.AzureTraces.Query == "" {
+			return dataResponseErrorWithExecuted(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
 		}
 	}
 
@@ -619,16 +625,28 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters) string {
+func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters, resultFormat *string) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
 	}
-	sort.Strings(types)
+
+	filteredTypes := make([]string, 0)
+	// If the result format is set to trace then we filter out all events that are of the type traces as they don't make sense when visualised as a span
+	if resultFormat != nil && dataquery.ResultFormat(*resultFormat) == dataquery.ResultFormatTrace {
+		filteredTypes = slices.Filter(filteredTypes, types, func(s string) bool { return s != "traces" })
+	} else {
+		filteredTypes = types
+	}
+	sort.Strings(filteredTypes)
+
+	if len(filteredTypes) == 0 {
+		return ""
+	}
 
 	tagsMap := make(map[string]bool)
 	var tags []string
-	for _, t := range types {
+	for _, t := range filteredTypes {
 		tableTags := getTagsForTable(t)
 		for _, i := range tableTags {
 			if tagsMap[i] {
@@ -665,7 +683,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		}
 	}
 
-	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s | where $__timeFilter()`, strings.Join(types, ","))
+	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s | where $__timeFilter()`, strings.Join(filteredTypes, ","))
 	propertiesStaticQuery := `| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 		`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 		`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))`
