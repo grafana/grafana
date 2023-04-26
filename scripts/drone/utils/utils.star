@@ -47,6 +47,7 @@ def pipeline(
             },
         }],
         'depends_on': depends_on,
+        'image_pull_secrets': [pull_secret],
     }
     if environment:
         pipeline.update({
@@ -57,7 +58,6 @@ def pipeline(
     pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
-        pipeline['image_pull_secrets'] = [pull_secret]
         # We have a custom clone step for enterprise
         pipeline['clone'] = {
             'disable': True,
