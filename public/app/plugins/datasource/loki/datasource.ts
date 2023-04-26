@@ -195,7 +195,7 @@ export class LokiDatasource
         return {
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
-          instant: false,
+          queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
           expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
         };
@@ -208,6 +208,7 @@ export class LokiDatasource
         }
         return {
           ...normalizedQuery,
+          queryType: LokiQueryType.Range,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: 100,
