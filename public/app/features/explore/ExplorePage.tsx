@@ -3,13 +3,11 @@ import { inRange } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useWindowSize } from 'react-use';
 
-import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { stopQueryState } from 'app/core/utils/explore';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
@@ -18,6 +16,8 @@ import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExploreCorrelations } from './hooks/useExploreCorrelations';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useStateSync } from './hooks/useStateSync';
+import { useStopQueries } from './hooks/useStopQueries';
+import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { splitSizeUpdateAction } from './state/main';
 import { selectOrderedExplorePanes } from './state/selectors';
 
@@ -32,6 +32,8 @@ const styles = {
 };
 
 export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  useStopQueries();
+  useTimeSrvFix();
   useStateSync(props.queryParams);
   useExplorePageTitle();
   useExploreCorrelations();
@@ -54,29 +56,6 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
-
-  useEffect(() => {
-    // timeSrv (which is used internally) on init reads `from` and `to` param from the URL and updates itself
-    // using those value regardless of what is passed to the init method.
-    // The updated value is then used by Explore to get the range for each pane.
-    // This means that if `from` and `to` parameters are present in the URL,
-    // it would be impossible to change the time range in Explore.
-    // We are only doing this on mount for 2 reasons:
-    // 1: Doing it on update means we'll enter a render loop.
-    // 2: when parsing time in Explore (before feeding it to timeSrv) we make sure `from` is before `to` inside
-    //    each pane state in order to not trigger un URL update from timeSrv.
-    const searchParams = locationService.getSearchObject();
-    if (searchParams.from || searchParams.to) {
-      locationService.partial({ from: undefined, to: undefined }, true);
-    }
-
-    return () => {
-      for (const [, pane] of Object.entries(panes)) {
-        stopQueryState(pane!.querySubscription);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
-  }, []);
 
   const updateSplitSize = (size: number) => {
     const evenSplitWidth = windowWidth / 2;
