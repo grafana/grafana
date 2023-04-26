@@ -101,7 +101,7 @@ For more information about log queries and LogQL, refer to the [Loki log queries
 
 ### Show log context
 
-In Explore, you can can retrieve the context surrounding your log results by clicking on the `Show Context` button. You'll be able to investigate the logs from the same log stream that came before and after the log message you're interested in.
+In Explore, you can can retrieve the context surrounding your log results by clicking the `Show Context` button. You'll be able to investigate the logs from the same log stream that came before and after the log message you're interested in.
 
 The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
 
