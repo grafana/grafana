@@ -57,6 +57,9 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		require.Equal(t, 1, len(queryResult))
 	})
 	t.Run("Should not be able to get temp users by case-insentive email - case sensitive", func(t *testing.T) {
+		if db.IsTestDbMySQL() {
+			t.Skip("MySQL is case insensitive by default")
+		}
 		setup(t)
 		store.cfg.CaseInsensitiveLogin = false
 		query := tempuser.GetTempUsersQuery{Email: "E@as.co", Status: tempuser.TmpUserInvitePending}
