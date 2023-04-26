@@ -145,8 +145,8 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone as any)!,
-    to: dateMath.parse(raw.to, true, timeZone as any)!,
+    from: dateMath.parse(raw.from, false, timeZone)!,
+    to: dateMath.parse(raw.to, true, timeZone)!,
     raw,
   };
 }

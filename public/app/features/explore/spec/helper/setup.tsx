@@ -8,7 +8,13 @@ import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourceApi, DataSourceInstanceSettings, QueryEditorProps } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  QueryEditorProps,
+  DataSourcePluginMeta,
+  PluginType,
+} from '@grafana/data';
 import {
   setDataSourceSrv,
   setEchoSrv,
@@ -152,21 +158,37 @@ export function setupExplore(options?: SetupOptions): {
 function makeDatasourceSetup({
   name = 'loki',
   id = 1,
-  uid,
+  uid: uidOverride,
 }: { name?: string; id?: number; uid?: string } = {}): DatasourceSetup {
-  const meta: any = {
+  const uid = uidOverride || `${name}-uid`;
+  const type = 'logs';
+
+  const meta: DataSourcePluginMeta = {
     info: {
+      author: {
+        name: 'Grafana',
+      },
+      description: '',
+      links: [],
+      screenshots: [],
+      updated: '',
+      version: '',
       logos: {
         small: '',
+        large: '',
       },
     },
     id: id.toString(),
+    module: 'loki',
+    name,
+    type: PluginType.datasource,
+    baseUrl: '',
   };
   return {
     settings: {
       id,
-      uid: uid || `${name}-uid`,
-      type: 'logs',
+      uid,
+      type,
       name,
       meta,
       access: 'proxy',
@@ -191,9 +213,9 @@ function makeDatasourceSetup({
         },
       },
       name: name,
-      uid: uid || `${name}-uid`,
+      uid: uid,
       query: jest.fn(),
-      getRef: () => ({ type: 'logs', uid: uid || `${name}-uid` }),
+      getRef: () => ({ type, uid }),
       meta,
     } as any,
   };
