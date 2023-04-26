@@ -35,7 +35,7 @@ export function SearchView({ width, height }: SearchViewProps) {
       if (kind === '*' && uid === '*') {
         return hasSelection;
       } else if (kind === '*') {
-        // Unsure how this case can manifest itself
+        // Unsure how this case can happen
         return false;
       }
 
@@ -50,7 +50,6 @@ export function SearchView({ width, height }: SearchViewProps) {
 
   const handleItemSelectionChange = useCallback(
     (kind: string, uid: string) => {
-      console.log('handleItemSelectionChange', kind, uid);
       const newIsSelected = !selectionChecker(kind, uid);
 
       dispatch(
