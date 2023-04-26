@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
@@ -37,6 +36,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const openDropdown = () => {
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
     setOpen(true);
+    markerElement?.focus();
   };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
@@ -45,13 +45,15 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     placement: 'bottom-start',
   });
 
+  const onClose = useCallback(() => {
+    setOpen(false);
+    markerElement?.blur();
+  }, [setOpen, markerElement]);
+
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
     {
-      onClose: () => {
-        setFilterTerm(undefined);
-        setOpen(false);
-      },
+      onClose: onClose,
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
@@ -66,56 +68,46 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   return (
     <div className={styles.container}>
+      <div tabIndex={0} onFocus={openDropdown} role={'button'} className={styles.trigger} onClick={openDropdown}>
+        <Input
+          className={isOpen ? undefined : styles.input}
+          prefix={
+            filterTerm && isOpen ? (
+              <DataSourceLogoPlaceHolder />
+            ) : (
+              <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
+            )
+          }
+          suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
+          onFocus={openDropdown}
+          onClick={openDropdown}
+          onChange={(e) => {
+            setFilterTerm(e.currentTarget.value);
+          }}
+          ref={setMarkerElement}
+        ></Input>
+      </div>
       {isOpen ? (
-        <FocusScope contain autoFocus restoreFocus>
-          <Input
-            prefix={
-              filterTerm ? (
-                <DataSourceLogoPlaceHolder />
-              ) : (
-                <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
-              )
-            }
-            suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
-            placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
-            onChange={(e) => {
-              setFilterTerm(e.currentTarget.value);
-            }}
-            ref={setMarkerElement}
-          ></Input>
-          <Portal>
-            <div {...underlayProps} />
-            <div ref={ref} {...overlayProps} {...dialogProps}>
-              <PickerContent
-                filterTerm={filterTerm}
-                onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
-                  setFilterTerm(undefined);
-                  setOpen(false);
-                  onChange(ds);
-                }}
-                onClose={() => {
-                  setOpen(false);
-                }}
-                current={currentDataSourceInstanceSettings}
-                style={popper.styles.popper}
-                ref={setSelectorElement}
-                {...restProps}
-                onDismiss={() => {}}
-              ></PickerContent>
-            </div>
-          </Portal>
-        </FocusScope>
-      ) : (
-        <div className={styles.trigger} onClick={openDropdown}>
-          <Input
-            className={styles.input}
-            prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
-            suffix={<Icon name="angle-down" />}
-            value={dataSourceLabel(currentDataSourceInstanceSettings)}
-            onFocus={openDropdown}
-          />
-        </div>
-      )}
+        <Portal>
+          <div {...underlayProps} />
+          <div ref={ref} {...overlayProps} {...dialogProps}>
+            <PickerContent
+              filterTerm={filterTerm}
+              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+                onClose();
+                onChange(ds);
+              }}
+              onClose={onClose}
+              current={currentDataSourceInstanceSettings}
+              style={popper.styles.popper}
+              ref={setSelectorElement}
+              {...restProps}
+              onDismiss={onClose}
+            ></PickerContent>
+          </div>
+        </Portal>
+      ) : null}
     </div>
   );
 }
@@ -131,6 +123,9 @@ function getStylesDropdown(theme: GrafanaTheme2) {
     input: css`
       input {
         cursor: pointer;
+      }
+      input::placeholder {
+        color: ${theme.colors.text.primary};
       }
     `,
   };
