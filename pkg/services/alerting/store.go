@@ -168,7 +168,6 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 			builder.Write(")")
 		}
 
-		// FIXME: should not read for orgroles but only permissions
 		if query.User.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
 		}
@@ -180,7 +179,6 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 		}
 
 		alerts := make([]*alertmodels.AlertListItemDTO, 0)
-		fmt.Printf("%+v", builder.GetSQLString())
 		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&alerts); err != nil {
 			return err
 		}
