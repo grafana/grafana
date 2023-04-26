@@ -92,18 +92,10 @@ export function useStateSync(params: ExploreQueryParams) {
     };
 
     async function sync() {
-      // if navigating the history causes one of the time range
-      // to not being equal to all the other ones, we set syncedTimes to false
-      // to avoid inconsistent UI state.
-      // TODO: ideally `syncedTimes` should be saved in the URL.
-      if (
-        Object.values(urlPanes).some((pane, i, panes) => {
-          if (i === 0) {
-            return false;
-          }
-          return !isEqual(pane.range, panes[i - 1].range);
-        })
-      ) {
+      // if navigating the history causes one of the time range to not being equal to all the other ones,
+      // we set syncedTimes to false to avoid inconsistent UI state.
+      // Ideally `syncedTimes` should be saved in the URL.
+      if (Object.values(urlPanes).some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange))) {
         dispatch(syncTimesAction({ syncedTimes: false }));
       }
 
