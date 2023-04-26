@@ -165,6 +165,19 @@ export function AlertInstanceModalSelector({
       }) || [];
 
     onSelect(instances);
+    resetState();
+  };
+
+  const resetState = () => {
+    setSelectedRule(undefined);
+    setSelectedInstances(null);
+    setRuleFilter('');
+    handleSearchRules('');
+  };
+
+  const onDismiss = () => {
+    resetState();
+    onClose();
   };
 
   const handleSearchRules = (filter: string) => {
@@ -186,7 +199,7 @@ export function AlertInstanceModalSelector({
         className={styles.modal}
         closeOnEscape
         isOpen={isOpen}
-        onDismiss={onClose}
+        onDismiss={onDismiss}
         contentClassName={styles.modalContent}
       >
         <div className={styles.container}>
@@ -243,7 +256,7 @@ export function AlertInstanceModalSelector({
           </div>
         </div>
         <Modal.ButtonRow>
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>
           <Button
