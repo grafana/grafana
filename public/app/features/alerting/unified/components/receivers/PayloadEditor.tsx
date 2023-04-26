@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Badge, Button, Icon, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, CodeEditor, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
@@ -36,6 +35,8 @@ export function PayloadEditor({
     setIsEditingAlertData(false);
   };
 
+  const errorInPayloadJson = payloadFormatError !== null;
+
   const onOpenEditAlertModal = () => {
     try {
       JSON.parse(payload);
@@ -56,25 +57,26 @@ export function PayloadEditor({
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="column" gap={1}>
+      <div className={styles.editor}>
         <div className={styles.title}>
           Payload data
           <Tooltip placement="top" content={'This payload data will be sent to the preview'} theme="info">
             <Icon name="info-circle" className={styles.tooltip} size="xl" />
           </Tooltip>
         </div>
-        <TextArea
-          required={true}
+
+        <CodeEditor
+          width={640}
+          height={363}
+          language={'json'}
+          showLineNumbers={true}
+          showMiniMap={false}
           value={payload}
-          onChange={(e) => {
-            setPayload(e.currentTarget.value);
-          }}
-          data-testid="payloadJSON"
-          className={styles.jsonEditor}
-          rows={10}
-          cols={50}
+          readOnly={false}
+          onBlur={setPayload}
         />
-        <Stack>
+
+        <div className={styles.buttonsWrapper}>
           <Button onClick={onReset} className={styles.button} icon="arrow-up" type="button" variant="secondary">
             {RESET_TO_DEFAULT}
           </Button>
@@ -84,6 +86,7 @@ export function PayloadEditor({
             icon="plus-circle"
             type="button"
             variant="secondary"
+            disabled={errorInPayloadJson}
           >
             Add alert data
           </Button>
@@ -91,12 +94,12 @@ export function PayloadEditor({
             <Badge
               color="orange"
               icon="exclamation-triangle"
-              text={'There are some errors in payload JSON'}
-              tooltip={'Fix errors in existing payload before adding more data'}
+              text={'There are some errors in payload JSON.'}
+              tooltip={'Fix errors in payload, and click Refresh preview button'}
             />
           )}
-        </Stack>
-      </Stack>
+        </div>
+      </div>
       <GenerateAlertDataModal isOpen={isEditingAlertData} onDismiss={onCloseEditAlertModal} onAccept={onAddAlertList} />
     </div>
   );
@@ -105,20 +108,30 @@ export function PayloadEditor({
 const getStyles = (theme: GrafanaTheme2) => ({
   jsonEditor: css`
     width: 605px;
-    height: 325px;
+    height: 363px;
+  `,
+  buttonsWrapper: css`
+    margin-top: ${theme.spacing(1)};
+    display: flex;
   `,
   button: css`
     flex: none;
     width: fit-content;
     padding-right: ${theme.spacing(1)};
+    margin-right: ${theme.spacing(1)};
   `,
   title: css`
     font-weight: ${theme.typography.fontWeightBold};
   `,
   wrapper: css`
-    padding-top: ${theme.spacing(1)};
+    padding-top: 38px;
   `,
   tooltip: css`
     padding-left: ${theme.spacing(1)};
+  `,
+  editor: css`
+    display: flex;
+    flex-direction: column;
+    margin-top: ${theme.spacing(-1)};
   `,
 });

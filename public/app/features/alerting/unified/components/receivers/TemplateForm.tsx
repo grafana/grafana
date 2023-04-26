@@ -4,7 +4,6 @@ import { Location } from 'history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -189,16 +188,12 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                   <div>
                     <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
                       <div className={styles.editWrapper}>
-                        <AutoSizer>
-                          {({ width, height }) => (
-                            <TemplateEditor
-                              value={getValues('content')}
-                              width={width}
-                              height={height}
-                              onBlur={(value) => setValue('content', value)}
-                            />
-                          )}
-                        </AutoSizer>
+                        <TemplateEditor
+                          value={getValues('content')}
+                          width={640}
+                          height={363}
+                          onBlur={(value) => setValue('content', value)}
+                        />
                       </div>
                     </Field>
                     <div className={styles.buttons}>
@@ -379,6 +374,9 @@ export function TemplatePreview({
         <pre className={styles.preview.result} data-testid="payloadJSON">
           {previewToRender}
         </pre>
+        <Button onClick={onPreview} className={styles.preview.button} icon="arrow-up" type="button" variant="secondary">
+          Refresh preview
+        </Button>
       </Stack>
     </Stack>
   );
@@ -387,6 +385,7 @@ export function TemplatePreview({
 const getStyles = (theme: GrafanaTheme2) => ({
   contentContainer: css`
     display: flex;
+    padding-top: 10px;
     gap: ${theme.spacing(2)};
     flex-direction: row;
     align-items: flex-start;
@@ -407,6 +406,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & > * + * {
       margin-left: ${theme.spacing(1)};
     }
+    margin-top: -7px;
   `,
   textarea: css`
     max-width: 758px;
@@ -415,7 +415,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: block;
     position: relative;
     width: 640px;
-    height: 320px;
+    height: 363px;
   `,
   toggle: css({
     color: theme.colors.text.secondary,
@@ -439,8 +439,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   preview: {
     result: css`
-      width: 570px;
+      width: 640px;
       height: 363px;
+    `,
+    button: css`
+      flex: none;
+      width: fit-content;
+      margin-top: ${theme.spacing(-3)};
     `,
   },
 });
