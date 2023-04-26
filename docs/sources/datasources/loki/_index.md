@@ -57,7 +57,8 @@ The **Derived Fields** configuration helps you:
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
 These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
 
-> **Note:** If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
+> **Note:** If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support). 
+> Alternatively, you can create a duplicate of your provisioned Grafana Cloud Loki datasource, which would allow you to modify the Derived Fields in the Grafana UI.
 
 Each derived field consists of:
 
