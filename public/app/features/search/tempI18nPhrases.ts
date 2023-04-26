@@ -5,6 +5,6 @@ import { t } from 'app/core/internationalization';
 
 export function getSearchPlaceholder(includePanels = false) {
   return includePanels
-    ? t('search.search-input.include-panels-placeholder', 'Search for dashboards and panels')
-    : t('search.search-input.placeholder', 'Search for dashboards');
+    ? t('search.search-input.include-panels-placeholder', 'Search for dashboards, folders, and panels')
+    : t('search.search-input.placeholder', 'Search for dashboards and folders');
 }
