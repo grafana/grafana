@@ -16,6 +16,7 @@ export interface Props {}
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
   const selectedItemsForBackend = useSelectedItemsForBackendState();
+  console.log('selectedItemsForBackend', selectedItemsForBackend);
 
   const onMove = () => {
     appEvents.publish(

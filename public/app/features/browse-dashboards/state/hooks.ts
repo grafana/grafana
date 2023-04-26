@@ -114,19 +114,24 @@ function getSelectedItemsForBackend(
     folder: { ...selectedItems.folder },
   };
 
-  for (const [parentFolderUID, children] of Object.entries(childrenByParentUID)) {
-    // Check if the parent folder is selected
-    if (selectedItems.folder[parentFolderUID]) {
-      // Unselect any children
-      children?.forEach((child) => {
-        if (child.kind === 'dashboard') {
-          result.dashboard[child.uid] = false;
+  // Loop over selected folders in the input
+  for (const folderUID of Object.keys(selectedItems.folder)) {
+    const isSelected = selectedItems.folder[folderUID];
+    if (isSelected) {
+      // Unselect any children in the output
+      const children = childrenByParentUID[folderUID];
+      if (children) {
+        for (const child of children) {
+          if (child.kind === 'dashboard') {
+            result.dashboard[child.uid] = false;
+          }
+          if (child.kind === 'folder') {
+            result.folder[child.uid] = false;
+          }
         }
-        if (child.kind === 'folder') {
-          result.folder[child.uid] = false;
-        }
-      });
+      }
     }
   }
+
   return result;
 }
