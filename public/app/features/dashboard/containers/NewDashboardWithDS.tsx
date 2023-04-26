@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useLoadDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
 
 import { getNewDashboardModelData, setDashboardToFetchFromLocalStorage } from '../state/initDashboard';
@@ -13,7 +12,6 @@ export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ d
   const [error, setError] = useState<string | null>(null);
   const { datasourceUid } = props.match.params;
   const dispatch = useDispatch();
-  useLoadDataSource(datasourceUid);
 
   useEffect(() => {
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);

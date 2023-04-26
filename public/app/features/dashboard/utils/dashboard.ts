@@ -12,7 +12,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
     type: 'timeseries',
     title: 'Panel Title',
     gridPos: calculateNewPanelGridPos(dashboard),
-    datasource: datasource ? { uid: datasource } : undefined,
+    datasource: datasource ? { uid: datasource } : null,
   };
 
   dashboard.addPanel(newPanel);
