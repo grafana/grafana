@@ -155,7 +155,7 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
 }
 
 function buildFooterData(data: DataFrame): FooterItem[] {
-  const values = data.fields[3].values.toArray();
+  const values = data.fields[3].values;
   const valueSum = values.reduce((prev, curr) => {
     return prev + curr;
   }, 0);

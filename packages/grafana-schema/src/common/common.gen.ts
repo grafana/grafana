@@ -664,7 +664,7 @@ export interface TableFooterOptions {
   countRows?: boolean;
   enablePagination?: boolean;
   fields?: Array<string>;
-  reducer: Array<string>;
+  reducer: Array<string>; // actually 1 value
   show: boolean;
 }
 
@@ -771,6 +771,7 @@ export enum VariableFormatID {
   SQLString = 'sqlstring',
   SingleQuote = 'singlequote',
   Text = 'text',
+  UriEncode = 'uriencode',
 }
 
 export interface DataSourceRef {
@@ -846,7 +847,7 @@ export interface TableFieldOptions {
    */
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
-  hidden?: boolean;
+  hidden?: boolean; // ?? default is missing or false ??
   inspect: boolean;
   minWidth?: number;
   width?: number;

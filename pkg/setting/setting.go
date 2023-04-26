@@ -47,7 +47,6 @@ const (
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
-	Test             = "test"
 	ApplicationName  = "Grafana"
 )
 
@@ -369,6 +368,11 @@ type Cfg struct {
 	// Data sources
 	DataSourceLimit int
 
+	// SQL Data sources
+	SqlDatasourceMaxOpenConnsDefault    int
+	SqlDatasourceMaxIdleConnsDefault    int
+	SqlDatasourceMaxConnLifetimeDefault int
+
 	// Snapshots
 	SnapshotEnabled       bool
 	ExternalSnapshotUrl   string
@@ -505,6 +509,9 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+	// Override default fixed role assignments
+	RBACGrantOverrides map[string][]string
+
 	// GRPC Server.
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
@@ -1113,6 +1120,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
@@ -1555,10 +1563,21 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
-	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACEnabled = true
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
+
+	rbacOverrides := iniFile.Section("rbac.overrides")
+	cfg.RBACGrantOverrides = map[string][]string{}
+	for _, key := range rbacOverrides.Keys() {
+		value := key.MustString("")
+		grants := strings.Split(value, ",")
+		for i, grant := range grants {
+			grants[i] = strings.TrimSpace(grant)
+		}
+		cfg.RBACGrantOverrides[key.Name()] = grants
+	}
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1832,6 +1851,13 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readSqlDataSourceSettings() {
+	sqlDatasources := cfg.Raw.Section("sql_datasources")
+	cfg.SqlDatasourceMaxOpenConnsDefault = sqlDatasources.Key("max_open_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxIdleConnsDefault = sqlDatasources.Key("max_idle_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxConnLifetimeDefault = sqlDatasources.Key("max_conn_lifetime_default").MustInt(14400)
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {

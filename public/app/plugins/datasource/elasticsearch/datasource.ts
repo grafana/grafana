@@ -1,6 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap, switchMap } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
 import {
@@ -25,12 +25,10 @@ import {
   QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
+  SupplementaryQueryOptions,
   DataQueryError,
-  FieldCache,
-  FieldType,
   rangeUtil,
   Field,
-  sortDataFrame,
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
@@ -54,7 +52,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
-import { trackQuery } from './tracking';
+import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
   BucketAggregation,
@@ -118,10 +116,10 @@ export class ElasticDatasource
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
-    this.index = instanceSettings.database ?? '';
     this.isProxyAccess = instanceSettings.access === 'proxy';
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
+    this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
     this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
@@ -259,7 +257,17 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query;
+
+    // the `target.query` is the "new" location for the query.
+    // normally we would write this code as
+    // try-the-new-place-then-try-the-old-place,
+    // but we had the bug at
+    // https://github.com/grafana/grafana/issues/61107
+    // that may have stored annotations where
+    // both the old and the new place are set,
+    // and in that scenario the old place needs
+    // to have priority.
+    const queryString = annotation.query ?? annotation.target?.query;
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
@@ -313,7 +321,8 @@ export class ElasticDatasource
       ignore_unavailable: true,
     };
 
-    // old elastic annotations had index specified on them
+    // @deprecated
+    // Field annotation.index is deprecated and will be removed in the future
     if (annotation.index) {
       header.index = annotation.index;
     } else {
@@ -322,6 +331,7 @@ export class ElasticDatasource
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
+    trackAnnotationQuery(annotation);
     return lastValueFrom(
       this.post('_msearch', payload).pipe(
         map((res) => {
@@ -515,15 +525,12 @@ export class ElasticDatasource
               statusText: err.statusText,
             };
             throw error;
-          }),
-          switchMap((res) => {
-            return of(processToLogContextDataFrames(res));
           })
         )
       );
     } else {
       const sortField = row.dataFrame.fields.find((f) => f.name === 'sort');
-      const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
+      const searchAfter = sortField?.values[row.rowIndex] || [row.timeEpochMs];
       const sort = options?.direction === LogRowContextQueryDirection.Forward ? 'asc' : 'desc';
 
       const header =
@@ -603,14 +610,14 @@ export class ElasticDatasource
     return [SupplementaryQueryType.LogsVolume];
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
       return undefined;
     }
 
     let isQuerySuitable = false;
 
-    switch (type) {
+    switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
@@ -661,7 +668,7 @@ export class ElasticDatasource
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((target) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, target))
+      .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
       .filter((query): query is ElasticsearchQuery => !!query);
 
     if (!targets.length) {
@@ -1120,7 +1127,7 @@ export class ElasticDatasource
         // Sorting of results in the context query
         sortDirection: direction === LogRowContextQueryDirection.Backward ? 'desc' : 'asc',
         // Used to get the next log lines before/after the current log line using sort field of selected log line
-        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values.get(row.rowIndex) ?? [row.timeEpochMs],
+        searchAfter: row.dataFrame.fields.find((f) => f.name === 'sort')?.values[row.rowIndex] ?? [row.timeEpochMs],
       },
     };
 
@@ -1221,44 +1228,6 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
         },
       },
     ],
-  };
-}
-
-function processToLogContextDataFrames(result: DataQueryResponse): DataQueryResponse {
-  const frames = result.data.map((frame) => sortDataFrame(frame, 0, true));
-  const processedFrames = frames.map((frame) => {
-    // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
-    const cache = new FieldCache(frame);
-    const timestampField = cache.getFirstFieldOfType(FieldType.time);
-    const lineField = cache.getFirstFieldOfType(FieldType.string);
-    const idField = cache.getFieldByName('_id');
-
-    if (!timestampField || !lineField || !idField) {
-      return { ...frame, fields: [] };
-    }
-
-    return {
-      ...frame,
-      fields: [
-        {
-          ...timestampField,
-          name: 'ts',
-        },
-        {
-          ...lineField,
-          name: 'line',
-        },
-        {
-          ...idField,
-          name: 'id',
-        },
-      ],
-    };
-  });
-
-  return {
-    ...result,
-    data: processedFrames,
   };
 }
 

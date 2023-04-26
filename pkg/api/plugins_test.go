@@ -30,9 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/caching"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -373,11 +371,9 @@ func Test_GetPluginAssets(t *testing.T) {
 
 func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
-		Cfg:            setting.NewCfg(),
-		log:            log.New(),
-		pluginClient:   &fakePluginClient{},
-		cachingService: &caching.OSSCachingService{},
-		Features:       &featuremgmt.FeatureManager{},
+		Cfg:          setting.NewCfg(),
+		log:          log.New(),
+		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -392,32 +388,9 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		}
 	}
 
-	require.Equal(t, resp.Header().Get("Content-Type"), "application/json")
-	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
-}
-
-func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
-	hs := HTTPServer{
-		Cfg: setting.NewCfg(),
-		log: log.New(),
-		pluginClient: &fakePluginClient{
-			headers: map[string][]string{"Set-Cookie": {"monster"}},
-		},
-		cachingService: &caching.OSSCachingService{},
-		Features:       &featuremgmt.FeatureManager{},
-	}
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	resp := httptest.NewRecorder()
-	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx)
-	require.NoError(t, err)
-
-	for {
-		if resp.Flushed {
-			break
-		}
-	}
-	require.Empty(t, resp.Header().Values("Set-Cookie"), "Set-Cookie header should not be present")
+	res := resp.Result()
+	require.NoError(t, res.Body.Close())
+	require.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
@@ -439,8 +412,6 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 						"x-another": {"hello"},
 					},
 				},
-				cachingService: &caching.OSSCachingService{},
-				Features:       &featuremgmt.FeatureManager{},
 			}
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
@@ -464,11 +435,9 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 		statusCode: http.StatusNoContent,
 	}
 	hs := HTTPServer{
-		Cfg:            setting.NewCfg(),
-		log:            log.New(),
-		pluginClient:   pluginClient,
-		cachingService: &caching.OSSCachingService{},
-		Features:       &featuremgmt.FeatureManager{},
+		Cfg:          setting.NewCfg(),
+		log:          log.New(),
+		pluginClient: pluginClient,
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
