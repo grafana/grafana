@@ -639,7 +639,7 @@ function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allI
       {
         id: 'custom.hideFrom',
         value: {
-          tooltip: false,
+          tooltip: true,
           viz: false,
           legend: true,
         },

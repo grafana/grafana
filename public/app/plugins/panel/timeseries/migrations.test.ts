@@ -180,7 +180,7 @@ describe('Graph Migrations', () => {
                 "id": "custom.hideFrom",
                 "value": {
                   "legend": true,
-                  "tooltip": false,
+                  "tooltip": true,
                   "viz": false,
                 },
               },
@@ -225,7 +225,7 @@ describe('Graph Migrations', () => {
                 "id": "custom.hideFrom",
                 "value": {
                   "legend": true,
-                  "tooltip": false,
+                  "tooltip": true,
                   "viz": false,
                 },
               },
@@ -245,7 +245,7 @@ describe('Graph Migrations', () => {
                 "id": "custom.hideFrom",
                 "value": {
                   "legend": true,
-                  "tooltip": false,
+                  "tooltip": true,
                   "viz": false,
                 },
               },
