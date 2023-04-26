@@ -9,7 +9,7 @@ title: Proxying data source connections
 weight: 1110
 ---
 
-# Proxying data source connections
+# Configure a data source connection proxy
 
 Grafana provides support for proxying data source connections through a Secure Socks5 Tunnel. This enables you to securely connect to data sources hosted in a different network than Grafana.
 
@@ -20,18 +20,17 @@ To make use of this functionality, you need to deploy a socks5 proxy server that
 - You can configure only one socks5 proxy per Grafana instance
 - All built-in core data sources are compatible, but not all external data sources are. For a list of supported data sources, refer to [private data source connect]({{< ref "/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/#known-limitations" >}}).
 
-## Configure Grafana to use the proxy
+## Start proxying connections
 
-## Before you begin
+Before configuring Grafana, you must first deploy a socks proxy server that:
 
-To follow this guide, you must first deploy a socks proxy server that:
 - Supports TLS
 - Is exposed to the public internet
 - Is hosted within the same network as your data source
 
-### Configure Grafana to proxy connections through a socks server
+### Grafana Configuration Steps
 
-For Grafana to send data source connections to the socks5 server, you configure the `secure_socks_datasource_proxy` section of the `config.ini` with the following information:
+1. For Grafana to send data source connections to the socks5 server, you configure the `secure_socks_datasource_proxy` section of the `config.ini` with the following information:
 
 | Key             | Description                                | Example                         |
 | --------------- | ------------------------------------------ | ------------------------------- |
@@ -42,9 +41,6 @@ For Grafana to send data source connections to the socks5 server, you configure 
 | `server_name`   | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
 | `proxy_address` | the address of the proxy                   | localhost:9090                  |
 
-### Configure data sources to proxy connections through a socks server
-
-1. Toggle on `secure_socks_datasource_proxy.enabled` in your config.ini.
 2. Set up a data source and configure it to send data source connections through the proxy. To configure your data sources to send connections through the proxy, `enableSecureSocksProxy=true` must be specified in the data source json. You can do this in the [API]({{< relref "../developers/http_api/data_source" >}}) or using [file based provisioning]({{< relref "../administration/provisioning/#data-sources" >}}).
 
 Additionally, socks5 username and password can be set by adding `secureSocksProxyUsername` in the data source json and `secureSocksProxyPassword` in the secure data source json.
