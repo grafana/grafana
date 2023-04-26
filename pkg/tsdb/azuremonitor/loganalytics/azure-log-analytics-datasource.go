@@ -332,7 +332,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 				queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 			}
 			AddCustomDataLink(*frame, data.DataLink{
-				Title: "Explore Trace: ${__data.fields.traceID}",
+				Title: "Explore Trace in Azure Portal",
 				URL:   "",
 				Internal: &data.InternalDataLink{
 					DatasourceUID:  dsInfo.DatasourceUID,
