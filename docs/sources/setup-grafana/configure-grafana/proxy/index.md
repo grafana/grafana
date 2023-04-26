@@ -37,7 +37,7 @@ To complete this task, you must first deploy a socks proxy server that supports 
    | `server_name`   | The domain name of the proxy, used for SNI | proxy.grafana.svc.cluster.local |
    | `proxy_address` | the address of the proxy                   | localhost:9090                  |
 
-1. Set up a data source and configure it to send data source connections through the proxy. 
+1. Set up a data source and configure it to send data source connections through the proxy.
 
    To configure your data sources to send connections through the proxy, `enableSecureSocksProxy=true` must be specified in the data source json. You can do this in the [API]({{< relref "../../../developers/http_api/data_source" >}}) or use [file based provisioning]({{< relref "../../../administration/provisioning/#data-sources" >}}).
 
