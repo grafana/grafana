@@ -35,10 +35,6 @@ func ProvideStoreWrapper(
 	clientset client.ClientSetProvider,
 	folders folder.FolderStore,
 ) (dashboards.Store, error) {
-	// When feature is disabled, resolve the upstream SQL store
-	if !features.IsEnabled(featuremgmt.FlagK8S) {
-		return store, nil
-	}
 	return &StoreWrapper{
 		DashboardSQLStore: store,
 		log:               log.New("k8s.dashboards.service-wrapper"),

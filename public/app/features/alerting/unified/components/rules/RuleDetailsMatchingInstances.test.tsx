@@ -32,7 +32,7 @@ describe('RuleDetailsMatchingInstances', () => {
     it('For Grafana Managed rules instances filter should contain five states', () => {
       const rule = mockCombinedRule();
 
-      render(<RuleDetailsMatchingInstances rule={rule} />);
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
       const stateFilter = ui.stateFilter.get();
       expect(stateFilter).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('RuleDetailsMatchingInstances', () => {
         [GrafanaAlertState.Error]: ui.grafanaStateButton.error,
       };
 
-      render(<RuleDetailsMatchingInstances rule={rule} />);
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
       await userEvent.click(buttons[state].get());
 
@@ -82,7 +82,7 @@ describe('RuleDetailsMatchingInstances', () => {
         namespace: mockPromNamespace(),
       });
 
-      render(<RuleDetailsMatchingInstances rule={rule} />);
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
       const stateFilter = ui.stateFilter.get();
       expect(stateFilter).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('RuleDetailsMatchingInstances', () => {
           }),
         });
 
-        render(<RuleDetailsMatchingInstances rule={rule} />);
+        render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
         await userEvent.click(ui.cloudStateButton[state].get());
 
@@ -122,7 +122,7 @@ describe('RuleDetailsMatchingInstances', () => {
 function mockPromNamespace(): CombinedRuleNamespace {
   return {
     rulesSource: mockDataSource(),
-    groups: [{ name: 'Prom rules group', rules: [] }],
+    groups: [{ name: 'Prom rules group', rules: [], totals: {} }],
     name: 'Prometheus-test',
   };
 }

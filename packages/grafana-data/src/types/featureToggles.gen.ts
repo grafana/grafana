@@ -31,7 +31,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  k8s?: boolean;
   exploreMixedDatasource?: boolean;
   newTraceViewHeader?: boolean;
   correlations?: boolean;

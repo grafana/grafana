@@ -427,7 +427,7 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 		return err
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagK8S) {
+	if true { // hs.Features.IsEnabled(featuremgmt.FlagK8S) {
 		go func() {
 			hs.errs <- hs.k8sWebhookServer()
 		}()
