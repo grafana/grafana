@@ -9,11 +9,15 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { getLabelStyles } from './Label';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+  /** Label to display next to checkbox */
   label?: string;
+  /** Description to display under the label */
   description?: string;
+  /** Current value of the checkbox */
   value?: boolean;
-  // htmlValue allows to specify the input "value" attribute
+  /** htmlValue allows to specify the input "value" attribute */
   htmlValue?: string | number;
+  /** Sets the checkbox into a "mixed" state. This is only a visual change and does not affect the value. */
   indeterminate?: boolean;
 }
 
