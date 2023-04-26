@@ -44,8 +44,11 @@ export const browseDashboardsAPI = createApi({
     }),
     deleteFolder: builder.mutation<void, string>({
       query: (folderUID) => ({
-        url: `/folders/${folderUID}?forceDeleteRules=true`,
+        url: `/folders/${folderUID}`,
         method: 'DELETE',
+        params: {
+          forceDeleteRules: true,
+        },
       }),
     }),
     // TODO we can define this return type properly
