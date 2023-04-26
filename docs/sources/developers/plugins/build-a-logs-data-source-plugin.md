@@ -2,11 +2,9 @@
 title: Build a logs data source plugin
 ---
 
-# Build a logs data source plugin
+# Build a logs data source plugin 
 
-Data logs are defined as data stored over a period of time in different systems or environments for the purpose of tracking certain events.  
-
-Grafana data source plugins support metrics, logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences. 
+Grafana data source plugins support metrics, logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences which we will explain in this guide. 
 
 ## Before you begin
 
@@ -106,7 +104,7 @@ Add additional information about each log line by supplying more data frame fiel
 
 If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Grafana treats subsequent text fields as [detected fields]({{< relref "../../explore/#labels-and-detected-fields" >}}).
 
-Although you can add any number of custom fields to your data frame, Grafana comes with a couple of dedicated fields: `levels` and `id`. Let's have a closer look at each one.
+Any number of custom fields can be added to your data frame; Grafana comes with two dedicated fields: `levels` and `id`.
 
 ### Levels
 

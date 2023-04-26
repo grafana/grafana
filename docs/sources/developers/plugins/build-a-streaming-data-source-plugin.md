@@ -14,9 +14,9 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 
 > **Note:** To learn more about RxJs, refer to the [RxJS documentation](https://rxjs.dev/guide/overview).
 
-## Add _streaming_ to your data source
+## Add streaming to your data source
 
-Enable _streaming_ for your data source plugin to update your dashboard as soon as new data becomes available.
+Enable streaming for your data source plugin to update your dashboard as soon as new data becomes available.
 
 For example, a streaming data source plugin can connect to a websocket, or subscribe to a message bus, and update the visualization whenever a new message is available.
 
