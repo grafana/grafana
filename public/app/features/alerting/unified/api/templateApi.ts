@@ -25,11 +25,6 @@ export interface AlertField {
   labels: KeyValueField[];
 }
 
-export interface AlertFields {
-  annotations: AnnoField[];
-  labels: AnnoField[];
-}
-
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     previewTemplate: build.mutation<TemplatePreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
