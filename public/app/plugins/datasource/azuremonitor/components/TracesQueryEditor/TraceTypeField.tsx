@@ -31,7 +31,7 @@ const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQuer
   const options = useMemo(() => [...tables, variableOptionGroup], [tables, variableOptionGroup]);
 
   return (
-    <Field label="Trace Type">
+    <Field label="Event Type">
       <MultiSelect
         placeholder="Choose event types"
         inputId="azure-monitor-traces-type-field"
