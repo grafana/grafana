@@ -149,9 +149,17 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           right: 3px;
           top: calc(50% - 1.5px);
           height: 3px;
+          border: solid ${theme.colors.primary.contrastText};
           background-color: ${theme.colors.primary.contrastText};
           width: auto;
           transform: none;
+        }
+      }
+      &:disabled[aria-checked='mixed'] + span {
+        background-color: ${theme.colors.action.disabledBackground};
+
+        &:after {
+          border-color: ${theme.colors.action.disabledText};
         }
       }
     `,
