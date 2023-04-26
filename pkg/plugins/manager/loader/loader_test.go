@@ -3,9 +3,6 @@ package loader
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -1390,7 +1387,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(pCfg),
+		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
 		signature.ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore())))
 
 	for _, cb := range cbs {

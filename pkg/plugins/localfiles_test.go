@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
