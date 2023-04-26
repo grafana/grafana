@@ -97,7 +97,7 @@ func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID, labelSelec
 			LabelSelector: labelSelector,
 			Start:         start,
 			End:           end,
-			MaxNodes:      maxNodes,
+			MaxNodes:      &maxNodes,
 		},
 	}
 

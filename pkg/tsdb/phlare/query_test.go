@@ -289,7 +289,7 @@ func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, 
 	panic("implement me")
 }
 
-func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
+func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end, maxNodes int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
@@ -305,7 +305,7 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID string, label
 	}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
 	f.Args = []interface{}{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{

@@ -155,10 +155,11 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 	}, nil
 }
 
-func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
 	// This is super ineffective at the moment. We need 2 different APIs one for profile one for series (timeline) data
 	// but Pyro returns all in single response. This currently does the simplest thing and calls the same API 2 times
 	// and gets the part of the response it needs.
+	maxNodes := int64(100) // irrelevant for this call, therefore set to a low number
 	respData, err := c.getProfileData(ctx, profileTypeID, labelSelector, start, end, maxNodes, groupBy)
 	if err != nil {
 		return nil, err
