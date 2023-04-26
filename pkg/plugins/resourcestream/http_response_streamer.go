@@ -25,15 +25,15 @@ type HTTPResponseStreamer struct {
 // NewHTTPResponseStreamer creates a new HTTPResponseStreamer.
 func NewHTTPResponseStreamer(logger log.Logger, client plugins.Client, w http.ResponseWriter) (*HTTPResponseStreamer, error) {
 	if logger == nil {
-		return nil, fmt.Errorf("logger cannot be nil")
+		return nil, errors.New("logger cannot be nil")
 	}
 
 	if client == nil {
-		return nil, fmt.Errorf("client cannot be nil")
+		return nil, errors.New("client cannot be nil")
 	}
 
 	if w == nil {
-		return nil, fmt.Errorf("w cannot be nil")
+		return nil, errors.New("w cannot be nil")
 	}
 
 	return &HTTPResponseStreamer{
@@ -102,8 +102,6 @@ func (s *HTTPResponseStreamer) flushStream(stream callResourceClientResponseStre
 				k = textproto.CanonicalMIMEHeaderKey(k)
 
 				for _, v := range values {
-					// TODO: Figure out if we should use Set here instead
-					// nolint:gocritic
 					s.w.Header().Add(k, v)
 				}
 			}
