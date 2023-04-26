@@ -7,6 +7,7 @@ import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
+/** @deprecated */
 export type MutableField<T = any> = Field<T>;
 
 type MutableVectorCreator = (buffer?: any[]) => any[];
@@ -65,14 +66,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.first.length;
   }
 
-  addFieldFor(value: unknown, name?: string): MutableField {
+  addFieldFor(value: unknown, name?: string): Field {
     return this.addField({
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
     });
   }
 
-  addField(f: Field | FieldDTO, startLength?: number): MutableField {
+  addField(f: Field | FieldDTO, startLength?: number): Field {
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
@@ -98,7 +99,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       name = `Field ${this.fields.length + 1}`;
     }
 
-    const field: MutableField = {
+    const field: Field = {
       ...f,
       name,
       type,

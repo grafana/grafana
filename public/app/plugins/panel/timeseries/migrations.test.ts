@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { PanelModel, FieldConfigSource, FieldMatcherID } from '@grafana/data';
+import { PanelModel, FieldConfigSource, FieldMatcherID, ReducerID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 import { graphPanelChangedHandler } from './migrations';
@@ -143,6 +143,116 @@ describe('Graph Migrations', () => {
       const panel = {} as PanelModel;
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.options.legend.width).toBe(200);
+    });
+
+    test('hide allZeros', () => {
+      const old = {
+        angular: {
+          legend: {
+            show: true,
+            values: false,
+            min: false,
+            max: false,
+            current: false,
+            total: false,
+            avg: false,
+            hideZero: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.overrides).toHaveLength(1);
+      expect(panel.fieldConfig.overrides[0].matcher.options.reducer).toBe(ReducerID.allIsZero);
+      expect(panel.fieldConfig.overrides).toMatchInlineSnapshot(`
+        [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0,
+              },
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false,
+                },
+              },
+            ],
+          },
+        ]
+      `);
+    });
+
+    test('hide allZeros allNulls', () => {
+      const old = {
+        angular: {
+          legend: {
+            show: true,
+            values: false,
+            min: false,
+            max: false,
+            current: false,
+            total: false,
+            avg: false,
+            hideEmpty: true,
+            hideZero: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.overrides).toHaveLength(2);
+      expect(panel.fieldConfig.overrides).toMatchInlineSnapshot(`
+        [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0,
+              },
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false,
+                },
+              },
+            ],
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsNull",
+                "value": 0,
+              },
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false,
+                },
+              },
+            ],
+          },
+        ]
+      `);
     });
   });
 

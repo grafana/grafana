@@ -12,7 +12,6 @@ lokiLive,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
-k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
 newTraceViewHeader,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
@@ -63,7 +62,7 @@ prometheusResourceBrowserCache,alpha,@grafana/observability-metrics,false,false,
 influxdbBackendMigration,alpha,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,alpha,@grafana/grafana-authnz-team,false,false,false,false
 prometheusDataplane,stable,@grafana/observability-metrics,false,false,false,false
-lokiMetricDataplane,alpha,@grafana/observability-logs,false,false,false,false
+lokiMetricDataplane,stable,@grafana/observability-logs,false,false,false,false
 dataplaneFrontendFallback,stable,@grafana/observability-metrics,false,false,false,true
 disableSSEDataplane,alpha,@grafana/observability-metrics,false,false,false,false
 alertStateHistoryLokiSecondary,alpha,@grafana/alerting-squad,false,false,false,false

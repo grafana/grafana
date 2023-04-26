@@ -75,7 +75,7 @@ const dataSources = {
 };
 
 const ui = {
-  confirmButton: byRole('button', { name: /Confirm Modal Danger Button/ }),
+  confirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   resetButton: byRole('button', { name: /Reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   configInput: byLabelText<HTMLTextAreaElement>(/Configuration/),
