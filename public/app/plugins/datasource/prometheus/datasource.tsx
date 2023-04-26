@@ -301,6 +301,15 @@ export class PrometheusDatasource
     ); // toPromise until we change getTagValues, getLabelNames to Observable
   }
 
+  replaceNestedQuery(query: string, request: DataQueryRequest<PromQuery>): string {
+    return query.replace(/\#([A-Z])/g, (match, g1) => {
+      let replaceTarget = request.targets.find((t) => {
+        return t.refId === g1;
+      });
+      return replaceTarget ? replaceTarget.expr : match;
+    });
+  }
+
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -422,6 +431,11 @@ export class PrometheusDatasource
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
     const processedTargets: PromQuery[] = [];
+
+    console.log('before', target.expr);
+    target.expr = this.replaceNestedQuery(target.expr, request);
+    console.log('after', target.expr);
+
     const processedTarget = {
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
@@ -594,6 +608,7 @@ export class PrometheusDatasource
   }
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
+    console.log('createQuery');
     const query: PromQueryRequest = {
       hinting: target.hinting,
       instant: target.instant,
@@ -1090,6 +1105,8 @@ export class PrometheusDatasource
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
+    console.log('interpolateVariablesInQueries');
+
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
@@ -1251,6 +1268,8 @@ export class PrometheusDatasource
 
   // Used when running queries trough backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
+    console.log('target', target);
+    console.log('scopedVars', scopedVars);
     const variables = cloneDeep(scopedVars);
 
     // We want to interpolate these variables on backend
@@ -1273,6 +1292,7 @@ export class PrometheusDatasource
   }
 
   interpolateString(string: string) {
+    console.log('interpolateString');
     return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
   }
 
