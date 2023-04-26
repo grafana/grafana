@@ -2,6 +2,7 @@ package signature
 
 import (
 	"context"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -212,29 +213,50 @@ func TestCalculate(t *testing.T) {
 	})
 
 	t.Run("Signature verification should work with any path separator", func(t *testing.T) {
-		var toSlashUnix = newToSlash('/')
-		var toSlashWindows = newToSlash('\\')
+		const basePath = "../testdata/app-with-child/dist"
 
-		for _, tc := range []struct {
-			name    string
-			sep     string
-			toSlash func(string) string
+		platformWindows := fsPlatform{separator: '\\'}
+		platformUnix := fsPlatform{separator: '/'}
+
+		type testCase struct {
+			name      string
+			platform  fsPlatform
+			fsFactory func() (plugins.FS, error)
+		}
+		var testCases []testCase
+		for _, fsFactory := range []struct {
+			name string
+			f    func() (plugins.FS, error)
 		}{
-			{"unix", "/", toSlashUnix},
-			{"windows", "\\", toSlashWindows},
+			{"local fs", func() (plugins.FS, error) {
+				return plugins.NewLocalFS(basePath), nil
+			}},
+			{"static fs", func() (plugins.FS, error) {
+				return plugins.NewStaticFS(plugins.NewLocalFS(basePath))
+			}},
 		} {
+			testCases = append(testCases, []testCase{
+				{"unix " + fsFactory.name, platformUnix, fsFactory.f},
+				{"windows " + fsFactory.name, platformWindows, fsFactory.f},
+			}...)
+		}
+
+		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				// Replace toSlash for cross-platform testing
 				oldToSlash := toSlash
+				oldFromSlash := fromSlash
 				t.Cleanup(func() {
 					toSlash = oldToSlash
+					fromSlash = oldFromSlash
 				})
-				toSlash = tc.toSlash
-
-				basePath := "../testdata/app-with-child/dist"
+				toSlash = tc.platform.toSlashFunc()
+				fromSlash = tc.platform.fromSlashFunc()
 
 				s := ProvideService(&config.Cfg{}, keystore.ProvideService(kvstore.NewFakeKVStore()))
-				fs, err := newPathSeparatorOverrideFS(tc.sep, plugins.NewLocalFS(basePath))
+				pfs, err := tc.fsFactory()
+				require.NoError(t, err)
+				pfs, err = newPathSeparatorOverrideFS(string(tc.platform.separator), pfs)
 				require.NoError(t, err)
 				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -248,7 +270,7 @@ func TestCalculate(t *testing.T) {
 							Version: "%VERSION%",
 						},
 					},
-					FS: fs,
+					FS: pfs,
 				})
 				require.NoError(t, err)
 				require.Equal(t, plugins.Signature{
@@ -261,20 +283,35 @@ func TestCalculate(t *testing.T) {
 	})
 }
 
-// newToSlash returns a new function that acts as filepath.ToSlash but for the specified os-separator.
+type fsPlatform struct {
+	separator rune
+}
+
+// toSlashFunc returns a new function that acts as filepath.ToSlash but for the specified os-separator.
 // This can be used to test filepath.ToSlash-dependant code cross-platform.
-func newToSlash(sep rune) func(string) string {
+func (p fsPlatform) toSlashFunc() func(string) string {
 	return func(path string) string {
-		if sep == '/' {
+		if p.separator == '/' {
 			return path
 		}
-		return strings.ReplaceAll(path, string(sep), "/")
+		return strings.ReplaceAll(path, string(p.separator), "/")
 	}
 }
 
-func TestNewToSlash(t *testing.T) {
+// fromSlashFunc returns a new function that acts as filepath.FromSlash but for the specified os-separator.
+// This can be used to test filepath.FromSlash-dependant code cross-platform.
+func (p fsPlatform) fromSlashFunc() func(string) string {
+	return func(path string) string {
+		if p.separator == '/' {
+			return path
+		}
+		return strings.ReplaceAll(path, "/", string(p.separator))
+	}
+}
+
+func TestFsPlatform(t *testing.T) {
 	t.Run("unix", func(t *testing.T) {
-		toSlashUnix := newToSlash('/')
+		toSlashUnix := fsPlatform{'/'}.toSlashFunc()
 		require.Equal(t, "folder", toSlashUnix("folder"))
 		require.Equal(t, "/folder", toSlashUnix("/folder"))
 		require.Equal(t, "/folder/file", toSlashUnix("/folder/file"))
@@ -282,7 +319,7 @@ func TestNewToSlash(t *testing.T) {
 	})
 
 	t.Run("windows", func(t *testing.T) {
-		toSlashWindows := newToSlash('\\')
+		toSlashWindows := fsPlatform{'\\'}.toSlashFunc()
 		require.Equal(t, "folder", toSlashWindows("folder"))
 		require.Equal(t, "C:/folder", toSlashWindows("C:\\folder"))
 		require.Equal(t, "folder/file.exe", toSlashWindows("folder\\file.exe"))
@@ -320,6 +357,10 @@ func (f fsPathSeparatorFiles) Files() ([]string, error) {
 	return files, nil
 }
 
+func (f fsPathSeparatorFiles) Open(name string) (fs.File, error) {
+	return f.FS.Open(strings.ReplaceAll(name, f.separator, string(filepath.Separator)))
+}
+
 func TestFSPathSeparatorFiles(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -329,13 +370,13 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 		{"windows", "\\"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			fs, err := newPathSeparatorOverrideFS(
+			pfs, err := newPathSeparatorOverrideFS(
 				"/", plugins.NewInMemoryFS(
 					map[string][]byte{"a": nil, strings.Join([]string{"a", "b", "c"}, tc.sep): nil},
 				),
 			)
 			require.NoError(t, err)
-			files, err := fs.Files()
+			files, err := pfs.Files()
 			require.NoError(t, err)
 			exp := []string{"a", strings.Join([]string{"a", "b", "c"}, tc.sep)}
 			sort.Strings(files)
