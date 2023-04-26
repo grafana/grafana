@@ -64,7 +64,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = true
 		features := featuremgmt.WithFeatures()
 
 		service := &Service{
@@ -451,7 +450,6 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	folderService := &Service{
 		cfg:                  cfg,
 		store:                nestedFolderStore,
@@ -1033,7 +1031,6 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 
 	// nothing enabled yet
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	return &Service{
 		cfg:                  cfg,
 		log:                  log.New("test-folder-service"),

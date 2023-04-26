@@ -99,7 +99,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   async componentDidUpdate() {
     const { options } = this.props;
 
-    if (this.state.dataSource && options.dataSource.uid !== this.state.dataSource?.uid) {
+    const currentDS = await getDataSourceSrv().get(options.dataSource);
+    if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
       this.setNewQueriesAndDatasource(options);
     }
   }

@@ -61,7 +61,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   it('displays a search input', async () => {
     render(<BrowseDashboardsPage {...props} />);
-    expect(await screen.findByPlaceholderText('Search box')).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
   });
 
   it('displays the filters and hides the actions initially', async () => {
