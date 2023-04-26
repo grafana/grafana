@@ -908,7 +908,6 @@ func TestProcessBuckets(t *testing.T) {
 	})
 
 	t.Run("Histograms", func(t *testing.T) {
-
 		t.Run("Histogram simple", func(t *testing.T) {
 			query := []byte(`
 	[
@@ -2235,7 +2234,6 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average value")
 		})
-
 	})
 
 	t.Run("Avg", func(t *testing.T) {
@@ -2702,7 +2700,6 @@ func TestProcessBuckets(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
-
 	})
 
 	t.Run("Trim edges", func(t *testing.T) {
@@ -2748,10 +2745,8 @@ func TestProcessBuckets(t *testing.T) {
 
 			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-
 			experimental.CheckGoldenJSONResponse(t, "testdata", "trimedges_string.golden", &queryRes, *update)
 		})
-
 	})
 
 	t.Run("Bucket script", func(t *testing.T) {
