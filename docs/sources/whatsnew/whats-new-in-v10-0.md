@@ -209,7 +209,7 @@ Notably, we've added the following new features that streamline the log context 
 3. An **Open in split view** button to execute the context query for a log entry in a split screen in the Explore view.
 4. Only for Loki: A quick filter menu that lets you easily refine the context query by selecting and removing labels.
 
-{{< figure src="/media/docs/grafana/log-context-new-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
+{{< figure src="/media/docs/grafana/log-context-loki-new-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
 
 These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
 
