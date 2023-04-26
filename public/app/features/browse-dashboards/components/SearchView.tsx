@@ -12,10 +12,9 @@ import { setItemSelectionState } from '../state';
 interface SearchViewProps {
   height: number;
   width: number;
-  folderUID: string | undefined;
 }
 
-export function SearchView({ folderUID, width, height }: SearchViewProps) {
+export function SearchView({ width, height }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
 
