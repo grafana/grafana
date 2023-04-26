@@ -258,7 +258,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 						`| extend tags = bag_merge(customDimensions, customMeasurements)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -272,7 +272,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 						`| extend tags = bag_merge(customDimensions, customMeasurements)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -317,7 +317,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 						`| extend tags = bag_merge(customDimensions, customMeasurements)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -331,7 +331,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
 						`| extend tags = bag_merge(customDimensions, customMeasurements)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -374,7 +374,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -389,7 +389,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -435,7 +435,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -450,7 +450,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -499,7 +499,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| where appId in ("test-app-id")` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -515,7 +515,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| where appId in ("test-app-id")` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -564,7 +564,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| where appId !in ("test-app-id")` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -580,7 +580,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| where appId !in ("test-app-id")` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -629,7 +629,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| where appId !in ("test-app-id")| where clientId in ("test-client-id")` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -645,7 +645,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| where appId !in ("test-app-id")| where clientId in ("test-client-id")` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -688,7 +688,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -703,7 +703,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},
@@ -749,7 +749,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
@@ -764,7 +764,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
 						`| extend error = iff(itemType == "exceptions", true, false)` +
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-						`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 				},
 			},

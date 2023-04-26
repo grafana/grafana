@@ -704,8 +704,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)`
 	propertiesQuery := fmt.Sprintf(`| extend tags = %s`, propertiesFunc)
 	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
-		`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+		`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 		`| order by startTime asc`
-
 	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + errorProperty + filtersClause + projectClause
 }
