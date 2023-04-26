@@ -60,6 +60,12 @@ function getStyles(theme: GrafanaTheme2) {
     logo: css`
       width: 32px;
       height: 32px;
+      padding-right: ${theme.spacing(1.5)};
+
+      > img {
+        width: 32px;
+        height: 32px;
+      }
     `,
     name: css`
       color: ${theme.colors.text.primary};
