@@ -92,6 +92,8 @@ datasources:
       incrementalQuerying: true
       incrementalQueryOverlapWindow: 10m
       cacheLevel: 'High'
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
@@ -102,12 +104,6 @@ datasources:
         - name: traceID
           url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
 ```
-
-## Query the data source
-
-The Prometheus query editor includes a code editor and visual query builder.
-
-For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## View Grafana metrics with Prometheus
 

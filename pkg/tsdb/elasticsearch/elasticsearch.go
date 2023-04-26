@@ -108,6 +108,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			timeInterval = ""
 		}
 
+		index, ok := jsonData["index"].(string)
+		if !ok {
+			index = ""
+		}
+		if index == "" {
+			index = settings.Database
+		}
+
 		var maxConcurrentShardRequests float64
 
 		switch v := jsonData["maxConcurrentShardRequests"].(type) {
@@ -142,7 +150,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			ID:                         settings.ID,
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
-			Database:                   settings.Database,
+			Database:                   index,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,

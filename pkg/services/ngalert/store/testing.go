@@ -150,12 +150,13 @@ func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, fs *folde
 	quotaService := quotatest.New(false, nil)
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-	dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+	require.NoError(tb, err)
+
+	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, fs, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 	)
-
 	require.NoError(tb, err)
 
 	return dashboardService, dashboardStore
