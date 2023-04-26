@@ -64,7 +64,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
     if (dashboard && annotations?.length > 0) {
       dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
 
-      // Trigger a full dashbaord refresh when annotations change
+      // Trigger a full dashboard refresh when annotations change
       if (dashboardRefreshDebouncer == null) {
         dashboardRefreshDebouncer = setTimeout(() => {
           dashboardRefreshDebouncer = null;
@@ -423,6 +423,7 @@ export function graphToTimeseriesOptions(angular: any): {
           },
         },
       };
+
       if (region.fill) {
         annotations.push(anno);
       } else if (region.line) {
