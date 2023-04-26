@@ -796,7 +796,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/FolderChildrenCounts"
+              "$ref": "#/components/schemas/ChildrenCounts"
             }
           }
         },
@@ -2952,6 +2952,13 @@
         },
         "type": "object"
       },
+      "ChildrenCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "type": "object"
+      },
       "ConfFloat64": {
         "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
         "format": "double",
@@ -4658,13 +4665,6 @@
             "format": "int64",
             "type": "integer"
           }
-        },
-        "type": "object"
-      },
-      "FolderChildrenCounts": {
-        "additionalProperties": {
-          "format": "int64",
-          "type": "integer"
         },
         "type": "object"
       },
@@ -16759,7 +16759,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "operationId": "getFolders",
         "parameters": [
           {
