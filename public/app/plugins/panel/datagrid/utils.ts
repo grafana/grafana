@@ -72,16 +72,16 @@ interface CellRange {
   height: number;
 }
 
-export const updateSnapshot = async (
+export async function updateSnapshot(
   frame: DataFrame,
   updateData?: (frames: DataFrame[]) => Promise<boolean>
-): Promise<boolean> => {
+): Promise<boolean> {
   if (updateData && isDatagridEditEnabled()) {
     return await updateData([frame]);
   }
 
   return false;
-};
+}
 
 export const getTextWidth = (text: string, isHeader = false): number => {
   const context = TEXT_CANVAS.getContext('2d');
