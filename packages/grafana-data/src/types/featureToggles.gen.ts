@@ -38,6 +38,7 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
+  validateDashboardsOnSave?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   prometheusWideSeries?: boolean;

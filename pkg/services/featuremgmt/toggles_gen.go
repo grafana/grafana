@@ -87,6 +87,10 @@ const (
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
 
+	// FlagValidateDashboardsOnSave
+	// Validate dashboard JSON POSTed to api/dashboards/db
+	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
