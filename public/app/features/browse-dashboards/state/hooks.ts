@@ -106,10 +106,10 @@ function createFlatTree(
 function getSelectedItemsForActions(
   selectedItemsState: DashboardTreeSelection,
   childrenByParentUID: Record<string, DashboardViewItem[] | undefined>
-): Omit<DashboardTreeSelection, 'panel'> {
+): Omit<DashboardTreeSelection, 'panel' | '$all'> {
   // Take a copy of the selected items to work with
   // We don't care about panels here, only dashboards and folders can be moved or deleted
-  const result: Omit<DashboardTreeSelection, 'panel'> = {
+  const result = {
     dashboard: { ...selectedItemsState.dashboard },
     folder: { ...selectedItemsState.folder },
   };

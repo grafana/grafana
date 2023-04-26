@@ -9,6 +9,7 @@ function createInitialState(): BrowseDashboardsState {
     childrenByParentUID: {},
     openFolders: {},
     selectedItems: {
+      $all: false,
       dashboard: {},
       folder: {},
       panel: {},
