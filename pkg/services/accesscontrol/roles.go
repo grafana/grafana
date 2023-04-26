@@ -188,10 +188,6 @@ var (
 			},
 			{
 				Action: ActionSettingsWrite,
-				Scope:  ScopeSettingsAuth,
-			},
-			{
-				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsSAML,
 			},
 		},
