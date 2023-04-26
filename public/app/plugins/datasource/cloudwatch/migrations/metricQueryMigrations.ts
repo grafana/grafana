@@ -1,7 +1,5 @@
 import deepEqual from 'fast-deep-equal';
 
-import { config } from '@grafana/runtime';
-
 import { CloudWatchMetricsQuery } from '../types';
 
 // Call this function to migrate queries from within the plugin.
@@ -21,7 +19,7 @@ const aliasPatterns: Record<string, string> = {
 };
 
 export function migrateAliasPatterns(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
-  if (config.featureToggles.cloudWatchDynamicLabels && !query.hasOwnProperty('label')) {
+  if (!query.hasOwnProperty('label')) {
     const newQuery = { ...query };
     if (!query.hasOwnProperty('label')) {
       const regex = /{{\s*(.+?)\s*}}/g;
