@@ -314,7 +314,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			dataResponse.Error = err
 			return dataResponse
 		}
-		linkTitle := "View E2E transaction in Application Insights"
+		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
 
 		if query.TraceExploreQuery != "" {
@@ -332,7 +332,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 				queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 			}
 			AddCustomDataLink(*frame, data.DataLink{
-				Title: "Explore Trace in Azure Portal",
+				Title: "Explore Trace: ${__data.fields.traceID}",
 				URL:   "",
 				Internal: &data.InternalDataLink{
 					DatasourceUID:  dsInfo.DatasourceUID,
