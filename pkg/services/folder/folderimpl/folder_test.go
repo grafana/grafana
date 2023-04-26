@@ -359,41 +359,94 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	}
 
 	t.Run("Should get descendant counts", func(t *testing.T) {
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-
 		ac := acmock.New()
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		_, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
-		require.NoError(t, err)
-
 		depth := 5
-		ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCounts", createCmd)
+		t.Run("With nested folder feature flag on", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-		parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
-		require.NoError(t, err)
-		subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
-		require.NoError(t, err)
-		_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, "prod")
-		_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, "prod")
+			_, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
+			require.NoError(t, err)
 
-		countCmd := folder.GetDescendantCountsQuery{
-			UID:          &ancestorUIDs[0],
-			OrgID:        orgID,
-			SignedInUser: &signedInUser,
-		}
-		m, err := serviceWithFlagOn.GetDescendantCounts(context.Background(), &countCmd)
-		require.NoError(t, err)
-		require.Equal(t, m["folder"], int64(depth-1))
-		require.Equal(t, m["dashboard"], int64(2))
+			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOn", createCmd)
 
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-			for _, uid := range ancestorUIDs {
-				err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
-				assert.NoError(t, err)
+			parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+			require.NoError(t, err)
+			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+			require.NoError(t, err)
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, "prod")
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, "prod")
+
+			countCmd := folder.GetDescendantCountsQuery{
+				UID:          &ancestorUIDs[0],
+				OrgID:        orgID,
+				SignedInUser: &signedInUser,
 			}
+			m, err := serviceWithFlagOn.GetDescendantCounts(context.Background(), &countCmd)
+			require.NoError(t, err)
+			require.Equal(t, m["folder"], int64(depth-1))
+			require.Equal(t, m["dashboard"], int64(2))
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+				for _, uid := range ancestorUIDs {
+					err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+					assert.NoError(t, err)
+				}
+			})
+		})
+		t.Run("With nested folder feature flag off", func(t *testing.T) {
+			featuresFlagOff := featuremgmt.WithFeatures()
+			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+			require.NoError(t, err)
+			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+
+			serviceWithFlagOff := &Service{
+				cfg:                  cfg,
+				log:                  log.New("test-folder-service"),
+				dashboardStore:       dashStore,
+				dashboardFolderStore: folderStore,
+				store:                nestedFolderStore,
+				features:             featuresFlagOff,
+				bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+				db:                   db,
+				registry:             make(map[string]folder.RegistryService),
+			}
+
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+			_, err = service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff, folderPermissions, dashboardPermissions, ac, serviceWithFlagOff)
+			require.NoError(t, err)
+
+			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOff", createCmd)
+
+			parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+			require.NoError(t, err)
+			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+			require.NoError(t, err)
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, "prod")
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, "prod")
+
+			countCmd := folder.GetDescendantCountsQuery{
+				UID:          &ancestorUIDs[0],
+				OrgID:        orgID,
+				SignedInUser: &signedInUser,
+			}
+			m, err := serviceWithFlagOff.GetDescendantCounts(context.Background(), &countCmd)
+			require.NoError(t, err)
+			require.Equal(t, m["folder"], int64(0))
+			require.Equal(t, m["dashboard"], int64(1))
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+				for _, uid := range ancestorUIDs {
+					err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+					assert.NoError(t, err)
+				}
+			})
 		})
 	})
 
@@ -424,7 +477,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				guardian.New = origNewGuardian
 			})
 		})
-		t.Run("With feature flag unset", func(t *testing.T) {
+		t.Run("With nested folder feature flag off", func(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 			require.NoError(t, err)
