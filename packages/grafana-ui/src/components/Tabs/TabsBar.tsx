@@ -17,7 +17,7 @@ export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, clas
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx({ [styles.tabsBorderBottom]: !hideBorder }, styles.tabsScroll, className)} ref={ref}>
+    <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref}>
       <div className={styles.tabs} role="tablist">
         {children}
       </div>
@@ -26,11 +26,12 @@ export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, clas
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabsBorderBottom: css`
+  tabsWrapper: css`
     border-bottom: 1px solid ${theme.colors.border.weak};
-  `,
-  tabsScroll: css`
     overflow-x: auto;
+  `,
+  noBorder: css`
+    border-bottom: 0;
   `,
   tabs: css`
     position: relative;
