@@ -26,7 +26,6 @@ import {
 } from '../state';
 import { DataSourceRights } from '../types';
 
-import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
 import { DataSourceLoadError } from './DataSourceLoadError';
@@ -101,8 +100,6 @@ export function EditDataSourceView({
   dataSourceRights,
   exploreUrl,
   onDelete,
-  onDefaultChange,
-  onNameChange,
   onOptionsChange,
   onTest,
   onUpdate,
@@ -112,10 +109,6 @@ export function EditDataSourceView({
   const hasDataSource = dataSource.id > 0;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
-
-  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
-  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
-  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -152,15 +145,6 @@ export function EditDataSourceView({
       {dataSourceMeta.state && <DataSourcePluginState state={dataSourceMeta.state} />}
 
       <CloudInfoBox dataSource={dataSource} />
-
-      <BasicSettings
-        dataSourceName={dataSource.name}
-        isDefault={dataSource.isDefault}
-        onDefaultChange={onDefaultChange}
-        onNameChange={onNameChange}
-        alertingSupported={alertingSupported}
-        disabled={readOnly || !hasWriteRights}
-      />
 
       {plugin && (
         <DataSourcePluginContextProvider instanceSettings={dsi}>
