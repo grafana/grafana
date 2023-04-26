@@ -13,6 +13,7 @@ import { parseRouteParams } from '../search/utils';
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions';
 import { BrowseView } from './components/BrowseView';
+import { CreateNewButton } from './components/CreateNewButton';
 import { SearchView } from './components/SearchView';
 
 export interface BrowseDashboardsPageRouteParams {
@@ -36,7 +37,7 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
 
   return (
-    <Page navId="dashboards/browse" pageNav={navModel}>
+    <Page navId="dashboards/browse" pageNav={navModel} actions={<CreateNewButton inFolder={folderUID} />}>
       <Page.Contents className={styles.pageContents}>
         <BrowseActions />
 
