@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import React, { memo, useMemo } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject } from '@grafana/runtime';
-import { Input, useStyles2 } from '@grafana/ui';
+import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { buildNavModel } from '../folders/state/navModel';
-import { parseRouteParams } from '../search/utils';
+import { useSearchStateManager } from '../search/state/SearchStateManager';
+import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
 import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
@@ -27,13 +27,22 @@ export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRo
 
 // New Browse/Manage/Search Dashboards views for nested folders
 
-const BrowseDashboardsPage = memo(({ match, location }: Props) => {
-  const styles = useStyles2(getStyles);
+const BrowseDashboardsPage = memo(({ match }: Props) => {
   const { uid: folderUID } = match.params;
 
-  const searchState = useMemo(() => {
-    return parseRouteParams(locationSearchToObject(location.search));
-  }, [location.search]);
+  const styles = useStyles2(getStyles);
+  const [searchState, stateManager] = useSearchStateManager();
+  const isSearching = stateManager.hasSearchFilters();
+
+  useEffect(() => stateManager.initStateFromUrl(folderUID), [folderUID, stateManager]);
+
+  useEffect(() => {
+    // Clear the search results when we leave SearchView to prevent old results flashing
+    // when starting a new search
+    if (!isSearching && searchState.result) {
+      stateManager.setState({ result: undefined, includePanels: undefined });
+    }
+  }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
@@ -42,15 +51,20 @@ const BrowseDashboardsPage = memo(({ match, location }: Props) => {
   return (
     <Page navId="dashboards/browse" pageNav={navModel}>
       <Page.Contents className={styles.pageContents}>
-        <Input placeholder="Search box" />
+        <FilterInput
+          placeholder={getSearchPlaceholder(searchState.includePanels)}
+          value={searchState.query}
+          escapeRegex={false}
+          onChange={(e) => stateManager.onQueryChange(e)}
+        />
 
         {hasSelection ? <BrowseActions /> : <BrowseFilters />}
 
         <div className={styles.subView}>
           <AutoSizer>
             {({ width, height }) =>
-              searchState.query ? (
-                <SearchView width={width} height={height} folderUID={folderUID} />
+              isSearching ? (
+                <SearchView width={width} height={height} />
               ) : (
                 <BrowseView width={width} height={height} folderUID={folderUID} />
               )
