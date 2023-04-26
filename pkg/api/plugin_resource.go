@@ -111,12 +111,15 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 		Body:          body,
 	}
 
-	stream, err := resourcestream.NewHTTPResponseStreamer(hs.log, hs.pluginClient, w)
-	if err != nil {
-		return fmt.Errorf("failed to create resource http response streamer: %w", err)
-	}
+	// stream, err := resourcestream.NewHTTPResponseStreamer(hs.log, hs.pluginClient, w)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create resource http response streamer: %w", err)
+	// }
 
-	return stream.CallResource(req.Context(), crReq)
+	// return stream.CallResource(req.Context(), crReq)
+
+	httpSender := resourcestream.NewHTTPResponseSender(w)
+	return hs.pluginClient.CallResource(req.Context(), crReq, httpSender)
 }
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
