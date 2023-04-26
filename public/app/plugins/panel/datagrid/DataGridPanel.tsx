@@ -19,7 +19,7 @@ import '@glideapps/glide-data-grid/dist/index.css';
 import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { RenameColumnCell } from './components/RenameColumnCell';
-import { isDatagridEditEnabled } from './featureFlagUtils';
+import { isDatagridEnabled } from './featureFlagUtils';
 import { PanelOptions } from './panelcfg.gen';
 import { DatagridActionType, datagridReducer, initialState } from './state';
 import {
@@ -233,6 +233,10 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
+  if (!isDatagridEnabled()) {
+    return <PanelDataErrorView panelId={id} message="Datagrid is not enabled" fieldConfig={fieldConfig} data={data} />;
+  }
+
   if (!document.getElementById('portal')) {
     const portal = document.createElement('div');
     portal.id = 'portal';
@@ -255,31 +259,31 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
         smoothScrollX
         smoothScrollY
         overscrollY={50}
-        onCellEdited={isDatagridEditEnabled() ? onCellEdited : undefined}
-        getCellsForSelection={isDatagridEditEnabled() ? true : undefined}
-        showSearch={isDatagridEditEnabled() ? toggleSearch : false}
+        onCellEdited={isDatagridEnabled() ? onCellEdited : undefined}
+        getCellsForSelection={isDatagridEnabled() ? true : undefined}
+        showSearch={isDatagridEnabled() ? toggleSearch : false}
         onSearchClose={onSearchClose}
-        onPaste={isDatagridEditEnabled() ? true : undefined}
+        onPaste={isDatagridEnabled() ? true : undefined}
         gridSelection={gridSelection}
-        onGridSelectionChange={isDatagridEditEnabled() ? onGridSelectionChange : undefined}
-        onRowAppended={isDatagridEditEnabled() ? addNewRow : undefined}
-        onDelete={isDatagridEditEnabled() ? onDeletePressed : undefined}
-        rowMarkers={isDatagridEditEnabled() ? ROW_MARKER_BOTH : ROW_MARKER_NUMBER}
+        onGridSelectionChange={isDatagridEnabled() ? onGridSelectionChange : undefined}
+        onRowAppended={isDatagridEnabled() ? addNewRow : undefined}
+        onDelete={isDatagridEnabled() ? onDeletePressed : undefined}
+        rowMarkers={isDatagridEnabled() ? ROW_MARKER_BOTH : ROW_MARKER_NUMBER}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
-        onCellContextMenu={isDatagridEditEnabled() ? onCellContextMenu : undefined}
-        onHeaderContextMenu={isDatagridEditEnabled() ? onHeaderContextMenu : undefined}
-        onHeaderMenuClick={isDatagridEditEnabled() ? onHeaderMenuClick : undefined}
+        onCellContextMenu={isDatagridEnabled() ? onCellContextMenu : undefined}
+        onHeaderContextMenu={isDatagridEnabled() ? onHeaderContextMenu : undefined}
+        onHeaderMenuClick={isDatagridEnabled() ? onHeaderMenuClick : undefined}
         trailingRowOptions={TRAILING_ROW_OPTIONS}
         rightElement={
-          isDatagridEditEnabled() ? (
+          isDatagridEnabled() ? (
             <AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />
           ) : null
         }
         rightElementProps={RIGHT_ELEMENT_PROPS}
         freezeColumns={columnFreezeIndex}
-        onRowMoved={isDatagridEditEnabled() ? onRowMove : undefined}
-        onColumnMoved={isDatagridEditEnabled() ? onColumnMove : undefined}
+        onRowMoved={isDatagridEnabled() ? onRowMove : undefined}
+        onColumnMoved={isDatagridEnabled() ? onColumnMove : undefined}
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu

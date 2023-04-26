@@ -3,7 +3,7 @@ import { CompactSelection, GridCell, GridCellKind, GridSelection, Theme } from '
 
 import { DataFrame, Field, GrafanaTheme2, FieldType } from '@grafana/data';
 
-import { isDatagridEditEnabled } from './featureFlagUtils';
+import { isDatagridEnabled } from './featureFlagUtils';
 
 const HEADER_FONT_FAMILY = '600 13px Inter';
 const CELL_FONT_FAMILY = '400 13px Inter';
@@ -76,7 +76,7 @@ export async function updateSnapshot(
   frame: DataFrame,
   updateData?: (frames: DataFrame[]) => Promise<boolean>
 ): Promise<boolean> {
-  if (updateData && isDatagridEditEnabled()) {
+  if (updateData && isDatagridEnabled()) {
     return await updateData([frame]);
   }
 
@@ -204,7 +204,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Number,
         data: value ? value : 0,
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: isDatagridEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -212,7 +212,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: isDatagridEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };
@@ -220,7 +220,7 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
       return {
         kind: GridCellKind.Text,
         data: value ? value : '',
-        allowOverlay: isDatagridEditEnabled()! && !hasGridSelection,
+        allowOverlay: isDatagridEnabled()! && !hasGridSelection,
         readonly: false,
         displayData: value !== null && value !== undefined ? value.toString() : '',
       };

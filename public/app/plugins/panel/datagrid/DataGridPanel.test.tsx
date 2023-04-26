@@ -8,7 +8,7 @@ import * as utils from './utils';
 
 jest.mock('./featureFlagUtils', () => {
   return {
-    isDatagridEditEnabled: jest.fn().mockReturnValue(true),
+    isDatagridEnabled: jest.fn().mockReturnValue(true),
   };
 });
 
