@@ -43,7 +43,6 @@ const meta: Meta = {
       control: 'select',
       options: ['inherit', 'initial', 'left', 'right', 'center', 'justify', undefined],
     },
-    margin: { control: 'text' },
   },
 };
 
@@ -57,6 +56,9 @@ export const Example: Story = () => {
         <h4>h4. Heading</h4>
         <h5>h5. Heading</h5>
         <h6>h6. Heading</h6>
+        <p>This is a paragraph</p>
+        <span>This is a span</span>
+        <legend>This is a legend</legend>
       </StoryExample>
     </VerticalGroup>
   );
@@ -65,7 +67,7 @@ export const Example: Story = () => {
 export const ExperimentalH1: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H1 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <H1 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </H1>
     </div>
@@ -78,12 +80,11 @@ ExperimentalH1.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a H1 component',
-  margin: '100px auto',
 };
 export const ExperimentalH2: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H2 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <H2 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </H2>
     </div>
@@ -96,12 +97,11 @@ ExperimentalH2.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a H2 component',
-  margin: '100px auto',
 };
 export const ExperimentalH3: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H3 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <H3 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </H3>
     </div>
@@ -114,12 +114,11 @@ ExperimentalH3.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a H3 component',
-  margin: '100px auto',
 };
 export const ExperimentalH4: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H4 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <H4 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </H4>
     </div>
@@ -132,12 +131,11 @@ ExperimentalH4.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a H4 component',
-  margin: '100px auto',
 };
 export const ExperimentalH5: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H5 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <H5 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </H5>
     </div>
@@ -150,12 +148,11 @@ ExperimentalH5.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a H5 component',
-  margin: '100px auto',
 };
 export const ExperimentalH6: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H6 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <H6 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </H6>
     </div>
@@ -168,12 +165,11 @@ ExperimentalH6.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a H6 component',
-  margin: '100px auto',
 };
 export const ExperimentalBody: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <P variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} margin={args.margin} {...args}>
+      <P variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </P>
     </div>
@@ -186,18 +182,11 @@ ExperimentalBody.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a P component',
-  margin: '100px auto',
 };
 export const ExperimentalSpan: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <Span
-        variant={args.variant}
-        weight={args.weight}
-        textAlignment={args.textAlignment}
-        margin={args.margin}
-        {...args}
-      >
+      <Span variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </Span>
     </div>
@@ -210,19 +199,12 @@ ExperimentalSpan.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a Span component',
-  margin: '100px auto',
 };
 
 export const ExperimentalLegend: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <Legend
-        variant={args.variant}
-        weight={args.weight}
-        textAlignment={args.textAlignment}
-        margin={args.margin}
-        {...args}
-      >
+      <Legend variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
         {args.children}
       </Legend>
     </div>
@@ -236,7 +218,6 @@ ExperimentalLegend.args = {
   truncate: false,
   color: 'color.error.text',
   children: 'This is a Lengend component',
-  margin: '100px auto',
 };
 
 export default meta;
