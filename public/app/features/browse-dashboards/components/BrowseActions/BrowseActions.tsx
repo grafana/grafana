@@ -6,7 +6,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useSelectedItemsForBackendState } from '../../state';
+import { useActionSelectionState } from '../../state';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -15,15 +15,14 @@ export interface Props {}
 
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
-  const selectedItemsForBackend = useSelectedItemsForBackendState();
-  console.log('selectedItemsForBackend', selectedItemsForBackend);
+  const selectedItems = useActionSelectionState();
 
   const onMove = () => {
     appEvents.publish(
       new ShowModalReactEvent({
         component: MoveModal,
         props: {
-          selectedItems: selectedItemsForBackend,
+          selectedItems,
           onConfirm: (moveTarget: string) => {
             console.log(`MoveModal onConfirm clicked with target ${moveTarget}!`);
           },
@@ -37,7 +36,7 @@ export function BrowseActions() {
       new ShowModalReactEvent({
         component: DeleteModal,
         props: {
-          selectedItems: selectedItemsForBackend,
+          selectedItems,
           onConfirm: () => {
             console.log('DeleteModal onConfirm clicked!');
           },
