@@ -11,7 +11,7 @@ package dashboard
 
 // Resource is the wire representation of Dashboard. (TODO be better)
 type Resource struct {
-	Metadata Metadata
-	Spec Spec
-	Status Status
+	Metadata Metadata `json:"metadata"`
+	Spec Spec `json:"spec"`
+	Status Status `json:"status"`
 }

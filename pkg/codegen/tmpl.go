@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"embed"
+	"strings"
 	"text/template"
 	"time"
 
@@ -15,7 +16,8 @@ var tmpls *template.Template
 
 func init() {
 	base := template.New("codegen").Funcs(template.FuncMap{
-		"now": time.Now,
+		"now":     time.Now,
+		"ToLower": strings.ToLower,
 	})
 	tmpls = template.Must(base.ParseFS(tmplFS, "tmpl/*.tmpl"))
 }

@@ -3,5 +3,5 @@ package {{ .PackageName }}
 // Resource is the wire representation of {{ .KindName }}. (TODO be better)
 type Resource struct {
     {{- range .SubresourceNames }}
-	{{ . }} {{ . }}{{end}}
+	{{ . }} {{ . }} `json:"{{ . | ToLower }}"`{{end}}
 }
