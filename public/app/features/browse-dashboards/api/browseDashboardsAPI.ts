@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { isTruthy } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { FolderDTO } from 'app/types';
+import { DashboardDTO, FolderDTO } from 'app/types';
 
 import { DashboardTreeSelection } from '../types';
 
@@ -46,6 +46,47 @@ export const browseDashboardsAPI = createApi({
       query: (folderUID) => ({
         url: `/folders/${folderUID}?forceDeleteRules=true`,
         method: 'DELETE',
+      }),
+    }),
+    // TODO we can define this return type properly
+    moveDashboard: builder.mutation<
+      unknown,
+      {
+        dashboardUID: string;
+        destinationUID: string;
+      }
+    >({
+      queryFn: async ({ dashboardUID, destinationUID }, _api, _extraOptions, baseQuery) => {
+        const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUID}`);
+
+        const options = {
+          dashboard: fullDash.dashboard,
+          folderUid: destinationUID,
+          overwrite: false,
+        };
+
+        return baseQuery({
+          url: '/dashboards/db',
+          method: 'POST',
+          data: {
+            message: '',
+            ...options,
+          },
+        });
+      },
+    }),
+    // TODO this doesn't return void, find where the correct type is
+    moveFolder: builder.mutation<
+      void,
+      {
+        folderUID: string;
+        destinationUID: string;
+      }
+    >({
+      query: ({ folderUID, destinationUID }) => ({
+        url: `/folders/${folderUID}/move`,
+        method: 'POST',
+        data: { parentUid: destinationUID },
       }),
     }),
     getFolder: builder.query<FolderDTO, string>({
@@ -106,6 +147,12 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
-export const { useDeleteDashboardMutation, useDeleteFolderMutation, useGetFolderQuery, useGetAffectedItemsQuery } =
-  browseDashboardsAPI;
+export const {
+  useDeleteDashboardMutation,
+  useDeleteFolderMutation,
+  useGetFolderQuery,
+  useGetAffectedItemsQuery,
+  useMoveDashboardMutation,
+  useMoveFolderMutation,
+} = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

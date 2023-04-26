@@ -6,7 +6,12 @@ import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useDeleteDashboardMutation, useDeleteFolderMutation } from '../../api/browseDashboardsAPI';
+import {
+  useDeleteDashboardMutation,
+  useDeleteFolderMutation,
+  useMoveDashboardMutation,
+  useMoveFolderMutation,
+} from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state';
 
 import { DeleteModal } from './DeleteModal';
@@ -15,7 +20,7 @@ import { MoveModal } from './MoveModal';
 export interface Props {
   // this is a complete hack to force a full rerender.
   // TODO remove once we move everything to RTK query
-  onActionComplete: () => void;
+  onActionComplete?: () => void;
 }
 
 export function BrowseActions({ onActionComplete }: Props) {
@@ -23,6 +28,8 @@ export function BrowseActions({ onActionComplete }: Props) {
   const selectedItems = useActionSelectionState();
   const [deleteDashboard] = useDeleteDashboardMutation();
   const [deleteFolder] = useDeleteFolderMutation();
+  const [moveFolder] = useMoveFolderMutation();
+  const [moveDashboard] = useMoveDashboardMutation();
   const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
@@ -38,18 +45,37 @@ export function BrowseActions({ onActionComplete }: Props) {
     for (const dashboardUID of selectedDashboards) {
       await deleteDashboard(dashboardUID).unwrap();
     }
-    onActionComplete();
+    onActionComplete?.();
   };
 
-  const onMove = () => {
+  const onMove = async (destinationUID: string) => {
+    // Move all the folders sequentially
+    // TODO error handling here
+    for (const folderUID of selectedFolders) {
+      await moveFolder({
+        folderUID,
+        destinationUID,
+      }).unwrap();
+    }
+
+    // Move all the dashboards sequentially
+    // TODO error handling here
+    for (const dashboardUID of selectedDashboards) {
+      await moveDashboard({
+        dashboardUID,
+        destinationUID,
+      }).unwrap();
+    }
+    onActionComplete?.();
+  };
+
+  const showMoveModal = () => {
     appEvents.publish(
       new ShowModalReactEvent({
         component: MoveModal,
         props: {
           selectedItems,
-          onConfirm: (moveTarget: string) => {
-            console.log(`MoveModal onConfirm clicked with target ${moveTarget}!`);
-          },
+          onConfirm: onMove,
         },
       })
     );
@@ -69,7 +95,7 @@ export function BrowseActions({ onActionComplete }: Props) {
 
   return (
     <div className={styles.row} data-testid="manage-actions">
-      <Button onClick={onMove} variant="secondary">
+      <Button onClick={showMoveModal} variant="secondary">
         Move
       </Button>
       <Button onClick={showDeleteModal} variant="destructive">
