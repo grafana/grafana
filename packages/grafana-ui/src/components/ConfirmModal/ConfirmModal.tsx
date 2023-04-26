@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 
 import { HorizontalGroup, Input } from '..';
 import { useStyles2 } from '../../themes';
@@ -86,7 +85,7 @@ export const ConfirmModal = ({
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
-        {body}
+        {<div aria-live="polite">{body}</div>}
         {description ? <div className={styles.modalDescription}>{description}</div> : null}
         {confirmationText ? (
           <div className={styles.modalConfirmationInput}>
@@ -105,7 +104,7 @@ export const ConfirmModal = ({
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}
-          aria-label={selectors.pages.ConfirmModal.delete}
+          aria-label={confirmText}
         >
           {confirmText}
         </Button>
