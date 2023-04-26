@@ -1,9 +1,9 @@
 import { rest } from 'msw';
 import { SetupServer } from 'msw/node';
 
-import { previewTemplateUrl, TemplatesPreviewResponse } from '../api/templateApi';
+import { previewTemplateUrl, TemplatePreviewResponse } from '../api/templateApi';
 
-export function mockPreviewTemplateResponse(server: SetupServer, response: TemplatesPreviewResponse) {
+export function mockPreviewTemplateResponse(server: SetupServer, response: TemplatePreviewResponse) {
   server.use(rest.post(previewTemplateUrl, (req, res, ctx) => res(ctx.status(200), ctx.json(response))));
 }
 

@@ -11,7 +11,7 @@ export interface TemplatePreviewErrors {
   message: string;
   kind: string;
 }
-export interface TemplatesPreviewResponse {
+export interface TemplatePreviewResponse {
   results?: TemplatePreviewResult[];
   errors?: TemplatePreviewErrors[];
 }
@@ -27,7 +27,7 @@ export interface AlertField {
 
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    previewPayload: build.mutation<TemplatesPreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
+    previewTemplate: build.mutation<TemplatePreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
       query: ({ template, alerts, name }) => ({
         url: previewTemplateUrl,
         data: { template: template, alerts: alerts, name: name },
@@ -37,4 +37,4 @@ export const templatesApi = alertingApi.injectEndpoints({
   }),
 });
 
-export const { usePreviewPayloadMutation } = templatesApi;
+export const { usePreviewTemplateMutation } = templatesApi;

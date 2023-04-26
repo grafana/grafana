@@ -28,9 +28,9 @@ import { useDispatch } from 'app/types';
 import {
   AlertField,
   TemplatePreviewErrors,
+  TemplatePreviewResponse,
   TemplatePreviewResult,
-  TemplatesPreviewResponse,
-  usePreviewPayloadMutation,
+  usePreviewTemplateMutation,
 } from '../../api/templateApi';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
@@ -88,7 +88,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const isduplicating = isDuplicating(location);
 
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
-  const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
   const [isTemplateDataDocsOpen, toggleTemplateDataDocsOpen] = useToggle(false);
 
@@ -224,12 +223,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     </div>
                   </div>
                 ) : (
-                  <TemplatePreview
-                    payload={payload}
-                    payloadFormatError={payloadFormatError}
-                    setPayloadFormatError={setPayloadFormatError}
-                    templateName={watch('name')}
-                  />
+                  <TemplatePreview payload={payload} templateName={watch('name')} />
                 )}
               </div>
             </div>
@@ -335,7 +329,7 @@ export const PREVIEW_NOT_AVAILABLE = 'Preview is not available';
 function getPreviewTorender(
   isPreviewError: boolean,
   payloadFormatError: string | null,
-  data: TemplatesPreviewResponse | undefined
+  data: TemplatePreviewResponse | undefined
 ) {
   // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
   const previewErrorRequest = isPreviewError ? PREVIEW_NOT_AVAILABLE : undefined;
@@ -356,23 +350,14 @@ function getPreviewTorender(
   }
 }
 
-export function TemplatePreview({
-  payload,
-  setPayloadFormatError,
-  payloadFormatError,
-  templateName,
-}: {
-  payload: string;
-  payloadFormatError: string | null;
-  templateName: string;
-  setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
-}) {
+export function TemplatePreview({ payload, templateName }: { payload: string; templateName: string }) {
   const styles = useStyles2(getStyles);
 
   const { watch } = useFormContext<TemplateFormValues>();
 
   const templateContent = watch('content');
-  const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewPayloadMutation();
+  const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
+  const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewTemplateMutation();
 
   const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
 
