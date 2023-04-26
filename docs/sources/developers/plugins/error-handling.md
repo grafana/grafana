@@ -1,8 +1,8 @@
 ---
-title: Error handling
+title: Work with error handling
 ---
 
-# Error handling
+# Work with error handling
 
 This guide explains how to handle errors in plugins and provides suggestions for common scenarios.
 

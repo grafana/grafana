@@ -1,7 +1,6 @@
 ---
 aliases:
   - share-a-plugin/
-  - package-a-plugin/
 description: Learn how to package and share your plugin.
 title: Publish a plugin
 type: docs
@@ -9,10 +8,10 @@ type: docs
 
 # Publish or update a plugin
 
-You've just built your first plugin and [packaged it](package-a-plugin.md), and now you want to share it with the world.
+You've just built your first plugin and [packaged it]({{< relref "package-a-plugin.md" >}}), and now you want to share it with the world.
 In this guide, you'll learn how to share your plugin with others.
 
-The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog](/plugins).
+The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog]({{< "/plugins" >}}).
 By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 ## Before you begin
@@ -21,7 +20,7 @@ Before you begin to publish a plugin, it needs to be built and packaged.
 
 When you build a plugin from source, a `dist` folder is created. This folder contains the production build or _plugin assets_ for your plugin.
 
-To package a plugin, refer to [Package a plugin](package-a-plugin.md).
+To package a plugin, refer to [Package a plugin]({{< "package-a-plugin.md" >}}).
 
 ### Follow our guidelines
 
@@ -39,7 +38,7 @@ To speed up the time it takes to review your plugin:
 
 Follow these steps to publish your plugin for the first time.
 
-1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
+1. [Sign in]({{< "/auth/sign-in" >}}) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Plugin**.
 1. Enter the information requested by the form.
@@ -68,7 +67,7 @@ For every new plugin, we perform a manual review that includes the following che
 
 To submit an **update** for an already published plugin:
 
-1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
+1. [Sign in]({{< "/auth/sign-in" >}}) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update.
 1. Enter the information requested by the form.

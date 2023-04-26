@@ -3,7 +3,7 @@ description: How to package a plugin
 title: Package a plugin
 ---
 
-You've just built your first plugin and you're getting ready to [publish it](publish-a-plugin.md), and now you need to package it. This step follows the building and [signing](sign-a-plugin.md) steps for plugin deployment. 
+By packaging a plugin, you can organize the plugin code and make it ready for use in your organization. 
 
 ## Package a plugin for distribution
 

@@ -6,8 +6,6 @@ title: Data frames
 
 Grafana supports a variety of different data sources, each with its own data model. To make this possible, Grafana consolidates the query results from each of these data sources into one unified data structure called a _data frame_.
 
-> **Note:** Data frames are available in Grafana 7.0+, and replaced the Time series and Table structures with a more generic data structure that supports a wider range of data types.
-
 ## The data frame
 
 Data frames have a columnar-oriented table structure, which means it stores data by column and not by row. 
