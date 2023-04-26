@@ -5,7 +5,7 @@ import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-interface TextProps {
+export interface TextProps {
   /** Defines what HTML element is defined underneath, also maps into a default typography variant */
   as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined 'as' is not what is needed */
@@ -57,6 +57,10 @@ const getTextStyles = (
   return css([
     {
       ...theme.typography[variant],
+    },
+    {
+      margin: 0,
+      padding: 0,
     },
     color && {
       color: customColor(color, theme),
