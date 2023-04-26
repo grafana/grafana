@@ -38,7 +38,10 @@ export function setFolderOpenState(
 
 export function setItemSelectionState(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ item: DashboardViewItem; isSelected: boolean }>
+
+  // SearchView doesn't use DashboardViewItemKind (yet), so we pick just the specific properties
+  // we're interested in
+  action: PayloadAction<{ item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID'>; isSelected: boolean }>
 ) {
   const { item, isSelected } = action.payload;
 

@@ -3,7 +3,7 @@ import { startCase } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { CompletionProvider } from '../traceql/autocomplete';
+import { intrinsics } from '../traceql/traceql';
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
@@ -23,7 +23,7 @@ const valueHelper = (f: TraceqlFilter) => {
 };
 const scopeHelper = (f: TraceqlFilter) => {
   // Intrinsic fields don't have a scope
-  if (CompletionProvider.intrinsics.find((t) => t === f.tag)) {
+  if (intrinsics.find((t) => t === f.tag)) {
     return '';
   }
   return (

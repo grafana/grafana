@@ -388,30 +388,9 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		}
 	}
 
-	require.Equal(t, resp.Header().Get("Content-Type"), "application/json")
-	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
-}
-
-func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
-	hs := HTTPServer{
-		Cfg: setting.NewCfg(),
-		log: log.New(),
-		pluginClient: &fakePluginClient{
-			headers: map[string][]string{"Set-Cookie": {"monster"}},
-		},
-	}
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	resp := httptest.NewRecorder()
-	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx)
-	require.NoError(t, err)
-
-	for {
-		if resp.Flushed {
-			break
-		}
-	}
-	require.Empty(t, resp.Header().Values("Set-Cookie"), "Set-Cookie header should not be present")
+	res := resp.Result()
+	require.NoError(t, res.Body.Close())
+	require.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {

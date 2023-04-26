@@ -289,16 +289,6 @@ func TestCloudWatchQuery(t *testing.T) {
 	})
 }
 
-func TestQueryJSON(t *testing.T) {
-	jsonString := []byte(`{
-		"type": "timeSeriesQuery"
-	}`)
-	var res metricsDataQuery
-	err := json.Unmarshal(jsonString, &res)
-	require.NoError(t, err)
-	assert.Equal(t, "timeSeriesQuery", res.Type)
-}
-
 func TestRequestParser(t *testing.T) {
 	t.Run("legacy statistics field is migrated: migrates first stat only", func(t *testing.T) {
 		oldQuery := []backend.DataQuery{
