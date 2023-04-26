@@ -80,7 +80,7 @@ You can install official and community plugins listed on the Grafana [plugins pa
 
 ### Install official and community Grafana plugins
 
-Pass the plugins you want installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma-separated list. This sends each plugin name to `grafana-cli plugins install ${plugin}` and installs them when Grafana starts.
+Pass the plugins you want installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma-separated list. This sends each plugin name to `grafana cli plugins install ${plugin}` and installs them when Grafana starts.
 
 ```bash
 docker run -d \
