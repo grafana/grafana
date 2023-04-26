@@ -122,6 +122,14 @@ If the rule uses Classic Conditions instead of Threshold, Reduce and Math expres
 The first condition is {{ $values.B0 }}, and the second condition is {{ $values.B1 }}
 ```
 
+With Classic Conditions, labels from the query is not available in `$labels` variable because it generates single alert instance. Instead, you can retrieve the labels from `$values` variable.
+
+```
+{{ range $k, $v := $values }}
+The value is {{ $v }} and the labels are {{ $v.Labels }}
+{{ end }}
+```
+
 ## Functions
 
 The following functions are also available when expanding labels and annotations:
