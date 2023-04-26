@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { CompactSelection, GridCell, GridCellKind, GridSelection, Theme } from '@glideapps/glide-data-grid';
 
-import { ArrayVector, DataFrame, Field, GrafanaTheme2, FieldType } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2, FieldType } from '@grafana/data';
 
 import { isDatagridEditEnabled } from './featureFlagUtils';
 
@@ -72,6 +72,17 @@ interface CellRange {
   height: number;
 }
 
+export const updateSnapshot = async (
+  frame: DataFrame,
+  updateData?: (frames: DataFrame[]) => Promise<boolean>
+): Promise<boolean> => {
+  if (updateData && isDatagridEditEnabled()) {
+    return await updateData([frame]);
+  }
+
+  return false;
+};
+
 export const getTextWidth = (text: string, isHeader = false): number => {
   const context = TEXT_CANVAS.getContext('2d');
   context!.font = isHeader ? HEADER_FONT_FAMILY : CELL_FONT_FAMILY;
@@ -117,7 +128,7 @@ export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = fal
       }
     }
 
-    field.values = new ArrayVector(valuesArray);
+    field.values = [...valuesArray];
   }
 
   return {
@@ -140,7 +151,7 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
 
     const valuesArray = field.values.toArray();
     valuesArray.splice(rowFrom, range.height, ...new Array(range.height).fill(null));
-    field.values = new ArrayVector(valuesArray);
+    field.values = [...valuesArray];
   }
 
   return {
@@ -152,7 +163,7 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
 //Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func
 export const cleanStringFieldAfterConversion = (field: Field): void => {
   const valuesArray = field.values.toArray();
-  field.values = new ArrayVector(valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val)));
+  field.values = valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val));
   return;
 };
 

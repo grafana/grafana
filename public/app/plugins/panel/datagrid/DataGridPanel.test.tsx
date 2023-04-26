@@ -2,7 +2,6 @@ import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import * as React from 'react';
 
 import { ArrayVector, DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
-import { usePanelContext as usePanelContextMock } from '@grafana/ui';
 
 import { DataGridPanel, DataGridProps } from './DataGridPanel';
 import * as utils from './utils';
@@ -19,22 +18,11 @@ jest.mock('./utils', () => {
     ...originalModule,
     deleteRows: jest.fn(),
     clearCellsFromRangeSelection: jest.fn(),
+    updateSnapshot: jest.fn(),
   };
 });
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  usePanelContext: jest.fn(),
-}));
-
 describe('DataGrid', () => {
-  const onUpdateData = jest.fn();
-
-  beforeEach(() => {
-    //@ts-ignore
-    usePanelContextMock.mockImplementation(() => ({ onUpdateData }));
-  });
-
   describe('when there is no data', () => {
     it('renders without error', () => {
       window.ResizeObserver = jest.fn().mockImplementation(() => ({
@@ -204,6 +192,7 @@ describe('DataGrid', () => {
     });
 
     it('editing a cell triggers publishing the snapshot', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -226,7 +215,7 @@ describe('DataGrid', () => {
       const expectedField = {
         ...props.data.series[0].fields[0],
       };
-      expectedField.values = new ArrayVector([1, 9, 3, 4]);
+      expectedField.values = [1, 9, 3, 4];
 
       await waitFor(() => {
         const overlay = screen.getByDisplayValue('9');
@@ -241,11 +230,12 @@ describe('DataGrid', () => {
           jest.runAllTimers();
         });
 
-        expect(onUpdateData).toHaveBeenCalledWith([
+        expect(spy).toHaveBeenCalledWith(
           expect.objectContaining({
             fields: expect.arrayContaining([expectedField]),
           }),
-        ]);
+          undefined
+        );
       });
     });
 
@@ -282,6 +272,7 @@ describe('DataGrid', () => {
       });
     });
     it('should add a new column', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -300,7 +291,7 @@ describe('DataGrid', () => {
 
       fireEvent.blur(columnInput);
 
-      expect(onUpdateData).toBeCalledWith([
+      expect(spy).toBeCalledWith(
         expect.objectContaining({
           fields: expect.arrayContaining([
             expect.objectContaining({
@@ -310,10 +301,12 @@ describe('DataGrid', () => {
             }),
           ]),
         }),
-      ]);
+        undefined
+      );
     });
 
     it('should not add a new column if input is empty', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -328,10 +321,11 @@ describe('DataGrid', () => {
 
       fireEvent.blur(columnInput);
 
-      expect(onUpdateData).not.toBeCalled();
+      expect(spy).not.toBeCalled();
     });
 
     it('should add a new row', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -345,7 +339,7 @@ describe('DataGrid', () => {
         clientY: 36 + 32 * 5, //click add row
       });
 
-      expect(onUpdateData).toBeCalled();
+      expect(spy).toBeCalled();
     });
 
     it('should close context menu on right click', async () => {
@@ -376,6 +370,7 @@ describe('DataGrid', () => {
     });
 
     it('should clear cell when cell is selected and delete button clicked', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
       const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
 
@@ -399,12 +394,13 @@ describe('DataGrid', () => {
         key: 'Delete',
       });
 
-      expect(onUpdateData).toBeCalled();
+      expect(spy).toBeCalled();
       expect(spyClearingCells).toBeCalled();
       expect(spyDeleteRows).not.toBeCalled();
     });
 
     it('should clear row when row is selected delete button clicked', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
       const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
 
@@ -424,12 +420,13 @@ describe('DataGrid', () => {
         key: 'Delete',
       });
 
-      expect(onUpdateData).toBeCalled();
+      expect(spy).toBeCalled();
       expect(spyClearingCells).not.toBeCalled();
       expect(spyDeleteRows).toBeCalled();
     });
 
     it('should move column when column dragged and dropped', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -455,14 +452,13 @@ describe('DataGrid', () => {
       };
 
       df.fields = [df.fields[1], df.fields[0], df.fields[2]];
-      const received = onUpdateData.mock.calls[onUpdateData.mock.calls.length - 1][0][0].fields.map(
-        (f: Field) => f.name
-      );
+      const received = spy.mock.calls[spy.mock.calls.length - 1][0].fields.map((f: Field) => f.name);
 
       expect(received).toEqual(df.fields.map((f) => f.name));
     });
 
     it('should move row when row dragged and dropped', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -483,7 +479,7 @@ describe('DataGrid', () => {
 
       fireEvent.mouseUp(canvas);
 
-      const received: DataFrame = onUpdateData.mock.calls[onUpdateData.mock.calls.length - 1][0][0];
+      const received: DataFrame = spy.mock.calls[spy.mock.calls.length - 1][0];
 
       expect(received.fields[0].values[0]).toEqual(2);
       expect(received.fields[0].values[1]).toEqual(3);
