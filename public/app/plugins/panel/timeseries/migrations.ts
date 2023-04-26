@@ -34,12 +34,14 @@ import {
 } from '@grafana/schema';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getDashboardQueryRunner } from 'app/features/query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
 import { PanelOptions } from './panelcfg.gen';
 
-let dashboardRefresher: ReturnType<typeof setTimeout> | null = null;
+let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * This is called when the panel changes from another panel
@@ -59,18 +61,21 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
     });
 
     const dashboard = getDashboardSrv().getCurrent();
-    if (dashboard && annotations.length > 0) {
+    if (dashboard && annotations?.length > 0) {
       dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
       console.log('updating annotations from migration', panel, dashboard.annotations);
 
-      // Trigger a full dashbaord refresh ???
-      if (dashboardRefresher == null) {
+      // Trigger a full dashbaord refresh when annotations change
+      if (dashboardRefreshDebouncer == null) {
         console.log('scheduling a refresh');
-        dashboardRefresher = setTimeout(() => {
-          console.log('trigger refresh for annotations');
-          dashboard.startRefresh({ refreshAll: true, panelIds: [] });
-          dashboardRefresher = null;
-        }, 100);
+        dashboardRefreshDebouncer = setTimeout(() => {
+          dashboardRefreshDebouncer = null;
+          console.log('execute dashboard refresh');
+          getDashboardQueryRunner().run({
+            dashboard,
+            range: getTimeSrv().timeRange(),
+          });
+        }, 250);
       }
     }
 
@@ -396,19 +401,7 @@ export function graphToTimeseriesOptions(angular: any): {
     }));
 
     regions.forEach((region) => {
-      const queryTarget: GrafanaQuery = {
-        queryType: GrafanaQueryType.TimeRegions,
-        refId: 'Anno',
-        timeRegion: {
-          fromDayOfWeek: region.fromDayOfWeek,
-          toDayOfWeek: region.toDayOfWeek,
-          from: region.from,
-          to: region.to,
-          timezone: getDashboardSrv().getCurrent()?.getTimezone(),
-        },
-      };
-
-      annotations.push({
+      const anno: AnnotationQuery<GrafanaQuery> = {
         datasource: {
           type: 'datasource',
           uid: 'grafana',
@@ -421,8 +414,24 @@ export function graphToTimeseriesOptions(angular: any): {
         },
         iconColor: region.color,
         name: region.name,
-        target: queryTarget,
-      });
+        target: {
+          queryType: GrafanaQueryType.TimeRegions,
+          refId: 'Anno',
+          timeRegion: {
+            fromDayOfWeek: region.fromDayOfWeek,
+            toDayOfWeek: region.toDayOfWeek,
+            from: region.from,
+            to: region.to,
+            timezone: 'utc', // graph panel was always UTC
+          },
+        },
+      };
+      if (region.fill) {
+        annotations.push(anno);
+      } else if (region.line) {
+        anno.iconColor = 'white';
+        annotations.push(anno);
+      }
     });
   }
 
