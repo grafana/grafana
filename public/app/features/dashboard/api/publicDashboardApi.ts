@@ -153,6 +153,7 @@ export const publicDashboardApi = createApi({
       invalidatesTags: (result, error, { dashboardUid }) => [
         { type: 'PublicDashboard', id: dashboardUid },
         'AuditTablePublicDashboard',
+        'UsersWithActiveSessions',
         'ActiveUserDashboards',
       ],
     }),

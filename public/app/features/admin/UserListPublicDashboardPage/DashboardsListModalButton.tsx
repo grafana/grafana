@@ -15,15 +15,11 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
   const { data: dashboards, isLoading } = useGetActiveUserDashboardsQuery(email);
 
   return (
-    <Modal
-      className={styles.modal}
-      contentClassName={styles.modalContent}
-      isOpen
-      title="Public dashboards"
-      onDismiss={onDismiss}
-    >
+    <Modal className={styles.modal} isOpen title="Public dashboards" onDismiss={onDismiss}>
       {isLoading ? (
-        <LoadingPlaceholder text="Loading..." />
+        <div className={styles.loading}>
+          <LoadingPlaceholder text="Loading..." />
+        </div>
       ) : (
         dashboards?.map((dash) => (
           <div key={dash.dashboardUid} className={styles.listItem} data-testid={selectors.listItem(dash.dashboardUid)}>
@@ -74,10 +70,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
     width: 590px;
   `,
-  modalContent: css`
+  loading: css`
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
   `,
   listItem: css`
     display: flex;
