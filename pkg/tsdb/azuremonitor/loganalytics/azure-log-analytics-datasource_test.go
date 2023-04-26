@@ -274,6 +274,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -333,6 +336,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -391,6 +397,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"${__data.fields.traceID}\"",
 				},
 			},
 			Err: require.NoError,
@@ -452,6 +461,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -517,6 +529,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -582,6 +597,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -647,6 +665,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -705,6 +726,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"${__data.fields.traceID}\"",
 				},
 			},
 			Err: require.NoError,
@@ -766,6 +790,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -807,6 +834,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TimeRange:         timeRange,
 					QueryType:         string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: "",
+					TraceLogsExploreQuery: "union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults \n" +
+						"| where ['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z') \n" +
+						"| where operation_Id == \"test-op-id\"",
 				},
 			},
 			Err: require.NoError,
@@ -818,7 +848,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			queries, err := datasource.buildQueries(logger, tt.queryModel, types.DatasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+				t.Errorf("Result mismatch (-want +got): \n%s", diff)
 			}
 		})
 	}

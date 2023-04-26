@@ -36,15 +36,16 @@ type AzureLogAnalyticsDatasource struct {
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
 type AzureLogAnalyticsQuery struct {
-	RefID             string
-	ResultFormat      string
-	URL               string
-	TraceExploreQuery string
-	JSON              json.RawMessage
-	TimeRange         backend.TimeRange
-	Query             string
-	Resources         []string
-	QueryType         string
+	RefID                 string
+	ResultFormat          string
+	URL                   string
+	TraceExploreQuery     string
+	TraceLogsExploreQuery string
+	JSON                  json.RawMessage
+	TimeRange             backend.TimeRange
+	Query                 string
+	Resources             []string
+	QueryType             string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -89,6 +90,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 		var queryString string
 		var resultFormat string
 		traceExploreQuery := ""
+		traceLogsExploreQuery := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
@@ -152,12 +154,18 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 			traceIdVariable := "${__data.fields.traceID}"
 			if operationId == "" {
 				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, nil)
+				traceLogsExploreQuery = buildTracesLogsQuery(&traceIdVariable)
 			} else {
 				traceExploreQuery = queryString
+				traceLogsExploreQuery = buildTracesLogsQuery(&operationId)
 			}
 			traceExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceExploreQuery, "TimeGenerated")
 			if err != nil {
 				return nil, fmt.Errorf("failed to create traces explore query: %s", err)
+			}
+			traceLogsExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceLogsExploreQuery, "TimeGenerated")
+			if err != nil {
+				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
 			}
 		}
 
@@ -169,15 +177,16 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 		}
 
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
-			RefID:             query.RefID,
-			ResultFormat:      resultFormat,
-			URL:               apiURL,
-			JSON:              query.JSON,
-			TimeRange:         query.TimeRange,
-			Query:             rawQuery,
-			Resources:         resources,
-			QueryType:         query.QueryType,
-			TraceExploreQuery: traceExploreQuery,
+			RefID:                 query.RefID,
+			ResultFormat:          resultFormat,
+			URL:                   apiURL,
+			JSON:                  query.JSON,
+			TimeRange:             query.TimeRange,
+			Query:                 rawQuery,
+			Resources:             resources,
+			QueryType:             query.QueryType,
+			TraceExploreQuery:     traceExploreQuery,
+			TraceLogsExploreQuery: traceLogsExploreQuery,
 		})
 	}
 
@@ -306,7 +315,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		dataResponse.Error = err
 		return dataResponse
 	}
-	AddConfigLinks(*frame, queryUrl, nil)
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+		AddConfigLinks(*frame, queryUrl, nil)
+	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
 		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
@@ -317,30 +328,54 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
 
-		if query.TraceExploreQuery != "" {
-			queryJSONModel := dataquery.AzureMonitorQuery{}
-			err = json.Unmarshal(query.JSON, &queryJSONModel)
-			if err != nil {
-				dataResponse.Error = err
-				return dataResponse
-			}
-			traceIdVariable := "${__data.fields.traceID}"
-			resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
-			queryJSONModel.AzureTraces.ResultFormat = &resultFormat
-			queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
-			if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
-				queryJSONModel.AzureTraces.OperationId = &traceIdVariable
-			}
-			AddCustomDataLink(*frame, data.DataLink{
-				Title: "Explore Trace: ${__data.fields.traceID}",
-				URL:   "",
-				Internal: &data.InternalDataLink{
-					DatasourceUID:  dsInfo.DatasourceUID,
-					DatasourceName: dsInfo.DatasourceName,
-					Query:          queryJSONModel,
-				},
-			})
+		queryJSONModel := dataquery.AzureMonitorQuery{}
+		err = json.Unmarshal(query.JSON, &queryJSONModel)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
 		}
+		traceIdVariable := "${__data.fields.traceID}"
+		resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
+		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
+		queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
+		if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
+			queryJSONModel.AzureTraces.OperationId = &traceIdVariable
+		}
+
+		logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
+		logsJSONModel := dataquery.AzureMonitorQuery{
+			AzureLogAnalytics: &struct {
+				Query        *string                                                   "json:\"query,omitempty\""
+				Resource     *string                                                   "json:\"resource,omitempty\""
+				Resources    []string                                                  "json:\"resources,omitempty\""
+				ResultFormat *dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormat "json:\"resultFormat,omitempty\""
+				Workspace    *string                                                   "json:\"workspace,omitempty\""
+			}{
+				Resources: queryJSONModel.AzureTraces.Resources,
+				Query:     &query.TraceLogsExploreQuery,
+			},
+			QueryType: &logsQueryType,
+		}
+
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Trace: ${__data.fields.traceID}",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          queryJSONModel,
+			},
+		})
+
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Trace Logs",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          logsJSONModel,
+			},
+		})
 	}
 
 	dataResponse.Frames = data.Frames{frame}
@@ -707,4 +742,11 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 		`| order by startTime asc`
 	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + errorProperty + filtersClause + projectClause
+}
+
+func buildTracesLogsQuery(operationId *string) string {
+	tables := `union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults`
+	time := `| where $__timeFilter()`
+	operationIdFilter := fmt.Sprintf(`| where operation_Id == "%s"`, *operationId)
+	return strings.Join([]string{tables, time, operationIdFilter}, " \n")
 }
