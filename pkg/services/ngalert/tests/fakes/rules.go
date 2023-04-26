@@ -347,3 +347,9 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 	return 0, nil
 }
+
+// #TODO figure out if this fake RuleStore needs to include CountAlertRulesInFolder as well now that
+// RuleStore interface (pkg/services/ngalert/provisioning/persist.go) includes it
+// func (f *RuleStore) CountAlertRulesInFolder(ctx context.Context, query *models.CountAlertRulesQuery) (int64, error) {
+// 	return 0, nil
+// }

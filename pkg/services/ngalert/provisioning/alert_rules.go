@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -518,7 +519,10 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 }
 
 func (service *AlertRuleService) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
-	return 0, nil
+	return service.ruleStore.CountAlertRulesInFolder(ctx, &models.CountAlertRulesQuery{
+		OrgID:        orgID,
+		NamespaceUID: uid,
+	})
 }
 
 func (service *AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, uid string) error {
