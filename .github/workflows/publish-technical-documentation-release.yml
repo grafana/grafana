@@ -40,7 +40,7 @@ jobs:
         uses: "actions/setup-node@v3.2.0"
         id: "generate-packages_api-docs"
         with:
-          node-version: '16'
+          node-version-file: ".nvmrc"
 
       - name: "Get yarn cache directory path"
         id: "yarn-cache-dir-path"
