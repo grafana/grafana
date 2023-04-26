@@ -48,7 +48,7 @@ e2e.scenario({
         e2e.components.PanelAlertTabContent.content().should('not.exist');
 
         //  Can change to Alerts tab (graph panel is the default vis so the alerts tab should be rendered)
-        e2e.components.Tab.title('Alert').should('be.visible').click({ force: true });
+        e2e.components.Tab.title('Alert').should('be.visible').click();
         e2e.components.Tab.active().should('have.text', 'Alert0'); // there's no alert so therefore Alert + 0
 
         // Needs to be disabled until Grafana EE turns unified alerting on by default
