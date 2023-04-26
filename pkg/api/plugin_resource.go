@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/resourcestream"
+	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -111,14 +111,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 		Body:          body,
 	}
 
-	// stream, err := resourcestream.NewHTTPResponseStreamer(hs.log, hs.pluginClient, w)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to create resource http response streamer: %w", err)
-	// }
-
-	// return stream.CallResource(req.Context(), crReq)
-
-	httpSender := resourcestream.NewHTTPResponseSender(w)
+	httpSender := httpresponsesender.New(w)
 	return hs.pluginClient.CallResource(req.Context(), crReq, httpSender)
 }
 
