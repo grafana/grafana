@@ -15,32 +15,64 @@ Data frames have a columnar-oriented table structure, which means it stores data
 You can see what this means by looking at the TypeScript definition used by Grafana:
 
 ```ts
-interface DataFrame {
-    name?:  string;
-    // reference to query that create the frame
-    refId?: string;
+export interface DataFrame extends QueryResultBase {
+  name?: string;
+  fields: Field[]; // All fields of equal length
 
-    fields: []Field;
+  // The number of rows
+  length: number;
 }
 ```
 
 ### Data frame fields
 
-In essence, a data frame is a collection of _fields_, where each field corresponds to a column. Each field, in turn, consists of a collection of values, along with metadata, such as the data type of those values.
+A data frame is a collection of _fields_, where each field corresponds to a column. Each field, in turn, consists of a collection of values, along with metadata, such as the data type of those values.
 
 ```ts
-interface Field {
+export interface Field<T = any, V = Vector<T>> {
+  /**
+   * Name of the field (column)
+   */
   name: string;
-  // Prometheus-like Labels / Tags
-  labels?: Record<string, string>;
-
-  // For example string, number, time (or more specific primitives in the backend)
+  /**
+   *  Field value type (string, number, etc)
+   */
   type: FieldType;
-  // Array of values all of the same type
-  values: Vector<T>;
-
-  // Optional display data for the field (e.g. unit, name override, etc.)
+  /**
+   *  Meta info about how field and how to display it
+   */
   config: FieldConfig;
+
+  /**
+   * The raw field values
+   * In Grafana 10, this accepts both simple arrays and the Vector interface
+   * In Grafana 11, the Vector interface will be removed
+   */
+  values: V | T[];
+
+  /**
+   * When type === FieldType.Time, this can optionally store
+   * the nanosecond-precison fractions as integers between
+   * 0 and 999999.
+   */
+  nanos?: number[];
+
+  labels?: Labels;
+
+  /**
+   * Cached values with appropriate display and id values
+   */
+  state?: FieldState | null;
+
+  /**
+   * Convert a value for display
+   */
+  display?: DisplayProcessor;
+
+  /**
+   * Get value data links with variables interpolated
+   */
+  getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
 }
 ```
 
@@ -67,6 +99,8 @@ By adding field configurations to a data frame, Grafana can configure visualizat
 We have seen how field configs contain type information, and they also have another role. Data frame fields enable _data transformations_ within Grafana.
 
 A data transformation is any function that accepts a data frame as input, and returns another data frame as output. By using data frames in your plugin, you get a range of transformations for free.
+
+To learn more about data transformations in Grafana, refer to [Transform data](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/).
 
 ## Data frames as time series
 
@@ -146,7 +180,7 @@ Dimensions: 4 fields by 4 rows
 +---------------------+-----------------+-----------------+----------------+
 ```
 
-Convert the above table into a data frame in wide format like this:
+The above table can be converted into a data frame in wide format like this:
 
 ```text
 Name: Wide
