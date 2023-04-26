@@ -355,7 +355,7 @@ export function SelectBase<T>({
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: MultiValueRemove,
+          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           ...components,
         }}
         styles={selectStyles}
