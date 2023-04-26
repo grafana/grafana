@@ -3,7 +3,7 @@ import React, { CSSProperties, useCallback, useEffect, useMemo, useState } from 
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   clearButtonStyles,
@@ -13,6 +13,7 @@ import {
   Tooltip,
   useStyles2,
   Icon,
+  Tag,
 } from '@grafana/ui';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
@@ -20,7 +21,9 @@ import { dispatch } from 'app/store/store';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { arrayLabelsToObject, labelsToTags, objectLabelsToArray } from '../../utils/labels';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { extractCommonLabels, omitLabels } from '../rules/state-history/common';
 
 export function AlertInstanceModalSelector({
   onSelect,
@@ -65,8 +68,6 @@ export function AlertInstanceModalSelector({
         rulesWithInstances[instance.labels['alertname']].push(instance);
       });
       setFilteredRules(rulesWithInstances);
-
-      console.log(rulesWithInstances);
     }
   }, [loading, result, rulesWithInstances]);
 
@@ -100,14 +101,25 @@ export function AlertInstanceModalSelector({
     );
   };
 
+  const getAlertUniqueLabels = (allAlerts: AlertmanagerAlert[], currentAlert: AlertmanagerAlert) => {
+    const allLabels = allAlerts.map((alert) => alert.labels);
+    const labelsAsArray = allLabels.map(objectLabelsToArray);
+
+    const ruleCommonLabels = extractCommonLabels(labelsAsArray);
+    const alertUniqueLabels = omitLabels(objectLabelsToArray(currentAlert.labels), ruleCommonLabels);
+
+    const tags = alertUniqueLabels.length
+      ? labelsToTags(arrayLabelsToObject(alertUniqueLabels))
+      : labelsToTags(currentAlert.labels);
+
+    return tags;
+  };
+
   const InstanceRow = ({ index, style }: { index: number; style: CSSProperties }) => {
-    if (!selectedRule || !rulesWithInstances[selectedRule].length) {
-      return null;
-    }
-
-    const alert = rulesWithInstances[selectedRule][index];
-
+    const alerts = useMemo(() => (selectedRule ? rulesWithInstances[selectedRule] : []), []);
+    const alert = alerts[index];
     const isSelected = selectedInstances?.includes(alert);
+    const tags = useMemo(() => getAlertUniqueLabels(alerts, alert), [alerts, alert]);
 
     const handleSelectInstances = () => {
       if (isSelected && selectedInstances) {
@@ -129,10 +141,11 @@ export function AlertInstanceModalSelector({
       >
         <div className={styles.rowButtonTitle} title={alert.labels['alertname']}>
           <Tooltip placement="bottom" content={<pre>{JSON.stringify(alert, null, 2)}</pre>} theme={'info'}>
-            <span>
-              Starts at: {dateTimeFormat(alert.startsAt, { format: 'YYYY-MM-DD HH:mm:ss' })} - Ends at:{' '}
-              {dateTimeFormat(alert.startsAt, { format: 'YYYY-MM-DD HH:mm:ss' })}
-            </span>
+            <div>
+              {tags.map((tag, index) => (
+                <Tag key={index} name={tag} className={styles.tag} />
+              ))}
+            </div>
           </Tooltip>
         </div>
       </button>
@@ -257,17 +270,23 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1.5fr;
       grid-template-rows: min-content auto;
       gap: ${theme.spacing(2)};
       flex: 1;
     `,
+
+    tag: css`
+      margin: 5px;
+    `,
+
     column: css`
       flex: 1 1 auto;
     `,
 
     alertLabels: css`
       overflow-x: auto;
+      height: 32px;
     `,
     ruleTitle: css`
       height: 22px;
