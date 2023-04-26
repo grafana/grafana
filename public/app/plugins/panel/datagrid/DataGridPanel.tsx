@@ -10,7 +10,7 @@ import DataEditor, {
 } from '@glideapps/glide-data-grid';
 import React, { useEffect, useReducer } from 'react';
 
-import { ArrayVector, Field, MutableDataFrame, PanelProps, FieldType } from '@grafana/data';
+import { Field, PanelProps, FieldType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
@@ -85,36 +85,37 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     const values = field.values.toArray();
 
     values[row] = newValue.data;
-    field.values = new ArrayVector(values);
+    field.values = values;
 
-    publishSnapshot(new MutableDataFrame(frame), id);
+    publishSnapshot(frame, id);
   };
 
   const onColumnInputBlur = (columnName: string) => {
     const len = frame.length ?? 0;
-    const newFrame = new MutableDataFrame(frame);
-
-    const field: Field = {
-      name: columnName,
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(new Array(len).fill('')),
-    };
-
-    newFrame.addField(field);
-
-    publishSnapshot(newFrame, id);
+    publishSnapshot(
+      {
+        ...frame,
+        fields: [
+          ...frame.fields,
+          {
+            name: columnName,
+            type: FieldType.string,
+            config: {},
+            values: new Array(len).fill(''),
+          },
+        ],
+      },
+      id
+    );
   };
 
   const addNewRow = () => {
-    //TODO use .appendRow() after fieldValues refactor is finished
-    const newFrame = new MutableDataFrame(frame);
-
-    newFrame.fields.map((field) => {
-      field.values = new ArrayVector([...field.values.toArray(), null]);
+    const fields = frame.fields.map((f) => {
+      const values = f.values.slice(); // copy
+      values.push(null);
+      return { ...f, values };
     });
-
-    publishSnapshot(newFrame, id);
+    publishSnapshot({ ...frame, fields, length: frame.length + 1 }, id);
   };
 
   const onColumnResize = (column: GridColumn, width: number, columnIndex: number, newSizeWithGrow: number) => {
@@ -162,27 +163,25 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onColumnMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(frame);
-    const field = newFrame.fields[from];
-    newFrame.fields.splice(from, 1);
-    newFrame.fields.splice(to, 0, field);
+    const fields = frame.fields.map((f) => f);
+    const field = fields[from];
+    fields.splice(from, 1);
+    fields.splice(to, 0, field);
 
     dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
-    publishSnapshot(newFrame, id);
+    publishSnapshot({ ...frame, fields }, id);
   };
 
   const onRowMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(frame);
+    const fields = frame.fields.map((f) => ({ ...f, values: f.values.slice() }));
 
-    for (const field of newFrame.fields) {
-      const values = field.values.toArray();
-      const value = values[from];
-      values.splice(from, 1);
-      values.splice(to, 0, value);
-      field.values = new ArrayVector(values);
+    for (const field of fields) {
+      const value = field.values[from];
+      field.values.splice(from, 1);
+      field.values.splice(to, 0, value);
     }
 
-    publishSnapshot(newFrame, id);
+    publishSnapshot({ ...frame, fields }, id);
   };
 
   const onColumnRename = () => {
@@ -190,11 +189,11 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
-    const newFrame = new MutableDataFrame(frame);
-    newFrame.fields[columnIdx].name = columnName;
+    const fields = frame.fields.map((f) => f);
+    fields[columnIdx].name = columnName;
 
     dispatch({ type: DatagridActionType.hideColumnRenameInput });
-    publishSnapshot(newFrame, id);
+    publishSnapshot({ ...frame, fields }, id);
   };
 
   const onSearchClose = () => {

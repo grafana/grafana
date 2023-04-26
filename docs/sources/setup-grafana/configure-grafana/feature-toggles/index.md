@@ -36,6 +36,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                                                | Yes                |
 | `logsContextDatasourceUi`           | Allow datasource to provide custom UI for context view                                                                                                                                              | Yes                |
 | `prometheusDataplane`               | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. | Yes                |
+| `lokiMetricDataplane`               | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
 | `dataplaneFrontendFallback`         | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
 | `useCachingService`                 | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
 
@@ -101,7 +102,6 @@ Alpha features might be changed or removed without prior notice.
 | `prometheusResourceBrowserCache`   | Displays browser caching options in Prometheus data source configuration                                       |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                      |
 | `clientTokenRotation`              | Replaces the current in-request token rotation so that the client initiates the rotation                       |
-| `lokiMetricDataplane`              | Changes responses from Loki to be compliant with the dataplane specification.                                  |
 | `disableSSEDataplane`              | Disables dataplane specific processing in server side expressions.                                             |
 | `alertStateHistoryLokiSecondary`   | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.   |
 | `alertStateHistoryLokiPrimary`     | Enable a remote Loki instance as the primary source for state history reads.                                   |

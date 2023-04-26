@@ -16,7 +16,7 @@ export type PhlareQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPhlareQueryType: PhlareQueryType = 'both';
 
-export interface Phlare extends common.DataQuery {
+export interface GrafanaPyroscope extends common.DataQuery {
   /**
    * Allows to group the results.
    */
@@ -31,7 +31,7 @@ export interface Phlare extends common.DataQuery {
   profileTypeId: string;
 }
 
-export const defaultPhlare: Partial<Phlare> = {
+export const defaultGrafanaPyroscope: Partial<GrafanaPyroscope> = {
   groupBy: [],
   labelSelector: '{}',
 };
