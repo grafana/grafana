@@ -1274,6 +1274,8 @@ github.com/grafana/alerting v0.0.0-20230410151633-4a7ecc241d72 h1:WuQGIUeDIyPviy
 github.com/grafana/alerting v0.0.0-20230410151633-4a7ecc241d72/go.mod h1:nHfrSTdV7/l74N5/ezqlQ+JwSvIChhN3G5+PjCfwG/E=
 github.com/grafana/alerting v0.0.0-20230418161049-5f374e58cb32 h1:LdPoVBj+CA5oHLeUejDzqy8/c4Fa0UfTtCcOHka0Jws=
 github.com/grafana/alerting v0.0.0-20230418161049-5f374e58cb32/go.mod h1:nHfrSTdV7/l74N5/ezqlQ+JwSvIChhN3G5+PjCfwG/E=
+github.com/grafana/alerting v0.0.0-20230426173942-011a41e1fbe2 h1:teRmmE08bSnvyh3e+adfv/6RA1ZZdhTCmNL9Ckfm1Rk=
+github.com/grafana/alerting v0.0.0-20230426173942-011a41e1fbe2/go.mod h1:nHfrSTdV7/l74N5/ezqlQ+JwSvIChhN3G5+PjCfwG/E=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.8 h1:l0AKXfHr0clu6qPirirDzNC/W5mqq5gG7iruOVolG34=
