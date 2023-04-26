@@ -20,7 +20,7 @@ type HTTPResponseSender struct {
 // New creates a new HTTPResponseSender.
 func New(w http.ResponseWriter) *HTTPResponseSender {
 	if w == nil {
-		panic("w cannot be nil")
+		panic("response writer cannot be nil")
 	}
 
 	return &HTTPResponseSender{
