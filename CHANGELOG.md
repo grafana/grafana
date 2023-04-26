@@ -722,6 +722,10 @@ The following functions and classes related to logs are deprecated in the `grafa
 - **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
 - **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
 
+<!-- 9.2.17 START -->
+
+<!-- 9.2.17 END -->
+
 <!-- 9.2.15 START -->
 
 # 9.2.15 (2023-03-22)
