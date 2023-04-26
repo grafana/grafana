@@ -1,4 +1,4 @@
-import { flatten, omit, uniq } from 'lodash';
+import { omit } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -283,15 +283,6 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
   return { ...target, refId, key };
 };
 
-export const queryDatasourceDetails = (queries: DataQuery[]) => {
-  const allUIDs = queries.map((query) => query.datasource?.uid);
-  return {
-    allHaveDatasource: allUIDs.length === queries.length,
-    noneHaveDatasource: allUIDs.length === 0,
-    allDatasourceSame: allUIDs.every((val, i, arr) => val === arr[0]),
-  };
-};
-
 /**
  * Ensure at least one target exists and that targets have the necessary keys
  *
@@ -394,11 +385,6 @@ export function updateHistory<T extends DataQuery>(
   }
 }
 
-export function clearHistory(datasourceId: string) {
-  const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.delete(historyKey);
-}
-
 export const getQueryKeys = (queries: DataQuery[]): string[] => {
   const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = query.datasource?.uid || query.key;
@@ -416,50 +402,6 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalY
   }
 
   return range;
-};
-
-export const getValueWithRefId = (value?: any): any => {
-  if (!value || typeof value !== 'object') {
-    return undefined;
-  }
-
-  if (value.refId) {
-    return value;
-  }
-
-  const keys = Object.keys(value);
-  for (let index = 0; index < keys.length; index++) {
-    const key = keys[index];
-    const refId = getValueWithRefId(value[key]);
-    if (refId) {
-      return refId;
-    }
-  }
-
-  return undefined;
-};
-
-export const getRefIds = (value: any): string[] => {
-  if (!value) {
-    return [];
-  }
-
-  if (typeof value !== 'object') {
-    return [];
-  }
-
-  const keys = Object.keys(value);
-  const refIds = [];
-  for (let index = 0; index < keys.length; index++) {
-    const key = keys[index];
-    if (key === 'refId') {
-      refIds.push(value[key]);
-      continue;
-    }
-    refIds.push(getRefIds(value[key]));
-  }
-
-  return uniq(flatten(refIds));
 };
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
