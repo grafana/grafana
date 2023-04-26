@@ -27,22 +27,25 @@ const defaultProps = {
 describe('<NewTracePageSearchBar>', () => {
   it('renders buttons', () => {
     render(<NewTracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
-    const nextResButton = screen.queryByRole('button', { name: 'Next result button' });
-    const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
+    const nextResButton = screen.getByRole('button', { name: 'Next result button' });
+    const prevResButton = screen.getByRole('button', { name: 'Prev result button' });
+    const resetFiltersButton = screen.getByRole('button', { name: 'Reset filters button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
+    expect(resetFiltersButton).toBeInTheDocument();
     expect((nextResButton as HTMLButtonElement)['disabled']).toBe(true);
     expect((prevResButton as HTMLButtonElement)['disabled']).toBe(true);
+    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
   });
 
-  it('renders buttons that can be used to search if filters added', () => {
+  it('renders buttons that can be used to search if results found', () => {
     const props = {
       ...defaultProps,
       spanFilterMatches: new Set(['2ed38015486087ca']),
     };
     render(<NewTracePageSearchBar {...(props as unknown as TracePageSearchBarProps)} />);
-    const nextResButton = screen.queryByRole('button', { name: 'Next result button' });
-    const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
+    const nextResButton = screen.getByRole('button', { name: 'Next result button' });
+    const prevResButton = screen.getByRole('button', { name: 'Prev result button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
     expect((nextResButton as HTMLButtonElement)['disabled']).toBe(false);

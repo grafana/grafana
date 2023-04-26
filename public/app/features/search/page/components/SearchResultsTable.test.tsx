@@ -2,15 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Subject } from 'rxjs';
 
-import {
-  applyFieldOverrides,
-  ArrayVector,
-  createTheme,
-  DataFrame,
-  DataFrameView,
-  FieldType,
-  toDataFrame,
-} from '@grafana/data';
+import { applyFieldOverrides, createTheme, DataFrame, DataFrameView, FieldType, toDataFrame } from '@grafana/data';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType } from '../../types';
@@ -121,12 +113,12 @@ describe('SearchResultsTable', () => {
   describe('when there is no data', () => {
     const emptySearchData: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([]) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'kind', type: FieldType.string, config: {}, values: [] },
+        { name: 'name', type: FieldType.string, config: {}, values: [] },
+        { name: 'uid', type: FieldType.string, config: {}, values: [] },
+        { name: 'url', type: FieldType.string, config: {}, values: [] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [] },
+        { name: 'location', type: FieldType.string, config: {}, values: [] },
       ],
       length: 0,
     };

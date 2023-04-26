@@ -312,6 +312,7 @@ var wireBasicSet = wire.NewSet(
 	cuectx.GrafanaCUEContext,
 	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
+	wire.Bind(new(csrf.Service), new(*csrf.CSRF)),
 	ossaccesscontrol.ProvideTeamPermissions,
 	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
 	ossaccesscontrol.ProvideFolderPermissions,

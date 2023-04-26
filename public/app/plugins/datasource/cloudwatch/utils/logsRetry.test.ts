@@ -120,8 +120,8 @@ describe('runWithRetry', () => {
     // dataframe fields
     expect(values.length).toBe(1);
     expect(values[0].frames.length).toBe(2);
-    expect(values[0].frames[0].fields[0].values.get(0)).toBe('A');
-    expect(values[0].frames[1].fields[0].values.get(0)).toBe('B');
+    expect(values[0].frames[0].fields[0].values[0]).toBe('A');
+    expect(values[0].frames[1].fields[0].values[0]).toBe('B');
   });
 
   it('sends data and also error if only one query gets limit error', async () => {
@@ -145,7 +145,7 @@ describe('runWithRetry', () => {
     expect(queryFunc).nthCalledWith(1, targets);
     expect(values.length).toBe(1);
     expect(values[0].frames.length).toBe(1);
-    expect(values[0].frames[0].fields[0].values.get(0)).toBe('A');
+    expect(values[0].frames[0].fields[0].values[0]).toBe('A');
     expect(values[0].error).toEqual({ message: 'Some queries timed out: LimitExceededException' });
   });
 
@@ -190,8 +190,8 @@ describe('runWithRetry', () => {
     expect(queryFunc).nthCalledWith(3, [targetC]);
     expect(values.length).toBe(1);
     expect(values[0].frames.length).toBe(2);
-    expect(values[0].frames[0].fields[0].values.get(0)).toBe('A');
-    expect(values[0].frames[1].fields[0].values.get(0)).toBe('B');
+    expect(values[0].frames[0].fields[0].values[0]).toBe('A');
+    expect(values[0].frames[1].fields[0].values[0]).toBe('B');
     expect(values[0].error).toEqual({ message: 'Some queries timed out: LimitExceededException' });
   });
 });

@@ -4,12 +4,12 @@ import React, { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType, NavModelItem } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
 
-import { Page } from '../PageNew/Page';
+import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
 
@@ -23,12 +23,12 @@ const pageNav: NavModelItem = {
 
 const searchData: DataFrame = {
   fields: [
-    { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-    { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-    { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-    { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-    { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([]) },
-    { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+    { name: 'kind', type: FieldType.string, config: {}, values: [] },
+    { name: 'name', type: FieldType.string, config: {}, values: [] },
+    { name: 'uid', type: FieldType.string, config: {}, values: [] },
+    { name: 'url', type: FieldType.string, config: {}, values: [] },
+    { name: 'tags', type: FieldType.other, config: {}, values: [] },
+    { name: 'location', type: FieldType.string, config: {}, values: [] },
   ],
   length: 0,
 };
@@ -54,6 +54,10 @@ const setup = (children: ReactNode) => {
         { text: 'Child1', id: 'child1', url: 'section/child1' },
         { text: 'Child2', id: 'child2', url: 'section/child2' },
       ],
+    },
+    {
+      text: 'Help',
+      id: 'help',
     },
   ];
 

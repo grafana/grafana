@@ -30,10 +30,8 @@ const (
 
 const (
 	NavIDRoot               = "root"
-	NavIDDashboards         = "dashboards"
-	NavIDDashboardsBrowse   = "dashboards/browse"
+	NavIDDashboards         = "dashboards/browse"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
-	NavIDAdmin              = "admin"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDAlertingLegacy     = "alerting-legacy"
@@ -90,44 +88,6 @@ func (root *NavTreeRoot) FindById(id string) *NavLink {
 	return FindById(root.Children, id)
 }
 
-func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture() {
-	// Remove server admin node if it has no children or set the url to first child
-	if node := root.FindById(NavIDAdmin); node != nil {
-		if len(node.Children) == 0 {
-			root.RemoveSection(node)
-		} else {
-			node.Url = node.Children[0].Url
-		}
-	}
-
-	ApplyAdminIA(root)
-
-	// Move reports into dashboards
-	if reports := root.FindById(NavIDReporting); reports != nil {
-		if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
-			reports.SortWeight = 0
-			dashboards.Children = append(dashboards.Children, reports)
-			root.RemoveSection(reports)
-		}
-	}
-
-	// Change id of dashboards
-	if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
-		dashboards.Id = "dashboards/browse"
-	}
-
-	// Remove top level cfg / administration node if it has no children
-	if node := root.FindById(NavIDCfg); node != nil {
-		if len(node.Children) == 0 {
-			root.RemoveSection(node)
-		}
-	}
-
-	if len(root.Children) < 1 {
-		root.Children = make([]*NavLink, 0)
-	}
-}
-
 func (root *NavTreeRoot) Sort() {
 	Sort(root.Children)
 }
@@ -155,28 +115,19 @@ func Sort(nodes []*NavLink) {
 	}
 }
 
-func ApplyAdminIA(root *NavTreeRoot) {
+func (root *NavTreeRoot) ApplyAdminIA() {
 	orgAdminNode := root.FindById(NavIDCfg)
 
 	if orgAdminNode != nil {
-		orgAdminNode.Url = "/admin"
-		orgAdminNode.Text = "Administration"
-
 		adminNodeLinks := []*NavLink{}
 
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("datasources"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugins"))
-		if globalUsers := root.FindById("global-users"); globalUsers != nil {
-			globalUsers.Text = "Users"
-			adminNodeLinks = append(adminNodeLinks, globalUsers)
-		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-users"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("teams"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("serviceaccounts"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("apikeys"))
-		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
-			orgSettings.Text = "Default preferences"
-			adminNodeLinks = append(adminNodeLinks, orgSettings)
-		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("org-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("authentication"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
@@ -196,10 +147,6 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		} else {
 			root.RemoveSection(orgAdminNode)
 		}
-	}
-
-	if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-		root.RemoveSection(serverAdminNode)
 	}
 }
 

@@ -611,13 +611,13 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
     return null;
   }
 
-  const startValue = field.values.get(datapointIdx);
+  const startValue = field.values[datapointIdx];
 
   while (end === undefined) {
     if (rightPointer >= field.values.length) {
       return null;
     }
-    const rightValue = field.values.get(rightPointer);
+    const rightValue = field.values[rightPointer];
 
     if (rightValue === undefined || rightValue === startValue) {
       rightPointer++;

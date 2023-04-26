@@ -480,7 +480,7 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 				return err
 			}
 			var (
-				cfg = &alertingNotify.GrafanaReceiver{
+				cfg = &alertingNotify.GrafanaIntegrationConfig{
 					UID:                   gr.UID,
 					Name:                  gr.Name,
 					Type:                  gr.Type,
@@ -504,7 +504,7 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 				return fallback
 			}
 			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
-				GrafanaReceivers: alertingNotify.GrafanaReceivers{Receivers: []*alertingNotify.GrafanaReceiver{cfg}},
+				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
 			}, decryptFunc)
 			if err != nil {
 				return err
