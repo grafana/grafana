@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"fmt"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -69,6 +70,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 	)
 	if !ac.IsDisabled(sb.cfg) {
 		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features, sb.recursiveQueriesAreSupported)
+		fmt.Printf("filterRBAC: %+v", filterRBAC)
 		sql, params = filterRBAC.Where()
 		recQry, recQryParams = filterRBAC.With()
 	} else {
