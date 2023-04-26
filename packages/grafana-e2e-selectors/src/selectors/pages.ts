@@ -38,7 +38,7 @@ export const Pages = {
     dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
-    delete: 'Confirm Modal Danger Button',
+    delete: 'data-testid Confirm Modal Danger Button',
   },
   AddDashboard: {
     url: '/dashboard/new',
@@ -177,6 +177,9 @@ export const Pages = {
         },
       },
     },
+    Annotations: {
+      marker: 'data-testid annotation-marker',
+    },
   },
   Dashboards: {
     url: '/dashboards',
@@ -249,9 +252,6 @@ export const Pages = {
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
-    Annotations: {
-      marker: 'data-testid annotation-marker',
-    },
   },
   PluginsList: {
     page: 'Plugins list page',
@@ -268,6 +268,12 @@ export const Pages = {
     name: 'Playlist name',
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
+  },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
   },
   Search: {
     url: '/?search=openn',

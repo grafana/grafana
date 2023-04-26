@@ -8,8 +8,8 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func PostableGrafanaReceiverToGrafanaReceiver(p *apimodels.PostableGrafanaReceiver) *alertingNotify.GrafanaReceiver {
-	return &alertingNotify.GrafanaReceiver{
+func PostableGrafanaReceiverToGrafanaIntegrationConfig(p *apimodels.PostableGrafanaReceiver) *alertingNotify.GrafanaIntegrationConfig {
+	return &alertingNotify.GrafanaIntegrationConfig{
 		UID:                   p.UID,
 		Name:                  p.Name,
 		Type:                  p.Type,
@@ -20,16 +20,16 @@ func PostableGrafanaReceiverToGrafanaReceiver(p *apimodels.PostableGrafanaReceiv
 }
 
 func PostableApiReceiverToApiReceiver(r *apimodels.PostableApiReceiver) *alertingNotify.APIReceiver {
-	receivers := alertingNotify.GrafanaReceivers{
-		Receivers: make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers)),
+	integrations := alertingNotify.GrafanaIntegrations{
+		Integrations: make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers)),
 	}
-	for _, receiver := range r.GrafanaManagedReceivers {
-		receivers.Receivers = append(receivers.Receivers, PostableGrafanaReceiverToGrafanaReceiver(receiver))
+	for _, cfg := range r.GrafanaManagedReceivers {
+		integrations.Integrations = append(integrations.Integrations, PostableGrafanaReceiverToGrafanaIntegrationConfig(cfg))
 	}
 
 	return &alertingNotify.APIReceiver{
-		ConfigReceiver:   r.Receiver,
-		GrafanaReceivers: receivers,
+		ConfigReceiver:      r.Receiver,
+		GrafanaIntegrations: integrations,
 	}
 }
 

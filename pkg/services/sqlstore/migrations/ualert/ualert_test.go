@@ -72,7 +72,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 					SecureSettings: map[string]string{"url": invalidUri},
 				},
 			},
-			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": failed to parse notifier SlackWithBadURL (UID: test-uid): invalid URL %q", invalidUri),
+			err: fmt.Errorf("failed to validate integration \"SlackWithBadURL\" (UID test-uid) of type \"slack\": invalid URL %q", invalidUri),
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",

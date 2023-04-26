@@ -205,32 +205,34 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		require.NoError(t, json.Unmarshal(b, &result))
 		require.Len(t, result.Receivers, 1)
 		require.Len(t, result.Receivers[0].Configs, 1)
+		require.Regexp(t, `failed to validate integration "receiver-1" \(UID[^\)]+\) of type "email": could not find addresses in settings`, result.Receivers[0].Configs[0].Error)
 
 		expectedJSON := fmt.Sprintf(`{
-		"alert": {
-			"annotations": {
-				"summary": "Notification test",
-				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
-			},
-			"labels": {
-				"alertname": "TestAlert",
-				"instance": "Grafana"
-			}
-		},
-		"receivers": [{
-			"name":"receiver-1",
-			"grafana_managed_receiver_configs": [
-				{
-					"name": "receiver-1",
-					"uid": "%s",
-					"status": "failed",
-					"error": "the receiver is invalid: failed to validate receiver \"receiver-1\" of type \"email\": could not find addresses in settings"
+			"alert": {
+				"annotations": {
+					"summary": "Notification test",
+					"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+				},
+				"labels": {
+					"alertname": "TestAlert",
+					"instance": "Grafana"
 				}
-			]
-		}],
-		"notified_at": "%s"
-	}`,
+			},
+			"receivers": [{
+				"name":"receiver-1",
+				"grafana_managed_receiver_configs": [
+					{
+						"name": "receiver-1",
+						"uid": "%s",
+						"status": "failed",
+						"error": %q
+					}
+				]
+			}],
+			"notified_at": "%s"
+		}`,
 			result.Receivers[0].Configs[0].UID,
+			result.Receivers[0].Configs[0].Error,
 			result.NotifiedAt.Format(time.RFC3339Nano))
 		require.JSONEq(t, expectedJSON, string(b))
 	})
@@ -392,6 +394,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		require.Len(t, result.Receivers, 2)
 		require.Len(t, result.Receivers[0].Configs, 1)
 		require.Len(t, result.Receivers[1].Configs, 1)
+		require.Regexp(t, `failed to validate integration "receiver-1" \(UID[^\)]+\) of type "email": could not find addresses in settings`, result.Receivers[0].Configs[0].Error)
 
 		expectedJSON := fmt.Sprintf(`{
 		"alert": {
@@ -411,7 +414,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 					"name": "receiver-1",
 					"uid": "%s",
 					"status": "failed",
-					"error": "the receiver is invalid: failed to validate receiver \"receiver-1\" of type \"email\": could not find addresses in settings"
+					"error": %q
 				}
 			]
 		}, {
@@ -428,6 +431,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		"notified_at": "%s"
 	}`,
 			result.Receivers[0].Configs[0].UID,
+			result.Receivers[0].Configs[0].Error,
 			result.Receivers[1].Configs[0].UID,
 			result.NotifiedAt.Format(time.RFC3339Nano))
 		require.JSONEq(t, expectedJSON, string(b))
@@ -1056,6 +1060,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	body := getBody(nc.t, req.Body)
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	fmt.Fprint(res, nc.responses[paths[0]])
 }

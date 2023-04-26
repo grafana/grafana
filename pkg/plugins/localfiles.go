@@ -160,6 +160,17 @@ func (f LocalFS) Files() ([]string, error) {
 	return relFiles, nil
 }
 
+func (f LocalFS) Remove() error {
+	// extra security check to ensure we only remove a directory that looks like a plugin
+	if _, err := os.Stat(filepath.Join(f.basePath, "plugin.json")); os.IsNotExist(err) {
+		if _, err = os.Stat(filepath.Join(f.basePath, "dist/plugin.json")); os.IsNotExist(err) {
+			return ErrUninstallInvalidPluginDir
+		}
+	}
+
+	return os.RemoveAll(f.basePath)
+}
+
 // staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.
 type staticFilesMap map[string]struct{}
 
@@ -201,37 +212,6 @@ func NewStaticFS(fs FS) (StaticFS, error) {
 		FS:             fs,
 		staticFilesMap: newStaticFilesMap(files...),
 	}, nil
-}
-
-// Open checks that name is an allowed file and, if so, it returns a fs.File to access it, by calling the
-// underlying FS' Open() method.
-// If access is denied, the function returns ErrFileNotExist.
-func (f StaticFS) Open(name string) (fs.File, error) {
-	// Ensure access to the file is allowed
-	if !f.staticFilesMap.isAllowed(name) {
-		return nil, ErrFileNotExist
-	}
-	// Use the wrapped FS to access the file
-	return f.FS.Open(name)
-}
-
-// Files returns a slice of all the file paths in the FS relative to the base path.
-// It calls Files() on the underlying FS, and intersects the result with the allow-list.
-func (f StaticFS) Files() ([]string, error) {
-	// Get files from the underlying FS
-	filesystemFiles, err := f.FS.Files()
-	if err != nil {
-		return filesystemFiles, err
-	}
-	// Intersect with allow list
-	files := make([]string, 0, len(filesystemFiles))
-	for _, fn := range filesystemFiles {
-		if !f.staticFilesMap.isAllowed(fn) {
-			continue
-		}
-		files = append(files, fn)
-	}
-	return files, nil
 }
 
 // LocalFile implements a fs.File for accessing the local filesystem.

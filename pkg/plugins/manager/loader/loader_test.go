@@ -2,10 +2,10 @@ package loader
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -23,10 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/manifestverifier"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -438,12 +438,10 @@ func TestLoader_Load(t *testing.T) {
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{})
 		})
@@ -461,7 +459,7 @@ func TestLoader_Load(t *testing.T) {
 				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
 
-			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+			verifyState(t, tt.want, reg, procPrvdr, procMgr)
 		})
 	}
 }
@@ -674,12 +672,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 
 		for _, tt := range tests {
 			reg := fakes.NewFakePluginRegistry()
-			storage := fakes.NewFakePluginStorage()
 			procPrvdr := fakes.NewFakeBackendProcessProvider()
 			procMgr := fakes.NewFakeProcessManager()
 			l := newLoader(tt.cfg, func(l *Loader) {
 				l.pluginRegistry = reg
-				l.pluginStorage = storage
 				l.processManager = procMgr
 				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 			})
@@ -710,7 +706,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				for _, pluginErr := range pluginErrs {
 					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 				}
-				verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+				verifyState(t, tt.want, reg, procPrvdr, procMgr)
 			})
 		}
 	})
@@ -797,12 +793,10 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		})
 		setting.AppUrl = "http://localhost:3000"
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -823,7 +817,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		pluginErrs := l.PluginErrors()
 		require.Len(t, pluginErrs, 0)
 
-		verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+		verifyState(t, tt.want, reg, procPrvdr, procMgr)
 	}
 }
 
@@ -878,12 +872,10 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -900,7 +892,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		if !cmp.Equal(got, expected, compareOpts...) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
@@ -964,12 +956,10 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -987,7 +977,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
@@ -1056,7 +1046,6 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		// Cause an initialization error
 		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
@@ -1070,7 +1059,6 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -1088,118 +1076,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-	})
-}
-
-func TestLoader_Load_UseAPIForManifestPublicKey(t *testing.T) {
-	t.Run("Load plugin using API manifest", func(t *testing.T) {
-		pluginDir, err := filepath.Abs("../testdata/test-app")
-		if err != nil {
-			t.Errorf("could not construct absolute path of plugin dir")
-			return
-		}
-		expected := []*plugins.Plugin{
-			{
-				JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: "app",
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
-						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
-						},
-						Logos: plugins.Logos{
-							Small: "public/plugins/test-app/img/logo_small.png",
-							Large: "public/plugins/test-app/img/logo_large.png",
-						},
-						Screenshots: []plugins.Screenshots{
-							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
-							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
-						},
-						Updated: "2015-02-10",
-					},
-					Dependencies: plugins.Dependencies{
-						GrafanaVersion: "3.x.x",
-						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
-						},
-					},
-					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
-					},
-					Backend: false,
-				},
-				FS:            mustNewStaticFSForTests(t, pluginDir),
-				Class:         plugins.External,
-				Signature:     plugins.SignatureValid,
-				SignatureType: plugins.GrafanaSignature,
-				SignatureOrg:  "Grafana Labs",
-				Module:        "plugins/test-app/module",
-				BaseURL:       "public/plugins/test-app",
-			},
-		}
-
-		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
-		apiCalled := false
-		cfg := &config.Cfg{Features: featuremgmt.WithFeatures([]interface{}{"pluginsAPIManifestKey"}...)}
-		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/api/plugins/ci/keys" {
-				w.WriteHeader(http.StatusOK)
-				// Use the hardcoded key
-				k, err := manifestverifier.New(&config.Cfg{}, log.New("test")).GetPublicKey("7e4d0c6a708866e7")
-				require.NoError(t, err)
-				data := struct {
-					Items []manifestverifier.ManifestKeys `json:"items"`
-				}{
-					Items: []manifestverifier.ManifestKeys{{PublicKey: k, KeyID: "7e4d0c6a708866e7"}},
-				}
-				b, err := json.Marshal(data)
-				require.NoError(t, err)
-				_, err = w.Write(b)
-				require.NoError(t, err)
-				apiCalled = true
-				return
-			}
-			w.WriteHeader(http.StatusNotFound)
-		}))
-		cfg.GrafanaComURL = s.URL
-		l := newLoader(cfg, func(l *Loader) {
-			l.pluginRegistry = reg
-			l.pluginStorage = storage
-			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(cfg, procPrvdr, fakes.NewFakeLicensingService())
-		})
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
-			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{pluginDir}
-			},
-		})
-		require.NoError(t, err)
-		require.True(t, apiCalled)
-
-		if !cmp.Equal(got, expected, compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
-		}
-
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
@@ -1279,12 +1156,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -1309,7 +1184,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
 			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1331,7 +1206,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 			}
 
-			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+			verifyState(t, expected, reg, procPrvdr, procMgr)
 		})
 	})
 
@@ -1459,12 +1334,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		expected := []*plugins.Plugin{parent, child}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -1487,7 +1360,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
@@ -1516,8 +1389,9 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
-		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg), signature.ProvideService(cfg))
+		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
+		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(pCfg),
+		signature.ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore())))
 
 	for _, cb := range cbs {
 		cb(l)
@@ -1527,7 +1401,7 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegistry,
-	procPrvdr *fakes.FakeBackendProcessProvider, storage *fakes.FakePluginStorage, procMngr *fakes.FakeProcessManager) {
+	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager) {
 	t.Helper()
 
 	for _, p := range ps {
@@ -1541,13 +1415,6 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegist
 		} else {
 			require.Zero(t, procPrvdr.Requested[p.ID])
 			require.Zero(t, procPrvdr.Invoked[p.ID])
-		}
-
-		_, exists := storage.Store[p.ID]
-		if p.IsExternalPlugin() {
-			require.True(t, exists)
-		} else {
-			require.False(t, exists)
 		}
 
 		require.Equal(t, 1, procMngr.Started[p.ID])

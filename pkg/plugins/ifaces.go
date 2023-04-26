@@ -58,6 +58,10 @@ type FS interface {
 	Files() ([]string, error)
 }
 
+type FSRemover interface {
+	Remove() error
+}
+
 type FoundBundle struct {
 	Primary  FoundPlugin
 	Children []*FoundPlugin
@@ -143,4 +147,13 @@ type FeatureToggles interface {
 
 type SignatureCalculator interface {
 	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+}
+
+type KeyStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key string, value string) error
+	Del(ctx context.Context, key string) error
+	ListKeys(ctx context.Context) ([]string, error)
+	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	SetLastUpdated(ctx context.Context) error
 }

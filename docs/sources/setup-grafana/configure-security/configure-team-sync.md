@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../auth/saml/
   - ../../auth/team-sync/
   - ../../enterprise/team-sync/
 description: Learn how to use Team Sync to synchronize between your authentication
