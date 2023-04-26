@@ -20,3 +20,7 @@ export function getNewFolderPhrase() {
 export function getImportPhrase() {
   return t('search.dashboard-actions.import', 'Import');
 }
+
+export function getNewPhrase() {
+  return t('search.dashboard-actions.new', 'New');
+}

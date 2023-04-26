@@ -1,7 +1,12 @@
 import React from 'react';
 
-import { Button, ButtonGroup, Dropdown, Menu, MenuItem } from '@grafana/ui';
-import { getNewDashboardPhrase, getNewFolderPhrase, getImportPhrase } from 'app/features/search/tempI18nPhrases';
+import { Button, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import {
+  getNewDashboardPhrase,
+  getNewFolderPhrase,
+  getImportPhrase,
+  getNewPhrase,
+} from 'app/features/search/tempI18nPhrases';
 
 interface Props {
   /**
@@ -21,10 +26,10 @@ export function CreateNewButton({ inFolder }: Props) {
 
   return (
     <Dropdown overlay={newMenu}>
-      <ButtonGroup>
-        <Button icon="plus">New</Button>
-        <Button icon="angle-down" />
-      </ButtonGroup>
+      <Button>
+        {getNewPhrase()}
+        <Icon name="angle-down" />
+      </Button>
     </Dropdown>
   );
 }

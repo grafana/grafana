@@ -2,11 +2,10 @@ import React, { useMemo, useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, Button, Icon, HorizontalGroup } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 
 import { MoveToFolderModal } from '../page/components/MoveToFolderModal';
-import { getImportPhrase, getNewDashboardPhrase, getNewFolderPhrase } from '../tempI18nPhrases';
+import { getImportPhrase, getNewDashboardPhrase, getNewFolderPhrase, getNewPhrase } from '../tempI18nPhrases';
 
 export interface Props {
   folder: FolderDTO | undefined;
@@ -83,7 +82,7 @@ export const DashboardActions = ({ folder, canCreateFolders = false, canCreateDa
           )}
           <Dropdown overlay={MenuActions} placement="bottom-start">
             <Button variant="primary">
-              {t('search.dashboard-actions.new', 'New')}
+              {getNewPhrase()}
               <Icon name="angle-down" />
             </Button>
           </Dropdown>
