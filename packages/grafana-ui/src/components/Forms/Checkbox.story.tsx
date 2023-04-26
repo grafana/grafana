@@ -37,6 +37,7 @@ Basic.args = {
   label: 'Skip TLS cert validation',
   description: 'Set to true if you want to skip TLS cert validation',
   disabled: false,
+  indeterminate: false,
 };
 
 export const StackedList = () => {
@@ -78,6 +79,7 @@ InAField.args = {
   description:
     'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
   disabled: false,
+  indeterminate: false,
 };
 
 export const AllStates: ComponentStory<typeof Checkbox> = (args) => {
@@ -103,6 +105,7 @@ AllStates.args = {
   label: 'Props set from controls',
   description: 'Set to true if you want to skip TLS cert validation',
   disabled: false,
+  indeterminate: false,
 };
 
 export default meta;

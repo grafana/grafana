@@ -93,6 +93,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
        * */
       &:checked + span {
         background: ${theme.colors.primary.main};
+        border: none;
 
         &:hover {
           background: ${theme.colors.primary.shade};
@@ -127,7 +128,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
 
     inputIndeterminate: css`
-      & + span {
+      &[aria-checked='mixed'] + span {
+        border: none;
         background: ${theme.colors.primary.main};
 
         &:hover {
@@ -138,11 +140,13 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           content: '';
           position: absolute;
           z-index: 2;
-          left: 2px;
-          right: 2px;
+          left: 3px;
+          right: 3px;
           top: calc(50% - 1.5px);
           height: 3px;
           background-color: ${theme.colors.primary.contrastText};
+          width: auto;
+          transform: none;
         }
       }
     `,
