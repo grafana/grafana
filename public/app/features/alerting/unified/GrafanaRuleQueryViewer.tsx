@@ -133,7 +133,7 @@ export function QueryPreview({
       {dataSource && (
         <RuleViewerVisualization
           refId={refId}
-          datasourceUid={dataSource.uid}
+          dsSettings={dataSource}
           model={model}
           data={queryData}
           thresholds={thresholds}
@@ -151,7 +151,7 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
     margin: ${theme.spacing(1)};
   `,
   contentBox: css`
-    flex: 1 0 100%; // RuleViewerVisualization uses AutoSizer which doesn't expand the box
+    flex: 1 0 100%;
   `,
   visualization: css`
     padding: ${theme.spacing(1)};

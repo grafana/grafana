@@ -1,8 +1,9 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
 import {
   DataSourceInstanceSettings,
+  DataSourceJsonData,
   DateTime,
   dateTime,
   GrafanaTheme2,
@@ -10,8 +11,8 @@ import {
   RelativeTimeRange,
   urlUtil,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { DateTimePicker, LinkButton, useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -20,8 +21,8 @@ import { Authorize } from '../Authorize';
 import { VizWrapper } from '../rule-editor/VizWrapper';
 import { ThresholdDefinition } from '../rule-editor/util';
 
-interface RuleViewerVisualizationProps
-  extends Pick<AlertQuery, 'refId' | 'datasourceUid' | 'model' | 'relativeTimeRange'> {
+interface RuleViewerVisualizationProps extends Pick<AlertQuery, 'refId' | 'model' | 'relativeTimeRange'> {
+  dsSettings: DataSourceInstanceSettings<DataSourceJsonData>;
   data?: PanelData;
   thresholds?: ThresholdDefinition;
   onTimeRangeChange: (range: RelativeTimeRange) => void;
@@ -34,13 +35,12 @@ export function RuleViewerVisualization({
   data,
   model,
   thresholds,
-  datasourceUid,
+  dsSettings,
   relativeTimeRange,
   onTimeRangeChange,
   className,
 }: RuleViewerVisualizationProps): JSX.Element | null {
   const styles = useStyles2(getStyles);
-  const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceUid);
 
   const onTimeChange = useCallback(
     (newDateTime: DateTime) => {
@@ -62,25 +62,8 @@ export function RuleViewerVisualization({
     return null;
   }
 
-  if (!dsSettings) {
-    return (
-      <div className={cx(styles.content, className)}>
-        <Alert title="Could not find datasource for query" />
-        <CodeEditor
-          width="100%"
-          height="250px"
-          language="json"
-          showLineNumbers={false}
-          showMiniMap={false}
-          value={JSON.stringify(model, null, '\t')}
-          readOnly={true}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={cx(styles.content, className)}>
+    <div className={className}>
       <div className={styles.header}>
         <div className={styles.actions}>
           {!isExpressionQuery(model) && relativeTimeRange ? (
@@ -88,17 +71,15 @@ export function RuleViewerVisualization({
           ) : null}
           <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
             {!isExpressionQuery(model) && (
-              <>
-                <LinkButton
-                  size="md"
-                  variant="secondary"
-                  icon="compass"
-                  target="_blank"
-                  href={createExploreLink(dsSettings, model)}
-                >
-                  View in Explore
-                </LinkButton>
-              </>
+              <LinkButton
+                size="md"
+                variant="secondary"
+                icon="compass"
+                target="_blank"
+                href={createExploreLink(dsSettings, model)}
+              >
+                View in Explore
+              </LinkButton>
             )}
           </Authorize>
         </div>
@@ -131,10 +112,6 @@ function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDat
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    content: css`
-      width: 100%;
-      height: 380px;
-    `,
     header: css`
       height: ${theme.spacing(headerHeight)};
       display: flex;
