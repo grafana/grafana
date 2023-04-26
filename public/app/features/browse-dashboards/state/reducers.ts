@@ -87,16 +87,38 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
 
   state.selectedItems.$all = isSelected;
 
-  for (const folderUID in state.childrenByParentUID) {
-    const children = state.childrenByParentUID[folderUID] ?? [];
+  // Search works a bit differently so the state here does different things...
+  // In search:
+  //  - When "Selecting all", it sends individual state updates with setItemSelectionState.
+  //  - When "Deselecting all", it uses this setAllSelection. Search results aren't stored in
+  //    redux, so we just need to iterate over the selected items to flip them to false
 
-    for (const child of children) {
+  if (isSelected) {
+    for (const folderUID in state.childrenByParentUID) {
+      const children = state.childrenByParentUID[folderUID] ?? [];
+
+      for (const child of children) {
+        state.selectedItems[child.kind][child.uid] = isSelected;
+      }
+    }
+
+    for (const child of state.rootItems) {
       state.selectedItems[child.kind][child.uid] = isSelected;
     }
+
+    return;
   }
 
-  for (const child of state.rootItems) {
-    state.selectedItems[child.kind][child.uid] = isSelected;
+  for (const kind in state.selectedItems) {
+    if (!(kind === 'dashboard' || kind === 'panel' || kind === 'folder')) {
+      continue;
+    }
+
+    const selection = state.selectedItems[kind];
+
+    for (const uid in selection) {
+      selection[uid] = isSelected;
+    }
   }
 }
 

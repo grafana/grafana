@@ -1,7 +1,12 @@
 import { wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { BrowseDashboardsState } from '../types';
 
-import { extraReducerFetchChildrenFulfilled, setFolderOpenState, setItemSelectionState } from './reducers';
+import {
+  extraReducerFetchChildrenFulfilled,
+  setAllSelection,
+  setFolderOpenState,
+  setItemSelectionState,
+} from './reducers';
 
 function createInitialState(): BrowseDashboardsState {
   return {
@@ -186,6 +191,19 @@ describe('browse-dashboards reducers', () => {
         },
         panel: {},
       });
+    });
+  });
+
+  describe('setAllSelection', () => {
+    const state = createInitialState();
+
+    setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true } });
+
+    expect(state.selectedItems).toEqual({
+      $all: true,
+      dashboard: {},
+      folder: {},
+      panel: {},
     });
   });
 });
