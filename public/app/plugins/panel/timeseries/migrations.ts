@@ -63,14 +63,11 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard && annotations?.length > 0) {
       dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
-      console.log('updating annotations from migration', panel, dashboard.annotations);
 
       // Trigger a full dashbaord refresh when annotations change
       if (dashboardRefreshDebouncer == null) {
-        console.log('scheduling a refresh');
         dashboardRefreshDebouncer = setTimeout(() => {
           dashboardRefreshDebouncer = null;
-          console.log('execute dashboard refresh');
           getDashboardQueryRunner().run({
             dashboard,
             range: getTimeSrv().timeRange(),
@@ -400,7 +397,7 @@ export function graphToTimeseriesOptions(angular: any): {
       to: old.to,
     }));
 
-    regions.forEach((region) => {
+    regions.forEach((region: GraphTimeRegionConfig, idx: number) => {
       const anno: AnnotationQuery<GrafanaQuery> = {
         datasource: {
           type: 'datasource',
@@ -412,8 +409,8 @@ export function graphToTimeseriesOptions(angular: any): {
           exclude: false,
           ids: [angular.panel.id],
         },
-        iconColor: region.color,
-        name: region.name,
+        iconColor: region.fillColor ?? (region as any).color,
+        name: `T${idx + 1}`,
         target: {
           queryType: GrafanaQueryType.TimeRegions,
           refId: 'Anno',
@@ -429,7 +426,7 @@ export function graphToTimeseriesOptions(angular: any): {
       if (region.fill) {
         annotations.push(anno);
       } else if (region.line) {
-        anno.iconColor = 'white';
+        anno.iconColor = region.lineColor ?? 'white';
         annotations.push(anno);
       }
     });
