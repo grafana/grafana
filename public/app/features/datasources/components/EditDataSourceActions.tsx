@@ -37,11 +37,9 @@ export function EditDataSourceActions({ uid }: Props) {
     <>
       {hasExploreRights && (
         <Button
-          icon="compass"
-          fill="outline"
+          type="button"
           variant="secondary"
-          className={styles.button}
-          href={constructDataSourceExploreUrl(dataSource)}
+          disabled={!canDelete}
           onClick={() => {
             trackExploreClicked({
               grafana_version: config.buildInfo.version,
@@ -49,12 +47,13 @@ export function EditDataSourceActions({ uid }: Props) {
               plugin_name: dataSource.typeName,
               path: location.pathname,
             });
+            location.href = constructDataSourceExploreUrl(dataSource);
           }}
+          className={styles.button}
         >
-          Explore
+          Explore data
         </Button>
       )}
-
       <Button
         type="button"
         variant="secondary"
@@ -72,7 +71,6 @@ export function EditDataSourceActions({ uid }: Props) {
       >
         View dashboards
       </Button>
-
       <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete} className={styles.button}>
         Delete
       </Button>
