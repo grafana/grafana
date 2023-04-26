@@ -4,7 +4,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { HorizontalGroup, Icon, Tag, Tooltip } from '@grafana/ui/src';
 import { Page } from 'app/core/components/PageNew/Page';
 
-import { useGetUsersWithActiveSessionsQuery } from '../../dashboard/api/publicDashboardApi';
+import { useGetActiveUsersQuery } from '../../dashboard/api/publicDashboardApi';
 
 import { DashboardsListModalButton } from './DashboardsListModalButton';
 import { DeleteUserModalButton } from './DeleteUserModalButton';
@@ -12,7 +12,7 @@ import { DeleteUserModalButton } from './DeleteUserModalButton';
 const selectors = e2eSelectors.pages.UserListPage.publicDashboards;
 
 export const UserListPublicDashboardPage = () => {
-  const { data: users, isLoading } = useGetUsersWithActiveSessionsQuery();
+  const { data: users, isLoading } = useGetActiveUsersQuery();
 
   return (
     <Page.Contents isLoading={isLoading}>
@@ -42,8 +42,8 @@ export const UserListPublicDashboardPage = () => {
               <td className="max-width-10">{user.firstSeenAtAge}</td>
               <td className="max-width-10">
                 <HorizontalGroup spacing="sm">
-                  <span>{user.dashboards?.length} dashboards</span>
-                  {user.dashboards && <DashboardsListModalButton dashboards={user.dashboards} />}
+                  <span>{user.totalDashboards} dashboards</span>
+                  <DashboardsListModalButton email={user.email} />
                 </HorizontalGroup>
               </td>
               <td className="max-width-10">

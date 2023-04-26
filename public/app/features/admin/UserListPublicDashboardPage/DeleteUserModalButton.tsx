@@ -10,8 +10,8 @@ const DeleteUserModal = ({ user, onDismiss }: { user: SessionUser; onDismiss: ()
 
   const body = (
     <p className={styles.description}>
-      The user {user.email} is currently present in {user.dashboards?.length} public dashboards. If you wish to remove
-      this user, please navigate to the settings of the corresponding public dashboard.
+      The user {user.email} is currently present in {user.totalDashboards} public dashboards. If you wish to remove this
+      user, please navigate to the settings of the corresponding public dashboard.
     </p>
   );
 
@@ -37,6 +37,7 @@ export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => (
         onClick={() => showModal(DeleteUserModal, { user, onDismiss: hideModal })}
         icon="times"
         aria-label="Delete user"
+        title="Delete user"
       />
     )}
   </ModalsController>

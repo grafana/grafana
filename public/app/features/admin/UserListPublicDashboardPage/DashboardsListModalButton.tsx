@@ -2,47 +2,60 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
-import {
-  generatePublicDashboardUrl,
-  SessionDashboard,
-} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
+import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
-const DashboardsListModal = ({ dashboards, onDismiss }: { dashboards: SessionDashboard[]; onDismiss: () => void }) => {
+import { useGetActiveUserDashboardsQuery } from '../../dashboard/api/publicDashboardApi';
+
+const selectors = e2eSelectors.pages.UserListPage.UsersListPublicDashboardsPage.DashboardsListModal;
+export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDismiss: () => void }) => {
   const styles = useStyles2(getStyles);
 
+  const { data: dashboards, isLoading } = useGetActiveUserDashboardsQuery(email);
+
   return (
-    <Modal className={styles.modal} isOpen title="Public dashboards" onDismiss={onDismiss}>
-      {dashboards.map((dash) => (
-        <div key={dash.dashboardUid} className={styles.listItem}>
-          <p className={styles.dashboardTitle}>{dash.name}</p>
-          <div className={styles.urlsContainer}>
-            <a
-              rel="noreferrer"
-              target="_blank"
-              className={cx('external-link', styles.url)}
-              href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
-              onClick={onDismiss}
-            >
-              Public dashboard URL
-            </a>
-            <span className={styles.urlsDivider}>•</span>
-            <a
-              className={cx('external-link', styles.url)}
-              href={`/d/${dash.dashboardUid}?shareView=share`}
-              onClick={onDismiss}
-            >
-              Public dashboard settings
-            </a>
+    <Modal
+      className={styles.modal}
+      contentClassName={styles.modalContent}
+      isOpen
+      title="Public dashboards"
+      onDismiss={onDismiss}
+    >
+      {isLoading ? (
+        <LoadingPlaceholder text="Loading..." />
+      ) : (
+        dashboards?.map((dash) => (
+          <div key={dash.dashboardUid} className={styles.listItem} data-testid={selectors.listItem(dash.dashboardUid)}>
+            <p className={styles.dashboardTitle}>{dash.dashboardTitle}</p>
+            <div className={styles.urlsContainer}>
+              <a
+                rel="noreferrer"
+                target="_blank"
+                className={cx('external-link', styles.url)}
+                href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
+                onClick={onDismiss}
+              >
+                Public dashboard URL
+              </a>
+              <span className={styles.urlsDivider}>•</span>
+              <a
+                className={cx('external-link', styles.url)}
+                href={`/d/${dash.dashboardUid}?shareView=share`}
+                onClick={onDismiss}
+              >
+                Public dashboard settings
+              </a>
+            </div>
+            <hr className={styles.divider} />
           </div>
-          <hr className={styles.divider} />
-        </div>
-      ))}
+        ))
+      )}
     </Modal>
   );
 };
 
-export const DashboardsListModalButton = ({ dashboards }: { dashboards: SessionDashboard[] }) => (
+export const DashboardsListModalButton = ({ email }: { email: string }) => (
   <ModalsController>
     {({ showModal, hideModal }) => (
       <Button
@@ -50,8 +63,8 @@ export const DashboardsListModalButton = ({ dashboards }: { dashboards: SessionD
         size="sm"
         icon="question-circle"
         title="Open dashboards list"
-        onClick={() => showModal(DashboardsListModal, { dashboards, onDismiss: hideModal })}
-        data-testid="query-tab-help-button"
+        aria-label="Open dashboards list"
+        onClick={() => showModal(DashboardsListModal, { email, onDismiss: hideModal })}
       />
     )}
   </ModalsController>
@@ -60,6 +73,11 @@ export const DashboardsListModalButton = ({ dashboards }: { dashboards: SessionD
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
     width: 590px;
+  `,
+  modalContent: css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   `,
   listItem: css`
     display: flex;

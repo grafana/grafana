@@ -7,6 +7,7 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import {
   PublicDashboard,
   PublicDashboardSettings,
+  SessionDashboard,
   SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -43,7 +44,7 @@ const getConfigError = (err: unknown) => ({ error: isFetchError(err) && err.stat
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
-  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard', 'UsersWithActiveSessions'],
+  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard', 'UsersWithActiveSessions', 'ActiveUserDashboards'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
@@ -117,11 +118,17 @@ export const publicDashboardApi = createApi({
         url: '',
       }),
     }),
-    getUsersWithActiveSessions: builder.query<SessionUser[], void>({
+    getActiveUsers: builder.query<SessionUser[], void>({
       query: () => ({
         url: '/',
       }),
       providesTags: ['UsersWithActiveSessions'],
+    }),
+    getActiveUserDashboards: builder.query<SessionDashboard[], string>({
+      query: () => ({
+        url: '',
+      }),
+      providesTags: (result, _, email) => [{ type: 'ActiveUserDashboards', id: email }],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
@@ -146,6 +153,7 @@ export const publicDashboardApi = createApi({
       invalidatesTags: (result, error, { dashboardUid }) => [
         { type: 'PublicDashboard', id: dashboardUid },
         'AuditTablePublicDashboard',
+        'ActiveUserDashboards',
       ],
     }),
   }),
@@ -160,5 +168,6 @@ export const {
   useAddRecipientMutation,
   useDeleteRecipientMutation,
   useReshareAccessToRecipientMutation,
-  useGetUsersWithActiveSessionsQuery,
+  useGetActiveUsersQuery,
+  useGetActiveUserDashboardsQuery,
 } = publicDashboardApi;

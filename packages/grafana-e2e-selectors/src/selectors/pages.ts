@@ -312,6 +312,9 @@ export const Pages = {
     },
     UsersListPublicDashboardsPage: {
       container: 'data-testid users-list-public-dashboards-page',
+      DashboardsListModal: {
+        listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
+      },
     },
   },
 };

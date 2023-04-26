@@ -26,7 +26,7 @@ export interface PublicDashboard extends PublicDashboardSettings {
 }
 
 export interface SessionDashboard {
-  name: string;
+  dashboardTitle: string;
   dashboardUid: string;
   publicDashboardAccessToken: string;
 }
@@ -34,7 +34,7 @@ export interface SessionDashboard {
 export interface SessionUser {
   email: string;
   firstSeenAtAge: string;
-  dashboards?: SessionDashboard[];
+  totalDashboards: number;
 }
 
 // Instance methods
