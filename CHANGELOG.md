@@ -1,3 +1,12 @@
+<!-- 9.4.9 START -->
+
+# 9.4.9 (2023-04-24)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.3. [#66264](https://github.com/grafana/grafana/pull/66264), [@sakjur](https://github.com/sakjur)
+
+<!-- 9.4.9 END -->
 <!-- 9.4.7 START -->
 
 # 9.4.7 (2023-03-16)
