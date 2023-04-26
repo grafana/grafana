@@ -439,8 +439,8 @@
       "type-header": "类型"
     },
     "search-input": {
-      "include-panels-placeholder": "搜索仪表板和面板",
-      "placeholder": "搜索仪表板"
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
