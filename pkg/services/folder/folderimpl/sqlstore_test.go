@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -544,6 +545,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	require.NoError(t, err)
 
 	treeLeaves := CreateLeaves(t, folderStore, parent, 8)
+	sort.Strings(treeLeaves)
 
 	t.Cleanup(func() {
 		for _, uid := range treeLeaves {
@@ -768,9 +770,10 @@ func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int)
 
 	leaves := make([]string, 0)
 	for i := 0; i < num; i++ {
+		uid := util.GenerateShortUID()
 		f, err := store.Create(context.Background(), folder.CreateFolderCommand{
-			Title:     fmt.Sprintf("folder-%d", i),
-			UID:       util.GenerateShortUID(),
+			Title:     fmt.Sprintf("folder-%s", uid),
+			UID:       uid,
 			OrgID:     parent.OrgID,
 			ParentUID: parent.UID,
 		})
