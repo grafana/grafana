@@ -3,8 +3,9 @@ import React from 'react';
 import { FieldValidationMessage } from '@grafana/ui';
 
 import { validateInput } from './ConfigEditor';
-import { VALID_URL_REGEX } from './Connection';
 import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from './PromSettings';
+
+const VALID_URL_REGEX = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
 
 const error = <FieldValidationMessage>Value is not valid</FieldValidationMessage>;
 // replaces promSettingsValidationEvents to display a <FieldValidationMessage> onBlur for duration input errors
