@@ -315,9 +315,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		dataResponse.Error = err
 		return dataResponse
 	}
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
-		AddConfigLinks(*frame, queryUrl, nil)
-	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
 		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
@@ -376,6 +373,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 				Query:          logsJSONModel,
 			},
 		})
+	} else {
+		AddConfigLinks(*frame, queryUrl, nil)
 	}
 
 	dataResponse.Frames = data.Frames{frame}
