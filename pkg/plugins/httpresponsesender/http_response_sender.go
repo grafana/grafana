@@ -11,7 +11,7 @@ import (
 
 // HTTPResponseSender implements backend.CallResourceResponseSender and
 // writes an HTTP response using an http.ResponseWriter given received
-// backend.CallResourceResponse's.
+// backend.CallResourceResponse(s).
 type HTTPResponseSender struct {
 	processedStreams int
 	w                http.ResponseWriter
