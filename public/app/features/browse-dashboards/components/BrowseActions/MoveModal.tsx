@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, isTruthy } from '@grafana/data';
-import { Alert, Button, Field, Modal, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Button, Field, Modal, Spinner, useStyles2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
+import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';
 
 import { buildBreakdownString } from './utils';
@@ -19,14 +20,8 @@ export interface Props {
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const styles = useStyles2(getStyles);
-
-  // TODO abstract all this counting logic out
-  const folderCount = Object.values(selectedItems.folder).filter(isTruthy).length;
-  const dashboardCount = Object.values(selectedItems.dashboard).filter(isTruthy).length;
-  // hardcoded values for now
-  // TODO replace with dummy API
-  const libraryPanelCount = 1;
-  const alertRuleCount = 1;
+  const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+  const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
 
   const onMove = () => {
     if (moveTarget !== undefined) {
@@ -37,11 +32,15 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
 
   return (
     <Modal title="Move" onDismiss={onDismiss} {...props}>
-      {folderCount > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
+      {selectedFolders.length > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
       This action will move the following content:
-      <p className={styles.breakdown}>
-        {buildBreakdownString(folderCount, dashboardCount, libraryPanelCount, alertRuleCount)}
-      </p>
+      <div className={styles.breakdown}>
+        <>
+          {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
+          {(isFetching || isLoading) && <Spinner size={12} />}
+          {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
+        </>
+      </div>
       <Field label="Folder name">
         <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
       </Field>
@@ -61,5 +60,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   breakdown: css({
     ...theme.typography.bodySmall,
     color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
   }),
 });

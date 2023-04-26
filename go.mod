@@ -7,13 +7,10 @@ go 1.19
 // Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
 replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
 
-// Avoid using v2.0.0+incompatible Redigo used by dependencies as the latest maintained branch of Redigo is v1.
-replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
-
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
+replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8
@@ -87,7 +84,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
@@ -126,7 +123,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -288,7 +285,6 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
-	github.com/containerd/containerd v1.6.8 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -371,7 +367,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/docker/docker v20.10.21+incompatible
+	github.com/docker/docker v23.0.4+incompatible
 	github.com/elazarl/goproxy v0.0.0-20220115173737-adb46da277ac // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect

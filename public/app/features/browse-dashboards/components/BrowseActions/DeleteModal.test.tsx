@@ -1,8 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DeleteModal, Props } from './DeleteModal';
+
+function render(...[ui, options]: Parameters<typeof rtlRender>) {
+  rtlRender(<TestProvider>{ui}</TestProvider>, options);
+}
 
 describe('browse-dashboards DeleteModal', () => {
   const mockOnDismiss = jest.fn();

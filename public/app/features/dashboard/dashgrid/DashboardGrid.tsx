@@ -142,7 +142,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return { top, bottom: this.lastPanelBottom };
   }
 
-  renderPanels(gridWidth: number) {
+  renderPanels(gridWidth: number, isDashboardDraggable: boolean) {
     const panelElements = [];
 
     // Reset last panel bottom
@@ -171,7 +171,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height);
+            return this.renderPanel(panel, width, height, isDashboardDraggable);
           }}
         </GrafanaGridItem>
       );
@@ -180,7 +180,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: number, height: number) {
+  renderPanel(panel: PanelModel, width: number, height: number, isDraggable: boolean) {
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
@@ -202,6 +202,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
         isViewing={panel.isViewing}
+        isDraggable={isDraggable}
         width={width}
         height={height}
         hideMenu={this.props.hidePanelMenus}
@@ -258,7 +259,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                     onResizeStop={this.onResizeStop}
                     onLayoutChange={this.onLayoutChange}
                   >
-                    {this.renderPanels(width)}
+                    {this.renderPanels(width, draggable)}
                   </ReactGridLayout>
                 </div>
               ) : (
@@ -290,7 +291,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                   onResizeStop={this.onResizeStop}
                   onLayoutChange={this.onLayoutChange}
                 >
-                  {this.renderPanels(width)}
+                  {this.renderPanels(width, draggable)}
                 </ReactGridLayout>
               </div>
             );

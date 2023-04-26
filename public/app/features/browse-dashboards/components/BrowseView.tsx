@@ -5,7 +5,7 @@ import { useDispatch } from 'app/types';
 
 import {
   useFlatTreeState,
-  useSelectedItemsState,
+  useCheckboxSelectionState,
   fetchChildren,
   setFolderOpenState,
   setItemSelectionState,
@@ -22,7 +22,7 @@ interface BrowseViewProps {
 export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
-  const selectedItems = useSelectedItemsState();
+  const selectedItems = useCheckboxSelectionState();
 
   useEffect(() => {
     dispatch(fetchChildren(folderUID));

@@ -6,7 +6,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useSelectedItemsState } from '../../state';
+import { useActionSelectionState } from '../../state';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -15,7 +15,7 @@ export interface Props {}
 
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
-  const selectedItems = useSelectedItemsState();
+  const selectedItems = useActionSelectionState();
 
   const onMove = () => {
     appEvents.publish(

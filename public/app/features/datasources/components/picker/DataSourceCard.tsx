@@ -60,6 +60,14 @@ function getStyles(theme: GrafanaTheme2) {
     logo: css`
       width: 32px;
       height: 32px;
+      padding-right: ${theme.spacing(1.5)};
+      display: flex;
+      align-items: center;
+
+      > img {
+        max-height: 100%;
+        min-width: 32px;
+      }
     `,
     name: css`
       color: ${theme.colors.text.primary};
