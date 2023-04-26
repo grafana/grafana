@@ -372,7 +372,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span tracing.Span) {
-		logger := logger.New("version", e.rule.Version, "fingerprint", f.String(), "attempt", attempt, "now", e.scheduledAt)
+		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
 		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
