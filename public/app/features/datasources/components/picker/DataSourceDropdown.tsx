@@ -46,6 +46,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   });
 
   const onClose = useCallback(() => {
+    setFilterTerm('');
     setOpen(false);
     markerElement?.blur();
   }, [setOpen, markerElement]);
@@ -82,6 +83,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
           onFocus={openDropdown}
           onClick={openDropdown}
+          value={filterTerm}
           onChange={(e) => {
             setFilterTerm(e.currentTarget.value);
           }}
