@@ -21,7 +21,7 @@ This can be mitigated by utilizing the enterprise [caching]({{< relref "../../ad
 
 {{% /admonition %}}
 
-Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be part of the same Grafana organization or provides limited information, as with a snapshot.
+Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
 
 ## Security implications of making your dashboard public
 
