@@ -13,24 +13,37 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect } from 'react';
+import React, { memo, Dispatch, SetStateAction, useEffect, useMemo } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Switch, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
+import { convertTimeFilter } from '../utils/filter-spans';
 
 export type TracePageSearchBarProps = {
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   spanFilterMatches: Set<string> | undefined;
+  showSpanFilterMatchesOnly: boolean;
+  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
+  reset: () => void;
 };
 
 export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
-  const { search, spanFilterMatches, focusedSpanIdForSearch, setFocusedSpanIdForSearch, datasourceType } = props;
+  const {
+    search,
+    spanFilterMatches,
+    focusedSpanIdForSearch,
+    setFocusedSpanIdForSearch,
+    datasourceType,
+    reset,
+    showSpanFilterMatchesOnly,
+    setShowSpanFilterMatchesOnly,
+  } = props;
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -77,34 +90,68 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
   };
 
+  const resetEnabled = useMemo(() => {
+    return (
+      (search.serviceName && search.serviceName !== '') ||
+      (search.spanName && search.spanName !== '') ||
+      convertTimeFilter(search.from || '') ||
+      convertTimeFilter(search.to || '') ||
+      search.tags.length > 1 ||
+      search.tags.some((tag) => {
+        return tag.key;
+      })
+    );
+  }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
   const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
 
   return (
     <div className={styles.searchBar}>
-      <>
-        <Button
-          className={styles.button}
-          variant="secondary"
-          disabled={!buttonEnabled}
-          type="button"
-          fill={'outline'}
-          aria-label="Prev result button"
-          onClick={prevResult}
-        >
-          Prev
-        </Button>
-        <Button
-          className={styles.button}
-          variant="secondary"
-          disabled={!buttonEnabled}
-          type="button"
-          fill={'outline'}
-          aria-label="Next result button"
-          onClick={nextResult}
-        >
-          Next
-        </Button>
-      </>
+      <div className={styles.buttons}>
+        <>
+          <div className={styles.resetButton}>
+            <Button
+              variant="destructive"
+              disabled={!resetEnabled}
+              type="button"
+              fill="outline"
+              aria-label="Reset filters button"
+              onClick={reset}
+            >
+              Reset
+            </Button>
+            <div className={styles.matchesOnly}>
+              <Switch
+                value={showSpanFilterMatchesOnly}
+                onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
+                label="Show matches only switch"
+              />
+              <span onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}>Show matches only</span>
+            </div>
+          </div>
+          <div className={styles.nextPrevButtons}>
+            <Button
+              variant="secondary"
+              disabled={!buttonEnabled}
+              type="button"
+              fill="outline"
+              aria-label="Prev result button"
+              onClick={prevResult}
+            >
+              Prev
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={!buttonEnabled}
+              type="button"
+              fill="outline"
+              aria-label="Next result button"
+              onClick={nextResult}
+            >
+              Next
+            </Button>
+          </div>
+        </>
+      </div>
     </div>
   );
 });
@@ -112,12 +159,33 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
 export const getStyles = () => {
   return {
     searchBar: css`
+      display: inline;
+    `,
+    matchesOnly: css`
+      display: inline-flex;
+      margin: 0 0 0 10px;
+      vertical-align: middle;
+
+      span {
+        cursor: pointer;
+        margin: -3px 0 0 5px;
+      }
+    `,
+    buttons: css`
       display: flex;
       justify-content: flex-end;
-      margin-top: 5px;
+      margin: 5px 0 0 0;
     `,
-    button: css`
-      margin-left: 8px;
+    resetButton: css`
+      order: 1;
+    `,
+    nextPrevButtons: css`
+      margin-left: auto;
+      order: 2;
+
+      button {
+        margin-left: 8px;
+      }
     `,
   };
 };

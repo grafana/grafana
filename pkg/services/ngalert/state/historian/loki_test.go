@@ -154,6 +154,25 @@ func TestRemoteLokiBackend(t *testing.T) {
 			entry := requireSingleEntry(t, res)
 			require.Equal(t, rule.Condition, entry.Condition)
 		})
+
+		t.Run("stores fingerprint of instance labels", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				Labels: data.Labels{
+					"statelabel": "labelvalue",
+					"labeltwo":   "labelvalue",
+					"labelthree": "labelvalue",
+				},
+			})
+
+			res := statesToStream(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			exp := labelFingerprint(states[0].Labels)
+			require.Equal(t, exp, entry.Fingerprint)
+		})
 	})
 
 	t.Run("selector string", func(t *testing.T) {
