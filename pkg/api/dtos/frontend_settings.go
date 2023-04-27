@@ -164,6 +164,8 @@ type FrontendSettingsDTO struct {
 	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool   `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool   `json:"cspReportOnlyEnabled"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 

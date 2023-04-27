@@ -83,10 +83,9 @@ describe('toDataFrame', () => {
       { a: 1, b: 2 },
       { a: 3, b: 4 },
     ];
-    const array = new ArrayDataFrame(orig);
+    const array = new ArrayDataFrame(orig); // will return a simple DataFrame
     const frame = toDataFrame(array);
     expect(frame).toEqual(array);
-    expect(frame instanceof ArrayDataFrame).toEqual(true);
     expect(frame.length).toEqual(orig.length);
     expect(frame.fields.map((f) => f.name)).toEqual(['a', 'b']);
   });

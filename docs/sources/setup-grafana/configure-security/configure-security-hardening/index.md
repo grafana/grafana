@@ -74,6 +74,24 @@ content_security_policy = true
 content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://$ROOT_PATH wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
 ```
 
+### Enable trusted types
+
+**Currently in development. [Trusted types](https://github.com/w3c/trusted-types/blob/main/explainer.md) is an experimental Javascript API with [limited browser support](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types#browser_compatibility).**
+
+Trusted types reduce the risk of DOM XSS by enforcing developers to sanitize strings that are used in injection sinks, such as setting `innerHTML` on an element. Furthermore, when enabling trusted types, these injection sinks need to go through a policy that will sanitize, or leave the string intact and return it as "safe". This provides some protection from client side injection vulnerabilities in third party libraries, such as jQuery, Angular and even third party plugins.
+
+To enable trusted types in enforce mode, where injection sinks are automatically sanitized:
+
+- Enable `content_security_policy` in the configuration.
+- Add `require-trusted-types-for 'script'` to the `content_security_policy_template` in the configuration.
+
+To enable trusted types in report mode, where inputs that have not been sanitized with trusted types will be logged to the console:
+
+- Enable `content_security_policy_report_only` in the configuration.
+- Add `require-trusted-types-for 'script'` to the `content_security_policy_report_only_template` in the configuration.
+
+As this is a feature currently in development, things may break. If they do, or if you have any other feedback, feel free to [leave a comment](https://github.com/grafana/grafana/discussions/66823).
+
 ## Additional security hardening
 
 The Grafana server has several built-in security features that you can opt-in to enhance security. This section describes additional techniques you can use to harden security.

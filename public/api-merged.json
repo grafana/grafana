@@ -5655,7 +5655,7 @@
           "folders"
         ],
         "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
-        "operationId": "getFolderChildrenCounts",
+        "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
             "type": "string",
@@ -5666,7 +5666,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getFolderChildrenCountsResponse"
+            "$ref": "#/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -11885,13 +11885,6 @@
         }
       }
     },
-    "ChildrenCounts": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "integer",
-        "format": "int64"
-      }
-    },
     "ConfFloat64": {
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
@@ -13096,6 +13089,13 @@
         "instance": {
           "type": "string"
         }
+      }
+    },
+    "DescendantCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
       }
     },
     "DiscordConfig": {
@@ -20341,10 +20341,10 @@
         "$ref": "#/definitions/DataSourceList"
       }
     },
-    "getFolderChildrenCountsResponse": {
+    "getFolderDescendantCountsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/ChildrenCounts"
+        "$ref": "#/definitions/DescendantCounts"
       }
     },
     "getFolderPermissionListResponse": {
