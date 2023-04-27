@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { FilterInput } from '@grafana/ui';
 
@@ -8,7 +8,7 @@ interface Props {
   onSearchChange: (value: string) => void;
 }
 
-export const ApiKeysActionBar: FC<Props> = ({ searchQuery, disabled, onSearchChange }) => {
+export const ApiKeysActionBar = ({ searchQuery, disabled, onSearchChange }: Props) => {
   return (
     <div className="page-action-bar">
       <div className="gf-form gf-form--grow">

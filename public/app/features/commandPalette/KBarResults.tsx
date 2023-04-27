@@ -21,7 +21,7 @@ interface KBarResultsProps {
   maxHeight?: number;
 }
 
-export const KBarResults: React.FC<KBarResultsProps> = (props) => {
+export const KBarResults = (props: KBarResultsProps) => {
   const activeRef = React.useRef<HTMLElement>(null);
   const parentRef = React.useRef(null);
 

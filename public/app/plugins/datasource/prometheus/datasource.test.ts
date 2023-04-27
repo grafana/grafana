@@ -15,6 +15,7 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { QueryOptions } from 'app/types';
@@ -29,7 +30,7 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
-import { PromOptions, PromQuery, PromQueryRequest } from './types';
+import { PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -49,14 +50,26 @@ const templateSrvStub = {
   replace: replaceMock,
 } as unknown as TemplateSrv;
 
-const timeSrvStub = {
+const fromSeconds = 1674500289215;
+const toSeconds = 1674500349215;
+
+const timeSrvStubOld = {
   timeRange() {
     return {
       from: dateTime(1531468681),
       to: dateTime(1531489712),
     };
   },
-} as unknown as TimeSrv;
+} as TimeSrv;
+
+const timeSrvStub: TimeSrv = {
+  timeRange() {
+    return {
+      from: dateTime(fromSeconds),
+      to: dateTime(toSeconds),
+    };
+  },
+} as TimeSrv;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -73,11 +86,22 @@ describe('PrometheusDatasource', () => {
     password: 'mupp',
     jsonData: {
       customQueryParameters: '',
-    },
+      cacheLevel: PrometheusCacheLevel.Low,
+    } as Partial<PromOptions>,
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
+  });
+
+  // Some functions are required by the parent datasource class to provide functionality such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues functions
+  describe('Datasource contract', () => {
+    it('has function called getTagKeys', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagKeys');
+    });
+    it('has function called getTagValues', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagValues');
+    });
   });
 
   describe('Query', () => {
@@ -153,7 +177,7 @@ describe('PrometheusDatasource', () => {
       ).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
-      await expect(directDs.getLabelNames()).rejects.toMatchObject({
+      await expect(directDs.getTagKeys()).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
       await expect(directDs.getTagValues()).rejects.toMatchObject({
@@ -190,7 +214,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('customQueryParams', () => {
-    const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+    const target: PromQuery = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
 
     function makeQuery(target: PromQuery) {
       return {
@@ -372,9 +396,9 @@ describe('PrometheusDatasource', () => {
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
         const results = result[0].data;
-        expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
-        expect(results[0].fields[2].values.toArray()).toEqual([10, 0]);
-        expect(results[0].fields[3].values.toArray()).toEqual([5, 0]);
+        expect(results[0].fields[1].values).toEqual([10, 10]);
+        expect(results[0].fields[2].values).toEqual([10, 0]);
+        expect(results[0].fields[3].values).toEqual([5, 0]);
       });
     });
 
@@ -418,6 +442,106 @@ describe('PrometheusDatasource', () => {
         const seriesLabels = result[0].data[0].fields.slice(1).map((field: Field) => getFieldDisplayName(field));
         expect(seriesLabels).toEqual(expected);
       });
+    });
+  });
+
+  // Remove when prometheusResourceBrowserCache is removed
+  describe('When prometheusResourceBrowserCache feature flag is off, there should be no change to the query intervals ', () => {
+    beforeEach(() => {
+      config.featureToggles.prometheusResourceBrowserCache = false;
+    });
+
+    it('test default 1 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Low },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      const oldRange = dataSource.getTimeRangeParams();
+      // For "1 minute" the window is unchanged
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+      expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
+    });
+
+    it('test 10 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Medium },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      const oldRange = dataSource.getTimeRangeParams();
+
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(60);
+      expect(parseInt(oldRange.end, 10) - parseInt(oldRange.start, 10)).toBe(60);
+    });
+  });
+
+  describe('Test query range snapping', () => {
+    beforeEach(() => {
+      config.featureToggles.prometheusResourceBrowserCache = true;
+    });
+
+    it('test default 1 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Low },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      // For "1 minute" the window contains all the minutes, so a query from 1:11:09 - 1:12:09 becomes 1:11 - 1:13
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(120);
+    });
+
+    it('test 10 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Medium },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(600);
+    });
+
+    it('test 60 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.High },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(3600);
+    });
+
+    it('test quantization turned off', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.None },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getAdjustedInterval();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(
+        (toSeconds - fromSeconds) / 1000
+      );
     });
   });
 
@@ -618,7 +742,7 @@ describe('PrometheusDatasource', () => {
 
   describe('interpolateVariablesInQueries', () => {
     it('should call replace function 2 times', () => {
-      const query = {
+      const query: PromQuery = {
         expr: 'test{job="testjob"}',
         format: 'time_series',
         interval: '$Interval',
@@ -716,8 +840,13 @@ describe('PrometheusDatasource', () => {
 
   describe('metricFindQuery', () => {
     beforeEach(() => {
+      const prometheusDatasource = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.None } },
+        templateSrvStub,
+        timeSrvStubOld
+      );
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
-      ds.metricFindQuery(query);
+      prometheusDatasource.metricFindQuery(query);
     });
 
     it('should call templateSrv.replace with scopedVars', () => {
@@ -756,7 +885,7 @@ describe('PrometheusDatasource2', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: { httpMethod: 'GET' },
+    jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.None },
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
@@ -889,27 +1018,27 @@ describe('PrometheusDatasource2', () => {
     });
 
     it('should fill null until first datapoint in response', () => {
-      expect(results.data[0].fields[0].values.get(0)).toBe(start * 1000);
-      expect(results.data[0].fields[1].values.get(0)).toBe(null);
-      expect(results.data[0].fields[0].values.get(1)).toBe((start + step * 1) * 1000);
-      expect(results.data[0].fields[1].values.get(1)).toBe(3846);
+      expect(results.data[0].fields[0].values[0]).toBe(start * 1000);
+      expect(results.data[0].fields[1].values[0]).toBe(null);
+      expect(results.data[0].fields[0].values[1]).toBe((start + step * 1) * 1000);
+      expect(results.data[0].fields[1].values[1]).toBe(3846);
     });
 
     it('should fill null after last datapoint in response', () => {
       const length = (end - start) / step + 1;
-      expect(results.data[0].fields[0].values.get(length - 2)).toBe((end - step * 1) * 1000);
-      expect(results.data[0].fields[1].values.get(length - 2)).toBe(3848);
-      expect(results.data[0].fields[0].values.get(length - 1)).toBe(end * 1000);
-      expect(results.data[0].fields[1].values.get(length - 1)).toBe(null);
+      expect(results.data[0].fields[0].values[length - 2]).toBe((end - step * 1) * 1000);
+      expect(results.data[0].fields[1].values[length - 2]).toBe(3848);
+      expect(results.data[0].fields[0].values[length - 1]).toBe(end * 1000);
+      expect(results.data[0].fields[1].values[length - 1]).toBe(null);
     });
 
     it('should fill null at gap between series', () => {
-      expect(results.data[0].fields[0].values.get(2)).toBe((start + step * 2) * 1000);
-      expect(results.data[0].fields[1].values.get(2)).toBe(null);
-      expect(results.data[1].fields[0].values.get(1)).toBe((start + step * 1) * 1000);
-      expect(results.data[1].fields[1].values.get(1)).toBe(null);
-      expect(results.data[1].fields[0].values.get(3)).toBe((start + step * 3) * 1000);
-      expect(results.data[1].fields[1].values.get(3)).toBe(null);
+      expect(results.data[0].fields[0].values[2]).toBe((start + step * 2) * 1000);
+      expect(results.data[0].fields[1].values[2]).toBe(null);
+      expect(results.data[1].fields[0].values[1]).toBe((start + step * 1) * 1000);
+      expect(results.data[1].fields[1].values[1]).toBe(null);
+      expect(results.data[1].fields[0].values[3]).toBe((start + step * 3) * 1000);
+      expect(results.data[1].fields[1].values[3]).toBe(null);
     });
   });
 
@@ -1398,7 +1527,13 @@ describe('PrometheusDatasource2', () => {
       const step = 55;
       const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
       const urlExpected =
-        'proxied/api/v1/query_range?query=test' + '&start=' + adjusted.start + '&end=' + adjusted.end + '&step=' + step;
+        'proxied/api/v1/query_range?query=test' +
+        '&start=' +
+        adjusted.start +
+        '&end=' +
+        (adjusted.end + step) +
+        '&step=' +
+        step;
       fetchMock.mockImplementation(() => of(response));
       ds.query(query);
       const res = fetchMock.mock.calls[0][0];
@@ -1651,7 +1786,7 @@ describe('PrometheusDatasource2', () => {
         '&start=' +
         adjusted.start +
         '&end=' +
-        adjusted.end +
+        (adjusted.end + step) +
         '&step=' +
         step;
       fetchMock.mockImplementation(() => of(response));
@@ -1873,7 +2008,7 @@ describe('PrometheusDatasource for POST', () => {
   });
 
   describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
-    const options = { dashboardId: 1, panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
+    const options = { panelId: 2, dashboardUID: 'WFlOM-jM1' } as DataQueryRequest<PromQuery>;
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     } as PromQueryRequest;
@@ -1897,7 +2032,6 @@ describe('PrometheusDatasource for POST', () => {
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions, options);
-      expect(httpOptions.headers['X-Dashboard-Id']).toBe(options.dashboardId);
       expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
       expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
     });
@@ -1975,7 +2109,6 @@ describe('prepareTargets', () => {
       const target: PromQuery = {
         refId: 'A',
         expr: 'up',
-        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({ targets: [target] });
@@ -1993,7 +2126,6 @@ describe('prepareTargets', () => {
         hinting: undefined,
         instant: undefined,
         refId: target.refId,
-        requestId: panelId + target.refId,
         start,
         step: 1,
       });
@@ -2134,7 +2266,6 @@ describe('prepareTargets', () => {
           expr: 'up',
           range: true,
           instant: true,
-          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
@@ -2155,7 +2286,6 @@ describe('prepareTargets', () => {
           hinting: undefined,
           instant: true,
           refId: target.refId,
-          requestId: panelId + target.refId + '_instant',
           start,
           step: 1,
         });
@@ -2163,7 +2293,6 @@ describe('prepareTargets', () => {
           ...target,
           format: 'table',
           instant: true,
-          requestId: panelId + target.refId + '_instant',
           valueWithRefId: true,
         });
         expect(queries[1]).toEqual({
@@ -2177,7 +2306,6 @@ describe('prepareTargets', () => {
           hinting: undefined,
           instant: false,
           refId: target.refId,
-          requestId: panelId + target.refId,
           start,
           step: 1,
         });
@@ -2185,7 +2313,6 @@ describe('prepareTargets', () => {
           ...target,
           format: 'time_series',
           instant: false,
-          requestId: panelId + target.refId,
         });
       });
     });
@@ -2197,7 +2324,6 @@ describe('prepareTargets', () => {
           expr: 'up',
           instant: true,
           range: false,
-          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
@@ -2218,7 +2344,6 @@ describe('prepareTargets', () => {
           hinting: undefined,
           instant: true,
           refId: target.refId,
-          requestId: panelId + target.refId,
           start,
           step: 1,
         });
@@ -2234,7 +2359,6 @@ describe('prepareTargets', () => {
         expr: 'up',
         range: true,
         instant: false,
-        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
@@ -2255,7 +2379,6 @@ describe('prepareTargets', () => {
         hinting: undefined,
         instant: false,
         refId: target.refId,
-        requestId: panelId + target.refId,
         start,
         step: 1,
       });

@@ -3,3 +3,4 @@ export const ALL_VARIABLE_TEXT = 'All';
 export const ALL_VARIABLE_VALUE = '$__all';
 export const NONE_VARIABLE_TEXT = 'None';
 export const NONE_VARIABLE_VALUE = '';
+export const VARIABLE_PREFIX = 'var-';

@@ -45,9 +45,10 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	var identity *authn.Identity
 	if renderUsr.UserID <= 0 {
 		identity = &authn.Identity{
-			ID:       authn.NamespacedID(authn.NamespaceUser, 0),
-			OrgID:    renderUsr.OrgID,
-			OrgRoles: map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+			ID:           authn.NamespacedID(authn.NamespaceUser, 0),
+			OrgID:        renderUsr.OrgID,
+			OrgRoles:     map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+			ClientParams: authn.ClientParams{SyncPermissions: true},
 		}
 	} else {
 		usr, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{UserID: renderUsr.UserID, OrgID: renderUsr.OrgID})
@@ -55,7 +56,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 			return nil, err
 		}
 
-		identity = authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{})
+		identity = authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true})
 	}
 
 	identity.LastSeenAt = time.Now()

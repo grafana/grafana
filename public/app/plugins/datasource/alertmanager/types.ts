@@ -7,6 +7,8 @@ export type AlertManagerCortexConfig = {
   alertmanager_config: AlertmanagerConfig;
   /** { [name]: provenance } */
   template_file_provenances?: Record<string, string>;
+  last_applied?: string;
+  id?: number;
 };
 
 export type TLSConfig = {
@@ -155,6 +157,7 @@ export type AlertmanagerConfig = {
   mute_time_intervals?: MuteTimeInterval[];
   /** { [name]: provenance } */
   muteTimeProvenances?: Record<string, string>;
+  last_applied?: boolean;
 };
 
 export type Matcher = {

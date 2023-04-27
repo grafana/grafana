@@ -1,6 +1,9 @@
 package kind
 
-import "strings"
+import (
+	"strings"
+	t "time"
+)
 
 name:        "Dashboard"
 maturity:    "experimental"
@@ -25,8 +28,8 @@ lineage: seqs: [
 				// Description of dashboard.
 				description?: string
 				// This property should only be used in dashboards defined by plugins.  It is a quick check
-				// to see if the version has changed since the last time.  Unclear why using the version property 
-				// is insufficient.  
+				// to see if the version has changed since the last time.  Unclear why using the version property
+				// is insufficient.
 				revision?: int64 @grafanamaturity(NeedsExpertReview)
 				// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
@@ -82,10 +85,18 @@ lineage: seqs: [
 				templating?: {
 					list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 				}
-				// TODO docs
-				annotations?: {
+
+				// TODO -- should not be a public interface on its own, but required for Veneer
+				#AnnotationContainer: {
+					// annoying... but required so that the list is defined using the nested Veneer
+					@grafana(TSVeneer="type")
+
 					list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
-				}
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				annotations?: #AnnotationContainer
+
 				// TODO docs
 				links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
 
@@ -94,38 +105,71 @@ lineage: seqs: [
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
-				// TODO docs
+				// TODO: this should be a regular DataQuery that depends on the selected dashboard
+				// these match the properties of the "grafana" datasouce that is default in most dashboards
 				#AnnotationTarget: {
-					limit:    int64
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already depending on it so hard to change
+					limit: int64
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already depending on it so hard to change
 					matchAny: bool
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already depending on it so hard to change
 					tags: [...string]
+					// Only required/valid for the grafana datasource... 
+					// but code+tests is already depending on it so hard to change
 					type: string
+					... // datasource will stick their raw DataQuery here
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+
+				#AnnotationPanelFilter: {
+					// Should the specified panels be included or excluded
+					exclude?: bool | *false
+
+					// Panel IDs that should be included or excluded
+					ids: [...uint8]
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 				#AnnotationQuery: {
-					// Datasource to use for annotation.
+					@grafana(TSVeneer="type")
+
+					// Name of annotation.
+					name: string
+
+					// TODO: Should be DataSourceRef
 					datasource: {
 						type?: string
 						uid?:  string
 					} @grafanamaturity(NeedsExpertReview)
 
-					// Whether annotation is enabled.
-					enable: bool | *true @grafanamaturity(NeedsExpertReview)
-					// Name of annotation.
-					name?:   string     @grafanamaturity(NeedsExpertReview)
-					builtIn: uint8 | *0 @grafanamaturity(NeedsExpertReview) // TODO should this be persisted at all?
-					// Whether to hide annotation.
-					hide?: bool | *false @grafanamaturity(NeedsExpertReview)
-					// Annotation icon color.
-					iconColor?: string                @grafanamaturity(NeedsExpertReview)
-					type:       string | *"dashboard" @grafanamaturity(NeedsExpertReview)
-					// Query for annotation data.
-					rawQuery?: string            @grafanamaturity(NeedsExpertReview)
-					showIn:    uint8 | *0        @grafanamaturity(NeedsExpertReview)
-					target?:   #AnnotationTarget @grafanamaturity(NeedsExpertReview)
+					// When enabled the annotation query is issued with every dashboard refresh
+					enable: bool | *true
+
+					// Annotation queries can be toggled on or off at the top of the dashboard.  
+					// When hide is true, the toggle is not shown in the dashboard.
+					hide?: bool | *false
+
+					// Color to use for the annotation event markers
+					iconColor: string
+
+					// Optionally   
+					filter?: #AnnotationPanelFilter
+
+					// TODO.. this should just be a normal query target
+					target?: #AnnotationTarget
+
+					// TODO -- this should not exist here, it is based on the --grafana-- datasource
+					type?: string @grafanamaturity(NeedsExpertReview)
+
+					// unless datasources have migrated to the target+mapping,
+					// they just spread their query into the base object :(
+					...
 				} @cuetsy(kind="interface")
+
+				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
 				// TODO docs
@@ -220,6 +264,8 @@ lineage: seqs: [
 					value?: number @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					color: string @grafanamaturity(NeedsExpertReview)
+					// Threshold index, an old property that is not needed an should only appear in older dashboards
+					index?: int32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					// TODO are the values here enumerable into a disjunction?
 					// Some seem to be listed in typescript comment
@@ -320,7 +366,7 @@ lineage: seqs: [
 				// TODO docs
 				#Snapshot: {
 					// TODO docs
-					created: string @grafanamaturity(NeedsExpertReview)
+					created: string & t.Time
 					// TODO docs
 					expires: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs
@@ -336,7 +382,7 @@ lineage: seqs: [
 					// TODO docs
 					orgId: uint32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
-					updated: string @grafanamaturity(NeedsExpertReview)
+					updated: string & t.Time
 					// TODO docs
 					url?: string @grafanamaturity(NeedsExpertReview)
 					// TODO docs

@@ -82,8 +82,8 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   };
 
   const access: NestedValueAccess = {
-    getValue: (path: string) => lodashGet(currentOptions, path),
-    onChange: (path: string, value: any) => {
+    getValue: (path) => lodashGet(currentOptions, path),
+    onChange: (path, value) => {
       const newOptions = setOptionImmutably(currentOptions, path, value);
       onPanelOptionsChanged(newOptions);
     },

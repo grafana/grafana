@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
@@ -15,6 +15,7 @@ import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 import { LogMessages } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
+import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
 import { RuleListErrors } from './components/rules/RuleListErrors';
 import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
@@ -34,6 +35,9 @@ const VIEWS = {
   state: RuleListStateView,
 };
 
+// make sure we ask for 1 more so we show the "show x more" button
+const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+
 const RuleList = withErrorBoundary(
   () => {
     const dispatch = useDispatch();
@@ -41,6 +45,8 @@ const RuleList = withErrorBoundary(
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
     const location = useLocation();
     const [expandAll, setExpandAll] = useState(false);
+
+    const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
@@ -66,17 +72,18 @@ const RuleList = withErrorBoundary(
     );
     const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
+    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction());
+        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
-    }, [loading]);
+    }, [loading, limitAlerts, dispatch]);
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction());
-    }, [dispatch]);
+      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+    }, [dispatch, limitAlerts]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
@@ -90,7 +97,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={() => setExpandAll(false)} />
+        <RulesFilter onFilterCleared={onFilterCleared} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
@@ -106,7 +113,7 @@ const RuleList = withErrorBoundary(
                     {expandAll ? 'Collapse all' : 'Expand all'}
                   </Button>
                 )}
-                <RuleStats namespaces={filteredNamespaces} includeTotal />
+                <RuleStats namespaces={filteredNamespaces} />
               </div>
               <Stack direction="row" gap={0.5}>
                 {canReadProvisioning && (

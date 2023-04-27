@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Location } from 'history';
-import React, { FC } from 'react';
+import React from 'react';
 import { useForm, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -41,7 +41,7 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, config, provenance }) => {
+export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 

@@ -21,12 +21,12 @@ export const PublicDashboardNotAvailable = ({ paused }: { paused?: boolean }) =>
         <Branding.LoginLogo className={loginStyles.loginLogo} />
         <p className={styles.title} data-testid={selectors.title}>
           {paused
-            ? 'The dashboard has been temporarily paused by the administrator.'
-            : 'The dashboard your are trying to access does not exist.'}
+            ? 'This dashboard has been paused by the administrator'
+            : 'The dashboard your are trying to access does not exist'}
         </p>
         {paused && (
           <p className={styles.description} data-testid={selectors.pausedDescription}>
-            Please check again soon.
+            Try again later
           </p>
         )}
       </div>

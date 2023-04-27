@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -286,12 +285,4 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	if !strings.Contains(res.Error.Error(), "credentials for Log Analytics are no longer supported") {
 		t.Error("expecting the error to inform of bad credentials")
 	}
-}
-
-func Test_setAdditionalFrameMeta(t *testing.T) {
-	t.Run("it should not error with an empty response", func(t *testing.T) {
-		frame := data.NewFrame("test")
-		err := setAdditionalFrameMeta(frame, "", "")
-		require.NoError(t, err)
-	})
 }

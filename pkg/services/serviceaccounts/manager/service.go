@@ -244,25 +244,25 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 
 func validOrgID(orgID int64) error {
 	if orgID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidOrgID
+		return serviceaccounts.ErrServiceAccountInvalidOrgID.Errorf("invalid org ID 0 has been specified")
 	}
 	return nil
 }
 func validServiceAccountID(serviceaccountID int64) error {
 	if serviceaccountID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidID
+		return serviceaccounts.ErrServiceAccountInvalidID.Errorf("invalid service account ID 0 has been specified")
 	}
 	return nil
 }
 func validServiceAccountTokenID(tokenID int64) error {
 	if tokenID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidTokenID
+		return serviceaccounts.ErrServiceAccountInvalidTokenID.Errorf("invalid service account token ID 0 has been specified")
 	}
 	return nil
 }
 func validAPIKeyID(apiKeyID int64) error {
 	if apiKeyID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID
+		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID.Errorf("invalid API key ID 0 has been specified")
 	}
 	return nil
 }

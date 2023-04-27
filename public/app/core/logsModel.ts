@@ -329,7 +329,7 @@ function getAllLabels(fields: LogFields): Labels[] {
   const { stringField, labelsField } = fields;
 
   if (labelsField !== undefined) {
-    return labelsField.values.toArray();
+    return labelsField.values;
   } else {
     return [stringField.labels ?? {}];
   }
@@ -342,7 +342,7 @@ function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
   const { stringField, labelsField } = fields;
 
   if (labelsField !== undefined) {
-    return labelsField.values.get(index);
+    return labelsField.values[index];
   } else {
     return stringField.labels ?? {};
   }
@@ -407,13 +407,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeField.values.get(j);
+      const ts = timeField.values[j];
       const time = toUtc(ts);
-      const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
+      const tsNs = timeNanosecondField ? timeNanosecondField.values[j] : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
       // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
-      const messageValue: unknown = stringField.values.get(j) ?? '';
+      const messageValue: unknown = stringField.values[j] ?? '';
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
@@ -421,7 +421,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
 
-      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+      // Data sources that set up searchWords on backend use meta.custom.searchWords
+      // Data sources that set up searchWords trough frontend can use meta.searchWords
+      const searchWords = series.meta?.custom?.searchWords ?? series.meta?.searchWords ?? [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 
       const labels = getLabelsForFrameRow(info, j);
@@ -431,7 +433,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       }
 
       let logLevel = LogLevel.unknown;
-      const logLevelKey = (logLevelField && logLevelField.values.get(j)) || (labels && labels['level']);
+      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels && labels['level']);
       if (logLevelKey) {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
@@ -457,7 +459,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         entry,
         raw: message,
         labels: labels || {},
-        uid: idField ? idField.values.get(j) : j.toString(),
+        uid: idField ? idField.values[j] : j.toString(),
         datasourceType,
       });
     }
@@ -782,7 +784,7 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
 }
 
 function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval: string; intervalMs?: number } {
-  if (scopedVars.__interval) {
+  if (scopedVars.__interval_ms) {
     let intervalMs: number = scopedVars.__interval_ms.value;
     let interval = '';
     // below 5 seconds we force the resolution to be per 1ms as interval in scopedVars is not less than 10ms

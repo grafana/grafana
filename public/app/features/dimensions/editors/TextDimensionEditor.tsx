@@ -26,7 +26,7 @@ const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfig
   settings: {},
 } as any;
 
-type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions, any>;
+type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
 
 export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
   const labelWidth = 9;

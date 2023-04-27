@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createDimension, createTheme, ArrayVector, FieldType, DisplayProcessor } from '@grafana/data';
+import { createDimension, createTheme, FieldType, DisplayProcessor } from '@grafana/data';
 
 import { ActiveDimensions } from '../../VizTooltip';
 
@@ -11,7 +11,7 @@ import { GraphDimensions } from './types';
 let dimensions: GraphDimensions;
 
 describe('MultiModeGraphTooltip', () => {
-  const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
+  const display: DisplayProcessor = (v) => ({ numeric: Number(v), text: String(v), color: 'red' });
   const theme = createTheme();
 
   describe('when shown when hovering over a datapoint', () => {
@@ -20,14 +20,14 @@ describe('MultiModeGraphTooltip', () => {
         xAxis: createDimension('xAxis', [
           {
             config: {},
-            values: new ArrayVector([0, 100, 200]),
+            values: [0, 100, 200],
             name: 'A-series time',
             type: FieldType.time,
             display,
           },
           {
             config: {},
-            values: new ArrayVector([0, 100, 200]),
+            values: [0, 100, 200],
             name: 'B-series time',
             type: FieldType.time,
             display,
@@ -36,14 +36,14 @@ describe('MultiModeGraphTooltip', () => {
         yAxis: createDimension('yAxis', [
           {
             config: {},
-            values: new ArrayVector([10, 20, 10]),
+            values: [10, 20, 10],
             name: 'A-series values',
             type: FieldType.number,
             display,
           },
           {
             config: {},
-            values: new ArrayVector([20, 30, 40]),
+            values: [20, 30, 40],
             name: 'B-series values',
             type: FieldType.number,
             display,

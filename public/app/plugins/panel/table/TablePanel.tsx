@@ -5,7 +5,6 @@ import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableV
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { OPTIONAL_ROW_NUMBER_COLUMN_WIDTH } from '@grafana/ui/src/components/Table/utils';
 
 import { PanelOptions } from './panelcfg.gen';
 
@@ -19,7 +18,7 @@ export function TablePanel(props: Props) {
   const frames = data.series;
   const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
   const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
-  const count = mainFrames.length;
+  const count = mainFrames?.length;
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
   const main = mainFrames[currentIndex];
@@ -43,12 +42,11 @@ export function TablePanel(props: Props) {
     <Table
       height={tableHeight}
       // This calculation is to accommodate the optionally rendered Row Numbers Column
-      width={options.showRowNums ? width : width + OPTIONAL_ROW_NUMBER_COLUMN_WIDTH}
+      width={width}
       data={main}
       noHeader={!options.showHeader}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
-      showRowNums={options.showRowNums}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
@@ -56,6 +54,7 @@ export function TablePanel(props: Props) {
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
       subData={subData}
+      cellHeight={options.cellHeight}
     />
   );
 

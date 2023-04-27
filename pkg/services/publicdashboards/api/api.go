@@ -196,7 +196,7 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
+	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
 	if err != nil {
 		return response.Err(err)
 	}

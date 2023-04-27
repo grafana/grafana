@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
@@ -14,9 +14,7 @@ const fixedValueOption: SelectableValue<string> = {
   value: '_____fixed_____',
 };
 
-export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions, any>> = (
-  props
-) => {
+export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
   const { value, context, onChange, item } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);

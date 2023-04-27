@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes } from 'react';
 
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { PopoverContent } from '../Tooltip';
@@ -24,7 +24,7 @@ const defaultProps = {
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
  */
-export const FormField: FunctionComponent<Props> = ({
+export const FormField = ({
   label,
   tooltip,
   labelWidth,
@@ -33,7 +33,7 @@ export const FormField: FunctionComponent<Props> = ({
   className,
   interactive,
   ...inputProps
-}) => {
+}: Props) => {
   const styles = getStyles();
   return (
     <div className={cx(styles.formField, className)}>

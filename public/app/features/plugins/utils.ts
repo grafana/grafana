@@ -1,5 +1,4 @@
 import { GrafanaPlugin, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getPluginSettings } from './pluginSettings';
@@ -35,11 +34,6 @@ export function buildPluginSectionNav(
   pluginNav: NavModel | null,
   currentUrl: string
 ): NavModel | undefined {
-  // When topnav is disabled we only just show pluginNav like before
-  if (!config.featureToggles.topnav) {
-    return pluginNav ?? undefined;
-  }
-
   // shallow clone as we set active flag
   let copiedPluginNavSection = { ...pluginNavSection };
   let activePage: NavModelItem | undefined;

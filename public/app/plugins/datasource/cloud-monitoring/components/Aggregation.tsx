@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
@@ -16,7 +16,7 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export const Aggregation: FC<Props> = (props) => {
+export const Aggregation = (props: Props) => {
   const aggOptions = useAggregationOptionsByMetric(props);
   const selected = useSelectedFromOptions(aggOptions, props);
 

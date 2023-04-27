@@ -75,7 +75,7 @@ rendering_ignore_https_errors = true
 enable = newNavigation
 ```
 
-You can override them on Linux machines with:
+You can override variables on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
@@ -191,7 +191,9 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 ### http_addr
 
-The IP address to bind to. If empty will bind to all interfaces
+The host for the server to listen on. If your machine has more than one network interface, you can use this setting to expose the Grafana service on only one network interface and not have it available on others, such as the loopback interface. An empty value is equivalent to setting the value to `0.0.0.0`, which means the Grafana service binds to all interfaces.
+
+In environments where network address translation (NAT) is used, ensure you use the network interface address and not a final public address; otherwise, you might see errors such as `bind: cannot assign requested address` in the logs.
 
 ### http_port
 
@@ -677,6 +679,10 @@ List of additional allowed URLs to pass by the CSRF check. Suggested when authen
 
 List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
 
+### csrf_always_check
+
+Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
 ## [snapshots]
 
 ### enabled
@@ -727,6 +733,22 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 > **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
+
+## [sql_datasources]
+
+### max_open_conns_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum number of open connections (default: 100). The value configured in data source settings will be preferred over the default value.
+
+### max_idle_conns_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default allowed number of idle connections (default: 100). The value configured in data source settings will be preferred over the default value.
+
+### max_conn_lifetime_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum connection lifetime specified in seconds (default: 14400). The value configured in data source settings will be preferred over the default value.
+
+<hr/>
 
 ## [users]
 
@@ -1358,6 +1380,10 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
+### global_correlations
+
+Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]
@@ -1446,7 +1472,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [unified_alerting.screenshots]
 
-For more information about screenshots, refer to [Images in notifications(https://grafana.com/docs/grafana/next/alerting/manage-notifications/images-in-notifications)].
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/manage-notifications/images-in-notifications">}}).
 
 ### capture
 
@@ -1748,7 +1774,7 @@ The host:port destination for reporting spans. (ex: `localhost:14268/api/traces`
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
 
 <hr>
 
@@ -1762,7 +1788,7 @@ The host:port destination for reporting spans. (ex: `localhost:4317`)
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`). The default value is `w3c`.
 
 <hr>
 
@@ -2011,6 +2037,20 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
+
+<hr>
+
+## [plugin.plugin_id]
+
+This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
+
+Properties described in this section are available for all plugins, but you must set them individually for each plugin.
+
+### tracing
+
+> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+
+If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
 <hr>
 

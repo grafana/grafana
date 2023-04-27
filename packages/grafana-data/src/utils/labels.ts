@@ -23,14 +23,11 @@ export function parseLabels(labels: string): Labels {
  * Returns a map labels that are common to the given label sets.
  */
 export function findCommonLabels(labelsSets: Labels[]): Labels {
-  return labelsSets.reduce((acc, labels) => {
-    if (!labels) {
-      throw new Error('Need parsed labels to find common labels.');
-    }
-    if (!acc) {
-      // Initial set
-      acc = { ...labels };
-    } else {
+  return labelsSets.reduce(
+    (acc, labels) => {
+      if (!labels) {
+        throw new Error('Need parsed labels to find common labels.');
+      }
       // Remove incoming labels that are missing or not matching in value
       Object.keys(labels).forEach((key) => {
         if (acc[key] === undefined || acc[key] !== labels[key]) {
@@ -43,9 +40,10 @@ export function findCommonLabels(labelsSets: Labels[]): Labels {
           delete acc[key];
         }
       });
-    }
-    return acc;
-  }, undefined as unknown as Labels);
+      return acc;
+    },
+    { ...labelsSets[0] }
+  );
 }
 
 /**

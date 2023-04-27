@@ -22,7 +22,7 @@ interface MonacoLanguages {
   };
 }
 
-const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
+const QueryField = ({ query, datasource, onQueryChange }: AzureQueryEditorFieldProps) => {
   const monacoPromiseRef = useRef<Deferred<MonacoPromise>>();
   function getPromise() {
     if (!monacoPromiseRef.current) {

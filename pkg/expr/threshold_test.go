@@ -8,9 +8,72 @@ import (
 )
 
 func TestNewThresholdCommand(t *testing.T) {
-	cmd, err := NewThresholdCommand("B", "A", "is_above", []float64{})
-	require.Nil(t, err)
-	require.NotNil(t, cmd)
+	type testCase struct {
+		fn            string
+		args          []float64
+		shouldError   bool
+		expectedError string
+	}
+
+	cases := []testCase{
+		{
+			fn:          "gt",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "lt",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "within_range",
+			args:        []float64{0, 1},
+			shouldError: false,
+		},
+		{
+			fn:          "outside_range",
+			args:        []float64{0, 1},
+			shouldError: false,
+		},
+		{
+			fn:            "gt",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "lt",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "within_range",
+			args:          []float64{0},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "outside_range",
+			args:          []float64{0},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+	}
+
+	for _, tc := range cases {
+		cmd, err := NewThresholdCommand("B", "A", tc.fn, tc.args)
+
+		if tc.shouldError {
+			require.Nil(t, cmd)
+			require.NotNil(t, err)
+			require.Contains(t, err.Error(), tc.expectedError)
+		} else {
+			require.Nil(t, err)
+			require.NotNil(t, cmd)
+		}
+	}
 }
 
 func TestUnmarshalThresholdCommand(t *testing.T) {

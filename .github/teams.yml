@@ -7,5 +7,4 @@ test:
 
 # Alerting team
 area/alerting:
-  github-board: 52
   channel-label: C02B9MXQE0J

@@ -43,7 +43,7 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (props) => {
+export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
     isReversed,
@@ -174,7 +174,7 @@ const NarrowScreenForm = (props: FormProps) => {
   );
 };
 
-const FullScreenForm: React.FC<FormProps> = (props) => {
+const FullScreenForm = (props: FormProps) => {
   const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions } = props;
   const theme = useTheme2();
   const styles = getFullScreenStyles(theme, props.hideQuickRanges);

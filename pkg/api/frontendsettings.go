@@ -11,7 +11,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -100,7 +100,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
-		LdapEnabled:                         hs.Cfg.LDAPEnabled,
+		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
 		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
@@ -133,11 +133,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
 		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
 		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
-		ViewersCanEdit:                      setting.ViewersCanEdit,
+		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
 		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
 		DateFormats:                         hs.Cfg.DateFormats,
+		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
@@ -148,7 +149,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
 			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
 			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
-			GithubSkipOrgRoleSync:       hs.Cfg.GithubSkipOrgRoleSync,
+			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
 			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
 			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
 			DisableSyncLock:             hs.Cfg.DisableSyncLock,
@@ -174,6 +175,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
@@ -216,6 +218,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
 	}
 
+	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
+		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
+	}
+
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
@@ -230,10 +236,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			return nil, fmt.Errorf("plugins cdn base url: %w", err)
 		}
 		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
-	}
-
-	if hs.ThumbService != nil {
-		frontendSettings.DashboardPreviews = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {

@@ -140,8 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   const defaultTopNav = css`
     color: ${theme.colors.text.secondary};
-    background-color: transparent;
-    border-color: transparent;
+    background: transparent;
+    border: 1px solid transparent;
 
     &:hover {
       color: ${theme.colors.text.primary};
@@ -194,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: theme.flags.topnav ? defaultTopNav : defaultOld,
+    default: defaultTopNav,
     canvas: defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};

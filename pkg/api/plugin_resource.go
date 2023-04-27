@@ -142,7 +142,6 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
 	processedStreams := 0
-
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
@@ -162,7 +161,6 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 
 		// Expected that headers and status are only part of first stream
 		if processedStreams == 0 {
-			var hasContentType bool
 			for k, values := range resp.Headers {
 				// Convert the keys to the canonical format of MIME headers.
 				// This ensures that we can safely add/overwrite headers
@@ -170,28 +168,12 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 				// and be sure they won't be present multiple times in the response.
 				k = textproto.CanonicalMIMEHeaderKey(k)
 
-				switch k {
-				case "Set-Cookie":
-					// Due to security reasons we don't want to forward
-					// cookies from a backend plugin to clients/browsers.
-					continue
-				case "Content-Type":
-					hasContentType = true
-				}
-
 				for _, v := range values {
 					// TODO: Figure out if we should use Set here instead
 					// nolint:gocritic
 					w.Header().Add(k, v)
 				}
 			}
-
-			// Make sure a content type always is returned in response
-			if !hasContentType && resp.Status != http.StatusNoContent {
-				w.Header().Set("Content-Type", "application/json")
-			}
-
-			proxyutil.SetProxyResponseHeaders(w.Header())
 
 			w.WriteHeader(resp.Status)
 		}

@@ -7,10 +7,14 @@ import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';
 
+interface Props {
+  stats: DisplayValue[];
+}
+
 /**
  * @internal
  */
-export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
+export const VizLegendStatsList = ({ stats }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (stats.length === 0) {

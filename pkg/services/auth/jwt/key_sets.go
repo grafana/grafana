@@ -171,7 +171,7 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	var jwks keySetJWKS
 
 	if ks.cacheExpiration > 0 {
-		if val, err := ks.cache.GetByteArray(ctx, ks.cacheKey); err == nil {
+		if val, err := ks.cache.Get(ctx, ks.cacheKey); err == nil {
 			err := json.Unmarshal(val, &jwks)
 			return jwks, err
 		}
@@ -200,7 +200,7 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	}
 
 	if ks.cacheExpiration > 0 {
-		err = ks.cache.SetByteArray(ctx, ks.cacheKey, jsonBuf.Bytes(), ks.cacheExpiration)
+		err = ks.cache.Set(ctx, ks.cacheKey, jsonBuf.Bytes(), ks.cacheExpiration)
 	}
 	return jwks, err
 }
