@@ -180,10 +180,6 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsAuth,
-			},
-			{
-				Action: ActionSettingsRead,
 				Scope:  ScopeSettingsSAML,
 			},
 			{
