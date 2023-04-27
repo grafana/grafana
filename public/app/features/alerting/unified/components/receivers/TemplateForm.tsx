@@ -240,7 +240,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             )}
           </Stack>
         </FieldSet>
-        <CollapsableSection label="Data cheat sheet" isOpen={false}>
+        <CollapsableSection label="Data cheat sheet" isOpen={false} className={styles.collapsableSection}>
           <TemplateDataDocs />
         </CollapsableSection>
       </form>
@@ -452,4 +452,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-top: ${theme.spacing(-3)};
     `,
   },
+  collapsableSection: css`
+    width: fit-content;
+  `,
 });
