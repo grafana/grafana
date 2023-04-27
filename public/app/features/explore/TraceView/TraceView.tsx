@@ -166,7 +166,6 @@ export function TraceView(props: Props) {
                 setShowSpanFilters={setShowSpanFilters}
                 showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
                 setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-                focusedSpanIdForSearch={newTraceViewHeaderFocusedSpanIdForSearch}
                 setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
                 spanFilterMatches={spanFilterMatches}
                 datasourceType={datasourceType}

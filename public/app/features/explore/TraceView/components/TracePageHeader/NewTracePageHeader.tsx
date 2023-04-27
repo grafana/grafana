@@ -41,7 +41,6 @@ export type TracePageHeaderProps = {
   setShowSpanFilters: (isOpen: boolean) => void;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -58,7 +57,6 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
     setShowSpanFilters,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
-    focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -140,7 +138,6 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
         search={search}
         setSearch={setSearch}
         spanFilterMatches={spanFilterMatches}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
         setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
         datasourceType={datasourceType}
       />

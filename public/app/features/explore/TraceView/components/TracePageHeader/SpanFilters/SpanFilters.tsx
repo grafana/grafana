@@ -42,7 +42,6 @@ export type SpanFilterProps = {
   setShowSpanFilters: (isOpen: boolean) => void;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -57,7 +56,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setShowSpanFilters,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
-    focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -89,13 +87,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       const serviceNames = trace.spans.map((span) => {
         return span.process.serviceName;
       });
-      setServiceNames(
-        uniq(serviceNames)
-          .sort()
-          .map((name) => {
-            return toOption(name);
-          })
-      );
+      setServiceNames(uniq(serviceNames).sort().map(toOption));
     }
   };
 
@@ -104,13 +96,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       const spanNames = trace.spans.map((span) => {
         return span.operationName;
       });
-      setSpanNames(
-        uniq(spanNames)
-          .sort()
-          .map((name) => {
-            return toOption(name);
-          })
-      );
+      setSpanNames(uniq(spanNames).sort().map(toOption));
     }
   };
 
@@ -137,11 +123,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       keys = uniq(keys).sort();
       logKeys = uniq(logKeys).sort();
 
-      setTagKeys(
-        [...keys, ...logKeys].map((name) => {
-          return toOption(name);
-        })
-      );
+      setTagKeys([...keys, ...logKeys].map(toOption));
     }
   };
 
@@ -167,11 +149,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       }
     });
 
-    return uniq(values)
-      .sort()
-      .map((name) => {
-        return toOption(name);
-      });
+    return uniq(values).sort().map(toOption);
   };
 
   const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
@@ -228,9 +206,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       content="Filter your spans below. The more filters, the more specific the filtered spans."
       placement="right"
     >
-      <span id="collapse-label">
+      <span className={styles.collapseLabel}>
         Span Filters
-        <Icon size="sm" name="info-circle" />
+        <Icon size="md" name="info-circle" />
       </span>
     </Tooltip>
   );
@@ -319,7 +297,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 <div key={i}>
                   <HorizontalGroup spacing={'xs'} width={'auto'}>
                     <Select
-                      aria-label={`Select tag key`}
+                      aria-label="Select tag key"
                       isClearable
                       key={tag.key}
                       onChange={(v) => onTagChange(tag, v)}
@@ -329,7 +307,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       value={tag.key || null}
                     />
                     <Select
-                      aria-label={`Select tag operator`}
+                      aria-label="Select tag operator"
                       onChange={(v) => {
                         setSearch({
                           ...search,
@@ -343,7 +321,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                     />
                     <span className={styles.tagValues}>
                       <Select
-                        aria-label={`Select tag value`}
+                        aria-label="Select tag value"
                         isClearable
                         key={tag.value}
                         onChange={(v) => {
@@ -360,20 +338,20 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       />
                     </span>
                     <AccessoryButton
-                      aria-label={`Remove tag`}
-                      variant={'secondary'}
-                      icon={'times'}
+                      aria-label="Remove tag"
+                      variant="secondary"
+                      icon="times"
                       onClick={() => removeTag(tag.id)}
-                      title={'Remove tag'}
+                      title="Remove tag"
                     />
                     <span className={styles.addTag}>
                       {search?.tags?.length && i === search.tags.length - 1 && (
                         <AccessoryButton
                           aria-label="Add tag"
-                          variant={'secondary'}
-                          icon={'plus'}
+                          variant="secondary"
+                          icon="plus"
                           onClick={addTag}
-                          title={'Add tag'}
+                          title="Add tag"
                         />
                       )}
                     </span>
@@ -386,14 +364,13 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
         <NewTracePageSearchBar
           search={search}
-          setSearch={setSearch}
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
           reset={reset}
+          totalSpans={trace.spans.length}
         />
       </Collapse>
     </div>
@@ -412,9 +389,11 @@ const getStyles = () => {
         border-left: none;
         border-right: none;
       }
-
-      #collapse-label svg {
-        margin: -1px 0 0 10px;
+    `,
+    collapseLabel: css`
+      svg {
+        color: #aaa;
+        margin: -2px 0 0 10px;
       }
     `,
     addTag: css`
