@@ -294,17 +294,26 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
-/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/dataviz-squad
+/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
 /packages/grafana-toolkit/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
-/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/Gauge/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/BarGauge/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizLayout/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /plugins-bundled/ @grafana/plugins-platform-frontend
