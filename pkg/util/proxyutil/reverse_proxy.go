@@ -89,16 +89,9 @@ func wrapDirector(d func(*http.Request)) func(req *http.Request) {
 var deletedHeaders = []string{
 	"Alt-Svc",
 	"Close",
-	"Connection",
-	"Keep-Alive",
-	"Proxy-Authenticate",
-	"Proxy-Connection",
 	"Server",
 	"Set-Cookie",
 	"Strict-Transport-Security",
-	"TE",
-	"Transfer-Encoding",
-	"Upgrade",
 }
 
 // modifyResponse enforces certain constraints on http.Response.
