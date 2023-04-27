@@ -1,7 +1,6 @@
-import { ReactElement, useCallback, useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 
 import { LoadingState, PanelMenuItem } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { useSelector } from 'app/types';
 
@@ -10,7 +9,6 @@ import { getPanelMenu } from '../../utils/getPanelMenu';
 
 interface PanelHeaderMenuProviderApi {
   items: PanelMenuItem[];
-  reportMenuInteraction: () => void;
 }
 
 interface Props {
@@ -28,12 +26,5 @@ export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, childr
     setItems(getPanelMenu(dashboard, panel, angularComponent));
   }, [dashboard, panel, angularComponent, loadingState, setItems]);
 
-  const reportMenuInteraction = useCallback(() => {
-    // Report menu interaction only when there are items being rendered
-    if (items.length > 0) {
-      reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
-    }
-  }, [items]);
-
-  return children({ items, reportMenuInteraction });
+  return children({ items });
 }
