@@ -108,7 +108,7 @@ export function EditDataSourceView({
   onUpdate,
 }: ViewProps) {
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
-  const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
+  const { readOnly, hasWriteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
@@ -175,14 +175,7 @@ export function EditDataSourceView({
 
       <DataSourceTestingStatus testingStatus={testingStatus} />
 
-      <ButtonRow
-        onSubmit={onSubmit}
-        onDelete={onDelete}
-        onTest={onTest}
-        exploreUrl={exploreUrl}
-        canSave={!readOnly && hasWriteRights}
-        canDelete={!readOnly && hasDeleteRights}
-      />
+      <ButtonRow onSubmit={onSubmit} onTest={onTest} exploreUrl={exploreUrl} canSave={!readOnly && hasWriteRights} />
     </form>
   );
 }

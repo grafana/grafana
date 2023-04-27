@@ -17,6 +17,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/gobwas/glob"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -29,6 +30,9 @@ var (
 
 	// toSlash is filepath.ToSlash, but can be overwritten in tests path separators cross-platform
 	toSlash = filepath.ToSlash
+
+	// fromSlash is filepath.FromSlash, but can be overwritten in tests path separators cross-platform
+	fromSlash = filepath.FromSlash
 )
 
 // PluginManifest holds details for the file manifest
@@ -58,17 +62,25 @@ type Signature struct {
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.Cfg) *Signature {
+func ProvideService(cfg *config.Cfg, kv plugins.KeyStore) *Signature {
 	log := log.New("plugin.signature")
 	return &Signature{
-		verifier: manifestverifier.New(cfg, log),
+		verifier: manifestverifier.New(cfg, log, kv),
 		mlog:     log,
 	}
 }
 
+func (s *Signature) IsDisabled() bool {
+	return s.verifier.IsDisabled()
+}
+
+func (s *Signature) Run(ctx context.Context) error {
+	return s.verifier.Run(ctx)
+}
+
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
+func (s *Signature) readPluginManifest(ctx context.Context, body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
@@ -81,7 +93,7 @@ func (s *Signature) readPluginManifest(body []byte) (*PluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	if err = s.validateManifest(manifest, block); err != nil {
+	if err = s.validateManifest(ctx, manifest, block); err != nil {
 		return nil, err
 	}
 
@@ -92,8 +104,11 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
-
-	if len(plugin.FS.Files()) == 0 {
+	fsFiles, err := plugin.FS.Files()
+	if err != nil {
+		return plugins.Signature{}, fmt.Errorf("files: %w", err)
+	}
+	if len(fsFiles) == 0 {
 		s.mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
@@ -131,7 +146,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		}, nil
 	}
 
-	manifest, err := s.readPluginManifest(byteValue)
+	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
 		s.mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
@@ -182,7 +197,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	// Track files missing from the manifest
 	var unsignedFiles []string
-	for _, f := range plugin.FS.Files() {
+	for _, f := range fsFiles {
 		// Ensure slashes are used, because MANIFEST.txt always uses slashes regardless of the filesystem
 		f = toSlash(f)
 
@@ -215,6 +230,8 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 }
 
 func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) error {
+	path = fromSlash(path)
+
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.
@@ -286,7 +303,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func (s *Signature) validateManifest(m PluginManifest, block *clearsign.Block) error {
+func (s *Signature) validateManifest(ctx context.Context, m PluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}
@@ -314,5 +331,5 @@ func (s *Signature) validateManifest(m PluginManifest, block *clearsign.Block) e
 		}
 	}
 
-	return s.verifier.Verify(m.KeyID, block)
+	return s.verifier.Verify(ctx, m.KeyID, block)
 }

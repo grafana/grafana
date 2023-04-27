@@ -14,7 +14,7 @@ import {
   SelectableValue,
   rangeUtil,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
@@ -142,10 +142,15 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
-  const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
+  // LoadMoreOptions[2] refers to 50 lines
+  const defaultLimit = LoadMoreOptions[2];
+  const [limit, setLimit] = useState<number>(defaultLimit.value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
-  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(defaultLimit);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
+  const [wrapLines, setWrapLines] = useState(
+    store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
+  );
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
@@ -265,7 +270,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
-          <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
+          <LogContextButtons
+            position="top"
+            wrapLines={wrapLines}
+            onChangeWrapLines={setWrapLines}
+            onChangeOption={onChangeLimitOption}
+            option={loadMoreOption}
+          />
         </div>
       </div>
       <div className={loading ? '' : styles.hidden}>
@@ -281,7 +292,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -299,7 +310,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -316,7 +327,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -342,6 +353,12 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           title="We recently reworked the Log Context UI, please let us know how we can further improve it."
           target="_blank"
           rel="noreferrer noopener"
+          onClick={() => {
+            reportInteraction('grafana_explore_logs_log_context_give_feedback_clicked', {
+              datasourceType: row.datasourceType,
+              logRowUid: row.uid,
+            });
+          }}
         >
           <Icon name="comment-alt-message" /> Give feedback
         </a>
@@ -357,6 +374,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 })
               );
               onClose();
+              reportInteraction('grafana_explore_logs_log_context_open_split_view_clicked', {
+                datasourceType: row.datasourceType,
+                logRowUid: row.uid,
+              });
             }}
           >
             Open in split view

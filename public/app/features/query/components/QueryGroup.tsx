@@ -27,7 +27,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
@@ -57,12 +57,6 @@ interface State {
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
   scrollElement?: HTMLDivElement;
-  savedQueryUid?: string | null;
-  initialState: {
-    queries: DataQuery[];
-    dataSource?: QueryGroupDataSource;
-    savedQueryUid?: string | null;
-  };
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -78,11 +72,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     isAddingMixed: false,
     isHelpOpen: false,
     queries: [],
-    savedQueryUid: null,
-    initialState: {
-      queries: [],
-      savedQueryUid: null,
-    },
     data: {
       state: LoadingState.NotStarted,
       series: [],
@@ -97,6 +86,26 @@ export class QueryGroup extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
+    this.setNewQueriesAndDatasource(options);
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
+  }
+
+  async componentDidUpdate() {
+    const { options } = this.props;
+
+    const currentDS = await getDataSourceSrv().get(options.dataSource);
+    if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
+      this.setNewQueriesAndDatasource(options);
+    }
+  }
+
+  async setNewQueriesAndDatasource(options: QueryGroupOptions) {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
@@ -113,12 +122,6 @@ export class QueryGroup extends PureComponent<Props, State> {
         dataSource: ds,
         dsSettings,
         defaultDataSource,
-        savedQueryUid: options.savedQueryUid,
-        initialState: {
-          queries: options.queries.map((q) => ({ ...q })),
-          dataSource: { ...options.dataSource },
-          savedQueryUid: options.savedQueryUid,
-        },
         // TODO: Detect the first panel added into a new dashboard better.
         // This is flaky in case the UID is generated differently
         isDataSourceModalOpen:
@@ -127,13 +130,6 @@ export class QueryGroup extends PureComponent<Props, State> {
       });
     } catch (error) {
       console.log('failed to load data source', error);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
   }
 
@@ -152,7 +148,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
       queries,
-      savedQueryUid: null,
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
@@ -163,7 +158,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     this.setState({
       queries,
-      savedQueryUid: null,
       dataSource: dataSource,
       dsSettings: newSettings,
     });
