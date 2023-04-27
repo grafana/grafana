@@ -34,6 +34,7 @@ func NewLocalFS(basePath string) LocalFS {
 // file is allowed or not. Access to a file is allowed if the file is in the FS's Base() directory, and if it's a
 // symbolic link it should not end up outside the plugin's directory.
 func (f LocalFS) fileIsAllowed(basePath string, absolutePath string, info os.FileInfo) (bool, error) {
+	upperLevelSeparator := "../" + string(filepath.Separator)
 	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 		symlinkPath, err := filepath.EvalSymlinks(absolutePath)
 		if err != nil {
@@ -50,7 +51,7 @@ func (f LocalFS) fileIsAllowed(basePath string, absolutePath string, info os.Fil
 		if err != nil {
 			return false, err
 		}
-		if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+		if p == ".." || strings.HasPrefix(p, upperLevelSeparator) {
 			return false, fmt.Errorf("file '%s' not inside of plugin directory", p)
 		}
 
@@ -70,7 +71,7 @@ func (f LocalFS) fileIsAllowed(basePath string, absolutePath string, info os.Fil
 	if err != nil {
 		return false, err
 	}
-	if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+	if strings.HasPrefix(file, upperLevelSeparator) {
 		return false, fmt.Errorf("file '%s' not inside of plugin directory", file)
 	}
 	return true, nil
@@ -141,13 +142,14 @@ func (f LocalFS) Files() ([]string, error) {
 	// Convert the accumulator into a slice of relative path strings
 	relFiles := make([]string, 0, len(absFilePaths))
 	base := f.Base()
+	upperLevelPrefix := ".." + string(os.PathSeparator)
 	for fn := range absFilePaths {
 		relPath, err := filepath.Rel(base, fn)
 		if err != nil {
 			return nil, err
 		}
 		clenRelPath, err := util.CleanRelativePath(relPath)
-		if strings.Contains(clenRelPath, "..") || err != nil {
+		if strings.HasPrefix(clenRelPath, upperLevelPrefix) || err != nil {
 			continue
 		}
 		relFiles = append(relFiles, clenRelPath)
