@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
 import {
@@ -12,7 +12,7 @@ import {
   useChildrenByParentUIDState,
   setAllSelection,
 } from '../state';
-import { SelectionState } from '../types';
+import { DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -29,10 +29,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
 
-  useEffect(() => {
-    dispatch(fetchChildren(folderUID));
-  }, [dispatch, folderUID]);
-
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
       dispatch(setFolderOpenState({ folderUID: clickedFolderUID, isOpen }));
@@ -44,6 +40,15 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [dispatch]
   );
 
+  useEffect(() => {
+    dispatch(fetchChildren(folderUID));
+
+    handleFolderClick('c056cc75-9162-426f-80af-fd7722172e60', true);
+    handleFolderClick('fd51d699-bd35-4e6b-83de-235aa1946fe7', true);
+    handleFolderClick('dfe4a6d2-b608-48a3-aa49-3ecd0de7553b', true);
+    handleFolderClick('c6a3b0e9-7bad-4c5c-9026-e079cbb79888', true);
+  }, [handleFolderClick, dispatch, folderUID]);
+
   const handleItemSelectionChange = useCallback(
     (item: DashboardViewItem, isSelected: boolean) => {
       dispatch(setItemSelectionState({ item, isSelected }));
@@ -52,19 +57,19 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   );
 
   const isSelected = useCallback(
-    (kind: DashboardViewItemKind | '$all', uid: string): SelectionState => {
-      if (kind === '$all') {
+    (item: DashboardViewItem | '$all'): SelectionState => {
+      if (item === '$all') {
         return selectedItems.$all ? SelectionState.Selected : SelectionState.Unselected;
       }
 
-      const isSelected = selectedItems[kind][uid];
+      const isSelected = selectedItems[item.kind][item.uid];
       if (isSelected) {
         return SelectionState.Selected;
       }
 
       // Because if _all_ children, then the parent is selected (and bailed in the previous check),
       // this .some check will only return true if the children are partially selected
-      const isMixed = (childrenByParentUID[uid] ?? []).some((v) => selectedItems[v.kind][v.uid]);
+      const isMixed = hasSelectedDescendants(item, childrenByParentUID, selectedItems);
       if (isMixed) {
         return SelectionState.Mixed;
       }
@@ -86,4 +91,24 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       onItemSelectionChange={handleItemSelectionChange}
     />
   );
+}
+
+function hasSelectedDescendants(
+  item: DashboardViewItem,
+  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>,
+  selectedItems: DashboardTreeSelection
+): boolean {
+  const children = childrenByParentUID[item.uid];
+  if (!children) {
+    return false;
+  }
+
+  return children.some((v) => {
+    const thisIsSelected = selectedItems[v.kind][v.uid];
+    if (thisIsSelected) {
+      return thisIsSelected;
+    }
+
+    return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
+  });
 }

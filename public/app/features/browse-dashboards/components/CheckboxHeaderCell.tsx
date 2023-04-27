@@ -5,7 +5,7 @@ import { Checkbox } from '@grafana/ui';
 import { DashboardTreeHeaderProps, SelectionState } from '../types';
 
 export default function CheckboxHeaderCell({ isSelected, onAllSelectionChange }: DashboardTreeHeaderProps) {
-  const state = isSelected?.('$all', '$all') ?? SelectionState.Unselected;
+  const state = isSelected?.('$all') ?? SelectionState.Unselected;
 
   return (
     <Checkbox

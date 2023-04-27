@@ -6,7 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { DashboardViewItem } from 'app/features/search/types';
 
 import {
   DashboardsTreeCellProps,
@@ -27,7 +27,7 @@ interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
-  isSelected: (kind: DashboardViewItemKind | '$all', uid: string) => SelectionState;
+  isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
