@@ -39,7 +39,7 @@ export interface DataSourceListProps {
   onClear?: () => void;
 }
 
-export const DataSourceList = React.forwardRef((props: DataSourceListProps, ref) => {
+export function DataSourceList(props: DataSourceListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const styles = useStyles2(getStyles);
@@ -85,9 +85,7 @@ export const DataSourceList = React.forwardRef((props: DataSourceListProps, ref)
         ))}
     </div>
   );
-});
-
-DataSourceList.displayName = 'DataSourceList';
+}
 
 function getDataSourceVariableIDs() {
   const templateSrv = getTemplateSrv();
