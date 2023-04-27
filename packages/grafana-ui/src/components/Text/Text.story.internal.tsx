@@ -63,6 +63,11 @@ export const Example: Story = () => {
     </VerticalGroup>
   );
 };
+Example.parameters = {
+  controls: {
+    exclude: ['variant', 'weight', 'textAlignment', 'truncate', 'color', 'children'],
+  },
+};
 
 export const HeadingComponent: Story = (args) => {
   return (
@@ -75,10 +80,10 @@ export const HeadingComponent: Story = (args) => {
 };
 HeadingComponent.args = {
   variant: undefined,
-  weight: 'bold',
+  weight: 'fontWeightBold',
   textAlignment: 'center',
   truncate: false,
-  color: 'error',
+  color: 'color.error.text',
   children: 'This is a H1 component',
 };
 
@@ -94,11 +99,11 @@ export const LegendComponent: Story = (args) => {
 
 LegendComponent.args = {
   variant: undefined,
-  weight: 'bold',
+  weight: 'fontWeightBold',
   textAlignment: 'center',
   truncate: false,
-  color: 'error',
-  children: 'This is a legend component',
+  color: 'color.error.text',
+  children: 'This is a lengend component',
 };
 
 export default meta;
