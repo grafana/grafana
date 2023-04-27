@@ -174,7 +174,7 @@ grafana/grafana-enterprise
 
 ## Run Grafana via Docker Compose
 
-Docker Compose is a tool that allows to define and share multi-container applications. With Compose, we can create a YAML file (e.g. `docker-compose.yaml`) to define the services and with a single command, can spin everything up or tear it all down. You can find more information about [Using Docker Compose and its advantages](https://docs.docker.com/get-started/08_using_compose/).
+Docker Compose is a software tool that makes it easy to define and share applications that consist of multiple containers. It works by using a YAML file, usually called `docker-compose.yaml`, which lists all the services that make up the application. With a single command, you can start up all the containers in the correct order, and with another command, you can shut everything down. For more information about the benefits of using Docker Compose and how to use it refer to [Use Docker Compose](https://docs.docker.com/get-started/08_using_compose/).
 
 ### Before you begin
 
