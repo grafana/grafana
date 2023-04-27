@@ -1,7 +1,7 @@
 import { ValidateResult } from 'react-hook-form';
 
-import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames } from '@grafana/data';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames, PanelData } from '@grafana/data';
+import { GraphTresholdsStyleMode, LoadingState } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -272,4 +272,18 @@ function isRangeCondition(condition: ClassicCondition) {
   return (
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange
   );
+}
+
+export function getStatusMessage(data: PanelData): string | undefined {
+  const genericErrorMessage = 'Failed to fetch data';
+  if (data.state !== LoadingState.Error) {
+    return;
+  }
+
+  const errors = data.errors;
+  if (errors?.length) {
+    return errors.map((error) => error.message ?? genericErrorMessage).join(', ');
+  }
+
+  return data.error?.message ?? genericErrorMessage;
 }

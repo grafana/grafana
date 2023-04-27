@@ -10,6 +10,8 @@ import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
 
 import { ExpressionResult } from '../expressions/Expression';
 
+import { getStatusMessage } from './util';
+
 interface Props {
   data: PanelData;
   thresholds?: ThresholdsConfig;
@@ -21,6 +23,7 @@ interface Props {
 export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
   const styles = useStyles2(getStyles);
   const isTimeSeriesData = isTimeSeriesFrames(data.series);
+  const statusMessage = getStatusMessage(data);
   const thresholdsStyle = thresholdsType ? { mode: thresholdsType } : undefined;
   const timeRange = {
     from: data.timeRange.from.valueOf(),
@@ -35,6 +38,7 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
             {isTimeSeriesData ? (
               <GraphContainer
                 loading={data.state === LoadingState.Loading}
+                statusMessage={statusMessage}
                 data={data.series}
                 eventBus={appEvents}
                 height={300}
