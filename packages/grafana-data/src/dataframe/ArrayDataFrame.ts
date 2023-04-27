@@ -20,7 +20,11 @@ export class ArrayDataFrame<T = any> implements DataFrame {
   }
 }
 
-/** arrayToDataFrame will convert */
+/**
+ * arrayToDataFrame will convert any array into a DataFrame
+ *
+ * @public
+ */
 export function arrayToDataFrame(source: any[], names?: string[]): DataFrame {
   const df: DataFrame = {
     fields: [],
