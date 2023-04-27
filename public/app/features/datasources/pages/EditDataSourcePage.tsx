@@ -1,15 +1,13 @@
 import React from 'react';
 
-import { getDataSourceSrv } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useDispatch } from 'app/types';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
 import { EditDataSourceTitle } from '../components/EditDataSourceTitle';
 import { EditDataSourceSubtitle } from '../components/EditDatasSourceSubtitle';
-import { useDataSourceSettingsNav, setDataSourceName, setIsDefault, useDataSource } from '../state';
+import { useDataSourceSettingsNav } from '../state';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
@@ -18,25 +16,18 @@ export function EditDataSourcePage(props: Props) {
   const params = new URLSearchParams(props.location.search);
   const pageId = params.get('page');
   const nav = useDataSourceSettingsNav(uid, pageId);
-  const dispatch = useDispatch();
-  const dataSource = useDataSource(uid);
-  const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
-  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
-  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
-  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
-  const onNameChange = (name: string) => dispatch(setDataSourceName(name));
-  const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
+
   return (
     <Page
       navId="datasources"
       pageNav={nav.main}
-      renderTitle={(title) => <EditDataSourceTitle title={title} onNameChange={onNameChange} />}
+      renderTitle={(title) => <EditDataSourceTitle title={title} onNameChange={nav.props.onNameChange} />}
       subTitle={
         <EditDataSourceSubtitle
           dataSourcePluginName={nav.main.dataSourcePluginName}
-          isDefault={dataSource.isDefault || false}
-          alertingSupported={alertingSupported}
-          onDefaultChange={onDefaultChange}
+          isDefault={nav.props.isDefault || false}
+          alertingSupported={nav.props.alertingSupported}
+          onDefaultChange={nav.props.onDefaultChange}
         />
       }
       actions={<EditDataSourceActions uid={uid} />}

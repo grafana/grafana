@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react';
 
 import { DataSourcePluginMeta, DataSourceSettings, NavModel, NavModelItem } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -24,7 +25,7 @@ import {
 } from './actions';
 import { DataSourcesRoutesContext } from './contexts';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
-import { initialDataSourceSettingsState } from './reducers';
+import { initialDataSourceSettingsState, setDataSourceName, setIsDefault } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
 export const useInitDataSourceSettings = (uid: string) => {
@@ -128,10 +129,17 @@ export const useDataSourceSettings = () => {
 };
 
 export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | null) => {
-  const dataSource = useDataSource(dataSourceId);
-  const datasourcePlugin = useGetSingle(dataSource.type);
-
   const { plugin, loadError, loading } = useDataSourceSettings();
+  const dataSource = useDataSource(dataSourceId);
+  const dispatch = useDispatch();
+  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSourceId);
+  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+  const onNameChange = (name: string) => dispatch(setDataSourceName(name));
+  const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
+
+  const datasourcePlugin = useGetSingle(dataSource.type);
   const navIndex = useSelector((state) => state.navIndex);
   const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
   let pageNav: NavModel = {
@@ -175,6 +183,12 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
       text: dataSource.name,
       dataSourcePluginName: datasourcePlugin?.name || '',
       active: true,
+    },
+    props: {
+      isDefault: dataSource.isDefault,
+      alertingSupported,
+      onNameChange,
+      onDefaultChange,
     },
   };
 };
