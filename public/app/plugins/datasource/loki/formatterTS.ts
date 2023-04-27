@@ -21,6 +21,7 @@ import {
   PipelineStage,
   Re,
   Selector,
+  String,
 } from '@grafana/lezer-logql';
 
 // the way i currently reconstruct the query is temporary, i would like to find a better way to do this.
@@ -96,39 +97,30 @@ function formatPipelineExpr(node: SyntaxNode, query: string): string {
 
           // | logfmt
           case LabelParser:
-            const labelParser = formatLabelParser(node.lastChild!, validQueryExpr);
-            if (lastPipelineType === LabelParser) {
-              response += ` ${labelParser}`;
-            } else {
-              response += `\n  ${labelParser}`;
-            }
+            const formattedLabelParser = formatLabelParser(node.lastChild!, validQueryExpr);
+            response += buildResponse(LabelParser, lastPipelineType, formattedLabelParser);
             lastPipelineType = LabelParser;
             break;
 
           // | foo = "bar"
           case LabelFilter:
-            const labelFilter = formatLabelFilter(node.lastChild!, validQueryExpr);
-            if (lastPipelineType === LabelFilter) {
-              response += ` ${labelFilter}`;
-            } else {
-              response += `\n  ${labelFilter}`;
-            }
+            const formattedLabelFilter = formatLabelFilter(node.lastChild!, validQueryExpr);
+            response += buildResponse(LabelFilter, lastPipelineType, formattedLabelFilter);
             lastPipelineType = LabelFilter;
             break;
 
           // | json foo="bar"
           case JsonExpressionParser:
-            const jsonExpressionParser = formatJsonExpression(node.lastChild!, validQueryExpr);
-            if (lastPipelineType === JsonExpressionParser) {
-              response += ` ${jsonExpressionParser}`;
-            } else {
-              response += `\n  ${jsonExpressionParser}`;
-            }
+            const formattedJsonExpressionParser = formatJsonExpression(node.lastChild!, validQueryExpr);
+            response += buildResponse(JsonExpressionParser, lastPipelineType, formattedJsonExpressionParser);
             lastPipelineType = JsonExpressionParser;
             break;
 
           // | line_format "{{.log}}"
           case LineFormatExpr:
+            const formattedLineFormatExpr = formatLineFormatExpr(node.lastChild!, validQueryExpr);
+            response += buildResponse(LineFormatExpr, lastPipelineType, formattedLineFormatExpr);
+            lastPipelineType = LineFormatExpr;
             break;
 
           // | label_format bar=foo
@@ -146,7 +138,14 @@ function formatPipelineExpr(node: SyntaxNode, query: string): string {
   return response;
 }
 
-function formatLineFilters(node: SyntaxNode, query: string): string {
+function buildResponse(pipelineType: number, lastPipelineType: number, formattedNode: string): string {
+  if (lastPipelineType === pipelineType) {
+    return ` ${formattedNode}`;
+  }
+  return `\n  ${formattedNode}`;
+}
+
+export function formatLineFilters(node: SyntaxNode, query: string): string {
   if (node.parent?.type.id !== PipelineStage) {
     return '';
   }
@@ -186,12 +185,12 @@ function formatLineFilters(node: SyntaxNode, query: string): string {
   return output;
 }
 
-function formatLabelParser(node: SyntaxNode, query: string): string {
+export function formatLabelParser(node: SyntaxNode, query: string): string {
   const labelParsers = query.substring(node.from, node.to);
   return `| ${labelParsers}`;
 }
 
-function formatLabelFilter(node: SyntaxNode, query: string): string {
+export function formatLabelFilter(node: SyntaxNode, query: string): string {
   const labelFilter = query.substring(node.from, node.to);
   const matcherNode = node.getChild(Matcher)!;
 
@@ -226,7 +225,7 @@ function formatLabelFilter(node: SyntaxNode, query: string): string {
   return '';
 }
 
-function formatJsonExpression(node: SyntaxNode, query: string): string {
+export function formatJsonExpression(node: SyntaxNode, query: string): string {
   const jsonExpression = '{}|' + query.substring(node.from, node.to);
   const subtree = parser.parse(jsonExpression);
   const jsonExpressionNodes: SyntaxNode[] = [];
@@ -247,4 +246,18 @@ function formatJsonExpression(node: SyntaxNode, query: string): string {
   });
 
   return trimEnd(output, ', ');
+}
+
+export function formatLineFormatExpr(node: SyntaxNode, query: string): string {
+  const expressionString = node.getChild(String)!;
+  const expression = query.substring(expressionString.from, expressionString.to);
+  return `| line_format ${expression}`;
+}
+
+export function formatLabelFormatExpr(node: SyntaxNode, query: string): string {
+  return '';
+}
+
+export function formatLineComment(node: SyntaxNode, query: string): string {
+  return '';
 }
