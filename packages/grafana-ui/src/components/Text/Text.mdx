@@ -8,11 +8,38 @@ Text components helps establish hierarchy, rendering an specific _HTML element_,
 
 ## **Components**
 
-<br />
-### **H1** * This component returns an h1 HTML element * By default the h1 styles are applied
+Each component returns the _HTML element_ with the same name. E.g. `<H1/>` will return and `<h1/>` heading and `<Span/>` will render a `<span/>` element.
+
+- `<H1/>`
+- `<H2/>`
+- `<H3/>`
+- `<H4/>`
+- `<H5/>`
+- `<H6/>`
+- `<Span/>`
+- `<P/>`
+- `<Legend/>`
 
 <br />
-<br />
-## **Variants**
+## **Variants** The _variant_ prop is related to the appearence of the text. Depending on the _variant_ chosen, the text
+will have proper styles applied. * Headings: from "h1" till "h6", the variant will apply the correspondant heading styles
+to the element. * `body`: the text will be shown as a `<p />` element, independant from the real element that will be rendered.
+* `bodySmall`: the text will look like a `<span />` or a `<legend />
+`, that are the ones using this style.{' '}
 
+<br />
+## **Usage**
+
+## **_Do:_**
+
+- Use the element according to the structure of the DOM. If the styles do not fit, they can be overwritten by choosing the correct variant.
+- Use the color needed by the type of text or message.
+
+## **_Don'ts:_**
+
+- Do not confuse _heading variant_ with _heading component_ that provide structure for SEO and Accessibility. The styles normally applied using an specific _heading element_ will be overwritten by the ones defined by the _variant_ chosen.
+- Do not use color based on appearence. E.g. do not use 'error' color just to highlith the message.
+
+<br />
+## **Accessibility**
 <ArgsTable of={H1} />
