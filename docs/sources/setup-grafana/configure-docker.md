@@ -265,7 +265,6 @@ grafana/grafana-enterprise
 
 ### Increasing log level while using the Docker Compose
 
-
 To increase the log level to e.g. `DEBUG` mode, you need to use the Environment variable, `GF_LOG_LEVEL` as explained below inside the `docker-compose.yaml` file.
 
 ```yaml

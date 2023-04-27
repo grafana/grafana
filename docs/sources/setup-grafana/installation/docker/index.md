@@ -200,13 +200,13 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
 
    ```bash
     version: "3.8"
-     services:
-       grafana:
-         image: grafana/grafana-enterprise
-         container_name: grafana
-         restart: unless-stopped
-         ports:
-           - '3000:3000'
+    services:
+      grafana:
+      image: grafana/grafana-enterprise
+      container_name: grafana
+      restart: unless-stopped
+      ports:
+        - '3000:3000'
    ```
 
 1. To run `docker-compose.yaml`, run the following command:
@@ -249,20 +249,20 @@ Complete the following steps to use persistent storage.
 1. Add the following code to the into it:
    ```yaml
    version: "3.8"
-    services:
-      grafana:
-        image: grafana/grafana-enterprise
-        container_name: grafana
-        restart: unless-stopped
-        ports:
-          - '3000:3000'
-    ```
+   services:
+     grafana:
+     image: grafana/grafana-enterprise
+     container_name: grafana
+     restart: unless-stopped
+     ports:
+       - '3000:3000'
+   ```
 
 1. Save the file and run the following command:
 
    ```bash
    docker compose up -d docker-compose.yaml
-    ```
+   ```
 
 #### Use bind mounts
 
@@ -276,17 +276,18 @@ To use bind mounts, complete the following steps:
 
    ```yaml
    services:
-     grafana:
-       image: grafana/grafana-enterprise
-       container_name: grafana
-       restart: unless-stopped
-       # if you are running as root then set it to 0
-       # else find the right id with the id -u command
-       user: "0"
-       ports:
-         - '3000:3000'
-       volumes:
-         - '$PWD/data:/var/lib/grafana'
+   grafana:
+     image: grafana/grafana-enterprise
+     container_name: grafana
+     restart: unless-stopped
+     # if you are running as root then set it to 0
+     # else find the right id with the id -u command
+     user: "0"
+     ports:
+       - '3000:3000'
+     volumes:
+       - '$PWD/data:/var/lib/grafana'
+   ```
 
 1. Save the file and run the following command:
 
@@ -300,20 +301,20 @@ The following example runs the latest stable version of Grafana, listening on po
 
 ```bash
 version: "3.8"
-  services:
-    grafana:
-      image: grafana/grafana-enterprise
-      container_name: grafana
-      restart: unless-stopped
-      environment:
-	      - GF_SERVER_ROOT_URL=http://my.grafana.server/
-        - GF_INSTALL_PLUGINS=grafana-clock-panel
-      ports:
-        - '3000:3000'
-      volumes:
-        - 'grafana_storage:/var/lib/grafana'
-  volumes:
-    grafana_storage: {}
+services:
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SERVER_ROOT_URL=http://my.grafana.server/
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+    ports:
+      - '3000:3000'
+    volumes:
+      - 'grafana_storage:/var/lib/grafana'
+volumes:
+  grafana_storage: {}
 ```
 
 > **Note:** If you want to specify the version of a plugin, add the version number to the `GF_INSTALL_PLUGINS` environment variable. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`. If you do not specify a version number, the latest version is used.
