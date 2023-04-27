@@ -184,7 +184,7 @@ To run Grafana via Docker Compose, install the compose tool on your machine. To 
 docker compose version
 ```
 
-If the compose tool is not available, refer to the [Compose tool](https://docs.docker.com/compose/install/) installation guide.
+If the compose tool is unavailable, refer to [Install Docker Compose](https://docs.docker.com/compose/install/).
 
 ### Run the latest stable version of Grafana
 
