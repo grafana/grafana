@@ -34,7 +34,7 @@ func NewLocalFS(basePath string) LocalFS {
 // file is allowed or not. Access to a file is allowed if the file is in the FS's Base() directory, and if it's a
 // symbolic link it should not end up outside the plugin's directory.
 func (f LocalFS) fileIsAllowed(basePath string, absolutePath string, info os.FileInfo) (bool, error) {
-	upperLevelPrefix := "../" + string(filepath.Separator)
+	upperLevelPrefix := ".." + string(filepath.Separator)
 	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 		symlinkPath, err := filepath.EvalSymlinks(absolutePath)
 		if err != nil {
