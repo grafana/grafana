@@ -26,6 +26,10 @@ export interface GrafanaPyroscope extends common.DataQuery {
    */
   labelSelector: string;
   /**
+   * Sets the maximum number of nodes in the flamegraph.
+   */
+  maxNodes?: number;
+  /**
    * Specifies the type of profile to query.
    */
   profileTypeId: string;

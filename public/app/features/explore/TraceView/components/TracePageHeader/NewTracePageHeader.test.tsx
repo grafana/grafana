@@ -30,6 +30,8 @@ const setup = () => {
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
+    showSpanFilterMatchesOnly: false,
+    setShowSpanFilterMatchesOnly: jest.fn(),
     spanFilterMatches: undefined,
     focusedSpanIdForSearch: '',
     setFocusedSpanIdForSearch: jest.fn(),

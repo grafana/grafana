@@ -1,9 +1,11 @@
 package plugins
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,14 +19,7 @@ func TestLocalFS_Remove(t *testing.T) {
 	require.NoError(t, err)
 	err = f.Close()
 	require.NoError(t, err)
-
-	fs := NewLocalFS(
-		map[string]struct{}{
-			"plugin.json": {},
-		},
-		pluginDir,
-	)
-
+	fs := NewLocalFS(pluginDir)
 	err = fs.Remove()
 	require.NoError(t, err)
 
@@ -49,12 +44,7 @@ func TestLocalFS_Remove(t *testing.T) {
 
 		pluginDir = filepath.Dir(pluginDistDir)
 
-		fs = NewLocalFS(
-			map[string]struct{}{
-				"dist/plugin.json": {},
-			},
-			pluginDir,
-		)
+		fs = NewLocalFS(pluginDir)
 
 		err = fs.Remove()
 		require.NoError(t, err)
@@ -78,12 +68,7 @@ func TestLocalFS_Remove(t *testing.T) {
 		err = f.Close()
 		require.NoError(t, err)
 
-		fs = NewLocalFS(
-			map[string]struct{}{
-				"system32/important.exe": {},
-			},
-			pluginDir,
-		)
+		fs = NewLocalFS(pluginDir)
 
 		err = fs.Remove()
 		require.ErrorIs(t, err, ErrUninstallInvalidPluginDir)
@@ -221,4 +206,74 @@ func newTempFileScenarioForTest(t *testing.T) tempFileScenario {
 	s, err := newTempFileScenario(t)
 	require.NoError(t, err)
 	return s
+}
+
+func createDummyTempFile(dir, fn string) (err error) {
+	f, err := os.Create(filepath.Join(dir, fn)) // nolint: gosec
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+	_, err = f.WriteString(fn)
+	return
+}
+
+func TestStaticFS(t *testing.T) {
+	tmp := t.TempDir()
+	const allowedFn, deniedFn = "allowed.txt", "denied.txt"
+	require.NoError(t, createDummyTempFile(tmp, allowedFn))
+
+	localFS := NewLocalFS(tmp)
+	staticFS, err := NewStaticFS(localFS)
+	require.NoError(t, err)
+
+	t.Run("open allowed", func(t *testing.T) {
+		f, err := staticFS.Open(allowedFn)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, f.Close()) })
+		b, err := io.ReadAll(f)
+		require.NoError(t, err)
+		require.Equal(t, []byte(allowedFn), b)
+	})
+
+	t.Run("open denied", func(t *testing.T) {
+		// Add file after initialization
+		require.NoError(t, createDummyTempFile(tmp, deniedFn))
+
+		// StaticFS should fail
+		_, err := staticFS.Open(deniedFn)
+		require.True(t, errors.Is(err, ErrFileNotExist))
+
+		// Underlying FS should succeed
+		f, err := localFS.Open(deniedFn)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, f.Close()) })
+		b, err := io.ReadAll(f)
+		require.NoError(t, err)
+		require.Equal(t, []byte("denied.txt"), b)
+	})
+
+	t.Run("open not existing", func(t *testing.T) {
+		_, err := staticFS.Open("unknown.txt")
+		require.True(t, errors.Is(err, ErrFileNotExist))
+	})
+
+	t.Run("list files", func(t *testing.T) {
+		t.Run("underlying fs has extra files", func(t *testing.T) {
+			files, err := localFS.Files()
+			require.NoError(t, err)
+			sort.Strings(files)
+			require.Equal(t, []string{allowedFn, deniedFn}, files)
+		})
+
+		t.Run("staticfs filters underelying fs's files", func(t *testing.T) {
+			files, err := staticFS.Files()
+			require.NoError(t, err)
+			require.Equal(t, []string{allowedFn}, files)
+		})
+	})
 }

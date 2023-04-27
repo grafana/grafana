@@ -3,7 +3,7 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Icon, useStyles2, RadioButtonGroup, MultiSelect } from '@grafana/ui';
+import { Icon, useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
 
 import { Query } from '../types';
 
@@ -88,6 +88,18 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                   return c.value!;
                 });
                 onQueryChange({ ...query, groupBy: changes });
+              }}
+            />
+          </EditorField>
+          <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
+            <Input
+              value={query.maxNodes || ''}
+              type="number"
+              placeholder="16384"
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                let newValue = parseInt(event.currentTarget.value, 10);
+                newValue = isNaN(newValue) ? 0 : newValue;
+                onQueryChange({ ...query, maxNodes: newValue });
               }}
             />
           </EditorField>
