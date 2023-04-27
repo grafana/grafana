@@ -5,6 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, CodeEditor, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { AlertTemplatePreviewData } from './TemplateData';
+import { TemplateDataTable } from './TemplateDataDocs';
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
 export const RESET_TO_DEFAULT = 'Reset to default';
@@ -60,7 +62,7 @@ export function PayloadEditor({
       <div className={styles.editor}>
         <div className={styles.title}>
           Payload data
-          <Tooltip placement="top" content={'This payload data will be sent to the preview'} theme="info">
+          <Tooltip placement="top" content={<AlertTemplateDataTable />} theme="info">
             <Icon name="info-circle" className={styles.tooltip} size="xl" />
           </Tooltip>
         </div>
@@ -104,7 +106,19 @@ export function PayloadEditor({
     </div>
   );
 }
-
+const AlertTemplateDataTable = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <TemplateDataTable
+      caption={
+        <h4 className={styles.templateDataDocsHeader}>
+          Alert template data <span>This is the list of Alert data fields used in the Preview.</span>
+        </h4>
+      }
+      dataItems={AlertTemplatePreviewData}
+    />
+  );
+};
 const getStyles = (theme: GrafanaTheme2) => ({
   jsonEditor: css`
     width: 605px;
@@ -133,5 +147,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     margin-top: ${theme.spacing(-1)};
+  `,
+  templateDataDocsHeader: css`
+    color: ${theme.colors.text.primary};
+
+    span {
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+    }
   `,
 });
