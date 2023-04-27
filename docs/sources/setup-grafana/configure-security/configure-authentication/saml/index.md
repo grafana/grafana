@@ -52,7 +52,7 @@ By default, SP-initiated requests are enabled. For instructions on how to enable
 ### Edit SAML options in the Grafana config file
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref "../../../configure-grafana/enterprise-configuration/#enabled" >}}) to `true`.
-1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
+1. (Optional) Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
 1. Set the [`idp_metadata_url`]({{< relref "../../../configure-grafana/enterprise-configuration/#idp_metadata_url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
 1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
@@ -90,12 +90,18 @@ Refer to [Configuration]({{< relref "../../../configure-grafana/" >}}) for more 
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part. The private key needs to be issued in a [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
-Grafana supports two ways of specifying both the `certificate` and `private_key`.
+> **Note:** Directly supplying a certificate and private key to Grafana is optional. Commonly, the certificate and key are embedded in the IDP metadata (see that configuration step below), and refreshed as needed by Grafana automatically. This can save you the work of manually rotating your certs and keys whenever they expire.
+
+Whether supplying certificate and key directly or via idp_metadata: loading certs into Grafana helps ensure that Grafana is connecting to a verified endpoint (for example in case of MITM takeover scenarios).
+
+If you are directly supplying the certificate and key, also note that Grafana supports two ways of specifying both the `certificate` and `private_key`:
 
 - Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
 > **Note:** You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
+
+You should always work with your company's security team on setting up certificates and private keys. If you need to generate them yourself (i.e. in the short term, for testing purposes, etc.), we give you the example below of generating your own certificate and private key, including the step of ensuring that the key is generated with the [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 
 ---
 
@@ -115,7 +121,13 @@ $ base64 -w0 key.pem > key.pem.base64
 $ base64 -w0 cert.pem > cert.pem.base64
 ```
 
-The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
+Convert the private key to [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format
+
+```sh
+openssl pkcs8 -topk8 -inform PEM -outform PEM -in myoriginalkey.pem -out myconvertedkey.pem -nocrypt
+```
+
+The base64-encoded values (`myconvertedkey.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
 
 The keys you provide should look like:
 
