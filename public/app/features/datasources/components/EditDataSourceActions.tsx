@@ -56,7 +56,7 @@ export function EditDataSourceActions({ uid }: Props) {
           location.href = `dashboard/new-with-ds/${dataSource.uid}`;
         }}
       >
-        View dashboards
+        Build a dashboard
       </Button>
       <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete}>
         Delete
