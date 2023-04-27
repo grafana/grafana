@@ -151,7 +151,7 @@ export function EditDataSourceView({
 
       <DataSourceTestingStatus testingStatus={testingStatus} />
 
-      <ButtonRow onSubmit={onSubmit} onTest={onTest} exploreUrl={exploreUrl} canSave={!readOnly && hasWriteRights} />
+      <ButtonRow onSubmit={onSubmit} onTest={onTest} canSave={!readOnly && hasWriteRights} />
     </form>
   );
 }

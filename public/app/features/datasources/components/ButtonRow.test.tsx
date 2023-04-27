@@ -10,7 +10,6 @@ const setup = (propOverrides?: object) => {
     canSave: false,
     onSubmit: jest.fn(),
     onTest: jest.fn(),
-    exploreUrl: '/explore',
   };
 
   Object.assign(props, propOverrides);
@@ -21,9 +20,8 @@ const setup = (propOverrides?: object) => {
 describe('<ButtonRow>', () => {
   it('should render component', () => {
     setup();
-
-    expect(screen.getByRole('link', { name: 'Explore' })).toBeInTheDocument();
   });
+
   it('should render save & test', () => {
     setup({ canSave: true });
 
