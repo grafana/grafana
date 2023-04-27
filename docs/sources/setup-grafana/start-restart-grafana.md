@@ -135,13 +135,13 @@ volumes:
 
 Start the Grafana server:
 
-`docker-compose up -d`
+`docker compose up -d`
 
 This starts the Grafana server container in detached mode along with the two plugins specified in the YAML file.
 
 To restart the running container, use this command:
 
-`docker-compose restart grafana`
+`docker compose restart grafana`
 
 ## Windows
 
