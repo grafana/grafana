@@ -33,7 +33,7 @@ Recorded queries only work with backend data source plugins. Refer to [Backend d
 - row count - A query that returns meaningful rows to be counted.
 - expression - Any expression. To learn more about creating and using expressions, see [Write expression queries]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
 
-After a recorded query is created or enabled, it immediately creates a snapshot and continues to create snapshots at the set interval. The recorded query stops taking snapshots when it is disabled, deleted, or when Grafana is not running. Data points are gathered in the backend by running the recorded query and forwarding each result to a remote-write enabled Prometheus instance.
+After a recorded query is created or enabled, it immediately creates a snapshot and continues to create snapshots at the specified interval. The recorded query stops taking snapshots when it is disabled, deleted, or when Grafana is not running. Data points are gathered in the backend by running the recorded query and forwarding each result to a remote-write enabled Prometheus instance.
 
 ## Using a recorded query
 
@@ -50,7 +50,7 @@ To use a recorded query, create one and add it to a dashboard. After that, it ca
     - Description - (optional) Describe the recorded query as you want it to appear in the recorded query list.
     - Interval - The interval on which the snapshot will be taken. The interval starts when you create the recorded query and will stop if you pause or delete the recorded query. Refer to [Managing recorded queries](#manage-recorded-queries) for more information on pausing and deleting recorded queries.
     - Range - The relative time range of the query. If you select a range of `30m` and an interval of `1h` the query will take a snapshot every hour of the past 30 minutes.
-    - Count query results - If you want to count the rows returned from your query toggle this option on. If this option is off, your query must return one row with one value.
+    - Count query results - If you want to count the number of rows returned by your query toggle this option on. If this option is off, your query must return one row with one value.
 1.  Test your recorded query by clicking the test recorded query button.
 1.  Click `Start recording query` to start recording your query.
 
@@ -60,12 +60,12 @@ You can add existing recorded queries to panels in a dashboard. For each recorde
 
 1. Navigate to a panel in a dashboard where you wish to add a recorded query.
 1. Click the `+ Recorded query` button located below the queries.
-1. If you want to filter recorded queries by data source, select a data source from the filter by data source drop down menu.
+1. If you want to filter recorded queries by data source, select a data source from the data source filter drop-down menu.
 1. Click the `Add` button on your recorded query to add it to the panel.
 
 After adding your recorded query to the panel, the panel data source will become `-- Mixed --`. Your recorded query is represented by a `Prometheus` query with a name label matching your recorded query name. Refer to [Prometheus]({{< relref "../../datasources/prometheus/" >}}) to learn more about the `Prometheus` data source.
 
-If after adding a recorded query, a query with a `-- Mixed --` data source instead of `Prometheus` data source appears, this could mean that a Prometheus remote write target was not set up for recorded queries. Refer to [Remote write target](#remote-write-target) to set up a remote write point.
+If after adding a recorded query, a query with a `-- Mixed --` data source instead of `Prometheus` data source appears, this could mean that a Prometheus remote write target was not set up for recorded queries. Refer to [Remote write target](#remote-write-target) to set up a remote write target.
 
 ### Manage recorded queries
 
