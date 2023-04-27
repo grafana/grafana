@@ -97,7 +97,13 @@ export function PayloadEditor({
           >
             Add alert data
           </Button>
-          <Button type="button" variant="secondary" icon="bell" onClick={() => setIsAlertSelectorOpen(true)}>
+          <Button
+            type="button"
+            variant="secondary"
+            icon="bell"
+            disabled={errorInPayloadJson}
+            onClick={() => setIsAlertSelectorOpen(true)}
+          >
             Choose alert instances
           </Button>
           {payloadFormatError !== null && (
