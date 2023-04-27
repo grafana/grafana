@@ -51,25 +51,23 @@ export function AlertInstanceModalSelector({
   }, []);
 
   const rulesWithInstances: Record<string, AlertmanagerAlert[]> = useMemo(() => {
-    return {};
-  }, []);
+    const rules: Record<string, AlertmanagerAlert[]> = {};
+    if (!loading && result) {
+      result.forEach((instance) => {
+        if (!rules[instance.labels['alertname']]) {
+          rules[instance.labels['alertname']] = [];
+        }
+        rules[instance.labels['alertname']].push(instance);
+      });
+      setFilteredRules(rules);
+    }
+    return rules;
+  }, [loading, result]);
 
   const handleRuleChange = useCallback((rule: string) => {
     setSelectedRule(rule);
     setSelectedInstances(null);
   }, []);
-
-  useEffect(() => {
-    if (!loading && result) {
-      result.forEach((instance) => {
-        if (!rulesWithInstances[instance.labels['alertname']]) {
-          rulesWithInstances[instance.labels['alertname']] = [];
-        }
-        rulesWithInstances[instance.labels['alertname']].push(instance);
-      });
-      setFilteredRules(rulesWithInstances);
-    }
-  }, [loading, result, rulesWithInstances]);
 
   if (error) {
     return null;
