@@ -10,7 +10,6 @@ import { AlertTemplatePreviewData } from './TemplateData';
 import { TemplateDataTable } from './TemplateDataDocs';
 import { GenerateAlertDataModal } from './form/GenerateAlertDataModal';
 
-
 export const RESET_TO_DEFAULT = 'Reset to default';
 
 export function PayloadEditor({
@@ -98,7 +97,13 @@ export function PayloadEditor({
           >
             Add alert data
           </Button>
-          <Button type="button" variant="secondary" icon="bell" onClick={() => setIsAlertSelectorOpen(true)}>
+          <Button
+            type="button"
+            variant="secondary"
+            icon="bell"
+            disabled={errorInPayloadJson}
+            onClick={() => setIsAlertSelectorOpen(true)}
+          >
             Choose alert instances
           </Button>
           {payloadFormatError !== null && (
