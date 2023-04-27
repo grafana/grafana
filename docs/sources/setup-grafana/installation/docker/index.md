@@ -33,7 +33,7 @@ docker run -d -p 3000:3000 --name=grafana grafana/grafana-enterprise
 where:
 
 run = run directly from the command line\
-d = run in the background\
+`d` = run in the background\
 p = assign the port number, which in this case is `3000`\
 name = assign a logical name to the container, for example, `grafana`\
 grafana/grafana-enterprise = the image to run in the container
