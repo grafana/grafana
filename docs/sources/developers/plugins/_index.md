@@ -46,7 +46,7 @@ Explore the many UI components in our [Grafana UI library](https://developers.gr
 
 ### Plugin examples
 
-Text: Grafana Labs provides a number of best practice example plugins for different use cases to help you quickly get started. Browse our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
+Grafana Labs provides a number of best practice example plugins for different use cases to help you quickly get started. Browse our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
 
 ### SDK
 

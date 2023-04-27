@@ -77,7 +77,7 @@ const frame = new MutableDataFrame({
 });
 ```
 
-## Add labels to your logs
+### Add labels to your logs
 
 Many log systems let you query logs based on metadata, or _labels_, to help filter log lines.
 
@@ -98,7 +98,7 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-## Extract detected fields from your logs
+### Extract detected fields from your logs
 
 Add additional information about each log line by supplying more data frame fields.
 
@@ -106,7 +106,7 @@ If a data frame has more than one text field, then Grafana assumes the first fie
 
 Any number of custom fields can be added to your data frame; Grafana comes with two dedicated fields: `levels` and `id`.
 
-### Levels
+#### Levels
 
 To set the level for each log line, add a `level` field.
 
@@ -126,7 +126,7 @@ frame.add({ time: 1589189388597, content: 'user registered', level: 'info' });
 frame.add({ time: 1589189406480, content: 'unknown error', level: 'error' });
 ```
 
-### Unique log lines
+#### Unique log lines
 
 By default, Grafana offers basic support for deduplicating log lines. You can improve the support by adding an `id` field to explicitly assign identifiers to each log line.
 
