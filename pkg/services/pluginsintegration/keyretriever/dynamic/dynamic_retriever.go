@@ -14,9 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/static"
-	// Only used for getting the feature flag value
-	// "github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const publicKeySyncInterval = 10 * 24 * time.Hour // 10 days
@@ -41,7 +40,7 @@ type KeyRetriever struct {
 
 var _ plugins.KeyRetriever = (*KeyRetriever)(nil)
 
-func New(cfg *config.Cfg, kv plugins.KeyStore) *KeyRetriever {
+func ProvideService(cfg *config.Cfg, kv plugins.KeyStore) *KeyRetriever {
 	kr := &KeyRetriever{
 		cfg: cfg,
 		log: log.New("plugin.signature.key_retriever"),
@@ -49,6 +48,11 @@ func New(cfg *config.Cfg, kv plugins.KeyStore) *KeyRetriever {
 		kv:  kv,
 	}
 	return kr
+}
+
+// IsDisabled disables dynamic retrieval of public keys from the API server.
+func (kr *KeyRetriever) IsDisabled() bool {
+	return !kr.cfg.Features.IsEnabled(featuremgmt.FlagPluginsAPIManifestKey)
 }
 
 func (kr *KeyRetriever) Run(ctx context.Context) error {
@@ -177,7 +181,7 @@ func (kr *KeyRetriever) ensureKeys(ctx context.Context) error {
 	}
 	if len(keys) == 0 {
 		// Populate with the default key
-		err := kr.kv.Set(ctx, static.GetDefaultKeyID(), static.GetDefaultKey())
+		err := kr.kv.Set(ctx, statickey.GetDefaultKeyID(), statickey.GetDefaultKey())
 		if err != nil {
 			return err
 		}

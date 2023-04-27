@@ -49,7 +49,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := New(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -72,7 +72,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := New(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -94,7 +94,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "other")
 		cfg.GrafanaComURL = s.URL
-		v := New(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)

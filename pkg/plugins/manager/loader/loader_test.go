@@ -21,9 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/static"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -1421,7 +1421,7 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(),
-		signature.ProvideService(cfg, static.New()))
+		signature.ProvideService(cfg, statickey.New()))
 
 	for _, cb := range cbs {
 		cb(l)

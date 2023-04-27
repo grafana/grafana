@@ -54,17 +54,16 @@ func (m *PluginManifest) isV2() bool {
 }
 
 type Signature struct {
-	mlog log.Logger
-	kr   plugins.KeyRetriever
+	log log.Logger
+	kr  plugins.KeyRetriever
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
 func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
-	log := log.New("plugin.signature")
 	return &Signature{
-		mlog: log,
-		kr:   kr,
+		log: log.New("plugin.signature"),
+		kr:  kr,
 	}
 }
 
@@ -96,7 +95,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	}
 
 	if len(plugin.FS.Files()) == 0 {
-		s.mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
+		s.log.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -105,13 +104,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	f, err := plugin.FS.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
-			s.mlog.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+			s.log.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
 			return plugins.Signature{
 				Status: plugins.SignatureUnsigned,
 			}, nil
 		}
 
-		s.mlog.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		s.log.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -121,13 +120,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 			return
 		}
 		if err = f.Close(); err != nil {
-			s.mlog.Warn("Failed to close plugin MANIFEST file", "err", err)
+			s.log.Warn("Failed to close plugin MANIFEST file", "err", err)
 		}
 	}()
 
 	byteValue, err := io.ReadAll(f)
 	if err != nil || len(byteValue) < 10 {
-		s.mlog.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
+		s.log.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureUnsigned,
 		}, nil
@@ -135,7 +134,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
-		s.mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
+		s.log.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -157,10 +156,10 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	// Validate that plugin is running within defined root URLs
 	if len(manifest.RootURLs) > 0 {
 		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
-			s.mlog.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
+			s.log.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
-			s.mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
+			s.log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
 				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureInvalid,
@@ -172,7 +171,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
-		err = verifyHash(s.mlog, plugin, p, hash)
+		err = verifyHash(s.log, plugin, p, hash)
 		if err != nil {
 			return plugins.Signature{
 				Status: plugins.SignatureModified,
@@ -202,13 +201,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	}
 
 	if len(unsignedFiles) > 0 {
-		s.mlog.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
+		s.log.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
 		return plugins.Signature{
 			Status: plugins.SignatureModified,
 		}, nil
 	}
 
-	s.mlog.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
+	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
 	return plugins.Signature{
 		Status:     plugins.SignatureValid,
 		Type:       manifest.SignatureType,
