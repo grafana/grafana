@@ -284,3 +284,17 @@ services:
 volumes:
   grafana_storage: {}
 ```
+
+## Validating Docker Compose YAML file
+
+Sometimes there are syntax error in the `docker-compose.yaml` file once it gets complicated. Use the docker built-in command `docker compose config` to check for any syntax errors.
+
+Example
+
+To check for any syntax error run the command:
+
+```bash
+docker compose config docker-compose.yaml
+```
+
+If there are any errors, it will inform you with the line numbers. Else it will output the content of the `docker-compose.yaml` file in detailed YAML format.
