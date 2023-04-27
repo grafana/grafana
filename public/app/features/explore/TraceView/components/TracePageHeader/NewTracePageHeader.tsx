@@ -161,7 +161,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       z-index: 5;
     `,
     titleRow: css`
-      align-items: center;
+      align-items: flex-start;
       display: flex;
       padding: 0 8px;
     `,
@@ -192,6 +192,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     `,
     url: css`
       margin: -2.5px 0.3em;
+      height: 15px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
