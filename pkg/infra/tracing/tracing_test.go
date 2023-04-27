@@ -1,6 +1,7 @@
 package tracing
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,37 +56,97 @@ func TestSplitCustomAttribs_Malformed(t *testing.T) {
 	}
 }
 
-func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
-	cfg := setting.NewCfg()
-	otel := &Opentelemetry{Cfg: cfg}
-
-	otelsect := cfg.Raw.Section("tracing.opentelemetry")
-	jaegersect := cfg.Raw.Section("tracing.opentelemetry.jaeger")
-	otlpsect := cfg.Raw.Section("tracing.opentelemetry.otlp")
-
-	assert.NoError(t, otel.parseSettings())
-	assert.Equal(t, noopExporter, otel.enabled)
-
-	otelsect.Key("custom_attributes")
-	assert.NoError(t, otel.parseSettings())
-	assert.Empty(t, otel.customAttribs)
-
-	otelsect.Key("custom_attributes").SetValue("key1:value1,key2:value2")
-	assert.NoError(t, otel.parseSettings())
-	expected := []attribute.KeyValue{
-		attribute.String("key1", "value1"),
-		attribute.String("key2", "value2"),
+func TestTracingConfig(t *testing.T) {
+	for _, test := range []struct {
+		Name               string
+		Cfg                string
+		Env                map[string]string
+		ExpectedExporter   string
+		ExpectedAddress    string
+		ExpectedPropagator string
+		ExpectedAttrs      []attribute.KeyValue
+	}{
+		{
+			Name:             "default config uses noop exporter",
+			Cfg:              "",
+			ExpectedExporter: "noop",
+			ExpectedAttrs:    []attribute.KeyValue{},
+		},
+		{
+			Name: "custom attributes are parsed",
+			Cfg: `
+			[tracing.opentelemetry]
+			custom_attributes = key1:value1,key2:value2
+			`,
+			ExpectedExporter: "noop",
+			ExpectedAttrs:    []attribute.KeyValue{attribute.String("key1", "value1"), attribute.String("key2", "value2")},
+		},
+		{
+			Name: "jaeger address is parsed",
+			Cfg: `
+			[tracing.opentelemetry.jaeger]
+			address = jaeger.example.com:6831
+			`,
+			ExpectedExporter: "jaeger",
+			ExpectedAddress:  "jaeger.example.com:6831",
+			ExpectedAttrs:    []attribute.KeyValue{},
+		},
+		{
+			Name: "OTLP address is parsed",
+			Cfg: `
+			[tracing.opentelemetry.otlp]
+			address = otlp.example.com:4317
+			`,
+			ExpectedExporter: "otlp",
+			ExpectedAddress:  "otlp.example.com:4317",
+			ExpectedAttrs:    []attribute.KeyValue{},
+		},
+		{
+			Name: "legacy config format is supproted",
+			Cfg: `
+			[tracing.jaeger]
+			address = jaeger.example.com:6831
+			`,
+			ExpectedExporter: "jaeger",
+			ExpectedAddress:  "jaeger.example.com:6831",
+			ExpectedAttrs:    []attribute.KeyValue{},
+		},
+		{
+			Name: "legacy env variables are supproted",
+			Cfg:  `[tracing.jaeger]`,
+			Env: map[string]string{
+				"JAEGER_AGENT_HOST": "example.com",
+				"JAEGER_AGENT_PORT": "12345",
+			},
+			ExpectedExporter: "jaeger",
+			ExpectedAddress:  "example.com:12345",
+			ExpectedAttrs:    []attribute.KeyValue{},
+		},
+	} {
+		t.Run(test.Name, func(t *testing.T) {
+			// export envioronment variables
+			if test.Env != nil {
+				for k, v := range test.Env {
+					os.Setenv(k, v)
+				}
+				defer func() {
+					for k := range test.Env {
+						os.Unsetenv(k)
+					}
+				}()
+			}
+			// parse config sections
+			cfg := setting.NewCfg()
+			cfg.Raw.Append([]byte(test.Cfg))
+			// create tracer
+			tracer, err := ProvideService(cfg)
+			assert.NoError(t, err)
+			// make sure tracker is properly configured
+			otel := tracer.(*Opentelemetry)
+			assert.Equal(t, test.ExpectedExporter, otel.enabled)
+			assert.Equal(t, test.ExpectedAddress, otel.Address)
+			assert.Equal(t, test.ExpectedPropagator, otel.Propagation)
+			assert.Equal(t, test.ExpectedAttrs, otel.customAttribs)
+		})
 	}
-	assert.Equal(t, expected, otel.customAttribs)
-
-	jaegersect.Key("address").SetValue("somehost:6831")
-	assert.NoError(t, otel.parseSettings())
-	assert.Equal(t, "somehost:6831", otel.Address)
-	assert.Equal(t, jaegerExporter, otel.enabled)
-
-	jaegersect.Key("address").SetValue("")
-	otlpsect.Key("address").SetValue("somehost:4317")
-	assert.NoError(t, otel.parseSettings())
-	assert.Equal(t, "somehost:4317", otel.Address)
-	assert.Equal(t, otlpExporter, otel.enabled)
 }
