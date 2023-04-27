@@ -863,7 +863,7 @@ describe('ElasticDatasource', () => {
       const postMock = jest.fn((method: string, url: string, data, header: object) =>
         of(createFetchResponse({ responses: [] }))
       );
-      ds['legacyRequest'] = postMock;
+      ds.legacyQueryRunner['request'] = postMock;
 
       await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
         expect(postMock).toHaveBeenCalledTimes(1);
