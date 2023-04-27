@@ -1,6 +1,6 @@
 import { DataFrame } from '../types';
 
-import { ArrayDataFrame } from './ArrayDataFrame';
+import { ArrayDataFrame, arrayToDataFrame } from './ArrayDataFrame';
 import { toDataFrameDTO } from './processDataFrame';
 
 describe('Array DataFrame', () => {
@@ -79,5 +79,26 @@ describe('Array DataFrame', () => {
     expect(copy.fields).toEqual(frame.fields);
     expect(copy.length).toEqual(frame.length);
     expect(copy.length).toEqual(input.length);
+  });
+
+  test('Handles any array input', () => {
+    const f = arrayToDataFrame([1, 2, 3]);
+    expect(f).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "Value",
+            "type": "number",
+            "values": [
+              1,
+              2,
+              3,
+            ],
+          },
+        ],
+        "length": 3,
+      }
+    `);
   });
 });
