@@ -283,16 +283,16 @@ function TemplatingGuideline() {
 }
 
 function getResultsToRender(results: TemplatePreviewResult[]) {
-  const moreThanOne = results.length > 1;
-  const preview = (result: TemplatePreviewResult) =>
-    moreThanOne ? `Preview for ${result.name}:\n${result.text}` : `{result.text}`;
+  const filteredResults = results.filter((result) => result.text.trim().length > 0);
 
-  return results
+  const moreThanOne = filteredResults.length > 1;
+
+  const preview = (result: TemplatePreviewResult) =>
+    moreThanOne ? `Preview for ${result.name}:\n${result.text}` : `${result.text}`;
+
+  return filteredResults
     .map((result: TemplatePreviewResult) => {
-      if (result.text.trim().length > 0) {
-        return preview(result);
-      }
-      return '';
+      return preview(result);
     })
     .join(`\n`);
 }

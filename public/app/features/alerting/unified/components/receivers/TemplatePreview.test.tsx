@@ -136,7 +136,7 @@ describe('TemplatePreview component', () => {
     );
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        'Preview for template1: This is the template result bla bla bla ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'
+        'This is the template result bla bla bla ERROR in template2: kind_of_error Unexpected "{" in operand ERROR in template3: kind_of_error Unexpected "{" in operand'
       );
     });
   });

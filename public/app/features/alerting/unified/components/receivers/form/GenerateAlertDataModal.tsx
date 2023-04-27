@@ -63,6 +63,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
     onAccept(alerts);
     setAlerts([]);
     formMethods.reset();
+    setStatus('firing');
   };
 
   const labelsOrAnnotationsAdded = () => {
