@@ -30,16 +30,4 @@ describe('usePrepareMetricsQuery', () => {
       expect(onChangeQuery).toHaveBeenCalledTimes(0);
     });
   });
-  // TODO: delete this test when dynamic labels feature flag is removed
-  describe('when dynamic labels feature flag is disabled', () => {
-    const testQuery: CloudWatchMetricsQuery = { ...DEFAULT_TEST_QUERY };
-    it('should replace label or trigger onChange', async () => {
-      const expectedQuery: CloudWatchMetricsQuery = migrateAliasPatterns(testQuery);
-      config.featureToggles.cloudWatchDynamicLabels = false;
-      const onChangeQuery = jest.fn();
-      const { result } = renderHook(() => useMigratedMetricsQuery(testQuery, onChangeQuery));
-      expect(onChangeQuery).toHaveBeenLastCalledWith(result.current);
-      expect(result.current).toEqual(expectedQuery);
-    });
-  });
 });

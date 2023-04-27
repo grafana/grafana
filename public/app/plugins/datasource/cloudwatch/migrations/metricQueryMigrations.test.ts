@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { CloudWatchMetricsQuery } from '../types';
 
 import { migrateAliasPatterns } from './metricQueryMigrations';
@@ -69,48 +67,6 @@ describe('metricQueryMigrations', () => {
       ];
       test.each(cases)('it should not be migrated once again', ({ alias, label }) => {
         const testQuery = { ...baseQuery, alias, label };
-        const result = migrateAliasPatterns(testQuery);
-        expect(result.label).toBe(label);
-        expect(result.alias).toBe(alias);
-      });
-    });
-
-    // TODO: delete this test when dynamic labels feature flag is removed
-    describe('when feature is disabled', () => {
-      const cases: TestScenario[] = [
-        { alias: '{{period}}', label: "${PROP('MetricName')}" },
-        { alias: '{{metric}}', label: "${PROP('MetricName')}" },
-        { alias: '', label: "${PROP('MetricName')}" },
-        { alias: '', label: '' },
-        { description: 'Metric name', alias: '{{metric}}', label: "${PROP('MetricName')}" },
-        { description: 'Trim pattern', alias: '{{  metric     }}', label: "${PROP('MetricName')}" },
-        { description: 'Namespace', alias: '{{namespace}}', label: "${PROP('Namespace')}" },
-        { description: 'Period', alias: '{{period}}', label: "${PROP('Period')}" },
-        { description: 'Region', alias: '{{region}}', label: "${PROP('Region')}" },
-        { description: 'Statistic', alias: '{{stat}}', label: "${PROP('Stat')}" },
-        { description: 'Label', alias: '{{label}}', label: '${LABEL}' },
-        {
-          description: 'Non-existing alias pattern',
-          alias: '{{anything_else}}',
-          label: "${PROP('Dim.anything_else')}",
-        },
-        {
-          description: 'Combined patterns',
-          alias: 'some {{combination}} of {{label}} and {{metric}}',
-          label: "some ${PROP('Dim.combination')} of ${LABEL} and ${PROP('MetricName')}",
-        },
-        {
-          description: 'Combined patterns not trimmed',
-          alias: 'some {{combination  }}{{ label}} and {{metric}}',
-          label: "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}",
-        },
-      ];
-      test.each(cases)('should migrate alias anyway', ({ alias, label }) => {
-        config.featureToggles.cloudWatchDynamicLabels = false;
-        const testQuery = { ...baseQuery, alias: `${alias}` };
-        if (label !== undefined) {
-          testQuery.label = label;
-        }
         const result = migrateAliasPatterns(testQuery);
         expect(result.label).toBe(label);
         expect(result.alias).toBe(alias);
