@@ -529,3 +529,27 @@ cookie_secure = true
 ```
 
 Ensure cookie_secure is set to true to ensure that cookies are only sent over HTTPS.
+
+
+### Error: "Corresponding relay state was not found"
+
+This can happen in case of IdP initiated authentication, when it is isn’t enabled in Grafana, or the relay_state configurations don’t match between Grafana and the IdP.
+
+The configuration for IdP initiated login is here: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/#idp-initiated-single-sign-on-sso 
+
+If this error happens when logging in from the Grafana login page, it means that there is an issue with the saml_state cookie created at the beginning of the authentication process (in the login/saml request). Either the cookie expired (this can happen if there’s MFA set up on the IdP side, and the authentication process takes a while). In this case raising the max_issue_delay should help.
+
+In any case, you need to check what happens to this cookie to figure out what the issue is. It can be caused by HTTP/HTTPS issues in some cases.
+
+
+### Error: "Failed to save the SAML received information"
+
+This means the assertion configuration in Grafana doesn’t match what’s in the IdP. You need to turn on debug logs for SAML:
+
+```ini
+[log]
+filters = saml.auth:debug
+```
+
+This will add in the logs the information received from the IdP, and these need to be mapped exactly in Grafana.  
+
