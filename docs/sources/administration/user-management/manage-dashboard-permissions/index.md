@@ -35,7 +35,7 @@ When you grant user permissions for folders, that setting applies to all dashboa
 
 When you grant folder permissions, that setting applies to all dashboards and subfolders in the folder. For a more granular approach to assigning permissions, you can also assign user permissions to individual dashboards.
 
-For example, if a user with the viewer organization role requires editor (or admin) access to a dashboard, you can assign those elevated permissions on an individual basis.
+For example, if a user with the viewers organization role requires editor (or admin) access to a dashboard, you can assign those elevated permissions on an individual basis.
 
 > **Note**: If you have assigned a user dashboard folder permissions, you cannot also assign the user permission to dashboards contained in the folder.
 
@@ -81,7 +81,7 @@ This modification is useful for public Grafana installations where you want anon
 
 ## Edit dashboard permissions
 
-Edit dashboard permissions when you are want to enhance or restrict a user's access to a dashboard. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
+Edit dashboard permissions when you want to enhance or restrict a users access to a dashboard. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
 
 ### Before you begin
 
@@ -103,13 +103,13 @@ Grafana applies the highest permission a given user has to access a resource lik
 
 - You cannot override organization administrator permissions. Organization administrators have access to all organization resources.
 - User permissions set for a folder propagate to all dashboards and subfolders contained in a folder. Permissions also cascade down to all dashboards and folders under the subfolders, and so on.
-- A lower permission level does not affect access if a more general rule exists with a higher permission.
+- A lower level of permission does not affect access if a more general rule exists with a higher permission.
 
 Refer to the following examples to understand how organization and dashboard permissions impact a user's access to dashboards.
 
 ### Example 1
 
-In this example, user1 has the editor organization role.
+In this example, user1 has an editor organization role.
 
 Dashboard permissions settings:
 
@@ -120,7 +120,7 @@ Result: User1 has edit permissions because the user's organization role is Edito
 
 ### Example 2
 
-In this example, user1 has the viewer organization role and is a member of team1.
+In this example, user1 has a viewer organization role and is a member of team1.
 
 Dashboard permissions settings:
 
@@ -139,7 +139,7 @@ Dashboard permissions settings:
 - user1 is set to `admin`, which is inherited from the permissions set in parent folder
 - user1 is set to `edit`
 
-Result: You receive an error message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions.
+Result: You receive an error message that cannot override a higher level of permission with a lower level of permission in the same dashboard. User1 has administrator permissions.
 
 ### Example 4
 
