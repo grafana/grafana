@@ -30,7 +30,7 @@ To run the latest stable version of Grafana, run the following command:
 docker run -d -p 3000:3000 --name=grafana grafana/grafana-enterprise
 ```
 
-where:
+Where:
 
 run = run directly from the command line\
 `d` = run in the background\
