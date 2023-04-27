@@ -40,17 +40,32 @@ export function PayloadEditor({
 
   const errorInPayloadJson = payloadFormatError !== null;
 
-  const onOpenEditAlertModal = () => {
+  const validatePayload = () => {
     try {
       const payloadObj = JSON.parse(payload);
       JSON.stringify([...payloadObj]); // check if it's iterable, in order to be able to add more data
-      setIsEditingAlertData(true);
       setPayloadFormatError(null);
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
       onPayloadError();
+      throw e;
     }
   };
+
+  const onOpenEditAlertModal = () => {
+    try {
+      validatePayload();
+      setIsEditingAlertData(true);
+    } catch (e) {}
+  };
+
+  const onOpenAlertSelectorModal = () => {
+    try {
+      validatePayload();
+      setIsAlertSelectorOpen(true);
+    } catch (e) {}
+  };
+
   const onAddAlertList = (alerts: TestTemplateAlert[]) => {
     onCloseEditAlertModal();
     setIsAlertSelectorOpen(false);
@@ -102,7 +117,7 @@ export function PayloadEditor({
             variant="secondary"
             icon="bell"
             disabled={errorInPayloadJson}
-            onClick={() => setIsAlertSelectorOpen(true)}
+            onClick={onOpenAlertSelectorModal}
           >
             Choose alert instances
           </Button>
