@@ -342,7 +342,8 @@ func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.B
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
 		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
-		if errors.Is(err, openpgpErrors.ErrUnknownIssuer) && len(keyring) > 0 && len(keyring[0].Revocations) > 0 {
+		// If the key includes revocations, we can assume that the key was revoked
+		if len(keyring) > 0 && len(keyring[0].Revocations) > 0 {
 			return fmt.Errorf("%v (KeyID: %s): %w", openpgpErrors.ErrKeyRevoked, keyID, err)
 		}
 		return fmt.Errorf("%v: %w", "failed to check signature", err)
