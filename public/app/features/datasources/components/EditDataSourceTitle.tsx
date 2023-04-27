@@ -44,7 +44,6 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
             defaultValue={name}
             placeholder="Name"
             onCommitChange={handleChange}
-            suffix={<Icon name="check" />}
             minWidth={40}
             maxWidth={80}
             required
