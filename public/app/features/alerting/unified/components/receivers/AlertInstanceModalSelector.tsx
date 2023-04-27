@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
@@ -16,13 +16,10 @@ import {
   Tag,
 } from '@grafana/ui';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { dispatch } from 'app/store/store';
 
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAmAlertsAction } from '../../state/actions';
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { arrayLabelsToObject, labelsToTags, objectLabelsToArray } from '../../utils/labels';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { extractCommonLabels, omitLabels } from '../rules/state-history/common';
 
 export function AlertInstanceModalSelector({
@@ -38,15 +35,22 @@ export function AlertInstanceModalSelector({
 
   const [selectedRule, setSelectedRule] = useState<string>();
   const [selectedInstances, setSelectedInstances] = useState<AlertmanagerAlert[] | null>(null);
+  const { useGetAlertmanagerAlertsQuery } = alertmanagerApi;
 
-  const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
-  const { loading, result, error } = alertsRequests[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState;
+  const {
+    currentData: result = [],
+    isFetching: loading,
+    isError: error,
+  } = useGetAlertmanagerAlertsQuery({
+    amSourceName: GRAFANA_RULES_SOURCE_NAME,
+    filter: {
+      inhibited: true,
+      silenced: true,
+      active: true,
+    },
+  });
 
   const [ruleFilter, setRuleFilter] = useState('');
-
-  useEffect(() => {
-    dispatch(fetchAmAlertsAction(GRAFANA_RULES_SOURCE_NAME));
-  }, []);
 
   const rulesWithInstances: Record<string, AlertmanagerAlert[]> = useMemo(() => {
     const rules: Record<string, AlertmanagerAlert[]> = {};
