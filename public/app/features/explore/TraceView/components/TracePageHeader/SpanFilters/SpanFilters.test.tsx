@@ -48,7 +48,6 @@ describe('SpanFilters', () => {
       search,
       setSearch,
       spanFilterMatches: undefined,
-      focusedSpanIdForSearch: '',
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: 'tempo',
     };

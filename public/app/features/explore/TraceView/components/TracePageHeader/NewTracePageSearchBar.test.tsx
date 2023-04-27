@@ -14,18 +14,11 @@
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { defaultFilters } from '../../useSearch';
 
-import NewTracePageSearchBar, { getStyles, TracePageSearchBarProps } from './NewTracePageSearchBar';
-
-const defaultProps = {
-  search: defaultFilters,
-  setFocusedSpanIdForSearch: jest.fn(),
-  showSpanFilterMatchesOnly: false,
-  setShowSpanFilterMatchesOnly: jest.fn(),
-};
+import NewTracePageSearchBar, { getStyles } from './NewTracePageSearchBar';
 
 describe('<NewTracePageSearchBar>', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -40,14 +33,12 @@ describe('<NewTracePageSearchBar>', () => {
   });
 
   const NewTracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
-    const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
     const searchBarProps = {
       search: defaultFilters,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
       showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),
-      focusedSpanIdForSearch,
-      setFocusedSpanIdForSearch,
+      setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: '',
       reset: jest.fn(),
       totalSpans: 100,
@@ -98,8 +89,14 @@ describe('<NewTracePageSearchBar>', () => {
     expect(screen.getByText('1/3 matches')).toBeDefined();
     await user.click(nextResButton!);
     expect(screen.getByText('2/3 matches')).toBeDefined();
-    await user.click(prevResButton!);
+    await user.click(nextResButton!);
+    expect(screen.getByText('3/3 matches')).toBeDefined();
+    await user.click(nextResButton!);
     expect(screen.getByText('1/3 matches')).toBeDefined();
+    await user.click(prevResButton!);
+    expect(screen.getByText('3/3 matches')).toBeDefined();
+    await user.click(prevResButton!);
+    expect(screen.getByText('2/3 matches')).toBeDefined();
   });
 
   it('renders correctly when there are no matches i.e. too many filters added', async () => {
@@ -115,7 +112,7 @@ describe('<NewTracePageSearchBar>', () => {
   });
 
   it('renders show span filter matches only switch', async () => {
-    render(<NewTracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
+    render(<NewTracePageSearchBarWithProps matches={[]} />);
     const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
     expect(matchesSwitch).toBeInTheDocument();
   });

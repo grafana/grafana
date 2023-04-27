@@ -33,7 +33,6 @@ const setup = () => {
     showSpanFilterMatchesOnly: false,
     setShowSpanFilterMatchesOnly: jest.fn(),
     spanFilterMatches: undefined,
-    focusedSpanIdForSearch: '',
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),

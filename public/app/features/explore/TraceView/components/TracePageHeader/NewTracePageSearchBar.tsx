@@ -26,7 +26,6 @@ export type TracePageSearchBarProps = {
   spanFilterMatches: Set<string> | undefined;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
   reset: () => void;
@@ -39,22 +38,25 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     spanFilterMatches,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
-    focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
     datasourceType,
     reset,
     totalSpans,
   } = props;
-  const [currentSpanIndex, setCurrentSpanIndex] = useState<number>();
+  const [currentSpanIndex, setCurrentSpanIndex] = useState(-1);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
+    setCurrentSpanIndex(-1);
     setFocusedSpanIdForSearch('');
-  }, [search, setFocusedSpanIdForSearch]);
+  }, [setFocusedSpanIdForSearch, spanFilterMatches]);
 
   useEffect(() => {
-    setCurrentSpanIndex(undefined);
-  }, [spanFilterMatches?.size]);
+    if (spanFilterMatches) {
+      const spanMatches = Array.from(spanFilterMatches!);
+      setFocusedSpanIdForSearch(spanMatches[currentSpanIndex]);
+    }
+  }, [currentSpanIndex, setFocusedSpanIdForSearch, spanFilterMatches]);
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
@@ -63,19 +65,14 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
       direction: 'next',
     });
 
-    const spanMatches = Array.from(spanFilterMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch);
-
     // new query || at end, go to start
-    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-      setFocusedSpanIdForSearch(spanMatches[0]);
-      setCurrentSpanIndex(1);
+    if (currentSpanIndex === -1 || (spanFilterMatches && currentSpanIndex === spanFilterMatches.size - 1)) {
+      setCurrentSpanIndex(0);
       return;
     }
 
     // get next
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
-    setCurrentSpanIndex(prevMatchedIndex + 2);
+    setCurrentSpanIndex(currentSpanIndex + 1);
   };
 
   const prevResult = () => {
@@ -85,19 +82,14 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
       direction: 'prev',
     });
 
-    const spanMatches = Array.from(spanFilterMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch);
-
     // new query || at start, go to end
-    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
-      setCurrentSpanIndex(spanMatches.length);
+    if (spanFilterMatches && (currentSpanIndex === -1 || currentSpanIndex === 0)) {
+      setCurrentSpanIndex(spanFilterMatches.size - 1);
       return;
     }
 
     // get prev
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
-    setCurrentSpanIndex(prevMatchedIndex);
+    setCurrentSpanIndex(currentSpanIndex - 1);
   };
 
   const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
@@ -114,27 +106,25 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     );
   }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
 
-  const matchesText = () => {
-    if (spanFilterMatches?.size === 0) {
-      return (
-        <>
-          <span>0 matches</span>
-          <Tooltip
-            content="There are 0 span matches for the filters selected. Please try removing some of the selected filters."
-            placement="left"
-          >
-            <span className={styles.matchesTooltip}>
-              <Icon name="info-circle" size="lg" />
-            </span>
-          </Tooltip>
-        </>
-      );
-    }
-    const amountText = spanFilterMatches?.size === 1 ? 'match' : 'matches';
-    return currentSpanIndex
-      ? `${currentSpanIndex}/${spanFilterMatches?.size} ${amountText}`
-      : `${spanFilterMatches?.size} ${amountText}`;
-  };
+  const amountText = spanFilterMatches?.size === 1 ? 'match' : 'matches';
+  const matches =
+    spanFilterMatches?.size === 0 ? (
+      <>
+        <span>0 matches</span>
+        <Tooltip
+          content="There are 0 span matches for the filters selected. Please try removing some of the selected filters."
+          placement="left"
+        >
+          <span className={styles.matchesTooltip}>
+            <Icon name="info-circle" size="lg" />
+          </span>
+        </Tooltip>
+      </>
+    ) : currentSpanIndex !== -1 ? (
+      `${currentSpanIndex + 1}/${spanFilterMatches?.size} ${amountText}`
+    ) : (
+      `${spanFilterMatches?.size} ${amountText}`
+    );
 
   return (
     <div className={styles.searchBar}>
@@ -161,7 +151,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
             </div>
           </div>
           <div className={styles.nextPrevButtons}>
-            <span className={styles.matches}>{spanFilterMatches ? matchesText() : `${totalSpans} spans`}</span>
+            <span className={styles.matches}>{spanFilterMatches ? matches : `${totalSpans} spans`}</span>
             <Button
               variant="secondary"
               disabled={!buttonEnabled}

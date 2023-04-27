@@ -42,7 +42,6 @@ export type SpanFilterProps = {
   setShowSpanFilters: (isOpen: boolean) => void;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -57,7 +56,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setShowSpanFilters,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
-    focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -369,7 +367,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
           reset={reset}
