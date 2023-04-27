@@ -142,14 +142,13 @@ func (f LocalFS) Files() ([]string, error) {
 	// Convert the accumulator into a slice of relative path strings
 	relFiles := make([]string, 0, len(absFilePaths))
 	base := f.Base()
-	upperLevelPrefix := ".." + string(os.PathSeparator)
 	for fn := range absFilePaths {
 		relPath, err := filepath.Rel(base, fn)
 		if err != nil {
 			return nil, err
 		}
 		clenRelPath, err := util.CleanRelativePath(relPath)
-		if strings.HasPrefix(clenRelPath, upperLevelPrefix) || err != nil {
+		if err != nil {
 			continue
 		}
 		relFiles = append(relFiles, clenRelPath)
