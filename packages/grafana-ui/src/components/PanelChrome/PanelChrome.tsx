@@ -252,7 +252,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      flex: '1 1 0',
 
       '.show-on-hover': {
         visibility: 'hidden',

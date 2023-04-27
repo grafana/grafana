@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -70,7 +71,7 @@ export const getFieldLinksForExplore = (options: {
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
-      raw: field.values.get(rowIndex),
+      raw: field.values[rowIndex],
     },
     text: 'Raw value',
   };
@@ -121,30 +122,6 @@ export const getFieldLinksForExplore = (options: {
         if (!linkModel.title) {
           linkModel.title = getTitleFromHref(linkModel.href);
         }
-
-        // Take over the onClick to report the click, then either call the original onClick or navigate to the URL
-        // Note: it is likely that an external link that opens in the same tab will not be reported, as the browser redirect might cancel reporting the interaction
-        const origOnClick = linkModel.onClick;
-
-        linkModel.onClick = (...args) => {
-          reportInteraction(DATA_LINK_USAGE_KEY, {
-            origin: link.origin || DataLinkConfigOrigin.Datasource,
-            app: CoreApp.Explore,
-            internal: false,
-          });
-
-          if (origOnClick) {
-            origOnClick?.apply(...args);
-          } else {
-            // for external links without an onClick, we want to duplicate default href behavior since onClick stops it
-            if (linkModel.target === '_blank') {
-              window.open(linkModel.href);
-            } else {
-              window.location.href = linkModel.href;
-            }
-          }
-        };
-
         return linkModel;
       } else {
         let internalLinkSpecificVars: ScopedVars = {};
@@ -153,9 +130,9 @@ export const getFieldLinksForExplore = (options: {
             let fieldValue;
             if (transformation.field) {
               const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
-              fieldValue = transformField?.values.get(rowIndex);
+              fieldValue = transformField?.values[rowIndex];
             } else {
-              fieldValue = field.values.get(rowIndex);
+              fieldValue = field.values[rowIndex];
             }
 
             internalLinkSpecificVars = {
@@ -194,7 +171,9 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: (options) => splitFnWithTracking(options),
+            // Don't track internal links without split view as they are used only in Dashboards
+            // TODO: It should be revisited in #66570
+            onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };
@@ -260,9 +239,10 @@ export function getVariableUsageInfo<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
-  const variables: VariableInterpolation[] = [];
+  let variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
+  variables = uniqBy(variables, 'variableName');
   return {
     variables: variables,
     allVariablesDefined: variables.every((variable) => variable.found),

@@ -79,6 +79,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('annotation-filtering', import '../dev-dashboards/annotations/annotation-filtering.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('auto_decimals', import '../dev-dashboards/panel-common/auto_decimals.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -156,6 +163,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('datagrid_metric_values', import '../dev-dashboards/panel-datagrid/datagrid_metric_values.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('demo1', import '../dev-dashboards/datasource-testdata/demo1.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -163,21 +177,21 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_compare', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_compare.json') +
+    dashboard.new('elasticsearch_complex', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_complex.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_v7', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_v7.json') +
+    dashboard.new('elasticsearch_migration', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_migration.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
         id: 0,
       }
     },
-    dashboard.new('elasticsearch_v7_filebeat', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_v7_filebeat.json') +
+    dashboard.new('elasticsearch_simple', import '../dev-dashboards/datasource-elasticsearch/elasticsearch_simple.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

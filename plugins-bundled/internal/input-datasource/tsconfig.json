@@ -4,5 +4,13 @@
   "compilerOptions": {
     "rootDir": "./src",
     "baseUrl": "./src"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "es5",
+      "esModuleInterop": true
+    },
+    "transpileOnly": true
   }
 }

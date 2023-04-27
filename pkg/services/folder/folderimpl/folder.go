@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -36,6 +37,9 @@ type Service struct {
 
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
+
+	mutex    sync.RWMutex
+	registry map[string]folder.RegistryService
 }
 
 func ProvideService(
@@ -58,6 +62,7 @@ func ProvideService(
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,
+		registry:             make(map[string]folder.RegistryService),
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -437,6 +442,12 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
+	if cmd.UID == "" {
+		return folder.ErrBadRequest.Errorf("missing UID")
+	}
+	if cmd.OrgID < 1 {
+		return folder.ErrBadRequest.Errorf("invalid orgID")
+	}
 	result := []string{cmd.UID}
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
@@ -466,6 +477,11 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				}
 				return dashboards.ErrFolderAccessDenied
 			}
+
+			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
+				return err
+			}
+
 			err = s.legacyDelete(ctx, cmd, dashFolder)
 			if err != nil {
 				return err
@@ -475,6 +491,15 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	})
 
 	return err
+}
+
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
+	for _, v := range s.registry {
+		if err := v.DeleteInFolder(ctx, orgID, UID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
@@ -533,7 +558,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 
 	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
 	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached
+		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
 	// if the current folder is already a parent of newparent, we should return error
@@ -588,13 +613,36 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		}
 		result = append(result, subfolders...)
 	}
-	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
+
+	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return result, err
 	}
 	return result, nil
+}
+
+func (s *Service) GetChildrenCounts(ctx context.Context, cmd *folder.GetChildrenCountsQuery) (folder.ChildrenCounts, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
+	}
+	if *cmd.UID == "" {
+		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+	if cmd.OrgID < 1 {
+		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
+	}
+
+	countsMap := make(folder.ChildrenCounts, len(s.registry))
+	for _, v := range s.registry {
+		c, err := v.CountInFolder(ctx, cmd.OrgID, *cmd.UID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		countsMap[v.Kind()] += c
+	}
+	return countsMap, nil
 }
 
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin
@@ -749,7 +797,7 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 	}
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {
-		return folder.ErrMaximumDepthReached
+		return folder.ErrMaximumDepthReached.Errorf("failed to validate parent folder")
 	}
 
 	// Create folder under itself is not allowed
@@ -793,4 +841,18 @@ func toFolderError(err error) error {
 	}
 
 	return err
+}
+
+func (s *Service) RegisterService(r folder.RegistryService) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	_, ok := s.registry[r.Kind()]
+	if ok {
+		return folder.ErrTargetRegistrySrvConflict.Errorf("target registry service: %s already exists", r.Kind())
+	}
+
+	s.registry[r.Kind()] = r
+
+	return nil
 }

@@ -340,7 +340,7 @@ var NamespaceMetricsMap = map[string][]string{
 	"AWS/Glue":                 {"glue.driver.BlockManager.disk.diskSpaceUsed_MB", "glue.driver.ExecutorAllocationManager.executors.numberAllExecutors", "glue.driver.ExecutorAllocationManager.executors.numberMaxNeededExecutors", "glue.driver.aggregate.bytesRead", "glue.driver.aggregate.elapsedTime", "glue.driver.aggregate.numCompletedStages", "glue.driver.aggregate.numCompletedTasks", "glue.driver.aggregate.numFailedTasks", "glue.driver.aggregate.numKilledTasks", "glue.driver.aggregate.recordsRead", "glue.driver.aggregate.shuffleBytesWritten", "glue.driver.aggregate.shuffleLocalBytesRead", "glue.driver.jvm.heap.usage  glue.executorId.jvm.heap.usage  glue.ALL.jvm.heap.usage", "glue.driver.jvm.heap.used  glue.executorId.jvm.heap.used  glue.ALL.jvm.heap.used", "glue.driver.s3.filesystem.read_bytes  glue.executorId.s3.filesystem.read_bytes  glue.ALL.s3.filesystem.read_bytes", "glue.driver.s3.filesystem.write_bytes  glue.executorId.s3.filesystem.write_bytes  glue.ALL.s3.filesystem.write_bytes", "glue.driver.system.cpuSystemLoad  glue.executorId.system.cpuSystemLoad  glue.ALL.system.cpuSystemLoad"},
 	"AWS/GroundStation":        {"BitErrorRate", "BlockErrorRate", "ReceivedPower", "Es/N0"},
 	"AWS/Inspector":            {"TotalAssessmentRunFindings", "TotalAssessmentRuns", "TotalHealthyAgents", "TotalMatchingAgents"},
-	"AWS/IVS":                  {"ConcurrentViews", "ConcurrentStreams", "LiveDeliveredTime", "LiveInputTime", "RecordedTime"},
+	"AWS/IVS":                  {"ConcurrentViews", "ConcurrentStreams", "IngestAudioBitrate", "IngestFramerate", "IngestVideoBitrate", "KeyframeInterval", "LiveDeliveredTime", "LiveInputTime", "RecordedTime"},
 	"AWS/IoT":                  {"CanceledJobExecutionCount", "CanceledJobExecutionTotalCount", "ClientError", "Connect.AuthError", "Connect.ClientError", "Connect.ServerError", "Connect.Success", "Connect.Throttle", "DeleteThingShadow.Accepted", "FailedJobExecutionCount", "FailedJobExecutionTotalCount", "Failure", "GetThingShadow.Accepted", "InProgressJobExecutionCount", "InProgressJobExecutionTotalCount", "NonCompliantResources", "NumLogBatchesFailedToPublishThrottled", "NumLogEventsFailedToPublishThrottled", "ParseError", "Ping.Success", "PublishIn.AuthError", "PublishIn.ClientError", "PublishIn.ServerError", "PublishIn.Success", "PublishIn.Throttle", "PublishOut.AuthError", "PublishOut.ClientError", "PublishOut.Success", "QueuedJobExecutionCount", "QueuedJobExecutionTotalCount", "RejectedJobExecutionCount", "RejectedJobExecutionTotalCount", "RemovedJobExecutionCount", "RemovedJobExecutionTotalCount", "ResourcesEvaluated", "RuleMessageThrottled", "RuleNotFound", "RulesExecuted", "ServerError", "Subscribe.AuthError", "Subscribe.ClientError", "Subscribe.ServerError", "Subscribe.Success", "Subscribe.Throttle", "SuccededJobExecutionCount", "SuccededJobExecutionTotalCount", "Success", "TopicMatch", "Unsubscribe.ClientError", "Unsubscribe.ServerError", "Unsubscribe.Success", "Unsubscribe.Throttle", "UpdateThingShadow.Accepted", "Violations", "ViolationsCleared", "ViolationsInvalidated"},
 	"AWS/IoTAnalytics":         {"ActionExecution", "ActivityExecutionError", "IncomingMessages"},
 	"AWS/IoTSiteWise":          {"Gateway.Heartbeat", "Gateway.PublishSuccessCount", "Gateway.PublishFailureCount", "Gateway.ProcessFailureCount", "OPCUACollector.Heartbeat", "OPCUACollector.ActiveDataStreamCount", "OPCUACollector.IncomingValuesCount"},
@@ -523,9 +523,37 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"CloudWatchSynthetics":        {"CanaryName", "StepName"},
 }
 
-var Regions = []string{
-	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
-	"ap-southeast-2", "ap-southeast-3", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-south-1", "eu-west-1",
-	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
-	"us-iso-east-1", "us-isob-east-1", "us-west-1", "us-west-2",
+type RegionsSet map[string]struct{}
+
+func Regions() RegionsSet {
+	return RegionsSet{
+		"af-south-1":     {},
+		"ap-east-1":      {},
+		"ap-northeast-1": {},
+		"ap-northeast-2": {},
+		"ap-northeast-3": {},
+		"ap-south-1":     {},
+		"ap-southeast-1": {},
+		"ap-southeast-2": {},
+		"ap-southeast-3": {},
+		"ca-central-1":   {},
+		"cn-north-1":     {},
+		"cn-northwest-1": {},
+		"eu-central-1":   {},
+		"eu-north-1":     {},
+		"eu-south-1":     {},
+		"eu-west-1":      {},
+		"eu-west-2":      {},
+		"eu-west-3":      {},
+		"me-south-1":     {},
+		"sa-east-1":      {},
+		"us-east-1":      {},
+		"us-east-2":      {},
+		"us-gov-east-1":  {},
+		"us-gov-west-1":  {},
+		"us-iso-east-1":  {},
+		"us-isob-east-1": {},
+		"us-west-1":      {},
+		"us-west-2":      {},
+	}
 }

@@ -41,7 +41,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
 		} else {
-			addMetadataToMultiFrame(q, frame)
+			addMetadataToMultiFrame(q, frame, s.enableDataplane)
 		}
 	}
 
@@ -102,7 +102,7 @@ func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) b
 	}
 }
 
-func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
+func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane bool) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
@@ -110,10 +110,20 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	if len(frame.Fields) < 2 {
 		return
 	}
-	frame.Name = getName(q, frame.Fields[1])
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
-	if frame.Name != "" {
-		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: frame.Name}
+
+	customName := getName(q, frame.Fields[1])
+	if customName != "" {
+		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
+	}
+
+	if enableDataplane {
+		valueField := frame.Fields[1]
+		if n, ok := valueField.Labels["__name__"]; ok {
+			valueField.Name = n
+		}
+	} else {
+		frame.Name = customName
 	}
 }
 

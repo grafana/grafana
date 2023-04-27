@@ -13,7 +13,7 @@ export interface QueryHistoryPreference {
    * one of: '' | 'query' | 'starred';
    */
   homeTab?: string;
-}
+} // 0.0
 
 export interface Preferences {
   /**

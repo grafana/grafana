@@ -10,6 +10,8 @@ import {
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
 
+import { DocsLinkButton } from '../DocsLinkButton';
+
 import { TagMappingInput } from './TagMappingInput';
 
 // @deprecated use getTraceToLogsOptions to get the v2 version of this config from jsonData
@@ -107,7 +109,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Trace to logs</h3>
 
-      <div className={styles.infoText}>Navigate from a trace span to the selected data source&apos;s logs.</div>
+      <div className={styles.infoText}>
+        Navigate from a trace span to the selected data source&apos;s logs
+        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-logs`} />
+      </div>
 
       <InlineFieldRow>
         <InlineField

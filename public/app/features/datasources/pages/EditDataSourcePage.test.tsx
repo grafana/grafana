@@ -1,4 +1,4 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -102,13 +102,12 @@ describe('<EditDataSourcePage>', () => {
     // Title
     expect(screen.queryByText(name)).toBeVisible();
 
-    // Buttons
-    expect(screen.queryByRole('button', { name: /Back/i })).toBeVisible();
-    expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
-    expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
-    expect(screen.queryByText('Explore')).toBeVisible();
-
-    // wait for the rest of the async processes to finish
-    expect(await screen.findByText(name)).toBeVisible();
+    await waitFor(() => {
+      // Buttons
+      expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
+      expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
+      expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(2);
+    });
   });
 });

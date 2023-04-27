@@ -9,17 +9,17 @@ import {
   SplitOpen,
   TimeZone,
   EventBus,
-  isLogsVolumeLimited,
-  getLogsVolumeAbsoluteRange,
   GrafanaTheme2,
-  getLogsVolumeDataSourceInfo,
 } from '@grafana/data';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../logs/utils';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
+  allLogsVolumeMaximum: number;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
@@ -31,7 +31,7 @@ type Props = {
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged, allLogsVolumeMaximum } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -55,10 +55,6 @@ export function LogsVolumePanel(props: Props) {
       .join('. ');
   }
 
-  const range = isLogsVolumeLimited(logsVolumeData.data)
-    ? getLogsVolumeAbsoluteRange(logsVolumeData.data, props.absoluteRange)
-    : props.absoluteRange;
-
   let LogsVolumePanelContent;
 
   if (logsVolumeData?.data) {
@@ -70,13 +66,14 @@ export function LogsVolumePanel(props: Props) {
           data={logsVolumeData.data}
           height={height}
           width={width - spacing * 2}
-          absoluteRange={range}
+          absoluteRange={props.absoluteRange}
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
           tooltipDisplayMode={TooltipDisplayMode.Multi}
           onHiddenSeriesChanged={onHiddenSeriesChanged}
           anchorToZero
+          yAxisMaximum={allLogsVolumeMaximum}
           eventBus={props.eventBus}
         />
       );

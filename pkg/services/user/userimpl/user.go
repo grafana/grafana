@@ -67,6 +67,17 @@ func ProvideService(
 	return s, nil
 }
 
+func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
+	stats := map[string]interface{}{}
+	caseInsensitiveLoginVal := 0
+	if s.cfg.CaseInsensitiveLogin {
+		caseInsensitiveLoginVal = 1
+	}
+
+	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	return stats
+}
+
 func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
 	u := &quota.Map{}
 	if used, err := s.store.Count(ctx); err != nil {

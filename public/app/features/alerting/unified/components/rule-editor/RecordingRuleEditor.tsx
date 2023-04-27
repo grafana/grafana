@@ -57,17 +57,19 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
   const handleChangedQuery = (changedQuery: DataQuery) => {
     const query = queries[0];
+    const dataSourceId = getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid;
 
-    if (!isPromOrLokiQuery(query.model)) {
+    if (!isPromOrLokiQuery(changedQuery) || !dataSourceId) {
       return;
     }
 
-    const expr = query.model.expr;
+    const expr = changedQuery.expr;
 
     const merged = {
       ...query,
       refId: changedQuery.refId,
-      queryType: query.model.queryType ?? '',
+      queryType: changedQuery.queryType ?? '',
+      datasourceUid: dataSourceId,
       expr,
       model: {
         refId: changedQuery.refId,

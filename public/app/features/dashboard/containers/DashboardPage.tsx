@@ -19,7 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -351,6 +351,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
+  // Todo: Remove this when we remove the emptyDashboardPage toggle
   onAddPanel = () => {
     const { dashboard } = this.props;
 
@@ -551,7 +552,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
+    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
   }
 
   if (state.editPanel || state.viewPanel) {

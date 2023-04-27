@@ -144,6 +144,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveSelector,
   },
   {
+    path: [ERROR_NODE_ID, Matchers, Selector],
+    fun: resolveSelector,
+  },
+  {
     path: [LogQL],
     fun: resolveTopLevel,
   },
@@ -244,14 +248,11 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 
   while (listNode !== null) {
     const matcherNode = walk(listNode, [['lastChild', Matcher]]);
-    if (matcherNode === null) {
-      // unexpected, we stop
-      return [];
-    }
-
-    const label = getLabel(matcherNode, text);
-    if (label !== null) {
-      labels.push(label);
+    if (matcherNode !== null) {
+      const label = getLabel(matcherNode, text);
+      if (label !== null) {
+        labels.push(label);
+      }
     }
 
     // there might be more labels
@@ -469,14 +470,24 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
     // to be able to suggest adding the next label.
     // the area between the end-of-the-child-node and the cursor-pos
     // must contain a `,` in this case.
-    const textToCheck = text.slice(child.to, pos);
-
-    if (!textToCheck.includes(',')) {
+    const textToCheck = text.slice(child.from, pos);
+    if (!textToCheck.trim().endsWith(',')) {
       return null;
     }
   }
 
-  const otherLabels = getLabels(node, text);
+  const selectorNode =
+    node.type.id === ERROR_NODE_ID
+      ? walk(node, [
+          ['parent', Matchers],
+          ['parent', Selector],
+        ])
+      : node;
+  if (!selectorNode) {
+    return null;
+  }
+
+  const otherLabels = getLabels(selectorNode, text);
 
   return {
     type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',

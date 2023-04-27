@@ -206,5 +206,16 @@ describe('SelectBase', () => {
         { action: 'select-option', name: undefined, option: undefined }
       );
     });
+
+    it('hideSelectedOptions prop - when false does not hide selected', async () => {
+      render(<SelectBase onChange={jest.fn()} options={options} aria-label="My select" hideSelectedOptions={false} />);
+
+      const selectEl = screen.getByLabelText('My select');
+
+      await selectOptionInTest(selectEl, 'Option 2');
+      await userEvent.click(screen.getByText(/option 2/i));
+      const menuOptions = screen.getAllByLabelText('Select option');
+      expect(menuOptions).toHaveLength(2);
+    });
   });
 });

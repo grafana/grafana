@@ -713,19 +713,8 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	if dashboard.IsFolder {
 		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
 
-		var dashIds []struct {
-			Id  int64
-			Uid string
-		}
-		err := sess.SQL("SELECT id, uid FROM dashboard WHERE folder_id = ?", dashboard.ID).Find(&dashIds)
-		if err != nil {
+		if err := d.deleteChildrenDashboardAssociations(sess, dashboard); err != nil {
 			return err
-		}
-
-		for _, id := range dashIds {
-			if err := d.deleteAlertDefinition(id.Id, sess); err != nil {
-				return err
-			}
 		}
 
 		// remove all access control permission with folder scope
@@ -734,53 +723,8 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		for _, dash := range dashIds {
-			// remove all access control permission with child dashboard scopes
-			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dash.Uid))
-			if err != nil {
-				return err
-			}
-		}
-
-		if len(dashIds) > 0 {
-			childrenDeletes := []string{
-				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-			}
-			for _, sql := range childrenDeletes {
-				_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		var existingRuleID int64
-		exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.ID).Cols("id").Get(&existingRuleID)
-		if err != nil {
+		if err := deleteFolderAlertRules(sess, dashboard, cmd.ForceDeleteFolderRules); err != nil {
 			return err
-		}
-		if exists {
-			if !cmd.ForceDeleteFolderRules {
-				return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
-			}
-
-			// Delete all rules under this folder.
-			deleteNGAlertsByFolder := []string{
-				"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-				"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-			}
-
-			for _, sql := range deleteNGAlertsByFolder {
-				_, err := sess.Exec(sql, dashboard.ID)
-				if err != nil {
-					return err
-				}
-			}
 		}
 	} else {
 		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dashboard.UID))
@@ -804,6 +748,74 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		_, err := sess.Insert(createEntityEvent(&dashboard, store.EntityEventTypeDelete))
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard dashboards.Dashboard) error {
+	var dashIds []struct {
+		Id  int64
+		Uid string
+	}
+	err := sess.SQL("SELECT id, uid FROM dashboard WHERE folder_id = ?", dashboard.ID).Find(&dashIds)
+	if err != nil {
+		return err
+	}
+
+	if len(dashIds) > 0 {
+		for _, dash := range dashIds {
+			if err := d.deleteAlertDefinition(dash.Id, sess); err != nil {
+				return err
+			}
+
+			// remove all access control permission with child dashboard scopes
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dash.Uid))
+			if err != nil {
+				return err
+			}
+		}
+
+		childrenDeletes := []string{
+			"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+		}
+		for _, sql := range childrenDeletes {
+			_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteFolderAlertRules(sess *db.Session, dashboard dashboards.Dashboard, forceDeleteFolderAlertRules bool) error {
+	var existingRuleID int64
+	exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.ID).Cols("id").Get(&existingRuleID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		if !forceDeleteFolderAlertRules {
+			return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
+		}
+
+		// Delete all rules under this folder.
+		deleteNGAlertsByFolder := []string{
+			"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+			"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+		}
+
+		for _, sql := range deleteNGAlertsByFolder {
+			_, err := sess.Exec(sql, dashboard.ID)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -934,9 +946,14 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !ac.IsDisabled(d.cfg) {
+		recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+		if err != nil {
+			return nil, err
+		}
+
 		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 		}
 	}
 
@@ -1038,6 +1055,27 @@ func (d *dashboardStore) CountDashboardsInFolder(
 		return err
 	})
 	return count, err
+}
+
+func (d *dashboardStore) DeleteDashboardsInFolder(
+	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
+		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return dashboards.ErrFolderNotFound
+		}
+
+		if err := d.deleteChildrenDashboardAssociations(sess, dashboard); err != nil {
+			return err
+		}
+
+		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ?", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
+		return err
+	})
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
