@@ -64,6 +64,7 @@ import {
 } from './types';
 import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
+const CONTENT_HEADER = { 'Content-Type': 'application/x-ndjson' };
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -149,10 +150,10 @@ export class ElasticDatasource
     this.timeSrv = getTimeSrv();
   }
 
-  private request(
+  private legacyRequest(
     method: string,
     url: string,
-    data?: undefined,
+    data?: BackendSrvRequest['data'],
     headers?: BackendSrvRequest['headers']
   ): Observable<any> {
     if (!this.isProxyAccess) {
@@ -212,7 +213,8 @@ export class ElasticDatasource
    *
    * @param url the url to query the index on, for example `/_mapping`.
    */
-  private get(url: string, range = getDefaultTimeRange()): Observable<any> {
+
+  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
@@ -220,12 +222,8 @@ export class ElasticDatasource
 
     const indexUrlList = indexList.map((index) => index + url);
 
-    return this.requestAllIndices(indexUrlList);
-  }
-
-  private requestAllIndices(indexList: string[]): Observable<any> {
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
-    const listLen = indexList.length;
+    const listLen = indexUrlList.length;
 
     return generate({
       initialState: 0,
@@ -234,7 +232,7 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.request('GET', indexList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
+        return this.legacyRequest('GET', indexUrlList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -247,10 +245,6 @@ export class ElasticDatasource
         return resp;
       })
     );
-  }
-
-  private post(url: string, data: any): Observable<any> {
-    return this.request('POST', url, data, { 'Content-Type': 'application/x-ndjson' });
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -333,7 +327,7 @@ export class ElasticDatasource
 
     trackAnnotationQuery(annotation);
     return lastValueFrom(
-      this.post('_msearch', payload).pipe(
+      this.legacyRequest('POST', '_msearch', payload, CONTENT_HEADER).pipe(
         map((res) => {
           const list = [];
           const hits = res.responses[0].hits.hits;
@@ -560,7 +554,7 @@ export class ElasticDatasource
       });
       const payload = [header, esQuery].join('\n') + '\n';
       const url = this.getMultiSearchUrl();
-      const response = await lastValueFrom(this.post(url, payload));
+      const response = await lastValueFrom(this.legacyRequest('POST', url, payload, CONTENT_HEADER));
       const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
       const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
       const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
@@ -755,7 +749,7 @@ export class ElasticDatasource
     const url = this.getMultiSearchUrl();
 
     const start = new Date();
-    return this.post(url, payload).pipe(
+    return this.legacyRequest('POST', url, payload, CONTENT_HEADER).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
@@ -796,7 +790,7 @@ export class ElasticDatasource
       nested: 'nested',
       histogram: 'number',
     };
-    return this.get('/_mapping', range).pipe(
+    return this.requestAllIndices('/_mapping', range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
@@ -874,7 +868,7 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
-    return this.post(url, esQuery).pipe(
+    return this.legacyRequest('POST', url, esQuery, CONTENT_HEADER).pipe(
       map((res) => {
         if (!res.responses[0].aggregations) {
           return [];
@@ -1084,7 +1078,7 @@ export class ElasticDatasource
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    return lastValueFrom(this.request('GET', '/')).then(
+    return lastValueFrom(this.legacyRequest('GET', '/')).then(
       (data) => {
         const versionNumber = data?.version?.number;
         if (typeof versionNumber !== 'string') {
