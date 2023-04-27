@@ -275,10 +275,10 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	err = am.Base.ApplyConfig(AlertingConfiguration{
-		RawAlertmanagerConfig:    rawConfig,
-		AlertmanagerConfig:       cfg.AlertmanagerConfig,
-		ReceiverMap:              am.buildIntegrationsMap(PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)),
-		ReceiverIntegrationsFunc: am.buildReceiverIntegrations,
+		rawAlertmanagerConfig:    rawConfig,
+		alertmanagerConfig:       cfg.AlertmanagerConfig,
+		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})
 	if err != nil {
 		return false, err
@@ -307,16 +307,6 @@ func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg
 
 func (am *Alertmanager) AppURL() string {
 	return am.Settings.AppURL
-}
-
-// buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*alertingNotify.APIReceiver) map[string]*alertingNotify.APIReceiver {
-	integrationsMap := make(map[string]*alertingNotify.APIReceiver, len(receivers))
-	for _, receiver := range receivers {
-		integrationsMap[receiver.Name] = receiver
-	}
-
-	return integrationsMap
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
