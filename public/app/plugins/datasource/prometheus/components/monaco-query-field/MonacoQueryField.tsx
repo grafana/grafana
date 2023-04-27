@@ -12,6 +12,7 @@ import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import {DataProvider} from "./monaco-completion-provider/completions";
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -106,6 +107,8 @@ const MonacoQueryField = (props: Props) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+  const queries = props.queries;
+  const query = props.query;
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -166,13 +169,15 @@ const MonacoQueryField = (props: Props) => {
 
           const getSeriesLabels = lpRef.current.getSeriesLabels;
 
-          const dataProvider = {
+          const dataProvider: DataProvider = {
             getHistory,
             getAllMetricNames,
             getAllLabelNames,
             getLabelValues,
             getSeriesValues,
             getSeriesLabels,
+            queries,
+            query,
           };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 

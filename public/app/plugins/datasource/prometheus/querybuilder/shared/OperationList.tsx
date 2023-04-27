@@ -94,11 +94,11 @@ export function OperationList<T extends QueryWithOperations>({
                   {operations.map((op, index) => {
                     return (
                       <OperationEditor
+                        query={query}
                         key={op.id + JSON.stringify(op.params) + index}
                         queryModeller={queryModeller}
                         index={index}
                         operation={op}
-                        query={query}
                         datasource={datasource}
                         onChange={onOperationChange}
                         onRemove={onRemove}

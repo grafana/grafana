@@ -402,7 +402,7 @@ export interface QueryEditorProps<
   range?: TimeRange;
   exploreId?: any;
   history?: Array<HistoryItem<TQuery>>;
-  queries?: DataQuery[];
+  queries?: TQuery[];
   app?: CoreApp;
 }
 

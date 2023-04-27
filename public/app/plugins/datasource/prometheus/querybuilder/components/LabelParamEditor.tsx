@@ -28,7 +28,7 @@ export function LabelParamEditor({
       openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
-        const options = await loadGroupByLabels(query, datasource);
+        const options = await loadGroupByLabels(query as PromVisualQuery, datasource);
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}

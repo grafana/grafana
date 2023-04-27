@@ -6,7 +6,9 @@ import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
-import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
+import { LokiOperationId, LokiVisualQuery } from 'app/plugins/datasource/loki/querybuilder/types';
+
+import { PromVisualQuery } from '../types';
 
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
@@ -22,7 +24,7 @@ import {
 export interface Props {
   operation: QueryBuilderOperation;
   index: number;
-  query: any;
+  query: any
   datasource: DataSourceApi;
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
@@ -30,6 +32,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
+  queries?: PromVisualQuery[] | LokiVisualQuery[];
 }
 
 export function OperationEditor({

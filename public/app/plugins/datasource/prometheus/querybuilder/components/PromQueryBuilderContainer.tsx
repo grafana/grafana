@@ -5,6 +5,7 @@ import React, { useEffect, useReducer } from 'react';
 import { PanelData } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
+import {interpolatePrometheusReferences} from "../../language_utils";
 import { PromQuery } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
@@ -34,7 +35,7 @@ export interface State {
 export function PromQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource, data, showExplain, queries } = props;
   const queryWithReferencesInterpolated = clone(query);
-  datasource.updateRenderedTarget(queryWithReferencesInterpolated, queries);
+  interpolatePrometheusReferences(queries, queryWithReferencesInterpolated);
   const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
 
   // Only rebuild visual query if expr changes from outside

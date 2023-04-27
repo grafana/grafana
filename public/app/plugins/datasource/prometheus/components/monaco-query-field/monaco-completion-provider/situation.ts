@@ -22,6 +22,10 @@ import {
   VectorSelector,
 } from '@prometheus-io/lezer-promql';
 
+import {interpolatePrometheusReferences} from "../../../language_utils";
+import {PromQuery} from "../../../types";
+
+import {DataProvider} from "./completions";
 import { NeverCaseError } from './util';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -153,6 +157,9 @@ export type Situation =
       labelName: string;
       betweenQuotes: boolean;
       otherLabels: Label[];
+    }
+    | {
+      type: 'IN_REFERENCE';
     };
 
 type Resolver = {
@@ -522,14 +529,30 @@ function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
   return null;
 }
 
-export function getSituation(text: string, pos: number): Situation | null {
+export function getSituation(text: string, pos: number, dataProvider: DataProvider): Situation | null {
   // there is a special-case when we are at the start of writing text,
   // so we handle that case first
+  console.log('getSituation', text, pos, text[pos - 1])
+  console.log('dataProvider', dataProvider)
 
   if (text === '') {
     return {
       type: 'EMPTY',
     };
+  }
+
+  // This char shouldn't be used for anything else as it's not valid in promQL
+  if(text[pos - 1] === '@'){
+    return {
+      type: 'IN_REFERENCE',
+    }
+  }
+  // If there are multiple targets (queries with references), let's interpolate any references in this before parsing the syntax
+  if(text.match(/@/g) && dataProvider.queries && dataProvider.query && dataProvider.queries?.length > 1){
+    const thisTarget = dataProvider.query as PromQuery;
+    const allTargets = dataProvider.queries as PromQuery[];
+    interpolatePrometheusReferences(allTargets, thisTarget);
+    text = thisTarget.expr;
   }
 
   /*

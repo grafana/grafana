@@ -282,7 +282,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       ExtraFieldElement,
       history = [],
       theme,
-    } = this.props;
+      queries
+    }: PromQueryFieldProps = this.props;
 
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
     const hasMetrics = languageProvider.metrics.length > 0;
@@ -316,6 +317,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     onRunQuery={this.props.onRunQuery}
                     initialValue={query.expr ?? ''}
                     placeholder="Enter a PromQL query…"
+                    queries={queries}
+                    query={query}
                   />
                 </div>
               </div>

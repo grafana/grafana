@@ -1,16 +1,20 @@
 import React, { useRef } from 'react';
 
+import { PromQuery } from '../../types';
+
 import { MonacoQueryFieldLazy } from './MonacoQueryFieldLazy';
 import { Props as MonacoProps } from './MonacoQueryFieldProps';
 
-type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
+type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur' | 'queries'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
+  queries?: PromQuery[];
+  query: PromQuery
 };
 
 export const MonacoQueryFieldWrapper = (props: Props) => {
   const lastRunValueRef = useRef<string | null>(null);
-  const { onRunQuery, onChange, ...rest } = props;
+  const { onRunQuery, onChange, queries, query, ...rest } = props;
 
   const handleRunQuery = (value: string) => {
     lastRunValueRef.current = value;
@@ -30,5 +34,14 @@ export const MonacoQueryFieldWrapper = (props: Props) => {
     onChange(value);
   };
 
-  return <MonacoQueryFieldLazy onChange={handleChange} onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
+  return (
+    <MonacoQueryFieldLazy
+      query={query}
+      queries={queries}
+      onChange={handleChange}
+      onRunQuery={handleRunQuery}
+      onBlur={handleBlur}
+      {...rest}
+    />
+  );
 };

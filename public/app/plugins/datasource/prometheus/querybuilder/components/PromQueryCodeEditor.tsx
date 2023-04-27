@@ -14,7 +14,7 @@ type Props = PromQueryEditorProps & {
 };
 
 export function PromQueryCodeEditor(props: Props) {
-  const { query, datasource, range, onRunQuery, onChange, data, app, showExplain } = props;
+  const { query, datasource, range, onRunQuery, onChange, data, app, showExplain, queries } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -22,6 +22,7 @@ export function PromQueryCodeEditor(props: Props) {
       <PromQueryField
         datasource={datasource}
         query={query}
+        queries={queries}
         range={range}
         onRunQuery={onRunQuery}
         onChange={onChange}

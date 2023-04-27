@@ -1,4 +1,4 @@
-import { invert } from 'lodash';
+import { each, invert, keyBy } from 'lodash';
 import { Token } from 'prismjs';
 
 import {
@@ -14,7 +14,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -415,4 +415,59 @@ export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
   }
 
   return Math.ceil(date.valueOf() / 1000);
+}
+
+/**
+ * @todo throw error when self-referential, or "@" leaks through somehow
+ * see grafana/grafana/public/app/plugins/datasource/prometheus/language_utils.ts:421 for more
+ * Currently mutates passed in queries
+ * @param targets
+ * @param target
+ */
+export function interpolatePrometheusReferences(targets: PromQuery[], target: PromQuery) {
+  // render nested query
+  const targetsByRefId = keyBy(targets, 'refId');
+
+  // no references to self
+  delete targetsByRefId[target.refId];
+
+  const nestedSeriesRefRegex = /\@([A-Z])/g;
+  let targetWithNestedQueries = target;
+
+  // Use ref count to track circular references
+  each(targetsByRefId, (t, id) => {
+    const regex = RegExp(`\@(${id})`, 'g');
+    const refMatches = targetWithNestedQueries.expr.match(regex);
+    t.refCount = refMatches?.length ?? 0;
+  });
+
+  // Shamelessly stolen from Graphite
+  // Keep interpolating until there are no query references
+  // The reason for the loop is that the referenced query might contain another reference to another query
+  while (targetWithNestedQueries.expr.match(nestedSeriesRefRegex)) {
+    const updated = targetWithNestedQueries.expr.replace(nestedSeriesRefRegex, (match: string, g1: string) => {
+      const t = targetsByRefId[g1];
+      if (!t) {
+        return match;
+      }
+
+      // no circular references
+      if (t.refCount === 0) {
+        delete targetsByRefId[g1];
+      }
+      t.refCount ? t.refCount-- : (t.refCount = 0);
+
+      return t.expr;
+    });
+
+    if (updated === targetWithNestedQueries.expr) {
+      break;
+    }
+
+    if(updated.match(nestedSeriesRefRegex)){
+      throw new Error('Unable to interpolate query reference, check for circular references')
+    }
+
+    targetWithNestedQueries.expr = updated;
+  }
 }

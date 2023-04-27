@@ -1,7 +1,7 @@
-import { HistoryItem } from '@grafana/data';
+import {HistoryItem} from '@grafana/data';
 
 import type PromQlLanguageProvider from '../../language_provider';
-import { PromQuery } from '../../types';
+import {PromQuery} from '../../types';
 
 // we need to store this in a separate file,
 // because we have an async-wrapper around,
@@ -16,4 +16,6 @@ export type Props = {
   onBlur: (value: string) => void;
   // onChange will never initiate a query, it just denotes that a query value has been changed
   onChange: (value: string) => void;
+  queries?: PromQuery[];
+  query?: PromQuery
 };

@@ -257,14 +257,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getBeginningCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
-    console.log('getBeginningCompletionItems');
     return {
       suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
     };
   };
 
   getEmptyCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
-    console.log('getEmptyCompletionItems');
     const { history } = context;
     const suggestions: CompletionItemGroup[] = [];
 
@@ -290,7 +288,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getTermCompletionItems = (): TypeaheadOutput => {
-    console.log('getTermCompletionItems');
     const { metrics, metricsMetadata } = this;
     const suggestions: CompletionItemGroup[] = [];
 
@@ -312,7 +309,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getRangeCompletionItems(): TypeaheadOutput {
-    console.log('getRangeCompletionItems');
     return {
       context: 'context-range',
       suggestions: [
@@ -325,7 +321,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
-    console.log('getAggregationCompletionItems');
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -392,7 +387,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getReferenceCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
-    console.log('getReferenceCompletionItems', context);
     return {
       context: 'keyword',
       suggestions: [
@@ -420,7 +414,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
-    console.log('getLabelCompletionItems');
     if (!value) {
       return { suggestions: [] };
     }

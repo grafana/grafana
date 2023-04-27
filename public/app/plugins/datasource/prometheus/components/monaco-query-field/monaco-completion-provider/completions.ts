@@ -1,11 +1,20 @@
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
+import { PromQuery } from '../../../types';
 
-import type { Situation, Label } from './situation';
+import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
+
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
-export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
+export type CompletionType =
+  | 'HISTORY'
+  | 'FUNCTION'
+  | 'METRIC_NAME'
+  | 'DURATION'
+  | 'LABEL_NAME'
+  | 'LABEL_VALUE'
+  | 'IN_REFERENCE';
 
 type Completion = {
   type: CompletionType;
@@ -29,6 +38,8 @@ export type DataProvider = {
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeriesValues: (name: string, match: string) => Promise<string[]>;
   getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
+  queries?: PromQuery[];
+  query?: PromQuery;
 };
 
 // we order items like: history, functions, metrics
@@ -52,9 +63,11 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
-async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+async function getAllFunctionsAndMetricNamesCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
   const metricNames = await getAllMetricNamesCompletions(dataProvider);
-  return [...FUNCTION_COMPLETIONS, ...metricNames];
+  const referenceValues = getReferenceValues(situation.type, dataProvider);
+  // Does this order?
+  return [...FUNCTION_COMPLETIONS, ...referenceValues, ...metricNames];
 }
 
 const DURATION_COMPLETIONS: Completion[] = [
@@ -137,6 +150,7 @@ async function getLabelNamesForSelectorCompletions(
 ): Promise<Completion[]> {
   return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider);
 }
+
 async function getLabelNamesForByCompletions(
   metric: string | undefined,
   otherLabels: Label[],
@@ -160,6 +174,23 @@ async function getLabelValues(
   }
 }
 
+function getReferenceValues(text: string, dataProvider: DataProvider): Completion[] {
+  console.log('dataProvider', dataProvider);
+  if (dataProvider.queries) {
+    return dataProvider.queries
+      .filter((query) => query.refId !== dataProvider.query?.refId)
+      ?.map((query) => {
+        return {
+          type: 'IN_REFERENCE',
+          label: `@${query.refId}`,
+          insertText: `@${query.refId}`,
+        };
+      });
+  }
+
+  return [];
+}
+
 async function getLabelValuesForMetricCompletions(
   metric: string | undefined,
   labelName: string,
@@ -180,9 +211,9 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(situation, dataProvider);
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(situation, dataProvider);
     }
     case 'EMPTY': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
@@ -201,6 +232,8 @@ export async function getCompletions(situation: Situation, dataProvider: DataPro
         situation.otherLabels,
         dataProvider
       );
+    case 'IN_REFERENCE':
+      return getReferenceValues(situation.type, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }

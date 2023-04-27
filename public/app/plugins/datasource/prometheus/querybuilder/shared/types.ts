@@ -6,6 +6,10 @@ import { ComponentType } from 'react';
 
 import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
 
+import { LokiVisualQuery } from '../../../loki/querybuilder/types';
+import { PromQuery } from '../../types';
+import {PromVisualQuery} from "../types";
+
 export interface QueryBuilderLabelFilter {
   label: string;
   op: string;
@@ -90,7 +94,8 @@ export interface QueryBuilderOperationParamEditorProps {
   index: number;
   operation: QueryBuilderOperation;
   operationIndex: number;
-  query: any;
+  query: PromVisualQuery | LokiVisualQuery;
+  queries?: PromQuery[] | LokiVisualQuery[];
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
@@ -103,7 +108,10 @@ export enum QueryEditorMode {
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
+
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
+
   getCategories(): string[];
+
   getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }

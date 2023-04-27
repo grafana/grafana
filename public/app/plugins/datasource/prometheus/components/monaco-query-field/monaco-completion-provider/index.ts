@@ -39,6 +39,8 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       return monaco.languages.CompletionItemKind.EnumMember;
     case 'METRIC_NAME':
       return monaco.languages.CompletionItemKind.Constructor;
+    case 'IN_REFERENCE':
+      return monaco.languages.CompletionItemKind.Reference;
     default:
       throw new NeverCaseError(type);
   }
@@ -68,13 +70,15 @@ export function getCompletionProvider(
       lineNumber: position.lineNumber,
     };
     const offset = model.getOffsetAt(positionClone);
-    const situation = getSituation(model.getValue(), offset);
+    const situation = getSituation(model.getValue(), offset, dataProvider);
+    console.log('situation', situation)
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
+      console.log('items', items)
       const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
@@ -90,12 +94,13 @@ export function getCompletionProvider(
             }
           : undefined,
       }));
+      console.log('suggestions', suggestions)
       return { suggestions };
     });
   };
 
   return {
-    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
+    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"', '@'],
     provideCompletionItems,
   };
 }
