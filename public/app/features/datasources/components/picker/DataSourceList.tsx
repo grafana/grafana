@@ -1,7 +1,9 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
 import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
@@ -37,6 +39,7 @@ export interface DataSourceListProps {
 
 export function DataSourceList(props: DataSourceListProps) {
   const { className, current, onChange } = props;
+  const styles = useStyles2(getStyles);
   // QUESTION: Should we use data from the Redux store as admin DS view does?
   const dataSources = useDatasources({
     alerting: props.alerting,
@@ -52,11 +55,12 @@ export function DataSourceList(props: DataSourceListProps) {
   });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
     <div className={className}>
-      {dataSources
-        .filter((ds) => (props.filter ? props.filter(ds) : true))
+      {filteredDataSources.length === 0 && <div className={styles.noDataSourcesFound}>No data sources found</div>}
+      {filteredDataSources
         .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
@@ -71,6 +75,18 @@ export function DataSourceList(props: DataSourceListProps) {
         ))}
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    noDataSourcesFound: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: ${theme.spacing(2)};
+    `,
+  };
 }
 
 function getDataSourceVariableIDs() {
