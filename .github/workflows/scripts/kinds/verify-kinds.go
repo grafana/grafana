@@ -151,9 +151,9 @@ func verifyKind(kind kindsys.Kind, name string, category string, latestRegistryD
 		return fmt.Errorf("kind maturity can't be downgraded once a kind is published")
 	}
 
-	if kind.Maturity().Less(kindsys.MaturityStable) {
-		return nil
-	}
+	// if kind.Maturity().Less(kindsys.MaturityStable) {
+	// 	return nil
+	// }
 
 	// Check that old schemas do not contain updates
 	err = thema.IsAppendOnly(oldKind.Lineage(), kind.Lineage())
