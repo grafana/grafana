@@ -73,11 +73,13 @@ export function AlertInstanceModalSelector({
     return null;
   }
 
+  const filteredRulesKeys = Object.keys(filteredRules || []);
+
   const RuleRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
     if (!filteredRules) {
       return null;
     }
-    const ruleName = Object.keys(filteredRules)[index];
+    const ruleName = filteredRulesKeys[index];
 
     const isSelected = ruleName === selectedRule;
 
@@ -216,12 +218,7 @@ export function AlertInstanceModalSelector({
             {!loading && (
               <AutoSizer>
                 {({ height, width }) => (
-                  <FixedSizeList
-                    itemSize={50}
-                    height={height}
-                    width={width}
-                    itemCount={Object.keys(filteredRules || {}).length}
-                  >
+                  <FixedSizeList itemSize={50} height={height} width={width} itemCount={filteredRulesKeys.length}>
                     {RuleRow}
                   </FixedSizeList>
                 )}
