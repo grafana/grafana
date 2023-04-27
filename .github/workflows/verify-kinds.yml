@@ -1,0 +1,26 @@
+name: "verify-kinds"
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  sync:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout Grafana repo"
+        uses: "actions/checkout@v3"
+        with:
+          fetch-depth: 0
+
+      - name: "Setup Go"
+        uses: "actions/setup-go@v4"
+        with:
+          go-version: '1.19.2'
+
+      - name: "Verify kinds"
+        run: go run ./scripts/kinds/verify-kinds.go
+        env:
+          CODEGEN_VERIFY: 1

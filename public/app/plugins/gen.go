@@ -13,10 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-github/github"
 	"github.com/grafana/codejen"
 	"github.com/grafana/kindsys"
-	"golang.org/x/oauth2"
 
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -46,10 +44,6 @@ func main() {
 	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
 	rt := cuectx.GrafanaThemaRuntime()
 
-	tc := oauth2.NewClient(context.Background(), nil)
-	client := github.NewClient(tc)
-	latestRegistryDir, err := corecodegen.FindLatestDir(context.Background(), client)
-
 	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
 		return d.PluginMeta.Id
 	})
@@ -61,7 +55,6 @@ func main() {
 		kind2pd(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		)),
-		codegen.PluginSchemaRegistryJenny("pkg/schemaregistry", latestRegistryDir),
 	)
 
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))

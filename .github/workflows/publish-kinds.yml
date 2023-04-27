@@ -4,7 +4,7 @@ name: "publish-kinds"
 on:
   push:
     branches:
-      - "agnestoulet/schema-registry"
+      - "agnestoulet/kind-registry"
 
 # on:
 #   push:
@@ -31,7 +31,7 @@ jobs:
           go-version: '1.19.2'
 
       - name: "Verify kinds"
-        run: make gen-cue
+        run: go run ./scripts/kinds/verify-kinds.go
         env:
           CODEGEN_VERIFY: 1
 
