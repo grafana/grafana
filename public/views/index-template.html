@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    [[ if and .CSPEnabled .TrustedTypesEnabled .TestModeEnabled]]
-    <!-- Cypress overwrite CSP headers in HTTP requests, so this is required for e2e tests-->
+    [[ if .CSPEnabled]]
+    <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
     <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
     [[ end ]]
     <meta charset="utf-8" />

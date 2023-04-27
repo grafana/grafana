@@ -140,10 +140,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Nonce:                               c.RequestNonce,
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
-		CSPEnabled:                          hs.Cfg.CSPEnabled,
-		CSPContent:                          middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce),
-		TestModeEnabled:                     hs.Cfg.Env == setting.Test,
-		TrustedTypesEnabled:                 hs.Features.IsEnabled(featuremgmt.FlagTrustedTypes),
+	}
+
+	if hs.Cfg.CSPEnabled {
+		data.CSPEnabled = true
+		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 
 	if !hs.AccessControl.IsDisabled() {

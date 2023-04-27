@@ -32,8 +32,6 @@ type IndexViewData struct {
 	LoadingLogo                         template.URL
 	CSPContent                          string
 	CSPEnabled                          bool
-	TestModeEnabled                     bool
-	TrustedTypesEnabled                 bool
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
 }
