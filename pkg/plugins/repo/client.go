@@ -53,7 +53,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
 		}
-		return nil, fmt.Errorf("%v: failed to download plugin archive (%s)", err, pluginZipURL)
+		return nil, fmt.Errorf("%w: failed to download plugin archive (%s)", err, pluginZipURL)
 	}
 
 	rc, err := zip.OpenReader(tmpFile.Name())
