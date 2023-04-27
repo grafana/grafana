@@ -79,7 +79,6 @@ export interface FeatureToggles {
   timeSeriesTable?: boolean;
   prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
-  trustedTypes?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;

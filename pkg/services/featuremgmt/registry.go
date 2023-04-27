@@ -414,13 +414,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "trustedTypes",
-			Description:  "Enables Trusted Types to make XSS bugs less likely",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaUserEssentialsSquad,
-		},
-		{
 			Name:        "clientTokenRotation",
 			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
 			State:       FeatureStateAlpha,

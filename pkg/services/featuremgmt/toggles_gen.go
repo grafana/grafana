@@ -251,10 +251,6 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
-	// FlagTrustedTypes
-	// Enables Trusted Types to make XSS bugs less likely
-	FlagTrustedTypes = "trustedTypes"
-
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
