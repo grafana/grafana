@@ -37,7 +37,7 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
   }, [title]);
 
   return (
-    <>
+    <div className={styles.container}>
       {!isNameEditable ? (
         <div className={styles.titleContainer}>
           <h1 className={styles.title}>{name}</h1>
@@ -60,12 +60,15 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
           ></AutoSizeInput>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    container: css({
+      marginBottom: theme.spacing(2),
+    }),
     titleContainer: css({
       display: 'flex',
       flexDirection: 'row',
