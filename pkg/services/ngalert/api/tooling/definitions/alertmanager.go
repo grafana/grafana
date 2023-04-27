@@ -325,7 +325,7 @@ type TestTemplatesConfigBodyParams struct {
 
 // swagger:model
 type TestTemplatesResults struct {
-	Results []TestTemplatesResult      `json:"results"`
+	Results []TestTemplatesResult      `json:"results,omitempty"`
 	Errors  []TestTemplatesErrorResult `json:"errors,omitempty"`
 }
 

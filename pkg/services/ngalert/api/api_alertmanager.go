@@ -448,10 +448,7 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 }
 
 func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {
-	apiRes := apimodels.TestTemplatesResults{
-		Results: nil,
-		Errors:  nil,
-	}
+	apiRes := apimodels.TestTemplatesResults{}
 	for _, r := range res.Results {
 		apiRes.Results = append(apiRes.Results, apimodels.TestTemplatesResult{
 			Name: r.Name,
