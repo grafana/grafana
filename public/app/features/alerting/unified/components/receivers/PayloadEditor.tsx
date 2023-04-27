@@ -125,7 +125,7 @@ export function PayloadEditor({
             <Badge
               color="orange"
               icon="exclamation-triangle"
-              text={'There are some errors in payload JSON.'}
+              text={'JSON Error'}
               tooltip={'Fix errors in payload, and click Refresh preview button'}
             />
           )}
