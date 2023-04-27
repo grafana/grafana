@@ -97,7 +97,7 @@ LegendComponent.args = {
   weight: 'bold',
   textAlignment: 'center',
   truncate: false,
-  color: 'color.error.text',
+  color: 'error',
   children: 'This is a lengend component',
 };
 
