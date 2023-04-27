@@ -94,7 +94,7 @@ export const LegendComponent: Story = (args) => {
 
 LegendComponent.args = {
   variant: undefined,
-  weight: 'fontWeightBold',
+  weight: 'bold',
   textAlignment: 'center',
   truncate: false,
   color: 'color.error.text',
