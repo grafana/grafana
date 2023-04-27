@@ -279,7 +279,7 @@ func TestStaticFS(t *testing.T) {
 }
 
 // TestFSTwoDotsInFileName ensures that LocalFS and StaticFS allow two dots in file names.
-// This makes sure that FS' do not believe that two dots in a file name (anywhere in the path)
+// This makes sure that FSes do not believe that two dots in a file name (anywhere in the path)
 // represent a path traversal attempt.
 func TestFSTwoDotsInFileName(t *testing.T) {
 	tmp := t.TempDir()
