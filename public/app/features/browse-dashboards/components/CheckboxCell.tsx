@@ -18,21 +18,11 @@ export default function CheckboxCell({
 
   const state = isSelected(item);
 
-  if (state === SelectionState.Mixed) {
-    // PR TODO: replace this with indeterminate checkbox once its merged in
-    return (
-      <div
-        data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
-        style={{ width: 16, height: 16, marginRight: 8, background: '#3D71D9', borderRadius: 2 }}
-        onClick={() => onItemSelectionChange?.(item, true)}
-      />
-    );
-  }
-
   return (
     <Checkbox
       data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
       value={state === SelectionState.Selected}
+      indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
     />
   );

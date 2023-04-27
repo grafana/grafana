@@ -42,11 +42,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   useEffect(() => {
     dispatch(fetchChildren(folderUID));
-
-    handleFolderClick('c056cc75-9162-426f-80af-fd7722172e60', true);
-    handleFolderClick('fd51d699-bd35-4e6b-83de-235aa1946fe7', true);
-    handleFolderClick('dfe4a6d2-b608-48a3-aa49-3ecd0de7553b', true);
-    handleFolderClick('c6a3b0e9-7bad-4c5c-9026-e079cbb79888', true);
   }, [handleFolderClick, dispatch, folderUID]);
 
   const handleItemSelectionChange = useCallback(
