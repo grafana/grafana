@@ -462,7 +462,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 		apiRes.Errors = append(apiRes.Errors, apimodels.TestTemplatesErrorResult{
 			Name:    e.Name,
 			Kind:    apimodels.TemplateErrorKind(e.Kind),
-			Message: e.Message,
+			Message: e.Error.Error(),
 		})
 	}
 	return apiRes
