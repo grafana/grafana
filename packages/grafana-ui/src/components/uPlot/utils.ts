@@ -209,7 +209,7 @@ export function preparePlotData2(
       vals = Array(vals.length).fill(undefined);
       vals[firstValIdx] = firstVal;
     } else {
-      vals = vals.slice();
+      vals = Array.from(vals);
 
       if (custom.transform === GraphTransform.NegativeY) {
         for (let i = 0; i < vals.length; i++) {
