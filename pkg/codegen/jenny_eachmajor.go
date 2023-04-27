@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/kindsys"
 )
 
-// LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version,
+// LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version.
+//
+// TODO remove forceGroup option, it's a temporary hack to accommodate core kinds
 func LatestMajorsOrXJenny(parentdir string, forceGroup bool, inner codejen.OneToOne[SchemaForGen]) OneToMany {
 	if inner == nil {
 		panic("inner jenny must not be nil")
