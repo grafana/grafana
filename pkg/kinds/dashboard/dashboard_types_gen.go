@@ -160,52 +160,75 @@ const (
 	VariableTypeTextbox    VariableType = "textbox"
 )
 
+// TODO -- should not be a public interface on its own, but required for Veneer
+type AnnotationContainer struct {
+	List []AnnotationQuery `json:"list,omitempty"`
+}
+
+// AnnotationPanelFilter defines model for AnnotationPanelFilter.
+type AnnotationPanelFilter struct {
+	// Should the specified panels be included or excluded
+	Exclude *bool `json:"exclude,omitempty"`
+
+	// Panel IDs that should be included or excluded
+	Ids []int `json:"ids"`
+}
+
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
-	BuiltIn int `json:"builtIn"`
-
-	// Datasource to use for annotation.
+	// TODO: Should be DataSourceRef
 	Datasource struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource"`
 
-	// Whether annotation is enabled.
-	Enable bool `json:"enable"`
+	// When enabled the annotation query is issued with every dashboard refresh
+	Enable bool                   `json:"enable"`
+	Filter *AnnotationPanelFilter `json:"filter,omitempty"`
 
-	// Whether to hide annotation.
+	// Annotation queries can be toggled on or off at the top of the dashboard.
+	// When hide is true, the toggle is not shown in the dashboard.
 	Hide *bool `json:"hide,omitempty"`
 
-	// Annotation icon color.
-	IconColor *string `json:"iconColor,omitempty"`
+	// Color to use for the annotation event markers
+	IconColor string `json:"iconColor"`
 
 	// Name of annotation.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 
-	// Query for annotation data.
-	RawQuery *string `json:"rawQuery,omitempty"`
-	ShowIn   int     `json:"showIn"`
-
-	// TODO docs
+	// TODO: this should be a regular DataQuery that depends on the selected dashboard
+	// these match the properties of the "grafana" datasouce that is default in most dashboards
 	Target *AnnotationTarget `json:"target,omitempty"`
-	Type   string            `json:"type"`
+
+	// TODO -- this should not exist here, it is based on the --grafana-- datasource
+	Type *string `json:"type,omitempty"`
 }
 
-// TODO docs
+// TODO: this should be a regular DataQuery that depends on the selected dashboard
+// these match the properties of the "grafana" datasouce that is default in most dashboards
 type AnnotationTarget struct {
-	Limit    int64    `json:"limit"`
-	MatchAny bool     `json:"matchAny"`
-	Tags     []string `json:"tags"`
-	Type     string   `json:"type"`
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already depending on it so hard to change
+	Limit int64 `json:"limit"`
+
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already depending on it so hard to change
+	MatchAny bool `json:"matchAny"`
+
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already depending on it so hard to change
+	Tags []string `json:"tags"`
+
+	// Only required/valid for the grafana datasource...
+	// but code+tests is already depending on it so hard to change
+	Type string `json:"type"`
 }
 
 // Dashboard defines model for Dashboard.
 type Dashboard struct {
-	// TODO docs
-	Annotations *struct {
-		List []AnnotationQuery `json:"list,omitempty"`
-	} `json:"annotations,omitempty"`
+	// TODO -- should not be a public interface on its own, but required for Veneer
+	Annotations *AnnotationContainer `json:"annotations,omitempty"`
 
 	// Description of dashboard.
 	Description *string `json:"description,omitempty"`

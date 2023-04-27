@@ -59,17 +59,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8S
-	// Explore native k8s integrations
-	FlagK8S = "k8s"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagNewTraceView
-	// Shows the new trace view design
-	FlagNewTraceView = "newTraceView"
+	// FlagNewTraceViewHeader
+	// Shows the new trace view header
+	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
@@ -264,8 +260,16 @@ const (
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
-	// Changes responses from Loki to be compliant with the dataplane specification.
+	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
@@ -278,10 +282,6 @@ const (
 	// FlagAlertStateHistoryLokiOnly
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
-
-	// FlagDisableSSEDataplane
-	// Disables dataplane specific processing in server side expressions.
-	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -298,10 +298,6 @@ const (
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
-
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 
 	// FlagUseCachingService
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
@@ -326,4 +322,8 @@ const (
 	// FlagOpensearchDetectVersion
 	// Enable version detection in OpenSearch
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+
+	// FlagEnableDatagridEditing
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditing = "enableDatagridEditing"
 )

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { countBy } from 'lodash';
+import { countBy, sum } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,11 +20,13 @@ import { isAlertingRule } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
+import { getComponentsFromStats } from './RuleStats';
 
 interface Props {
   rule: CombinedRule;
   pagination?: PaginationProps;
   itemsDisplayLimit?: number;
+  enableFiltering?: boolean;
 }
 
 interface ShowMoreStats {
@@ -52,9 +54,10 @@ function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreSta
 
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const {
-    rule: { promRule, namespace },
+    rule: { promRule, namespace, instanceTotals },
     itemsDisplayLimit = Number.POSITIVE_INFINITY,
     pagination,
+    enableFiltering = false,
   } = props;
 
   const [queryString, setQueryString] = useState<string>();
@@ -82,40 +85,45 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   const visibleInstances = alerts.slice(0, itemsDisplayLimit);
 
+  // Count All By State is used only when filtering is enabled and we have access to all instances
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
-  const hiddenItemsCount = alerts.length - visibleInstances.length;
+  const totalInstancesCount = sum(Object.values(instanceTotals));
+  const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
 
   const stats: ShowMoreStats = {
-    totalItemsCount: alerts.length,
+    totalItemsCount: totalInstancesCount,
     visibleItemsCount: visibleInstances.length,
   };
 
   const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
+  const statsComponents = getComponentsFromStats(instanceTotals);
 
-  const footerRow = hiddenItemsCount ? (
+  const footerRow = hiddenInstancesCount ? (
     <ShowMoreInstances stats={stats} ruleViewPageLink={ruleViewPageLink} />
   ) : undefined;
 
   return (
     <DetailsField label="Matching instances" horizontal={true}>
-      <div className={cx(styles.flexRow, styles.spaceBetween)}>
-        <div className={styles.flexRow}>
-          <MatcherFilter
-            className={styles.rowChild}
-            key={queryStringKey}
-            defaultQueryString={queryString}
-            onFilterChange={(value) => setQueryString(value)}
-          />
-          <AlertInstanceStateFilter
-            className={styles.rowChild}
-            filterType={stateFilterType}
-            stateFilter={alertState}
-            onStateFilterChange={setAlertState}
-            itemPerStateStats={countAllByState}
-          />
+      {enableFiltering && (
+        <div className={cx(styles.flexRow, styles.spaceBetween)}>
+          <div className={styles.flexRow}>
+            <MatcherFilter
+              className={styles.rowChild}
+              key={queryStringKey}
+              defaultQueryString={queryString}
+              onFilterChange={(value) => setQueryString(value)}
+            />
+            <AlertInstanceStateFilter
+              className={styles.rowChild}
+              filterType={stateFilterType}
+              stateFilter={alertState}
+              onStateFilterChange={setAlertState}
+              itemPerStateStats={countAllByState}
+            />
+          </div>
         </div>
-      </div>
-
+      )}
+      {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
       <AlertInstancesTable instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
     </DetailsField>
   );
@@ -163,6 +171,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: space-between;
       align-items: center;
       width: 100%;
+    `,
+    instancesContainer: css`
+      margin-bottom: ${theme.spacing(2)};
+    `,
+    stats: css`
+      display: flex;
+      gap: ${theme.spacing(1)};
+      padding: ${theme.spacing(1, 0)};
     `,
   };
 };

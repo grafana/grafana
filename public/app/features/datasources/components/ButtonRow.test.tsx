@@ -8,9 +8,7 @@ import { ButtonRow, Props } from './ButtonRow';
 const setup = (propOverrides?: object) => {
   const props: Props = {
     canSave: false,
-    canDelete: false,
     onSubmit: jest.fn(),
-    onDelete: jest.fn(),
     onTest: jest.fn(),
     exploreUrl: '/explore',
   };
@@ -24,7 +22,7 @@ describe('<ButtonRow>', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByRole('button', { name: selectors.pages.DataSource.delete })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Explore' })).toBeInTheDocument();
   });
   it('should render save & test', () => {
     setup({ canSave: true });

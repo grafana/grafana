@@ -1,6 +1,7 @@
 package historian
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -115,6 +116,28 @@ func TestLokiHTTPClient(t *testing.T) {
 		sent := reqBody(t, req.lastRequest)
 		exp := fmt.Sprintf(`{"streams": [{"stream": {}, "values": [["%d", "some line"]]}]}`, now.UnixNano())
 		require.JSONEq(t, exp, sent)
+	})
+
+	t.Run("range query", func(t *testing.T) {
+		t.Run("passes along page size", func(t *testing.T) {
+			req := NewFakeRequester().WithResponse(&http.Response{
+				Status:        "200 OK",
+				StatusCode:    200,
+				Body:          io.NopCloser(bytes.NewBufferString(`{}`)),
+				ContentLength: int64(0),
+				Header:        make(http.Header, 0),
+			})
+			client := createTestLokiClient(req)
+			now := time.Now().UTC().UnixNano()
+			q := `{from="state-history"}`
+
+			_, err := client.rangeQuery(context.Background(), q, now-100, now)
+
+			require.NoError(t, err)
+			params := req.lastRequest.URL.Query()
+			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
+			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
+		})
 	})
 }
 

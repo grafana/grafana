@@ -7,6 +7,7 @@ import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
+/** @deprecated */
 export type MutableField<T = any> = Field<T>;
 
 type MutableVectorCreator = (buffer?: any[]) => any[];
@@ -65,14 +66,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.first.length;
   }
 
-  addFieldFor(value: unknown, name?: string): MutableField {
+  addFieldFor(value: unknown, name?: string): Field {
     return this.addField({
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
     });
   }
 
-  addField(f: Field | FieldDTO, startLength?: number): MutableField {
+  addField(f: Field | FieldDTO, startLength?: number): Field {
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
@@ -98,7 +99,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       name = `Field ${this.fields.length + 1}`;
     }
 
-    const field: MutableField = {
+    const field: Field = {
       ...f,
       name,
       type,
@@ -119,7 +120,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // Make sure the field starts with a given length
     if (startLength) {
       while (field.values.length < startLength) {
-        field.values.add(MISSING_VALUE);
+        field.values.push(MISSING_VALUE);
       }
     } else {
       this.validate();
@@ -137,7 +138,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // Add empty elements until everything matches
     for (const field of this.fields) {
       while (field.values.length !== length) {
-        field.values.add(MISSING_VALUE);
+        field.values.push(MISSING_VALUE);
       }
     }
   }
@@ -191,7 +192,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       if (f.type !== FieldType.string && isString(v)) {
         v = this.parseValue(f, v);
       }
-      f.values.add(v);
+      f.values.push(v);
     }
   }
 
@@ -227,7 +228,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
         val = MISSING_VALUE;
       }
 
-      field.values.add(val);
+      field.values.push(val);
     }
   }
 
@@ -238,7 +239,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
 
     const obj = (value as any) || {};
     for (const field of this.fields) {
-      field.values.set(index, obj[field.name]);
+      field.values[index] = obj[field.name];
     }
   }
 
@@ -248,7 +249,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   get(idx: number): T {
     const v: any = {};
     for (const field of this.fields) {
-      v[field.name] = field.values.get(idx);
+      v[field.name] = field.values[idx];
     }
     return v as T;
   }
