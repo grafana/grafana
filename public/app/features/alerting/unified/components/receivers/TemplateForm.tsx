@@ -283,10 +283,14 @@ function TemplatingGuideline() {
 }
 
 function getResultsToRender(results: TemplatePreviewResult[]) {
+  const moreThanOne = results.length > 1;
+  const preview = (result: TemplatePreviewResult) =>
+    moreThanOne ? `Preview for ${result.name}:\n${result.text}` : `{result.text}`;
+
   return results
     .map((result: TemplatePreviewResult) => {
       if (result.text.trim().length > 0) {
-        return `Preview for ${result.name}:\n${result.text}`;
+        return preview(result);
       }
       return '';
     })
