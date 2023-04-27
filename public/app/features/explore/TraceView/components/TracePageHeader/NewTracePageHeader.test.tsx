@@ -15,6 +15,7 @@
 import { getByText, render } from '@testing-library/react';
 import React from 'react';
 
+import { MutableDataFrame } from '@grafana/data';
 import config from 'app/core/config';
 
 import { defaultFilters } from '../../useSearch';
@@ -35,6 +36,7 @@ const setup = () => {
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
+    data: new MutableDataFrame(),
   };
 
   return render(<NewTracePageHeader {...defaultProps} />);
