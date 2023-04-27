@@ -22,7 +22,7 @@ The default images for Grafana are created using the Alpine Linux project and ca
 
 This section shows you how to run Grafana using the Docker CLI. 
 
-> **Note:** If you are on a Linux system (for example, Debian or Ubuntu), you might need to add **sudo** before the command or add your user to the **docker** group. For more information, refer to [Linux post-installation steps for Docker Engine](https://docs.docker.com/engine/install/linux-postinstall/).
+> **Note:** If you are on a Linux system (for example, Debian or Ubuntu), you might need to add `sudo` before the command or add your user to the `docker` group. For more information, refer to [Linux post-installation steps for Docker Engine](https://docs.docker.com/engine/install/linux-postinstall/).
 
 To run the latest stable version of Grafana, run the following command:
 
