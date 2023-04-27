@@ -49,7 +49,7 @@ const meta: Meta = {
 export const Example: Story = () => {
   return (
     <VerticalGroup>
-      <StoryExample name="Native header elements (global styles)">
+      <StoryExample name="Header, paragraph, span and legend elements">
         <H1>h1. Heading</H1>
         <H2>h2. Heading</H2>
         <H3>h3. Heading</H3>
