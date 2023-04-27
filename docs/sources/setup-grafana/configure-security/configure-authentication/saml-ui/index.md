@@ -25,7 +25,7 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 To follow this guide, you need:
 
 - Knowledge of SAML authentication. Refer to [SAML authentication in Grafana]({{< relref "../saml/" >}}) for an overview of Grafana's SAML integration.
-- Permissions `settings:read` and `settings:write` with scope `settings:auth:*` that allow you to read and update authentication settings.
+- Permissions `settings:read` and `settings:write` with scope `settings:auth.saml:*` that allow you to read and update SAML authentication settings.
 
   These permissions are granted by `fixed:authentication.config:writer` role.
   By default, this role is granted to Grafana server administrator in self-hosted instances and to Organization admins in Grafana Cloud instances.

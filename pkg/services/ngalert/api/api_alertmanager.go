@@ -406,8 +406,8 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 		for _, next := range receiver.Configs {
 			if next.Error != nil {
 				var (
-					invalidReceiverErr alertingNotify.InvalidReceiverError
-					receiverTimeoutErr alertingNotify.ReceiverTimeoutError
+					invalidReceiverErr alertingNotify.IntegrationValidationError
+					receiverTimeoutErr alertingNotify.IntegrationTimeoutError
 				)
 				if errors.As(next.Error, &invalidReceiverErr) {
 					numBadRequests += 1

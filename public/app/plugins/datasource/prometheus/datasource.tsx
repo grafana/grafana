@@ -173,8 +173,6 @@ export class PrometheusDatasource
       this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
       // https://github.com/cortexproject/cortex/discussions/4542
       this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
-      //https://github.com/VictoriaMetrics/VictoriaMetrics/releases/tag/v1.24.0
-      this._isDatasourceVersionGreaterOrEqualTo('1.24.0', PromApplication.VictoriaMetrics) ||
       // https://github.com/thanos-io/thanos/pull/3566
       //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
       this._isDatasourceVersionGreaterOrEqualTo('0.18.0', PromApplication.Thanos)
@@ -994,7 +992,6 @@ export class PrometheusDatasource
       [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
       [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
       [PromApplication.Thanos]: '/public/app/plugins/datasource/prometheus/img/thanos_logo.svg',
-      [PromApplication.VictoriaMetrics]: '/public/app/plugins/datasource/prometheus/img/vm_logo.svg',
     };
 
     const COLORS: Record<PromApplication, BadgeColor> = {
@@ -1002,7 +999,6 @@ export class PrometheusDatasource
       [PromApplication.Mimir]: 'orange',
       [PromApplication.Prometheus]: 'red',
       [PromApplication.Thanos]: 'purple', // Purple hex taken from thanos.io
-      [PromApplication.VictoriaMetrics]: 'black',
     };
 
     const AppDisplayNames: Record<PromApplication, string> = {
@@ -1010,7 +1006,6 @@ export class PrometheusDatasource
       [PromApplication.Mimir]: 'Mimir',
       [PromApplication.Prometheus]: 'Prometheus',
       [PromApplication.Thanos]: 'Thanos',
-      [PromApplication.VictoriaMetrics]: 'VictoriaMetrics',
     };
 
     const application = this.datasourceConfigurationPrometheusFlavor ?? buildInfo.application;
@@ -1054,44 +1049,6 @@ export class PrometheusDatasource
         </>
       </div>
     );
-  }
-
-  async testDatasource() {
-    const now = new Date().getTime();
-    const request: DataQueryRequest<PromQuery> = {
-      targets: [{ refId: 'test', expr: '1+1', instant: true }],
-      requestId: `${this.id}-health`,
-      scopedVars: {},
-      panelId: 0,
-      interval: '1m',
-      intervalMs: 60000,
-      maxDataPoints: 1,
-      range: {
-        from: dateTime(now - 1000),
-        to: dateTime(now),
-      },
-    } as DataQueryRequest<PromQuery>;
-
-    const buildInfo = await this.getBuildInfo();
-
-    return lastValueFrom(this.query(request))
-      .then((res: DataQueryResponse) => {
-        if (!res || !res.data || res.state !== LoadingState.Done) {
-          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
-        } else {
-          return {
-            status: 'success',
-            message: 'Data source is working',
-            details: buildInfo && {
-              verboseMessage: this.getBuildInfoMessage(buildInfo),
-            },
-          };
-        }
-      })
-      .catch((err: any) => {
-        console.error('Prometheus Error', err);
-        return { status: 'error', message: err.message };
-      });
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {

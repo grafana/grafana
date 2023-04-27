@@ -11,7 +11,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func TestPostableGrafanaReceiverToGrafanaReceiver(t *testing.T) {
+func TestPostableGrafanaReceiverToGrafanaIntegrationConfig(t *testing.T) {
 	r := &apimodels.PostableGrafanaReceiver{
 		UID:                   "test-uid",
 		Name:                  "test-name",
@@ -22,8 +22,8 @@ func TestPostableGrafanaReceiverToGrafanaReceiver(t *testing.T) {
 			"test": "data",
 		},
 	}
-	actual := PostableGrafanaReceiverToGrafanaReceiver(r)
-	require.Equal(t, alertingNotify.GrafanaReceiver{
+	actual := PostableGrafanaReceiverToGrafanaIntegrationConfig(r)
+	require.Equal(t, alertingNotify.GrafanaIntegrationConfig{
 		UID:                   "test-uid",
 		Name:                  "test-name",
 		Type:                  "slack",
@@ -43,7 +43,7 @@ func TestPostableApiReceiverToApiReceiver(t *testing.T) {
 			},
 		}
 		actual := PostableApiReceiverToApiReceiver(r)
-		require.Empty(t, actual.Receivers)
+		require.Empty(t, actual.Integrations)
 		require.Equal(t, r.Receiver, actual.ConfigReceiver)
 	})
 	t.Run("converts receivers", func(t *testing.T) {
@@ -77,10 +77,10 @@ func TestPostableApiReceiverToApiReceiver(t *testing.T) {
 			},
 		}
 		actual := PostableApiReceiverToApiReceiver(r)
-		require.Len(t, actual.Receivers, 2)
+		require.Len(t, actual.Integrations, 2)
 		require.Equal(t, r.Receiver, actual.ConfigReceiver)
-		require.Equal(t, *PostableGrafanaReceiverToGrafanaReceiver(r.GrafanaManagedReceivers[0]), *actual.Receivers[0])
-		require.Equal(t, *PostableGrafanaReceiverToGrafanaReceiver(r.GrafanaManagedReceivers[1]), *actual.Receivers[1])
+		require.Equal(t, *PostableGrafanaReceiverToGrafanaIntegrationConfig(r.GrafanaManagedReceivers[0]), *actual.Integrations[0])
+		require.Equal(t, *PostableGrafanaReceiverToGrafanaIntegrationConfig(r.GrafanaManagedReceivers[1]), *actual.Integrations[1])
 	})
 }
 
