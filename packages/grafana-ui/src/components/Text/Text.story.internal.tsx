@@ -6,7 +6,7 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
-import { H1, H2, H3, H4, H5, H6, P, Span, Legend } from './TextElements';
+import { H1, Legend } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
@@ -64,7 +64,7 @@ export const Example: Story = () => {
   );
 };
 
-export const ExperimentalH1: Story = (args) => {
+export const HeadingComponent: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
       <H1 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
@@ -73,7 +73,7 @@ export const ExperimentalH1: Story = (args) => {
     </div>
   );
 };
-ExperimentalH1.args = {
+HeadingComponent.args = {
   variant: undefined,
   weight: 'fontWeightBold',
   textAlignment: 'center',
@@ -81,127 +81,8 @@ ExperimentalH1.args = {
   color: 'color.error.text',
   children: 'This is a H1 component',
 };
-export const ExperimentalH2: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <H2 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </H2>
-    </div>
-  );
-};
-ExperimentalH2.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a H2 component',
-};
-export const ExperimentalH3: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <H3 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </H3>
-    </div>
-  );
-};
-ExperimentalH3.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a H3 component',
-};
-export const ExperimentalH4: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <H4 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </H4>
-    </div>
-  );
-};
-ExperimentalH4.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a H4 component',
-};
-export const ExperimentalH5: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <H5 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </H5>
-    </div>
-  );
-};
-ExperimentalH5.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a H5 component',
-};
-export const ExperimentalH6: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <H6 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </H6>
-    </div>
-  );
-};
-ExperimentalH6.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a H6 component',
-};
-export const ExperimentalBody: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <P variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </P>
-    </div>
-  );
-};
-ExperimentalBody.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a P component',
-};
-export const ExperimentalSpan: Story = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <Span variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </Span>
-    </div>
-  );
-};
-ExperimentalSpan.args = {
-  variant: undefined,
-  weight: 'fontWeightBold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'color.error.text',
-  children: 'This is a Span component',
-};
 
-export const ExperimentalLegend: Story = (args) => {
+export const LegendComponent: Story = (args) => {
   return (
     <div style={{ width: '300px' }}>
       <Legend variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
@@ -211,7 +92,7 @@ export const ExperimentalLegend: Story = (args) => {
   );
 };
 
-ExperimentalLegend.args = {
+LegendComponent.args = {
   variant: undefined,
   weight: 'fontWeightBold',
   textAlignment: 'center',
