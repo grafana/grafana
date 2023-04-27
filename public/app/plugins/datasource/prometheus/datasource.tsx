@@ -1263,6 +1263,33 @@ export class PrometheusDatasource
   getCacheDurationInMinutes(): number {
     return getClientCacheDurationInMinutes(this.cacheLevel);
   }
+
+  getDefaultQuery(app: CoreApp): PromQuery {
+    const defaults = {
+      refId: 'A',
+      expr: '',
+      range: true,
+      instant: false,
+    };
+
+    if (app === CoreApp.UnifiedAlerting) {
+      return {
+        ...defaults,
+        instant: true,
+        range: false,
+      };
+    }
+
+    if (app === CoreApp.Explore) {
+      return {
+        ...defaults,
+        instant: true,
+        range: true,
+      };
+    }
+
+    return defaults;
+  }
 }
 
 /**
