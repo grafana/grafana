@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import { Spinner } from '@grafana/ui';
+import { Button, Card, Spinner } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -69,7 +69,18 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   }
 
   if (value.totalRows === 0) {
-    return <div style={{ width }}>No search results</div>;
+    return (
+      <div style={{ width }}>
+        <Card>
+          <Card.Heading>No results found for your query.</Card.Heading>
+          <Card.Actions>
+            <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
+              Clear search and filters
+            </Button>
+          </Card.Actions>
+        </Card>
+      </div>
+    );
   }
 
   const props: SearchResultsProps = {
@@ -100,3 +111,12 @@ function assertDashboardViewItemKind(kind: string): DashboardViewItemKind {
 
   throw new Error('Unsupported kind' + kind);
 }
+
+// const getStyles = (theme: GrafanaTheme2) => ({
+//   noResults: css`
+//     padding: ${theme.v1.spacing.md};
+//     background: ${theme.v1.colors.bg2};
+//     font-style: italic;
+//     margin-top: ${theme.v1.spacing.md};
+//   `,
+// });
