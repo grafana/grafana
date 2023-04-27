@@ -43,7 +43,7 @@ run = run directly from the command line\
 To stop the Grafana container, run the following command:
 
 ```bash
-# docker ps command tells about the running process in the docker
+# The `docker ps` command shows the processes running in Docker
 docker ps
 
 # This will display a list of containers, like:
