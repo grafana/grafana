@@ -82,6 +82,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       labelSelector: toPromLikeExpr(labelBasedQuery),
       queryType: 'both',
       profileTypeId: '',
+      maxNodes: 16,
       groupBy: [''],
     };
   }

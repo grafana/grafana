@@ -1699,6 +1699,42 @@
     "signatureOrg": ""
   },
   {
+    "name": "Trend",
+    "type": "panel",
+    "id": "trend",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like timeseries, but when x != time",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/trend/img/trend.svg",
+        "large": "public/app/plugins/panel/trend/img/trend.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/trend/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "Welcome",
     "type": "panel",
     "id": "welcome",

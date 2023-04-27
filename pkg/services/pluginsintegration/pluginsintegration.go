@@ -86,7 +86,7 @@ var WireExtensionSet = wire.NewSet(
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
-	finder.NewLocalFinder,
+	finder.ProvideLocalFinder,
 )
 
 func ProvideClientDecorator(
@@ -119,6 +119,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
+		clientmiddleware.NewResourceResponseMiddleware(),
 	}
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable

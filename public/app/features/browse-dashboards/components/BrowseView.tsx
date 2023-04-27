@@ -5,10 +5,11 @@ import { useDispatch } from 'app/types';
 
 import {
   useFlatTreeState,
-  useSelectedItemsState,
+  useCheckboxSelectionState,
   fetchChildren,
   setFolderOpenState,
   setItemSelectionState,
+  setAllSelection,
 } from '../state';
 
 import { DashboardsTree } from './DashboardsTree';
@@ -22,7 +23,7 @@ interface BrowseViewProps {
 export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
-  const selectedItems = useSelectedItemsState();
+  const selectedItems = useCheckboxSelectionState();
 
   useEffect(() => {
     dispatch(fetchChildren(folderUID));
@@ -53,6 +54,7 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
       height={height}
       selectedItems={selectedItems}
       onFolderClick={handleFolderClick}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
       onItemSelectionChange={handleItemSelectionChange}
     />
   );

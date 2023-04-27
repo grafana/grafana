@@ -32,7 +32,8 @@ func Test_PhlareClient(t *testing.T) {
 	})
 
 	t.Run("GetProfile", func(t *testing.T) {
-		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100)
+		maxNodes := int64(-1)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
 		require.Nil(t, err)
 
 		series := &ProfileResponse{

@@ -237,7 +237,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
-      const toggleState = value === 'true';
+      const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;
         console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
