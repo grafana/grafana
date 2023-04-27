@@ -26,8 +26,7 @@ export function PanelHeaderMenuWrapper({
 }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items, reportMenuInteraction }) => {
-        reportMenuInteraction();
+      {({ items }) => {
         return (
           <PanelHeaderMenu
             className={menuWrapperClassName}
@@ -44,8 +43,7 @@ export function PanelHeaderMenuWrapper({
 export function PanelHeaderMenuWrapperNew({ style, panel, dashboard, loadingState }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items, reportMenuInteraction }) => {
-        reportMenuInteraction();
+      {({ items }) => {
         return <PanelHeaderMenuNew style={style} items={items} />;
       }}
     </PanelHeaderMenuProvider>
