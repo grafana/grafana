@@ -178,7 +178,7 @@ Docker Compose is a software tool that makes it easy to define and share applica
 
 ### Before you begin
 
-To run Grafana via Docker Compose, install the compose tool your machine. To determine if the compose tool is available, run the following command:
+To run Grafana via Docker Compose, install the compose tool on your machine. To determine if the compose tool is available, run the following command:
 
 ```bash
 docker compose version
