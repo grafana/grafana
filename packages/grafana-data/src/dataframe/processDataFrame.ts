@@ -25,7 +25,7 @@ import {
   GraphSeriesValue,
 } from '../types/index';
 
-import { ArrayDataFrame } from './ArrayDataFrame';
+import { ArrayDataFrame, arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
 import { MutableDataFrame } from './MutableDataFrame';
 
@@ -339,7 +339,7 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (Array.isArray(data)) {
-    return new ArrayDataFrame(data);
+    return arrayToDataFrame(data);
   }
 
   console.warn('Can not convert', data);
