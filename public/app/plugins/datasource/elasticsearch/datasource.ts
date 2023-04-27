@@ -64,7 +64,6 @@ import {
 } from './types';
 import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
-const CONTENT_HEADER = { 'Content-Type': 'application/x-ndjson' };
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -169,6 +168,11 @@ export class ElasticDatasource
       data,
       headers,
     };
+
+    if (method === 'POST') {
+      options.headers = options.headers ?? {};
+      options.headers['Content-Type'] = 'application/x-ndjson';
+    }
 
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
@@ -327,7 +331,7 @@ export class ElasticDatasource
 
     trackAnnotationQuery(annotation);
     return lastValueFrom(
-      this.legacyRequest('POST', '_msearch', payload, CONTENT_HEADER).pipe(
+      this.legacyRequest('POST', '_msearch', payload).pipe(
         map((res) => {
           const list = [];
           const hits = res.responses[0].hits.hits;
@@ -554,7 +558,7 @@ export class ElasticDatasource
       });
       const payload = [header, esQuery].join('\n') + '\n';
       const url = this.getMultiSearchUrl();
-      const response = await lastValueFrom(this.legacyRequest('POST', url, payload, CONTENT_HEADER));
+      const response = await lastValueFrom(this.legacyRequest('POST', url, payload));
       const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
       const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
       const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
@@ -749,7 +753,7 @@ export class ElasticDatasource
     const url = this.getMultiSearchUrl();
 
     const start = new Date();
-    return this.legacyRequest('POST', url, payload, CONTENT_HEADER).pipe(
+    return this.legacyRequest('POST', url, payload).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
@@ -868,7 +872,7 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
-    return this.legacyRequest('POST', url, esQuery, CONTENT_HEADER).pipe(
+    return this.legacyRequest('POST', url, esQuery).pipe(
       map((res) => {
         if (!res.responses[0].aggregations) {
           return [];
@@ -1206,6 +1210,7 @@ function generateDataLink(linkConfig: DataLinkConfig): DataLink {
     };
   }
 }
+
 function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
   if (direction === 'desc') {
     return response;
