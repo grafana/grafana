@@ -67,7 +67,7 @@ It is recommended to use persistent storage because running without it, users wi
 
 To use persistent storage, complete the following steps:
 
-1. Ceate a Docker volume by running the following command:
+1. Ceate a Docker volume by running the following commands:
 
    ```bash
    # create a persistent volume for your data
