@@ -4,8 +4,8 @@ import { useLocation, useParams } from 'react-router-dom';
 import { Page } from 'app/core/components/Page/Page';
 import { EditDataSource } from 'app/features/datasources/components/EditDataSource';
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
+import { EditDataSourceSubtitle } from 'app/features/datasources/components/EditDataSourceSubtitle';
 import { EditDataSourceTitle } from 'app/features/datasources/components/EditDataSourceTitle';
-import { EditDataSourceSubtitle } from 'app/features/datasources/components/EditDatasSourceSubtitle';
 import { useDataSourceSettingsNav } from 'app/features/datasources/state';
 
 export function EditDataSourcePage() {

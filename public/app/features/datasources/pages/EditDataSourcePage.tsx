@@ -5,8 +5,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
+import { EditDataSourceSubtitle } from '../components/EditDataSourceSubtitle';
 import { EditDataSourceTitle } from '../components/EditDataSourceTitle';
-import { EditDataSourceSubtitle } from '../components/EditDatasSourceSubtitle';
 import { useDataSourceSettingsNav } from '../state';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
