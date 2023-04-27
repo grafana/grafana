@@ -12,6 +12,7 @@ import {
   FieldType,
   NullValueMode,
   PanelTypeChangedHandler,
+  ReducerID,
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
@@ -31,6 +32,7 @@ import {
   SortOrder,
   GraphTransform,
   AnnotationQuery,
+  ComparisonOperation,
 } from '@grafana/schema';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -378,6 +380,14 @@ export function graphToTimeseriesOptions(angular: any): {
     if (angular.legend.sideWidth) {
       options.legend.width = angular.legend.sideWidth;
     }
+
+    if (legendConfig.hideZero) {
+      overrides.push(getLegendHideFromOverride(ReducerID.allIsZero));
+    }
+
+    if (legendConfig.hideEmpty) {
+      overrides.push(getLegendHideFromOverride(ReducerID.allIsNull));
+    }
   }
 
   // timeRegions migration
@@ -699,4 +709,27 @@ function migrateHideFrom(panel: {
       return fr;
     });
   }
+}
+
+function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allIsNull) {
+  return {
+    matcher: {
+      id: FieldMatcherID.byValue,
+      options: {
+        reducer: reducer,
+        op: ComparisonOperation.GTE,
+        value: 0,
+      },
+    },
+    properties: [
+      {
+        id: 'custom.hideFrom',
+        value: {
+          tooltip: true,
+          viz: false,
+          legend: true,
+        },
+      },
+    ],
+  };
 }
