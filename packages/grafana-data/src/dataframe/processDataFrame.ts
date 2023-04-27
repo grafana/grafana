@@ -25,7 +25,7 @@ import {
   GraphSeriesValue,
 } from '../types/index';
 
-import { ArrayDataFrame, arrayToDataFrame } from './ArrayDataFrame';
+import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
 import { MutableDataFrame } from './MutableDataFrame';
 
