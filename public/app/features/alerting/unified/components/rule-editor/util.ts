@@ -146,11 +146,17 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     // the time series panel does not support both.
     const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
 
-    query.model.conditions.forEach((condition, index) => {
+    query.model.conditions.forEach((condition) => {
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
       const refId = condition.query.params[0] ?? query.model.expression;
+
+      // if an expression hasn't been linked to a data query yet, it won't have a refId
+      if (!refId) {
+        return;
+      }
+
       const isRangeThreshold = isRangeCondition(condition);
 
       try {
