@@ -21,6 +21,6 @@ jobs:
           go-version: '1.19.2'
 
       - name: "Verify kinds"
-        run: go run ./scripts/kinds/verify-kinds.go
+        run: go run .github/workflows/scripts/kinds/verify-kinds.go
         env:
           CODEGEN_VERIFY: 1
