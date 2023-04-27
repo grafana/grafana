@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    [[ if .CSPEnabled]]
+    [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
     <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
     [[ end ]]
