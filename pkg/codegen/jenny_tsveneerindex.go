@@ -82,7 +82,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 			// Only deal with subpaths that are definitions, for now
 			// TODO incorporate smarts about grouped lineages here
 			if name == "" {
-				if !sels[0].IsDefinition() {
+				if !(sels[0].IsDefinition() || sels[0].String() == "spec") {
 					return false
 				}
 				// It might seem to make sense that we'd strip replaceout the leading # here for
