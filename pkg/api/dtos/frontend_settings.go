@@ -61,7 +61,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval string `json:"minInterval"`
+	MinInterval              string `json:"minInterval"`
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
 }
 
 // Enterprise-only
@@ -163,6 +164,8 @@ type FrontendSettingsDTO struct {
 	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool   `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool   `json:"cspReportOnlyEnabled"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 

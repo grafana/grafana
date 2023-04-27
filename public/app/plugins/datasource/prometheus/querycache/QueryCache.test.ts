@@ -268,7 +268,7 @@ describe('QueryCache', function () {
       // All of the new values should be the ones that were stored, this is overkill
       secondFrames.forEach((frame, frameIdx) => {
         frame.fields.forEach((field, fieldIdx) => {
-          secondFrames[frameIdx].fields[fieldIdx].values.toArray().forEach((value) => {
+          secondFrames[frameIdx].fields[fieldIdx].values.forEach((value) => {
             expect(secondStoredFrames[frameIdx].fields[fieldIdx].values).toContain(value);
           });
         });
@@ -394,12 +394,8 @@ describe('QueryCache', function () {
 
     // Since the step is 15s, and the request was 30 seconds later, we should have 2 extra frames, but we should evict the first two, so we should get the same length
     expect(firstMergedLength).toEqual(secondMergedLength);
-    expect(firstQueryResult[0].fields[0].values.toArray()[2]).toEqual(
-      secondQueryResult[0].fields[0].values.toArray()[0]
-    );
-    expect(firstQueryResult[0].fields[0].values.toArray()[0] + 30000).toEqual(
-      secondQueryResult[0].fields[0].values.toArray()[0]
-    );
+    expect(firstQueryResult[0].fields[0].values[2]).toEqual(secondQueryResult[0].fields[0].values[0]);
+    expect(firstQueryResult[0].fields[0].values[0] + 30000).toEqual(secondQueryResult[0].fields[0].values[0]);
 
     cache.set(targetIdentity, `'1=1'|${interval}|${JSON.stringify(thirdRange.raw)}`);
 
@@ -418,7 +414,7 @@ describe('QueryCache', function () {
     );
 
     const cachedAfterThird = storage.cache.get(targetIdentity);
-    const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.toArray().length;
+    const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.length;
     expect(storageLengthAfterThirdQuery).toEqual(20);
   });
 

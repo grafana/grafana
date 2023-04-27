@@ -95,7 +95,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		})
 	}
 
-	if c.IsPublicDashboardView || hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate))) {
+	if c.IsPublicDashboardView || hasAccess(ac.ReqSignedIn, ac.EvalAny(
+		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
+		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
+	) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
 		dashboardLink := &navtree.NavLink{
@@ -149,18 +152,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		}
 	}
 
-	orgAdminNode, err := s.getOrgAdminNode(c)
+	orgAdminNode, err := s.getAdminNode(c)
 
 	if orgAdminNode != nil {
 		treeRoot.AddSection(orgAdminNode)
 	} else if err != nil {
 		return nil, err
-	}
-
-	serverAdminNode := s.getServerAdminNode(c)
-
-	if serverAdminNode != nil {
-		treeRoot.AddSection(serverAdminNode)
 	}
 
 	s.addHelpLinks(treeRoot, c)

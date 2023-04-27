@@ -38,7 +38,7 @@ export const Pages = {
     dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
-    delete: 'Confirm Modal Danger Button',
+    delete: 'data-testid Confirm Modal Danger Button',
   },
   AddDashboard: {
     url: '/dashboard/new',
@@ -177,6 +177,9 @@ export const Pages = {
         },
       },
     },
+    Annotations: {
+      marker: 'data-testid annotation-marker',
+    },
   },
   Dashboards: {
     url: '/dashboards',
@@ -249,9 +252,6 @@ export const Pages = {
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
-    Annotations: {
-      marker: 'data-testid annotation-marker',
-    },
   },
   PluginsList: {
     page: 'Plugins list page',
@@ -269,6 +269,12 @@ export const Pages = {
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
   },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+  },
   Search: {
     url: '/?search=openn',
     FolderView: {
@@ -283,11 +289,32 @@ export const Pages = {
     },
   },
   UserListPage: {
+    tabs: {
+      allUsers: 'data-testid all-users-tab',
+      orgUsers: 'data-testid org-users-tab',
+      publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
+      users: 'data-testid users-tab',
+    },
     org: {
       url: '/org/users',
     },
     admin: {
       url: '/admin/users',
+    },
+    publicDashboards: {
+      container: 'data-testid public-dashboards-users-list',
+    },
+    UserListAdminPage: {
+      container: 'data-testid user-list-admin-page',
+    },
+    UsersListPage: {
+      container: 'data-testid users-list-page',
+    },
+    UsersListPublicDashboardsPage: {
+      container: 'data-testid users-list-public-dashboards-page',
+      DashboardsListModal: {
+        listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
+      },
     },
   },
 };

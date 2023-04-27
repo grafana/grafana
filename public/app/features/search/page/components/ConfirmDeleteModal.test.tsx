@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { config } from 'app/core/config';
@@ -14,8 +14,7 @@ describe('ConfirmModal', () => {
     expect(screen.getByRole('heading', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.getByText('Do you want to delete the 2 selected dashboards?')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-    const button = screen.getByRole('button', { name: 'Confirm Modal Danger Button' });
-    expect(within(button).getByText('Delete')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
     expect(screen.queryByPlaceholderText('Type delete to confirm')).not.toBeInTheDocument();
   });

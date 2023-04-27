@@ -3,18 +3,16 @@ package phlare
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"net/url"
-	"strings"
+	"strconv"
 	"time"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
-	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
-	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 var (
@@ -26,7 +24,13 @@ var (
 
 // PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
-	client querierv1connect.QuerierServiceClient
+	httpClient *http.Client
+	client     ProfilingClient
+	settings   backend.DataSourceInstanceSettings
+}
+
+type JsonData struct {
+	BackendType string `json:"backendType"`
 }
 
 // NewPhlareDatasource creates a new datasource instance.
@@ -40,93 +44,152 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		return nil, err
 	}
 
+	var jsonData *JsonData
+	err = json.Unmarshal(settings.JSONData, &jsonData)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PhlareDatasource{
-		client: querierv1connect.NewQuerierServiceClient(httpClient, settings.URL),
+		httpClient: httpClient,
+		client:     getClient(jsonData.BackendType, httpClient, settings.URL),
+		settings:   settings,
 	}, nil
 }
 
 func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
-		return d.callProfileTypes(ctx, req, sender)
+		return d.profileTypes(ctx, req, sender)
 	}
 	if req.Path == "labelNames" {
-		return d.callLabelNames(ctx, req, sender)
+		return d.labelNames(ctx, req, sender)
 	}
-	if req.Path == "series" {
-		return d.callSeries(ctx, req, sender)
+	if req.Path == "labelValues" {
+		return d.labelValues(ctx, req, sender)
+	}
+	if req.Path == "backendType" {
+		return d.backendType(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
 	})
 }
 
-func (d *PhlareDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
+func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	types, err := d.client.ProfileTypes(ctx)
 	if err != nil {
 		return err
 	}
-	var data []byte
-	if res.Msg.ProfileTypes == nil {
-		// Let's make sure we send at least empty array if we don't have any types
-		data, err = json.Marshal([]*typesv1.ProfileType{})
+	bodyData, err := json.Marshal(types)
+	if err != nil {
+		return err
+	}
+	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: req.Headers, Status: 200})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *PhlareDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+	query := u.Query()
+	start, err := strconv.ParseInt(query["start"][0], 10, 64)
+	if err != nil {
+		return err
+	}
+	end, err := strconv.ParseInt(query["end"][0], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	res, err := d.client.LabelNames(ctx, query["query"][0], start, end)
+	if err != nil {
+		return fmt.Errorf("error calling LabelNames: %v", err)
+	}
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type LabelValuesPayload struct {
+	Query string
+	Label string
+	Start int64
+	End   int64
+}
+
+func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+	query := u.Query()
+	start, err := strconv.ParseInt(query["start"][0], 10, 64)
+	if err != nil {
+		return err
+	}
+	end, err := strconv.ParseInt(query["end"][0], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	res, err := d.client.LabelValues(ctx, query["query"][0], query["label"][0], start, end)
+	if err != nil {
+		return fmt.Errorf("error calling LabelValues: %v", err)
+	}
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type BackendTypeRespBody struct {
+	BackendType string `json:"backendType"` // "phlare" or "pyroscope"
+}
+
+// backendType is a simplistic test to figure out if we are speaking to phlare or pyroscope backend
+func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+	query := u.Query()
+	body := &BackendTypeRespBody{BackendType: "unknown"}
+
+	pyroClient := getClient("pyroscope", d.httpClient, query["url"][0])
+	_, err = pyroClient.ProfileTypes(ctx)
+
+	if err == nil {
+		body.BackendType = "pyroscope"
 	} else {
-		data, err = json.Marshal(res.Msg.ProfileTypes)
-	}
-	if err != nil {
-		return err
-	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type SeriesRequestJson struct {
-	Matchers []string `json:"matchers"`
-}
-
-func (d *PhlareDatasource) callSeries(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	parsedUrl, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	matchers, ok := parsedUrl.Query()["matchers"]
-	if !ok {
-		matchers = []string{"{}"}
+		phlareClient := getClient("phlare", d.httpClient, d.settings.URL)
+		_, err := phlareClient.ProfileTypes(ctx)
+		if err == nil {
+			body.BackendType = "phlare"
+		}
 	}
 
-	res, err := d.client.Series(ctx, connect.NewRequest(&querierv1.SeriesRequest{Matchers: matchers}))
+	data, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
 
-	for _, val := range res.Msg.LabelsSet {
-		withoutPrivate := withoutPrivateLabels(val.Labels)
-		val.Labels = withoutPrivate
-	}
-
-	data, err := json.Marshal(res.Msg.LabelsSet)
-	if err != nil {
-		return err
-	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	res, err := d.client.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
-	if err != nil {
-		return err
-	}
-	data, err := json.Marshal(res.Msg.Names)
-	if err != nil {
-		return err
-	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
 		return err
@@ -166,7 +229,7 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHeal
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{})); err != nil {
+	if _, err := d.client.ProfileTypes(ctx); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}
@@ -238,14 +301,4 @@ func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishSt
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
-}
-
-func withoutPrivateLabels(labels []*typesv1.LabelPair) []*typesv1.LabelPair {
-	res := make([]*typesv1.LabelPair, 0, len(labels))
-	for _, l := range labels {
-		if !strings.HasPrefix(l.Name, "__") {
-			res = append(res, l)
-		}
-	}
-	return res
 }

@@ -37,6 +37,10 @@ const setupProps = (): LokiContextUiProps => {
       },
     } as unknown as LogRowModel,
     onClose: jest.fn(),
+    origQuery: {
+      expr: '{label1="value1"} | logfmt',
+      refId: 'A',
+    },
   };
 
   return defaults;
@@ -78,7 +82,14 @@ describe('LokiContextUi', () => {
   it('renders and shows executed query text', async () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
-    expect(await screen.findByText(/Executed log context query:/)).toBeInTheDocument();
+    await waitFor(() => {
+      // We should see the query text (it is split into multiple spans)
+      expect(screen.getByText('{')).toBeInTheDocument();
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('=')).toBeInTheDocument();
+      expect(screen.getByText('"value1"')).toBeInTheDocument();
+      expect(screen.getByText('}')).toBeInTheDocument();
+    });
   });
 
   it('initialize context filters', async () => {
@@ -139,10 +150,8 @@ describe('LokiContextUi', () => {
   it('displays executed query even if context ui closed', async () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
-    // We start with the context ui open
-    expect(await screen.findByText(/Executed log context query:/)).toBeInTheDocument();
-    // We click on it to close
-    await userEvent.click(screen.getByText(/Executed log context query:/));
+    // We start with the context ui open and click on it to close
+    await userEvent.click(screen.getAllByRole('button')[0]);
     await waitFor(() => {
       // We should see the query text (it is split into multiple spans)
       expect(screen.getByText('{')).toBeInTheDocument();
@@ -150,6 +159,51 @@ describe('LokiContextUi', () => {
       expect(screen.getByText('=')).toBeInTheDocument();
       expect(screen.getByText('"value1"')).toBeInTheDocument();
       expect(screen.getByText('}')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show parsed labels section if origQuery has 0 parsers', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"}',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows parsed labels section if origQuery has 1 parser', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.getByText('Refine the search')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show parsed labels section if origQuery has 2 parsers', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt | json',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
     });
   });
 });

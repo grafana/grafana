@@ -4,7 +4,6 @@ import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
-  ArrayVector,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -89,7 +88,7 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
     config: {},
-    values: new ArrayVector<number>(times),
+    values: times,
   };
 
   const valueField = {
@@ -98,7 +97,7 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     config: {
       displayNameFromDS: timeSeries.title,
     },
-    values: new ArrayVector<unknown>(values),
+    values: values,
     labels: timeSeries.tags,
   };
 
