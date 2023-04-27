@@ -52,7 +52,7 @@ cd48d3994968   grafana/grafana-enterprise   "/run.sh"   8 seconds ago   Up 7 sec
 
 # To stop the grafana container run the command
 # docker stop CONTAINER-ID or use 
-# docker stop NAME (which is grafana as we defined previously)
+# docker stop NAME, which is `grafana` as previously defined
 docker stop grafana
 ```
 
