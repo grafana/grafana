@@ -40,25 +40,24 @@ describe('MetricStatEditor', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
   });
   describe('statistics field', () => {
-    test.each([['Average', 'p23.23', 'p34', 'TM(2%:98%)', 'WM(10%:90%)', 'TS(80%:)', '$statistic']])(
-      'should accept valid values',
-      async (statistic) => {
-        const onChange = jest.fn();
-        props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
-        render(<MetricStatEditor {...props} onChange={onChange} />);
-
-        const statisticElement = await screen.findByLabelText('Statistic');
-        expect(statisticElement).toBeInTheDocument();
-
-        await userEvent.type(statisticElement, statistic);
-        fireEvent.keyDown(statisticElement, { keyCode: 13 });
-        expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
-      }
-    );
-
-    test.each(['CustomStat', 'p23,23', '$someUnknownValue'])('should not accept invalid values', async (statistic) => {
+    test.each([
+      'Average',
+      'p23.23',
+      'p34',
+      'TM(2%:98%)',
+      'WM(10%:90%)',
+      'tc99',
+      'ts90',
+      'TS(80%:)',
+      'PR(100:2000)',
+      'TC(0.005:0.030)',
+      'TM(100:200)',
+      'TM(:90%)',
+      'WM(45%:)',
+      '$statistic',
+    ])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
-
+      props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
       render(<MetricStatEditor {...props} onChange={onChange} />);
 
       const statisticElement = await screen.findByLabelText('Statistic');
@@ -66,8 +65,24 @@ describe('MetricStatEditor', () => {
 
       await userEvent.type(statisticElement, statistic);
       fireEvent.keyDown(statisticElement, { keyCode: 13 });
-      expect(onChange).not.toHaveBeenCalled();
+      expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
     });
+
+    test.each(['CustomStat', 'p23,23', 'tc(80%:)', 'ts', 'wm', 'pr', 'tm', 'tm(10:90)', '$someUnknownValue'])(
+      'should not accept invalid values',
+      async (statistic) => {
+        const onChange = jest.fn();
+
+        render(<MetricStatEditor {...props} onChange={onChange} />);
+
+        const statisticElement = await screen.findByLabelText('Statistic');
+        expect(statisticElement).toBeInTheDocument();
+
+        await userEvent.type(statisticElement, statistic);
+        fireEvent.keyDown(statisticElement, { keyCode: 13 });
+        expect(onChange).not.toHaveBeenCalled();
+      }
+    );
   });
 
   describe('expressions', () => {
