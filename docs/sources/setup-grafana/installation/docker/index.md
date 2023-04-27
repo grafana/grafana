@@ -188,7 +188,7 @@ If the compose tool is unavailable, refer to [Install Docker Compose](https://do
 
 ### Run the latest stable version of Grafana
 
-This section shows you how to run Grafana using the Docker Compose. The examples in this section use Compose version 3. For more information about compatibility, refer to [Compose and Docker compatibility matrix](https://docs.docker.com/compose/compose-file/compose-file-v3/).
+This section shows you how to run Grafana using Docker Compose. The examples in this section use Compose version 3. For more information about compatibility, refer to [Compose and Docker compatibility matrix](https://docs.docker.com/compose/compose-file/compose-file-v3/).
 
 > **Note:** If you are on a Linux system (for example, Debian or Ubuntu), you might need to add **sudo** before the command or add your user to the **docker** group. For more information, refer to [Linux post-installation steps for Docker Engine](https://docs.docker.com/engine/install/linux-postinstall/).
 
