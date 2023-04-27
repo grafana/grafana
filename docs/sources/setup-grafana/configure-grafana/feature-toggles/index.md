@@ -61,6 +61,8 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
+| `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
+| `publicDashboardsEmailSharing`       | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                     |
 
 ## Alpha feature toggles
 
@@ -71,8 +73,6 @@ Alpha features might be changed or removed without prior notice.
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                               |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                          |
-| `publicDashboards`                 | Enables public access to dashboards                                                                            |
-| `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                       |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                         |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                |
 | `newTraceViewHeader`               | Shows the new trace view header                                                                                |
