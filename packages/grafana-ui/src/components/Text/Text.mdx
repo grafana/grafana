@@ -1,9 +1,18 @@
-import { Props, ArgsTable } from '@storybook/addon-docs/blocks';
+import { Props, ArgsTable, Preview } from '@storybook/addon-docs/blocks';
 import { Text } from './Text';
-import { Basic } from './Text.story.tsx';
+import { H1 } from './TextElements';
 
 # Text
 
-Use for showing text.
+Text components helps establish hierarchy, rendering an specific _HTML element_, and displays text content with styles applied according to the _variant_ selected.
 
-<ArgsTable of={Text} />
+## **Components**
+
+<br />
+### **H1** * This component returns an h1 HTML element * By default the h1 styles are applied
+
+<br />
+<br />
+## **Variants**
+
+<ArgsTable of={H1} />
