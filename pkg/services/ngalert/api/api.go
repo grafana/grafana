@@ -55,7 +55,7 @@ type Alertmanager interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
 }
 
 // API handlers.
@@ -85,6 +85,9 @@ type API struct {
 	Historian            Historian
 
 	AppUrl *url.URL
+
+	// Hooks can be used to replace API handlers for specific paths.
+	Hooks *Hooks
 }
 
 // RegisterAPIEndpoints registers API handlers

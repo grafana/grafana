@@ -1,6 +1,6 @@
 import {
-  ArrayVector,
   DataFrame,
+  DataFrameType,
   DataQueryResponse,
   DataQueryResponseData,
   Field,
@@ -8,47 +8,55 @@ import {
   isValidGoDuration,
   Labels,
   QueryResultMetaStat,
+  shallowCompare,
 } from '@grafana/data';
 
 import { isBytesString } from './languageUtils';
-import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
+import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
-  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
+  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
   return labelSets.some((labels) => labels.__error__ !== undefined);
 }
 
 export function dataFrameHasLevelLabel(frame: DataFrame): boolean {
-  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
+  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
   return labelSets.some((labels) => labels.level !== undefined);
 }
 
-export function extractLogParserFromDataFrame(frame: DataFrame): { hasLogfmt: boolean; hasJSON: boolean } {
+export function extractLogParserFromDataFrame(frame: DataFrame): {
+  hasLogfmt: boolean;
+  hasJSON: boolean;
+  hasPack: boolean;
+} {
   const lineField = frame.fields.find((field) => field.type === FieldType.string);
   if (lineField == null) {
-    return { hasJSON: false, hasLogfmt: false };
+    return { hasJSON: false, hasLogfmt: false, hasPack: false };
   }
 
-  const logLines: string[] = lineField.values.toArray();
+  const logLines: string[] = lineField.values;
 
   let hasJSON = false;
   let hasLogfmt = false;
+  let hasPack = false;
 
   logLines.forEach((line) => {
     if (isLogLineJSON(line)) {
       hasJSON = true;
+
+      hasPack = isLogLinePacked(line);
     }
     if (isLogLineLogfmt(line)) {
       hasLogfmt = true;
     }
   });
 
-  return { hasLogfmt, hasJSON };
+  return { hasLogfmt, hasJSON, hasPack };
 }
 
 export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
-    frame?.fields?.find((field) => field.name === 'labels')?.values.toArray() ?? [];
+    frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
 
   if (!labelsArray?.length) {
     return [];
@@ -59,7 +67,7 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
 
 export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
-    frame?.fields?.find((field) => field.name === 'labels')?.values.toArray() ?? [];
+    frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
 
   if (!labelsArray?.length) {
     return [];
@@ -85,7 +93,7 @@ export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
     return false;
   }
 
-  const labels: Array<{ [key: string]: string }> = labelField.values.toArray();
+  const labels: Array<{ [key: string]: string }> = labelField.values;
   return labels.some((label) => label['__error__']);
 }
 
@@ -97,7 +105,7 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
 
   // Depending on number of labels, this can be pretty heavy operation.
   // Let's just look at first 2 lines If needed, we can introduce more later.
-  const labelsArray: Array<{ [key: string]: string }> = labelField.values.toArray().slice(0, 2);
+  const labelsArray: Array<{ [key: string]: string }> = labelField.values.slice(0, 2);
   let levelLikeLabel: string | null = null;
 
   // Find first level-like label
@@ -116,7 +124,38 @@ function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
     return false;
   }
 
-  return frame1.name === frame2.name;
+  const frameType1 = frame1.meta?.type;
+  const frameType2 = frame2.meta?.type;
+
+  if (frameType1 !== frameType2) {
+    // we do not join things that have a different type
+    return false;
+  }
+
+  // metric range query data
+  if (frameType1 === DataFrameType.TimeSeriesMulti) {
+    const field1 = frame1.fields.find((f) => f.type === FieldType.number);
+    const field2 = frame2.fields.find((f) => f.type === FieldType.number);
+    if (field1 === undefined || field2 === undefined) {
+      // should never happen
+      return false;
+    }
+
+    return shallowCompare(field1.labels ?? {}, field2.labels ?? {});
+  }
+
+  // logs query data
+  // logs use a special attribute in the dataframe's "custom" section
+  // because we do not have a good "frametype" value for them yet.
+  const customType1 = frame1.meta?.custom?.frameType;
+  const customType2 = frame2.meta?.custom?.frameType;
+
+  if (customType1 === 'LabeledTimeValues' && customType2 === 'LabeledTimeValues') {
+    return true;
+  }
+
+  // should never reach here
+  return false;
 }
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
@@ -147,7 +186,15 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   // some grafana parts do not behave well.
   // we just choose the old error, if it exists,
   // otherwise the new error, if it exists.
-  currentResult.error = currentResult.error ?? newResult.error;
+  const mergedError = currentResult.error ?? newResult.error;
+  if (mergedError != null) {
+    currentResult.error = mergedError;
+  }
+
+  const mergedTraceIds = [...(currentResult.traceIds ?? []), ...(newResult.traceIds ?? [])];
+  if (mergedTraceIds.length > 0) {
+    currentResult.traceIds = mergedTraceIds;
+  }
 
   return currentResult;
 }
@@ -155,9 +202,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values = new ArrayVector(
-      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
-    );
+    dest.fields[i].values = [].concat.apply(source.fields[i].values, dest.fields[i].values);
   }
   dest.length += source.length;
   dest.meta = {
@@ -203,9 +248,9 @@ export function cloneQueryResponse(response: DataQueryResponse): DataQueryRespon
 function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
   return {
     ...frame,
-    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+    fields: frame.fields.map((field: Field) => ({
       ...field,
-      values: new ArrayVector(field.values.buffer),
+      values: field.values,
     })),
   };
 }

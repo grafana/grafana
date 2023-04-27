@@ -7,6 +7,7 @@ import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin 
 import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
+import { PanelOptions } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
@@ -14,10 +15,9 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { TimeSeriesOptions } from './types';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
-interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
+interface TimeSeriesPanelProps extends PanelProps<PanelOptions> {}
 
 export const TimeSeriesPanel = ({
   data,

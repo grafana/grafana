@@ -8,7 +8,7 @@ export interface LokiInstantQueryRequest {
   query: string;
   limit?: number;
   time?: string;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiQueryDirection;
 }
 
 export interface LokiRangeQueryRequest {
@@ -17,7 +17,7 @@ export interface LokiRangeQueryRequest {
   start?: number;
   end?: number;
   step?: number;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiQueryDirection;
 }
 
 export enum LokiResultType {
@@ -40,7 +40,7 @@ export interface LokiQuery extends LokiQueryFromSchema {
    * This is a property for the experimental query splitting feature.
    * @experimental
    */
-  chunkDuration?: string;
+  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {

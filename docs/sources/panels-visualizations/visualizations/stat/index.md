@@ -16,7 +16,7 @@ weight: 900
 
 # Stat
 
-The Stat panel visualization shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds.
+The Stat panel visualization shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or overrides.
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
@@ -27,7 +27,7 @@ By default, the Stat panel displays one of the following:
 - Just the value for a single series or field.
 - Both the value and name for multiple series or fields.
 
-You can use the **Text mode** to control whether the text is displayed or not.
+You can use the **Text mode** to control how the text is displayed.
 
 Example screenshot:
 
@@ -39,15 +39,15 @@ The panel automatically adjusts the layout depending on available width and heig
 
 ## Value options
 
-Use the following options to refine how your visualization displays the value:
+Use the following options to refine how your visualization displays its values:
 
 ### Show
 
-Choose how Grafana displays your data.
+Display a single value per column or series, or show values for each row.
 
 #### Calculate
 
-Show a calculated value based on all rows.
+Display a calculated value based on all rows.
 
 - **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types]({{< relref "../../calculation-types/" >}}).
 - **Fields -** Select the fields display in the panel.
@@ -85,8 +85,10 @@ You can use the Text mode option to control what text the panel renders. If the 
 
 Select a color mode.
 
-- **Value -** Colors only the value and graph area.
-- **Background -** Colors the background as well.
+- **None -** No color applied to the value.
+- **Value -** Applies color to the value and graph area.
+- **Background Gradient -** Applies color to the value, graph area, and background, with a slight background gradient.
+- **Background Solid -** Applies color to the value, graph area, and background, with a solid background color.
 
 ### Graph mode
 

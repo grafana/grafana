@@ -47,6 +47,19 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
+export function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML {
+  return DOMPurify.sanitize(unsanitizedString, {
+    RETURN_TRUSTED_TYPE: true,
+    ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'],
+    ADD_TAGS: ['rss', 'meta', 'channel', 'title', 'link', 'description', 'atom:link', 'item', 'pubDate', 'guid'],
+    PARSER_MEDIA_TYPE: 'application/xhtml+xml',
+  });
+}
+
+export function sanitizeTrustedTypes(unsanitizedString: string): TrustedHTML {
+  return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true });
+}
+
 /**
  * Returns string safe from XSS attacks to be used in the Text panel plugin.
  *
@@ -85,6 +98,5 @@ export function escapeHtml(str: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/'/g, '&#39;')
-    .replace(/\//g, '&#47;')
     .replace(/"/g, '&quot;');
 }

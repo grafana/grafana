@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -10,11 +11,13 @@ import { PanelMenu } from './PanelMenu';
 
 interface Props {
   children?: React.ReactNode;
-  menu: ReactElement | (() => ReactElement);
+  menu?: ReactElement | (() => ReactElement);
   title?: string;
   offset?: number;
   dragClass?: string;
 }
+
+const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
 
 export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: Props) {
   const styles = useStyles2(getStyles);
@@ -39,19 +42,22 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
     <div
       className={cx(styles.container, { 'show-on-hover': !menuOpen })}
       style={{ top: `${offset}px` }}
-      data-testid="hover-header-container"
+      data-testid={selectors.container}
     >
-      <div
-        className={cx(styles.square, styles.draggable, dragClass)}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        ref={draggableRef}
-      >
-        <Icon name="expand-arrows" className={styles.draggableIcon} />
-      </div>
-      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
+      {dragClass && (
+        <div
+          className={cx(styles.square, styles.draggable, dragClass)}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          ref={draggableRef}
+          data-testid={selectors.dragIcon}
+        >
+          <Icon name="expand-arrows" className={styles.draggableIcon} />
+        </div>
+      )}
+      {!title && <h6 className={cx(styles.untitled, { [styles.draggable]: !!dragClass }, dragClass)}>Untitled</h6>}
       {children}
-      <div className={styles.square}>
+      {menu && (
         <PanelMenu
           menu={menu}
           title={title}
@@ -59,7 +65,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           menuButtonClass={styles.menuButton}
           onVisibleChange={setMenuOpen}
         />
-      </div>
+      )}
     </div>
   );
 }
@@ -92,7 +98,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       width: theme.spacing(4),
       height: '100%',
-      paddingRight: theme.spacing(0.5),
     }),
     draggable: css({
       cursor: 'move',
@@ -109,12 +114,10 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.secondary.main,
       },
     }),
-    title: css({
-      padding: theme.spacing(0.75),
-    }),
     untitled: css({
       color: theme.colors.text.disabled,
       fontStyle: 'italic',
+      padding: theme.spacing(0, 1),
       marginBottom: 0,
     }),
     draggableIcon: css({

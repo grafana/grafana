@@ -54,15 +54,20 @@ describe('shouldUpdateStats', () => {
 describe('makeStatsRequest', () => {
   const datasource = createLokiDatasource();
 
-  it('should return undefined if there is no query', () => {
+  it('should return null if there is no query', () => {
     const query = '';
-    expect(getStats(datasource, query)).resolves.toBe(undefined); // change
+    expect(getStats(datasource, query)).resolves.toBe(null);
   });
 
-  it('should return undefined if the response has no data', () => {
+  it('should return null if the query is invalid', () => {
+    const query = '{job="grafana",';
+    expect(getStats(datasource, query)).resolves.toBe(null);
+  });
+
+  it('should return null if the response has no data', () => {
     const query = '{job="grafana"}';
     datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
-    expect(getStats(datasource, query)).resolves.toBe(undefined);
+    expect(getStats(datasource, query)).resolves.toBe(null);
   });
 
   it('should return the stats if the response has data', () => {

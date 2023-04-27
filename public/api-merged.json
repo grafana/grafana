@@ -2534,6 +2534,13 @@
             "description": "Whether to initiate a download of the file or not.",
             "name": "download",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2669,6 +2676,13 @@
             "default": false,
             "description": "Whether to initiate a download of the file or not.",
             "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
             "in": "query"
           }
         ],
@@ -2918,6 +2932,13 @@
             "default": false,
             "description": "Whether to initiate a download of the file or not.",
             "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
             "in": "query"
           }
         ],
@@ -3255,7 +3276,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "tags": [
           "api_keys"
         ],
@@ -3295,6 +3316,7 @@
         ],
         "summary": "Creates an API key.",
         "operationId": "addAPIkey",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3329,11 +3351,13 @@
     },
     "/auth/keys/{id}": {
       "delete": {
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "tags": [
           "api_keys"
         ],
         "summary": "Delete API key.",
         "operationId": "deleteAPIkey",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5380,7 +5404,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -5466,12 +5490,13 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "tags": [
           "folders"
         ],
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5534,7 +5559,6 @@
         }
       },
       "put": {
-        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "tags": [
           "folders"
         ],
@@ -5609,6 +5633,82 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
+        "operationId": "getFolderDescendantCounts",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getFolderDescendantCountsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/move": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Move folder.",
+        "operationId": "moveFolder",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MoveFolderCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/folderResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -9405,6 +9505,48 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
+        "summary": "Remove External Group.",
+        "operationId": "removeTeamGroupApiQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "groupId",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     },
     "/teams/{teamId}/groups/{groupId}": {
@@ -9415,6 +9557,7 @@
         ],
         "summary": "Remove External Group.",
         "operationId": "removeTeamGroupApi",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11263,9 +11406,9 @@
         "execErrState": {
           "type": "string",
           "enum": [
+            "OK",
             "Alerting",
-            "Error",
-            "OK"
+            "Error"
           ]
         },
         "for": {
@@ -11519,6 +11662,10 @@
             "internal",
             "external"
           ]
+        },
+        "numExternalAlertmanagers": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -11560,6 +11707,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time"
         },
         "name": {
           "type": "string"
@@ -11857,6 +12008,9 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "CookieType": {
+      "type": "string"
+    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
@@ -11912,6 +12066,9 @@
             "expr": "job=app"
           }
         },
+        "transformations": {
+          "$ref": "#/definitions/Transformations"
+        },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
         }
@@ -11935,6 +12092,23 @@
           "example": {
             "expr": "job=app"
           }
+        },
+        "transformations": {
+          "description": "Source data transformations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Transformation"
+          },
+          "example": [
+            {
+              "type": "logfmt"
+            },
+            {
+              "expression": "(Superman|Batman)",
+              "type": "regex",
+              "variable": "name"
+            }
+          ]
         },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
@@ -12615,48 +12789,6 @@
         }
       }
     },
-    "DashboardVersionDTO": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "createdBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "data": {
-          "$ref": "#/definitions/Json"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        },
-        "parentVersion": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "restoredFrom": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardVersionMeta": {
       "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
       "type": "object",
@@ -12703,6 +12835,9 @@
       "description": "DataLink define what",
       "type": "object",
       "properties": {
+        "internal": {
+          "$ref": "#/definitions/InternalDataLink"
+        },
         "targetBlank": {
           "type": "boolean"
         },
@@ -12956,6 +13091,13 @@
         }
       }
     },
+    "DescendantCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
     "DiscordConfig": {
       "type": "object",
       "title": "DiscordConfig configures notifications via Discord.",
@@ -13003,9 +13145,9 @@
       "format": "int64"
     },
     "Duration": {
+      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
-      "format": "int64",
-      "title": "Duration is a type used for marshalling durations."
+      "format": "int64"
     },
     "EmailConfig": {
       "type": "object",
@@ -13117,6 +13259,40 @@
         }
       }
     },
+    "EnumFieldConfig": {
+      "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+      "type": "object",
+      "properties": {
+        "color": {
+          "description": "Color is the color value for a given index (empty is undefined)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "description": "Description of the enum state",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "icon": {
+          "description": "Icon supports setting an icon for a given index value",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "description": "Value is the string display value for a given index",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": [
@@ -13193,6 +13369,9 @@
       }
     },
     "EvalQueriesResponse": {},
+    "ExplorePanelsState": {
+      "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+    },
     "ExtendedReceiver": {
       "type": "object",
       "properties": {
@@ -13323,6 +13502,9 @@
         "thresholds": {
           "$ref": "#/definitions/ThresholdsConfig"
         },
+        "type": {
+          "$ref": "#/definitions/FieldTypeConfig"
+        },
         "unit": {
           "description": "Numeric Options",
           "type": "string"
@@ -13330,6 +13512,15 @@
         "writeable": {
           "description": "Writeable indicates that the datasource knows how to update this value",
           "type": "boolean"
+        }
+      }
+    },
+    "FieldTypeConfig": {
+      "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+      "type": "object",
+      "properties": {
+        "enum": {
+          "$ref": "#/definitions/EnumFieldConfig"
         }
       }
     },
@@ -13381,6 +13572,13 @@
           "description": "only used if nested folders are enabled",
           "type": "string"
         },
+        "parents": {
+          "description": "the parent folders starting from the root going down",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Folder"
+          }
+        },
         "title": {
           "type": "string"
         },
@@ -13406,9 +13604,6 @@
     "FolderSearchHit": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -13430,7 +13625,7 @@
       "title": "Frame is a columnar data structure where each column is a Field.",
       "properties": {
         "Fields": {
-          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Field"
@@ -13502,6 +13697,9 @@
         },
         "type": {
           "$ref": "#/definitions/FrameType"
+        },
+        "typeVersion": {
+          "$ref": "#/definitions/FrameTypeVersion"
         }
       }
     },
@@ -13509,8 +13707,16 @@
       "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
       "type": "string"
     },
+    "FrameTypeVersion": {
+      "type": "array",
+      "title": "FrameType is a 2 number version (Major / Minor).",
+      "items": {
+        "type": "integer",
+        "format": "uint64"
+      }
+    },
     "Frames": {
-      "description": "It is the main data container within a backend.DataResponse.",
+      "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
       "type": "array",
       "title": "Frames is a slice of Frame pointers.",
       "items": {
@@ -13831,6 +14037,34 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "GettableHistoricUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "last_applied": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          }
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -14265,6 +14499,31 @@
       "format": "int64",
       "title": "InspectType is a type for the Inspect property of a Notice."
     },
+    "InternalDataLink": {
+      "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+      "type": "object",
+      "properties": {
+        "datasourceName": {
+          "type": "string"
+        },
+        "datasourceUid": {
+          "type": "string"
+        },
+        "panelsState": {
+          "$ref": "#/definitions/ExplorePanelsState"
+        },
+        "query": {},
+        "timeRange": {
+          "$ref": "#/definitions/TimeRange"
+        },
+        "transformations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkTransformationConfig"
+          }
+        }
+      }
+    },
     "Item": {
       "type": "object",
       "title": "Item defines model for Item.",
@@ -14408,7 +14667,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "DashboardId": {
+        "DashboardID": {
           "type": "integer",
           "format": "int64"
         },
@@ -14429,7 +14688,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "Id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
@@ -14443,11 +14702,11 @@
           "type": "string",
           "format": "date-time"
         },
-        "OrgId": {
+        "OrgID": {
           "type": "integer",
           "format": "int64"
         },
-        "PanelId": {
+        "PanelID": {
           "type": "integer",
           "format": "int64"
         },
@@ -14660,6 +14919,23 @@
         }
       }
     },
+    "LinkTransformationConfig": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "mapValue": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/SupportedTransformationTypes"
+        }
+      }
+    },
     "MassDeleteAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -14776,6 +15052,15 @@
           "items": {
             "$ref": "#/definitions/QueryToMigrate"
           }
+        }
+      }
+    },
+    "MoveFolderCommand": {
+      "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
+      "type": "object",
+      "properties": {
+        "parentUid": {
+          "type": "string"
         }
       }
     },
@@ -15098,6 +15383,9 @@
         "isDisabled": {
           "type": "boolean"
         },
+        "isExternallySynced": {
+          "type": "boolean"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -15292,6 +15580,12 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -15828,7 +16122,7 @@
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
-          "description": "light, dark, empty is default",
+          "description": "Theme light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -15836,7 +16130,7 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "day of the week (sunday, monday, etc)",
+          "description": "WeekStart day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -15939,9 +16233,9 @@
         "execErrState": {
           "type": "string",
           "enum": [
+            "OK",
             "Alerting",
-            "Error",
-            "OK"
+            "Error"
           ]
         },
         "folderUID": {
@@ -16242,6 +16536,9 @@
         },
         "thresholds": {
           "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "type": {
+          "$ref": "#/definitions/FieldTypeConfig"
         },
         "unit": {
           "description": "Numeric Options",
@@ -16982,7 +17279,7 @@
         "basicRole": {
           "type": "string"
         },
-        "orgID": {
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -16992,11 +17289,11 @@
         "scope": {
           "type": "string"
         },
-        "teamID": {
+        "teamId": {
           "type": "integer",
           "format": "int64"
         },
-        "userID": {
+        "userId": {
           "type": "integer",
           "format": "int64"
         },
@@ -17433,6 +17730,9 @@
           "type": "string"
         }
       }
+    },
+    "SupportedTransformationTypes": {
+      "type": "string"
     },
     "SyncResult": {
       "type": "object",
@@ -17878,17 +18178,16 @@
       }
     },
     "TimeRange": {
-      "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+      "description": "Redefining this to avoid an import cycle",
       "type": "object",
-      "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
       "properties": {
-        "EndMinute": {
-          "type": "integer",
-          "format": "int64"
+        "from": {
+          "type": "string",
+          "format": "date-time"
         },
-        "StartMinute": {
-          "type": "integer",
-          "format": "int64"
+        "to": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -18035,6 +18334,33 @@
     "TokenStatus": {
       "type": "integer",
       "format": "int64"
+    },
+    "Transformation": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "mapValue": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "regex",
+            "logfmt"
+          ]
+        }
+      }
+    },
+    "Transformations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Transformation"
+      }
     },
     "TrimDashboardCommand": {
       "type": "object",
@@ -18391,6 +18717,12 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
+        "cookies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CookieType"
+          }
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -18602,6 +18934,9 @@
           "type": "boolean"
         },
         "isExternal": {
+          "type": "boolean"
+        },
+        "isExternallySynced": {
           "type": "boolean"
         },
         "isGrafanaAdmin": {
@@ -18916,6 +19251,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -19076,13 +19412,13 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -19282,6 +19618,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -19319,7 +19656,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -19434,6 +19770,15 @@
     }
   },
   "responses": {
+    "GettableHistoricUserConfigs": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableHistoricUserConfig"
+        }
+      }
+    },
     "SMTPNotEnabledError": {
       "description": "(empty)"
     },
@@ -19677,7 +20022,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/DashboardVersionDTO"
+          "$ref": "#/definitions/DashboardVersionMeta"
         }
       }
     },
@@ -19994,6 +20339,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSourceList"
+      }
+    },
+    "getFolderDescendantCountsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DescendantCounts"
       }
     },
     "getFolderPermissionListResponse": {

@@ -6,7 +6,7 @@ import { ReducerID } from '../transformations/fieldReducer';
 import { FieldConfigPropertyItem, MappingType, SpecialValueMatch, ValueMapping } from '../types';
 
 import { getDisplayProcessor } from './displayProcessor';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { fixCellTemplateExpressions, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
@@ -534,3 +534,11 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
 
   return merge(options, extend);
 }
+
+describe('fixCellTemplateExpressions', () => {
+  it('Should replace __cell_x correctly', () => {
+    expect(fixCellTemplateExpressions('$__cell_10 asd ${__cell_15} asd [[__cell_20]]')).toEqual(
+      '${__data.fields[10]} asd ${__data.fields[15]} asd ${__data.fields[20]}'
+    );
+  });
+});

@@ -33,8 +33,8 @@ You install Grafana using the Windows installer or using the standalone Windows 
 
    c. Extract the ZIP file to any folder.
 
-1. Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
-   [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
+Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
+[NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
 
 1. To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}).
 
@@ -53,10 +53,6 @@ You install Grafana using the Windows installer or using the standalone Windows 
    c. Change the port to `8080` or something similar.
 
    Port `8080` should not require extra Windows privileges.
-
-## Upgrade Grafana
-
-While the process for upgrading Grafana is very similar to installing Grafana, there are important backup tasks you should perform. Refer to [Upgrade Grafana]({{< relref "../../../upgrade-guide/" >}}) for guidance on updating an existing installation.
 
 ## Next steps
 
