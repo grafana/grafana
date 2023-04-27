@@ -1,10 +1,17 @@
 name: "verify-kinds"
+
+# Temporary - for tests
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
+  push:
+    branches:
+      - "agnestoulet/kind-registry"
+
+# on:
+#   pull_request_target:
+#     types:
+#       - opened
+#       - reopened
+#       - synchronize
 
 jobs:
   sync:
