@@ -10,19 +10,19 @@ if (
 ) {
   // check if browser supports Trusted Types
   window.trustedTypes.createPolicy('default', {
-    createHTML: (string, args) => {
+    createHTML: (string, source, sink) => {
       if (!CSP_REPORT_ONLY_ENABLED) {
         return string.replace(/<script/gi, '&lt;script');
       }
-      console.error('[HTML not sanitized with Trusted Types]', string);
+      console.error('[HTML not sanitized with Trusted Types]', string, source, sink);
       return string;
     },
     createScript: (string) => string,
-    createScriptURL: (string) => {
+    createScriptURL: (string, source, sink) => {
       if (!CSP_REPORT_ONLY_ENABLED) {
         return textUtil.sanitizeUrl(string);
       }
-      console.error('[ScriptURL not sanitized with Trusted Types]', string);
+      console.error('[ScriptURL not sanitized with Trusted Types]', string, source, sink);
       return string;
     },
   });
