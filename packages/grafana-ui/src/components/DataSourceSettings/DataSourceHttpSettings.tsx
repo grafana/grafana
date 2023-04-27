@@ -73,6 +73,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     azureAuthSettings,
     renderSigV4Editor,
     secureSocksDSProxyEnabled,
+    connectionElements,
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
@@ -93,6 +94,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
       urlTooltip = (
         <>
           Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          {connectionElements?.tooltip}
         </>
       );
       break;
@@ -101,11 +103,12 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         <>
           Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
           backend/server.
+          {connectionElements?.tooltip}
         </>
       );
       break;
     default:
-      urlTooltip = 'Specify a complete HTTP URL (for example http://your_server:8080)';
+      urlTooltip = <>Specify a complete HTTP URL (for example http://your_server:8080) {connectionElements?.tooltip}</>;
   }
 
   const accessSelect = (
@@ -143,14 +146,24 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
 
+  const connectionLabel = connectionElements?.label ? connectionElements?.label : 'URL';
+
   return (
     <div className="gf-form-group">
       <>
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
-          <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
-          </div>
+          {defaultUrl && (
+            <div className="gf-form">
+              <FormField
+                interactive={connectionElements?.tooltip ? true : false}
+                label={connectionLabel}
+                labelWidth={13}
+                tooltip={urlTooltip}
+                inputEl={urlInput}
+              />
+            </div>
+          )}
 
           {showAccessOptions && (
             <>
