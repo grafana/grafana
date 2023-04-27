@@ -69,6 +69,16 @@ export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[])
   return orderedTags;
 }
 
+function handleJsonArrayRecursive<T>(input: T[] | string | undefined, depth = 0): T[] {
+  if (Array.isArray(input)) {
+    return input;
+  }
+  if (typeof input === 'string' && depth === 0) {
+    return handleJsonArrayRecursive(JSON.parse(input), ++depth);
+  }
+  return [];
+}
+
 /**
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
@@ -152,9 +162,11 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
     span.childSpanCount = node.children.length;
-    span.warnings = span.warnings || [];
-    span.tags = span.tags || [];
-    span.references = span.references || [];
+    span.warnings = handleJsonArrayRecursive(span.warnings);
+    span.tags = handleJsonArrayRecursive(span.tags);
+    span.logs = handleJsonArrayRecursive(span.logs);
+    span.references = handleJsonArrayRecursive(span.references);
+    span.stackTraces = handleJsonArrayRecursive(span.stackTraces);
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.tags, getConfigValue('topTagPrefixes'));
     span.warnings = span.warnings.concat(tagsInfo.warnings);
@@ -163,9 +175,10 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
       if (refSpan) {
         // eslint-disable-next-line no-param-reassign
         ref.span = refSpan;
+        ref.tags = handleJsonArrayRecursive(ref.tags);
         if (index > 0) {
           // Don't take into account the parent, just other references.
-          refSpan.subsidiarilyReferencedBy = refSpan.subsidiarilyReferencedBy || [];
+          refSpan.subsidiarilyReferencedBy = handleJsonArrayRecursive(refSpan.subsidiarilyReferencedBy);
           refSpan.subsidiarilyReferencedBy.push({
             spanID,
             traceID,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceResponse } from '../types';
+import { TraceKeyValuePair, TraceResponse } from '../types';
 
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
 
@@ -161,5 +161,36 @@ describe('transformTraceData()', () => {
     } as unknown as TraceResponse;
 
     expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
+  });
+
+  it('should return tags when defined as JSON strings', () => {
+    const expectedTags: TraceKeyValuePair[] = [
+      {
+        key: 'tag1',
+        value: 'value1',
+      },
+      {
+        key: 'tag2',
+        value: 'value2',
+      },
+    ];
+
+    const traceData = {
+      traceID,
+      processes,
+      spans: [
+        {
+          traceID,
+          spanID: '41f71485ed2593e4',
+          operationName: 'someOperationName',
+          startTime,
+          duration,
+          tags: JSON.stringify(expectedTags),
+          processID: 'p1',
+        },
+      ],
+    } as unknown as TraceResponse;
+
+    expect(transformTraceData(traceData)?.spans[0]?.tags).toEqual(expectedTags);
   });
 });
