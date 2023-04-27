@@ -7,6 +7,9 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
+import { useDispatch, useSelector } from 'app/types';
+
+import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -15,6 +18,8 @@ export interface Props {
 
 export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
+  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return (
     <div className={styles.centeredContent}>
@@ -36,9 +41,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             icon="plus"
             aria-label="Add new panel"
             onClick={() => {
-              reportInteraction('Create new panel');
-              const id = onCreateNewPanel(dashboard);
+              const id = onCreateNewPanel(dashboard, initialDatasource);
+              reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
               locationService.partial({ editPanel: id });
+              dispatch(setInitialDatasource(undefined));
             }}
             disabled={!canCreate}
           >
@@ -58,7 +64,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               fill="outline"
               aria-label="Add new row"
               onClick={() => {
-                reportInteraction('Create new row');
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
                 onCreateNewRow(dashboard);
               }}
               disabled={!canCreate}
@@ -80,7 +86,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               fill="outline"
               aria-label="Add new panel from panel library"
               onClick={() => {
-                reportInteraction('Add a panel from the panel library');
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
                 onAddLibraryPanel(dashboard);
               }}
               disabled={!canCreate}

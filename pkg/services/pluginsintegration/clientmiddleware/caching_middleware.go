@@ -56,16 +56,16 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// First look in the query cache if enabled
 	hit, cr := m.caching.HandleQueryRequest(ctx, req)
 
-	defer func() {
-		// record request duration if caching was used
-		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+	// record request duration if caching was used
+	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+		defer func() {
 			QueryCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
 				"query_type":      getQueryType(reqCtx),
 			}).Observe(time.Since(start).Seconds())
-		}
-	}()
+		}()
+	}
 
 	// Cache hit; return the response
 	if hit {
@@ -102,15 +102,15 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	// First look in the resource cache if enabled
 	hit, cr := m.caching.HandleResourceRequest(ctx, req)
 
-	defer func() {
-		// record request duration if caching was used
-		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+	// record request duration if caching was used
+	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+		defer func() {
 			ResourceCachingRequestHistogram.With(prometheus.Labels{
 				"plugin_id": req.PluginContext.PluginID,
 				"cache":     ch,
 			}).Observe(time.Since(start).Seconds())
-		}
-	}()
+		}()
+	}
 
 	// Cache hit; send the response and return
 	if hit {
@@ -123,7 +123,7 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		return m.next.CallResource(ctx, req, sender)
 	}
 	// Otherwise, intercept the responses in a wrapped sender so we can cache them first
-	cacheSender := cachedSenderFunc(func(res *backend.CallResourceResponse) error {
+	cacheSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		cr.UpdateCacheFn(ctx, res)
 		return sender.Send(res)
 	})
@@ -149,10 +149,4 @@ func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 
 func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
-}
-
-type cachedSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn cachedSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
 }

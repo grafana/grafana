@@ -4,14 +4,7 @@ import { program } from 'commander';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
-import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
-import { pluginDevTask } from './tasks/plugin.dev';
-import { pluginSignTask } from './tasks/plugin.sign';
-import { pluginTestTask } from './tasks/plugin.tests';
-import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
-import { bundleManagedTask } from './tasks/plugin/bundle.managed';
-import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { execTask } from './utils/execTask';
@@ -67,19 +60,6 @@ export const run = (includeInternalScripts = false) => {
         );
         await execTask(toolkitBuildTask)({});
       });
-
-    program
-      .command('searchTestData')
-      .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
-      .description('[deprecated] Setup test data for search')
-      .action(async (cmd) => {
-        console.log(
-          chalk.yellow.bold(
-            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-          )
-        );
-        await execTask(searchTestDataSetupTask)({ count: cmd.count });
-      });
   }
 
   program.option('-v, --version', 'Toolkit version').action(async () => {
@@ -122,48 +102,6 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:dev')
-    .option('-w, --watch', 'Run plugin development mode with watch enabled')
-    .description('[Deprecated] Starts plugin dev mode')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
-      console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
-      );
-
-      await execTask(pluginDevTask)({
-        watch: !!cmd.watch,
-        silent: true,
-      });
-    });
-
-  program
-    .command('plugin:test')
-    .option('-u, --updateSnapshot', 'Run snapshots update')
-    .option('--coverage', 'Run code coverage')
-    .option('--watch', 'Run tests in interactive watch mode')
-    .option('--testPathPattern <regex>', 'Run only tests with a path that matches the regex')
-    .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
-    .option('--maxWorkers <num>|<string>', 'Limit number of workers spawned')
-    .description('[Deprecated] Executes plugin tests')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
-      console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
-      );
-
-      await execTask(pluginTestTask)({
-        updateSnapshot: !!cmd.updateSnapshot,
-        coverage: !!cmd.coverage,
-        watch: !!cmd.watch,
-        testPathPattern: cmd.testPathPattern,
-        testNamePattern: cmd.testNamePattern,
-        maxWorkers: cmd.maxWorkers,
-        silent: true,
-      });
-    });
-
-  program
     .command('plugin:sign')
     .option('--signatureType <type>', 'Signature Type')
     .option(
@@ -181,64 +119,12 @@ export const run = (includeInternalScripts = false) => {
       },
       []
     )
-    .description('[Deprecated] Create a plugin signature')
-    .action(async (cmd) => {
+    .description('[removed] Use grafana sign-plugin instead')
+    .action(() => {
       console.log(
-        chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️') +
-          '\nPlease migrate to grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin'
+        'No longer supported. Use grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin\n'
       );
-      await execTask(pluginSignTask)({
-        signatureType: cmd.signatureType,
-        rootUrls: cmd.rootUrls,
-        silent: true,
-      });
-    });
-
-  program
-    .command('plugin:ci-build')
-    .option('--finish', 'move all results to the jobs folder', false)
-    .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('[deprecated] Build the plugin, leaving results in /dist and /coverage')
-    .action(async (cmd) => {
-      await execTask(ciBuildPluginTask)({
-        finish: cmd.finish,
-        maxJestWorkers: cmd.maxJestWorkers,
-      });
-    });
-
-  program
-    .command('plugin:ci-package')
-    .option('--signatureType <type>', 'Signature Type')
-    .option('--rootUrls <urls...>', 'Root URLs')
-    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
-    .description('[deprecated] Create a zip packages for the plugin')
-    .action(async (cmd) => {
-      await execTask(ciPackagePluginTask)({
-        signatureType: cmd.signatureType,
-        rootUrls: cmd.rootUrls,
-      });
-    });
-
-  program
-    .command('plugin:ci-report')
-    .description('[deprecated] Build a report for this whole process')
-    .option('--upload', 'upload packages also')
-    .action(async (cmd) => {
-      await execTask(ciPluginReportTask)({
-        upload: cmd.upload,
-      });
-    });
-
-  program
-    .command('plugin:bundle-managed')
-    .description('[Deprecated] Builds managed plugins')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-        )
-      );
-      await execTask(bundleManagedTask)({});
+      process.exit(1);
     });
 
   program
@@ -259,18 +145,6 @@ export const run = (includeInternalScripts = false) => {
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
       });
-    });
-
-  program
-    .command('plugin:update-circleci')
-    .description('[Deprecated] Update plugin')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-        )
-      );
-      await execTask(pluginUpdateTask)({});
     });
 
   program.on('command:*', () => {
