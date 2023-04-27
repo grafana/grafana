@@ -102,7 +102,7 @@ func TestTracingConfig(t *testing.T) {
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
-			Name: "legacy config format is supproted",
+			Name: "legacy config format is supported",
 			Cfg: `
 			[tracing.jaeger]
 			address = jaeger.example.com:6831
