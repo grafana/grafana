@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,7 +13,6 @@ interface Props {
 export function EditDataSourceTitle({ title, onNameChange }: Props) {
   const [isNameEditable, setIsNameEditable] = useState(false);
   const [name, setName] = useState<string>(title);
-  const inputRef = useRef<HTMLInputElement>(null);
   const styles = useStyles2(getStyles);
 
   const toggleEditMode = () => {
@@ -25,12 +24,6 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
     setName(event.currentTarget.value);
     toggleEditMode();
   };
-
-  useEffect(() => {
-    if (isNameEditable && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isNameEditable, inputRef]);
 
   useEffect(() => {
     setName(title);
@@ -56,7 +49,7 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
             maxWidth={80}
             required
             data-testid={selectors.pages.DataSource.name}
-            ref={inputRef}
+            autoFocus={isNameEditable}
           ></AutoSizeInput>
         </div>
       )}
@@ -79,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     datasourceNameInput: css({
       input: {
-        fontSize: '28px',
+        fontSize: theme.typography.h1.fontSize,
         padding: '6px 8px',
         height: '40px',
       },
