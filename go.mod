@@ -25,7 +25,7 @@ replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.
 // hoist a replace statement.
 replace k8s.io/client-go => k8s.io/client-go v0.25.3
 
-replace github.com/grafana/thema => github.com/grafana/thema v0.0.0-20230403072128-78fc27f0b99d
+replace github.com/grafana/thema => github.com/grafana/thema v0.0.0-20230427091111-6bf746211311
 
 require (
 	k8s.io/apiextensions-apiserver v0.26.2 // indirect
@@ -34,7 +34,7 @@ require (
 
 require (
 	cloud.google.com/go/storage v1.28.1
-	cuelang.org/go v0.5.0
+	cuelang.org/go v0.6.0-0.dev
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/BurntSushi/toml v1.2.1
@@ -128,7 +128,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6 // indirect
+	xorm.io/builder v0.3.6
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
