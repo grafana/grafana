@@ -78,7 +78,7 @@ HeadingComponent.args = {
   weight: 'fontWeightBold',
   textAlignment: 'center',
   truncate: false,
-  color: 'color.error.text',
+  color: 'error',
   children: 'This is a H1 component',
 };
 
