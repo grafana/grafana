@@ -18,6 +18,7 @@ describe('browse-dashboards DeleteModal', () => {
     onConfirm: mockOnConfirm,
     onDismiss: mockOnDismiss,
     selectedItems: {
+      $all: false,
       folder: {},
       dashboard: {},
       panel: {},

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,6 +15,7 @@ import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
+import { CreateNewButton } from './components/CreateNewButton';
 import { SearchView } from './components/SearchView';
 import { useHasSelection } from './state';
 
@@ -28,6 +29,9 @@ export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRo
 // New Browse/Manage/Search Dashboards views for nested folders
 
 const BrowseDashboardsPage = memo(({ match }: Props) => {
+  // this is a complete hack to force a full rerender.
+  // TODO remove once we move everything to RTK query
+  const [rerender, setRerender] = useState(0);
   const { uid: folderUID } = match.params;
 
   const styles = useStyles2(getStyles);
@@ -49,7 +53,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const hasSelection = useHasSelection();
 
   return (
-    <Page navId="dashboards/browse" pageNav={navModel}>
+    <Page navId="dashboards/browse" pageNav={navModel} actions={<CreateNewButton inFolder={folderUID} />}>
       <Page.Contents className={styles.pageContents}>
         <FilterInput
           placeholder={getSearchPlaceholder(searchState.includePanels)}
@@ -58,15 +62,15 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           onChange={(e) => stateManager.onQueryChange(e)}
         />
 
-        {hasSelection ? <BrowseActions /> : <BrowseFilters />}
+        {hasSelection ? <BrowseActions onActionComplete={() => setRerender(rerender + 1)} /> : <BrowseFilters />}
 
         <div className={styles.subView}>
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView width={width} height={height} />
+                <SearchView key={rerender} width={width} height={height} />
               ) : (
-                <BrowseView width={width} height={height} folderUID={folderUID} />
+                <BrowseView key={rerender} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

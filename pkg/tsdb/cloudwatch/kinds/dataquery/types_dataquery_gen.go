@@ -422,7 +422,8 @@ type CloudWatchMetricsQuery struct {
 	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
 	AccountId *string `json:"accountId,omitempty"`
 
-	// To be deprecated. Use label
+	// Deprecated: use label
+	// @deprecated use label
 	Alias *string `json:"alias,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.

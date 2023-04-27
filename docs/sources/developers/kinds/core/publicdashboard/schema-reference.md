@@ -13,16 +13,16 @@ title: PublicDashboard kind
 
 Public dashboard configuration
 
-| Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                   |
-|------------|---------------------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redfining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
-| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                               |
-| `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                               |
+| Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
+|------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redefining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
+| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+| `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                                |
 
 ### Metadata
 
 metadata contains embedded CommonMetadata and can be extended with custom string fields
-TODO: use CommonMetadata instead of redfining here; currently needs to be defined here
+TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
 without external reference as using the CommonMetadata reference breaks thema codegen.
 
 It extends [_kubeObjectMetadata](#_kubeobjectmetadata).

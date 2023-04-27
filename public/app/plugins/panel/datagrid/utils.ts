@@ -266,7 +266,7 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
         transition: background-color 200ms;
         cursor: pointer;
         :hover {
-          background-color: ${theme.colors.secondary.shade};
+          background-color: ${theme.colors.background.secondary};
         }
       }
       input {

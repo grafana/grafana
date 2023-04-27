@@ -5404,7 +5404,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -11885,6 +11885,13 @@
         }
       }
     },
+    "ChildrenCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
     "ConfFloat64": {
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
@@ -13592,13 +13599,6 @@
           "type": "integer",
           "format": "int64"
         }
-      }
-    },
-    "FolderChildrenCounts": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "integer",
-        "format": "int64"
       }
     },
     "FolderSearchHit": {
@@ -20344,7 +20344,7 @@
     "getFolderChildrenCountsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/FolderChildrenCounts"
+        "$ref": "#/definitions/ChildrenCounts"
       }
     },
     "getFolderPermissionListResponse": {
