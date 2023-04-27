@@ -62,6 +62,6 @@ base_url = https://secret-scanning.grafana.net
 # URL to send outgoing webhooks to in case of detection
 oncall_url =
 
-# Wether to revoke the token if a leak is detected or just send a notification
+# Whether to revoke the token if a leak is detected or just send a notification
 revoke = true
 ```
