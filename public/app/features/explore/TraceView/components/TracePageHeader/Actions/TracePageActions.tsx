@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { CoreApp, DataFrame, MutableDataFrame } from '@grafana/data';
+import { CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { config } from '../../../../../../core/config';
-import { transformToOTLP } from '../../../../../../plugins/datasource/tempo/resultTransformer';
-import { downloadAsJson } from '../../../../../inspector/utils/download';
+import { downloadTraceAsJson } from '../../../../../inspector/utils/download';
 
 import ActionButton from './ActionButton';
 
@@ -41,14 +40,13 @@ export default function TracePageActions(props: TracePageActionsProps) {
   };
 
   const exportTrace = () => {
+    const traceFormat = downloadTraceAsJson(data, 'Trace-' + traceId.substring(traceId.length - 6));
     reportInteraction('grafana_traces_download_traces_clicked', {
       app,
       grafana_version: config.buildInfo.version,
-      trace_format: 'otlp',
+      trace_format: traceFormat,
       location: 'trace-view',
     });
-    let res = transformToOTLP(new MutableDataFrame(data));
-    downloadAsJson(res, 'Trace-' + traceId.substring(traceId.length - 6));
   };
 
   return (

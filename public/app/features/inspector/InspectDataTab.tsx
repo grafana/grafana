@@ -9,7 +9,6 @@ import {
   CSVConfig,
   DataFrame,
   DataTransformerID,
-  MutableDataFrame,
   SelectableValue,
   TimeZone,
   transformDataFrame,
@@ -22,13 +21,10 @@ import { t, Trans } from 'app/core/internationalization';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
-import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
-import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
-import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
-import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './utils/download';
+import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt, downloadTraceAsJson } from './utils/download';
 
 interface Props {
   isLoading: boolean;
@@ -124,28 +120,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (df.meta?.preferredVisualisationType !== 'trace') {
         continue;
       }
-      let traceFormat = 'otlp';
-
-      switch (df.meta?.custom?.traceFormat) {
-        case 'jaeger': {
-          let res = transformToJaeger(new MutableDataFrame(df));
-          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
-          traceFormat = 'jaeger';
-          break;
-        }
-        case 'zipkin': {
-          let res = transformToZipkin(new MutableDataFrame(df));
-          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
-          traceFormat = 'zipkin';
-          break;
-        }
-        case 'otlp':
-        default: {
-          let res = transformToOTLP(new MutableDataFrame(df));
-          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
-          break;
-        }
-      }
+      const traceFormat = downloadTraceAsJson(df, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
 
       reportInteraction('grafana_traces_download_traces_clicked', {
         app,
