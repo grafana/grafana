@@ -1,9 +1,12 @@
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useRef } from 'react';
+import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
-import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { DataSourceCard } from './DataSourceCard';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
@@ -30,12 +33,22 @@ export interface DataSourceListProps {
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
   width?: number;
+  keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
 }
 
-export function DataSourceList(props: DataSourceListProps) {
+export const DataSourceList = React.forwardRef((props: DataSourceListProps, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const styles = useStyles2(getStyles);
+
+  useKeyboardNavigatableList({
+    keyboardEvents: props.keyboardEvents,
+    containerRef: containerRef,
+  });
+
   const { className, current, onChange } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
   const dataSources = useDatasources({
@@ -54,13 +67,14 @@ export function DataSourceList(props: DataSourceListProps) {
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
   return (
-    <div className={className}>
+    <div ref={containerRef} className={cx(className, styles.container)}>
       {dataSources
         .filter((ds) => (props.filter ? props.filter(ds) : true))
         .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
             key={ds.uid}
+            data-role={'keyboardSelectableItem'}
             ds={ds}
             onClick={() => {
               pushRecentlyUsedDataSource(ds);
@@ -71,7 +85,9 @@ export function DataSourceList(props: DataSourceListProps) {
         ))}
     </div>
   );
-}
+});
+
+DataSourceList.displayName = 'DataSourceList';
 
 function getDataSourceVariableIDs() {
   const templateSrv = getTemplateSrv();
@@ -80,4 +96,14 @@ function getDataSourceVariableIDs() {
     .getVariables()
     .filter((v) => v.type === 'datasource')
     .map((v) => `\${${v.id}}`);
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css`
+      [data-selectedItem='true'] {
+        background-color: ${theme.colors.background.secondary};
+      }
+    `,
+  };
 }

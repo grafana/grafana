@@ -9,6 +9,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
+import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 
 import { useDatasource } from '../../hooks';
 
@@ -38,6 +39,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     setOpen(true);
     markerElement?.focus();
   };
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
@@ -83,6 +86,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
           onFocus={openDropdown}
           onClick={openDropdown}
+          onKeyDown={onKeyDown}
           value={filterTerm}
           onChange={(e) => {
             setFilterTerm(e.currentTarget.value);
@@ -95,6 +99,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           <div {...underlayProps} />
           <div ref={ref} {...overlayProps} {...dialogProps}>
             <PickerContent
+              keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
               onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
                 onClose();

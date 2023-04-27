@@ -10,11 +10,16 @@ interface DataSourceCardProps {
   selected: boolean;
 }
 
-export function DataSourceCard({ ds, onClick, selected }: DataSourceCardProps) {
+export function DataSourceCard({ ds, onClick, selected, ...htmlProps }: DataSourceCardProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Card key={ds.uid} onClick={onClick} className={cx(styles.card, selected ? styles.selected : undefined)}>
+    <Card
+      key={ds.uid}
+      onClick={onClick}
+      className={cx(styles.card, selected ? styles.selected : undefined)}
+      {...htmlProps}
+    >
       <Card.Heading className={styles.heading}>
         <div className={styles.headingContent}>
           <span className={styles.name}>{ds.name}</span>
