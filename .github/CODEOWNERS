@@ -473,7 +473,6 @@ lerna.json @grafana/frontend-ops
 /scripts/trigger_docker_build.sh @grafana/grafana-delivery
 /scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
 /scripts/trigger_windows_build.sh @grafana/grafana-delivery
-/scripts/validate-devenv-dashboards.sh @grafana/grafana-delivery
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 
 /scripts/webpack/ @grafana/frontend-ops

@@ -22,10 +22,7 @@ replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.
 // hoist a replace statement.
 replace k8s.io/client-go => k8s.io/client-go v0.25.3
 
-require (
-	k8s.io/apiextensions-apiserver v0.26.2 // indirect
-	k8s.io/apimachinery v0.26.2
-)
+require k8s.io/apimachinery v0.26.2
 
 require (
 	cloud.google.com/go/storage v1.28.1
@@ -266,7 +263,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/kindsys v0.0.0-20230414093523-5df3e256ebc0
+	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a
 	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
@@ -297,8 +294,10 @@ require (
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.3 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.13 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -337,11 +336,8 @@ require (
 	go.opentelemetry.io/otel/metric v0.37.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
-	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/klog/v2 v2.80.1 // indirect
+	k8s.io/api v0.26.2 // indirect
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
-	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
 require (
