@@ -5404,7 +5404,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -5490,12 +5490,13 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "tags": [
           "folders"
         ],
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5654,7 +5655,7 @@
           "folders"
         ],
         "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
-        "operationId": "getFolderChildrenCounts",
+        "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
             "type": "string",
@@ -5665,7 +5666,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getFolderChildrenCountsResponse"
+            "$ref": "#/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -13090,6 +13091,13 @@
         }
       }
     },
+    "DescendantCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
     "DiscordConfig": {
       "type": "object",
       "title": "DiscordConfig configures notifications via Discord.",
@@ -13564,6 +13572,13 @@
           "description": "only used if nested folders are enabled",
           "type": "string"
         },
+        "parents": {
+          "description": "the parent folders starting from the root going down",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Folder"
+          }
+        },
         "title": {
           "type": "string"
         },
@@ -13586,19 +13601,9 @@
         }
       }
     },
-    "FolderChildrenCounts": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "integer",
-        "format": "int64"
-      }
-    },
     "FolderSearchHit": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -20336,10 +20341,10 @@
         "$ref": "#/definitions/DataSourceList"
       }
     },
-    "getFolderChildrenCountsResponse": {
+    "getFolderDescendantCountsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/FolderChildrenCounts"
+        "$ref": "#/definitions/DescendantCounts"
       }
     },
     "getFolderPermissionListResponse": {

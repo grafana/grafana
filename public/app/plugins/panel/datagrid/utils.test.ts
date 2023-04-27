@@ -54,7 +54,7 @@ describe('when deleting rows', () => {
     expect(newDf.fields[2].values.toArray()).toEqual(['a', 'c', 'e']);
     expect(newDf.length).toEqual(3);
 
-    newDf = deleteRows(df, [2], true);
+    newDf = deleteRows(newDf, [2], true);
 
     expect(newDf.fields[0].values.toArray()).toEqual(['a', 'c']);
     expect(newDf.fields[1].values.toArray()).toEqual([1, 3]);
@@ -68,6 +68,20 @@ describe('when deleting rows', () => {
     expect(newDf.fields[0].values.toArray()).toEqual([]);
     expect(newDf.fields[1].values.toArray()).toEqual([]);
     expect(newDf.fields[2].values.toArray()).toEqual([]);
+    expect(newDf.length).toEqual(0);
+  });
+
+  it('should do nothing if there are no fields', () => {
+    const newDf = deleteRows(
+      {
+        name: 'emptyDataframe',
+        fields: [],
+        length: 0,
+      },
+      [0, 1, 2, 3, 4],
+      true
+    );
+
     expect(newDf.length).toEqual(0);
   });
 });
@@ -118,5 +132,18 @@ describe('when clearing cells from range selection', () => {
     expect(newDf.fields[1].values.toArray()).toEqual([1, null, 3, 4, 5]);
     expect(newDf.fields[2].values.toArray()).toEqual(['a', 'b', 'c', 'd', 'e']);
     expect(newDf.length).toEqual(5);
+  });
+
+  it('should do nothing if there are no fields', () => {
+    const newDf = clearCellsFromRangeSelection(
+      {
+        name: 'emptyDataframe',
+        fields: [],
+        length: 0,
+      },
+      { x: 0, y: 0, width: 0, height: 0 }
+    );
+
+    expect(newDf.length).toEqual(0);
   });
 });

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	alertingTemplates "github.com/grafana/alerting/templates"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -94,14 +95,14 @@ type AlertingConfiguration struct {
 	AlertmanagerConfig    api.PostableApiAlertingConfig
 	RawAlertmanagerConfig []byte
 
-	AlertmanagerTemplates *alertingNotify.Template
+	AlertmanagerTemplates *alertingTemplates.Template
 
-	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error)
-	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error)
+	IntegrationsFunc         func(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error)
+	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (*alertingNotify.Integration, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
-	return func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (alertingNotify.Notifier, error) {
+	return func(next *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (alertingNotify.Notifier, error) {
 		return a.ReceiverIntegrationsFunc(next, tmpl)
 	}
 }
@@ -119,14 +120,14 @@ func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInte
 }
 
 func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
-	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
+	return a.IntegrationsFunc(PostableApiAlertingConfigToApiReceivers(a.AlertmanagerConfig), a.AlertmanagerTemplates)
 }
 
 func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
 	return a.AlertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() *alertingNotify.Template {
+func (a AlertingConfiguration) Templates() *alertingTemplates.Template {
 	return a.AlertmanagerTemplates
 }
 

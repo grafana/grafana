@@ -792,11 +792,11 @@
         },
         "description": "(empty)"
       },
-      "getFolderChildrenCountsResponse": {
+      "getFolderDescendantCountsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/FolderChildrenCounts"
+              "$ref": "#/components/schemas/DescendantCounts"
             }
           }
         },
@@ -4158,6 +4158,13 @@
         },
         "type": "object"
       },
+      "DescendantCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "type": "object"
+      },
       "DiscordConfig": {
         "properties": {
           "http_config": {
@@ -4631,6 +4638,13 @@
             "description": "only used if nested folders are enabled",
             "type": "string"
           },
+          "parents": {
+            "description": "the parent folders starting from the root going down",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "type": "array"
+          },
           "title": {
             "type": "string"
           },
@@ -4654,18 +4668,8 @@
         },
         "type": "object"
       },
-      "FolderChildrenCounts": {
-        "additionalProperties": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "type": "object"
-      },
       "FolderSearchHit": {
         "properties": {
-          "accessControl": {
-            "$ref": "#/components/schemas/Metadata"
-          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -16755,7 +16759,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -16848,7 +16852,8 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "deprecated": true,
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "operationId": "getFolderByID",
         "parameters": [
           {
@@ -17021,7 +17026,7 @@
     },
     "/folders/{folder_uid}/counts": {
       "get": {
-        "operationId": "getFolderChildrenCounts",
+        "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
             "in": "path",
@@ -17034,7 +17039,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getFolderChildrenCountsResponse"
+            "$ref": "#/components/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"

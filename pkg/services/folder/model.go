@@ -48,12 +48,6 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
-type FolderDTO struct {
-	Folder
-
-	Children []FolderDTO
-}
-
 // NewFolder tales a title and returns a Folder with the Created and Updated
 // fields set to the current time.
 func NewFolder(title string, description string) *Folder {
@@ -161,13 +155,13 @@ type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *user.SignedInUser
 }
 
-// GetChildrenCountsQuery captures the information required by the folder service
-// to return the count of children in a folder.
-type GetChildrenCountsQuery struct {
+// GetDescendantCountsQuery captures the information required by the folder service
+// to return the count of descendants (direct and indirect) in a folder.
+type GetDescendantCountsQuery struct {
 	UID   *string
 	OrgID int64
 
 	SignedInUser *user.SignedInUser `json:"-"`
 }
 
-type ChildrenCounts map[string]int64
+type DescendantCounts map[string]int64

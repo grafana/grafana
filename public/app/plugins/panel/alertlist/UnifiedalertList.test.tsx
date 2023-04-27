@@ -1,10 +1,10 @@
-import { render } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
-import { getDefaultTimeRange, LoadingState, PanelProps, FieldConfigSource } from '@grafana/data';
+import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -19,7 +19,7 @@ import {
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 
 import { UnifiedAlertList } from './UnifiedAlertList';
-import { UnifiedAlertListOptions, SortOrder, GroupMode, ViewMode } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
 jest.mock('app/features/alerting/unified/api/alertmanager');
@@ -88,6 +88,8 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
                   mockPromAlertingRule({
                     name: 'rule1',
                     alerts: [mockPromAlert({ labels: { severity: 'critical' } })],
+                    totals: { alerting: 1 },
+                    totalsFiltered: { alerting: 1 },
                   }),
                 ],
               }),
@@ -112,6 +114,7 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
 
 describe('UnifiedAlertList', () => {
   it('subscribes to the dashboard refresh interval', async () => {
+    jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
     await renderPanel();
     expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1);
     expect(dashboard.events.subscribe.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
@@ -125,7 +128,7 @@ describe('UnifiedAlertList', () => {
 
     const user = userEvent.setup();
 
-    renderPanel({
+    await renderPanel({
       alertInstanceLabelFilter: '$label',
       dashboardAlerts: false,
       alertName: '',
@@ -134,6 +137,10 @@ describe('UnifiedAlertList', () => {
     });
 
     expect(byText('rule1').get()).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('1 instance')).toBeInTheDocument();
+    });
 
     const expandElement = byText('1 instance').get();
 
