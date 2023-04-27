@@ -357,7 +357,10 @@ export const PromSettings = (props: Props) => {
                     className={`width-25`}
                     onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
                     options={cacheValueOptions}
-                    value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
+                    disabled={options.readOnly}
+                    value={
+                      cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
+                    }
                   />
                 }
               />
