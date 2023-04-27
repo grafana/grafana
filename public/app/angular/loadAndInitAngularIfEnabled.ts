@@ -1,6 +1,9 @@
 import { deprecationWarning } from '@grafana/data';
 import { config, setAngularLoader, setLegacyAngularInjector, getDataSourceSrv, getBackendSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 export async function loadAndInitAngularIfEnabled() {
   if (config.angularSupportEnabled) {
@@ -9,6 +12,7 @@ export async function loadAndInitAngularIfEnabled() {
     app.init();
     app.bootstrap();
   } else {
+    // Register a dummy loader that does nothing
     setAngularLoader({
       load: (elem, scopeProps, template) => {
         return {
@@ -24,31 +28,46 @@ export async function loadAndInitAngularIfEnabled() {
     // Temporary path to allow access to services exposed directly by the angular injector
     setLegacyAngularInjector({
       get: (key: string) => {
-        // See ./registerComponents.ts
         switch (key) {
-          // This does not yet have a better option
+          case 'backendSrv': {
+            deprecationWarning('getLegacyAngularInjector', 'backendSrv', 'use getBackendSrv() in @grafana/runtime');
+            return getBackendSrv();
+          }
+
+          case 'contextSrv': {
+            deprecationWarning('getLegacyAngularInjector', 'contextSrv');
+            return contextSrv;
+          }
+
           case 'dashboardSrv': {
+            // we do not yet have a public interface for this
             deprecationWarning('getLegacyAngularInjector', 'getDashboardSrv');
-            // deprecated... but not yet clear what we want to actually expose :grimmice:
             return getDashboardSrv();
           }
 
-          // These have better options in @grafana/runtime
           case 'datasourceSrv': {
             deprecationWarning(
               'getLegacyAngularInjector',
               'datasourceSrv',
               'use getDataSourceSrv() in @grafana/runtime'
-            ); // any suggestions?
+            );
             return getDataSourceSrv();
           }
-          case 'backendSrv': {
-            deprecationWarning('getLegacyAngularInjector', 'backendSrv', 'use getBackendSrv() in @grafana/runtime');
-            return getBackendSrv();
+
+          case 'linkSrv': {
+            // we do not yet have a public interface for this
+            deprecationWarning('getLegacyAngularInjector', 'linkSrv');
+            return getLinkSrv();
+          }
+
+          case 'validationSrv': {
+            // we do not yet have a public interface for this
+            deprecationWarning('getLegacyAngularInjector', 'validationSrv');
+            return validationSrv;
           }
         }
         throw 'Angular is disabled.  Unable to expose: ' + key;
       },
-    } as any);
+    } as angular.auto.IInjectorService);
   }
 }
