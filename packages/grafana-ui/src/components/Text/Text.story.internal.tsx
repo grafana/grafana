@@ -6,7 +6,7 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
-import { H1, Legend } from './TextElements';
+import { H1, H2, H3, H4, H5, H6, Span, P, Legend } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
@@ -50,15 +50,15 @@ export const Example: Story = () => {
   return (
     <VerticalGroup>
       <StoryExample name="Native header elements (global styles)">
-        <h1>h1. Heading</h1>
-        <h2>h2. Heading</h2>
-        <h3>h3. Heading</h3>
-        <h4>h4. Heading</h4>
-        <h5>h5. Heading</h5>
-        <h6>h6. Heading</h6>
-        <p>This is a paragraph</p>
-        <span>This is a span</span>
-        <legend>This is a legend</legend>
+        <H1>h1. Heading</H1>
+        <H2>h2. Heading</H2>
+        <H3>h3. Heading</H3>
+        <H4>h4. Heading</H4>
+        <H5>h5. Heading</H5>
+        <H6>h6. Heading</H6>
+        <P>This is a paragraph</P>
+        <Legend>This is a legend</Legend>
+        <Span>This is a span</Span>
       </StoryExample>
     </VerticalGroup>
   );
@@ -98,7 +98,7 @@ LegendComponent.args = {
   textAlignment: 'center',
   truncate: false,
   color: 'color.error.text',
-  children: 'This is a Lengend component',
+  children: 'This is a lengend component',
 };
 
 export default meta;
