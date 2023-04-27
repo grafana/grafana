@@ -14,7 +14,7 @@ import (
 )
 
 type Historian interface {
-	QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error)
+	Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error)
 }
 
 type HistorySrv struct {
@@ -44,7 +44,7 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 		To:           time.Unix(to, 0),
 		Labels:       labels,
 	}
-	frame, err := srv.hist.QueryStates(c.Req.Context(), query)
+	frame, err := srv.hist.Query(c.Req.Context(), query)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,18 +22,27 @@ var (
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
-func HandleNoCacheHeader(ctx *contextmodel.ReqContext) {
-	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+func HandleNoCacheHeaders(ctx *contextmodel.ReqContext) {
+	// X-Grafana-NoCache tells Grafana to skip the cache while retrieving datasource instance metadata
+	ctx.SkipDSCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+	// X-Cache-Skip tells Grafana to skip the Enterprise query/resource cache while issuing query and resource calls
+	ctx.SkipQueryCache = ctx.Req.Header.Get("X-Cache-Skip") == "true"
 }
 
 func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	t := web.NewTree()
 	t.Add("/api/datasources/uid/:uid/resources/*", nil)
 	t.Add("/api/datasources/:id/resources/*", nil)
+
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
 				return
+			}
+
+			traceId := tracing.TraceIDFromContext(c.Req.Context(), false)
+			if traceId != "" {
+				w.Header().Set("grafana-trace-id", traceId)
 			}
 
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)

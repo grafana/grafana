@@ -37,7 +37,7 @@ export function buildTooltipTheme(
     `,
     container: css`
       background-color: ${tooltipBg};
-      border-radius: 3px;
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${toggletipBorder};
       box-shadow: ${theme.shadows.z2};
       color: ${tooltipText};

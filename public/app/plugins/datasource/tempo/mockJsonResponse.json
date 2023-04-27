@@ -46,9 +46,9 @@
           "instrumentationLibrary": {},
           "spans": [
             {
-              "traceId": "AAAAAAAAAABguiq7RPE+rg==",
-              "spanId": "cmteMBAvwNA=",
-              "parentSpanId": "OY8PIaPbma4=",
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "726b5e30102fc0d0",
+              "parentSpanId": "398f0f21a3db99ae",
               "name": "HTTP GET - root",
               "kind": "SPAN_KIND_SERVER",
               "startTimeUnixNano": "1627471657255809000",
@@ -156,8 +156,8 @@
           "instrumentationLibrary": {},
           "spans": [
             {
-              "traceId": "AAAAAAAAAABguiq7RPE+rg==",
-              "spanId": "GVdnHErYWoo=",
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "1957671c4ad85a8a",
               "parentSpanId": "WgdmnUQaoyY=",
               "name": "HTTP Client",
               "startTimeUnixNano": "1627471657251425000",
@@ -214,8 +214,8 @@
           "instrumentationLibrary": {},
           "spans": [
             {
-              "traceId": "AAAAAAAAAABguiq7RPE+rg==",
-              "spanId": "YLoqu0TxPq4=",
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "60ba2abb44f13eae",
               "name": "HTTP Client",
               "startTimeUnixNano": "1627471657247632000",
               "endTimeUnixNano": "1627471657260233000",
@@ -285,9 +285,9 @@
           "instrumentationLibrary": {},
           "spans": [
             {
-              "traceId": "AAAAAAAAAABguiq7RPE+rg==",
-              "spanId": "VzhhbsaOedI=",
-              "parentSpanId": "YLoqu0TxPq4=",
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "5738616ec68e79d2",
+              "parentSpanId": "60ba2abb44f13eae",
               "name": "HTTP GET",
               "kind": "SPAN_KIND_CLIENT",
               "startTimeUnixNano": "1627471657247674000",
@@ -530,9 +530,9 @@
           "instrumentationLibrary": {},
           "spans": [
             {
-              "traceId": "AAAAAAAAAABguiq7RPE+rg==",
-              "spanId": "OY8PIaPbma4=",
-              "parentSpanId": "GVdnHErYWoo=",
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "398f0f21a3db99ae",
+              "parentSpanId": "1957671c4ad85a8a",
               "name": "HTTP GET",
               "kind": "SPAN_KIND_CLIENT",
               "startTimeUnixNano": "1627471657251445000",
@@ -775,9 +775,9 @@
           "instrumentationLibrary": {},
           "spans": [
             {
-              "traceId": "AAAAAAAAAABguiq7RPE+rg==",
-              "spanId": "WgdmnUQaoyY=",
-              "parentSpanId": "VzhhbsaOedI=",
+              "traceId": "000000000000000060ba2abb44f13eae",
+              "spanId": "5a07669d441aa326",
+              "parentSpanId": "5738616ec68e79d2",
               "name": "HTTP GET - root",
               "kind": "SPAN_KIND_SERVER",
               "startTimeUnixNano": "1627471657251228000",

@@ -28,8 +28,6 @@ describe('ConfigEditor', () => {
     const mockOnOptionsChange = jest.fn();
     const options = createDefaultConfigOptions();
     // @ts-ignore
-    delete options.jsonData.esVersion;
-    // @ts-ignore
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
 
@@ -38,7 +36,6 @@ describe('ConfigEditor', () => {
     expect(mockOnOptionsChange).toHaveBeenCalledWith(
       expect.objectContaining({
         jsonData: expect.objectContaining({
-          esVersion: '8.0.0',
           timeField: '@timestamp',
           maxConcurrentShardRequests: 5,
         }),

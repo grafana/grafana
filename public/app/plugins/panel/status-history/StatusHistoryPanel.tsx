@@ -32,7 +32,7 @@ interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 /**
  * @alpha
  */
-export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
+export const StatusHistoryPanel = ({
   data,
   timeRange,
   timeZone,
@@ -40,7 +40,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   width,
   height,
   onChangeTimeRange,
-}) => {
+}: TimelinePanelProps) => {
   const theme = useTheme2();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);

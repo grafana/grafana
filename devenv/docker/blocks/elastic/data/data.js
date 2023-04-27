@@ -53,7 +53,6 @@ async function elasticSendLogItem(timestamp, item) {
   const url = new URL(ELASTIC_BASE_URL);
   url.pathname = `/logs-${timestampText}/_doc`;
   await jsonRequest(item, 'POST', url, 201);
-  console.log(`posted to ${url.toString()}`);
 }
 
 async function elasticSetupIndexTemplate() {
@@ -82,6 +81,18 @@ async function elasticSetupIndexTemplate() {
           },
           shapes: {
             type: 'nested',
+          },
+          hostname: {
+            type: 'keyword',
+          },
+          value: {
+            type: 'integer',
+          },
+          metric: {
+            type: 'keyword',
+          },
+          description: {
+            type: 'text',
           }
         },
       },
@@ -120,6 +131,10 @@ function getRandomLogItem(counter, timestamp) {
       {"type": "triangle"},
       {"type": "square"},
     ],
+    hostname: chooseRandomElement(['hostname1', 'hostname2', 'hostname3', 'hostname4', 'hostname5', 'hostname6']),
+    value: counter,
+    metric: chooseRandomElement(['cpu', 'memory', 'latency']),
+    description: "this is description"
   };
 }
 

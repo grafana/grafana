@@ -49,6 +49,7 @@ import * as barChartPanel from 'app/plugins/panel/barchart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
+import * as dataGridPanel from 'app/plugins/panel/datagrid/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as flamegraphPanel from 'app/plugins/panel/flamegraph/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
@@ -66,6 +67,7 @@ import * as tablePanel from 'app/plugins/panel/table/module';
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as tracesPanel from 'app/plugins/panel/traces/module';
+import * as trendPanel from 'app/plugins/panel/trend/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 
@@ -106,6 +108,7 @@ const builtInPlugins: any = {
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
+  'app/plugins/panel/trend/module': trendPanel,
   'app/plugins/panel/state-timeline/module': stateTimelinePanel,
   'app/plugins/panel/status-history/module': statusHistoryPanel,
   'app/plugins/panel/candlestick/module': candlestickPanel,
@@ -123,6 +126,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/stat/module': statPanel,
+  'app/plugins/panel/datagrid/module': dataGridPanel,
   'app/plugins/panel/debug/module': debugPanel,
   'app/plugins/panel/flamegraph/module': flamegraphPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,

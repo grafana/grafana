@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs';
 
 import {
-  ArrayVector,
   DataFrame,
   DataQuery,
   DataQueryRequest,
@@ -13,6 +12,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsMetaKind,
+  LogsVolumeCustomMetaData,
   LogsVolumeType,
   MutableDataFrame,
   sortDataFrame,
@@ -326,15 +326,15 @@ describe('dataFrameToLogsModel', () => {
       {
         name: 'info',
         fields: [
-          { type: 'time', values: new ArrayVector([1556270891000, 1556289770000]) },
-          { type: 'number', values: new ArrayVector([1, 0]) },
+          { type: 'time', values: [1556270891000, 1556289770000] },
+          { type: 'number', values: [1, 0] },
         ],
       },
       {
         name: 'error',
         fields: [
-          { type: 'time', values: new ArrayVector([1556289770000]) },
-          { type: 'number', values: new ArrayVector([1]) },
+          { type: 'time', values: [1556289770000] },
+          { type: 'number', values: [1] },
         ],
       },
     ]);
@@ -424,15 +424,15 @@ describe('dataFrameToLogsModel', () => {
       {
         name: 'info',
         fields: [
-          { type: 'time', values: new ArrayVector([1556270891000, 1556289770000]) },
-          { type: 'number', values: new ArrayVector([1, 0]) },
+          { type: 'time', values: [1556270891000, 1556289770000] },
+          { type: 'number', values: [1, 0] },
         ],
       },
       {
         name: 'error',
         fields: [
-          { type: 'time', values: new ArrayVector([1556289770000]) },
-          { type: 'number', values: new ArrayVector([1]) },
+          { type: 'time', values: [1556289770000] },
+          { type: 'number', values: [1] },
         ],
       },
     ]);
@@ -697,15 +697,15 @@ describe('dataFrameToLogsModel', () => {
       {
         name: 'error',
         fields: [
-          { type: 'time', values: new ArrayVector([0, 1000, 2000]) },
-          { type: 'number', values: new ArrayVector([1, 0, 1]) },
+          { type: 'time', values: [0, 1000, 2000] },
+          { type: 'number', values: [1, 0, 1] },
         ],
       },
       {
         name: 'debug',
         fields: [
-          { type: 'time', values: new ArrayVector([1000, 2000]) },
-          { type: 'number', values: new ArrayVector([1, 0]) },
+          { type: 'time', values: [1000, 2000] },
+          { type: 'number', values: [1, 0] },
         ],
       },
     ]);
@@ -1207,6 +1207,16 @@ describe('logs volume', () => {
   it('applies correct meta data', async () => {
     setup(setupMultipleResults);
 
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
     await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
       expect(received).toContainEqual({
@@ -1216,15 +1226,7 @@ describe('logs volume', () => {
           expect.objectContaining({
             fields: expect.anything(),
             meta: {
-              custom: {
-                sourceQuery: { refId: 'A', target: 'volume query 1' },
-                datasourceName: 'loki',
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: {
-                  from: FROM.valueOf(),
-                  to: TO.valueOf(),
-                },
-              },
+              custom: logVolumeCustomMeta,
             },
           }),
           expect.anything(),
@@ -1236,6 +1238,16 @@ describe('logs volume', () => {
   it('applies correct meta data when streaming', async () => {
     setup(setupMultipleResultsStreaming);
 
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
     await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
       expect(received).toContainEqual({
@@ -1245,15 +1257,7 @@ describe('logs volume', () => {
           expect.objectContaining({
             fields: expect.anything(),
             meta: {
-              custom: {
-                sourceQuery: { refId: 'A', target: 'volume query 1' },
-                datasourceName: 'loki',
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: {
-                  from: FROM.valueOf(),
-                  to: TO.valueOf(),
-                },
-              },
+              custom: logVolumeCustomMeta,
             },
           }),
           expect.anything(),

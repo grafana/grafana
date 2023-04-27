@@ -11,9 +11,10 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 import { buildLayout } from './BigValueLayout';
 
 export enum BigValueColorMode {
-  Value = 'value',
   Background = 'background',
+  BackgroundSolid = 'background_solid',
   None = 'none',
+  Value = 'value',
 }
 
 export enum BigValueGraphMode {
@@ -53,8 +54,6 @@ export interface Props extends Themeable2 {
   className?: string;
   /** Color mode for coloring the value or the background */
   colorMode: BigValueColorMode;
-  /** Whether or not a horizontal gradient is applied to the panel background */
-  hasGradient?: boolean;
   /** Show a graph behind/under the value */
   graphMode: BigValueGraphMode;
   /** Auto justify value and text or center it */

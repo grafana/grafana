@@ -373,33 +373,20 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		schedulerUser := &user.SignedInUser{
-			UserID:           -1,
-			IsServiceAccount: true,
-			Login:            "grafana_scheduler",
-			OrgID:            e.rule.OrgID,
-			OrgRole:          org.RoleAdmin,
-			Permissions: map[int64]map[string][]string{
-				e.rule.OrgID: {
-					datasources.ActionQuery: []string{
-						datasources.ScopeAll,
-					},
-				},
-			},
-		}
-		evalCtx := eval.Context(ctx, schedulerUser)
+		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
 		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
 		var results eval.Results
 		var dur time.Duration
-		if err == nil {
+		if err != nil {
+			dur = sch.clock.Now().Sub(start)
+			logger.Error("Failed to build rule evaluator", "error", err)
+		} else {
 			results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
+			dur = sch.clock.Now().Sub(start)
 			if err != nil {
 				logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
 			}
-		} else {
-			logger.Error("Failed to build rule evaluator", "error", err)
 		}
-		dur = sch.clock.Now().Sub(start)
 
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -578,4 +565,21 @@ func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
 		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle
 	}
 	return extraLabels
+}
+
+func SchedulerUserFor(orgID int64) *user.SignedInUser {
+	return &user.SignedInUser{
+		UserID:           -1,
+		IsServiceAccount: true,
+		Login:            "grafana_scheduler",
+		OrgID:            orgID,
+		OrgRole:          org.RoleAdmin,
+		Permissions: map[int64]map[string][]string{
+			orgID: {
+				datasources.ActionQuery: []string{
+					datasources.ScopeAll,
+				},
+			},
+		},
+	}
 }

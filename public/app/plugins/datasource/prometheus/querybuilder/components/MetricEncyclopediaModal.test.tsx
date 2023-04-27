@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromOptions } from '../../types';
 import { PromVisualQuery } from '../types';
 
-import { MetricEncyclopediaModal, testIds, placeholders } from './MetricEncyclopediaModal';
+import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -22,7 +22,7 @@ describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Browse Metrics')).toBeInTheDocument();
+      expect(screen.getByText('Browse metrics')).toBeInTheDocument();
     });
   });
 
@@ -78,25 +78,12 @@ describe('MetricEncyclopediaModal', () => {
     expect(screen.getByText('all-metrics-help')).toBeInTheDocument();
   });
 
-  it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
-    setup(defaultQuery, listOfMetrics);
-    await waitFor(() => {
-      expect(screen.getByText('b')).toBeInTheDocument();
-    });
-
-    const interactiveMetric = screen.getByText('b');
-
-    await userEvent.click(interactiveMetric);
-
-    expect(screen.getByText('No metadata available')).toBeInTheDocument();
-  });
-
   // Filtering
   it('has a filter for selected type', async () => {
     setup(defaultQuery, listOfMetrics);
 
     await waitFor(() => {
-      const selectType = screen.getByText(placeholders.type);
+      const selectType = screen.getByText('Filter by type');
       expect(selectType).toBeInTheDocument();
     });
   });
@@ -119,7 +106,7 @@ describe('MetricEncyclopediaModal', () => {
     setup(defaultQuery, listOfMetrics);
 
     await waitFor(() => {
-      const selectType = screen.getByText(placeholders.variables);
+      const selectType = screen.getByText('Select template variables');
       expect(selectType).toBeInTheDocument();
     });
   });

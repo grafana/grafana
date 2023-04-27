@@ -1,4 +1,3 @@
-import { durationToMilliseconds, parseDuration } from '@grafana/data';
 import { describeInterval } from '@grafana/data/src/datetime/rangeutil';
 
 import { TimeOptions } from '../types/time';
@@ -27,10 +26,6 @@ export const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
   label: key[0].toUpperCase() + key.slice(1),
   value: value,
 }));
-
-export function parseDurationToMilliseconds(duration: string) {
-  return durationToMilliseconds(parseDuration(duration));
-}
 
 export function isValidPrometheusDuration(duration: string): boolean {
   try {

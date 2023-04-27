@@ -97,6 +97,10 @@ type AlertQuery struct {
 	modelProps map[string]interface{}
 }
 
+func (aq *AlertQuery) String() string {
+	return fmt.Sprintf("refID: %s, queryType: %s, datasourceUID: %s", aq.RefID, aq.QueryType, aq.DatasourceUID)
+}
+
 func (aq *AlertQuery) setModelProps() error {
 	aq.modelProps = make(map[string]interface{})
 	err := json.Unmarshal(aq.Model, &aq.modelProps)

@@ -171,6 +171,23 @@ var (
 			},
 		}),
 	}
+
+	authenticationConfigWriterRole = RoleDTO{
+		Name:        "fixed:authentication.config:writer",
+		DisplayName: "Authentication config writer",
+		Description: "Read and update authentication configuration and access configuration UI.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSAML,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSAML,
+			},
+		},
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
@@ -207,9 +224,14 @@ func DeclareFixedRoles(service Service) error {
 		Role:   usersWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
+	authenticationConfigWriter := RoleRegistration{
+		Role:                authenticationConfigWriterRole,
+		Grants:              []string{RoleGrafanaAdmin},
+		AllowGrantsOverride: true,
+	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter)
+		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {

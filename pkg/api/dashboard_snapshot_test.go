@@ -82,7 +82,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil).Maybe()
 				hs.DashboardService = dashSvc
 
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				guardian.InitLegacyGuardian(setting.NewCfg(), sc.sqlStore, dashSvc, teamSvc)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)
@@ -133,7 +133,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				dashSvc := dashboards.NewFakeDashboardService(t)
 				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, errutil.Error{PublicMessage: "some error"}).Maybe()
 
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				guardian.InitLegacyGuardian(sc.cfg, sc.sqlStore, dashSvc, teamSvc)
 				d := setUpSnapshotTest(t, 0, ts.URL)
 				hs := buildHttpServer(d, true)
 				hs.DashboardService = dashSvc
@@ -153,7 +153,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				dashSvc := dashboards.NewFakeDashboardService(t)
 				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, dashboards.ErrDashboardNotFound).Maybe()
 
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				guardian.InitLegacyGuardian(sc.cfg, sc.sqlStore, dashSvc, teamSvc)
 				d := setUpSnapshotTest(t, 0, ts.URL)
 				hs := buildHttpServer(d, true)
 				hs.DashboardService = dashSvc
@@ -185,7 +185,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 				}
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResultACL, nil)
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				guardian.InitLegacyGuardian(sc.cfg, sc.sqlStore, dashSvc, teamSvc)
 				d := setUpSnapshotTest(t, 0, ts.URL)
 				hs := buildHttpServer(d, true)
 				hs.DashboardService = dashSvc

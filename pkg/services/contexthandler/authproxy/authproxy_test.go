@@ -107,7 +107,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		cache := remotecache.NewFakeStore(t)
 
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
-		auth.cfg.LDAPEnabled = true
+		auth.cfg.LDAPAuthEnabled = true
 		ldapFake := &service.LDAPFakeService{
 			ExpectedUser: &login.ExternalUserInfo{UserId: id},
 		}
@@ -126,7 +126,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		cache := remotecache.NewFakeStore(t)
 
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
-		auth.cfg.LDAPEnabled = true
+		auth.cfg.LDAPAuthEnabled = true
 		ldapFake := &service.LDAPFakeService{
 			ExpectedUser:  nil,
 			ExpectedError: service.ErrUnableToCreateLDAPClient,

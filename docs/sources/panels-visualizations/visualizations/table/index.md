@@ -33,7 +33,7 @@ Annotations are not currently supported in the new table panel. This might be ad
 
 ## Sort column
 
-Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can only sort by one column at a time.
+Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
 

@@ -20,7 +20,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import UiFindInput from '../common/UiFindInput';
+import SearchBarInput from '../common/SearchBarInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 
 // eslint-disable-next-line no-duplicate-imports
@@ -38,7 +38,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: -48px;
       padding: 8px;
       margin-right: 2px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       box-shadow: ${theme.shadows.z2};
     `,
     TracePageSearchBarBar: css`
@@ -102,7 +102,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   ) : null;
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
-  const uiFindInputInputProps = {
+  const SearchBarInputProps = {
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
     suffix,
@@ -172,10 +172,10 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   return (
     <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
-        <UiFindInput
+        <SearchBarInput
           onChange={setTraceSearch}
           value={searchValue}
-          inputProps={uiFindInputInputProps}
+          inputProps={SearchBarInputProps}
           allowClear={true}
         />
         <>

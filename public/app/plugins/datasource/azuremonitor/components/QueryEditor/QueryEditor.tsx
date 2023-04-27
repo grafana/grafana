@@ -27,13 +27,13 @@ export type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureDataSourceJsonData
 >;
 
-const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
+const QueryEditor = ({
   query: baseQuery,
   datasource,
   onChange,
   onRunQuery: baseOnRunQuery,
   data,
-}) => {
+}: AzureMonitorQueryEditorProps) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
 
@@ -71,7 +71,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
         <>
           <Space v={2} />
           <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
-            {errorMessage}
+            {errorMessage instanceof Error ? errorMessage.message : errorMessage}
           </Alert>
         </>
       )}
@@ -85,7 +85,7 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
-const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
+const EditorForQueryType = ({
   data,
   subscriptionId,
   query,
@@ -93,7 +93,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
   variableOptionGroup,
   onChange,
   setError,
-}) => {
+}: EditorForQueryTypeProps) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
