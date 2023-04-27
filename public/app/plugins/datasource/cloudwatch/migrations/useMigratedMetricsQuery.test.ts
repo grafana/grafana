@@ -1,7 +1,5 @@
 import { renderHook } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
-
 import { DEFAULT_METRICS_QUERY } from '../defaultQueries';
 import { CloudWatchMetricsQuery } from '../types';
 
@@ -21,7 +19,6 @@ describe('usePrepareMetricsQuery', () => {
     });
   });
   describe('when query has a label', () => {
-    config.featureToggles.cloudWatchDynamicLabels = true;
     const testQuery: CloudWatchMetricsQuery = { ...DEFAULT_TEST_QUERY, label: 'test' };
     it('should not replace label or trigger onChange', async () => {
       const onChangeQuery = jest.fn();
