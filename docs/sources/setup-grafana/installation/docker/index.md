@@ -58,7 +58,7 @@ docker stop grafana
 
 ### Save your Grafana data
 
-When you use Docker containers, the data inside them is temporary by default. This means that if you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
 #### Use persistent storage (recommended)
 
