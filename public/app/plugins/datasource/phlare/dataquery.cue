@@ -40,7 +40,7 @@ composableKinds: DataQuery: {
 						// Allows to group the results.
 						groupBy: [...string]
 						// Sets the maximum number of nodes in the flamegraph.
-						maxNodes:         int | *16384
+						maxNodes?:        int64
 						#PhlareQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
 					},
 				]

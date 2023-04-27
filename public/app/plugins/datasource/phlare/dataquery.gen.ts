@@ -28,7 +28,7 @@ export interface GrafanaPyroscope extends common.DataQuery {
   /**
    * Sets the maximum number of nodes in the flamegraph.
    */
-  maxNodes: number;
+  maxNodes?: number;
   /**
    * Specifies the type of profile to query.
    */
@@ -38,5 +38,4 @@ export interface GrafanaPyroscope extends common.DataQuery {
 export const defaultGrafanaPyroscope: Partial<GrafanaPyroscope> = {
   groupBy: [],
   labelSelector: '{}',
-  maxNodes: 16384,
 };

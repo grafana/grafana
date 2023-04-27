@@ -83,12 +83,14 @@ type PyroFlamebearer struct {
 	Names    []string  `json:"names"`
 }
 
-func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID, labelSelector string, start, end, maxNodes int64, groupBy []string) (*PyroscopeProfileResponse, error) {
+func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64, groupBy []string) (*PyroscopeProfileResponse, error) {
 	params := url.Values{}
 	params.Add("from", strconv.FormatInt(start, 10))
 	params.Add("until", strconv.FormatInt(end, 10))
 	params.Add("query", profileTypeID+labelSelector)
-	params.Add("maxNodes", strconv.FormatInt(maxNodes, 10))
+	if maxNodes != nil {
+		params.Add("maxNodes", strconv.FormatInt(*maxNodes, 10))
+	}
 	params.Add("format", "json")
 	if len(groupBy) > 0 {
 		params.Add("groupBy", groupBy[0])
@@ -123,7 +125,7 @@ func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID, lab
 	return respData, nil
 }
 
-func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end, maxNodes int64) (*ProfileResponse, error) {
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	respData, err := c.getProfileData(ctx, profileTypeID, labelSelector, start, end, maxNodes, nil)
 	if err != nil {
 		return nil, err
@@ -159,8 +161,7 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 	// This is super ineffective at the moment. We need 2 different APIs one for profile one for series (timeline) data
 	// but Pyro returns all in single response. This currently does the simplest thing and calls the same API 2 times
 	// and gets the part of the response it needs.
-	maxNodes := int64(100) // irrelevant for this call, therefore set to a low number
-	respData, err := c.getProfileData(ctx, profileTypeID, labelSelector, start, end, maxNodes, groupBy)
+	respData, err := c.getProfileData(ctx, profileTypeID, labelSelector, start, end, nil, groupBy)
 	if err != nil {
 		return nil, err
 	}

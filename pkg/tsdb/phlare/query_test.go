@@ -289,7 +289,7 @@ func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, 
 	panic("implement me")
 }
 
-func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end, maxNodes int64) (*ProfileResponse, error) {
+func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
