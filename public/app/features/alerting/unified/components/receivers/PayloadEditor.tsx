@@ -41,7 +41,8 @@ export function PayloadEditor({
 
   const onOpenEditAlertModal = () => {
     try {
-      JSON.parse(payload);
+      const payloadObj = JSON.parse(payload);
+      JSON.stringify([...payloadObj]); // check if it's iterable, in order to be able to add more data
       setIsEditingAlertData(true);
       setPayloadFormatError(null);
     } catch (e) {

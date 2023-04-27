@@ -358,6 +358,7 @@ export function TemplatePreview({
   const onPreview = useCallback(() => {
     try {
       const alertList: AlertField[] = JSON.parse(payload);
+      JSON.stringify([...alertList]); // check if it's iterable, in order to be able to add more data
       trigger({ template: templateContent, alerts: alertList, name: templateName });
       setPayloadFormatError(null);
     } catch (e) {
