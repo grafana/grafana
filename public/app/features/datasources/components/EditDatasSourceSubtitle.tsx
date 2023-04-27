@@ -5,20 +5,19 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 interface Props {
-  subTitle?: string;
+  dataSourcePluginName: string;
   isDefault: boolean;
   alertingSupported: boolean;
   onDefaultChange: (value: boolean) => void;
 }
 
-export function EditDataSourceSubtitle({ subTitle, isDefault, alertingSupported, onDefaultChange }: Props) {
+export function EditDataSourceSubtitle({ dataSourcePluginName, isDefault, alertingSupported, onDefaultChange }: Props) {
   const styles = useStyles2(getStyles);
-  const dataSourceType = subTitle ? getDataSourceType(subTitle) : '';
   return (
     <div className={styles.subTitleRow}>
       <div className={styles.subTitleRowGroupFirst}>
         <div className={styles.subTitle}>
-          Type: <span>{dataSourceType}</span>
+          Type: <span>{dataSourcePluginName}</span>
         </div>
         <InlineField
           label="Default"
@@ -45,11 +44,6 @@ export function EditDataSourceSubtitle({ subTitle, isDefault, alertingSupported,
     </div>
   );
 }
-
-const getDataSourceType = (subTitle: string) => {
-  const typeArray = subTitle.split('Type: ');
-  return typeArray[1];
-};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

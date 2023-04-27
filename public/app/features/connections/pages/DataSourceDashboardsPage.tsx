@@ -3,15 +3,16 @@ import { useParams } from 'react-router-dom';
 
 import { Page } from 'app/core/components/Page/Page';
 import { DataSourceDashboards } from 'app/features/datasources/components/DataSourceDashboards';
-
-import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
+import { useDataSourceSettingsNav } from 'app/features/datasources/state';
 
 export function DataSourceDashboardsPage() {
   const { uid } = useParams<{ uid: string }>();
-  const { navId, pageNav } = useDataSourceSettingsNav('dashboards');
+  const params = new URLSearchParams(location.search);
+  const pageId = params.get('page');
+  const nav = useDataSourceSettingsNav('dashboards', pageId);
 
   return (
-    <Page navId={navId} pageNav={pageNav}>
+    <Page navId="connections-your-connections-datasources" pageNav={nav.main}>
       <Page.Contents>
         <DataSourceDashboards uid={uid} />
       </Page.Contents>

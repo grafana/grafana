@@ -18,7 +18,6 @@ export function EditDataSourcePage(props: Props) {
   const params = new URLSearchParams(props.location.search);
   const pageId = params.get('page');
   const nav = useDataSourceSettingsNav(uid, pageId);
-  const subTitle = nav.main.subTitle;
   const dispatch = useDispatch();
   const dataSource = useDataSource(uid);
   const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
@@ -27,7 +26,6 @@ export function EditDataSourcePage(props: Props) {
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
-
   return (
     <Page
       navId="datasources"
@@ -35,7 +33,7 @@ export function EditDataSourcePage(props: Props) {
       renderTitle={(title) => <EditDataSourceTitle title={title} onNameChange={onNameChange} />}
       subTitle={
         <EditDataSourceSubtitle
-          subTitle={subTitle}
+          dataSourcePluginName={nav.main.dataSourcePluginName}
           isDefault={dataSource.isDefault || false}
           alertingSupported={alertingSupported}
           onDefaultChange={onDefaultChange}

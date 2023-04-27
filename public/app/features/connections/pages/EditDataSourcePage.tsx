@@ -7,18 +7,20 @@ import { EditDataSource } from 'app/features/datasources/components/EditDataSour
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
 import { EditDataSourceTitle } from 'app/features/datasources/components/EditDataSourceTitle';
 import { EditDataSourceSubtitle } from 'app/features/datasources/components/EditDatasSourceSubtitle';
-import { setDataSourceName, setIsDefault, useDataSource } from 'app/features/datasources/state';
+import {
+  setDataSourceName,
+  setIsDefault,
+  useDataSource,
+  useDataSourceSettingsNav,
+} from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
-
-import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
 
 export function EditDataSourcePage() {
   const { uid } = useParams<{ uid: string }>();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const pageId = params.get('page');
-  const { navId, pageNav } = useDataSourceSettingsNav();
-  const subTitle = pageNav.subTitle;
+  const nav = useDataSourceSettingsNav(uid, pageId);
   const dispatch = useDispatch();
   const dataSource = useDataSource(uid);
   const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
@@ -29,12 +31,12 @@ export function EditDataSourcePage() {
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   return (
     <Page
-      navId={navId}
-      pageNav={pageNav}
+      navId="connections-your-connections-datasources"
+      pageNav={nav.main}
       renderTitle={(title) => <EditDataSourceTitle title={title} onNameChange={onNameChange} />}
       subTitle={
         <EditDataSourceSubtitle
-          subTitle={subTitle}
+          dataSourcePluginName={nav.main.dataSourcePluginName}
           isDefault={dataSource.isDefault || false}
           alertingSupported={alertingSupported}
           onDefaultChange={onDefaultChange}
