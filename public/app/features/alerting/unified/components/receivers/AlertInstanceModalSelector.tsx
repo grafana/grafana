@@ -39,8 +39,6 @@ export function AlertInstanceModalSelector({
   const [selectedRule, setSelectedRule] = useState<string>();
   const [selectedInstances, setSelectedInstances] = useState<AlertmanagerAlert[] | null>(null);
 
-  const [filteredRules, setFilteredRules] = useState<Record<string, AlertmanagerAlert[]> | null>(null);
-
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
   const { loading, result, error } = alertsRequests[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState;
 
@@ -59,7 +57,6 @@ export function AlertInstanceModalSelector({
         }
         rules[instance.labels['alertname']].push(instance);
       });
-      setFilteredRules(rules);
     }
     return rules;
   }, [loading, result]);
@@ -69,9 +66,22 @@ export function AlertInstanceModalSelector({
     setSelectedInstances(null);
   }, []);
 
+  const calculateFilteredRules = useCallback(() => {
+    const filteredRules = Object.keys(rulesWithInstances).filter((rule) =>
+      rule.toLowerCase().includes(ruleFilter.toLowerCase())
+    );
+    const filteredRulesObject: Record<string, AlertmanagerAlert[]> = {};
+    filteredRules.forEach((rule) => {
+      filteredRulesObject[rule] = rulesWithInstances[rule];
+    });
+    return filteredRulesObject;
+  }, [rulesWithInstances, ruleFilter]);
+
   if (error) {
     return null;
   }
+
+  const filteredRules: Record<string, AlertmanagerAlert[]> = calculateFilteredRules();
 
   const filteredRulesKeys = Object.keys(filteredRules || []);
 
@@ -182,14 +192,6 @@ export function AlertInstanceModalSelector({
 
   const handleSearchRules = (filter: string) => {
     setRuleFilter(filter);
-    const filteredRules = Object.keys(rulesWithInstances).filter((rule) =>
-      rule.toLowerCase().includes(filter.toLowerCase())
-    );
-    const filteredRulesObject: Record<string, AlertmanagerAlert[]> = {};
-    filteredRules.forEach((rule) => {
-      filteredRulesObject[rule] = rulesWithInstances[rule];
-    });
-    setFilteredRules(filteredRulesObject);
   };
 
   return (
