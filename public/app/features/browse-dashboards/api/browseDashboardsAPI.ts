@@ -153,8 +153,9 @@ export const browseDashboardsAPI = createApi({
 export const {
   useDeleteDashboardMutation,
   useDeleteFolderMutation,
-  useGetFolderQuery,
   useGetAffectedItemsQuery,
+  useGetFolderQuery,
+  useLazyGetFolderQuery,
   useMoveDashboardMutation,
   useMoveFolderMutation,
 } = browseDashboardsAPI;

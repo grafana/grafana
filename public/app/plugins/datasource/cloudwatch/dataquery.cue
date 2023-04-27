@@ -67,7 +67,8 @@ composableKinds: DataQuery: {
 							metricEditorMode?: #MetricEditorMode
 							// ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
 							id: string
-							// To be deprecated. Use label
+							// Deprecated: use label
+							// @deprecated use label
 							alias?: string
 							// Change the time series legend names using dynamic labels. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html for more details.
 							label?: string
