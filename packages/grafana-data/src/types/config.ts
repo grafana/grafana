@@ -198,6 +198,8 @@ export interface GrafanaConfig {
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
+  trustedTypesDefaultPolicyEnabled: boolean;
+  cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
