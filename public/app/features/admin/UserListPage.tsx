@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, featureEnabled } from '@grafana/runtime/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config, featureEnabled } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
