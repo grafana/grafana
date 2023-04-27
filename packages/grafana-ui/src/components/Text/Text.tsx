@@ -9,7 +9,7 @@ export interface TextProps {
   /** Defines what HTML element is defined underneath */
   as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
-  variant?: keyof ThemeTypographyVariantTypes;
+  variant: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
   /** Color to use for text */
@@ -22,7 +22,7 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ as = 'span', variant = 'bodySmall', weight, color, truncate, textAlignment, children }, ref) => {
+  ({ as, variant, weight, color, truncate, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
         (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment),
