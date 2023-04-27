@@ -431,7 +431,7 @@ export function interpolatePrometheusReferences(targets: PromQuery[], target: Pr
   // no references to self
   delete targetsByRefId[target.refId];
 
-  const nestedSeriesRefRegex = /\@([A-Z])/g;
+  const nestedSeriesRefRegex = /@([A-Z])/g;
   let targetWithNestedQueries = target;
 
   // Use ref count to track circular references
@@ -464,10 +464,10 @@ export function interpolatePrometheusReferences(targets: PromQuery[], target: Pr
       break;
     }
 
-    if(updated.match(nestedSeriesRefRegex)){
-      throw new Error('Unable to interpolate query reference, check for circular references')
-    }
-
     targetWithNestedQueries.expr = updated;
+  }
+
+  if (targetWithNestedQueries.expr.match(nestedSeriesRefRegex)) {
+    throw new Error('Unable to interpolate query reference, check for circular references');
   }
 }

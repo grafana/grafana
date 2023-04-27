@@ -12,7 +12,7 @@ import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
-import {DataProvider} from "./monaco-completion-provider/completions";
+import { DataProvider } from './monaco-completion-provider/completions';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -179,6 +179,11 @@ const MonacoQueryField = (props: Props) => {
             queries,
             query,
           };
+
+          console.log('dataProvider', dataProvider);
+          console.log('query', query);
+          console.log('queries', queries);
+
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

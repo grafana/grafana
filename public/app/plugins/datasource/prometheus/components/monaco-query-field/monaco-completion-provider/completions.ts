@@ -63,7 +63,10 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
-async function getAllFunctionsAndMetricNamesCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+async function getAllFunctionsAndMetricNamesCompletions(
+  situation: Situation,
+  dataProvider: DataProvider
+): Promise<Completion[]> {
   const metricNames = await getAllMetricNamesCompletions(dataProvider);
   const referenceValues = getReferenceValues(situation.type, dataProvider);
   // Does this order?
@@ -175,7 +178,7 @@ async function getLabelValues(
 }
 
 function getReferenceValues(text: string, dataProvider: DataProvider): Completion[] {
-  console.log('dataProvider', dataProvider);
+  console.log('getReferenceValues', dataProvider);
   if (dataProvider.queries) {
     return dataProvider.queries
       .filter((query) => query.refId !== dataProvider.query?.refId)

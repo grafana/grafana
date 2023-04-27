@@ -21,11 +21,11 @@ import {
   StringLiteral,
   VectorSelector,
 } from '@prometheus-io/lezer-promql';
+import { clone } from 'lodash';
 
-import {interpolatePrometheusReferences} from "../../../language_utils";
-import {PromQuery} from "../../../types";
+import { interpolatePrometheusReferences } from '../../../language_utils';
 
-import {DataProvider} from "./completions";
+import { DataProvider } from './completions';
 import { NeverCaseError } from './util';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -158,7 +158,7 @@ export type Situation =
       betweenQuotes: boolean;
       otherLabels: Label[];
     }
-    | {
+  | {
       type: 'IN_REFERENCE';
     };
 
@@ -532,8 +532,8 @@ function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
 export function getSituation(text: string, pos: number, dataProvider: DataProvider): Situation | null {
   // there is a special-case when we are at the start of writing text,
   // so we handle that case first
-  console.log('getSituation', text, pos, text[pos - 1])
-  console.log('dataProvider', dataProvider)
+  console.log('getSituation', text, pos, text[pos - 1]);
+  console.log('dataProvider', dataProvider);
 
   if (text === '') {
     return {
@@ -542,16 +542,31 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
   }
 
   // This char shouldn't be used for anything else as it's not valid in promQL
-  if(text[pos - 1] === '@'){
+  if (text[pos - 1] === '@') {
     return {
       type: 'IN_REFERENCE',
-    }
+    };
   }
+
+  const referenceRegex = RegExp(/@/, 'g');
+  const referenceMatches = referenceRegex.exec(text);
   // If there are multiple targets (queries with references), let's interpolate any references in this before parsing the syntax
-  if(text.match(/@/g) && dataProvider.queries && dataProvider.query && dataProvider.queries?.length > 1){
-    const thisTarget = dataProvider.query as PromQuery;
-    const allTargets = dataProvider.queries as PromQuery[];
+  if (referenceMatches?.length && dataProvider.queries && dataProvider.query && dataProvider.queries?.length > 1) {
+    const thisTarget = clone(dataProvider.query);
+    thisTarget.expr = text;
+    const allTargets = dataProvider.queries;
+
     interpolatePrometheusReferences(allTargets, thisTarget);
+    const lengthDelta = thisTarget.expr.length - text.length;
+
+    // calculate the new cursor position after reference interpolation
+    // This isn't gonna work for multiple references?
+    if (referenceMatches.index < pos) {
+      pos += lengthDelta;
+    }
+
+    console.log(referenceMatches);
+
     text = thisTarget.expr;
   }
 
