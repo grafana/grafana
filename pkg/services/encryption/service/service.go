@@ -55,8 +55,6 @@ func ProvideEncryptionService(
 		return nil, err
 	}
 
-	// settingsProvider.RegisterReloadHandler(securitySection, s)
-
 	s.registerUsageMetrics()
 
 	return s, nil
@@ -234,20 +232,3 @@ func (s *Service) GetDecryptedValue(ctx context.Context, sjd map[string][]byte, 
 
 	return fallback
 }
-
-// func (s *Service) Validate(section setting.Section) error {
-// 	s.log.Debug("Validating encryption config")
-
-// 	algorithm := section.KeyValue(encryptionAlgorithmKey).
-// 		MustString(defaultEncryptionAlgorithm)
-
-// 	if err := s.checkEncryptionAlgorithm(algorithm); err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func (s *Service) Reload(_ setting.Section) error {
-// 	return nil
-// }

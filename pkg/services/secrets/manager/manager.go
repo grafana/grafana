@@ -61,7 +61,6 @@ func ProvideSecretsService(
 	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
-	// ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
 	ttl := cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
 	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
