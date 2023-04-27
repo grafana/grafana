@@ -23,6 +23,7 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AccessControlAction } from 'app/types';
 
 import { DataSourceList } from './DataSourceList';
+import { matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
@@ -107,7 +108,7 @@ export function DataSourceModal({
             dashboard={false}
             mixed={false}
             variables
-            filter={(ds) => ds.name.includes(search) && !ds.meta.builtIn}
+            filter={(ds) => matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
             onChange={onChangeDataSource}
             current={current}
           />
