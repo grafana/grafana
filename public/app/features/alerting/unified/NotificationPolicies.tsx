@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+import * as comlink from 'comlink';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -33,6 +35,7 @@ import { Policy } from './components/notification-policies/Policy';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import type { FilterEngine } from './notificationPolicyWorker';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
@@ -44,6 +47,9 @@ enum ActiveTab {
   NotificationPolicies = 'notification_policies',
   MuteTimings = 'mute_timings',
 }
+
+const worker = new Worker(new URL('./notificationPolicyWorker.ts', import.meta.url), { type: 'module' });
+const { initData, findMatchingRoute } = comlink.wrap<FilterEngine>(worker);
 
 const AmRoutes = () => {
   const dispatch = useDispatch();
@@ -82,22 +88,38 @@ const AmRoutes = () => {
     if (config?.route) {
       return addUniqueIdentifierToRoute(config.route);
     }
-
     return;
   }, [config?.route]);
 
   // these are computed from the contactPoint and labels matchers filter
-  const routesMatchingFilters = useMemo(() => {
-    if (!rootRoute) {
-      return [];
-    }
-    return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
-  }, [contactPointFilter, labelMatchersFilter, rootRoute]);
+  // const routesMatchingFilters = useMemo(() => {
+  //   if (!rootRoute) {
+  //     return [];
+  //   }
+  //   return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
+  // }, [contactPointFilter, labelMatchersFilter, rootRoute]);
+
+  const { value: routesMatchingFilters } = useAsync(
+    async () =>
+      findMatchingRoute({
+        contactPointFilter,
+        labelMatchersFilter,
+      }),
+    [rootRoute, contactPointFilter, labelMatchersFilter]
+  );
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+
+  useEffect(() => {
+    if (rootRoute) {
+      console.time('Worker INIT transfer');
+      initData(rootRoute, fetchAlertGroups.result ?? []);
+      console.timeEnd('Worker INIT transfer');
+    }
+  }, [rootRoute, fetchAlertGroups.result]);
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {

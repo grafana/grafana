@@ -43,7 +43,7 @@ interface PolicyComponentProps {
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
   inheritedProperties?: InhertitableProperties;
-  routesMatchingFilters?: RouteWithID[];
+  routesMatchingFilters?: string[];
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -71,7 +71,7 @@ const Policy: FC<PolicyComponentProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
-  const showMatchingInstances = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
+  const showMatchingInstances = true; // useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -90,7 +90,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const matchers = normalizeMatchers(currentRoute);
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
-  const hasFocus = routesMatchingFilters.some((route) => route.id === currentRoute.id);
+  const hasFocus = routesMatchingFilters.some((routeId) => routeId === currentRoute.id);
 
   // gather errors here
   const errors: ReactNode[] = [];
