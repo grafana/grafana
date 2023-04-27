@@ -67,7 +67,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const subTitle = config.featureToggles.dataConnectionsConsole ? (
     <p>
       Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
-      <a href={`${CONNECTIONS_ROUTES.ConnectData}?cat=data-source`}>Connections</a>.
+      <a href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>Connections</a>.
     </p>
   ) : (
     <p>Extend the Grafana experience with panel plugins and apps.</p>
