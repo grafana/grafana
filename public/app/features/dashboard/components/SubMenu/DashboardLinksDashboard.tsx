@@ -109,7 +109,7 @@ interface LinkElementProps {
   children: JSX.Element;
 }
 
-const LinkElement: React.FC<LinkElementProps> = (props) => {
+const LinkElement = (props: LinkElementProps) => {
   const { link, children, ...rest } = props;
 
   return (

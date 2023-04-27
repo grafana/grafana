@@ -57,12 +57,13 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
   return {
     wrapper: css`
-      display: grid;
+      display: inline-grid;
       align-items: center;
       column-gap: ${theme.spacing(labelPadding)};
       grid-template-columns: auto 1fr;
       grid-template-rows: auto auto;
       position: relative;
+      vertical-align: middle;
     `,
     input: css`
       position: absolute;

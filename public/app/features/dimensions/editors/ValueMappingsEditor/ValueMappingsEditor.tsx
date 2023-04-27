@@ -9,7 +9,7 @@ import { ResourcePicker } from '../ResourcePicker';
 
 import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
 
-export interface Props extends StandardEditorProps<ValueMapping[], any, any> {
+export interface Props extends StandardEditorProps<ValueMapping[]> {
   showIcon?: boolean;
 }
 

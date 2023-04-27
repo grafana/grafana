@@ -55,11 +55,12 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        0,
-			MaxIdleConns:        2,
-			ConnMaxLifetime:     14400,
+			MaxOpenConns:        cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:        cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:     cfg.SqlDatasourceMaxConnLifetimeDefault,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
+			SecureDSProxy:       false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -92,8 +93,17 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 
+		driverName := "postgres"
+		// register a proxy driver if the secure socks proxy is enabled
+		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			driverName, err = createPostgresProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			if err != nil {
+				return "", nil
+			}
+		}
+
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "postgres",
+			DriverName:        driverName,
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},

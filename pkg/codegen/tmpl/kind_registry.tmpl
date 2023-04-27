@@ -7,7 +7,7 @@ import (
 	{{range .Kinds }}
 	"{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}"{{end}}
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 

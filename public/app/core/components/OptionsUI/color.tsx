@@ -2,26 +2,35 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2, useStyles2, ColorPicker } from '@grafana/ui';
+import { useTheme2, useStyles2, ColorPicker, IconButton } from '@grafana/ui';
 import { ColorSwatch } from '@grafana/ui/src/components/ColorPicker/ColorSwatch';
 
-/**
- * @alpha
- * */
-export interface ColorValueEditorProps {
+export interface ColorValueEditorSettings {
+  placeholder?: string;
+  /** defaults to true */
+  enableNamedColors?: boolean;
+  /** defaults to false */
+  isClearable?: boolean;
+}
+
+interface Props {
   value?: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
+  settings?: ColorValueEditorSettings;
+
+  // Will show placeholder or details
+  details?: boolean;
 }
 
 /**
  * @alpha
  * */
-export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onChange }) => {
+export const ColorValueEditor = ({ value, settings, onChange, details }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   return (
-    <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={true}>
+    <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={settings?.enableNamedColors !== false}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
           <div className={styles.spot}>
@@ -33,6 +42,20 @@ export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onCha
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
               />
             </div>
+            {details && (
+              <>
+                {value ? (
+                  <span className={styles.colorText} onClick={showColorPicker}>
+                    {value}
+                  </span>
+                ) : (
+                  <span className={styles.placeholderText} onClick={showColorPicker}>
+                    {settings?.placeholder ?? 'Select color'}
+                  </span>
+                )}
+                {settings?.isClearable && value && <IconButton name="times" onClick={() => onChange(undefined)} />}
+              </>
+            )}
           </div>
         );
       }}
@@ -43,6 +66,7 @@ export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onCha
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     spot: css`
+      cursor: pointer;
       color: ${theme.colors.text};
       background: ${theme.components.input.background};
       padding: 3px;
@@ -51,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: row;
       align-items: center;
+      align-content: flex-end;
       &:hover {
         border: 1px solid ${theme.components.input.borderHover};
       }
@@ -59,15 +84,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0 ${theme.spacing(1)};
     `,
     colorText: css`
-      cursor: pointer;
-      flex-grow: 1;
+      flex-grow: 2;
     `,
-    trashIcon: css`
-      cursor: pointer;
+    placeholderText: css`
+      flex-grow: 2;
       color: ${theme.colors.text.secondary};
-      &:hover {
-        color: ${theme.colors.text};
-      }
     `,
   };
 };

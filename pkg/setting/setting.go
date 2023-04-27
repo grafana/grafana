@@ -47,7 +47,6 @@ const (
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
-	Test             = "test"
 	ApplicationName  = "Grafana"
 )
 
@@ -102,7 +101,6 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-	ViewersCanEdit          bool
 
 	// HTTP auth
 	SigV4AuthEnabled bool
@@ -145,6 +143,7 @@ var (
 
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -329,6 +328,7 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
 
+	ViewersCanEdit  bool
 	EditorsCanAdmin bool
 
 	ApiKeyMaxSecondsToLive int64
@@ -368,6 +368,11 @@ type Cfg struct {
 	// Data sources
 	DataSourceLimit int
 
+	// SQL Data sources
+	SqlDatasourceMaxOpenConnsDefault    int
+	SqlDatasourceMaxIdleConnsDefault    int
+	SqlDatasourceMaxConnLifetimeDefault int
+
 	// Snapshots
 	SnapshotEnabled       bool
 	ExternalSnapshotUrl   string
@@ -401,21 +406,26 @@ type Cfg struct {
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
 	RudderstackConfigURL                string
+	IntercomSecret                      string
 
 	// AzureAD
+	AzureADEnabled         bool
 	AzureADSkipOrgRoleSync bool
 
 	// Google
+	GoogleAuthEnabled     bool
 	GoogleSkipOrgRoleSync bool
 
 	// Gitlab
+	GitLabAuthEnabled     bool
 	GitLabSkipOrgRoleSync bool
 
 	// Generic OAuth
+	GenericOAuthAuthEnabled     bool
 	GenericOAuthSkipOrgRoleSync bool
 
 	// LDAP
-	LDAPEnabled           bool
+	LDAPAuthEnabled       bool
 	LDAPSkipOrgRoleSync   bool
 	LDAPConfigFilePath    string
 	LDAPAllowSignup       bool
@@ -451,8 +461,9 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// Github OAuth
-	GithubSkipOrgRoleSync bool
+	// GitHub OAuth
+	GitHubAuthEnabled     bool
+	GitHubSkipOrgRoleSync bool
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -460,6 +471,8 @@ type Cfg struct {
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
+	// Grafana.com Auth enabled
+	GrafanaComAuthEnabled bool
 	// GrafanaComSkipOrgRoleSync can be set for
 	// letting users set org roles from within Grafana and
 	// skip the org roles coming from GrafanaCom
@@ -475,8 +488,6 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
-	DashboardPreviews DashboardPreviewsSettings
-
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -484,9 +495,11 @@ type Cfg struct {
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
+	SAMLAuthEnabled     bool
 	SAMLSkipOrgRoleSync bool
 
 	// Okta OAuth
+	OktaAuthEnabled     bool
 	OktaSkipOrgRoleSync bool
 
 	// Access Control
@@ -496,6 +509,9 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+	// Override default fixed role assignments
+	RBACGrantOverrides map[string][]string
+
 	// GRPC Server.
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
@@ -907,6 +923,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
+		Target:      []string{"all"},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -965,6 +982,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	cfg.Target = strings.Split(Target, " ")
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1034,6 +1053,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1100,8 +1120,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readSqlDataSourceSettings()
 
-	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 
@@ -1184,6 +1204,7 @@ type RemoteCacheOptions struct {
 
 func (cfg *Cfg) readSAMLConfig() {
 	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
 	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
 }
 
@@ -1191,7 +1212,7 @@ func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
 	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
 	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
-	cfg.LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPAuthEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
 	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
@@ -1263,6 +1284,7 @@ func (cfg *Cfg) LogConfigSources() {
 		}
 	}
 
+	cfg.Logger.Info("Target", "target", cfg.Target)
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
@@ -1369,36 +1391,43 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 func readAuthAzureADSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.azuread")
+	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
 	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.grafana_com")
+	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.github")
-	cfg.GithubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.google")
+	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.gitlab")
+	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.generic_oauth")
+	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.okta")
+	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
@@ -1534,10 +1563,21 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
-	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACEnabled = true
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
+
+	rbacOverrides := iniFile.Section("rbac.overrides")
+	cfg.RBACGrantOverrides = map[string][]string{}
+	for _, key := range rbacOverrides.Keys() {
+		value := key.MustString("")
+		grants := strings.Split(value, ",")
+		for i, grant := range grants {
+			grants[i] = strings.TrimSpace(grant)
+		}
+		cfg.RBACGrantOverrides[key.Name()] = grants
+	}
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1560,7 +1600,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 
-	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
@@ -1811,6 +1851,13 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readSqlDataSourceSettings() {
+	sqlDatasources := cfg.Raw.Section("sql_datasources")
+	cfg.SqlDatasourceMaxOpenConnsDefault = sqlDatasources.Key("max_open_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxIdleConnsDefault = sqlDatasources.Key("max_idle_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxConnLifetimeDefault = sqlDatasources.Key("max_conn_lifetime_default").MustInt(14400)
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {

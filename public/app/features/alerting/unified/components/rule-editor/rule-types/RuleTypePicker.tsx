@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Stack } from '@grafana/experimental';
@@ -21,7 +21,7 @@ interface RuleTypePickerProps {
   enabledTypes: RuleFormType[];
 }
 
-const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange, enabledTypes }) => {
+const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProps) => {
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
   const hasLotexDatasources = !isEmpty(rulesSourcesWithRuler);
 

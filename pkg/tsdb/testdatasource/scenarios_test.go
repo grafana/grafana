@@ -96,7 +96,7 @@ func TestTestdataScenarios(t *testing.T) {
 			require.Len(t, dResp.Frames, 1)
 			frame := dResp.Frames[0]
 			require.Greater(t, frame.Rows(), 50)
-			require.Len(t, frame.Fields, 5)
+			require.Len(t, frame.Fields, 6)
 			require.Equal(t, "Time", frame.Fields[0].Name)
 			require.Equal(t, "Value", frame.Fields[1].Name)
 			require.Equal(t, "Min", frame.Fields[2].Name)
@@ -152,12 +152,13 @@ func TestTestdataScenarios(t *testing.T) {
 			require.Len(t, dResp.Frames, 1)
 			frame := dResp.Frames[0]
 			require.Greater(t, frame.Rows(), 50)
-			require.Len(t, frame.Fields, 5)
+			require.Len(t, frame.Fields, 6)
 			require.Equal(t, "Time", frame.Fields[0].Name)
 			require.Equal(t, "Value", frame.Fields[1].Name)
 			require.Equal(t, "Min", frame.Fields[2].Name)
 			require.Equal(t, "Max", frame.Fields[3].Name)
 			require.Equal(t, "Info", frame.Fields[4].Name)
+			require.Equal(t, "State", frame.Fields[5].Name)
 
 			valNil := false
 			minNil := false

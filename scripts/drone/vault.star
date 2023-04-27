@@ -94,4 +94,29 @@ def secrets():
             "secret/data/common/aws-marketplace",
             "aws_secret_access_key",
         ),
+        vault_secret(
+            "security_dest_bucket",
+            "infra/data/ci/grafana-release-eng/security-bucket",
+            "bucket",
+        ),
+        vault_secret(
+            "static_asset_editions",
+            "infra/data/ci/grafana-release-eng/artifact-publishing",
+            "static_asset_editions",
+        ),
+        vault_secret(
+            "enterprise2_security_prefix",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "security_prefix",
+        ),
+        vault_secret(
+            "enterprise2-cdn-path",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "cdn_path",
+        ),
+        vault_secret(
+            "enterprise2_security_prefix",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "security_prefix",
+        ),
     ]

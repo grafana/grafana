@@ -6,7 +6,7 @@ interface EditorRowsProps {
   children: React.ReactNode;
 }
 
-export const EditorRows: React.FC<EditorRowsProps> = ({ children }) => {
+export const EditorRows = ({ children }: EditorRowsProps) => {
   return (
     <Stack gap={0.5} direction="column">
       {children}

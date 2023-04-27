@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
 import { t } from 'app/core/internationalization';
@@ -14,7 +14,7 @@ interface Props {
   getTagKeysOptions?: any;
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }) => {
+export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }: Props) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 

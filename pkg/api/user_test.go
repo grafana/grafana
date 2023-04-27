@@ -78,7 +78,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "loginuser",
 			IsAdmin: true,
 		}
-		usr, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
+		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID

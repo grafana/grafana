@@ -11,9 +11,10 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 import { buildLayout } from './BigValueLayout';
 
 export enum BigValueColorMode {
-  Value = 'value',
   Background = 'background',
+  BackgroundSolid = 'background_solid',
   None = 'none',
+  Value = 'value',
 }
 
 export enum BigValueGraphMode {

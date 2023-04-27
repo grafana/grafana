@@ -49,11 +49,16 @@ type PublicDashboard struct {
 	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
 	Share                ShareType     `json:"share" xorm:"share"`
-	Recipients           []string      `json:"recipients,omitempty" xorm:"-"`
+	Recipients           []EmailDTO    `json:"recipients,omitempty" xorm:"-"`
 	CreatedBy            int64         `json:"createdBy" xorm:"created_by"`
 	UpdatedBy            int64         `json:"updatedBy" xorm:"updated_by"`
 	CreatedAt            time.Time     `json:"createdAt" xorm:"created_at"`
 	UpdatedAt            time.Time     `json:"updatedAt" xorm:"updated_at"`
+}
+
+type EmailDTO struct {
+	Uid       string `json:"uid"`
+	Recipient string `json:"recipient"`
 }
 
 // Alias the generated type

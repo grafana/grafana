@@ -15,21 +15,29 @@ func TestStore_ProvideService(t *testing.T) {
 	t.Run("Plugin sources are added in order", func(t *testing.T) {
 		var addedPaths []string
 		l := &fakes.FakeLoader{
-			LoadFunc: func(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-				addedPaths = append(addedPaths, paths...)
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				addedPaths = append(addedPaths, src.PluginURIs(ctx)...)
 				return nil, nil
 			},
 		}
 
-		srcs := &fakes.FakeSources{ListFunc: func(_ context.Context) []plugins.PluginSource {
+		srcs := &fakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
 			return []plugins.PluginSource{
-				{
-					Class: plugins.Bundled,
-					Paths: []string{"path1"},
+				&fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return plugins.Bundled
+					},
+					PluginURIsFunc: func(ctx context.Context) []string {
+						return []string{"path1"}
+					},
 				},
-				{
-					Class: plugins.External,
-					Paths: []string{"path2", "path3"},
+				&fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return plugins.External
+					},
+					PluginURIsFunc: func(ctx context.Context) []string {
+						return []string{"path2", "path3"}
+					},
 				},
 			}
 		}}
@@ -97,11 +105,11 @@ func TestStore_Plugins(t *testing.T) {
 
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, PluginDir: "/some/dir"}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, PluginDir: "/grafana/"}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, PluginDir: "./secrets", Class: plugins.Core}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, PluginDir: "../test"}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, FS: fakes.NewFakePluginFiles("/grafana/")}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.Core}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, FS: fakes.NewFakePluginFiles("../test")}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}, FS: fakes.NewFakePluginFiles("any/path")}
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.App}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
@@ -115,7 +123,7 @@ func TestStore_Routes(t *testing.T) {
 		}))
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
-			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.PluginDir}
+			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
 		}
 
 		rs := ps.Routes()

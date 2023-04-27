@@ -2,7 +2,9 @@ import debounce from 'debounce-promise';
 import { useEffect, useState } from 'react';
 
 import { locationUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getGrafanaSearcher } from 'app/features/search/service';
 
@@ -15,6 +17,10 @@ const MAX_RECENT_DASHBOARDS = 5;
 const debouncedSearch = debounce(getSearchResultActions, 200);
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
+  if (!contextSrv.user.isSignedIn) {
+    return [];
+  }
+
   const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
   const resultsDataFrame = await getGrafanaSearcher().search({
     kind: ['dashboard'],
@@ -46,7 +52,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
 
 export async function getSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
-  if (searchQuery.length === 0) {
+  if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.bootData.settings.anonymousEnabled)) {
     return [];
   }
 
@@ -57,7 +63,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   });
 
   const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name, kind } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, kind, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `go/${kind}${url}`,
       name: `${name}`,
@@ -67,6 +73,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
           : t('command-palette.section.folder-search-results', 'Folders'),
       priority: SEARCH_RESULTS_PRORITY,
       url: locationUtil.stripBaseFromUrl(url),
+      subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
     };
   });
 

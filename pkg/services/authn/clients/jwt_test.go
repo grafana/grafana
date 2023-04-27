@@ -53,6 +53,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			AllowSignUp:     true,
 			FetchSyncedUser: true,
 			SyncOrgRoles:    true,
+			SyncPermissions: true,
 			LookUpParams: login.UserLookupParams{
 				UserID: nil,
 				Email:  stringPtr("eai.doe@cor.po"),

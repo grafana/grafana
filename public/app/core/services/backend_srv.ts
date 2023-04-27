@@ -20,7 +20,6 @@ import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -51,6 +50,8 @@ export interface FolderRequestOptions {
   withAccessControl?: boolean;
 }
 
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
@@ -65,7 +66,6 @@ export class BackendSrv implements BackendService {
     contextSrv: contextSrv,
     logout: () => {
       contextSrv.setLoggedOut();
-      window.location.reload();
     },
   };
 
@@ -225,6 +225,7 @@ export class BackendSrv implements BackendService {
           type,
           redirected,
           config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
         };
         return fetchResponse;
       }),
@@ -240,7 +241,13 @@ export class BackendSrv implements BackendService {
         filter((response) => response.ok === false),
         mergeMap((response) => {
           const { status, statusText, data } = response;
-          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
+          const fetchErrorResponse: FetchError = {
+            status,
+            statusText,
+            data,
+            config: options,
+            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+          };
           return throwError(fetchErrorResponse);
         }),
         retryWhen((attempts: Observable<any>) =>
@@ -262,7 +269,12 @@ export class BackendSrv implements BackendService {
                   return of({});
                 }
 
-                return from(this.loginPing()).pipe(
+                let authChecker = () => this.loginPing();
+                if (config.featureToggles.clientTokenRotation) {
+                  authChecker = () => this.rotateToken();
+                }
+
+                return from(authChecker()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -316,6 +328,11 @@ export class BackendSrv implements BackendService {
 
     let description = '';
     let message = err.data.message;
+
+    // Sometimes we have a better error message on err.message
+    if (message === 'Unexpected error' && err.message) {
+      message = err.message;
+    }
 
     if (message.length > 80) {
       description = message;
@@ -441,6 +458,10 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  rotateToken() {
+    return this.request({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 });
+  }
+
   loginPing() {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
@@ -451,9 +472,6 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
-      return getGrafanaStorage().getDashboard(uid);
-    }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 

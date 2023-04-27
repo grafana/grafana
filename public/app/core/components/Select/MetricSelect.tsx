@@ -1,5 +1,5 @@
 import { flatten } from 'lodash';
-import React, { useMemo, useCallback, FC } from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
@@ -16,7 +16,7 @@ export interface Props {
   variables?: Variable[];
 }
 
-export const MetricSelect: FC<Props> = (props) => {
+export const MetricSelect = (props: Props) => {
   const { value, placeholder, className, isSearchable, onChange } = props;
   const options = useSelectOptions(props);
   const selected = useSelectedOption(options, value);

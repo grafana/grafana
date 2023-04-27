@@ -46,7 +46,7 @@ To build a backend for your data source plugin, Grafana requires a binary that i
 The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and type:
 
 ```
-npx @grafana/create-plugin
+npx @grafana/create-plugin@latest
 ```
 
 Follow the steps and select **datasource** as your plugin type and answer **yes** when prompted to create a backend for your plugin.

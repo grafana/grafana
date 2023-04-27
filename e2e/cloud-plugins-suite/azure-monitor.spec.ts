@@ -44,11 +44,12 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
       // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
-      e2e().wait(15000);
+      e2e().wait(30000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
     timeout: 10000,
+    awaitHealth: true,
   });
 }
 
@@ -96,7 +97,7 @@ const addAzureMonitorVariable = (
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-  e2e.components.PageToolbar.item('Go Back').click();
+  e2e.pages.Dashboard.Settings.Actions.close().click();
 };
 
 e2e.scenario({

@@ -300,7 +300,7 @@ func Test_getGCEDefaultProject(t *testing.T) {
 				},
 			},
 		},
-		gceDefaultProjectGetter: func(ctx context.Context) (string, error) {
+		gceDefaultProjectGetter: func(ctx context.Context, scope string) (string, error) {
 			return project, nil
 		},
 	}

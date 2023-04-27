@@ -61,7 +61,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
 		userIdPayload := []byte(strconv.FormatInt(id, 10))
-		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
+		err = cache.Set(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 		// Set up the middleware
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
@@ -84,7 +84,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
 		userIdPayload := []byte(strconv.FormatInt(id, 10))
-		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
+		err = cache.Set(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 
 		auth, reqCtx := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
@@ -107,7 +107,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		cache := remotecache.NewFakeStore(t)
 
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
-		auth.cfg.LDAPEnabled = true
+		auth.cfg.LDAPAuthEnabled = true
 		ldapFake := &service.LDAPFakeService{
 			ExpectedUser: &login.ExternalUserInfo{UserId: id},
 		}
@@ -126,7 +126,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		cache := remotecache.NewFakeStore(t)
 
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
-		auth.cfg.LDAPEnabled = true
+		auth.cfg.LDAPAuthEnabled = true
 		ldapFake := &service.LDAPFakeService{
 			ExpectedUser:  nil,
 			ExpectedError: service.ErrUnableToCreateLDAPClient,

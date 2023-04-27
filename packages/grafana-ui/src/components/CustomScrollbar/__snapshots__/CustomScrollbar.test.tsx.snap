@@ -18,7 +18,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     className="scrollbar-view"
     style={
       {
-        "WebkitOverflowScrolling": "touch",
+        "WebkitOverflowScrolling": "auto",
         "bottom": undefined,
         "left": undefined,
         "marginBottom": 0,

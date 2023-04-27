@@ -60,6 +60,12 @@ export class MockDataSourceApi extends DataSourceApi {
   testDatasource() {
     return Promise.resolve();
   }
+
+  setupMixed(value: boolean) {
+    this.meta = this.meta || {};
+    this.meta.mixed = value;
+    return this;
+  }
 }
 
 export class MockObservableDataSourceApi extends DataSourceApi {

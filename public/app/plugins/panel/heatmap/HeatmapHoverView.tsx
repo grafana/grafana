@@ -9,10 +9,10 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
+import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
 
@@ -51,9 +51,9 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     return `${v}`;
   };
 
-  const xVals = xField?.values.toArray();
-  const yVals = yField?.values.toArray();
-  const countVals = countField?.values.toArray();
+  const xVals = xField?.values;
+  const yVals = yField?.values;
+  const countVals = countField?.values;
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
@@ -122,7 +122,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   for (const field of visibleFields ?? []) {
     // TODO: Currently always undefined? (getLinks)
     if (field.getLinks) {
-      const v = field.values.get(index);
+      const v = field.values[index];
       const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
 
       field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {

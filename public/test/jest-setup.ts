@@ -65,26 +65,6 @@ jest.mock('../app/core/core', () => ({
 jest.mock('../app/angular/partials', () => ({}));
 jest.mock('../app/features/plugins/plugin_loader', () => ({}));
 
-const localStorageMock = (() => {
-  let store: any = {};
-  return {
-    getItem: (key: string) => {
-      return store[key];
-    },
-    setItem: (key: string, value: any) => {
-      store[key] = value.toString();
-    },
-    clear: () => {
-      store = {};
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-  };
-})();
-
-global.localStorage = localStorageMock;
-
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {
     throw err;

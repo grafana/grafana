@@ -25,78 +25,55 @@ Before you can create your first dashboard, you need to add your data source.
 
 **To add a data source:**
 
-1. Select the cog icon on the side menu to show the configuration options.
-1. Select **Data sources**.
-
-   This opens the data sources page, which displays a list of previously configured data sources for the Grafana instance.
-
-1. Select **Add data source** to see a list of all supported data sources.
-
-   {{< figure src="/static/img/docs/v75/add-data-source-7-5.png" max-width="600px" class="docs-image--no-shadow">}}
-
-1. Enter the name of a specific data source in the search dialog.
-
-   You can also scroll through supported data sources grouped into time series, logging, tracing, and other categories.
-
-1. Move the cursor over the data source you want to add.
-
-1. Click **Select**.
-
-   This opens the data source configuration page.
-
+1. Click **Connections** in the left-side menu.
+1. Enter the name of a specific data source in the search dialog. You can filter by **Data source** to only see data sources.
+1. Click the data source you want to add.
 1. Configure the data source following instructions specific to that data source.
 
    For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
 
 ## Data source permissions
 
-You can configure data source permissions to allow or deny certain users the ability to query a data source.
-Each data source's configuration includes a permissions page where you can enable permissions and restrict query permissions to specific **Users** and **Teams**.
+You can configure data source permissions to allow or deny certain users the ability to query or edit a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, teams, or roles.
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
-### Enable data source permissions
-
-By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
-queries that exist on dashboards they have access to.
-
-When permissions are enabled for a data source in an organization, the user who created the datasource can edit the datasource and in addition, viewers can query the datasource.
-
-**Enable permissions for a data source:**
-
-1. Navigate to **Configuration > Data Sources**.
-1. Select the data source you want to enable permissions for.
-1. On the Permissions tab, click **Enable**.
+By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. Additionally, by default, data sources can be edited by the user who created the data source, as well as users with the `Admin` role.
 
 <div class="clearfix"></div>
 
-> **Caution:** Enabling permissions for the default data source makes users not listed in the permissions unable to invoke queries. Panels using default data source will return `Access denied to data source` error for those users.
+### Assign data source permissions to users, teams, or roles
 
-### Allow users and teams to query a data source
+You can assign data source permissions to users, teams, and roles which will allow access to query or edit the data source.
 
-After you have enabled permissions for a data source you can assign query permissions to users and teams which will allow access to query the data source.
-
-**Assign query permission to users and teams:**
-
-1. Navigate to **Configuration > Data Sources**.
-1. Select the data source you want to assign query permissions for.
-1. On the Permissions tab, click **Add Permission**.
-1. Select **Team** or **User**.
-1. Select the entity you want to allow query access and then click **Save**.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Select the data source to which you want to assign permissions.
+1. On the Permissions tab, click **Add a permission**.
+1. Select **User**, **Team**, or **Role**.
+1. Select the entity for which you want to modify permissions.
+1. Select the **Query** or **Edit** permission.
+1. Click **Save**.
 
 <div class="clearfix"></div>
 
-### Disable data source permissions
+### Edit data source permissions for users, teams, or roles
 
-If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Select the data source for which you want to edit permissions.
+1. On the Permissions tab, find the user, team, or role permission you want to update.
+1. Select a different option in the **Permission** dropdown.
 
-Note that _all_ existing permissions created for the data source will be deleted.
+<div class="clearfix"></div>
 
-**Disable permissions for a data source:**
+### Remove data source permissions for users, teams, or roles
 
-1. Navigate to **Configuration > Data Sources**.
-1. Select the data source you want to disable permissions for.
-1. On the Permissions tab, click **Disable Permissions**.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Select the data source from which you want to remove permissions.
+1. On the Permissions tab, find the user, team, or role permission you want to remove.
+1. Click the **X** next to the permission.
 
 <div class="clearfix"></div>
 
@@ -148,10 +125,11 @@ You must be an Org admin or Grafana admin to enable query caching for a data sou
 
 By default, data source queries are not cached. To enable query caching for a single data source:
 
-1. On the side menu, click Configuration > Data Sources.
+1. Click **Connections** in the left-side menu.
+1. Under Your Connections, click **Data sources**.
 1. In the data source list, click the data source that you want to turn on caching for.
-1. Open the Cache tab.
-1. Press the Enable button.
+1. Go to the Cache tab.
+1. Click **Enable**.
 1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
 
 You can optionally override a data source's configured TTL for individual dashboard panels. This can be be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand the Query options, and enter your the TTL in milliseconds.
@@ -166,9 +144,10 @@ To configure global settings for query caching, refer to the [Query caching sect
 
 To disable query caching for a single data source:
 
-1. On the side menu, click Configuration > Data Sources.
+1. Click **Connections** in the left-side menu.
+1. Under Your Connections, click **Data sources**.
 1. In the data source list, click the data source that you want to turn off caching for.
-1. In the Cache tab, click Disable.
+1. On the Cache tab, click **Disable**.
 
 To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
@@ -178,10 +157,10 @@ If you experience performance issues or repeated queries become slower to execut
 
 > **Note:** This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
 
-1. Sign in to Grafana and click **Settings > Data Sources**.
-1. Select a data source.
-1. Click the **Cache** tab.
-1. Click **Clear cache**.
+1. Click **Connections** in the left-side menu.
+1. Under Your Connections, click **Data sources**.
+1. In the data source list, click the data source that you want to clear the cache for.
+1. In the Cache tab, click **Clear cache**.
 
 ### Sending a request without cache
 

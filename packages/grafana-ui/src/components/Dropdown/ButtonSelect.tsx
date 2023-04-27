@@ -54,7 +54,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         {...buttonProps}
         {...restProps}
       >
-        {value?.label || value?.value}
+        {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>
       {state.isOpen && (
         <div className={styles.menuWrapper}>
@@ -68,7 +68,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}
-                    label={(item.label || item.value) as string}
+                    label={item.label ?? String(item.value)}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
                     ariaChecked={item.value === value?.value}

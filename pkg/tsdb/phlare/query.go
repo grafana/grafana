@@ -5,24 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
 	"github.com/xlab/treeprint"
-
-	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 )
 
 type queryModel struct {
 	WithStreaming bool
-	dataquery.PhlareDataQuery
+	dataquery.GrafanaPyroscopeDataQuery
 }
 
 type dsJsonModel struct {
@@ -62,36 +57,34 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 				logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
 			}
 		}
-		req := connect.NewRequest(&querierv1.SelectSeriesRequest{
-			ProfileTypeID: qm.ProfileTypeId,
-			LabelSelector: qm.LabelSelector,
-			Start:         query.TimeRange.From.UnixMilli(),
-			End:           query.TimeRange.To.UnixMilli(),
-			Step:          math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
-			GroupBy:       qm.GroupBy,
-		})
-
-		logger.Debug("Sending SelectSeriesRequest", "request", req, "queryModel", qm)
-		seriesResp, err := d.client.SelectSeries(ctx, req)
+		logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
+		seriesResp, err := d.client.GetSeries(
+			ctx,
+			qm.ProfileTypeId,
+			qm.LabelSelector,
+			query.TimeRange.From.UnixMilli(),
+			query.TimeRange.To.UnixMilli(),
+			qm.GroupBy,
+			math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
+		)
 		if err != nil {
 			logger.Error("Querying SelectSeries()", "err", err)
 			response.Error = err
 			return response
 		}
 		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeId)...)
+		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		req := makeRequest(qm, query)
-		logger.Debug("Sending SelectMergeProfile", "request", req, "queryModel", qm)
-		resp, err := d.client.SelectMergeProfile(ctx, req)
+		logger.Debug("Calling GetProfile", "queryModel", qm)
+		prof, err := d.client.GetProfile(ctx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli())
 		if err != nil {
-			logger.Error("Querying SelectMergeProfile()", "err", err)
+			logger.Error("Error GetProfile()", "err", err)
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeId)
+		frame := responseToDataFrames(prof)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -110,35 +103,121 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	return response
 }
 
-func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeProfileRequest] {
-	return &connect.Request[querierv1.SelectMergeProfileRequest]{
-		Msg: &querierv1.SelectMergeProfileRequest{
-			ProfileTypeID: qm.ProfileTypeId,
-			LabelSelector: qm.LabelSelector,
-			Start:         query.TimeRange.From.UnixMilli(),
-			End:           query.TimeRange.To.UnixMilli(),
-		},
-	}
-}
-
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[googlev1.Profile], profileTypeID string) *data.Frame {
-	tree := profileAsTree(resp.Msg)
-	return treeToNestedSetDataFrame(tree, profileTypeID)
+func responseToDataFrames(resp *ProfileResponse) *data.Frame {
+	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
+	return treeToNestedSetDataFrame(tree, resp.Units)
 }
 
-type ProfileTree struct {
-	Level      int
-	Value      int64
-	Self       int64
-	Function   *Function
-	Inlined    []*Function
-	locationID uint64
+// START_OFFSET is offset of the bar relative to previous sibling
+const START_OFFSET = 0
 
-	Nodes  []*ProfileTree
-	Parent *ProfileTree
+// VALUE_OFFSET is value or width of the bar
+const VALUE_OFFSET = 1
+
+// SELF_OFFSET is self value of the bar
+const SELF_OFFSET = 2
+
+// NAME_OFFSET is index into the names array
+const NAME_OFFSET = 3
+
+// ITEM_OFFSET Next bar. Each bar of the profile is represented by 4 number in a flat array.
+const ITEM_OFFSET = 4
+
+type ProfileTree struct {
+	Start int64
+	Value int64
+	Self  int64
+	Level int
+	Name  string
+	Nodes []*ProfileTree
+}
+
+// levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
+// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
+func levelsToTree(levels []*Level, names []string) *ProfileTree {
+	if len(levels) == 0 {
+		return nil
+	}
+
+	tree := &ProfileTree{
+		Start: 0,
+		Value: levels[0].Values[VALUE_OFFSET],
+		Self:  levels[0].Values[SELF_OFFSET],
+		Level: 0,
+		Name:  names[levels[0].Values[0]],
+	}
+
+	parentsStack := []*ProfileTree{tree}
+	currentLevel := 1
+
+	// Cycle through each level
+	for {
+		if currentLevel >= len(levels) {
+			break
+		}
+
+		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
+		if len(parentsStack) == 0 {
+			logger.Error("parentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
+			break
+		}
+
+		var nextParentsStack []*ProfileTree
+		currentParent := parentsStack[:1][0]
+		parentsStack = parentsStack[1:]
+		itemIndex := 0
+		// cumulative offset as items in flamebearer format have just relative to prev item
+		offset := int64(0)
+
+		// Cycle through bar in a level
+		for {
+			if itemIndex >= len(levels[currentLevel].Values) {
+				break
+			}
+
+			itemStart := levels[currentLevel].Values[itemIndex+START_OFFSET] + offset
+			itemValue := levels[currentLevel].Values[itemIndex+VALUE_OFFSET]
+			selfValue := levels[currentLevel].Values[itemIndex+SELF_OFFSET]
+			itemEnd := itemStart + itemValue
+			parentEnd := currentParent.Start + currentParent.Value
+
+			if itemStart >= currentParent.Start && itemEnd <= parentEnd {
+				// We have an item that is in the bounds of current parent item, so it should be its child
+				treeItem := &ProfileTree{
+					Start: itemStart,
+					Value: itemValue,
+					Self:  selfValue,
+					Level: currentLevel,
+					Name:  names[levels[currentLevel].Values[itemIndex+NAME_OFFSET]],
+				}
+				// Add to parent
+				currentParent.Nodes = append(currentParent.Nodes, treeItem)
+				// Add this item as parent for the next level
+				nextParentsStack = append(nextParentsStack, treeItem)
+				itemIndex += ITEM_OFFSET
+
+				// Update offset for next item. This is changing relative offset to absolute one.
+				offset = itemEnd
+			} else {
+				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
+				// we will check if it is a child of the next parent item in line.
+				if len(parentsStack) == 0 {
+					logger.Error("parentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
+					break
+				}
+				currentParent = parentsStack[:1][0]
+				parentsStack = parentsStack[1:]
+				continue
+			}
+		}
+		parentsStack = nextParentsStack
+		currentLevel++
+	}
+
+	return tree
 }
 
 type Function struct {
@@ -151,14 +230,14 @@ func (f Function) String() string {
 	return fmt.Sprintf("%s:%s:%d", f.FileName, f.FunctionName, f.Line)
 }
 
-func (pt ProfileTree) String() string {
+func (pt *ProfileTree) String() string {
 	type branch struct {
 		nodes []*ProfileTree
 		treeprint.Tree
 	}
 	tree := treeprint.New()
-	for _, n := range []ProfileTree{pt} {
-		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value))
+	for _, n := range []*ProfileTree{pt} {
+		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
 		remaining := append([]*branch{}, &branch{nodes: n.Nodes, Tree: b})
 		for len(remaining) > 0 {
 			current := remaining[0]
@@ -167,11 +246,11 @@ func (pt ProfileTree) String() string {
 				if len(n.Nodes) > 0 {
 					remaining = append(remaining,
 						&branch{
-							nodes: n.Nodes, Tree: current.Tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value)),
+							nodes: n.Nodes, Tree: current.Tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value)),
 						},
 					)
 				} else {
-					current.Tree.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value))
+					current.Tree.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
 				}
 			}
 		}
@@ -179,136 +258,15 @@ func (pt ProfileTree) String() string {
 	return tree.String()
 }
 
-// merge merges the node into the tree.
-// it assumes src has only one leaf.
-func (pt *ProfileTree) merge(src *ProfileTree) {
-	// find the node path where n should be inserted.
-	var parent, found *ProfileTree
-	// visit depth first the dst tree following the src tree
-	remaining := []*ProfileTree{pt}
-	for len(remaining) > 0 {
-		n := remaining[0]
-		remaining = remaining[1:]
-		if src.locationID == n.locationID {
-			if len(src.Nodes) == 0 {
-				// we have found the leaf
-				found = n
-				break
-			}
-			// move src and last parent visited
-			parent = n
-			src = src.Nodes[0]
-			remaining = n.Nodes
-			continue
-		}
-	}
-	if found == nil {
-		if parent == nil {
-			// Nothing in common can't be merged.
-			return
-		}
-		src.Parent = parent
-		parent.Nodes = append(parent.Nodes, src)
-		for p := parent; p != nil; p = p.Parent {
-			p.Value = p.Value + src.Value
-		}
-		return
-	}
-	found.Value = found.Value + src.Self
-	for p := found.Parent; p != nil; p = p.Parent {
-		p.Value = p.Value + src.Self
-	}
-	found.Self = found.Self + src.Self
-}
-
-func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *ProfileTree {
-	if len(sample.LocationId) == 0 {
-		return &ProfileTree{
-			Level: 0,
-			Value: sample.Value[0],
-			Function: &Function{
-				FunctionName: "root",
-			},
-		}
-	}
-
-	// The leaf is at locations[0].
-	locations := sample.LocationId
-
-	current := &ProfileTree{
-		Self:  sample.Value[0],
-		Level: 0,
-	}
-	for len(locations) > 0 {
-		current.locationID = locations[0]
-		current.Value = sample.Value[0]
-		current.Level = len(locations)
-
-		// Ids in pprof format are 1 based. So to get the index in array from the id we need to subtract one.
-		lines := profile.Location[locations[0]-1].Line
-		if len(lines) == 0 {
-			locations = locations[1:]
-			continue
-		}
-		// The leaf is at lines[len(lines)-1].
-		current.Function = &Function{
-			FunctionName: profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Name],
-			FileName:     profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Filename],
-			Line:         lines[len(lines)-1].Line,
-		}
-		lines = lines[:len(lines)-1]
-
-		// If there are more than one line, each line inlined into the next line.
-		for len(lines) > 0 {
-			current.Inlined = append(current.Inlined, &Function{
-				FunctionName: profile.StringTable[profile.Function[lines[0].FunctionId-1].Name],
-				FileName:     profile.StringTable[profile.Function[lines[0].FunctionId-1].Filename],
-				Line:         lines[0].Line,
-			})
-			lines = lines[1:]
-		}
-		parent := &ProfileTree{
-			Nodes: []*ProfileTree{current},
-		}
-		current.Parent = parent
-		current = parent
-		locations = locations[1:]
-	}
-	if current.Function == nil {
-		current.Function = &Function{
-			FunctionName: "root",
-		}
-		current.Value = sample.Value[0]
-		current.locationID = 0
-		current.Self = 0
-		current.Level = 0
-	}
-	return current
-}
-
-func profileAsTree(profile *googlev1.Profile) *ProfileTree {
-	if profile == nil {
-		return nil
-	}
-	if len(profile.Sample) == 0 {
-		return nil
-	}
-	n := treeFromSample(profile, profile.Sample[0])
-	for _, sample := range profile.Sample[1:] {
-		n.merge(treeFromSample(profile, sample))
-	}
-	return n
-}
-
 type CustomMeta struct {
 	ProfileTypeID string
 }
 
 // treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
+// where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
+// parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
+func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 	frame := data.NewFrame("response")
 	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
@@ -317,25 +275,64 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	selfField := data.NewField("self", nil, []int64{})
 
 	// profileTypeID should encode the type of the profile with unit being the 3rd part
-	parts := strings.Split(profileTypeID, ":")
-	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []string{})
-	lineNumberField := data.NewField("line", nil, []int64{})
-	fileNameField := data.NewField("fileName", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField, lineNumberField, fileNameField}
+	valueField.Config = &data.FieldConfig{Unit: unit}
+	selfField.Config = &data.FieldConfig{Unit: unit}
+	frame.Fields = data.Fields{levelField, valueField, selfField}
 
-	walkTree(tree, func(tree *ProfileTree) {
-		levelField.Append(int64(tree.Level))
-		valueField.Append(tree.Value)
-		selfField.Append(tree.Self)
-		// todo: inline functions
-		// tree.Inlined
-		labelField.Append(tree.Function.FunctionName)
-		lineNumberField.Append(tree.Function.Line)
-		fileNameField.Append(tree.Function.FileName)
-	})
+	labelField := NewEnumField("label", nil)
+
+	// Tree can be nil if profile was empty, we can still send empty frame in that case
+	if tree != nil {
+		walkTree(tree, func(tree *ProfileTree) {
+			levelField.Append(int64(tree.Level))
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
+			labelField.Append(tree.Name)
+		})
+	}
+
+	frame.Fields = append(frame.Fields, labelField.GetField())
 	return frame
+}
+
+type EnumField struct {
+	field     *data.Field
+	valuesMap map[string]int64
+	counter   int64
+}
+
+func NewEnumField(name string, labels data.Labels) *EnumField {
+	return &EnumField{
+		field:     data.NewField(name, labels, []int64{}),
+		valuesMap: make(map[string]int64),
+	}
+}
+
+func (e *EnumField) Append(value string) {
+	if valueIndex, ok := e.valuesMap[value]; ok {
+		e.field.Append(valueIndex)
+	} else {
+		e.valuesMap[value] = e.counter
+		e.field.Append(e.counter)
+		e.counter++
+	}
+}
+
+func (e *EnumField) GetField() *data.Field {
+	s := make([]string, len(e.valuesMap))
+	for k, v := range e.valuesMap {
+		s[v] = k
+	}
+
+	e.field.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: s,
+			},
+		},
+	})
+
+	return e.field
 }
 
 func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
@@ -356,10 +353,10 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
-	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
+func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+	frames := make([]*data.Frame, 0, len(resp.Series))
 
-	for _, series := range seriesResp.Msg.Series {
+	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
@@ -368,21 +365,13 @@ func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesRespo
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 
-		label := ""
-		unit := ""
-		parts := strings.Split(profileTypeID, ":")
-		if len(parts) == 5 {
-			label = parts[1] // sample type e.g. cpu, goroutine, alloc_objects
-			unit = normalizeUnit(parts[2])
-		}
-
 		labels := make(map[string]string)
 		for _, label := range series.Labels {
 			labels[label.Name] = label.Value
 		}
 
-		valueField := data.NewField(label, labels, []float64{})
-		valueField.Config = &data.FieldConfig{Unit: unit}
+		valueField := data.NewField(resp.Label, labels, []float64{})
+		valueField.Config = &data.FieldConfig{Unit: resp.Units}
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
@@ -394,14 +383,4 @@ func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesRespo
 		frames = append(frames, frame)
 	}
 	return frames
-}
-
-func normalizeUnit(unit string) string {
-	if unit == "nanoseconds" {
-		return "ns"
-	}
-	if unit == "count" {
-		return "short"
-	}
-	return unit
 }

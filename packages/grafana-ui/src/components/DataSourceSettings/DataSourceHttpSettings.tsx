@@ -17,6 +17,7 @@ import { TagsInput } from '../TagsInput/TagsInput';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { HttpProxySettings } from './HttpProxySettings';
+import { SecureSocksProxySettings } from './SecureSocksProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { HttpSettingsProps } from './types';
 
@@ -61,7 +62,7 @@ const HttpAccessHelp = () => (
 
 const LABEL_WIDTH = 26;
 
-export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
+export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   const {
     defaultUrl,
     dataSourceConfig,
@@ -71,6 +72,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     showForwardOAuthIdentityOption,
     azureAuthSettings,
     renderSigV4Editor,
+    secureSocksDSProxyEnabled,
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
@@ -308,6 +310,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           <CustomHeadersSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}
       </>
+      {secureSocksDSProxyEnabled && <SecureSocksProxySettings options={dataSourceConfig} onOptionsChange={onChange} />}
     </div>
   );
 };

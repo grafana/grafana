@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -19,7 +18,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 		Queries:       cmd.Queries,
 		DatasourceUID: cmd.DatasourceUID,
 		CreatedBy:     user.UserID,
-		CreatedAt:     time.Now().Unix(),
+		CreatedAt:     s.now().Unix(),
 		Comment:       "",
 	}
 
@@ -50,7 +49,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 	var allQueries []interface{}
 
 	if query.To <= 0 {
-		query.To = time.Now().Unix()
+		query.To = s.now().Unix()
 	}
 
 	if query.Page <= 0 {

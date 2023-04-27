@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { PlotSelection } from '../types';
@@ -15,7 +15,7 @@ const MIN_ZOOM_DIST = 5;
 /**
  * @alpha
  */
-export const ZoomPlugin: React.FC<ZoomPluginProps> = ({ onZoom, config }) => {
+export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
   const [selection, setSelection] = useState<PlotSelection | null>(null);
 
   useEffect(() => {
