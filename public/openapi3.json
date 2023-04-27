@@ -792,6 +792,16 @@
         },
         "description": "(empty)"
       },
+      "getFolderChildrenCountsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FolderChildrenCounts"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getFolderPermissionListResponse": {
         "content": {
           "application/json": {
@@ -4621,6 +4631,13 @@
             "description": "only used if nested folders are enabled",
             "type": "string"
           },
+          "parents": {
+            "description": "the parent folders starting from the root going down",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "type": "array"
+          },
           "title": {
             "type": "string"
           },
@@ -4644,11 +4661,15 @@
         },
         "type": "object"
       },
+      "FolderChildrenCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "type": "object"
+      },
       "FolderSearchHit": {
         "properties": {
-          "accessControl": {
-            "$ref": "#/components/schemas/Metadata"
-          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -16831,7 +16852,8 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "deprecated": true,
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "operationId": "getFolderByID",
         "parameters": [
           {
@@ -16997,6 +17019,42 @@
           }
         },
         "summary": "Update folder.",
+        "tags": [
+          "folders"
+        ]
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "operationId": "getFolderChildrenCounts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getFolderChildrenCountsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
         "tags": [
           "folders"
         ]
