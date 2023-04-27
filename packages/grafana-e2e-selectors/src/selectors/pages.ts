@@ -49,7 +49,6 @@ export const Pages = {
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
-    wrapper: 'data-testid dashboard-page-wrapper',
     DashNav: {
       /**
        * @deprecated use navV2 from Grafana 8.3 instead

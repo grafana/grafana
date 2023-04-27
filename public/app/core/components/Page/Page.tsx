@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -51,7 +50,7 @@ export const Page: PageType = ({
   }, [navModel, pageNav, chrome, layout]);
 
   return (
-    <div className={cx(styles.wrapper, className)} {...otherProps} data-testid={selectors.pages.Dashboard.wrapper}>
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.pageInner}>
