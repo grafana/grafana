@@ -9,7 +9,7 @@ type: docs
 
 # Publish a plugin
 
-You've just built your first plugin; now you want to share it with the world.
+You've just built your plugin; now you want to share it with the world.
 
 In this guide, you'll learn how to package and share your plugin with others.
 
@@ -110,10 +110,6 @@ To speed up the time it takes to review your plugin:
 **Can I decide a date when my plugin will be published?**
 
 - No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
-
-**Can I see metrics of my plugin installs, downloads, or usage?**
-
-- No. We don't offer this information to plugin authors at the moment.
 
 **How can I update my plugin's catalog page?**
 

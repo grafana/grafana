@@ -38,7 +38,7 @@ Plugins should not access system areas beyond the scope of the intended use.
 
 ## Plugin licensing
 
-Plugins must be licensed under one of the following AGPL compliant licenses for publishing to the Grafana catalog:
+Plugins must be licensed under one of the following AGPL compliant licenses for publishing to the Grafana plugin catalog:
 
 - AGPL-3.0
 - Apache-2.0

@@ -126,7 +126,7 @@ frame.add({ time: 1589189388597, content: 'user registered', level: 'info' });
 frame.add({ time: 1589189406480, content: 'unknown error', level: 'error' });
 ```
 
-#### Unique log lines
+#### 'id' for assigning unique identifiers to log lines
 
 By default, Grafana offers basic support for deduplicating log lines. You can improve the support by adding an `id` field to explicitly assign identifiers to each log line.
 
