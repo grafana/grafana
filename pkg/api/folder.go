@@ -299,19 +299,19 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, "")
 }
 
-// swagger:route GET /folders/{folder_uid}/counts folders getFolderChildrenCounts
+// swagger:route GET /folders/{folder_uid}/counts folders getFolderDescendantCounts
 //
 // Gets the count of each descendant of a folder by kind. The folder is identified by UID.
 //
 // Responses:
-// 200: getFolderChildrenCountsResponse
+// 200: getFolderDescendantCountsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolderChildrenCounts(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	counts, err := hs.folderService.GetChildrenCounts(c.Req.Context(), &folder.GetChildrenCountsQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
+	counts, err := hs.folderService.GetDescendantCounts(c.Req.Context(), &folder.GetDescendantCountsQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -546,16 +546,16 @@ type DeleteFolderResponse struct {
 	} `json:"body"`
 }
 
-// swagger:parameters getFolderChildrenCounts
-type GetFolderChildrenCountsParams struct {
+// swagger:parameters getFolderDescendantCounts
+type GetFolderDescendantCountsParams struct {
 	// in:path
 	// required:true
 	FolderUID string `json:"folder_uid"`
 }
 
-// swagger:response getFolderChildrenCountsResponse
-type GetFolderChildrenCountsResponse struct {
+// swagger:response getFolderDescendantCountsResponse
+type GetFolderDescendantCountsResponse struct {
 	// The response message
 	// in: body
-	Body folder.ChildrenCounts `json:"body"`
+	Body folder.DescendantCounts `json:"body"`
 }

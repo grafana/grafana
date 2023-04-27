@@ -792,11 +792,11 @@
         },
         "description": "(empty)"
       },
-      "getFolderChildrenCountsResponse": {
+      "getFolderDescendantCountsResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ChildrenCounts"
+              "$ref": "#/components/schemas/DescendantCounts"
             }
           }
         },
@@ -2952,13 +2952,6 @@
         },
         "type": "object"
       },
-      "ChildrenCounts": {
-        "additionalProperties": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "type": "object"
-      },
       "ConfFloat64": {
         "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
         "format": "double",
@@ -4162,6 +4155,13 @@
           "instance": {
             "type": "string"
           }
+        },
+        "type": "object"
+      },
+      "DescendantCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
         },
         "type": "object"
       },
@@ -17026,7 +17026,7 @@
     },
     "/folders/{folder_uid}/counts": {
       "get": {
-        "operationId": "getFolderChildrenCounts",
+        "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
             "in": "path",
@@ -17039,7 +17039,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/getFolderChildrenCountsResponse"
+            "$ref": "#/components/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
