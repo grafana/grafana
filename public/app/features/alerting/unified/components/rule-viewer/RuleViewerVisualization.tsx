@@ -41,6 +41,7 @@ export function RuleViewerVisualization({
   className,
 }: RuleViewerVisualizationProps): JSX.Element | null {
   const styles = useStyles2(getStyles);
+  const isExpression = isExpressionQuery(model);
 
   const onTimeChange = useCallback(
     (newDateTime: DateTime) => {
@@ -66,11 +67,11 @@ export function RuleViewerVisualization({
     <div className={className}>
       <div className={styles.header}>
         <div className={styles.actions}>
-          {!isExpressionQuery(model) && relativeTimeRange ? (
+          {!isExpression && relativeTimeRange ? (
             <DateTimePicker date={setDateTime(relativeTimeRange.to)} onChange={onTimeChange} maxDate={new Date()} />
           ) : null}
           <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
-            {!isExpressionQuery(model) && (
+            {!isExpression && (
               <LinkButton
                 size="md"
                 variant="secondary"
