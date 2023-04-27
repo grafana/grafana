@@ -5,8 +5,8 @@ keywords:
   - troubleshooting
   - support
   - bundles
-title: Send a support bundle to Grafana Labs support
-menutitle: Send a support bundle to support
+title: Send a support bundle to Grafana Labs Support
+menutitle: Send a support bundle to Grafana Labs Support
 weight: 200
 ---
 
@@ -39,21 +39,21 @@ To generate a support bundle and send the support bundle to Grafana Labs via a s
 
 1. Click the Help icon.
 
-1. Click **Support Bundles**.
+2. Click **Support Bundles**.
 
    ![Support bundle panel](/static/img/docs/troubleshooting/support-bundle.png)
 
-1. Click **New Support Bundle**.
+3. Click **New Support Bundle**.
 
-1. Select the components that you want to include in the support bundle.
+4. Select the components that you want to include in the support bundle.
 
-1. Click **Create**.
+5. Click **Create**.
 
-1. After the support bundle is ready, click **Download**.
+6. After the support bundle is ready, click **Download**.
 
-   Grafana downloads the support bundle to an archive (tar.gz) file.
+Grafana downloads the support bundle to an archive (tar.gz) file.
 
-1. Attach the archive (tar.gz) file to a support ticket that you send to Grafana Labs Technical Support.
+7. Attach the archive (tar.gz) file to a support ticket that you send to Grafana Labs Technical Support.
 
 ## Support bundle configuration
 
