@@ -57,6 +57,22 @@ describe('TemplatePreview component', () => {
     });
   });
 
+  it('Should render error if payload is not an iterable', async () => {
+    const setError = jest.fn();
+    render(
+      <TemplatePreview
+        payload={'{"a":"b"}'}
+        templateName="potato"
+        payloadFormatError={'Unexpected token b in JSON at position 0'}
+        setPayloadFormatError={setError}
+      />,
+      { wrapper: getProviderWraper() }
+    );
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith('alertList is not iterable');
+    });
+  });
+
   it('Should render error if payload has wrong format rendering the preview', async () => {
     render(
       <TemplatePreview
@@ -79,7 +95,7 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponseRejected(server);
     render(
       <TemplatePreview
-        payload={'{"a":"b"}'}
+        payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
         setPayloadFormatError={jest.fn()}
@@ -102,7 +118,7 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponse(server, response);
     render(
       <TemplatePreview
-        payload={'{"a":"b"}'}
+        payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
         setPayloadFormatError={jest.fn()}
@@ -127,7 +143,7 @@ describe('TemplatePreview component', () => {
     mockPreviewTemplateResponse(server, response);
     render(
       <TemplatePreview
-        payload={'{"a":"b"}'}
+        payload={'[{"a":"b"}]'}
         templateName="potato"
         payloadFormatError={null}
         setPayloadFormatError={jest.fn()}
