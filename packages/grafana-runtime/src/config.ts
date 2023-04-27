@@ -81,6 +81,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  trustedTypesDefaultPolicyEnabled = false;
+  cspReportOnlyEnabled = false;
   liveEnabled = true;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
