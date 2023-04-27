@@ -177,9 +177,9 @@ import (
 //     Responses:
 //
 //       200: TestTemplatesResults
-//       207: TestTemplatesResults
 //       400: ValidationError
 //       403: PermissionDenied
+//       409: AlertManagerNotReady
 
 // swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
 //

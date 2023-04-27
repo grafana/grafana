@@ -449,7 +449,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/config/api/v1/templates/test",
-				srv.RoutePostTestGrafanaTemplates,
+				api.Hooks.Wrap(srv.RoutePostTestGrafanaTemplates),
 				m,
 			),
 		)
