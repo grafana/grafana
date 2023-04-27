@@ -1,3 +1,12 @@
+<!-- 9.5.1 START -->
+
+# 9.5.1
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.3. [#66831](https://github.com/grafana/grafana/issues/66831), [@sakjur](https://github.com/sakjur)
+
+<!-- 9.5.1 END -->
 <!-- 9.4.7 START -->
 
 # 9.4.7 (2023-03-16)
