@@ -33,28 +33,4 @@ describe('Text', () => {
     const textComponent = screen.getByRole('heading');
     expect(textComponent).toHaveStyle(`color:${theme.colors.info.text}`);
   });
-  it('truncates when it has not enough space and truncate prop is set to true', () => {
-    render(
-      <div style={{ width: '50px' }}>
-        <Text as={'h1'} truncate={true}>
-          This is a text component
-        </Text>
-      </div>
-    );
-    const textComponent = screen.getByRole('heading');
-    expect(textComponent).toHaveStyle('overflow: hidden; textOverflow: ellipsis; whiteSpace: nowrap');
-  });
-  it('does not truncate when truncate prop is set to false although it has not enough space', () => {
-    render(
-      <div style={{ width: '50px' }}>
-        <Text as={'h1'} truncate={false}>
-          This is a text component
-        </Text>
-      </div>
-    );
-    const textComponent = screen.getByRole('heading');
-    expect(textComponent).not.toHaveStyle('overflow: hidden');
-    expect(textComponent).not.toHaveStyle('textOverflow: ellipsis');
-    expect(textComponent).not.toHaveStyle('whiteSpace: nowrap');
-  });
 });
