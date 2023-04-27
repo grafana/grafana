@@ -46,7 +46,7 @@ To stop the Grafana container, run the following command:
 # The `docker ps` command shows the processes running in Docker
 docker ps
 
-# This will display a list of containers, like:
+# This will display a list of containers that looks like the following:
 CONTAINER ID   IMAGE  COMMAND   CREATED  STATUS   PORTS    NAMES
 cd48d3994968   grafana/grafana-enterprise   "/run.sh"   8 seconds ago   Up 7 seconds   0.0.0.0:3000->3000/tcp   grafana
 
