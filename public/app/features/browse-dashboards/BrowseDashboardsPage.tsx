@@ -15,6 +15,7 @@ import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
+import { CreateNewButton } from './components/CreateNewButton';
 import { SearchView } from './components/SearchView';
 import { useHasSelection } from './state';
 
@@ -49,7 +50,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const hasSelection = useHasSelection();
 
   return (
-    <Page navId="dashboards/browse" pageNav={navModel}>
+    <Page navId="dashboards/browse" pageNav={navModel} actions={<CreateNewButton inFolder={folderUID} />}>
       <Page.Contents className={styles.pageContents}>
         <FilterInput
           placeholder={getSearchPlaceholder(searchState.includePanels)}
