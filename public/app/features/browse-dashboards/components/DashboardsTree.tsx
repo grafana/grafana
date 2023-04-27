@@ -5,14 +5,13 @@ import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Checkbox, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import {
   DashboardsTreeCellProps,
   DashboardsTreeColumn,
   DashboardsTreeItem,
-  DashboardTreeHeaderProps,
   INDENT_AMOUNT_CSS_VAR,
   SelectionState,
 } from '../types';
