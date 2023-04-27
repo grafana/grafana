@@ -216,6 +216,7 @@ describe('browse-dashboards reducers', () => {
       });
 
       expect(state.selectedItems).toEqual({
+        $all: false,
         dashboard: {
           [grandchildDashboard.uid]: true,
         },
@@ -232,6 +233,7 @@ describe('browse-dashboards reducers', () => {
       });
 
       expect(state.selectedItems).toEqual({
+        $all: false,
         dashboard: {
           [childDashboard.uid]: true,
           [grandchildDashboard.uid]: true,
