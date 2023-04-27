@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,15 +36,16 @@ type AzureLogAnalyticsDatasource struct {
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
 type AzureLogAnalyticsQuery struct {
-	RefID             string
-	ResultFormat      string
-	URL               string
-	TraceExploreQuery string
-	JSON              json.RawMessage
-	TimeRange         backend.TimeRange
-	Query             string
-	Resources         []string
-	QueryType         string
+	RefID                 string
+	ResultFormat          string
+	URL                   string
+	TraceExploreQuery     string
+	TraceLogsExploreQuery string
+	JSON                  json.RawMessage
+	TimeRange             backend.TimeRange
+	Query                 string
+	Resources             []string
+	QueryType             string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -88,6 +90,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 		var queryString string
 		var resultFormat string
 		traceExploreQuery := ""
+		traceLogsExploreQuery := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
@@ -147,16 +150,22 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 				operationId = *queryJSONModel.AzureTraces.OperationId
 			}
 
-			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
+			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat)
 			traceIdVariable := "${__data.fields.traceID}"
 			if operationId == "" {
-				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters)
+				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, nil)
+				traceLogsExploreQuery = buildTracesLogsQuery(&traceIdVariable)
 			} else {
 				traceExploreQuery = queryString
+				traceLogsExploreQuery = buildTracesLogsQuery(&operationId)
 			}
 			traceExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceExploreQuery, "TimeGenerated")
 			if err != nil {
 				return nil, fmt.Errorf("failed to create traces explore query: %s", err)
+			}
+			traceLogsExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceLogsExploreQuery, "TimeGenerated")
+			if err != nil {
+				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
 			}
 		}
 
@@ -168,15 +177,16 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 		}
 
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
-			RefID:             query.RefID,
-			ResultFormat:      resultFormat,
-			URL:               apiURL,
-			JSON:              query.JSON,
-			TimeRange:         query.TimeRange,
-			Query:             rawQuery,
-			Resources:         resources,
-			QueryType:         query.QueryType,
-			TraceExploreQuery: traceExploreQuery,
+			RefID:                 query.RefID,
+			ResultFormat:          resultFormat,
+			URL:                   apiURL,
+			JSON:                  query.JSON,
+			TimeRange:             query.TimeRange,
+			Query:                 rawQuery,
+			Resources:             resources,
+			QueryType:             query.QueryType,
+			TraceExploreQuery:     traceExploreQuery,
+			TraceLogsExploreQuery: traceLogsExploreQuery,
 		})
 	}
 
@@ -212,11 +222,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponse
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
-		query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
-		if err != nil {
-			dataResponse.Error = err
-			return dataResponse
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+		if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
+			query, err = getCorrelationWorkspaces(ctx, logger, query, dsInfo, *queryJSONModel.AzureTraces.OperationId, tracer)
+			if err != nil {
+				dataResponse.Error = err
+				return dataResponse
+			}
+		}
+		if dataquery.ResultFormat(query.ResultFormat) == (dataquery.ResultFormatTrace) && query.Query == "" {
+			return dataResponseErrorWithExecuted(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
 		}
 	}
 
@@ -300,7 +315,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		dataResponse.Error = err
 		return dataResponse
 	}
-	AddConfigLinks(*frame, queryUrl, nil)
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
 		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
@@ -308,33 +322,59 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			dataResponse.Error = err
 			return dataResponse
 		}
-		linkTitle := "View E2E transaction in Application Insights"
+		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
 
-		if query.TraceExploreQuery != "" {
-			queryJSONModel := dataquery.AzureMonitorQuery{}
-			err = json.Unmarshal(query.JSON, &queryJSONModel)
-			if err != nil {
-				dataResponse.Error = err
-				return dataResponse
-			}
-			traceIdVariable := "${__data.fields.traceID}"
-			resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
-			queryJSONModel.AzureTraces.ResultFormat = &resultFormat
-			queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
-			if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
-				queryJSONModel.AzureTraces.OperationId = &traceIdVariable
-			}
-			AddCustomDataLink(*frame, data.DataLink{
-				Title: "Explore Trace: ${__data.fields.traceID}",
-				URL:   "",
-				Internal: &data.InternalDataLink{
-					DatasourceUID:  dsInfo.DatasourceUID,
-					DatasourceName: dsInfo.DatasourceName,
-					Query:          queryJSONModel,
-				},
-			})
+		queryJSONModel := dataquery.AzureMonitorQuery{}
+		err = json.Unmarshal(query.JSON, &queryJSONModel)
+		if err != nil {
+			dataResponse.Error = err
+			return dataResponse
 		}
+		traceIdVariable := "${__data.fields.traceID}"
+		resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
+		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
+		queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
+		if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
+			queryJSONModel.AzureTraces.OperationId = &traceIdVariable
+		}
+
+		logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
+		logsJSONModel := dataquery.AzureMonitorQuery{
+			AzureLogAnalytics: &struct {
+				Query        *string                                                   "json:\"query,omitempty\""
+				Resource     *string                                                   "json:\"resource,omitempty\""
+				Resources    []string                                                  "json:\"resources,omitempty\""
+				ResultFormat *dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormat "json:\"resultFormat,omitempty\""
+				Workspace    *string                                                   "json:\"workspace,omitempty\""
+			}{
+				Resources: queryJSONModel.AzureTraces.Resources,
+				Query:     &query.TraceLogsExploreQuery,
+			},
+			QueryType: &logsQueryType,
+		}
+
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Trace: ${__data.fields.traceID}",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          queryJSONModel,
+			},
+		})
+
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Trace Logs",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          logsJSONModel,
+			},
+		})
+	} else {
+		AddConfigLinks(*frame, queryUrl, nil)
 	}
 
 	dataResponse.Frames = data.Frames{frame}
@@ -619,19 +659,34 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters) string {
+func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters, resultFormat *string) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
 	}
-	sort.Strings(types)
+
+	filteredTypes := make([]string, 0)
+	// If the result format is set to trace then we filter out all events that are of the type traces as they don't make sense when visualised as a span
+	if resultFormat != nil && dataquery.ResultFormat(*resultFormat) == dataquery.ResultFormatTrace {
+		filteredTypes = slices.Filter(filteredTypes, types, func(s string) bool { return s != "traces" })
+	} else {
+		filteredTypes = types
+	}
+	sort.Strings(filteredTypes)
+
+	if len(filteredTypes) == 0 {
+		return ""
+	}
 
 	tagsMap := make(map[string]bool)
 	var tags []string
-	for _, t := range types {
+	for _, t := range filteredTypes {
 		tableTags := getTagsForTable(t)
 		for _, i := range tableTags {
 			if tagsMap[i] {
+				continue
+			}
+			if i == "cloud_RoleInstance" || i == "cloud_RoleName" || i == "customDimensions" || i == "customMeasurements" {
 				continue
 			}
 			tags = append(tags, i)
@@ -665,14 +720,32 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		}
 	}
 
-	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s | where $__timeFilter()`, strings.Join(types, ","))
+	propertiesFunc := "bag_merge(customDimensions, customMeasurements)"
+	if len(tags) > 0 {
+		propertiesFunc = fmt.Sprintf("bag_merge(bag_pack_columns(%s), customDimensions, customMeasurements)", strings.Join(tags, ","))
+	}
+
+	errorProperty := ""
+	if slices.Contains(filteredTypes, "exceptions") {
+		errorProperty = `| extend error = iff(itemType == "exceptions", true, false)`
+	}
+
+	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s | where $__timeFilter()`, strings.Join(filteredTypes, ","))
 	propertiesStaticQuery := `| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 		`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
-		`| extend serviceName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))`
-	propertiesQuery := fmt.Sprintf(`| extend tags = bag_pack_columns(%s)`, strings.Join(tags, ","))
-	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions, operationName = operation_Name` +
-		`| project traceID, spanID, parentSpanID, duration, serviceName, operationName, startTime, serviceTags, tags, itemId, itemType` +
+		`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+		`| extend serviceName = cloud_RoleName` +
+		`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)`
+	propertiesQuery := fmt.Sprintf(`| extend tags = %s`, propertiesFunc)
+	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+		`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 		`| order by startTime asc`
+	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + errorProperty + filtersClause + projectClause
+}
 
-	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + filtersClause + projectClause
+func buildTracesLogsQuery(operationId *string) string {
+	tables := `union *, traces, customEvents, pageViews, requests, dependencies, exceptions, customMetrics, availabilityResults`
+	time := `| where $__timeFilter()`
+	operationIdFilter := fmt.Sprintf(`| where operation_Id == "%s"`, *operationId)
+	return strings.Join([]string{tables, time, operationIdFilter}, " \n")
 }

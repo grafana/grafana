@@ -103,15 +103,6 @@ const TracesQueryEditor = ({
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
-            <Field label="Operation ID">
-              <Input
-                id="azure-monitor-traces-operation-id-field"
-                value={operationId}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                width={40}
-              />
-            </Field>
           </EditorFieldGroup>
         </EditorRow>
         <EditorRow>
@@ -123,6 +114,15 @@ const TracesQueryEditor = ({
               setError={setError}
               variableOptionGroup={variableOptionGroup}
             />
+            <Field label="Operation ID">
+              <Input
+                id="azure-monitor-traces-operation-id-field"
+                value={operationId}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                width={40}
+              />
+            </Field>
           </EditorFieldGroup>
         </EditorRow>
         <EditorRow>

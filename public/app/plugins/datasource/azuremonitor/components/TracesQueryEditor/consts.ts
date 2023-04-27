@@ -1,13 +1,23 @@
 import { omit } from 'lodash';
 
 export const Tables = {
-  availabilityResults: 'Availablity Results',
-  dependencies: 'Dependencies',
-  events: 'Events',
-  exceptions: 'Exceptions',
-  pageViews: 'Page Views',
-  requests: 'Requests',
-  traces: 'Traces',
+  availabilityResults: { label: 'Availablity Results', description: 'Availability test results.' },
+  dependencies: {
+    label: 'Dependencies',
+    description: 'Calls your application makes to other services such as databases or REST APIs.',
+  },
+  customEvents: { label: 'Custom Events', description: 'Calls to TrackEvent that are inserted to monitor usage.' },
+  exceptions: {
+    label: 'Exceptions',
+    description: 'Exceptions that are logged via TrackException, or uncaught exceptions.',
+  },
+  pageViews: { label: 'Page Views', description: 'Web client telemetry to create page view reports.' },
+  requests: { label: 'Requests', description: 'HTTP requests received by the application.' },
+  traces: {
+    label: 'Traces',
+    description:
+      'Diagnostic logs emitted using TrackTrace and similar methods. Note: Traces are not visualised if the result format is set to Trace',
+  },
 };
 
 // Resource centric tables mapped to legacy tables
