@@ -35,7 +35,7 @@ where:
 run = run directly from the command line\
 `d` = run in the background\
 `p` = assign the port number, which in this case is `3000`\
-name = assign a logical name to the container, for example, `grafana`\
+`name` = assign a logical name to the container, for example, `grafana`\
 grafana/grafana-enterprise = the image to run in the container
 
 ### Stop the Grafana container
