@@ -163,7 +163,7 @@ The following example runs the latest stable version of Grafana, listening on po
 docker volume create grafana-storage
 
 # start grafana by using the above persistent storage
-# and defining Environment Variables
+# and defining environment variables
 
 docker run -d -p 3000:3000 --name=grafana \
 --volume grafana-storage:/var/lib/grafana \
