@@ -17,6 +17,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/gobwas/glob"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -29,6 +30,9 @@ var (
 
 	// toSlash is filepath.ToSlash, but can be overwritten in tests path separators cross-platform
 	toSlash = filepath.ToSlash
+
+	// fromSlash is filepath.FromSlash, but can be overwritten in tests path separators cross-platform
+	fromSlash = filepath.FromSlash
 )
 
 // PluginManifest holds details for the file manifest
@@ -100,8 +104,11 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
 		return defaultSignature, nil
 	}
-
-	if len(plugin.FS.Files()) == 0 {
+	fsFiles, err := plugin.FS.Files()
+	if err != nil {
+		return plugins.Signature{}, fmt.Errorf("files: %w", err)
+	}
+	if len(fsFiles) == 0 {
 		s.mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
@@ -190,7 +197,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	// Track files missing from the manifest
 	var unsignedFiles []string
-	for _, f := range plugin.FS.Files() {
+	for _, f := range fsFiles {
 		// Ensure slashes are used, because MANIFEST.txt always uses slashes regardless of the filesystem
 		f = toSlash(f)
 
@@ -223,6 +230,8 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 }
 
 func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) error {
+	path = fromSlash(path)
+
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.
