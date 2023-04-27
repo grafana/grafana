@@ -535,7 +535,7 @@ Ensure cookie_secure is set to true to ensure that cookies are only sent over HT
 
 This can happen in case of IdP initiated authentication, when it is isn’t enabled in Grafana, or the relay_state configurations don’t match between Grafana and the IdP.
 
-The configuration for IdP initiated login is here: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/#idp-initiated-single-sign-on-sso 
+For more information about IdP-initiated login, refer to [IdP-initiated Single Sign-On (SSO)](#idp-initiated-single-sign-on-sso).
 
 If this error happens when logging in from the Grafana login page, it means that there is an issue with the saml_state cookie created at the beginning of the authentication process (in the login/saml request). Either the cookie expired (this can happen if there’s MFA set up on the IdP side, and the authentication process takes a while). In this case raising the max_issue_delay should help.
 
