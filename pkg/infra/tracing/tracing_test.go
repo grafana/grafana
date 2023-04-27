@@ -43,8 +43,7 @@ func TestSplitCustomAttribs(t *testing.T) {
 
 func TestSplitCustomAttribs_Malformed(t *testing.T) {
 	tests := []struct {
-		input    string
-		expected []attribute.KeyValue
+		input string
 	}{
 		{input: "key1=value1"},
 		{input: "key1"},
@@ -121,6 +120,21 @@ func TestTracingConfig(t *testing.T) {
 			ExpectedExporter: "jaeger",
 			ExpectedAddress:  "example.com:12345",
 			ExpectedAttrs:    []attribute.KeyValue{},
+		},
+		{
+			Name: "opentelemetry config format is prioritised over legacy jaeger",
+			Cfg: `
+			[tracing.jaeger]
+			address = foo.com:6831
+			custom_tags = a:b
+			[tracing.opentelemetry]
+			custom_attributes = c:d
+			[tracing.opentelemetry.jaeger]
+			address = bar.com:6831
+			`,
+			ExpectedExporter: "jaeger",
+			ExpectedAddress:  "bar.com:6831",
+			ExpectedAttrs:    []attribute.KeyValue{attribute.String("c", "d")},
 		},
 	} {
 		t.Run(test.Name, func(t *testing.T) {
