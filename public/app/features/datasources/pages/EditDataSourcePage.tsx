@@ -36,7 +36,7 @@ export function EditDataSourcePage(props: Props) {
       subTitle={
         <EditDataSourceSubtitle
           subTitle={subTitle}
-          isDefault={dataSource.isDefault}
+          isDefault={dataSource.isDefault || false}
           alertingSupported={alertingSupported}
           onDefaultChange={onDefaultChange}
         />
