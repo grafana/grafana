@@ -127,17 +127,18 @@ func TestTracingConfig(t *testing.T) {
 			// export envioronment variables
 			if test.Env != nil {
 				for k, v := range test.Env {
-					os.Setenv(k, v)
+					assert.NoError(t, os.Setenv(k, v))
 				}
 				defer func() {
 					for k := range test.Env {
-						os.Unsetenv(k)
+						assert.NoError(t, os.Unsetenv(k))
 					}
 				}()
 			}
 			// parse config sections
 			cfg := setting.NewCfg()
-			cfg.Raw.Append([]byte(test.Cfg))
+			err := cfg.Raw.Append([]byte(test.Cfg))
+			assert.NoError(t, err)
 			// create tracer
 			tracer, err := ProvideService(cfg)
 			assert.NoError(t, err)
