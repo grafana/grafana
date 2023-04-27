@@ -80,11 +80,15 @@ content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-in
 
 Trusted types reduce the risk of DOM XSS by enforcing developers to sanitize strings that are used in injection sinks, such as setting `innerHTML` on an element. Furthermore, when enabling trusted types, these injection sinks need to go through a policy that will sanitize, or leave the string intact and return it as "safe". This provides some protection from client side injection vulnerabilities in third party libraries, such as jQuery, Angular and even third party plugins.
 
-To enable trusted types:
+To enable trusted types in enforce mode, where injection sinks are automatically sanitized:
 
-1. Enable the `trustedTypes` feature toggle.
-2. Enable `content_security_policy` in the configuration.
-3. Add `require-trusted-types-for 'script'` to the `content_security_policy_template` in the configuration.
+- Enable `content_security_policy` in the configuration.
+- Add `require-trusted-types-for 'script'` to the `content_security_policy_template` in the configuration.
+
+To enable trusted types in report mode, where inputs that have not been sanitized with trusted types will be logged to the console:
+
+- Enable `content_security_policy_report_only` in the configuration.
+- Add `require-trusted-types-for 'script'` to the `content_security_policy_report_only_template` in the configuration.
 
 As this is a feature currently in development, things may break. If they do, or if you have any other feedback, feel free to [leave a comment](https://github.com/grafana/grafana/discussions/66823).
 
