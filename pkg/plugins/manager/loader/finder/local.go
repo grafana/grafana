@@ -25,14 +25,14 @@ var (
 )
 
 type Local struct {
-	log     log.Logger
-	devMode bool
+	log        log.Logger
+	production bool
 }
 
 func NewLocalFinder(cfg *config.Cfg) *Local {
 	return &Local{
-		devMode: cfg.DevMode,
-		log:     log.New("local.finder"),
+		production: !cfg.DevMode,
+		log:        log.New("local.finder"),
 	}
 }
 
@@ -90,7 +90,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	for pluginDir, data := range foundPlugins {
 		var pluginFs plugins.FS
 		pluginFs = plugins.NewLocalFS(pluginDir)
-		if !l.devMode {
+		if l.production {
 			// In prod, tighten up security by allowing access only to the files present up to this point.
 			// Any new file "sneaked in" won't be allowed and will acts as if the file did not exist.
 			var err error
