@@ -207,7 +207,7 @@ export class BackendSrv implements BackendService {
   private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
-    
+
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
@@ -235,7 +235,7 @@ export class BackendSrv implements BackendService {
 
   private toFailureStream<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
     const { isSignedIn } = this.dependencies.contextSrv.user;
-    
+
     return (inputStream) =>
       inputStream.pipe(
         filter((response) => response.ok === false),
