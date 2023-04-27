@@ -25,16 +25,16 @@ This topic provides an overview of dashboard features and shortcuts, and describ
 
 The dashboard user interface provides a number of features that you can use to customize the presentation of your data.
 
-The following image and descriptions highlights all dashboards features.
+The following image and descriptions highlight all dashboard features.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" >}}
 
 - (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
-- (2) **Dashboard title**: When you click the dashboard title you can search for dashboard contained in the current folder.
-- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel by link or snapshot. You can also export the dashboard definition from the share modal.
+- (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder.
+- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel via link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
-- (5) **Save dashboard**: Click to save changes to your dashboard.
-- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts.
+- (5) **Save dashboard**: Click to save changes to the dashboard.
+- (6) **Dashboard insights**: Click to view analytics about the dashboard, including information about users, activity, and query counts.
 - (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. For more information about dashboard settings, refer to [Modify dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
 - (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
