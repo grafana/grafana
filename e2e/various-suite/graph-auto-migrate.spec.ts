@@ -13,9 +13,8 @@ e2e.scenario({
     e2e().contains(DASHBOARD_NAME).should('be.visible');
     cy.contains('uplot-main-div').should('not.exist');
 
-    cy.visit(
-      'http://localhost:3001/d/XMjIZPmik/panel-tests-graph-time-regions?orgId=1&__feature.autoMigrateOldPanels=true'
-    );
+    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
+
     e2e().wait(1000);
 
     e2e.components.Panels.Panel.title('Business Hours')
