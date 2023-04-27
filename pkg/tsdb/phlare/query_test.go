@@ -28,6 +28,12 @@ func Test_query(t *testing.T) {
 		resp := ds.query(context.Background(), pCtx, *dataQuery)
 		require.Nil(t, resp.Error)
 		require.Equal(t, 2, len(resp.Frames))
+
+		// The order of the frames is not guaranteed, so we normalize it
+		if resp.Frames[0].Fields[0].Name == "level" {
+			resp.Frames[1], resp.Frames[0] = resp.Frames[0], resp.Frames[1]
+		}
+
 		require.Equal(t, "time", resp.Frames[0].Fields[0].Name)
 		require.Equal(t, data.NewField("level", nil, []int64{0, 1, 2}), resp.Frames[1].Fields[0])
 	})
