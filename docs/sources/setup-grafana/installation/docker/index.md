@@ -101,7 +101,7 @@ docker run -d -p 3000:3000 --name=grafana \
 grafana/grafana-enterprise
 ```
 
-#### Use environment variables
+### Use environment variables
 
 Grafana supports specifying custom configuration settings via [environment variables](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#override-configuration-with-environment-variables) within your Docker container.
 
