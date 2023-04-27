@@ -25,7 +25,7 @@ import {
   GraphSeriesValue,
 } from '../types/index';
 
-import { ArrayDataFrame } from './ArrayDataFrame';
+import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
 import { MutableDataFrame } from './MutableDataFrame';
 
@@ -36,7 +36,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: [] as any[],
+      values: [] as unknown[],
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -339,7 +339,7 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (Array.isArray(data)) {
-    return new ArrayDataFrame(data);
+    return arrayToDataFrame(data);
   }
 
   console.warn('Can not convert', data);
@@ -350,7 +350,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   const { fields } = frame;
 
   const rowCount = frame.length;
-  const rows: any[][] = [];
+  const rows: unknown[][] = [];
 
   if (fields.length === 2) {
     const { timeField, timeIndex } = getTimeField(frame);
@@ -379,7 +379,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   for (let i = 0; i < rowCount; i++) {
-    const row: any[] = [];
+    const row: unknown[] = [];
     for (let j = 0; j < fields.length; j++) {
       row.push(fields[j].values[i]);
     }
@@ -460,8 +460,8 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
 /**
  * Wrapper to get an array from each field value
  */
-export function getDataFrameRow(data: DataFrame, row: number): any[] {
-  const values: any[] = [];
+export function getDataFrameRow(data: DataFrame, row: number): unknown[] {
+  const values: unknown[] = [];
   for (const field of data.fields) {
     values.push(field.values[row]);
   }
