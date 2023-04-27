@@ -27,6 +27,9 @@ Checkboxes typically only trigger changes after sending a form. If your componen
 - [ ] C-series
 
 The indeterminate state of the checkbox should be used when there is a group of child checkboxes that are in a mix of checked and unchecked states. For instance when you have a list of checkboxes representing the columns of a table, and you want to allow the user to select which columns to display. If some of the columns are checked, and some are unchecked, then the parent checkbox should be in an indeterminate state. If all the columns are checked, then the parent should be checked. If none of the columns are checked, then the parent should be unchecked.
+It is discouraged to set both `indeterminate` and `checked` state as a checkboxs emit boolean values which can only ever be TRUE or FALSE, and if something is partially true, then it is false.
+
+- **DON'T:** `<Checkbox checked indeterminate />`
 
 ### Usage
 
