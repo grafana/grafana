@@ -289,11 +289,32 @@ export const Pages = {
     },
   },
   UserListPage: {
+    tabs: {
+      allUsers: 'data-testid all-users-tab',
+      orgUsers: 'data-testid org-users-tab',
+      publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
+      users: 'data-testid users-tab',
+    },
     org: {
       url: '/org/users',
     },
     admin: {
       url: '/admin/users',
+    },
+    publicDashboards: {
+      container: 'data-testid public-dashboards-users-list',
+    },
+    UserListAdminPage: {
+      container: 'data-testid user-list-admin-page',
+    },
+    UsersListPage: {
+      container: 'data-testid users-list-page',
+    },
+    UsersListPublicDashboardsPage: {
+      container: 'data-testid users-list-public-dashboards-page',
+      DashboardsListModal: {
+        listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
+      },
     },
   },
 };
