@@ -98,7 +98,7 @@ LegendComponent.args = {
   textAlignment: 'center',
   truncate: false,
   color: 'error',
-  children: 'This is a lengend component',
+  children: 'This is a legend component',
 };
 
 export default meta;
