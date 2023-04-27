@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, AutoSizeInput, useStyles2, Icon } from '@grafana/ui';
+import { IconButton, AutoSizeInput, useStyles2 } from '@grafana/ui';
 
 interface Props {
   title: string;
