@@ -43,6 +43,8 @@ describe('SpanFilters', () => {
       trace: trace,
       showSpanFilters: true,
       setShowSpanFilters: jest.fn(),
+      showSpanFilterMatchesOnly: false,
+      setShowSpanFilterMatchesOnly: jest.fn(),
       search: search,
       setSearch: setSearch,
       spanFilterMatches: undefined,

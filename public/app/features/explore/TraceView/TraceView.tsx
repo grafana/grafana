@@ -99,6 +99,7 @@ export function TraceView(props: Props) {
   );
   const [newTraceViewHeaderFocusedSpanIdForSearch, setNewTraceViewHeaderFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
+  const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const styles = useStyles2(getStyles);
@@ -163,6 +164,8 @@ export function TraceView(props: Props) {
                 setSearch={setNewTraceViewHeaderSearch}
                 showSpanFilters={showSpanFilters}
                 setShowSpanFilters={setShowSpanFilters}
+                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+                setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
                 focusedSpanIdForSearch={newTraceViewHeaderFocusedSpanIdForSearch}
                 setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
                 spanFilterMatches={spanFilterMatches}
@@ -226,6 +229,7 @@ export function TraceView(props: Props) {
                 ? newTraceViewHeaderFocusedSpanIdForSearch
                 : props.focusedSpanIdForSearch!
             }
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}

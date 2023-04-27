@@ -15,7 +15,6 @@ import {
   formatLabels,
   getDisplayProcessor,
   Labels,
-  MutableField,
   PreferredVisualisationType,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
@@ -208,7 +207,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     const valueText = getValueText(refIds.length, refId);
     const valueField = getValueField({ data: [], valueName: valueText });
     const timeField = getTimeField([]);
-    const labelFields: MutableField[] = [];
+    const labelFields: Field[] = [];
 
     // Fill labelsFields with labels from dataFrames
     dataFramesByRefId[refId].forEach((df) => {
@@ -329,14 +328,13 @@ export function transform(
 
   // Return early if result type is scalar
   if (prometheusResult.resultType === 'scalar') {
-    return [
-      {
-        meta: options.meta,
-        refId: options.refId,
-        length: 1,
-        fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
-      },
-    ];
+    const df: DataFrame = {
+      meta: options.meta,
+      refId: options.refId,
+      length: 1,
+      fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
+    };
+    return [df];
   }
 
   // Return early again if the format is table, this needs special transformation.
@@ -556,7 +554,7 @@ function getLabelValue(metric: PromMetric, label: string): string | number {
   return '';
 }
 
-function getTimeField(data: PromValue[], isMs = false): MutableField {
+function getTimeField(data: PromValue[], isMs = false): Field<number> {
   return {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
@@ -579,7 +577,7 @@ function getValueField({
   parseValue = true,
   labels,
   displayNameFromDS,
-}: ValueFieldOptions): MutableField {
+}: ValueFieldOptions): Field {
   return {
     name: valueName,
     type: FieldType.number,

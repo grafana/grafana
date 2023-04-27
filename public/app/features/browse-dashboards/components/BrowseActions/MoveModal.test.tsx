@@ -28,6 +28,7 @@ describe('browse-dashboards MoveModal', () => {
       onConfirm: mockOnConfirm,
       onDismiss: mockOnDismiss,
       selectedItems: {
+        $all: false,
         folder: {},
         dashboard: {},
         panel: {},
