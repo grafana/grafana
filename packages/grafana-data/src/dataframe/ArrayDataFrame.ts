@@ -1,5 +1,5 @@
 import { QueryResultMeta } from '../types';
-import { Field, FieldType, DataFrame } from '../types/dataFrame';
+import { Field, FieldType, DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
 import { guessFieldTypeForField } from './processDataFrame';
 
@@ -56,7 +56,7 @@ export function arrayToDataFrame(source: any[], names?: string[]): DataFrame {
         );
       });
     } else {
-      df.fields.push(makeFieldFromValues('Value', source));
+      df.fields.push(makeFieldFromValues(TIME_SERIES_VALUE_FIELD_NAME, source));
     }
   }
   return df;
