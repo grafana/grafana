@@ -75,7 +75,7 @@ export const HeadingComponent: Story = (args) => {
 };
 HeadingComponent.args = {
   variant: undefined,
-  weight: 'fontWeightBold',
+  weight: 'bold',
   textAlignment: 'center',
   truncate: false,
   color: 'error',
