@@ -1,19 +1,30 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
-import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
+
+import { useDatasource } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
-import { dataSourceLabel, useGetDatasource } from './utils';
+import { dataSourceLabel } from './utils';
+
+const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+const INTERACTION_ITEM = {
+  OPEN_DROPDOWN: 'open_dspicker',
+  SELECT_DS: 'select_ds',
+  ADD_FILE: 'add_file',
+  OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
+};
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
@@ -22,20 +33,36 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   const [filterTerm, setFilterTerm] = useState<string>();
+  const openDropdown = () => {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
+    setOpen(true);
+    markerElement?.focus();
+  };
 
-  const currentDataSourceInstanceSettings = useGetDatasource(current);
+  const currentDataSourceInstanceSettings = useDatasource(current);
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [0, 4],
+        },
+      },
+    ],
   });
+
+  const onClose = useCallback(() => {
+    setFilterTerm('');
+    setOpen(false);
+    markerElement?.blur();
+  }, [setOpen, markerElement]);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
     {
-      onClose: () => {
-        setFilterTerm(undefined);
-        setOpen(false);
-      },
+      onClose: onClose,
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
@@ -50,63 +77,47 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   return (
     <div className={styles.container}>
-      {isOpen ? (
-        <FocusScope contain autoFocus restoreFocus>
-          <Input
-            prefix={
-              filterTerm ? (
-                <DataSourceLogoPlaceHolder />
-              ) : (
-                <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
-              )
-            }
-            suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
-            placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
-            onChange={(e) => {
-              setFilterTerm(e.currentTarget.value);
-            }}
-            ref={setMarkerElement}
-          ></Input>
-          <Portal>
-            <div {...underlayProps} />
-            <div ref={ref} {...overlayProps} {...dialogProps}>
-              <PickerContent
-                filterTerm={filterTerm}
-                onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
-                  setFilterTerm(undefined);
-                  setOpen(false);
-                  onChange(ds);
-                }}
-                onClose={() => {
-                  setOpen(false);
-                }}
-                current={currentDataSourceInstanceSettings}
-                style={popper.styles.popper}
-                ref={setSelectorElement}
-                {...restProps}
-                onDismiss={() => {}}
-              ></PickerContent>
-            </div>
-          </Portal>
-        </FocusScope>
-      ) : (
-        <div
-          className={styles.trigger}
-          onClick={() => {
-            setOpen(true);
+      <div tabIndex={0} onFocus={openDropdown} role={'button'} className={styles.trigger} onClick={openDropdown}>
+        <Input
+          className={isOpen ? undefined : styles.input}
+          prefix={
+            filterTerm && isOpen ? (
+              <DataSourceLogoPlaceHolder />
+            ) : (
+              <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
+            )
+          }
+          suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
+          onFocus={openDropdown}
+          onClick={openDropdown}
+          value={filterTerm}
+          onChange={(e) => {
+            setFilterTerm(e.currentTarget.value);
           }}
-        >
-          <Input
-            className={styles.input}
-            prefix={<DataSourceLogo dataSource={currentDataSourceInstanceSettings} />}
-            suffix={<Icon name="angle-down" />}
-            value={dataSourceLabel(currentDataSourceInstanceSettings)}
-            onFocus={() => {
-              setOpen(true);
-            }}
-          />
-        </div>
-      )}
+          ref={setMarkerElement}
+        ></Input>
+      </div>
+      {isOpen ? (
+        <Portal>
+          <div {...underlayProps} />
+          <div ref={ref} {...overlayProps} {...dialogProps}>
+            <PickerContent
+              filterTerm={filterTerm}
+              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+                onClose();
+                onChange(ds);
+              }}
+              onClose={onClose}
+              current={currentDataSourceInstanceSettings}
+              style={popper.styles.popper}
+              ref={setSelectorElement}
+              {...restProps}
+              onDismiss={onClose}
+            ></PickerContent>
+          </div>
+        </Portal>
+      ) : null}
     </div>
   );
 }
@@ -123,6 +134,9 @@ function getStylesDropdown(theme: GrafanaTheme2) {
       input {
         cursor: pointer;
       }
+      input::placeholder {
+        color: ${theme.colors.text.primary};
+      }
     `,
   };
 }
@@ -132,6 +146,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
     },
     [onChange]
   );
@@ -139,6 +154,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const clickAddCSVCallback = useCallback(() => {
     onClickAddCSV?.();
     onClose();
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
   }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStylesPickerContent);
@@ -146,18 +162,16 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   return (
     <div style={props.style} ref={ref} className={styles.container}>
       <div className={styles.dataSourceList}>
-        <CustomScrollbar>
-          <DataSourceList
-            {...props}
-            current={current}
-            onChange={changeCallback}
-            filter={(ds) => ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
-          ></DataSourceList>
-        </CustomScrollbar>
+        <DataSourceList
+          {...props}
+          current={current}
+          onChange={changeCallback}
+          filter={(ds) => ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
+        ></DataSourceList>
       </div>
 
       <div className={styles.footer}>
-        {onClickAddCSV && (
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
           <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
             Add csv or spreadsheet
           </Button>
@@ -173,6 +187,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 showModal(DataSourceModal, {
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
+                  reportedInteractionFrom: 'ds_picker',
                   current,
                   onDismiss: hideModal,
                   onChange: (ds) => {
@@ -180,6 +195,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                     hideModal();
                   },
                 });
+                reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
               }}
             >
               Open advanced data source picker
@@ -198,8 +214,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      height: 480px;
-      box-shadow: ${theme.shadows.z3};
+      height: 412px;
       width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
@@ -208,15 +223,16 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       background: ${theme.colors.background.secondary};
     `,
     dataSourceList: css`
-      height: 423px;
-      padding: 0 ${theme.spacing(2)};
+      flex: 1;
+      overflow: scroll;
     `,
     footer: css`
+      flex: 0;
       display: flex;
       justify-content: space-between;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};
-      height: 57px;
+      background-color: ${theme.colors.background.secondary};
     `,
   };
 }

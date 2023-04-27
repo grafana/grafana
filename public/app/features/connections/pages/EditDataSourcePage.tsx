@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { EditDataSource } from 'app/features/datasources/components/EditDataSource';
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
@@ -40,7 +40,7 @@ export function EditDataSourcePage() {
           onDefaultChange={onDefaultChange}
         />
       }
-      actions={config.featureToggles.topnav ? <EditDataSourceActions uid={uid} /> : undefined}
+      actions={<EditDataSourceActions uid={uid} />}
     >
       <Page.Contents>
         <EditDataSource uid={uid} pageId={pageId} />

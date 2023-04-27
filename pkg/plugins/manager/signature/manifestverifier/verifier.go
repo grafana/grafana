@@ -2,6 +2,7 @@ package manifestverifier
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,9 +15,15 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+
+	// Only used for getting the feature flag value
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
+
+const publicKeySyncInterval = 10 * 24 * time.Hour // 10 days
 
 // ManifestKeys is the database representation of public keys
 // used to verify plugin manifests.
@@ -30,20 +37,82 @@ type ManifestVerifier struct {
 	cfg  *config.Cfg
 	mlog log.Logger
 
-	lock       sync.Mutex
-	cli        http.Client
-	publicKeys map[string]ManifestKeys
+	lock    sync.Mutex
+	cli     http.Client
+	kv      plugins.KeyStore
+	hasKeys bool
 }
 
-func New(cfg *config.Cfg, mlog log.Logger) *ManifestVerifier {
-	return &ManifestVerifier{
-		cfg:        cfg,
-		publicKeys: map[string]ManifestKeys{},
-		mlog:       mlog,
-		cli:        makeHttpClient(),
+func New(cfg *config.Cfg, mlog log.Logger, kv plugins.KeyStore) *ManifestVerifier {
+	pmv := &ManifestVerifier{
+		cfg:  cfg,
+		mlog: mlog,
+		cli:  makeHttpClient(),
+		kv:   kv,
 	}
+	return pmv
 }
 
+// IsDisabled disables dynamic retrieval of public keys from the API server.
+func (pmv *ManifestVerifier) IsDisabled() bool {
+	return pmv.cfg == nil || pmv.cfg.Features == nil || !pmv.cfg.Features.IsEnabled(featuremgmt.FlagPluginsAPIManifestKey)
+}
+
+func (pmv *ManifestVerifier) Run(ctx context.Context) error {
+	// do an initial update if necessary
+	err := pmv.updateKeys(ctx)
+	if err != nil {
+		pmv.mlog.Error("Error downloading plugin manifest keys", "error", err)
+	}
+
+	// calculate initial send delay
+	lastUpdated, err := pmv.kv.GetLastUpdated(ctx)
+	if err != nil {
+		return err
+	}
+	nextSendInterval := time.Until(lastUpdated.Add(publicKeySyncInterval))
+	if nextSendInterval < time.Minute {
+		nextSendInterval = time.Minute
+	}
+
+	downloadKeysTicker := time.NewTicker(nextSendInterval)
+	defer downloadKeysTicker.Stop()
+
+	select {
+	case <-downloadKeysTicker.C:
+		err = pmv.updateKeys(ctx)
+		if err != nil {
+			pmv.mlog.Error("Error downloading plugin manifest keys", "error", err)
+		}
+
+		if nextSendInterval != publicKeySyncInterval {
+			nextSendInterval = publicKeySyncInterval
+			downloadKeysTicker.Reset(nextSendInterval)
+		}
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return ctx.Err()
+}
+
+func (pmv *ManifestVerifier) updateKeys(ctx context.Context) error {
+	pmv.lock.Lock()
+	defer pmv.lock.Unlock()
+
+	lastUpdated, err := pmv.kv.GetLastUpdated(ctx)
+	if err != nil {
+		return err
+	}
+	if time.Since(*lastUpdated) < publicKeySyncInterval {
+		// Cache is still valid
+		return nil
+	}
+
+	return pmv.downloadKeys(ctx)
+}
+
+const publicKeyID = "7e4d0c6a708866e7"
 const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
@@ -68,40 +137,24 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-// getPublicKey loads public keys from:
-//   - The hard-coded value if the feature flag is not enabled.
-//   - A cached value from memory if it has been already retrieved.
-//   - The Grafana.com API if the database is empty.
-func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
-	if pmv.cfg == nil || pmv.cfg.Features == nil || !pmv.cfg.Features.IsEnabled("pluginsAPIManifestKey") {
-		return publicKeyText, nil
-	}
-
-	pmv.lock.Lock()
-	defer pmv.lock.Unlock()
-
-	key, exist := pmv.publicKeys[keyID]
-	if exist {
-		return key.PublicKey, nil
-	}
-
-	// Retrieve the key from the API and store it in the database
+// Retrieve the key from the API and store it in the database
+func (pmv *ManifestVerifier) downloadKeys(ctx context.Context) error {
 	var data struct {
 		Items []ManifestKeys
 	}
 
 	url, err := url.JoinPath(pmv.cfg.GrafanaComURL, "/api/plugins/ci/keys") // nolint:gosec URL is provided by config
 	if err != nil {
-		return "", err
+		return err
 	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	resp, err := pmv.cli.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer func() {
 		err := resp.Body.Close()
@@ -111,27 +164,89 @@ func (pmv *ManifestVerifier) GetPublicKey(keyID string) (string, error) {
 	}()
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", err
+		return err
 	}
 
 	if len(data.Items) == 0 {
-		return "", errors.New("missing public key")
+		return errors.New("missing public key")
 	}
 
+	cachedKeys, err := pmv.kv.ListKeys(ctx)
+	if err != nil {
+		return err
+	}
+
+	shouldKeep := make(map[string]bool)
 	for _, key := range data.Items {
-		pmv.publicKeys[key.KeyID] = key
+		err = pmv.kv.Set(ctx, key.KeyID, key.PublicKey)
+		if err != nil {
+			return err
+		}
+		shouldKeep[key.KeyID] = true
 	}
 
-	key, exist = pmv.publicKeys[keyID]
+	// Delete keys that are no longer in the API
+	for _, key := range cachedKeys {
+		if !shouldKeep[key] {
+			err = pmv.kv.Del(ctx, key)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Update the last updated timestamp
+	return pmv.kv.SetLastUpdated(ctx)
+}
+
+func (pmv *ManifestVerifier) ensureKeys(ctx context.Context) error {
+	if pmv.hasKeys {
+		return nil
+	}
+	keys, err := pmv.kv.ListKeys(ctx)
+	if err != nil {
+		return err
+	}
+	if len(keys) == 0 {
+		// Populate with the default key
+		err := pmv.kv.Set(ctx, publicKeyID, publicKeyText)
+		if err != nil {
+			return err
+		}
+	}
+	pmv.hasKeys = true
+	return nil
+}
+
+// getPublicKey loads public keys from:
+//   - The hard-coded value if the feature flag is not enabled.
+//   - A cached value from kv storage if it has been already retrieved. This cache is populated from the grafana.com API.
+func (pmv *ManifestVerifier) getPublicKey(ctx context.Context, keyID string) (string, error) {
+	if pmv.IsDisabled() {
+		return publicKeyText, nil
+	}
+
+	pmv.lock.Lock()
+	defer pmv.lock.Unlock()
+
+	err := pmv.ensureKeys(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	key, exist, err := pmv.kv.Get(ctx, keyID)
+	if err != nil {
+		return "", err
+	}
 	if exist {
-		return key.PublicKey, nil
+		return key, nil
 	}
 
 	return "", fmt.Errorf("missing public key for %s", keyID)
 }
 
-func (pmv *ManifestVerifier) Verify(keyID string, block *clearsign.Block) error {
-	publicKey, err := pmv.GetPublicKey(keyID)
+func (pmv *ManifestVerifier) Verify(ctx context.Context, keyID string, block *clearsign.Block) error {
+	publicKey, err := pmv.getPublicKey(ctx, keyID)
 	if err != nil {
 		return err
 	}
