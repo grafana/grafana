@@ -4,10 +4,7 @@ import { program } from 'commander';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
-import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
-import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
-import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { execTask } from './utils/execTask';
@@ -131,53 +128,6 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-build')
-    .option('--finish', 'move all results to the jobs folder', false)
-    .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('[deprecated] Build the plugin, leaving results in /dist and /coverage')
-    .action(async (cmd) => {
-      await execTask(ciBuildPluginTask)({
-        finish: cmd.finish,
-        maxJestWorkers: cmd.maxJestWorkers,
-      });
-    });
-
-  program
-    .command('plugin:ci-package')
-    .option('--signatureType <type>', 'Signature Type')
-    .option('--rootUrls <urls...>', 'Root URLs')
-    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
-    .description('[deprecated] Create a zip packages for the plugin')
-    .action(async (cmd) => {
-      await execTask(ciPackagePluginTask)({
-        signatureType: cmd.signatureType,
-        rootUrls: cmd.rootUrls,
-      });
-    });
-
-  program
-    .command('plugin:ci-report')
-    .description('[deprecated] Build a report for this whole process')
-    .option('--upload', 'upload packages also')
-    .action(async (cmd) => {
-      await execTask(ciPluginReportTask)({
-        upload: cmd.upload,
-      });
-    });
-
-  program
-    .command('plugin:bundle-managed')
-    .description('[Deprecated] Builds managed plugins')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-        )
-      );
-      await execTask(bundleManagedTask)({});
-    });
-
-  program
     .command('plugin:github-publish')
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
@@ -195,18 +145,6 @@ export const run = (includeInternalScripts = false) => {
         verbose: cmd.verbose,
         commitHash: cmd.commitHash,
       });
-    });
-
-  program
-    .command('plugin:update-circleci')
-    .description('[Deprecated] Update plugin')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-        )
-      );
-      await execTask(pluginUpdateTask)({});
     });
 
   program.on('command:*', () => {

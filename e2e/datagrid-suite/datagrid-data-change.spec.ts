@@ -1,6 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
-const DASHBOARD_ID = 'a70ecb44-6c31-412d-ae74-d6306303ce37';
+const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_SELECT_SERIES = 'Datagrid Select series';
 
 e2e.scenario({
@@ -27,8 +27,10 @@ e2e.scenario({
     // Edit datagrid which triggers a snapshot query
     cy.get('.dvn-scroller').click(200, 100);
     cy.get('[data-testid="glide-cell-2-1"]').should('have.attr', 'aria-selected', 'true');
-    cy.get('body').type('123455{enter}', { delay: 1000 });
+    cy.get('body').type('12{enter}', { delay: 500 });
 
-    cy.get('[data-testid="query-editor-row"]').contains('Spreadsheet or snapshot');
+    cy.get('[aria-label="Confirm Modal Danger Button"]').click();
+
+    cy.get('[data-testid="query-editor-row"]').contains('Snapshot');
   },
 });

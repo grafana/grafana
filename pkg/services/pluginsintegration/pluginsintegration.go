@@ -114,6 +114,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
+		clientmiddleware.NewResourceResponseMiddleware(),
 	}
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable

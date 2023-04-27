@@ -139,6 +139,7 @@ describe('TraceViewContainer', () => {
     renderTraceViewContainer();
     const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters' });
     await user.click(spanFiltersButton);
+
     const nextResultButton = screen.getByRole('button', { name: 'Next result button' });
     const prevResultButton = screen.getByRole('button', { name: 'Prev result button' });
     expect((nextResultButton as HTMLButtonElement)['disabled']).toBe(true);
@@ -181,5 +182,23 @@ describe('TraceViewContainer', () => {
         screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
       ).toContain('rowFocused');
     });
+  });
+
+  it('show matches only works as expected', async () => {
+    config.featureToggles.newTraceViewHeader = true;
+    renderTraceViewContainer();
+    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters' });
+    await user.click(spanFiltersButton);
+
+    await user.click(screen.getByLabelText('Select tag key'));
+    const tagOption = screen.getByText('http.status_code');
+    await waitFor(() => expect(tagOption).toBeInTheDocument());
+    await user.click(tagOption);
+
+    expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
+    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    expect(matchesSwitch).toBeInTheDocument();
+    await user.click(matchesSwitch);
+    expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(1);
   });
 });

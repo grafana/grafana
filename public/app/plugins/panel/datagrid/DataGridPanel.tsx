@@ -10,16 +10,16 @@ import DataEditor, {
 } from '@glideapps/glide-data-grid';
 import React, { useEffect, useReducer } from 'react';
 
-import { ArrayVector, Field, MutableDataFrame, PanelProps, FieldType } from '@grafana/data';
+import { Field, PanelProps, FieldType, DataFrame } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { usePanelContext, useTheme2 } from '@grafana/ui';
 
 import '@glideapps/glide-data-grid/dist/index.css';
 
 import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { RenameColumnCell } from './components/RenameColumnCell';
-import { isDatagridEditEnabled } from './featureFlagUtils';
+import { isDatagridEnabled } from './featureFlagUtils';
 import { PanelOptions } from './panelcfg.gen';
 import { DatagridActionType, datagridReducer, initialState } from './state';
 import {
@@ -28,19 +28,21 @@ import {
   EMPTY_CELL,
   getGridCellKind,
   getGridTheme,
-  publishSnapshot,
   RIGHT_ELEMENT_PROPS,
   TRAILING_ROW_OPTIONS,
   getStyles,
   ROW_MARKER_BOTH,
   ROW_MARKER_NUMBER,
   hasGridSelection,
+  updateSnapshot,
 } from './utils';
 
 export interface DataGridProps extends PanelProps<PanelOptions> {}
 
 export function DataGridPanel({ options, data, id, fieldConfig, width, height }: DataGridProps) {
   const [state, dispatch] = useReducer(datagridReducer, initialState);
+  const { onUpdateData } = usePanelContext();
+
   const {
     columns,
     contextMenuData,
@@ -74,9 +76,23 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     return getGridCellKind(field, row, hasGridSelection(gridSelection));
   };
 
-  const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
+  const onCellEdited = async (cell: Item, newValue: EditableGridCell) => {
+    // if there are rows selected, return early, we don't want to edit any cell
+    if (hasGridSelection(gridSelection)) {
+      return;
+    }
+
     const [col, row] = cell;
-    const field: Field = frame.fields[col];
+    const frameCopy = {
+      ...frame,
+      fields: frame.fields.map((f) => {
+        return {
+          ...f,
+          values: [...f.values],
+        };
+      }),
+    };
+    const field: Field = frameCopy.fields[col];
 
     if (!field) {
       return;
@@ -85,36 +101,38 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     const values = field.values.toArray();
 
     values[row] = newValue.data;
-    field.values = new ArrayVector(values);
+    field.values = [...values];
 
-    publishSnapshot(new MutableDataFrame(frame), id);
+    updateSnapshot(frameCopy, onUpdateData);
   };
 
   const onColumnInputBlur = (columnName: string) => {
     const len = frame.length ?? 0;
-    const newFrame = new MutableDataFrame(frame);
-
-    const field: Field = {
-      name: columnName,
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(new Array(len).fill('')),
-    };
-
-    newFrame.addField(field);
-
-    publishSnapshot(newFrame, id);
+    updateSnapshot(
+      {
+        ...frame,
+        fields: [
+          ...frame.fields,
+          {
+            name: columnName,
+            type: FieldType.string,
+            config: {},
+            values: new Array(len).fill(''),
+          },
+        ],
+      },
+      onUpdateData
+    );
   };
 
   const addNewRow = () => {
-    //TODO use .appendRow() after fieldValues refactor is finished
-    const newFrame = new MutableDataFrame(frame);
-
-    newFrame.fields.map((field) => {
-      field.values = new ArrayVector([...field.values.toArray(), null]);
+    const fields = frame.fields.map((f) => {
+      const values = f.values.slice(); // copy
+      values.push(null);
+      return { ...f, values };
     });
 
-    publishSnapshot(newFrame, id);
+    updateSnapshot({ ...frame, fields, length: frame.length + 1 }, onUpdateData);
   };
 
   const onColumnResize = (column: GridColumn, width: number, columnIndex: number, newSizeWithGrow: number) => {
@@ -132,12 +150,12 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const onDeletePressed = (selection: GridSelection) => {
     if (selection.current && selection.current.range) {
-      publishSnapshot(clearCellsFromRangeSelection(frame, selection.current.range), id);
+      updateSnapshot(clearCellsFromRangeSelection(frame, selection.current.range), onUpdateData);
       return true;
     }
 
     if (selection.rows) {
-      publishSnapshot(deleteRows(frame, selection.rows.toArray()), id);
+      updateSnapshot(deleteRows(frame, selection.rows.toArray()), onUpdateData);
       return true;
     }
 
@@ -161,28 +179,29 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     });
   };
 
-  const onColumnMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(frame);
-    const field = newFrame.fields[from];
-    newFrame.fields.splice(from, 1);
-    newFrame.fields.splice(to, 0, field);
+  const onColumnMove = async (from: number, to: number) => {
+    const fields = frame.fields.map((f) => f);
+    const field = fields[from];
+    fields.splice(from, 1);
+    fields.splice(to, 0, field);
 
-    dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
-    publishSnapshot(newFrame, id);
+    const hasUpdated = await updateSnapshot({ ...frame, fields }, onUpdateData);
+
+    if (hasUpdated) {
+      dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
+    }
   };
 
   const onRowMove = (from: number, to: number) => {
-    const newFrame = new MutableDataFrame(frame);
+    const fields = frame.fields.map((f) => ({ ...f, values: f.values.slice() }));
 
-    for (const field of newFrame.fields) {
-      const values = field.values.toArray();
-      const value = values[from];
-      values.splice(from, 1);
-      values.splice(to, 0, value);
-      field.values = new ArrayVector(values);
+    for (const field of fields) {
+      const value = field.values[from];
+      field.values.splice(from, 1);
+      field.values.splice(to, 0, value);
     }
 
-    publishSnapshot(newFrame, id);
+    updateSnapshot({ ...frame, fields }, onUpdateData);
   };
 
   const onColumnRename = () => {
@@ -190,11 +209,12 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
-    const newFrame = new MutableDataFrame(frame);
-    newFrame.fields[columnIdx].name = columnName;
+    const fields = frame.fields.map((f) => f);
+    fields[columnIdx].name = columnName;
 
     dispatch({ type: DatagridActionType.hideColumnRenameInput });
-    publishSnapshot(newFrame, id);
+
+    updateSnapshot({ ...frame, fields }, onUpdateData);
   };
 
   const onSearchClose = () => {
@@ -205,8 +225,16 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     dispatch({ type: DatagridActionType.multipleCellsSelected, payload: { selection } });
   };
 
+  const onContextMenuSave = (data: DataFrame) => {
+    updateSnapshot(data, onUpdateData);
+  };
+
   if (!frame) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
+  }
+
+  if (!isDatagridEnabled()) {
+    return <PanelDataErrorView panelId={id} message="Datagrid is not enabled" fieldConfig={fieldConfig} data={data} />;
   }
 
   if (!document.getElementById('portal')) {
@@ -231,37 +259,37 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
         smoothScrollX
         smoothScrollY
         overscrollY={50}
-        onCellEdited={isDatagridEditEnabled() ? onCellEdited : undefined}
-        getCellsForSelection={isDatagridEditEnabled() ? true : undefined}
-        showSearch={isDatagridEditEnabled() ? toggleSearch : false}
+        onCellEdited={isDatagridEnabled() ? onCellEdited : undefined}
+        getCellsForSelection={isDatagridEnabled() ? true : undefined}
+        showSearch={isDatagridEnabled() ? toggleSearch : false}
         onSearchClose={onSearchClose}
-        onPaste={isDatagridEditEnabled() ? true : undefined}
+        onPaste={isDatagridEnabled() ? true : undefined}
         gridSelection={gridSelection}
-        onGridSelectionChange={isDatagridEditEnabled() ? onGridSelectionChange : undefined}
-        onRowAppended={isDatagridEditEnabled() ? addNewRow : undefined}
-        onDelete={isDatagridEditEnabled() ? onDeletePressed : undefined}
-        rowMarkers={isDatagridEditEnabled() ? ROW_MARKER_BOTH : ROW_MARKER_NUMBER}
+        onGridSelectionChange={isDatagridEnabled() ? onGridSelectionChange : undefined}
+        onRowAppended={isDatagridEnabled() ? addNewRow : undefined}
+        onDelete={isDatagridEnabled() ? onDeletePressed : undefined}
+        rowMarkers={isDatagridEnabled() ? ROW_MARKER_BOTH : ROW_MARKER_NUMBER}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
-        onCellContextMenu={isDatagridEditEnabled() ? onCellContextMenu : undefined}
-        onHeaderContextMenu={isDatagridEditEnabled() ? onHeaderContextMenu : undefined}
-        onHeaderMenuClick={isDatagridEditEnabled() ? onHeaderMenuClick : undefined}
+        onCellContextMenu={isDatagridEnabled() ? onCellContextMenu : undefined}
+        onHeaderContextMenu={isDatagridEnabled() ? onHeaderContextMenu : undefined}
+        onHeaderMenuClick={isDatagridEnabled() ? onHeaderMenuClick : undefined}
         trailingRowOptions={TRAILING_ROW_OPTIONS}
         rightElement={
-          isDatagridEditEnabled() ? (
+          isDatagridEnabled() ? (
             <AddColumn onColumnInputBlur={onColumnInputBlur} divStyle={styles.addColumnDiv} />
           ) : null
         }
         rightElementProps={RIGHT_ELEMENT_PROPS}
         freezeColumns={columnFreezeIndex}
-        onRowMoved={isDatagridEditEnabled() ? onRowMove : undefined}
-        onColumnMoved={isDatagridEditEnabled() ? onColumnMove : undefined}
+        onRowMoved={isDatagridEnabled() ? onRowMove : undefined}
+        onColumnMoved={isDatagridEnabled() ? onColumnMove : undefined}
       />
       {contextMenuData.isContextMenuOpen && (
         <DatagridContextMenu
           menuData={contextMenuData}
           data={frame}
-          saveData={(data) => publishSnapshot(data, id)}
+          saveData={onContextMenuSave}
           closeContextMenu={closeContextMenu}
           dispatch={dispatch}
           gridSelection={gridSelection}

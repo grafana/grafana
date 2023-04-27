@@ -18,7 +18,14 @@ import React, { useState } from 'react';
 
 import { defaultFilters } from '../../useSearch';
 
-import NewTracePageSearchBar, { getStyles } from './NewTracePageSearchBar';
+import NewTracePageSearchBar, { getStyles, TracePageSearchBarProps } from './NewTracePageSearchBar';
+
+const defaultProps = {
+  search: defaultFilters,
+  setFocusedSpanIdForSearch: jest.fn(),
+  showSpanFilterMatchesOnly: false,
+  setShowSpanFilterMatchesOnly: jest.fn(),
+};
 
 describe('<NewTracePageSearchBar>', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -37,6 +44,8 @@ describe('<NewTracePageSearchBar>', () => {
     const searchBarProps = {
       search: defaultFilters,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
+      showSpanFilterMatchesOnly: false,
+      setShowSpanFilterMatchesOnly: jest.fn(),
       focusedSpanIdForSearch,
       setFocusedSpanIdForSearch,
       datasourceType: '',
@@ -103,5 +112,11 @@ describe('<NewTracePageSearchBar>', () => {
     await waitFor(() => {
       expect(screen.getByText(/0 span matches for the filters selected/)).toBeDefined();
     });
+  });
+
+  it('renders show span filter matches only switch', async () => {
+    render(<NewTracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
+    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    expect(matchesSwitch).toBeInTheDocument();
   });
 });

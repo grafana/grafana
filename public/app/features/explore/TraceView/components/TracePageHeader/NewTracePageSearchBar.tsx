@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import React, { memo, Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
 import { convertTimeFilter } from '../utils/filter-spans';
@@ -24,6 +24,8 @@ import { convertTimeFilter } from '../utils/filter-spans';
 export type TracePageSearchBarProps = {
   search: SearchProps;
   spanFilterMatches: Set<string> | undefined;
+  showSpanFilterMatchesOnly: boolean;
+  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
@@ -35,6 +37,8 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
   const {
     search,
     spanFilterMatches,
+    showSpanFilterMatchesOnly,
+    setShowSpanFilterMatchesOnly,
     focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
     datasourceType,
@@ -147,6 +151,14 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
             >
               Reset
             </Button>
+            <div className={styles.matchesOnly}>
+              <Switch
+                value={showSpanFilterMatchesOnly}
+                onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
+                label="Show matches only switch"
+              />
+              <span onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}>Show matches only</span>
+            </div>
           </div>
           <div className={styles.nextPrevButtons}>
             <span className={styles.matches}>{spanFilterMatches ? matchesText() : `${totalSpans} spans`}</span>
@@ -181,6 +193,16 @@ export const getStyles = () => {
   return {
     searchBar: css`
       display: inline;
+    `,
+    matchesOnly: css`
+      display: inline-flex;
+      margin: 0 0 0 10px;
+      vertical-align: middle;
+
+      span {
+        cursor: pointer;
+        margin: -3px 0 0 5px;
+      }
     `,
     buttons: css`
       display: flex;

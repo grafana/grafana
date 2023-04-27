@@ -2,7 +2,7 @@ import { GridSelection } from '@glideapps/glide-data-grid';
 import { capitalize } from 'lodash';
 import React from 'react';
 
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
@@ -111,8 +111,7 @@ export const DatagridContextMenu = ({
           label="Clear column"
           onClick={() => {
             const field = data.fields[column];
-            field.values = new ArrayVector(field.values.toArray().map(() => null));
-
+            field.values = field.values.map(() => null);
             saveData({
               ...data,
             });

@@ -23,6 +23,7 @@ import {
   SceneDataTransformer,
   SceneGridItem,
   SceneDataProvider,
+  getUrlSyncManager,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -75,7 +76,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     // We initialize URL sync here as it better to do that before mounting and doing any rendering.
     // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
-    dashboard.initUrlSync();
+    getUrlSyncManager().initSync(dashboard);
 
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
