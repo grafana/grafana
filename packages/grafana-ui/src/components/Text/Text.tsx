@@ -8,7 +8,7 @@ import { useStyles2 } from '../../themes';
 export interface TextProps {
   /** Defines what HTML element is defined underneath */
   as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
-  /** What typograpy variant should be used for the component. Only use if default variant for the defined 'as' is not what is needed */
+  /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
