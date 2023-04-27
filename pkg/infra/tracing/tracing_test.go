@@ -68,7 +68,7 @@ func TestTracingConfig(t *testing.T) {
 		{
 			Name:             "default config uses noop exporter",
 			Cfg:              "",
-			ExpectedExporter: "noop",
+			ExpectedExporter: noopExporter,
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
@@ -77,7 +77,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry]
 			custom_attributes = key1:value1,key2:value2
 			`,
-			ExpectedExporter: "noop",
+			ExpectedExporter: noopExporter,
 			ExpectedAttrs:    []attribute.KeyValue{attribute.String("key1", "value1"), attribute.String("key2", "value2")},
 		},
 		{
@@ -86,7 +86,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: "jaeger",
+			ExpectedExporter: jaegerExporter,
 			ExpectedAddress:  "jaeger.example.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -96,7 +96,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.otlp]
 			address = otlp.example.com:4317
 			`,
-			ExpectedExporter: "otlp",
+			ExpectedExporter: otlpExporter,
 			ExpectedAddress:  "otlp.example.com:4317",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -106,7 +106,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.jaeger]
 			address = jaeger.example.com:6831
 			`,
-			ExpectedExporter: "jaeger",
+			ExpectedExporter: jaegerExporter,
 			ExpectedAddress:  "jaeger.example.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -117,7 +117,7 @@ func TestTracingConfig(t *testing.T) {
 				"JAEGER_AGENT_HOST": "example.com",
 				"JAEGER_AGENT_PORT": "12345",
 			},
-			ExpectedExporter: "jaeger",
+			ExpectedExporter: jaegerExporter,
 			ExpectedAddress:  "example.com:12345",
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
@@ -132,7 +132,7 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.opentelemetry.jaeger]
 			address = bar.com:6831
 			`,
-			ExpectedExporter: "jaeger",
+			ExpectedExporter: jaegerExporter,
 			ExpectedAddress:  "bar.com:6831",
 			ExpectedAttrs:    []attribute.KeyValue{attribute.String("c", "d")},
 		},

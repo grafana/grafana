@@ -219,6 +219,7 @@ func (ots *Opentelemetry) parseSettings() error {
 	}
 	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
 	var err error
+	// we default to legacy tag set (attributes) if the new config format is absent
 	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(legacyTags))
 	if err != nil {
 		return err
@@ -227,6 +228,7 @@ func (ots *Opentelemetry) parseSettings() error {
 	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	ots.enabled = noopExporter
 
+	// we default to legacy Jaeger agent address if the new config value is empty
 	ots.Address = section.Key("address").MustString(legacyAddress)
 	ots.Propagation = section.Key("propagation").MustString("")
 	if ots.Address != "" {
