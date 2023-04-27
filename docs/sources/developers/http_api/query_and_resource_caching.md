@@ -52,7 +52,6 @@ Content-Type: application/json
 
 {
    "message": "Data source cache enabled",
-   "id": 1,
    "dataSourceID": 1,
    "dataSourceUID": "jZrmlLCGka",
    "enabled": true,
@@ -103,7 +102,6 @@ Content-Type: application/json
 
 {
    "message": "Data source cache disabled",
-   "id": 1,
    "dataSourceID": 1,
    "dataSourceUID": "jZrmlLCGka",
    "enabled": false,
@@ -156,7 +154,6 @@ Content-Type: application/json
 
 {
    "message": "Data source cache cleaned",
-   "id": 1,
    "dataSourceID": 1,
    "dataSourceUID": "jZrmlLCGka",
    "enabled": false,
@@ -205,7 +202,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
    "useDefaultTTL": false,
    "ttlQueriesMs": 60000,
    "ttlResourcesMs": 300000,
-   "defaultTTLMs": 300000
 }
 ```
 
@@ -217,7 +213,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 | dataSourceUID  | string    | The UID of the data source to configure.                                                                                                    |
 | enabled        | boolean   | Whether or not to enable caching for this data source.                                                                                      |
 | useDefaultTTL  | boolean   | Whether the configured default TTL (Time-To-Live) should be used for both query and resource caching, instead of the user-specified values. |
-| defaultTTLMs   | number    | The default TTL to use instead of the user-specified values. <br> **Note:** This field will be removed in a future version of this API.     |
 | ttlQueriesMs   | number    | The TTL to use for query caching, in milliseconds.                                                                                          |
 | ttlResourcesMs | number    | The TTL to use for resource caching, in milliseconds.                                                                                       |
 
@@ -229,7 +224,6 @@ Content-Type: application/json
 
 {
    "message": "Data source cache settings updated",
-   "id": 1,
    "dataSourceID": 1,
    "dataSourceUID": "jZrmlLCGka",
    "enabled": true,
@@ -281,7 +275,6 @@ Content-Type: application/json
 
 {
    "message": "Data source cache settings loaded",
-   "id": 1,
    "dataSourceID": 1,
    "dataSourceUID": "jZrmlLCGka",
    "enabled": true,
