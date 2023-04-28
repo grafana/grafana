@@ -103,12 +103,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  sentry = {
-    enabled: false,
-    dsn: '',
-    customEndpoint: '',
-    sampleRate: 1,
-  };
   grafanaJavascriptAgent = {
     enabled: false,
     customEndpoint: '',
