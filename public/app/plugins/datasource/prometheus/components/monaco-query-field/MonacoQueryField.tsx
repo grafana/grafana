@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
 const MonacoQueryField = (props: Props) => {
   const id = uuidv4();
 
-  // we need only one instance of `overrideServices` during the lifetime of the react component
+  // we need only one instance of `overrideServices` during the lifetime of the React component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange } = props;
@@ -132,6 +132,7 @@ const MonacoQueryField = (props: Props) => {
         beforeMount={(monaco) => {
           ensurePromQL(monaco);
         }}
+        onChange={(value, ev) => {}}
         onMount={(editor, monaco) => {
           const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
@@ -202,6 +203,10 @@ const MonacoQueryField = (props: Props) => {
               if (editor.getModel()?.id !== model.id) {
                 return { suggestions: [] };
               }
+
+              console.log('providing completion items', dataProvider);
+              console.log('but now props', props);
+
               return completionProvider.provideCompletionItems(model, position, context, token);
             },
           };

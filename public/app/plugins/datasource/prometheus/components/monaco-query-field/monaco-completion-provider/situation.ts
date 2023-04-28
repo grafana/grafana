@@ -532,6 +532,7 @@ function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
 export function getSituation(text: string, pos: number, dataProvider: DataProvider): Situation | null {
   // there is a special-case when we are at the start of writing text,
   // so we handle that case first
+
   console.log('getSituation', text, pos, text[pos - 1]);
   console.log('dataProvider', dataProvider);
 
@@ -551,10 +552,15 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
   const referenceRegex = RegExp(/\@[A-Z]/, 'g');
 
   // If there are multiple targets (queries with references), let's interpolate any references in this before parsing the syntax
-  if (referenceRegex.exec(text)?.length && dataProvider.queries && dataProvider.query && dataProvider.queries?.length > 1) {
+  if (
+    referenceRegex.exec(text)?.length &&
+    dataProvider.queries &&
+    dataProvider.query &&
+    dataProvider.queries?.length > 1
+  ) {
     const thisTarget = clone(dataProvider.query);
     thisTarget.expr = text;
-    const allTargets = dataProvider.queries;
+    const allTargets = clone(dataProvider.queries);
 
     interpolatePrometheusReferences(allTargets, thisTarget);
     // This is the problem for multiple references in a single query, if there is an interpolation before and after the cursor, we'll get the wrong values
@@ -564,27 +570,27 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
     // calculate the new cursor position after reference interpolation
     // This isn't gonna work for multiple references?
     const before: number[] = [];
-    const after: number[] = []
+    const after: number[] = [];
 
-    const matches = [...text.matchAll(referenceRegex)]
-    console.log('ALLmatches', matches)
+    const matches = [...text.matchAll(referenceRegex)];
+    console.log('ALLmatches', matches);
 
-    matches.forEach(match => {
-      if(match?.index){
+    matches.forEach((match) => {
+      if (match?.index) {
         if (match.index < pos) {
-          before.push(match.index)
+          before.push(match.index);
           // newPos += lengthDelta;
-          console.log('cursor position is before @')
-        }else{
-          after.push(match.index)
-          console.log('cursor position is after @')
+          console.log('cursor position is before @');
+        } else {
+          after.push(match.index);
+          console.log('cursor position is after @');
         }
       }
-    })
+    });
 
-    if(!after.length && before.length){
+    if (!after.length && before.length) {
       pos += lengthDelta;
-    } else if(after.length && before.length){
+    } else if (after.length && before.length) {
       console.warn('Uhhh this wont work');
     }
 
