@@ -30,7 +30,7 @@ export function PanelMenu({
 }: PanelMenuProps) {
   const testId = title ? selectors.components.Panels.Panel.menu(title) : `panel-menu-button`;
 
-  const handleOpeningMenu = useCallback(
+  const handleVisibility = useCallback(
     (show: boolean) => {
       if (show && onOpenMenu) {
         onOpenMenu();
@@ -41,7 +41,7 @@ export function PanelMenu({
   );
 
   return (
-    <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleOpeningMenu}>
+    <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
       <ToolbarButton
         aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
         title="Menu"
