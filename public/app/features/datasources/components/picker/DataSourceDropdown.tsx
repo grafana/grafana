@@ -208,6 +208,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <div className={styles.dataSourceList}>
         <DataSourceList
           {...props}
+          enableKeyboardNavigation
           current={current}
           onChange={changeCallback}
           filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}

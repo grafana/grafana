@@ -37,6 +37,7 @@ export interface DataSourceListProps {
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  enableKeyboardNavigation?: boolean;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -50,7 +51,7 @@ export function DataSourceList(props: DataSourceListProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, selectedItemCssSelector);
 
-  const { className, current, onChange } = props;
+  const { className, current, onChange, enableKeyboardNavigation } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
   const dataSources = useDatasources({
     alerting: props.alerting,
@@ -81,7 +82,7 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={!!isDataSourceMatch(ds, current)}
-            {...navigatableProps}
+            {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
     </div>
