@@ -14,7 +14,6 @@ const loadingTeam = {
   memberCount: 0,
   permission: TeamPermissionLevel.Member,
   accessControl: { isEditor: false },
-  created: '',
   orgId: 0,
   updated: '',
 };

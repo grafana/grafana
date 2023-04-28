@@ -9,6 +9,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  TestDataSourceResponse,
   isValidLiveChannelAddress,
   MutableDataFrame,
   parseLiveChannelAddress,
@@ -252,8 +253,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return { data: [toDataFrame(annotations)] };
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }
 
