@@ -17,7 +17,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alertParagraph: css`
     margin: 0 ${theme.spacing(1)} 0 0;
     line-height: ${theme.spacing(theme.components.height.sm)};
-    //color: ${theme.colors.text.primary};
   `,
 });
 
