@@ -29,23 +29,23 @@ import (
 )
 
 const (
-	CloudWatch      = "cloudwatch"
-	CloudMonitoring = "stackdriver"
-	AzureMonitor    = "grafana-azure-monitor-datasource"
-	Elasticsearch   = "elasticsearch"
-	Graphite        = "graphite"
-	InfluxDB        = "influxdb"
-	Loki            = "loki"
-	OpenTSDB        = "opentsdb"
-	Prometheus      = "prometheus"
-	Tempo           = "tempo"
-	TestData        = "testdata"
-	PostgreSQL      = "postgres"
-	MySQL           = "mysql"
-	MSSQL           = "mssql"
-	Grafana         = "grafana"
-	Phlare          = "phlare"
-	Parca           = "parca"
+	CloudWatch       = "cloudwatch"
+	CloudMonitoring  = "stackdriver"
+	AzureMonitor     = "grafana-azure-monitor-datasource"
+	Elasticsearch    = "elasticsearch"
+	Graphite         = "graphite"
+	InfluxDB         = "influxdb"
+	Loki             = "loki"
+	OpenTSDB         = "opentsdb"
+	Prometheus       = "prometheus"
+	Tempo            = "tempo"
+	TestData         = "testdata"
+	PostgreSQL       = "postgres"
+	MySQL            = "mysql"
+	MSSQL            = "mssql"
+	Grafana          = "grafana"
+	GrafanaPyroscope = "grafana-pyroscope"
+	Parca            = "parca"
 )
 
 func init() {
@@ -69,23 +69,23 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, phlare *phlare.Service, parca *parca.Service) *Registry {
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:      asBackendPlugin(cw.Executor),
-		CloudMonitoring: asBackendPlugin(cm),
-		AzureMonitor:    asBackendPlugin(am),
-		Elasticsearch:   asBackendPlugin(es),
-		Graphite:        asBackendPlugin(grap),
-		InfluxDB:        asBackendPlugin(idb),
-		Loki:            asBackendPlugin(lk),
-		OpenTSDB:        asBackendPlugin(otsdb),
-		Prometheus:      asBackendPlugin(pr),
-		Tempo:           asBackendPlugin(t),
-		TestData:        asBackendPlugin(td),
-		PostgreSQL:      asBackendPlugin(pg),
-		MySQL:           asBackendPlugin(my),
-		MSSQL:           asBackendPlugin(ms),
-		Grafana:         asBackendPlugin(graf),
-		Phlare:          asBackendPlugin(phlare),
-		Parca:           asBackendPlugin(parca),
+		CloudWatch:       asBackendPlugin(cw.Executor),
+		CloudMonitoring:  asBackendPlugin(cm),
+		AzureMonitor:     asBackendPlugin(am),
+		Elasticsearch:    asBackendPlugin(es),
+		Graphite:         asBackendPlugin(grap),
+		InfluxDB:         asBackendPlugin(idb),
+		Loki:             asBackendPlugin(lk),
+		OpenTSDB:         asBackendPlugin(otsdb),
+		Prometheus:       asBackendPlugin(pr),
+		Tempo:            asBackendPlugin(t),
+		TestData:         asBackendPlugin(td),
+		PostgreSQL:       asBackendPlugin(pg),
+		MySQL:            asBackendPlugin(my),
+		MSSQL:            asBackendPlugin(ms),
+		Grafana:          asBackendPlugin(graf),
+		GrafanaPyroscope: asBackendPlugin(phlare),
+		Parca:            asBackendPlugin(parca),
 	})
 }
 

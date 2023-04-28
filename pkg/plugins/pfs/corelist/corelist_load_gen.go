@@ -45,7 +45,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/datasource/mssql", "mssql", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/mysql", "mysql", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/parca", "parca", rt),
-		parsePluginOrPanic("public/app/plugins/datasource/phlare", "phlare", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/phlare", "grafana_pyroscope", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/postgres", "postgres", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/prometheus", "prometheus", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/tempo", "tempo", rt),

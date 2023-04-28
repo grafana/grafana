@@ -78,7 +78,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 38;
+    this.dashboard.schemaVersion = 39;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -842,6 +842,10 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 39) {
+      panelUpgrades.push(migratePhlareIdToGrafanaPyroscope);
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -1360,6 +1364,21 @@ function ensureXAxisVisibility(panel: PanelModel) {
           },
         ],
       };
+    }
+  }
+
+  return panel;
+}
+
+// We renamed and changed the phlare data source id to grafana-pyroscope
+function migratePhlareIdToGrafanaPyroscope(panel: PanelModel) {
+  if (panel.datasource?.type === 'phlare') {
+    panel.datasource.type = 'grafana-pyroscope';
+  }
+
+  for (const target of panel.targets) {
+    if (target.datasource?.type === 'phlare') {
+      target.datasource.type = 'grafana-pyroscope';
     }
   }
 

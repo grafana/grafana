@@ -96,6 +96,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
+	changePhlareIdToGrafanaPyroscope(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
