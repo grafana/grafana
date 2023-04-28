@@ -94,9 +94,9 @@ func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error)
 		login := usr.Login
 		email := usr.Email
 		if ss.cfg.CaseInsensitiveLogin {
-			where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
 			login = strings.ToLower(login)
 			email = strings.ToLower(email)
+			where = "LOWER(email)=? OR LOWER(login)=?"
 		}
 
 		exists, err := sess.Where(where, email, login).Get(ret)
