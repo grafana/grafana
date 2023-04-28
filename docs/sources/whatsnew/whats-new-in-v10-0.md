@@ -252,7 +252,7 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If youâ€
 
 ### OpenTelemetry replacing OpenTracing
 
-We have started our work to migrate to OpenTelemetry in Grafana 8.4 and now we are removing OpenTracing and replacing it with OpenTelemetry under the hood. The changes are made in backwards compatible way so that users of Grafana do not need to change anything and they will continue working in the same way as before.
+We have started our work to migrate to OpenTelemetry in Grafana 8.4 and now we are removing OpenTracing and replacing it, for those that still have it configured, with OpenTelemetry under the hood. The changes are made in backwards compatible way so that users of Grafana do not need to change anything and they will continue working in the same way as before.
 
 ## Datasources
 
