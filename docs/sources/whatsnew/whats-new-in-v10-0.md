@@ -285,12 +285,17 @@ Use the on-call contact point to notify on-call teams on-call about firing alert
 
 ### Trusted Types support
 
-_In development, available behind the trustedTypes feature toggle in all editions of Grafana._
+_In development, available in all editions of Grafana._
 
 Use [trusted types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types) to reduce the risk of XSS vulnerabilities. This is an experimental web technology with limited browser support. One aspect of it is sanitization of third party libraries or plugins that have not explicitly done sanitization.
 
-To use it:
+To use it in report only mode:
 
-- Enable the feature toggle `trustedTypes`.
-- Enable either `content_security_policy` or `content_security_policy_report_only`.
-- Add `require-trusted-types-for 'script';` to the CSP template.
+- Enable `content_security_policy_report_only` in the configuration.
+- Add `require-trusted-types-for 'script';` to the `content_security_policy_report_only_template`.
+
+To use it in enforce mode:
+
+- Enable `content_security_policy` in the configuration.
+- Add `require-trusted-types-for 'script';` to the `content_security_policy_template`.
+
