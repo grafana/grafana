@@ -119,7 +119,11 @@ export function EditDataSourceView({
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onUpdate({ ...dataSource });
+    try {
+      await onUpdate({ ...dataSource });
+    } catch (err) {
+      return;
+    }
 
     onTest();
   };
@@ -173,9 +177,9 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} />
+      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
-      <ButtonRow onSubmit={onSubmit} onTest={onTest} exploreUrl={exploreUrl} canSave={!readOnly && hasWriteRights} />
+      <ButtonRow onSubmit={onSubmit} onTest={onTest} canSave={!readOnly && hasWriteRights} />
     </form>
   );
 }

@@ -112,6 +112,7 @@ export function PayloadEditor({
           >
             Add alert data
           </Button>
+
           <Button
             type="button"
             variant="secondary"
@@ -121,6 +122,8 @@ export function PayloadEditor({
           >
             Choose alert instances
           </Button>
+
+
           {payloadFormatError !== null && (
             <Badge
               color="orange"
@@ -132,6 +135,7 @@ export function PayloadEditor({
         </div>
       </div>
       <GenerateAlertDataModal isOpen={isEditingAlertData} onDismiss={onCloseEditAlertModal} onAccept={onAddAlertList} />
+
       <AlertInstanceModalSelector
         onSelect={onAddAlertList}
         isOpen={isAlertSelectorOpen}

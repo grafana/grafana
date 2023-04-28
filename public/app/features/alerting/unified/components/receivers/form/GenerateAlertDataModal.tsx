@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import addDays from 'date-fns/addDays';
+import { addDays, subDays } from 'date-fns';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -53,7 +53,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           return { ...acc, [key]: value };
         }, {}),
       startsAt: '2023-04-01T00:00:00Z',
-      endsAt: status === 'firing' ? addDays(new Date(), 1).toISOString() : addDays(new Date(), -1).toISOString(),
+      endsAt: status === 'firing' ? addDays(new Date(), 1).toISOString() : subDays(new Date(), 1).toISOString(),
     };
     setAlerts((alerts) => [...alerts, alert]);
     formMethods.reset();
