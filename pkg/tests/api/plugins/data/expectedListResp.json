@@ -646,7 +646,7 @@
   {
     "name": "Grafana Pyroscope",
     "type": "datasource",
-    "id": "phlare",
+    "id": "grafana-pyroscope",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -677,7 +677,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/phlare/",
+    "defaultNavUrl": "/plugins/grafana-pyroscope/",
     "category": "profiling",
     "state": "",
     "signature": "internal",
