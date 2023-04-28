@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	openpgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -755,4 +757,106 @@ func mustNewStaticFSForTests(t *testing.T, dir string) plugins.FS {
 	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(dir))
 	require.NoError(t, err)
 	return sfs
+}
+
+type revokedKeyProvider struct{}
+
+func (p *revokedKeyProvider) GetPublicKey(ctx context.Context, keyID string) (string, error) {
+	// dummy revoked key created locally
+	const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+YNE=
+=U6y9
+-----END PGP PUBLIC KEY BLOCK-----
+`
+	return publicKeyText, nil
+}
+
+func Test_VerifyRevokedKey(t *testing.T) {
+	s := ProvideService(&config.Cfg{}, &revokedKeyProvider{})
+	m := createV2Manifest(t)
+	txt := `-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "Grafana Labs",
+  "plugin": "test-app",
+  "version": "1.0.0",
+  "time": 1621356785895,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+	"plugin.json": "c59a51bf6d7ecd7a99608ccb99353390c8b973672a938a0247164324005c0caf",
+	"dashboards/connections.json": "bea86da4be970b98dc4681802ab55cdef3441dc3eb3c654cb207948d17b25303",
+	"dashboards/memory.json": "7c042464941084caa91d0a9a2f188b05315a9796308a652ccdee31ca4fbcbfee",
+	"dashboards/connections_result.json": "124d85c9c2e40214b83273f764574937a79909cfac3f925276fbb72543c224dc"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+
+iQGzBAEBCgAdFiEE7JeUrw5MX53LZ8CoXfB349i2H4YFAmRKigIACgkQXfB349i2
+H4ZdKgwAuVuTjGT7Rn1MfxYRUXRymdnyqsDRYaK8gw5i9OZweBuJBVLtL1eFII0h
+tTr+2jM4kGlsCakpJm3sjRG//8sBYoO5GsnOM6g1gv7mgUwo/Pv3A5eFFeOIkF1W
+E33nNyF17BlY+YPVJPMQ8Q4uBSz2pDlcdQY8gOleWERWMWvmsHZgobt7wyGgts7Y
+hCzKdm+e5/HpWBskW7dRMh1yB+8Ql+IK/Ksy8EDdX+Yv1fGV6ZNNIQxSEBXSily6
+uvZlU9zExa0db9rkg53jFpSfSFpQIJJ0Y0yOmHKDA4WLnphroCIBwo2lxIBIwuNH
+sXjmTjacvrqk13Af7Gat7XSNLapBfy5rTZwJFOwGWyDP1V0FTrlmt5vmoD0MRskq
+gry5NAKktwc2llGaS5uGc5wJ1wTvl5wYQkU8lBevdejntpQSOYNEuICe+OyKQP+h
+OOKpUCovEat+3W9JU1PM+z3cb1H/WWQ3hpKEykyzzi/jZMuRnRobW8Jm/4WxFgaY
+70RA9/V8
+=NUH5
+-----END PGP SIGNATURE-----
+`
+	block, _ := clearsign.Decode([]byte(txt))
+	require.NotNil(t, block, "failed to decode block")
+	err := s.validateManifest(context.Background(), *m, block)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), openpgpErrors.ErrKeyRevoked.Error())
 }
