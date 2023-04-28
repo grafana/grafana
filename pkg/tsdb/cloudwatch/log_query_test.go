@@ -417,7 +417,7 @@ func TestGroupingResults(t *testing.T) {
 		},
 	}
 
-	groupedResults, err := groupResults(fakeDataFrame, []string{"@log"})
+	groupedResults, err := groupResults(fakeDataFrame, []string{"@log"}, false)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }
@@ -538,7 +538,126 @@ func TestGroupingResultsWithNumericField(t *testing.T) {
 		},
 	}
 
-	groupedResults, err := groupResults(fakeDataFrame, []string{"httpresponse"})
+	groupedResults, err := groupResults(fakeDataFrame, []string{"httpresponse"}, false)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
+}
+
+func TestGroupingResultsWithRemoveNonNumericTrue(t *testing.T) {
+	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
+	require.NoError(t, err)
+	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
+	require.NoError(t, err)
+	timeVals := []*time.Time{
+		&timeA, &timeA, &timeA, &timeA, &timeB, &timeB, &timeB, &timeB,
+	}
+	timeField := data.NewField("@timestamp", data.Labels{}, timeVals)
+
+	logField := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+	})
+
+	streamField := data.NewField("stream", data.Labels{}, []*string{
+		aws.String("stream-a"),
+		aws.String("stream-a"),
+		aws.String("stream-b"),
+		aws.String("stream-b"),
+		aws.String("stream-a"),
+		aws.String("stream-a"),
+		aws.String("stream-b"),
+		aws.String("stream-b"),
+	})
+
+	countField := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("150"),
+		aws.String("20"),
+		aws.String("34"),
+		aws.String("57"),
+		aws.String("62"),
+		aws.String("105"),
+		aws.String("200"),
+	})
+
+	fakeDataFrame := &data.Frame{
+		Name: "CloudWatchLogsResponse",
+		Fields: []*data.Field{
+			timeField,
+			logField,
+			streamField,
+			countField,
+		},
+		RefID: "",
+	}
+
+	groupedTimeVals := []*time.Time{
+		&timeA, &timeB,
+	}
+	groupedTimeField := data.NewField("@timestamp", data.Labels{}, groupedTimeVals)
+
+	groupedCountFieldAA := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("57"),
+	})
+
+	groupedCountFieldBA := data.NewField("count", data.Labels{}, []*string{
+		aws.String("150"),
+		aws.String("62"),
+	})
+
+	groupedCountFieldAB := data.NewField("count", data.Labels{}, []*string{
+		aws.String("20"),
+		aws.String("105"),
+	})
+
+	groupedCountFieldBB := data.NewField("count", data.Labels{}, []*string{
+		aws.String("34"),
+		aws.String("200"),
+	})
+
+	expectedGroupedFrames := []*data.Frame{
+		{
+			Name: "fakelog-astream-a",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedCountFieldAA,
+			},
+			RefID: "",
+		},
+		{
+			Name: "fakelog-bstream-a",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedCountFieldBA,
+			},
+			RefID: "",
+		},
+		{
+			Name: "fakelog-astream-b",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedCountFieldAB,
+			},
+			RefID: "",
+		},
+		{
+			Name: "fakelog-bstream-b",
+			Fields: []*data.Field{
+				groupedTimeField,
+				groupedCountFieldBB,
+			},
+			RefID: "",
+		},
+	}
+
+	groupedResults, err := groupResults(fakeDataFrame, []string{"@log", "stream"}, true)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }
