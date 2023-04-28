@@ -737,26 +737,27 @@ export class ElasticDatasource
     return finalQuery;
   }
 
-  private getDatabaseVersionUncached(): Promise<SemVer | null> {
+  private async getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    return lastValueFrom(this.legacyQueryRunner.request('GET', '/')).then(
-      (data) => {
-        const versionNumber = data?.version?.number;
-        if (typeof versionNumber !== 'string') {
-          return null;
-        }
-        try {
-          return new SemVer(versionNumber);
-        } catch (error) {
-          console.error(error);
-          return null;
-        }
-      },
-      (error) => {
+    if (config.featureToggles.enableElasticsearchBackendQuerying) {
+      try {
+        const data = await this.getResource('');
+        return processVersionToSemver(data?.version?.number);
+      } catch (error) {
         console.error(error);
         return null;
       }
-    );
+    } else {
+      return lastValueFrom(this.legacyQueryRunner.request('GET', '/')).then(
+        (data) => {
+          return processVersionToSemver(data?.version?.number);
+        },
+        (error) => {
+          console.error(error);
+          return null;
+        }
+      );
+    }
   }
 
   async getDatabaseVersion(useCachedData = true): Promise<SemVer | null> {
@@ -897,5 +898,17 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
         to: dateTime(rowTimeEpochMs).utc(),
       };
     }
+  }
+}
+
+function processVersionToSemver(version: number | string | undefined): SemVer | null {
+  if (!version || typeof version !== 'string') {
+    return null;
+  }
+  try {
+    return new SemVer(version);
+  } catch (error) {
+    console.error(error);
+    return null;
   }
 }

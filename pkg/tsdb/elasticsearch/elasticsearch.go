@@ -1,10 +1,13 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -171,4 +174,38 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	instance := i.(es.DatasourceInfo)
 
 	return &instance, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ds, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	url := ds.URL + "/" + req.Path
+	// Maybe check here if we are requesting only allowed paths - allowlist
+	// So far:
+	// "" - empty path for db version
+
+	request, err := http.NewRequestWithContext(ctx, req.Method, url, bytes.NewBuffer(req.Body))
+	if err != nil {
+		return err
+	}
+
+	response, err := ds.HTTPClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  response.StatusCode,
+		Headers: response.Header,
+		Body:    body,
+	})
+
 }
