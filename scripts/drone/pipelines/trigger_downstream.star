@@ -7,7 +7,6 @@ load(
     "enterprise_downstream_step",
     "sync_grafana_mirror_step",
 )
-
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
