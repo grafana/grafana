@@ -95,6 +95,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   return (
     <div className={styles.container}>
+      {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
         <Input
           className={inputHasFocus ? undefined : styles.input}
