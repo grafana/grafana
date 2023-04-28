@@ -1564,7 +1564,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 }
 
 func TestSanitizeMetadataFromQueryData(t *testing.T) {
-	t.Run("can remove metadata from query", func(t *testing.T) {
+	t.Run("can remove ExecutedQueryString from metadata", func(t *testing.T) {
 		fakeResponse := &backend.QueryDataResponse{
 			Responses: backend.Responses{
 				"A": backend.DataResponse{
@@ -1595,9 +1595,6 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 							Name: "3",
 							Meta: &data.FrameMeta{
 								ExecutedQueryString: "Test3",
-								Custom: map[string]string{
-									"test3": "test3",
-								},
 							},
 						},
 					},
@@ -1605,13 +1602,12 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 			},
 		}
 		sanitizeMetadataFromQueryData(fakeResponse)
-		for k := range fakeResponse.Responses {
-			frames := fakeResponse.Responses[k].Frames
-			for i := range frames {
-				require.Empty(t, frames[i].Meta.ExecutedQueryString)
-				require.Empty(t, frames[i].Meta.Custom)
-			}
-		}
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.ExecutedQueryString, "")
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom, map[string]string{"test1": "test1"})
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.ExecutedQueryString, "")
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom, map[string]string{"test2": "test2"})
+		assert.Equal(t, fakeResponse.Responses["B"].Frames[0].Meta.ExecutedQueryString, "")
+		assert.Nil(t, fakeResponse.Responses["B"].Frames[0].Meta.Custom)
 	})
 }
 
