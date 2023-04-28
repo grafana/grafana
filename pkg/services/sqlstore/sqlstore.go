@@ -362,7 +362,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.dbCfg.InstrumentQueries {
+	if ss.Cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -468,7 +468,6 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
-	ss.dbCfg.InstrumentQueries = sec.Key("instrument_queries").MustBool(false)
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
@@ -755,5 +754,4 @@ type DatabaseConfig struct {
 	QueryRetries int
 	// SQLite only
 	TransactionRetries int
-	InstrumentQueries  bool
 }
