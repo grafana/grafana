@@ -66,11 +66,6 @@ export interface ExploreState {
   richHistoryLimitExceededWarningShown: boolean;
 
   /**
-   * True if a warning message about failed rich history has been shown already in this session.
-   */
-  richHistoryMigrationFailed: boolean;
-
-  /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
   largerExploreId?: ExploreId;
