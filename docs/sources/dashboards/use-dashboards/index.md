@@ -86,7 +86,7 @@ This section describes supported time units and relative ranges, the common time
 
 Grafana supports the following time units: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `Q (quarters)` and `y (years)`.
 
-The minus operator enables you to step back in time, relative to now (`now`). If you want to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end. To view fiscal periods, use `fQ (fiscal quarter)` and `fy (fiscal year)` time units.
+The minus operator enables you to step back in time, relative to the current date and time, or `now`. If you want to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end. To view fiscal periods, use `fQ (fiscal quarter)` and `fy (fiscal year)` time units.
 
 The plus operator enables you to step forward in time, relative to now. For example, you can use this feature to look at predicted data in the future.
 
@@ -159,6 +159,12 @@ You can set an absolute time range in the following ways:
 This section also displays recently used absolute ranges.
 
 #### Semi-relative time range
+
+{{% admonition type="Note" %}}
+
+Grafana Alerting does not support semi-relative time ranges.
+
+{{% /admonition %}}
 
 You can also use the absolute time range settings to set a semi-relative time range. Semi-relative time range dashboards are useful when you need to monitor the progress of something over time, but you also want to see the entire history from a beginning point in time.
 
