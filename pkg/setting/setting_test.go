@@ -31,6 +31,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		require.Equal(t, "admin", cfg.AdminUser)
 		require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
+		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
 	})
 
 	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
@@ -141,6 +142,34 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, "test2", cfg.Domain)
+	})
+
+	t.Run("Should be able to override TLS version via command line", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args: []string{
+				"cfg:default.server.min_tls_version=TLS1.3",
+			},
+			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, "TLS1.3", cfg.MinTLSVersion)
+	})
+
+	t.Run("Should be able to override TLS Ciphers via command line", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args: []string{
+				"cfg:default.server.tls_ciphers=TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+			},
+			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, "TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", cfg.TLSCiphers)
 	})
 
 	t.Run("Defaults can be overridden in specified config file", func(t *testing.T) {
