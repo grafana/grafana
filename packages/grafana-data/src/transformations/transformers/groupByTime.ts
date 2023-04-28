@@ -70,7 +70,7 @@ export const groupByTimeTransformer: DataTransformerInfo<GroupByTimeTransformerO
           if (groupByFields.length === 0) {
             continue; 
           }
-
+ 
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
           const valuesByGroupKey = new Map<string, Record<string, MutableField>>();
@@ -81,10 +81,10 @@ export const groupByTimeTransformer: DataTransformerInfo<GroupByTimeTransformerO
           
             const groupKey = String(groupByFields.map((field) => {
                 const fieldName = getFieldDisplayName(field);
-                const format = options.fields[fieldName].timeBucket;
+                const format = options.fields[fieldName].timeBucket?.toString();
                 const date = moment(field.values[rowIndex]);
 
-                return date.isValid() ? date.format(format as string) : null;
+                return date.isValid() ? date.format(format) : null;
             }));
 
             const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
