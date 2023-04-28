@@ -83,6 +83,36 @@ describe('getPluginExtensions()', () => {
     expect(extension.path).toBe(`/a/${pluginId}/updated-path`);
   });
 
+  test('should be possible to return multiple extensions with the configure() function', () => {
+    link2.configure = jest.fn().mockImplementation(() => [
+      {
+        title: 'Updated title',
+        description: 'Updated description',
+        path: `/a/${pluginId}/updated-path`,
+      },
+      {
+        title: 'Second updated title',
+        description: 'Second updated description',
+        path: `/a/${pluginId}/updated-path-2`,
+      },
+    ]);
+
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
+    const [extension1, extension2] = extensions;
+
+    assertPluginExtensionLink(extension1);
+    assertPluginExtensionLink(extension2);
+
+    expect(link2.configure).toHaveBeenCalledTimes(1);
+    expect(extension1.title).toBe('Updated title');
+    expect(extension1.description).toBe('Updated description');
+    expect(extension1.path).toBe(`/a/${pluginId}/updated-path`);
+    expect(extension2.title).toBe('Second updated title');
+    expect(extension2.description).toBe('Second updated description');
+    expect(extension2.path).toBe(`/a/${pluginId}/updated-path-2`);
+  });
+
   test('should hide the extension if it tries to override not-allowed properties with the configure() function', () => {
     link2.configure = jest.fn().mockImplementation(() => ({
       // The following props are not allowed to override

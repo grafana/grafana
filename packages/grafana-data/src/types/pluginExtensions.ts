@@ -26,6 +26,8 @@ export type PluginExtensionLink = PluginExtension & {
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
 
+export type ConfiguredPluginExtension<E> = Partial<{ title: string; description: string } & E>;
+
 export type PluginExtensionConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
   PluginExtension,
   'title' | 'description'
@@ -38,7 +40,7 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
     // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
     configure?: (
       context?: Readonly<Context>
-    ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
+    ) => ConfiguredPluginExtension<ExtraProps> | Array<ConfiguredPluginExtension<ExtraProps>> | undefined;
   };
 
 export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<

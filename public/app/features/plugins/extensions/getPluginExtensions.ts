@@ -1,4 +1,5 @@
 import {
+  type ConfiguredPluginExtension,
   type PluginExtension,
   PluginExtensionTypes,
   PluginExtensionLink,
@@ -19,6 +20,22 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
+const createExtension = (
+  extensionConfig: PluginExtensionLinkConfig,
+  pluginId: string,
+  frozenContext: object,
+  overrides?: ConfiguredPluginExtension<PluginExtensionLink>
+): PluginExtensionLink => ({
+  id: generateExtensionId(pluginId, extensionConfig),
+  type: PluginExtensionTypes.link,
+  pluginId,
+  onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
+  // Configurable properties
+  title: overrides?.title || extensionConfig.title,
+  description: overrides?.description || extensionConfig.description,
+  path: overrides?.path || extensionConfig.path,
+});
+
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, registry }) => {
   const frozenContext = context ? deepFreeze(context) : {};
@@ -32,25 +49,22 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
 
       if (isPluginExtensionLinkConfig(extensionConfig)) {
         const overrides = getLinkExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
-
+        //
         // Hide (configure() has returned `undefined`)
         if (extensionConfig.configure && overrides === undefined) {
           continue;
         }
 
-        const extension: PluginExtensionLink = {
-          id: generateExtensionId(registryItem.pluginId, extensionConfig),
-          type: PluginExtensionTypes.link,
-          pluginId: registryItem.pluginId,
-          onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
+        // No configure() and no overrides; just use the default extension config.
+        if (overrides === undefined) {
+          extensions.push(createExtension(extensionConfig, registryItem.pluginId, frozenContext));
+          continue;
+        }
 
-          // Configurable properties
-          title: overrides?.title || extensionConfig.title,
-          description: overrides?.description || extensionConfig.description,
-          path: overrides?.path || extensionConfig.path,
-        };
-
-        extensions.push(extension);
+        // Multiple overrides, emit an extension link for each.
+        for (const override of overrides) {
+          extensions.push(createExtension(extensionConfig, registryItem.pluginId, frozenContext, override));
+        }
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -62,38 +76,48 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
   return { extensions };
 };
 
-function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLinkConfig, context?: object) {
+function getLinkExtensionOverrides(
+  pluginId: string,
+  config: PluginExtensionLinkConfig,
+  context?: object
+): Array<ConfiguredPluginExtension<{ path?: string }>> | undefined {
   try {
-    const overrides = config.configure?.(context);
+    let overrides = config.configure?.(context);
 
     // Hiding the extension
     if (overrides === undefined) {
       return undefined;
     }
 
-    let { title = config.title, description = config.description, path = config.path, ...rest } = overrides;
-
-    assertIsNotPromise(
-      overrides,
-      `The configure() function for "${config.title}" returned a promise, skipping updates.`
-    );
-
-    path && assertLinkPathIsValid(pluginId, path);
-    assertStringProps({ title, description }, ['title', 'description']);
-
-    if (Object.keys(rest).length > 0) {
-      throw new Error(
-        `Invalid extension "${config.title}". Trying to override not-allowed properties: ${Object.keys(rest).join(
-          ', '
-        )}`
-      );
+    // For back-compat we allow returning a single override object from `configure()`.
+    // Treat it as an array of length one.
+    if (!Array.isArray(overrides)) {
+      overrides = [overrides];
     }
 
-    return {
-      title,
-      description,
-      path,
-    };
+    let out = [];
+    for (const override of overrides) {
+      let { title = config.title, description = config.description, path = config.path, ...rest } = override;
+
+      assertIsNotPromise(
+        override,
+        `The configure() function for "${config.title}" returned a promise, skipping updates.`
+      );
+
+      path && assertLinkPathIsValid(pluginId, path);
+      assertStringProps({ title, description }, ['title', 'description']);
+
+      if (Object.keys(rest).length > 0) {
+        throw new Error(
+          `Invalid extension "${config.title}". Trying to override not-allowed properties: ${Object.keys(rest).join(
+            ', '
+          )}`
+        );
+      }
+      out.push({ title, description, path });
+    }
+
+    return out;
   } catch (error) {
     if (error instanceof Error) {
       logWarning(error.message);
