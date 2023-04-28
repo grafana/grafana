@@ -552,53 +552,50 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
   const referenceRegex = RegExp(/\@[A-Z]/, 'g');
 
   // If there are multiple targets (queries with references), let's interpolate any references in this before parsing the syntax
-  if (
-    referenceRegex.exec(text)?.length &&
-    dataProvider.queries &&
-    dataProvider.query &&
-    dataProvider.queries?.length > 1
-  ) {
-    const thisTarget = clone(dataProvider.query);
-    thisTarget.expr = text;
-    const allTargets = clone(dataProvider.queries);
+  if (referenceRegex.exec(text)?.length && dataProvider.query) {
+    const thisTarget = dataProvider.referenceSrv.getQuery(dataProvider.query);
+    const allTargets = dataProvider.referenceSrv.getQueries();
+    if (thisTarget) {
+      thisTarget.expr = text;
+      interpolatePrometheusReferences(allTargets, thisTarget);
+      // const thisTarget = clone(dataProvider.query);
 
-    interpolatePrometheusReferences(allTargets, thisTarget);
-    // This is the problem for multiple references in a single query, if there is an interpolation before and after the cursor, we'll get the wrong values
-    // This will only work in the case where ALL references are before the cursor position
-    const lengthDelta = thisTarget.expr.length - text.length;
+      // This is the problem for multiple references in a single query, if there is an interpolation before and after the cursor, we'll get the wrong values
+      // This will only work in the case where ALL references are before the cursor position
+      const lengthDelta = thisTarget.expr.length - text.length;
 
-    // calculate the new cursor position after reference interpolation
-    // This isn't gonna work for multiple references?
-    const before: number[] = [];
-    const after: number[] = [];
+      // calculate the new cursor position after reference interpolation
+      // This isn't gonna work for multiple references?
+      const before: number[] = [];
+      const after: number[] = [];
 
-    const matches = [...text.matchAll(referenceRegex)];
-    console.log('ALLmatches', matches);
+      const matches = [...text.matchAll(referenceRegex)];
 
-    matches.forEach((match) => {
-      if (match?.index) {
-        if (match.index < pos) {
-          before.push(match.index);
-          // newPos += lengthDelta;
-          console.log('cursor position is before @');
-        } else {
-          after.push(match.index);
-          console.log('cursor position is after @');
+      matches.forEach((match) => {
+        if (match?.index) {
+          if (match.index < pos) {
+            before.push(match.index);
+            // newPos += lengthDelta;
+            console.log('cursor position is before @');
+          } else {
+            after.push(match.index);
+            console.log('cursor position is after @');
+          }
         }
+      });
+
+      if (!after.length && before.length) {
+        pos += lengthDelta;
+      } else if (after.length && before.length) {
+        console.warn('Uhhh this wont work');
       }
-    });
 
-    if (!after.length && before.length) {
-      pos += lengthDelta;
-    } else if (after.length && before.length) {
-      console.warn('Uhhh this wont work');
+      console.log('before', before);
+      console.log('after', after);
+      console.log('pos', pos);
+
+      text = thisTarget.expr;
     }
-
-    console.log('before', before);
-    console.log('after', after);
-    console.log('pos', pos);
-
-    text = thisTarget.expr;
   }
 
   /*

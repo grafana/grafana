@@ -1,4 +1,4 @@
-import { each, invert, keyBy } from 'lodash';
+import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
 import {
@@ -14,6 +14,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
+import { getReferenceSrv } from './services/ReferenceSrv';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
@@ -425,49 +426,5 @@ export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
  * @param target
  */
 export function interpolatePrometheusReferences(targets: PromQuery[], target: PromQuery) {
-  // render nested query
-  const targetsByRefId = keyBy(targets, 'refId');
-
-  // no references to self
-  delete targetsByRefId[target.refId];
-
-  const nestedSeriesRefRegex = /@([A-Z])/g;
-  let targetWithNestedQueries = target;
-
-  // Use ref count to track circular references
-  each(targetsByRefId, (t, id) => {
-    const regex = RegExp(`\@(${id})`, 'g');
-    const refMatches = targetWithNestedQueries.expr.match(regex);
-    t.refCount = refMatches?.length ?? 0;
-  });
-
-  // Shamelessly stolen from Graphite
-  // Keep interpolating until there are no query references
-  // The reason for the loop is that the referenced query might contain another reference to another query
-  while (targetWithNestedQueries.expr.match(nestedSeriesRefRegex)) {
-    const updated = targetWithNestedQueries.expr.replace(nestedSeriesRefRegex, (match: string, g1: string) => {
-      const t = targetsByRefId[g1];
-      if (!t) {
-        return match;
-      }
-
-      // no circular references
-      if (t.refCount === 0) {
-        delete targetsByRefId[g1];
-      }
-      t.refCount ? t.refCount-- : (t.refCount = 0);
-
-      return t.expr;
-    });
-
-    if (updated === targetWithNestedQueries.expr) {
-      break;
-    }
-
-    targetWithNestedQueries.expr = updated;
-  }
-
-  if (targetWithNestedQueries.expr.match(nestedSeriesRefRegex)) {
-    throw new Error('Unable to interpolate query reference, check for circular references');
-  }
+  return getReferenceSrv({ initialQueries: targets }).interpolatePrometheusReferences(target);
 }

@@ -435,7 +435,7 @@ export class PrometheusDatasource
     const processedTargets: PromQuery[] = [];
 
     console.log('before', target.expr);
-    interpolatePrometheusReferences(request.targets, target);
+    target = interpolatePrometheusReferences(request.targets, target);
     console.log('after', target.expr);
 
     const processedTarget = {

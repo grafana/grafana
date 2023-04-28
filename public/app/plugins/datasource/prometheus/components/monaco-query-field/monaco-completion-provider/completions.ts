@@ -1,5 +1,6 @@
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
+import { ReferenceSrv } from '../../../services/ReferenceSrv';
 import { PromQuery } from '../../../types';
 
 import type { Label, Situation } from './situation';
@@ -38,8 +39,8 @@ export type DataProvider = {
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeriesValues: (name: string, match: string) => Promise<string[]>;
   getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
-  queries?: PromQuery[];
-  query?: PromQuery;
+  referenceSrv: ReferenceSrv;
+  query: PromQuery | undefined;
 };
 
 // we order items like: history, functions, metrics
@@ -178,9 +179,11 @@ async function getLabelValues(
 }
 
 function getReferenceValues(text: string, dataProvider: DataProvider): Completion[] {
+  const queries = dataProvider.referenceSrv.getQueries();
+
   console.log('getReferenceValues', dataProvider);
-  if (dataProvider.queries) {
-    return dataProvider.queries
+  if (queries) {
+    return queries
       .filter((query) => query.refId !== dataProvider.query?.refId)
       ?.map((query) => {
         return {

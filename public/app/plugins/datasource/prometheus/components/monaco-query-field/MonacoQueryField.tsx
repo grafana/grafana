@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
+import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
+
+import { getReferenceSrv } from '../../services/ReferenceSrv';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -107,8 +109,10 @@ const MonacoQueryField = (props: Props) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
-  const queries = props.queries;
-  const query = props.query;
+
+  const referenceSrv = getReferenceSrv({
+    initialQueries: props.queries ?? [],
+  });
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -132,7 +136,13 @@ const MonacoQueryField = (props: Props) => {
         beforeMount={(monaco) => {
           ensurePromQL(monaco);
         }}
-        onChange={(value, ev) => {}}
+        onChange={(value, ev) => {
+          if (value && props.query) {
+            referenceSrv.setQuery({ ...props.query, expr: value });
+          } else {
+            console.warn('not updating values');
+          }
+        }}
         onMount={(editor, monaco) => {
           const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
@@ -177,13 +187,9 @@ const MonacoQueryField = (props: Props) => {
             getLabelValues,
             getSeriesValues,
             getSeriesLabels,
-            queries,
-            query,
+            referenceSrv,
+            query: props.query,
           };
-
-          console.log('dataProvider', dataProvider);
-          console.log('query', query);
-          console.log('queries', queries);
 
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
@@ -203,9 +209,6 @@ const MonacoQueryField = (props: Props) => {
               if (editor.getModel()?.id !== model.id) {
                 return { suggestions: [] };
               }
-
-              console.log('providing completion items', dataProvider);
-              console.log('but now props', props);
 
               return completionProvider.provideCompletionItems(model, position, context, token);
             },
