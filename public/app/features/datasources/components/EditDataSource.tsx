@@ -177,9 +177,9 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      <ButtonRow onSubmit={onSubmit} onTest={onTest} canSave={!readOnly && hasWriteRights} />
-
       <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
+
+      <ButtonRow onSubmit={onSubmit} onTest={onTest} canSave={!readOnly && hasWriteRights} />
     </form>
   );
 }
