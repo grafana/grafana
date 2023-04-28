@@ -33,7 +33,7 @@ tracing = true
 
 > **Note:** Make sure you are using at least grafana-plugin-sdk-go v0.157.0. You can update with `go get -u github.com/grafana/grafana-plugin-sdk-go`.
 
-When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabeld for a plugin,
+When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabled for a plugin,
 the OpenTelemetry endpoint address and propagation format will be passed to the plugin during startup,
 which will be used to configure a global tracer.
 
@@ -93,9 +93,9 @@ which will be used to configure a global tracer.
 
    If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
 
-### Tracing GRPC calls
+### Tracing gRPC calls
 
-A new span is created automatically for each GRPC call (`QueryData`, `CheckHealth`, etc), both on Grafana's side and
+A new span is created automatically for each gRPC call (`QueryData`, `CheckHealth`, etc), both on Grafana's side and
 on the plugin's side.
 
 This also injects the trace context into the `context.Context` passed to those methods.

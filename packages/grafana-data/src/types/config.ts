@@ -74,6 +74,8 @@ export interface GrafanaJavascriptAgentConfig {
 
 export interface UnifiedAlertingConfig {
   minInterval: string;
+  // will be undefined if alerStateHistory is not enabled
+  alertStateHistoryBackend?: string;
 }
 
 /** Supported OAuth services
@@ -196,6 +198,8 @@ export interface GrafanaConfig {
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
+  trustedTypesDefaultPolicyEnabled: boolean;
+  cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
@@ -224,6 +228,13 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  sqlConnectionLimits: SqlConnectionLimits;
+}
+
+export interface SqlConnectionLimits {
+  maxOpenConns: number;
+  maxIdleConns: number;
+  connMaxLifetime: number;
 }
 
 export interface AuthSettings {
