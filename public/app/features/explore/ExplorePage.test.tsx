@@ -40,13 +40,49 @@ describe('ExplorePage', () => {
 
   describe('Handles open/close splits and related events in UI and URL', () => {
     it('opens the split pane when split button is clicked', async () => {
-      setupExplore();
+      const { location } = setupExplore();
+
+      await waitFor(() => {
+        const editors = screen.getAllByText('loki Editor input:');
+        expect(editors.length).toBe(1);
+
+        // initializing explore replaces the first history entry
+        expect(location.getHistory().length).toBe(1);
+        expect(location.getHistory().action).toBe('REPLACE');
+      });
+
       // Wait for rendering the editor
       const splitButton = await screen.findByRole('button', { name: /split/i });
       await userEvent.click(splitButton);
       await waitFor(() => {
         const editors = screen.getAllByText('loki Editor input:');
         expect(editors.length).toBe(2);
+        // a new entry is pushed to the history
+        expect(location.getHistory().length).toBe(2);
+      });
+
+      act(() => {
+        location.getHistory().goBack();
+      });
+
+      await waitFor(() => {
+        const editors = screen.getAllByText('loki Editor input:');
+        expect(editors.length).toBe(1);
+        // going back pops the history
+        expect(location.getHistory().action).toBe('POP');
+        expect(location.getHistory().length).toBe(2);
+      });
+
+      act(() => {
+        location.getHistory().goForward();
+      });
+
+      await waitFor(() => {
+        const editors = screen.getAllByText('loki Editor input:');
+        expect(editors.length).toBe(2);
+        // going forward pops the history
+        expect(location.getHistory().action).toBe('POP');
+        expect(location.getHistory().length).toBe(2);
       });
     });
 
@@ -104,17 +140,21 @@ describe('ExplorePage', () => {
         left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
         right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
       };
-      setupExplore({ urlParams });
+      const { location } = setupExplore({ urlParams });
       let closeButtons = await screen.findAllByLabelText(/Close split pane/i);
       await userEvent.click(closeButtons[1]);
+
+      expect(location.getHistory().length).toBe(1);
 
       await waitFor(() => {
         closeButtons = screen.queryAllByLabelText(/Close split pane/i);
         expect(closeButtons.length).toBe(0);
+        // Closing a pane using the split close button causes a new entry to be pushed in the history
+        expect(location.getHistory().length).toBe(2);
       });
     });
 
-    it('Opens split pane when URL contains left and right', async () => {
+    it('Reacts to URL changes and opens a pane if an entry is pushed to history', async () => {
       const urlParams = {
         left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
       };
