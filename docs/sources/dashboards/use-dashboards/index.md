@@ -156,6 +156,20 @@ You can set an absolute time range in the following ways:
 
 This section also displays recently used absolute ranges.
 
+#### Semi-relative time range
+
+You can also use the absolute time range settings to set a semi-relative time range. Semi-relative time range dashboards are useful when you need to monitor the progress of something over time, but you also want to see the entire history from the beginning point in time.
+
+Set a semi-relative time range by setting the start time to an absolute timestamp, and the end time to a “now” that is relative to the current time.
+
+For example, to track a problem that happens infrequently, you may want to set a time range with an absolute start time and an end time of `now`, like so:
+
+**Start time:** `2023-05-01 00:00:00`
+
+**End time:** `now`
+
+As time progresses, the plot will automatically and progressively zoom out to show more history and fewer details (since the [interval]({{< relref "../../panels-visualizations/query-transform-data/#query-options" >}}) between data points gets bigger). At the same rate, the importance of high data resolution will decrease, while the relevance of viewing history trends over the entire time period will increase.
+
 #### Zoom out (Cmd+Z or Ctrl+Z)
 
 Click the **Zoom out** icon to view a larger time range in the dashboard or panel visualization.
