@@ -3399,7 +3399,6 @@ __metadata:
     "@grafana/ui": 10.0.0-pre
     "@jest/core": 27.5.1
     "@types/eslint": 8.4.1
-    "@types/fs-extra": ^9.0.13
     "@types/jest": 27.4.1
     "@types/lodash": 4.14.181
     "@types/node": 16.11.26
@@ -3410,7 +3409,6 @@ __metadata:
     "@types/tmp": 0.2.3
     "@typescript-eslint/eslint-plugin": 5.36.2
     "@typescript-eslint/parser": 5.36.2
-    axios: ^0.26.1
     babel-jest: 27.5.1
     babel-loader: ^8.2.5
     babel-plugin-angularjs-annotate: 0.10.0
@@ -3426,7 +3424,6 @@ __metadata:
     eslint-plugin-react-hooks: 4.6.0
     execa: ^5.1.1
     fork-ts-checker-webpack-plugin: ^7.2.1
-    fs-extra: ^10.0.0
     globby: ^11.0.4
     html-loader: ^3.1.0
     html-webpack-plugin: ^5.5.0
@@ -9495,15 +9492,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/fs-extra@npm:^9.0.13":
-  version: 9.0.13
-  resolution: "@types/fs-extra@npm:9.0.13"
-  dependencies:
-    "@types/node": "*"
-  checksum: add79e212acd5ac76b97b9045834e03a7996aef60a814185e0459088fd290519a3c1620865d588fa36c4498bf614210d2a703af5cf80aa1dbc125db78f6edac3
-  languageName: node
-  linkType: hard
-
 "@types/geojson@npm:*":
   version: 7946.0.8
   resolution: "@types/geojson@npm:7946.0.8"
@@ -12468,15 +12456,6 @@ __metadata:
   version: 4.6.2
   resolution: "axe-core@npm:4.6.2"
   checksum: 81523eeaf101a3a129545a936d448d235ecf1f8c0daccdee224d29f63bec716fa38cf1a65c8462548b1f995624277eed790d9d9977ae40ba692c4cadf1196403
-  languageName: node
-  linkType: hard
-
-"axios@npm:^0.26.1":
-  version: 0.26.1
-  resolution: "axios@npm:0.26.1"
-  dependencies:
-    follow-redirects: ^1.14.8
-  checksum: d9eb58ff4bc0b36a04783fc9ff760e9245c829a5a1052ee7ca6013410d427036b1d10d04e7380c02f3508c5eaf3485b1ae67bd2adbfec3683704745c8d7a6e1a
   languageName: node
   linkType: hard
 
@@ -19119,7 +19098,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.14.8":
+"follow-redirects@npm:^1.0.0":
   version: 1.14.8
   resolution: "follow-redirects@npm:1.14.8"
   peerDependenciesMeta:

@@ -4,7 +4,7 @@ import { program } from 'commander';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
-import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
+import { getToolkitVersion } from './tasks/plugin.utils';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { execTask } from './utils/execTask';
@@ -125,26 +125,6 @@ export const run = (includeInternalScripts = false) => {
         'No longer supported. Use grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin\n'
       );
       process.exit(1);
-    });
-
-  program
-    .command('plugin:github-publish')
-    .option('--dryrun', 'Do a dry run only', false)
-    .option('--verbose', 'Print verbose', false)
-    .option('--commitHash <hashKey>', 'Specify the commit hash')
-    .description('[Deprecated] Publish to github')
-    .action(async (cmd) => {
-      console.log(
-        chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`)
-      );
-      console.log(
-        'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/templates/github/ci/.github/workflows'
-      );
-      await execTask(githubPublishTask)({
-        dryrun: cmd.dryrun,
-        verbose: cmd.verbose,
-        commitHash: cmd.commitHash,
-      });
     });
 
   program.on('command:*', () => {
