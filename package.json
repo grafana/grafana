@@ -177,7 +177,7 @@
     "css-loader": "6.7.3",
     "css-minimizer-webpack-plugin": "4.2.2",
     "cypress": "9.5.1",
-    "esbuild": "0.16.17",
+    "esbuild": "0.17.18",
     "esbuild-loader": "2.21.0",
     "esbuild-plugin-browserslist": "^0.6.0",
     "eslint": "8.34.0",
