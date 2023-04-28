@@ -4,7 +4,7 @@ import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { LayoutModes } from '@grafana/data';
-import { setAngularLoader } from '@grafana/runtime';
+import { setAngularLoader, config } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
@@ -102,12 +102,23 @@ describe('<EditDataSourcePage>', () => {
     // Title
     expect(screen.queryByText(name)).toBeVisible();
 
+    // Buttons
+    expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
+
+    // wait for the rest of the async processes to finish
+    expect(await screen.findByText(name)).toBeVisible();
+  });
+
+  it('should show updated action buttons when topnav is on', async () => {
+    config.featureToggles.topnav = true;
+    setup(uid, store);
+
     await waitFor(() => {
       // Buttons
       expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
       expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
       expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
-      expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(2);
+      expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(1);
     });
   });
 });
