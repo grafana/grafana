@@ -102,9 +102,9 @@ To try it out, you'll need to enable the `advancedDataSourcePicker` feature togg
 ### Public dashboards
 
 _Available in preview in all editions of Grafana._
-Public dashboards allow you to share your Grafana dashboard with anyone without them having to log into Grafana. This is useful when you want to expose your dashboard to the world.
+Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
 
-These are some of the improvements you will find in this version:
+With this update, we've made the following improvements:
 
 - The time picker and annotations can be toggled on or off from the configuration modal
 - You can see all the public dashboards from the Dashboards menu
@@ -127,7 +127,7 @@ To try it out, you'll need to enable the `publicDashboards` feature toggle. If y
 
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
-Our email sharing feature allows you to easily share your public dashboards with specific individuals. By adding their email addresses, they will receive a one-time valid link to access the dashboard. This provides you with greater control over who can visualize your data.
+Our email sharing feature allows you to easily share your public dashboards with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can visualize your data.
 
 To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
