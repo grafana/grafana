@@ -129,10 +129,24 @@ type simpleSecret struct {
 	columnName string
 }
 
+func NewSimpleSecret(tableName, columnName string) simpleSecret {
+	return simpleSecret{
+		tableName:  tableName,
+		columnName: columnName,
+	}
+}
+
 type b64Secret struct {
 	simpleSecret
 	hasUpdatedColumn bool
 	encoding         *base64.Encoding
+}
+
+func NewBase64Secret(simple simpleSecret, encoding *base64.Encoding) b64Secret {
+	return b64Secret{
+		simpleSecret: simple,
+		encoding:     encoding,
+	}
 }
 
 type jsonSecret struct {
