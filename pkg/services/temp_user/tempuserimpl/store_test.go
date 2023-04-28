@@ -77,7 +77,9 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 
 		require.Nil(t, err)
 		require.Equal(t, 1, len(queryResult))
-		store.cfg.CaseInsensitiveLogin = false
+		t.Cleanup(func() {
+			store.cfg.CaseInsensitiveLogin = false
+		})
 	})
 
 	t.Run("Should be able to get temp users by code", func(t *testing.T) {
