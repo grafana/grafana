@@ -1,8 +1,18 @@
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { Text, TextProps } from './Text';
 
 interface TextElementsProps extends Omit<TextProps, 'as'> {}
+
+interface TextModifierProps {
+  /** Override the default weight for the used variant */
+  weight?: 'light' | 'regular' | 'medium' | 'bold';
+  /** Color to use for text */
+  color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info';
+  children: React.ReactNode;
+}
 
 export const H1 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
   return <Text as="h1" {...props} variant={props.variant || 'h1'} ref={ref} />;
@@ -57,3 +67,9 @@ export const Legend = React.forwardRef<HTMLLegendElement, TextElementsProps>((pr
 });
 
 Legend.displayName = 'Legend';
+
+export const TextModifier = React.forwardRef<HTMLSpanElement, TextModifierProps>((props, ref) => {
+  return <Text as="span" {...props} ref={ref} />;
+});
+
+TextModifier.displayName = 'TextModifier';
