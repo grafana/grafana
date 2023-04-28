@@ -66,35 +66,41 @@ export interface KeybaordNavigatableListProps {
  * Allows navigating lists of elements where the data-role attribute is set to "keyboardSelectableItem"
  * @param props
  */
-export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps) {
+export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps): [Record<string, string>, string] {
   const { keyboardEvents, containerRef } = props;
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
+  const attributeName = 'data-role';
+  const roleName = 'keyboardSelectableItem';
+  const navigatableItemProps = { ...{ [attributeName]: roleName } };
+  const querySelectorNavigatableElements = `[${attributeName}="${roleName}"`;
+
+  const selectedAttributeName = 'data-selectedItem';
+  const selectedItemCssSelector = `[${selectedAttributeName}="true"]`;
+
   useEffect(() => {
-    const menuItems = containerRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="keyboardSelectableItem"]'
+    const listItems = containerRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
+      querySelectorNavigatableElements
     );
 
-    const selectedItem = menuItems?.item(selectedIndex % menuItems?.length);
+    const selectedItem = listItems?.item(selectedIndex % listItems?.length);
 
-    menuItems?.forEach((mi) => mi.setAttribute('data-selectedItem', 'false'));
+    listItems?.forEach((li) => li.setAttribute(selectedAttributeName, 'false'));
 
     if (selectedItem) {
       selectedItem.scrollIntoView({ block: 'center' });
-      selectedItem.setAttribute('data-selectedItem', 'true');
+      selectedItem.setAttribute(selectedAttributeName, 'true');
     }
-  }, [selectedIndex, containerRef]);
+  }, [selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements]);
 
-  const select = () => {
+  const clickSelectedElement = () => {
     containerRef?.current
-      ?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>('[data-role="keyboardSelectableItem"]') //Could instead maybe select by [data-selected="true"]
-      .item(selectedIndex)
-      .querySelector<HTMLButtonElement>('button') // This is a bit weird. The main use for this would be to select card items, however the root of the card component does not have the click event handler, instead it's attached to a button inside it.
+      ?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(selectedItemCssSelector)
+      ?.querySelector<HTMLButtonElement>('button') // This is a bit weird. The main use for this would be to select card items, however the root of the card component does not have the click event handler, instead it's attached to a button inside it.
       ?.click();
   };
 
   useEffect(() => {
-    console.log(keyboardEvents);
     if (!keyboardEvents) {
       return;
     }
@@ -111,11 +117,13 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps) 
             keyEvent.preventDefault();
             break;
           case 'Enter':
-            select();
+            clickSelectedElement();
             break;
         }
       },
     });
     return () => sub.unsubscribe();
   });
+
+  return [navigatableItemProps, selectedItemCssSelector];
 }

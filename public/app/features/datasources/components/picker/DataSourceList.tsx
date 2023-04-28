@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
@@ -42,12 +42,13 @@ export interface DataSourceListProps {
 export function DataSourceList(props: DataSourceListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const styles = useStyles2(getStyles);
-
-  useKeyboardNavigatableList({
+  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
     keyboardEvents: props.keyboardEvents,
     containerRef: containerRef,
   });
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
@@ -74,13 +75,13 @@ export function DataSourceList(props: DataSourceListProps) {
         .map((ds) => (
           <DataSourceCard
             key={ds.uid}
-            data-role={'keyboardSelectableItem'}
             ds={ds}
             onClick={() => {
               pushRecentlyUsedDataSource(ds);
               onChange(ds);
             }}
             selected={!!isDataSourceMatch(ds, current)}
+            {...navigatableProps}
           />
         ))}
     </div>
@@ -96,10 +97,10 @@ function getDataSourceVariableIDs() {
     .map((v) => `\${${v.id}}`);
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, selectedSelector: string) {
   return {
     container: css`
-      [data-selectedItem='true'] {
+      ${selectedSelector} {
         background-color: ${theme.colors.background.secondary};
       }
     `,
