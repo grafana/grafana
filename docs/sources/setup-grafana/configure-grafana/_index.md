@@ -406,7 +406,7 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 ### instrument_queries
 
-Set to true to add metrics and tracing for database queries. The default value is `false`
+Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
 <hr />
 
