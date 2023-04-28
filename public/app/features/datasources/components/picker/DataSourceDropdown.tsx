@@ -16,7 +16,7 @@ import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
-import { dataSourceLabel } from './utils';
+import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 const INTERACTION_ITEM = {
@@ -166,7 +166,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           {...props}
           current={current}
           onChange={changeCallback}
-          filter={(ds) => ds.name.toLowerCase().includes(filterTerm?.toLowerCase() ?? '')}
+          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
         ></DataSourceList>
       </div>
 
