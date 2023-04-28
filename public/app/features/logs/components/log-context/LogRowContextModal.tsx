@@ -12,7 +12,8 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   SelectableValue,
-  rangeUtil,
+  dateTime,
+  TimeRange,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
@@ -23,6 +24,7 @@ import { splitOpen } from 'app/features/explore/state/main';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { useDispatch } from 'app/types';
 
+import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
 import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
@@ -142,23 +144,38 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
-  const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
+  // LoadMoreOptions[2] refers to 50 lines
+  const defaultLimit = LoadMoreOptions[2];
+  const [limit, setLimit] = useState<number>(defaultLimit.value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
-  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(defaultLimit);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
+  const [wrapLines, setWrapLines] = useState(
+    store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
+  );
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
-    const allRows = [...before, row, ...after].sort((a, b) => a.timeEpochMs - b.timeEpochMs);
-    const first = allRows[0];
-    const last = allRows[allRows.length - 1];
-    return rangeUtil.convertRawToRange(
-      {
-        from: first.timeUtc,
-        to: last.timeUtc,
+    const allRows = sortLogRows([...before, row, ...after], LogsSortOrder.Ascending);
+    const fromMs = allRows[0].timeEpochMs;
+    let toMs = allRows[allRows.length - 1].timeEpochMs;
+    // In case we have a lot of logs and from and to have same millisecond
+    // we add 1 millisecond to toMs to make sure we have a range
+    if (fromMs === toMs) {
+      toMs += 1;
+    }
+    const from = dateTime(fromMs);
+    const to = dateTime(toMs);
+
+    const range: TimeRange = {
+      from,
+      to,
+      raw: {
+        from,
+        to,
       },
-      'utc'
-    );
+    };
+    return range;
   }, [context, row]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
@@ -265,7 +282,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
-          <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
+          <LogContextButtons
+            position="top"
+            wrapLines={wrapLines}
+            onChangeWrapLines={setWrapLines}
+            onChangeOption={onChangeLimitOption}
+            option={loadMoreOption}
+          />
         </div>
       </div>
       <div className={loading ? '' : styles.hidden}>
@@ -281,7 +304,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -299,7 +322,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -316,7 +339,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}

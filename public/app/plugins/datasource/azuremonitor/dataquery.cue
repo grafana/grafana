@@ -43,6 +43,8 @@ composableKinds: DataQuery: {
 							azureLogAnalytics?: #AzureLogsQuery
 							// Azure Resource Graph sub-query properties.
 							azureResourceGraph?: #AzureResourceGraphQuery
+							// Application Insights Traces sub-query properties.
+							azureTraces?: #AzureTracesQuery
 							// @deprecated Legacy template variable support.
 							grafanaTemplateVariableFn?: #GrafanaTemplateVariableQuery
 
@@ -56,7 +58,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 						// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn")
+						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Traces" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|AzureTraces|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn")
 
 						#AzureMetricQuery: {
 							// Array of resource URIs to be queried.
@@ -121,7 +123,32 @@ composableKinds: DataQuery: {
 							resource?: string
 						} @cuetsy(kind="interface")
 
-						#ResultFormat: "table" | "time_series" @cuetsy(kind="enum", memberNames="Table|TimeSeries")
+						// Application Insights Traces sub-query properties
+						#AzureTracesQuery: {
+							// Specifies the format results should be returned as.
+							resultFormat?: #ResultFormat
+							// Array of resource URIs to be queried.
+							resources?: [...string]
+							// Operation ID. Used only for Traces queries.
+							operationId?: string
+							// Types of events to filter by.
+							traceTypes?: [...string]
+							// Filters for property values.
+							filters?: [...#AzureTracesFilter]
+							// KQL query to be executed.
+							query?: string
+						} @cuetsy(kind="interface")
+
+						#AzureTracesFilter: {
+							// Property name, auto-populated based on available traces.
+							property: string
+							// Comparison operator to use. Either equals or not equals.
+							operation: string
+							// Values to filter by.
+							filters: [...string]
+						} @cuetsy(kind="interface")
+
+						#ResultFormat: "table" | "time_series" | "trace" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace")
 
 						#AzureResourceGraphQuery: {
 							// Azure Resource Graph KQL query to be executed.

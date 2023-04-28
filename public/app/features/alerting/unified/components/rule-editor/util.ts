@@ -1,7 +1,7 @@
 import { ValidateResult } from 'react-hook-form';
 
-import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames } from '@grafana/data';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames, PanelData } from '@grafana/data';
+import { GraphTresholdsStyleMode, LoadingState } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -114,13 +114,12 @@ export function warningFromSeries(series: DataFrame[]): Error | undefined {
   return warning ? new Error(warning) : undefined;
 }
 
-export type ThresholdDefinitions = Record<
-  string,
-  {
-    config: ThresholdsConfig;
-    mode: GraphTresholdsStyleMode;
-  }
->;
+export type ThresholdDefinition = {
+  config: ThresholdsConfig;
+  mode: GraphTresholdsStyleMode;
+};
+
+export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
 
 /**
  * This function will retrieve threshold definitions for the given array of data and expression queries.
@@ -147,11 +146,17 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     // the time series panel does not support both.
     const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
 
-    query.model.conditions.forEach((condition, index) => {
+    query.model.conditions.forEach((condition) => {
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
       const refId = condition.query.params[0] ?? query.model.expression;
+
+      // if an expression hasn't been linked to a data query yet, it won't have a refId
+      if (!refId) {
+        return;
+      }
+
       const isRangeThreshold = isRangeCondition(condition);
 
       try {
@@ -261,6 +266,9 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     // now also sort the threshold values, if we don't then they will look weird in the time series panel
     // TODO this doesn't work for negative values for now, those need to be sorted inverse
     thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
+
+    // also make sure we remove any "undefined" values from our steps in case the threshold config is incomplete
+    thresholds[refId].config.steps = thresholds[refId].config.steps.filter((step) => step.value !== undefined);
   }
 
   return thresholds;
@@ -270,4 +278,18 @@ function isRangeCondition(condition: ClassicCondition) {
   return (
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange
   );
+}
+
+export function getStatusMessage(data: PanelData): string | undefined {
+  const genericErrorMessage = 'Failed to fetch data';
+  if (data.state !== LoadingState.Error) {
+    return;
+  }
+
+  const errors = data.errors;
+  if (errors?.length) {
+    return errors.map((error) => error.message ?? genericErrorMessage).join(', ');
+  }
+
+  return data.error?.message ?? genericErrorMessage;
 }

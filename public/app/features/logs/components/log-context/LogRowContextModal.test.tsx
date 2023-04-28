@@ -114,7 +114,7 @@ describe('LogRowContextModal', () => {
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
 
     const tenLinesButton = screen.getByRole('button', {
-      name: /10 lines/i,
+      name: /50 lines/i,
     });
     await userEvent.click(tenLinesButton);
     const twentyLinesButton = screen.getByRole('menuitemradio', {

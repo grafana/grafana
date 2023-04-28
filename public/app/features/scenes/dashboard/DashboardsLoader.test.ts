@@ -99,8 +99,6 @@ describe('DashboardLoader', () => {
       const loader = new DashboardLoader({});
       await loader.load('fake-dash');
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
-      // @ts-expect-error - private
-      expect(loader.state.dashboard?.urlSyncManager).toBeDefined();
       expect(loader.state.isLoading).toBe(false);
     });
   });

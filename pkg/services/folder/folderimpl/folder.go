@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -619,6 +620,61 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return result, err
+	}
+	return result, nil
+}
+
+func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	logger := s.log.FromContext(ctx)
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
+	}
+	if *cmd.UID == "" {
+		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+	if cmd.OrgID < 1 {
+		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
+	}
+
+	result := []string{*cmd.UID}
+	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
+		if err != nil {
+			logger.Error("failed to get subfolders", "error", err)
+			return nil, err
+		}
+		result = append(result, subfolders...)
+		countsMap[entity.StandardKindFolder] = int64(len(subfolders))
+	}
+
+	for _, v := range s.registry {
+		for _, folder := range result {
+			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
+			if err != nil {
+				logger.Error("failed to count folder descendants", "error", err)
+				return nil, err
+			}
+			countsMap[v.Kind()] += c
+		}
+	}
+	return countsMap, nil
+}
+
+func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string) ([]string, error) {
+	result := []string{}
+	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range folders {
+		result = append(result, f.UID)
+		subfolders, err := s.getNestedFolders(ctx, f.OrgID, f.UID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, subfolders...)
 	}
 	return result, nil
 }

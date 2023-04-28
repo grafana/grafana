@@ -2,6 +2,7 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { assertIsDefined } from 'test/helpers/asserts';
 
 import { wellFormedDashboard, wellFormedEmptyFolder, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 
@@ -20,6 +21,7 @@ describe('browse-dashboards DashboardsTree', () => {
   const dashboard = wellFormedDashboard(2);
   const noop = () => {};
   const selectedItems = {
+    $all: false,
     folder: {},
     dashboard: {},
     panel: {},
@@ -34,10 +36,12 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
     expect(screen.queryByText('Dashboard')).toBeInTheDocument();
+    expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
   });
 
   it('renders a folder item', () => {
@@ -49,6 +53,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText(folder.item.title)).toBeInTheDocument();
@@ -65,6 +70,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={handler}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     const folderButton = screen.getByLabelText('Collapse folder');
@@ -82,6 +88,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText('Empty folder')).toBeInTheDocument();
