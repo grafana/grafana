@@ -16,7 +16,7 @@ import {
   formattedValueToString,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -165,6 +165,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           </ul>
         )
       );
+    });
+
+    reportInteraction('dashboards_dropped_files', {
+      number_of_files: fileRejections.length + acceptedFiles.length,
+      accepted_files: acceptedFiles.map((a) => {
+        return { type: a.type, size: a.size };
+      }),
+      rejected_files: fileRejections.map((r) => {
+        return { type: r.file.type, size: r.file.size };
+      }),
     });
   };
 
