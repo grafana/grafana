@@ -16,15 +16,15 @@ export enum GroupByOperationID {
 }
 
 export enum GroupByTimeBucket {
-    day = 'YYYY-MM-DD',
-    month = 'YYYY-MM',
-    year = 'YYYY',
+  day = 'YYYY-MM-DD',
+  month = 'YYYY-MM',
+  year = 'YYYY',
 }
 
 export interface GroupByTimeFieldOptions {
-    timeBucket?: GroupByTimeBucket | null,
-    aggregations: ReducerID[];
-    operation: GroupByOperationID | null;
+  timeBucket?: GroupByTimeBucket | null;
+  aggregations: ReducerID[];
+  operation: GroupByOperationID | null;
 }
 
 export interface GroupByTimeTransformerOptions {
@@ -57,8 +57,8 @@ export const groupByTimeTransformer: DataTransformerInfo<GroupByTimeTransformerO
         const processed: DataFrame[] = [];
 
         for (const frame of data) {
-        // Create an array of fields to group by
-        // and then add configured fields to this array
+          // Create an array of fields to group by
+          // and then add configured fields to this array
           const groupByFields: Field[] = [];
           for (const field of frame.fields) {
             if (shouldGroupOnField(field, options)) {
@@ -68,9 +68,9 @@ export const groupByTimeTransformer: DataTransformerInfo<GroupByTimeTransformerO
 
           // If there are no fields to group by we do nothing
           if (groupByFields.length === 0) {
-            continue; 
+            continue;
           }
- 
+
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
           const valuesByGroupKey = new Map<string, Record<string, MutableField>>();
@@ -78,14 +78,16 @@ export const groupByTimeTransformer: DataTransformerInfo<GroupByTimeTransformerO
             // Get the key for the grouping bucket for each format
             // we format using the appropriate date string to get
             // the correct grouping key
-          
-            const groupKey = String(groupByFields.map((field) => {
+
+            const groupKey = String(
+              groupByFields.map((field) => {
                 const fieldName = getFieldDisplayName(field);
                 const format = options.fields[fieldName].timeBucket?.toString();
                 const date = moment(field.values[rowIndex]);
 
                 return date.isValid() ? date.format(format) : null;
-            }));
+              })
+            );
 
             const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
 
@@ -181,7 +183,7 @@ export const groupByTimeTransformer: DataTransformerInfo<GroupByTimeTransformerO
 const shouldGroupOnField = (field: Field, options: GroupByTimeTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return (
-    options?.fields[fieldName]?.operation === GroupByOperationID.groupBy && 
+    options?.fields[fieldName]?.operation === GroupByOperationID.groupBy &&
     options?.fields[fieldName]?.timeBucket !== null
   );
 };
