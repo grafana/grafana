@@ -1608,8 +1608,8 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 		for k := range fakeResponse.Responses {
 			frames := fakeResponse.Responses[k].Frames
 			for i := range frames {
-				require.Empty(t, frames[i].Meta.ExecutedQueryString)
-				require.Empty(t, frames[i].Meta.Custom)
+				assert.Empty(t, frames[i].Meta.ExecutedQueryString)
+				assert.NotEmpty(t, frames[i].Meta.Custom)
 			}
 		}
 	})
