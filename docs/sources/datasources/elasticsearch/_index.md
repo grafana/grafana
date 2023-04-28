@@ -33,6 +33,8 @@ This data source supports these versions of Elasticsearch:
 - v7.16+
 - v8.x
 
+Our policy is to follow [Elastic Product End of Life Dates](https://www.elastic.co/support/eol) to reduce maintenance burden.  Practically this means you will get a notification in the query builder that the version of Elastic you are using is no longer supported - nothing will prevent the queries from running.
+
 ## Configure the data source
 
 To configure basic settings for the data source, complete the following steps:
