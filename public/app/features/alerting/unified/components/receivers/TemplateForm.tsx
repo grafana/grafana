@@ -316,6 +316,7 @@ function getErrorsToRender(results: TemplatePreviewErrors[]) {
     })
     .join(`\n`);
 }
+
 export const PREVIEW_NOT_AVAILABLE = 'Preview request failed. Check if the payload data has the correct structure.';
 
 function getPreviewTorender(
