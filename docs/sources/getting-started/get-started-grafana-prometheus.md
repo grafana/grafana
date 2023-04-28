@@ -120,3 +120,4 @@ To learn more:
 
 - Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus/" >}})
 - Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
+- Mimir documentation: [What is Mimir?](https://grafana.com/docs/mimir/latest/) 
