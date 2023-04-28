@@ -113,4 +113,31 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		require.Equal(t, true, found)
 		require.Equal(t, expectedKey, res)
 	})
+
+	t.Run("it should force-download the key", func(t *testing.T) {
+		cfg := &config.Cfg{
+			Features:                     featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
+			PluginForcePublicKeyDownload: true,
+		}
+		expectedKey := "fake"
+		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
+		cfg.GrafanaComURL = s.URL
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		// Simulate an updated key
+		err := v.kv.SetLastUpdated(context.Background())
+		require.NoError(t, err)
+		go func() {
+			err := v.Run(context.Background())
+			require.NoError(t, err)
+		}()
+		<-done
+
+		// wait for the lock to be free
+		v.lock.Lock()
+		defer v.lock.Unlock()
+		res, found, err := v.kv.Get(context.Background(), "7e4d0c6a708866e7")
+		require.NoError(t, err)
+		require.Equal(t, true, found)
+		require.Equal(t, expectedKey, res)
+	})
 }

@@ -32,6 +32,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginsPath,
 		extractPluginSettings(settingProvider),
 		allowedUnsigned,
+		plugins.KeyValue("plugin_force_public_key_download").MustBool(false),
 		allowedAuth,
 		aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		grafanaCfg.Azure,

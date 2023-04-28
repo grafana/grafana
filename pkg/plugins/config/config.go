@@ -15,8 +15,9 @@ type Cfg struct {
 
 	PluginsPath string
 
-	PluginSettings       setting.PluginSettings
-	PluginsAllowUnsigned []string
+	PluginSettings               setting.PluginSettings
+	PluginsAllowUnsigned         []string
+	PluginForcePublicKeyDownload bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -41,24 +42,25 @@ type Cfg struct {
 	Features plugins.FeatureToggles
 }
 
-func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string, pluginForcePublicKeyDownload bool,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
 	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing, features plugins.FeatureToggles) *Cfg {
 	return &Cfg{
-		log:                     log.New("plugin.cfg"),
-		PluginsPath:             pluginsPath,
-		BuildVersion:            grafanaVersion,
-		DevMode:                 devMode,
-		PluginSettings:          pluginSettings,
-		PluginsAllowUnsigned:    pluginsAllowUnsigned,
-		AWSAllowedAuthProviders: awsAllowedAuthProviders,
-		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
-		Azure:                   azure,
-		ProxySettings:           secureSocksDSProxy,
-		LogDatasourceRequests:   logDatasourceRequests,
-		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
-		Tracing:                 tracing,
-		GrafanaComURL:           "https://grafana.com",
-		Features:                features,
+		log:                          log.New("plugin.cfg"),
+		PluginsPath:                  pluginsPath,
+		BuildVersion:                 grafanaVersion,
+		DevMode:                      devMode,
+		PluginSettings:               pluginSettings,
+		PluginsAllowUnsigned:         pluginsAllowUnsigned,
+		PluginForcePublicKeyDownload: pluginForcePublicKeyDownload,
+		AWSAllowedAuthProviders:      awsAllowedAuthProviders,
+		AWSAssumeRoleEnabled:         awsAssumeRoleEnabled,
+		Azure:                        azure,
+		ProxySettings:                secureSocksDSProxy,
+		LogDatasourceRequests:        logDatasourceRequests,
+		PluginsCDNURLTemplate:        pluginsCDNURLTemplate,
+		Tracing:                      tracing,
+		GrafanaComURL:                "https://grafana.com",
+		Features:                     features,
 	}
 }

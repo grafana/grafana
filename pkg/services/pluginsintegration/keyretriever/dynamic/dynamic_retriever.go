@@ -101,7 +101,7 @@ func (kr *KeyRetriever) updateKeys(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if time.Since(*lastUpdated) < publicKeySyncInterval {
+	if !kr.cfg.PluginForcePublicKeyDownload && time.Since(*lastUpdated) < publicKeySyncInterval {
 		// Cache is still valid
 		return nil
 	}
