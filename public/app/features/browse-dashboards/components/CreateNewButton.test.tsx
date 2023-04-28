@@ -32,9 +32,9 @@ describe('NewActionsButton', () => {
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 
-    expect(screen.getByText('New Dashboard')).toBeTruthy();
-    expect(screen.getByText('Import')).toBeTruthy();
-    expect(screen.queryByText('New Folder')).toBeFalsy();
+    expect(screen.getByText('New Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Import')).toBeInTheDocument();
+    expect(screen.queryByText('New Folder')).not.toBeInTheDocument();
   });
 
   it('should only render folder item when dashboard creation is disabled', async () => {
@@ -42,8 +42,8 @@ describe('NewActionsButton', () => {
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 
-    expect(screen.queryByText('New Dashboard')).toBeFalsy();
-    expect(screen.queryByText('Import')).toBeFalsy();
-    expect(screen.getByText('New Folder')).toBeTruthy();
+    expect(screen.queryByText('New Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('Import')).not.toBeInTheDocument();
+    expect(screen.getByText('New Folder')).toBeInTheDocument();
   });
 });
