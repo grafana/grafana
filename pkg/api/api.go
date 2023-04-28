@@ -225,7 +225,8 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.License.FeatureEnabled("saml") && hs.Features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI) {
-		r.Get("/admin/authentication/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)), hs.Index)
+		// TODO change the scope when we extend the auth UI to more providers
+		r.Get("/admin/authentication/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML)), hs.Index)
 	}
 
 	// authed api

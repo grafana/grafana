@@ -309,6 +309,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin/authentication',
+      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
       component:
         config.featureToggles.authenticationConfigUI && config.licenseInfo.enabledFeatures?.saml
           ? SafeDynamicImport(

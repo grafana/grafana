@@ -269,6 +269,9 @@ type Cfg struct {
 	AdminEmail                   string
 	DisableSyncLock              bool
 	DisableLoginForm             bool
+	// Not documented & not supported
+	// stand in until a more complete solution is implemented
+	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -509,8 +512,6 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
-	// Override default fixed role assignments
-	RBACGrantOverrides map[string][]string
 
 	// GRPC Server.
 	GRPCServerNetwork   string
@@ -1459,7 +1460,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
-
+	// Do not use
+	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
@@ -1567,17 +1569,6 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
-
-	rbacOverrides := iniFile.Section("rbac.overrides")
-	cfg.RBACGrantOverrides = map[string][]string{}
-	for _, key := range rbacOverrides.Keys() {
-		value := key.MustString("")
-		grants := strings.Split(value, ",")
-		for i, grant := range grants {
-			grants[i] = strings.TrimSpace(grant)
-		}
-		cfg.RBACGrantOverrides[key.Name()] = grants
-	}
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
