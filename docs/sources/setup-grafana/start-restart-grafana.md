@@ -109,7 +109,7 @@ To restart the Grafana service, use the `docker restart` command.
 
 `docker restart grafana`
 
-Alternately, you can use the `docker compose restart` command to restart Grafana. For more information, refer to [docker compose documentation](https://docs.docker.com/compose/).
+Alternatively, you can use the `docker compose restart` command to restart Grafana. For more information, refer to [docker compose documentation](https://docs.docker.com/compose/).
 
 ### Docker compose example
 
@@ -149,7 +149,7 @@ Complete the following steps to start the Grafana server on Windows:
 
    > **Note:** The default Grafana port is `3000`. This port might require extra permissions on Windows. If it does not appear in the default port, you can try changing to a different port.
 
-1. If you need to change the port, complete the following steps:
+1. To change the port, complete the following steps:
 
    a. In the `conf` directory, copy `sample.ini` to `custom.ini`.
 
