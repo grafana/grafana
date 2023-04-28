@@ -1,12 +1,9 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
-import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { getToolkitVersion } from './tasks/plugin.utils';
 import { templateTask } from './tasks/template';
-import { toolkitBuildTask } from './tasks/toolkit.build';
 import { execTask } from './utils/execTask';
 
 export const run = (includeInternalScripts = false) => {
@@ -14,51 +11,10 @@ export const run = (includeInternalScripts = false) => {
     program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', (v) => v.split(','));
 
     program
-      .command('package:build')
-      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
-      .description('Builds @grafana/* package to packages/grafana-*/dist')
-      .action(async (cmd) => {
-        console.warn(
-          '@grafana/toolkit package:build task is deprecated and will be removed in @grafana/toolkit@10.0.0.'
-        );
-        await execTask(buildPackageTask)({
-          scope: cmd.scope,
-        });
-      });
-
-    program
-      .command('node-version-check')
-      .description('[deprecated] Verify node version')
-      .action(async () => {
-        console.log(
-          chalk.yellow.bold(
-            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-          )
-        );
-        console.log(
-          'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
-        );
-
-        await execTask(nodeVersionCheckerTask)({});
-      });
-
-    program
       .command('debug:template')
       .description('Just testing')
       .action(async (cmd) => {
         await execTask(templateTask)({});
-      });
-
-    program
-      .command('toolkit:build')
-      .description('[Deprecated] Prepares grafana/toolkit dist package')
-      .action(async (cmd) => {
-        console.log(
-          chalk.yellow.bold(
-            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-          )
-        );
-        await execTask(toolkitBuildTask)({});
       });
   }
 

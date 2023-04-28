@@ -3400,12 +3400,11 @@ __metadata:
     "@jest/core": 27.5.1
     "@types/eslint": 8.4.1
     "@types/jest": 27.4.1
-    "@types/lodash": 4.14.181
+    "@types/lodash": ^4.14.194
     "@types/node": 16.11.26
     "@types/prettier": 2.6.3
     "@types/react-dev-utils": 9.0.10
     "@types/rimraf": 3.0.2
-    "@types/semver": 7.3.9
     "@types/tmp": 0.2.3
     "@typescript-eslint/eslint-plugin": 5.36.2
     "@typescript-eslint/parser": 5.36.2
@@ -3432,7 +3431,7 @@ __metadata:
     jest-junit: 13.1.0
     less: ^4.1.2
     less-loader: ^10.2.0
-    lodash: ^4.17.21
+    lodash: 4.17.21
     mini-css-extract-plugin: ^2.6.0
     ora: ^5.4.1
     postcss: ^8.4.12
@@ -3445,7 +3444,6 @@ __metadata:
     rimraf: 3.0.2
     sass: ^1.49.9
     sass-loader: ^12.6.0
-    semver: ^7.3.7
     style-loader: ^3.3.1
     terser-webpack-plugin: ^5.3.1
     ts-jest: 27.1.3
@@ -9756,13 +9754,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.181":
-  version: 4.14.181
-  resolution: "@types/lodash@npm:4.14.181"
-  checksum: 0d1863d8383fd2f8bb42e9e3fc1d6255bb88ff034d6df848941063698944313dae944fc1270315613e3d303fae7c7a9a86085ad3235ed6204c56c4b0b3699aa9
-  languageName: node
-  linkType: hard
-
 "@types/lodash@npm:4.14.191":
   version: 4.14.191
   resolution: "@types/lodash@npm:4.14.191"
@@ -9781,6 +9772,13 @@ __metadata:
   version: 4.14.178
   resolution: "@types/lodash@npm:4.14.178"
   checksum: a69a04a60bfc5257c3130a554b4efa0c383f0141b7b3db8ab7cf07ad2a46ea085fce66d0242da41da7e5647b133d5dfb2c15add9cbed8d7fef955e4a1e5b3128
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.14.194":
+  version: 4.14.194
+  resolution: "@types/lodash@npm:4.14.194"
+  checksum: 113f34831c461469d91feca2dde737f88487732898b4d25e9eb23b087bb193985f864d1e1e0f3b777edc5022e460443588b6000a3b2348c966f72d17eedc35ea
   languageName: node
   linkType: hard
 
@@ -10299,13 +10297,6 @@ __metadata:
   version: 7.3.13
   resolution: "@types/semver@npm:7.3.13"
   checksum: 00c0724d54757c2f4bc60b5032fe91cda6410e48689633d5f35ece8a0a66445e3e57fa1d6e07eb780f792e82ac542948ec4d0b76eb3484297b79bd18b8cf1cb0
-  languageName: node
-  linkType: hard
-
-"@types/semver@npm:7.3.9":
-  version: 7.3.9
-  resolution: "@types/semver@npm:7.3.9"
-  checksum: 60bfcfdfa7f937be2c6f4b37ddb6714fb0f27b05fe4cbdfdd596a97d35ed95d13ee410efdd88e72a66449d0384220bf20055ab7d6b5df10de4990fbd20e5cbe0
   languageName: node
   linkType: hard
 
