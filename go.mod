@@ -57,7 +57,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230427200804-f8565cd8b74b // TODO: This links to PR branch hash, update once grafana/alerting template testing PR is merged
+	github.com/grafana/alerting v0.0.0-20230428094731-e067f119be06
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.159.0
