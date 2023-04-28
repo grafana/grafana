@@ -1,6 +1,6 @@
 import { clone, each, keyBy } from 'lodash';
 
-interface QueryWithReference {
+export interface QueryWithReference {
   expr: string;
   refId: string;
   refCount?: number;

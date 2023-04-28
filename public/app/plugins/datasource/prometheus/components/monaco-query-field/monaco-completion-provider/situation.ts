@@ -21,9 +21,9 @@ import {
   StringLiteral,
   VectorSelector,
 } from '@prometheus-io/lezer-promql';
-import { clone } from 'lodash';
 
 import { interpolatePrometheusReferences } from '../../../language_utils';
+import { getReferenceSrv, QueryWithReference } from '../../../services/ReferenceSrv';
 
 import { DataProvider } from './completions';
 import { NeverCaseError } from './util';
@@ -532,15 +532,14 @@ function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
 export function getSituation(text: string, pos: number, dataProvider: DataProvider): Situation | null {
   // there is a special-case when we are at the start of writing text,
   // so we handle that case first
-
-  console.log('getSituation', text, pos, text[pos - 1]);
-  console.log('dataProvider', dataProvider);
-
   if (text === '') {
     return {
       type: 'EMPTY',
     };
   }
+
+  console.warn('getSituation', text, pos, text[pos - 1]);
+  console.log('dataProvider', dataProvider);
 
   // This char shouldn't be used for anything else as it's not valid in promQL
   if (text[pos - 1] === '@') {
@@ -549,52 +548,61 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
     };
   }
 
-  const referenceRegex = RegExp(/\@[A-Z]/, 'g');
+  const referenceRegex = new RegExp(/@[A-Z]/, 'g');
 
   // If there are multiple targets (queries with references), let's interpolate any references in this before parsing the syntax
-  if (referenceRegex.exec(text)?.length && dataProvider.query) {
-    const thisTarget = dataProvider.referenceSrv.getQuery(dataProvider.query);
-    const allTargets = dataProvider.referenceSrv.getQueries();
-    if (thisTarget) {
-      thisTarget.expr = text;
-      interpolatePrometheusReferences(allTargets, thisTarget);
-      // const thisTarget = clone(dataProvider.query);
+  if (referenceRegex.test(text) && dataProvider.query) {
+    const savedQuery = getReferenceSrv().getQuery(dataProvider.query);
+    if (savedQuery) {
+      const query: QueryWithReference = { ...savedQuery, expr: text };
+      const thisTarget = dataProvider.referenceSrv.getQuery(query);
+      const allTargets = dataProvider.referenceSrv.getQueries();
 
-      // This is the problem for multiple references in a single query, if there is an interpolation before and after the cursor, we'll get the wrong values
-      // This will only work in the case where ALL references are before the cursor position
-      const lengthDelta = thisTarget.expr.length - text.length;
+      if (thisTarget && savedQuery) {
+        thisTarget.expr = text;
+        const interpolatedTarget = interpolatePrometheusReferences(allTargets, thisTarget);
+        // const thisTarget = clone(dataProvider.query);
 
-      // calculate the new cursor position after reference interpolation
-      // This isn't gonna work for multiple references?
-      const before: number[] = [];
-      const after: number[] = [];
+        // This is the problem for multiple references in a single query, if there is an interpolation before and after the cursor, we'll get the wrong values
+        // This will only work in the case where ALL references are before the cursor position
+        const lengthDelta = interpolatedTarget.expr.length - text.length;
 
-      const matches = [...text.matchAll(referenceRegex)];
+        // calculate the new cursor position after reference interpolation
+        // This isn't gonna work for multiple references?
+        const before: number[] = [];
+        const after: number[] = [];
 
-      matches.forEach((match) => {
-        if (match?.index) {
-          if (match.index < pos) {
-            before.push(match.index);
-            // newPos += lengthDelta;
-            console.log('cursor position is before @');
-          } else {
-            after.push(match.index);
-            console.log('cursor position is after @');
+        // re-init otherwise the results from test will throw it off
+        let match;
+        referenceRegex.lastIndex = 0;
+        while ((match = referenceRegex.exec(text))) {
+          if (Number.isInteger(match?.index)) {
+            if (match.index <= pos) {
+              before.push(match.index);
+              // newPos += lengthDelta;
+              console.log('cursor position is at or before @');
+            } else {
+              after.push(match.index);
+              console.log('cursor position is after @');
+            }
           }
         }
-      });
 
-      if (!after.length && before.length) {
-        pos += lengthDelta;
-      } else if (after.length && before.length) {
-        console.warn('Uhhh this wont work');
+        console.log('oldpos', pos);
+        if (!after.length && before.length) {
+          pos += lengthDelta;
+        } else if (after.length && before.length) {
+          console.warn('Uhhh this wont work');
+        }
+
+        console.log('interpolatedTarget.expr', interpolatedTarget.expr);
+        console.log('rawText', text);
+        console.log('before', before);
+        console.log('after', after);
+        console.log('newpos', pos);
+
+        text = interpolatedTarget.expr;
       }
-
-      console.log('before', before);
-      console.log('after', after);
-      console.log('pos', pos);
-
-      text = thisTarget.expr;
     }
   }
 

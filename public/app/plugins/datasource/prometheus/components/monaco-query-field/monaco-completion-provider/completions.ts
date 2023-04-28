@@ -180,8 +180,6 @@ async function getLabelValues(
 
 function getReferenceValues(text: string, dataProvider: DataProvider): Completion[] {
   const queries = dataProvider.referenceSrv.getQueries();
-
-  console.log('getReferenceValues', dataProvider);
   if (queries) {
     return queries
       .filter((query) => query.refId !== dataProvider.query?.refId)
