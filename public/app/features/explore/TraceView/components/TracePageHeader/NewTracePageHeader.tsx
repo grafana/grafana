@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import React, { memo, useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -34,6 +34,8 @@ import { timestamp, getStyles } from './TracePageHeader';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
+  data: DataFrame;
+  app?: CoreApp;
   timeZone: TimeZone;
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
@@ -50,6 +52,8 @@ export type TracePageHeaderProps = {
 export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
   const {
     trace,
+    data,
+    app,
     timeZone,
     search,
     setSearch,
@@ -101,7 +105,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.titleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {title}
-        <TracePageActions traceId={trace.traceID} />
+        <TracePageActions traceId={trace.traceID} data={data} app={app} />
       </div>
 
       <div className={styles.subtitle}>
