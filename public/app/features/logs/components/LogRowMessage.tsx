@@ -19,6 +19,8 @@ interface Props {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
   styles: LogRowStyles;
+  onPinLogRow: (row: LogRowModel) => void;
+  pinned: boolean;
 }
 
 function renderLogMessage(
@@ -65,8 +67,14 @@ export class LogRowMessage extends PureComponent<Props> {
     onOpenContext(this.props.row);
   };
 
+  onPinLogRow = (e: React.SyntheticEvent<HTMLElement, Event>) => {
+    const { onPinLogRow } = this.props;
+    e.stopPropagation();
+    onPinLogRow(this.props.row);
+  };
+
   render() {
-    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
+    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles, pinned } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -101,6 +109,9 @@ export class LogRowMessage extends PureComponent<Props> {
                 <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
               </Tooltip>
             )}
+            <Tooltip placement="top" content={pinned ? 'Unpin Log Row' : 'Pin Log Row'}>
+              <IconButton size="md" name={pinned ? 'map-marker-minus' : 'map-marker-plus'} onClick={this.onPinLogRow} />
+            </Tooltip>
             <Tooltip placement="top" content={'Copy'}>
               <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
             </Tooltip>

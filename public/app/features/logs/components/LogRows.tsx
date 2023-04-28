@@ -48,6 +48,9 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  onPinLogRow?: (row: LogRowModel) => void;
+  onUnpinLogRow?: (row: LogRowModel) => void;
+  pinnedLogRows?: LogRowModel[];
 }
 
 interface State {
@@ -126,6 +129,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onLogRowHover,
       app,
       getLogRowContextUi,
+      onPinLogRow,
+      onUnpinLogRow,
+      pinnedLogRows,
     } = this.props;
     const { renderAll } = this.state;
     const styles = getLogRowStyles(theme);
@@ -176,6 +182,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onLogRowHover={onLogRowHover}
                 app={app}
                 styles={styles}
+                onPinLogRow={onPinLogRow}
+                onUnpinLogRow={onUnpinLogRow}
+                pinned={pinnedLogRows?.includes(row) || false}
               />
             ))}
           {hasData &&
@@ -207,6 +216,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onLogRowHover={onLogRowHover}
                 app={app}
                 styles={styles}
+                onPinLogRow={onPinLogRow}
+                onUnpinLogRow={onUnpinLogRow}
+                pinned={pinnedLogRows?.includes(row) || false}
               />
             ))}
           {hasData && !renderAll && (

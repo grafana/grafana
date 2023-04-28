@@ -44,6 +44,11 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
   return {
+    pinnedRow: css`
+      label: logs-row__pinned;
+      background: ${theme.colors.background.secondary};
+    `,
+
     logsRowLevel: css`
       label: logs-row__level;
       max-width: ${theme.spacing(1.25)};

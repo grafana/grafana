@@ -50,12 +50,16 @@ interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext: (row: LogRowModel, onClose: () => void) => void;
+  onPinLogRow?: (row: LogRowModel) => void;
+  onUnpinLogRow?: (row: LogRowModel) => void;
+  pinned: boolean;
   styles: LogRowStyles;
 }
 
 interface State {
   showContext: boolean;
   showDetails: boolean;
+  pinned: boolean;
 }
 
 /**
@@ -69,6 +73,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
     showDetails: false,
+    pinned: this.props.pinned,
   };
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
@@ -79,6 +84,20 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   onOpenContext = (row: LogRowModel) => {
     this.setState({ showContext: true });
     this.props.onOpenContext(row, this.debouncedContextClose);
+  };
+
+  onPinLogRow = (row: LogRowModel) => {
+    if (this.props.onPinLogRow) {
+      this.setState({ pinned: true });
+      this.props.onPinLogRow(row);
+    }
+  };
+
+  onUnpinLogRow = (row: LogRowModel) => {
+    if (this.props.onUnpinLogRow) {
+      this.setState({ pinned: false });
+      this.props.onUnpinLogRow(row);
+    }
   };
 
   toggleDetails = () => {
@@ -119,6 +138,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.pinned !== this.props.pinned) {
+      this.setState({ pinned: this.props.pinned });
+    }
+  }
+
   render() {
     const {
       getRows,
@@ -141,12 +166,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       app,
       styles,
     } = this.props;
-    const { showDetails, showContext } = this.state;
+    const { showDetails, showContext, pinned } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
       [styles.contextBackground]: showContext,
+      [styles.pinnedRow]: pinned,
     });
 
     const processedRow =
@@ -201,6 +227,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onOpenContext={this.onOpenContext}
               app={app}
               styles={styles}
+              pinned={pinned}
+              onPinLogRow={pinned ? this.onUnpinLogRow : this.onPinLogRow}
             />
           )}
         </tr>

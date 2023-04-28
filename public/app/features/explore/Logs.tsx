@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, createRef } from 'react';
@@ -100,6 +100,7 @@ interface State {
   forceEscape: boolean;
   contextOpen: boolean;
   contextRow?: LogRowModel;
+  pinnedRows: LogRowModel[];
 }
 
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
@@ -139,6 +140,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     forceEscape: false,
     contextOpen: false,
     contextRow: undefined,
+    pinnedRows: [],
   };
 
   constructor(props: Props) {
@@ -360,6 +362,25 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
+  onPinLogRow = (row: LogRowModel) => {
+    this.setState((prevState) => {
+      const pinnedRows = prevState.pinnedRows;
+      pinnedRows.push(row);
+      return { pinnedRows: [...pinnedRows] };
+    });
+  };
+
+  onUnpinLogRow = (row: LogRowModel) => {
+    this.setState((prevState) => {
+      const pinnedRows = prevState.pinnedRows;
+      const index = pinnedRows.indexOf(row);
+      if (index > -1) {
+        pinnedRows.splice(index, 1);
+      }
+      return { pinnedRows: [...pinnedRows] };
+    });
+  };
+
   render() {
     const {
       width,
@@ -532,48 +553,89 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows">
-              <LogRows
-                logRows={logRows}
-                deduplicatedRows={dedupedRows}
-                dedupStrategy={dedupStrategy}
-                getRowContext={getRowContext}
-                getLogRowContextUi={getLogRowContextUi}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                showContextToggle={showContextToggle}
-                showLabels={showLabels}
-                showTime={showTime}
-                enableLogDetails={true}
-                forceEscape={forceEscape}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                displayedFields={displayedFields}
-                onClickShowField={this.showField}
-                onClickHideField={this.hideField}
-                app={CoreApp.Explore}
-                onLogRowHover={this.onLogRowHover}
-                onOpenContext={this.onOpenContext}
-              />
-              {!loading && !hasData && !scanning && (
-                <div className={styles.noData}>
-                  No logs found.
-                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                    Scan for older logs
-                  </Button>
+            <div className={styles.logRowsContainer}>
+              {this.state.pinnedRows.length > 0 && (
+                <div className={cx(styles.logRows, styles.pinned)}>
+                  {this.state.pinnedRows.length} pinned rows |{' '}
+                  {this.state.pinnedRows.reduce(
+                    (partialSum, row) => partialSum + (dedupedRows.includes(row) ? 1 : 0),
+                    0
+                  )}{' '}
+                  contained in current results
+                  <LogRows
+                    logRows={this.state.pinnedRows}
+                    pinnedLogRows={this.state.pinnedRows}
+                    dedupStrategy={dedupStrategy}
+                    getRowContext={getRowContext}
+                    getLogRowContextUi={getLogRowContextUi}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    forceEscape={forceEscape}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    timeZone={timeZone}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
+                    onClickShowField={this.showField}
+                    onClickHideField={this.hideField}
+                    app={CoreApp.Explore}
+                    onLogRowHover={this.onLogRowHover}
+                    onOpenContext={this.onOpenContext}
+                    onUnpinLogRow={this.onUnpinLogRow}
+                  />
                 </div>
               )}
-              {scanning && (
-                <div className={styles.noData}>
-                  <span>{scanText}</span>
-                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                    Stop scan
-                  </Button>
-                </div>
-              )}
+              <div className={styles.logRows} data-testid="logRows">
+                <LogRows
+                  logRows={logRows}
+                  deduplicatedRows={dedupedRows}
+                  dedupStrategy={dedupStrategy}
+                  getRowContext={getRowContext}
+                  getLogRowContextUi={getLogRowContextUi}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  showContextToggle={showContextToggle}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  enableLogDetails={true}
+                  forceEscape={forceEscape}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
+                  displayedFields={displayedFields}
+                  onClickShowField={this.showField}
+                  onClickHideField={this.hideField}
+                  app={CoreApp.Explore}
+                  onLogRowHover={this.onLogRowHover}
+                  onOpenContext={this.onOpenContext}
+                  onPinLogRow={this.onPinLogRow}
+                  onUnpinLogRow={this.onUnpinLogRow}
+                  pinnedLogRows={this.state.pinnedRows}
+                />
+                {!loading && !hasData && !scanning && (
+                  <div className={styles.noData}>
+                    No logs found.
+                    <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                      Scan for older logs
+                    </Button>
+                  </div>
+                )}
+                {scanning && (
+                  <div className={styles.noData}>
+                    <span>{scanText}</span>
+                    <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                      Stop scan
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             <LogsNavigation
               logsSortOrder={logsSortOrder}
@@ -637,6 +699,17 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
       overflow-y: visible;
       width: 100%;
+    `,
+    pinned: css`
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: ${theme.colors.background.secondary};
+    `,
+    logRowsContainer: css`
+      display: flex;
+      flex-direction: column;
+      width: 95%;
     `,
   };
 };

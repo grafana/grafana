@@ -217,6 +217,8 @@ export const availableIconsIndex = {
   'wrap-text': true,
   rss: true,
   x: true,
+  'map-marker-plus': true,
+  'map-marker-minus': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
