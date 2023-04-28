@@ -113,7 +113,7 @@ const AlertTemplateDataTable = () => {
     <TemplateDataTable
       caption={
         <h4 className={styles.templateDataDocsHeader}>
-          Alert template data <span>This is the list of Alert data fields used in the Preview.</span>
+          Alert template data <span>This is the list of alert data fields used in the preview.</span>
         </h4>
       }
       dataItems={AlertTemplatePreviewData}
