@@ -14,6 +14,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: datasource ? { uid: datasource } : null,
     isNew: true,
+    openDataSourceModalWhenEditing: dashboard.panels.length === 0,
   };
 
   dashboard.addPanel(newPanel);

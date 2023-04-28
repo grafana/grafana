@@ -21,6 +21,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
+import { PanelModel } from 'app/features/dashboard/state';
 import * as DFImport from 'app/features/dataframe-import';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -42,6 +43,7 @@ export interface Props {
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
+  panel?: PanelModel;
 }
 
 interface State {
@@ -117,6 +119,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         datasource,
         ...q,
       }));
+      console.log(this.props.panel);
       this.setState({
         queries,
         dataSource: ds,
@@ -126,7 +129,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         // This is flaky in case the UID is generated differently
         isDataSourceModalOpen:
           locationService.getLocation().pathname === '/dashboard/new' &&
-          locationService.getSearchObject().editPanel === '1',
+          !!this.props.panel?.openDataSourceModalWhenEditing,
       });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -275,6 +278,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     );
   };
 
+  closeDatasourceModal = () => {
+    this.setState({ isDataSourceModalOpen: false });
+    if (this.props.panel) {
+      this.props.panel.openDataSourceModalWhenEditing = false;
+    }
+  };
+
   renderDataSourcePickerWithPrompt = () => {
     const { isDataSourceModalOpen } = this.state;
 
@@ -289,10 +299,12 @@ export class QueryGroup extends PureComponent<Props, State> {
       current: this.props.options.dataSource,
       onChange: (ds: DataSourceInstanceSettings) => {
         this.onChangeDataSource(ds);
-        this.setState({ isDataSourceModalOpen: false });
+        this.closeDatasourceModal();
       },
     };
-    const onDismiss = () => this.setState({ isDataSourceModalOpen: false });
+    const onDismiss = () => {
+      this.closeDatasourceModal();
+    };
 
     return (
       <>
