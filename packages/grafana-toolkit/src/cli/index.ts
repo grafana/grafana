@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { getToolkitVersion } from './tasks/plugin.utils';
@@ -24,22 +23,6 @@ export const run = (includeInternalScripts = false) => {
         await execTask(buildPackageTask)({
           scope: cmd.scope,
         });
-      });
-
-    program
-      .command('node-version-check')
-      .description('[deprecated] Verify node version')
-      .action(async () => {
-        console.log(
-          chalk.yellow.bold(
-            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
-          )
-        );
-        console.log(
-          'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
-        );
-
-        await execTask(nodeVersionCheckerTask)({});
       });
 
     program
