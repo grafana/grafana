@@ -10,8 +10,6 @@ import {
   RouteWithID,
 } from '../../../plugins/datasource/alertmanager/types';
 
-import { findMatchingRoutes } from './utils/notification-policies';
-
 let rootRoute: RouteWithID | undefined = undefined;
 let alertGroups: AlertmanagerGroup[] = [];
 
@@ -27,8 +25,24 @@ const npFilterEngine = {
     return rootRoute ? findRoutesMatchingFilters(rootRoute, filters).map((r) => r.id) : [];
   },
 
-  findMatchingAlertGroups(route: RouteWithID) {
-    return rootRoute ? findMatchingAlertGroups(rootRoute, route, alertGroups) : [];
+  // findMatchingAlertGroups(route: RouteWithID) {
+  //   return rootRoute ? findMatchingAlertGroups(rootRoute, route, alertGroups) : [];
+  // },
+
+  getRouteGroupsMap(): Map<string, AlertmanagerGroup[]> {
+    function addRouteGroups(route: RouteWithID, acc: Map<string, AlertmanagerGroup[]>) {
+      const routeGroups = rootRoute ? findMatchingAlertGroups(rootRoute, route, alertGroups) : [];
+      acc.set(route.id, routeGroups);
+
+      route.routes?.forEach((r) => addRouteGroups(r, acc));
+    }
+
+    const routeGroupsMap = new Map<string, AlertmanagerGroup[]>();
+    if (rootRoute) {
+      addRouteGroups(rootRoute, routeGroupsMap);
+    }
+
+    return routeGroupsMap;
   },
 };
 
@@ -112,6 +126,73 @@ function findMatchingAlertGroups(
     return acc;
   }, matchingGroups);
 }
+
+function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
+  let matches: T[] = [];
+
+  // If the current node is not a match, return nothing
+  const normalizedMatchers = normalizeMatchers(root);
+  if (!matchLabels(normalizedMatchers, labels)) {
+    return [];
+  }
+
+  // If the current node matches, recurse through child nodes
+  if (root.routes) {
+    for (let index = 0; index < root.routes.length; index++) {
+      let child = root.routes[index];
+      let matchingChildren = findMatchingRoutes(child, labels);
+
+      // TODO how do I solve this typescript thingy? It looks correct to me /shrug
+      // @ts-ignore
+      matches = matches.concat(matchingChildren);
+
+      // we have matching children and we don't want to continue, so break here
+      if (matchingChildren.length && !child.continue) {
+        break;
+      }
+    }
+  }
+
+  // If no child nodes were matches, the current node itself is a match.
+  if (matches.length === 0) {
+    matches.push(root);
+  }
+
+  return matches;
+}
+
+function matchLabels(matchers: ObjectMatcher[], labels: Label[]) {
+  return matchers.every((matcher) => {
+    return labels.some((label) => isLabelMatch(matcher, label));
+  });
+}
+
+function isLabelMatch(matcher: ObjectMatcher, label: Label) {
+  const [labelKey, labelValue] = label;
+  const [matcherKey, operator, matcherValue] = matcher;
+
+  // not interested, keys don't match
+  if (labelKey !== matcherKey) {
+    return false;
+  }
+
+  const matchFunction = OperatorFunctions[operator];
+  if (!matchFunction) {
+    throw new Error(`no such operator: ${operator}`);
+  }
+
+  return matchFunction(labelValue, matcherValue);
+}
+
+type Label = [string, string];
+type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
+
+const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
+  [MatcherOperator.equal]: (lv, mv) => lv === mv,
+  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
+  [MatcherOperator.regex]: (lv, mv) => Boolean(lv.match(new RegExp(mv))),
+  [MatcherOperator.notRegex]: (lv, mv) => !Boolean(lv.match(new RegExp(mv))),
+};
 
 function computeInheritedTree(routeTree: RouteWithID): RouteWithID {
   return {

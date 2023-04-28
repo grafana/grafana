@@ -44,6 +44,7 @@ interface PolicyComponentProps {
   readOnly?: boolean;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: string[];
+  routeAlertGroupsMap: Map<string, AlertmanagerGroup[]>;
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -64,6 +65,7 @@ const Policy: FC<PolicyComponentProps> = ({
   routeTree,
   inheritedProperties,
   routesMatchingFilters = [],
+  routeAlertGroupsMap,
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -114,9 +116,10 @@ const Policy: FC<PolicyComponentProps> = ({
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  const matchingAlertGroups = useMemo(() => {
-    return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
-  }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
+  // const matchingAlertGroups = useMemo(() => {
+  //   return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
+  // }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
+  const matchingAlertGroups = routeAlertGroupsMap.get(currentRoute.id) ?? [];
 
   // sum all alert instances for all groups we're handling
   const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
@@ -298,6 +301,7 @@ const Policy: FC<PolicyComponentProps> = ({
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
               routesMatchingFilters={routesMatchingFilters}
+              routeAlertGroupsMap={routeAlertGroupsMap}
             />
           );
         })}

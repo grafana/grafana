@@ -8,7 +8,7 @@ import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -49,7 +49,7 @@ enum ActiveTab {
 }
 
 const worker = new Worker(new URL('./notificationPolicyWorker.ts', import.meta.url), { type: 'module' });
-const { initData, findMatchingRoute } = comlink.wrap<FilterEngine>(worker);
+const engine = comlink.wrap<FilterEngine>(worker);
 
 const AmRoutes = () => {
   const dispatch = useDispatch();
@@ -68,6 +68,8 @@ const AmRoutes = () => {
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const contactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
+
+  const [routeAlertGroupsMap, setRouteAlertGroupsMap] = useState(new Map<string, AlertmanagerGroup[]>());
 
   useEffect(() => {
     if (alertManagerSourceName) {
@@ -101,7 +103,7 @@ const AmRoutes = () => {
 
   const { value: routesMatchingFilters } = useAsync(
     async () =>
-      findMatchingRoute({
+      engine.findMatchingRoute({
         contactPointFilter,
         labelMatchersFilter,
       }),
@@ -115,9 +117,17 @@ const AmRoutes = () => {
 
   useEffect(() => {
     if (rootRoute) {
+      initWorker(rootRoute);
+    }
+
+    async function initWorker(rootRoute: RouteWithID) {
       console.time('Worker INIT transfer');
-      initData(rootRoute, fetchAlertGroups.result ?? []);
+      await engine.initData(rootRoute, fetchAlertGroups.result ?? []);
       console.timeEnd('Worker INIT transfer');
+      console.time('Route Instances Map');
+      const routeGroupMap = await engine.getRouteGroupsMap();
+      console.timeEnd('Route Instances Map');
+      setRouteAlertGroupsMap(routeGroupMap);
     }
   }, [rootRoute, fetchAlertGroups.result]);
 
@@ -283,6 +293,7 @@ const AmRoutes = () => {
                       onDeletePolicy={openDeleteModal}
                       onShowAlertInstances={showAlertGroupsModal}
                       routesMatchingFilters={routesMatchingFilters}
+                      routeAlertGroupsMap={routeAlertGroupsMap}
                     />
                   )}
                 </Stack>
