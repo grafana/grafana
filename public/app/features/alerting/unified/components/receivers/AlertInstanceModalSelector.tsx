@@ -70,7 +70,7 @@ export function AlertInstanceModalSelector({
     setSelectedInstances(null);
   }, []);
 
-  const calculateFilteredRules = useCallback(() => {
+  const filteredRules: Record<string, AlertmanagerAlert[]> = useMemo(() => {
     const filteredRules = Object.keys(rulesWithInstances).filter((rule) =>
       rule.toLowerCase().includes(ruleFilter.toLowerCase())
     );
@@ -84,8 +84,6 @@ export function AlertInstanceModalSelector({
   if (error) {
     return null;
   }
-
-  const filteredRules: Record<string, AlertmanagerAlert[]> = calculateFilteredRules();
 
   const filteredRulesKeys = Object.keys(filteredRules || []);
 
@@ -270,7 +268,7 @@ export function AlertInstanceModalSelector({
               }
             }}
           >
-            Confirm
+            Add alert data to payload
           </Button>
         </Modal.ButtonRow>
       </Modal>
