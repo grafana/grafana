@@ -1,5 +1,5 @@
 import { cloneDeep, find, first as _first, isObject, isString, map as _map } from 'lodash';
-import { generate, lastValueFrom, Observable, of } from 'rxjs';
+import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
@@ -179,9 +179,13 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.legacyQueryRunner
-          .request('GET', indexUrlList[listLen - index - 1])
-          .pipe(catchError((err) => of({ err })));
+        if (config.featureToggles.enableElasticsearchBackendQuerying) {
+          return from(this.getResource(indexUrlList[listLen - index - 1])).pipe(catchError((err) => of({ err })));
+        } else {
+          return this.legacyQueryRunner
+            .request('GET', indexUrlList[listLen - index - 1])
+            .pipe(catchError((err) => of({ err })));
+        }
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -305,10 +309,8 @@ export class ElasticDatasource
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const { enableElasticsearchBackendQuerying } = config.featureToggles;
-    if (enableElasticsearchBackendQuerying) {
+    if (config.featureToggles.enableElasticsearchBackendQuerying) {
       const contextRequest = this.makeLogContextDataRequest(row, options);
-
       return lastValueFrom(
         this.query(contextRequest).pipe(
           catchError((err) => {
@@ -422,8 +424,7 @@ export class ElasticDatasource
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
-    const { enableElasticsearchBackendQuerying } = config.featureToggles;
-    if (enableElasticsearchBackendQuerying) {
+    if (config.featureToggles.enableElasticsearchBackendQuerying) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
@@ -462,7 +463,7 @@ export class ElasticDatasource
             return true;
           }
 
-          // equal query type filter, or via typemap translation
+          // equal query type filter, or via type map translation
           return type.includes(obj.type) || type.includes(typeMap[obj.type]);
         };
 
@@ -529,21 +530,19 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
-    return this.legacyQueryRunner.request('POST', url, esQuery).pipe(
-      map((res) => {
-        if (!res.responses[0].aggregations) {
-          return [];
-        }
-
-        const buckets = res.responses[0].aggregations['1'].buckets;
-        return _map(buckets, (bucket) => {
-          return {
-            text: bucket.key_as_string || bucket.key,
-            value: bucket.key,
-          };
-        });
-      })
-    );
+    if (config.featureToggles.enableElasticsearchBackendQuerying) {
+      return from(this.postResource(url, esQuery)).pipe(
+        map((res) => {
+          return processTermsResponse(res);
+        })
+      );
+    } else {
+      return this.legacyQueryRunner.request('POST', url, esQuery).pipe(
+        map((res) => {
+          return processTermsResponse(res);
+        })
+      );
+    }
   }
 
   getMultiSearchUrl() {
@@ -911,4 +910,18 @@ function processVersionToSemver(version: number | string | undefined): SemVer | 
     console.error(error);
     return null;
   }
+}
+
+function processTermsResponse(res: { responses: any[] }) {
+  if (!res.responses[0].aggregations) {
+    return [];
+  }
+
+  const buckets = res.responses[0].aggregations['1'].buckets;
+  return _map(buckets, (bucket) => {
+    return {
+      text: bucket.key_as_string || bucket.key,
+      value: bucket.key,
+    };
+  });
 }
