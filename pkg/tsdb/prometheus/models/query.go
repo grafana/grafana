@@ -156,6 +156,10 @@ func calculatePrometheusInterval(
 	query backend.DataQuery,
 	intervalCalculator intervalv2.Calculator,
 ) (time.Duration, error) {
+	// we need to compare the original query model after it is overwritten below to variables so that we can
+	// calculate the rateInterval if it is equal to $__rate_interval or ${__rate_interval}
+	originalQueryInterval := queryInterval
+
 	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
@@ -173,7 +177,8 @@ func calculatePrometheusInterval(
 		adjustedInterval = calculatedInterval.Value
 	}
 
-	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
+	// here is where we compare for $__rate_interval or ${__rate_interval}
+	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
 		// Rate interval is final and is not affected by resolution
 		return calculateRateInterval(adjustedInterval, timeInterval, intervalCalculator), nil
 	} else {
