@@ -60,7 +60,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20230426193323-4f09f516596b
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
-	github.com/grafana/grafana-plugin-sdk-go v0.159.0
+	github.com/grafana/grafana-plugin-sdk-go v0.160.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-plugin v1.4.9
