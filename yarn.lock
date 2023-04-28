@@ -3400,6 +3400,7 @@ __metadata:
     "@jest/core": 27.5.1
     "@types/eslint": 8.4.1
     "@types/jest": 27.4.1
+    "@types/lodash": ^4.14.194
     "@types/node": 16.11.26
     "@types/prettier": 2.6.3
     "@types/react-dev-utils": 9.0.10
@@ -3430,6 +3431,7 @@ __metadata:
     jest-junit: 13.1.0
     less: ^4.1.2
     less-loader: ^10.2.0
+    lodash: 4.17.21
     mini-css-extract-plugin: ^2.6.0
     ora: ^5.4.1
     postcss: ^8.4.12
@@ -9770,6 +9772,13 @@ __metadata:
   version: 4.14.178
   resolution: "@types/lodash@npm:4.14.178"
   checksum: a69a04a60bfc5257c3130a554b4efa0c383f0141b7b3db8ab7cf07ad2a46ea085fce66d0242da41da7e5647b133d5dfb2c15add9cbed8d7fef955e4a1e5b3128
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.14.194":
+  version: 4.14.194
+  resolution: "@types/lodash@npm:4.14.194"
+  checksum: 113f34831c461469d91feca2dde737f88487732898b4d25e9eb23b087bb193985f864d1e1e0f3b777edc5022e460443588b6000a3b2348c966f72d17eedc35ea
   languageName: node
   linkType: hard
 
