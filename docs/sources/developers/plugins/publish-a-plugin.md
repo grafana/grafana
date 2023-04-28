@@ -8,15 +8,13 @@ type: docs
 
 # Publish or update a plugin
 
-You've just built your first plugin and [packaged it]({{< relref "package-a-plugin.md" >}}), and now you want to share it with the world.
+You've [just built]({{< relref "/create-a-grafana-plugin/" >}}) your first plugin and [packaged it]({{< relref "package-a-plugin.md" >}}), and now you want to share it with the world.
 In this guide, you'll learn how to share your plugin with others.
 
 The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog]({{< "/plugins" >}}).
 By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 ## Before you begin
-
-Before you begin to publish a plugin, it needs to be built and packaged. 
 
 When you build a plugin from source, a `dist` folder is created. This folder contains the production build or _plugin assets_ for your plugin.
 
@@ -38,7 +36,7 @@ To speed up the time it takes to review your plugin:
 
 Follow these steps to publish your plugin for the first time.
 
-1. [Sign in]({{< "/auth/sign-in" >}}) to your Grafana Cloud account.
+1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Plugin**.
 1. Enter the information requested by the form.
@@ -67,7 +65,7 @@ For every new plugin, we perform a manual review that includes the following che
 
 To submit an **update** for an already published plugin:
 
-1. [Sign in]({{< "/auth/sign-in" >}}) to your Grafana Cloud account.
+1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update.
 1. Enter the information requested by the form.
@@ -90,7 +88,7 @@ To submit an **update** for an already published plugin:
 
 - We're not able to give an estimate at this time, though we're constantly working on improving the time it takes to review a plugin.
 
-### an I decide a date when my plugin will be published?
+### Can I decide a date when my plugin will be published?
 
 - No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
 
@@ -111,7 +109,7 @@ To submit an **update** for an already published plugin:
 
 - The official method for distributing Grafana plugins is through our catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide]({{< relref "../../administration/plugin-management#install-plugin-on-local-grafana" >}}).
 
-### an I still use Angular for my plugin?
+### Can I still use Angular for my plugin?
 
 - No. We will not accept any new plugin submissions written in angular. For more information, refer to our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
 
