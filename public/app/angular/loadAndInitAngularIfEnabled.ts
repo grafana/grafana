@@ -1,7 +1,15 @@
 import { deprecationWarning } from '@grafana/data';
-import { config, setAngularLoader, setLegacyAngularInjector, getDataSourceSrv, getBackendSrv } from '@grafana/runtime';
+import {
+  config,
+  setAngularLoader,
+  setLegacyAngularInjector,
+  getDataSourceSrv,
+  getBackendSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
@@ -64,6 +72,17 @@ export async function loadAndInitAngularIfEnabled() {
             // we do not yet have a public interface for this
             deprecationWarning('getLegacyAngularInjector', 'validationSrv');
             return validationSrv;
+          }
+
+          case 'timeSrv': {
+            // we do not yet have a public interface for this
+            deprecationWarning('getLegacyAngularInjector', 'timeSrv');
+            return getTimeSrv();
+          }
+
+          case 'templateSrv': {
+            deprecationWarning('getLegacyAngularInjector', 'templateSrv', 'use getTemplateSrv() in @grafana/runtime');
+            return getTemplateSrv();
           }
         }
         throw 'Angular is disabled.  Unable to expose: ' + key;
