@@ -6,7 +6,7 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
-import { H1, H2, H3, H4, H5, H6, Span, P, Legend } from './TextElements';
+import { H1, H2, H3, H4, H5, H6, Span, P, Legend, TextModifier } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
@@ -80,10 +80,10 @@ export const HeadingComponent: Story = (args) => {
 };
 HeadingComponent.args = {
   variant: undefined,
-  weight: 'fontWeightBold',
+  weight: 'light',
   textAlignment: 'center',
   truncate: false,
-  color: 'color.error.text',
+  color: 'primary',
   children: 'This is a H1 component',
 };
 
@@ -99,11 +99,33 @@ export const LegendComponent: Story = (args) => {
 
 LegendComponent.args = {
   variant: undefined,
-  weight: 'fontWeightBold',
+  weight: 'bold',
   textAlignment: 'center',
   truncate: false,
-  color: 'color.error.text',
+  color: 'error',
   children: 'This is a lengend component',
+};
+
+export const TextModifierComponent: Story = (args) => {
+  return (
+    <div style={{ width: '300px' }}>
+      <H6 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
+        {args.children}{' '}
+        <TextModifier weight="bold" color="error">
+          {' '}
+          with a part of its text modified{' '}
+        </TextModifier>
+      </H6>
+    </div>
+  );
+};
+TextModifierComponent.args = {
+  variant: undefined,
+  weight: 'light',
+  textAlignment: 'center',
+  truncate: false,
+  color: 'maxContrast',
+  children: 'This is a H6 component',
 };
 
 export default meta;
