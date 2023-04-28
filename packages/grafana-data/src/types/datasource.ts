@@ -475,8 +475,9 @@ export interface DataQueryResponse {
 
 export interface TestDataSourceResponse {
   status: string;
-  // string in case of a success, Error object in case of error
-  message: string | Error;
+  message: string;
+  error?: Error;
+  details?: { message?: string; verboseMessage?: string };
 }
 
 export enum DataQueryErrorType {

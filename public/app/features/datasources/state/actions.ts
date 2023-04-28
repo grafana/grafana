@@ -57,31 +57,36 @@ export interface TestDataSourceDependencies {
   getBackendSrv: typeof getBackendSrv;
 }
 
-const parseHealthCheckError = (error: any): { message: string | undefined; details?: HealthCheckResultDetails } => {
+type parseDataSourceSaveResponse = {
+  message?: string | undefined;
+  status?: string;
+  details?: HealthCheckResultDetails | { message?: string; verboseMessage?: string };
+};
+
+const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse => {
   let message: string | undefined;
   let details: HealthCheckResultDetails;
 
-  if (error.message && error.message instanceof HealthCheckError) {
-    message = error.message.message;
-    details = error.message.details;
-  } else if (isFetchError(error)) {
-    message = error.data.message ?? `HTTP error ${error.statusText}`;
-  } else if (error instanceof Error) {
-    message = error.message;
+  if (errorResponse.error && errorResponse.error instanceof HealthCheckError) {
+    message = errorResponse.error.message;
+    details = errorResponse.error.details;
+  } else if (isFetchError(errorResponse)) {
+    message = errorResponse.data.message ?? `HTTP error ${errorResponse.statusText}`;
+  } else if (errorResponse instanceof Error) {
+    message = errorResponse.message;
   }
 
   return { message, details };
 };
 
-const parseHealthCheckSuccess = (
-  response: any
-): { status?: string; message?: string | undefined; details?: HealthCheckResultDetails } => {
+const parseHealthCheckSuccess = (response: any): parseDataSourceSaveResponse => {
   let message: string | undefined;
   let status: string;
-  let details: HealthCheckResultDetails;
+  let details: { message?: string; verboseMessage?: string };
 
   status = response.status;
   message = response.message;
+  details = response.details;
 
   return { status, message, details };
 };
@@ -141,7 +146,7 @@ export const testDataSource = (
       try {
         const result = await dsApi.testDatasource();
 
-        const parsedResult = parseHealthCheckSuccess(result);
+        const parsedResult = parseHealthCheckSuccess({ ...result, details: { ...result.details } });
         dispatch(testDataSourceSucceeded(parsedResult));
 
         trackDataSourceTested({
@@ -272,7 +277,7 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 export function updateDataSource(dataSource: DataSourceSettings) {
   return async (
     dispatch: (
-      dataSourceSettings: ThunkResult<Promise<DataSourceSettings>> | { payload: any; type: any }
+      dataSourceSettings: ThunkResult<Promise<DataSourceSettings>> | { payload: unknown; type: string }
     ) => DataSourceSettings
   ) => {
     try {
@@ -280,7 +285,7 @@ export function updateDataSource(dataSource: DataSourceSettings) {
     } catch (err: any) {
       const formattedError = parseHealthCheckError(err);
 
-      dispatch(testDataSourceFailed({ ...formattedError }));
+      dispatch(testDataSourceFailed(formattedError));
 
       return Promise.reject(dataSource);
     }
@@ -295,13 +300,18 @@ export function deleteLoadedDataSource(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { uid } = getStore().dataSources.dataSource;
 
-    await api.deleteDataSource(uid);
-    await getDatasourceSrv().reload();
+    try {
+      await api.deleteDataSource(uid);
+      await getDatasourceSrv().reload();
 
-    const datasourcesUrl = config.featureToggles.dataConnectionsConsole
-      ? CONNECTIONS_ROUTES.DataSources
-      : '/datasources';
+      const datasourcesUrl = config.featureToggles.dataConnectionsConsole
+        ? CONNECTIONS_ROUTES.DataSources
+        : '/datasources';
 
-    locationService.push(datasourcesUrl);
+      locationService.push(datasourcesUrl);
+    } catch (err) {
+      const formattedError = parseHealthCheckError(err);
+      dispatch(testDataSourceFailed(formattedError));
+    }
   };
 }

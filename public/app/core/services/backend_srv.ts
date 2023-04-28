@@ -296,13 +296,12 @@ export class BackendSrv implements BackendService {
 
   showSuccessAlert<T>(response: FetchResponse<T>) {
     const { config } = response;
-    const data: { message: string } = response.data as any;
 
     if (config.showSuccessAlert === false) {
       return;
     }
 
-    // is showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
+    // if showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
     if (
       config.showSuccessAlert === undefined &&
       (config.method === 'GET' || isDataQuery(config.url) || !isLocalUrl(config.url))
@@ -310,12 +309,23 @@ export class BackendSrv implements BackendService {
       return;
     }
 
+    const data: { message: string } = response.data as any;
+
     if (data?.message) {
       this.dependencies.appEvents.emit(AppEvents.alertSuccess, [data.message]);
     }
   }
 
   showErrorAlert(config: BackendSrvRequest, err: FetchError) {
+    if (config.showErrorAlert === false) {
+      return;
+    }
+
+    // is showErrorAlert is undefined we only show alerts non data query and local api requests
+    if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
+      return;
+    }
+
     let description = '';
     let message = err.data.message;
 
@@ -324,33 +334,15 @@ export class BackendSrv implements BackendService {
       message = err.message;
     }
 
+    if (message.length > 80) {
+      description = message;
+      message = 'Error';
+    }
+
     // Validation
     if (err.status === 422) {
       description = err.data.message;
       message = 'Validation failed';
-    }
-
-    if (config.showErrorAlert === false) {
-      return;
-    }
-
-    if (message.length > 80) {
-      description = message;
-      message = 'Error';
-    }
-
-    if (!err.statusText) {
-      err.statusText = 'error';
-    }
-
-    if (message.length > 80) {
-      description = message;
-      message = 'Error';
-    }
-
-    // is showErrorAlert is undefined we only show alerts non data query and local api requests
-    if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
-      return;
     }
 
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
@@ -391,7 +383,6 @@ export class BackendSrv implements BackendService {
     }
 
     this.inspectorStream.next(err);
-
     return err;
   }
 

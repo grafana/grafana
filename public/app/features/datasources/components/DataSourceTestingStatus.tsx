@@ -47,13 +47,13 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage: React.FC<AlertMessageProps> = ({
+const AlertSuccessMessage = ({
   title,
   exploreUrl,
   canExploreDataSources,
   dataSourceId,
   onDashboardLinkClicked,
-}) => {
+}: AlertMessageProps) => {
   const theme = useTheme2();
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
@@ -105,26 +105,19 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   if (message) {
     return (
       <div className="gf-form-group p-t-2">
-        <Alert
-          severity={severity}
-          title={message}
-          aria-label={e2eSelectors.pages.DataSource.alert}
-          additionalContent={
-            severity === 'success' ? (
-              <AlertSuccessMessage
-                title={message}
-                canExploreDataSources={canExploreDataSources}
-                exploreUrl={exploreUrl}
-                dataSourceId={dataSource.uid}
-                onDashboardLinkClicked={onDashboardLinkClicked}
-              />
-            ) : null
-          }
-          useNewErrorIcon
-        >
+        <Alert severity={severity} title={message} aria-label={e2eSelectors.pages.DataSource.alert}>
           {testingStatus?.details && (
             <>
               {detailsMessage}
+              {severity === 'success' ? (
+                <AlertSuccessMessage
+                  title={message}
+                  canExploreDataSources={canExploreDataSources}
+                  exploreUrl={exploreUrl}
+                  dataSourceId={dataSource.uid}
+                  onDashboardLinkClicked={onDashboardLinkClicked}
+                />
+              ) : null}
               {detailsVerboseMessage ? (
                 <details style={{ whiteSpace: 'pre-wrap' }}>{String(detailsVerboseMessage)}</details>
               ) : null}

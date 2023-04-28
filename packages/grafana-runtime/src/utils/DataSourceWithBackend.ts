@@ -352,7 +352,11 @@ class DataSourceWithBackend<
         };
       }
 
-      return Promise.reject({ status: 'error', message: new HealthCheckError(res.message, res.details) });
+      return Promise.reject({
+        status: 'error',
+        message: res.message,
+        error: new HealthCheckError(res.message, res.details),
+      });
     });
   }
 }

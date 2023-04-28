@@ -230,7 +230,7 @@ describe('testDataSource', () => {
         testingStatus: {
           status: 'success',
           message: '',
-          details: undefined,
+          details: {},
         },
       };
       const dispatchedActions = await thunkTester(state)
