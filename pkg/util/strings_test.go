@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestStringsFallback2(t *testing.T) {
