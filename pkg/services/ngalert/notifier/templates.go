@@ -15,10 +15,8 @@ type TestTemplatesResults = alertingNotify.TestTemplatesResults
 
 var (
 	DefaultLabels = map[string]string{
-		alertingModels.NamespaceUIDLabel: `namespace_uid`,
-		prometheusModel.AlertNameLabel:   `alert title`,
-		alertingModels.RuleUIDLabel:      `rule_uid`,
-		alertingModels.FolderTitleLabel:  `folder title`,
+		prometheusModel.AlertNameLabel:  `alert title`,
+		alertingModels.FolderTitleLabel: `folder title`,
 	}
 	DefaultAnnotations = map[string]string{
 		alertingModels.ValuesAnnotation:       `{"B":22,"C":1}`,
