@@ -2721,6 +2721,7 @@ __metadata:
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
     "@grafana/data": 10.0.0-pre
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.0.0-pre
     "@types/jest": 26.0.15
     "@types/react": 18.0.28
