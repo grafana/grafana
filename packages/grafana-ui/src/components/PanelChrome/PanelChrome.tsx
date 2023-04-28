@@ -53,6 +53,10 @@ export interface PanelChromeProps {
   actions?: ReactNode;
   displayMode?: 'default' | 'transparent';
   onCancelQuery?: () => void;
+  /**
+   * callback when opening the panel menu
+   */
+  onOpenMenu?: () => void;
 }
 
 /**
@@ -83,6 +87,7 @@ export function PanelChrome({
   leftItems,
   actions,
   onCancelQuery,
+  onOpenMenu,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -159,7 +164,13 @@ export function PanelChrome({
 
       {hoverHeader && !isTouchDevice && (
         <>
-          <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
+          <HoverWidget
+            menu={menu}
+            title={title}
+            offset={hoverHeaderOffset}
+            dragClass={dragClass}
+            onOpenMenu={onOpenMenu}
+          >
             {headerContent}
           </HoverWidget>
 
@@ -192,6 +203,7 @@ export function PanelChrome({
                 dragClassCancel,
                 showOnHoverClass
               )}
+              onOpenMenu={onOpenMenu}
             />
           )}
         </div>

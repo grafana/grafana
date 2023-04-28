@@ -14,12 +14,12 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
-
   // Capture the pointer to keep the widget visible while dragging
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.setPointerCapture(e.pointerId);
@@ -60,6 +60,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           placement="bottom"
           menuButtonClass={styles.menuButton}
           onVisibleChange={setMenuOpen}
+          onOpenMenu={onOpenMenu}
         />
       )}
     </div>
