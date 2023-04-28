@@ -63,7 +63,7 @@ const AlertSuccessMessage = ({
       Next, you can analyze the data by &nbsp;
       <Link
         aria-label={`Create a dashboard`}
-        href={`../../dashboard/new-with-ds/${dataSourceId}`}
+        href={`/dashboard/new-with-ds/${dataSourceId}`}
         className={styles.link}
         onClick={onDashboardLinkClicked}
       >
