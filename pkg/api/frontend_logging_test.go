@@ -252,13 +252,13 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
 				assertContextContains(t, logs, "stacktrace", `UserError: Please replace user and try again
-  at ? (webpack:///./some_source.ts:2:2)
-  at ? (webpack:///./some_source.ts:3:2)
+  at ? (core|webpack:///./some_source.ts:2:2)
+  at ? (telepathic|webpack:///./some_source.ts:3:2)
   at explode (http://localhost:3000/public/build/error.js:3:10)
   at wat (http://localhost:3000/public/build/bar.js:3:10)
   at nope (http://localhost:3000/baz.js:3:10)
   at fake (http://localhost:3000/public/build/../../secrets.txt:3:10)
-  at ? (webpack:///./some_source.ts:3:2)`)
+  at ? (core|webpack:///./some_source.ts:3:2)`)
 				assert.Len(t, sourceMapReads, 6)
 				assert.Equal(t, "/staticroot", sourceMapReads[0].dir)
 				assert.Equal(t, "build/moo/foo.js.map", sourceMapReads[0].path)
