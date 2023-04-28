@@ -130,7 +130,7 @@ services:
     volumes:
       - 'grafana_storage:/var/lib/grafana'
 volumes:
-  grafana_storage: {}	
+  grafana_storage: {}
 ```
 
 Start the Grafana server:
