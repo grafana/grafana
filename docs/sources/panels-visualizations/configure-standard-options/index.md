@@ -124,7 +124,7 @@ Select one of the following palettes:
 | **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
 | **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                   |
 | **Green-Yellow-Red (by value)**      | Continuous color scheme                                                                                                                                  |
-| **Red-Yellow-Green (by value)**      | Continous color scheme                                                                                                                                   |
+| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                   |
 | **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                  |
 | **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                  |
 | **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                  |
