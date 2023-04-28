@@ -3,12 +3,7 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { useStyles2, LinkButton } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
-import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { AccessControlAction } from 'app/types';
+import { useStyles2 } from '@grafana/ui';
 
 import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 

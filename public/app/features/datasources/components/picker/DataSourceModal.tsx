@@ -10,7 +10,6 @@ import {
   FileDropzone,
   FileDropzoneDefaultChildren,
   CustomScrollbar,
-  LinkButton,
   useStyles2,
   Input,
   Icon,
