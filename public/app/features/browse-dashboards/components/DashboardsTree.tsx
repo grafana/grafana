@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { CellProps, Column, HeaderProps, TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
@@ -99,10 +99,8 @@ export function DashboardsTree({
       Header: 'Tags',
       Cell: TagsCell,
     };
-    const columns = [nameColumn, typeColumn, tagsColumns];
-    if (checkboxColumn) {
-      columns.unshift(checkboxColumn);
-    }
+    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+
     return columns;
   }, [onItemSelectionChange, onAllSelectionChange, onFolderClick, canSelect]);
 
