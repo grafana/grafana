@@ -7,6 +7,7 @@ import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
 import { filterByValueTransformer } from './transformers/filterByValue';
 import { groupByTransformer } from './transformers/groupBy';
+import { groupByTimeTransformer } from './transformers/groupByTime';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
 import { joinByFieldTransformer } from './transformers/joinByField';
@@ -42,6 +43,7 @@ export const standardTransformers = {
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
   groupByTransformer,
+  groupByTimeTransformer,
   sortByTransformer,
   mergeTransformer,
   renameByRegexTransformer,
