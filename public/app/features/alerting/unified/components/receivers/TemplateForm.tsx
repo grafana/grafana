@@ -287,8 +287,16 @@ function getResultsToRender(results: TemplatePreviewResult[]) {
 
   const moreThanOne = filteredResults.length > 1;
 
-  const preview = (result: TemplatePreviewResult) =>
-    moreThanOne ? `Preview for ${result.name}:\n${result.text}` : `${result.text}`;
+  const preview = (result: TemplatePreviewResult) => {
+    const previewForLabel = `Preview for ${result.name}:`;
+    const separatorStart = '='.repeat(previewForLabel.length).concat('>');
+    const separatorEnd = '<'.concat('='.repeat(previewForLabel.length));
+    if (moreThanOne) {
+      return `${previewForLabel}\n${separatorStart}${result.text}${separatorEnd}\n`;
+    } else {
+      return `${separatorStart}${result.text}${separatorEnd}\n`;
+    }
+  };
 
   return filteredResults
     .map((result: TemplatePreviewResult) => {
@@ -301,9 +309,9 @@ function getErrorsToRender(results: TemplatePreviewErrors[]) {
   return results
     .map((result: TemplatePreviewErrors) => {
       if (result.name) {
-        return `ERROR in ${result.name}:\n`.concat(`${result.kind}\n${result.message}`);
+        return `ERROR in ${result.name}:\n`.concat(`${result.kind}\n${result.message}\n`);
       } else {
-        return `ERROR:\n${result.kind}\n${result.message}`;
+        return `ERROR:\n${result.kind}\n${result.message}\n`;
       }
     })
     .join(`\n`);
