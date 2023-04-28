@@ -16,14 +16,10 @@ export type Props = {
   dataSource: DataSourceSettingsType;
 };
 
-export const createDashboardLinkText = `creating a dashboard`;
-export const exploreDataLinkText = `exploring the data`;
-
 interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   title: string;
   severity?: AlertVariant;
   exploreUrl: string;
-  canExploreDataSources: boolean;
   dataSourceId: string;
   onDashboardLinkClicked: () => void;
 }
@@ -36,10 +32,6 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
       max-height: 50vh;
       overflow-y: auto;
     `,
-    link: css`
-      color: ${theme.colors.primary.text};
-      text-decoration: underline;
-    `,
     disabled: css`
       pointer-events: none;
       color: ${theme.colors.text.secondary};
@@ -47,38 +39,33 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage = ({
-  title,
-  exploreUrl,
-  canExploreDataSources,
-  dataSourceId,
-  onDashboardLinkClicked,
-}: AlertMessageProps) => {
+const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
+  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (
     <div className={styles.content}>
-      Next, you can analyze the data by &nbsp;
+      Next, you can start to visualize data by{' '}
       <Link
         aria-label={`Create a dashboard`}
         href={`/dashboard/new-with-ds/${dataSourceId}`}
-        className={styles.link}
+        className="external-link"
         onClick={onDashboardLinkClicked}
       >
-        {createDashboardLinkText}
+        building a dashboard
       </Link>
-      , or &nbsp;
+      , or by querying data in the{' '}
       <Link
         aria-label={`Explore data`}
-        className={cx(styles.link, {
+        className={cx('external-link', {
           [`${styles.disabled}`]: !canExploreDataSources,
           'test-disabled': !canExploreDataSources,
         })}
         href={exploreUrl}
       >
-        {exploreDataLinkText}
+        Explore view
       </Link>
       .
     </div>
@@ -92,7 +79,6 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
-  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -112,7 +98,6 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
               {severity === 'success' ? (
                 <AlertSuccessMessage
                   title={message}
-                  canExploreDataSources={canExploreDataSources}
                   exploreUrl={exploreUrl}
                   dataSourceId={dataSource.uid}
                   onDashboardLinkClicked={onDashboardLinkClicked}
