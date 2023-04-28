@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { addDays } from 'date-fns';
+import { subDays } from 'date-fns';
 import { Location } from 'history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
@@ -70,7 +70,7 @@ const DEFAULT_PAYLOAD = `[
     "labels": {
       "instance": "instance1"
     },
-    "startsAt": "${addDays(new Date(), -1).toISOString()}"
+    "startsAt": "${subDays(new Date(), 1).toISOString()}"
   }]
 `;
 
