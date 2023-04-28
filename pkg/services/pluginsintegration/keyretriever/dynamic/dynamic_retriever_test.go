@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,13 +43,11 @@ func setFakeAPIServer(t *testing.T, publicKey string, keyID string) (*httptest.S
 }
 func Test_PublicKeyUpdate(t *testing.T) {
 	t.Run("it should retrieve an API key", func(t *testing.T) {
-		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
-		}
+		cfg := &setting.Cfg{}
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -66,13 +64,11 @@ func Test_PublicKeyUpdate(t *testing.T) {
 	})
 
 	t.Run("it should update the latest update date", func(t *testing.T) {
-		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
-		}
+		cfg := &setting.Cfg{}
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -88,13 +84,11 @@ func Test_PublicKeyUpdate(t *testing.T) {
 	})
 
 	t.Run("it should remove old keys", func(t *testing.T) {
-		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagPluginsAPIManifestKey}...),
-		}
+		cfg := &setting.Cfg{}
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "other")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -109,6 +103,32 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		require.Equal(t, false, found)
 
 		res, found, err := v.kv.Get(context.Background(), "other")
+		require.NoError(t, err)
+		require.Equal(t, true, found)
+		require.Equal(t, expectedKey, res)
+	})
+
+	t.Run("it should force-download the key", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			PluginForcePublicKeyDownload: true,
+		}
+		expectedKey := "fake"
+		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
+		cfg.GrafanaComURL = s.URL
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
+		// Simulate an updated key
+		err := v.kv.SetLastUpdated(context.Background())
+		require.NoError(t, err)
+		go func() {
+			err := v.Run(context.Background())
+			require.NoError(t, err)
+		}()
+		<-done
+
+		// wait for the lock to be free
+		v.lock.Lock()
+		defer v.lock.Unlock()
+		res, found, err := v.kv.Get(context.Background(), "7e4d0c6a708866e7")
 		require.NoError(t, err)
 		require.Equal(t, true, found)
 		require.Equal(t, expectedKey, res)

@@ -236,6 +236,7 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
+	PluginForcePublicKeyDownload     bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
