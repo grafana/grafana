@@ -123,7 +123,6 @@ export function PayloadEditor({
             Choose alert instances
           </Button>
 
-
           {payloadFormatError !== null && (
             <Badge
               color="orange"
