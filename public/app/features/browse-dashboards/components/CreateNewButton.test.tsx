@@ -5,7 +5,7 @@ import React from 'react';
 import { CreateNewButton } from './CreateNewButton';
 
 async function renderAndOpen(folderUID?: string) {
-  render(<CreateNewButton inFolder={folderUID} />);
+  render(<CreateNewButton canCreateDashboard canCreateFolder inFolder={folderUID} />);
   const newButton = screen.getByText('New');
   await userEvent.click(newButton);
 }

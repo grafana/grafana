@@ -50,13 +50,21 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
   const hasSelection = useHasSelection();
 
-  const { canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
+  const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
 
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      actions={(canCreateDashboards || canCreateFolder) && <CreateNewButton inFolder={folderUID} />}
+      actions={
+        (canCreateDashboards || canCreateFolder) && (
+          <CreateNewButton
+            inFolder={folderUID}
+            canCreateDashboard={canCreateDashboards}
+            canCreateFolder={canCreateFolder}
+          />
+        )
+      }
     >
       <Page.Contents className={styles.pageContents}>
         <FilterInput
@@ -72,9 +80,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView width={width} height={height} />
+                <SearchView showCheckboxes={canEditInFolder} width={width} height={height} />
               ) : (
-                <BrowseView width={width} height={height} folderUID={folderUID} />
+                <BrowseView showCheckboxes={canEditInFolder} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

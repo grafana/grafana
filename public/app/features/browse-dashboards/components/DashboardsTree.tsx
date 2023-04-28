@@ -23,6 +23,7 @@ interface DashboardsTreeProps {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  showCheckboxes: boolean;
 }
 
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
@@ -46,34 +47,37 @@ export function DashboardsTree({
   onFolderClick,
   onAllSelectionChange,
   onItemSelectionChange,
+  showCheckboxes = false,
 }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
 
   const tableColumns = useMemo(() => {
-    const checkboxColumn: DashboardsTreeColumn = {
-      id: 'checkbox',
-      width: 0,
-      Header: ({ selectedItems }: DashboardTreeHeaderProps) => {
-        const isAllSelected = selectedItems?.$all ?? false;
-        return <Checkbox value={isAllSelected} onChange={(ev) => onAllSelectionChange(ev.currentTarget.checked)} />;
-      },
-      Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
-        const item = row.item;
-        if (item.kind === 'ui-empty-folder' || !selectedItems) {
-          return <></>;
+    const checkboxColumn: DashboardsTreeColumn | null = showCheckboxes
+      ? {
+          id: 'checkbox',
+          width: 0,
+          Header: ({ selectedItems }: DashboardTreeHeaderProps) => {
+            const isAllSelected = selectedItems?.$all ?? false;
+            return <Checkbox value={isAllSelected} onChange={(ev) => onAllSelectionChange(ev.currentTarget.checked)} />;
+          },
+          Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
+            const item = row.item;
+            if (item.kind === 'ui-empty-folder' || !selectedItems) {
+              return <></>;
+            }
+
+            const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
+
+            return (
+              <Checkbox
+                data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
+                value={isSelected}
+                onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
+              />
+            );
+          },
         }
-
-        const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
-
-        return (
-          <Checkbox
-            data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
-            value={isSelected}
-            onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
-          />
-        );
-      },
-    };
+      : null;
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
@@ -95,9 +99,12 @@ export function DashboardsTree({
       Header: 'Tags',
       Cell: TagsCell,
     };
-
-    return [checkboxColumn, nameColumn, typeColumn, tagsColumns];
-  }, [onItemSelectionChange, onAllSelectionChange, onFolderClick]);
+    const columns = [nameColumn, typeColumn, tagsColumns];
+    if (checkboxColumn) {
+      columns.unshift(checkboxColumn);
+    }
+    return columns;
+  }, [onItemSelectionChange, onAllSelectionChange, onFolderClick, showCheckboxes]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;

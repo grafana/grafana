@@ -30,6 +30,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
+        showCheckboxes
         items={[dashboard]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -47,6 +48,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder item', () => {
     render(
       <DashboardsTree
+        showCheckboxes
         items={[folder]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -64,6 +66,7 @@ describe('browse-dashboards DashboardsTree', () => {
     const handler = jest.fn();
     render(
       <DashboardsTree
+        showCheckboxes
         items={[folder]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -82,6 +85,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders empty folder indicators', () => {
     render(
       <DashboardsTree
+        showCheckboxes
         items={[emptyFolderIndicator]}
         selectedItems={selectedItems}
         width={WIDTH}
