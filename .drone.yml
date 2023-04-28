@@ -777,11 +777,11 @@ steps:
     DOCKER_USER:
       from_secret: docker_username_pr
     GITHUB_APP_ID:
-      from_secret: updater-app-id
+      from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
-      from_secret: updater-app-installation-id
+      from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
-      from_secret: updater-app-private-key
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -7062,12 +7062,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 get:
-  name: private-key
-  path: infra/data/ci/github/updater-app
-kind: secret
-name: updater-app-private-key
----
-get:
   name: upstream-repo-main
   path: infra/data/ci/grafana-release-eng/grafana-enterprise
 kind: secret
@@ -7116,6 +7110,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: a74fc8b199f2b92e1f48134056f7932a8addd507659f5820a27edd50090e5297
+hmac: 3bd7456c9cdfeeb8d2315616fc7fda05a45ec373be4e278729f2170602ad6bf7
 
 ...

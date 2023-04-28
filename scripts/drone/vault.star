@@ -8,9 +8,9 @@ gcp_upload_artifacts_key = "gcp_upload_artifacts_key"
 azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
-updater_app_id = 'updater-app-id'
-updater_app_installation_id = 'updater-app-installation-id'
-updater_app_private_key = 'updater-app-private-key'
+delivery_bot_app_id = "delivery-bot-app-id"
+delivery_bot_app_installation_id = "delivery-bot-app-installation-id"
+delivery_bot_app_private_key = "delivery-bot-app-private-key"
 
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
@@ -127,19 +127,14 @@ def secrets():
             "security_prefix",
         ),
         vault_secret(
-            'updater-app-private-key',
-            'infra/data/ci/github/updater-app',
-            'private-key',
+            "grafana_upstream_repo_main",
+            "infra/data/ci/grafana-release-eng/grafana-enterprise",
+            "upstream-repo-main",
         ),
         vault_secret(
-            'grafana_upstream_repo_main',
-            'infra/data/ci/grafana-release-eng/grafana-enterprise',
-            'upstream-repo-main',
-        ),
-        vault_secret(
-            'grafana_upstream_repo_tag',
-            'infra/data/ci/grafana-release-eng/grafana-enterprise',
-            'upstream-repo-tag',
+            "grafana_upstream_repo_tag",
+            "infra/data/ci/grafana-release-eng/grafana-enterprise",
+            "upstream-repo-tag",
         ),
         vault_secret(
             rgm_gcp_key_base64,
