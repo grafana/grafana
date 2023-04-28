@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +9,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
+import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 
 import { useDatasource } from '../../hooks';
 
@@ -30,14 +31,40 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
+  const [inputHasFocus, setInputHasFocus] = useState(false);
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
-  const [filterTerm, setFilterTerm] = useState<string>();
+  const [filterTerm, setFilterTerm] = useState<string>('');
   const openDropdown = () => {
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
     setOpen(true);
     markerElement?.focus();
   };
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+
+  useEffect(() => {
+    const sub = keyboardEvents.subscribe({
+      next: (keyEvent) => {
+        switch (keyEvent?.code) {
+          case 'ArrowDown': {
+            openDropdown();
+            keyEvent.preventDefault();
+            break;
+          }
+          case 'ArrowUp':
+            openDropdown();
+            keyEvent.preventDefault();
+            break;
+          case 'Escape':
+            onClose();
+            markerElement?.focus();
+            keyEvent.preventDefault();
+        }
+      },
+    });
+    return () => sub.unsubscribe();
+  });
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
@@ -56,8 +83,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const onClose = useCallback(() => {
     setFilterTerm('');
     setOpen(false);
-    markerElement?.blur();
-  }, [setOpen, markerElement]);
+  }, [setOpen]);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
@@ -77,9 +103,11 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   return (
     <div className={styles.container}>
-      <div tabIndex={0} onFocus={openDropdown} role={'button'} className={styles.trigger} onClick={openDropdown}>
+      {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div className={styles.trigger} onClick={openDropdown}>
         <Input
-          className={isOpen ? undefined : styles.input}
+          className={inputHasFocus ? undefined : styles.input}
           prefix={
             filterTerm && isOpen ? (
               <DataSourceLogoPlaceHolder />
@@ -89,10 +117,18 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           }
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
-          onFocus={openDropdown}
           onClick={openDropdown}
+          onFocus={() => {
+            setInputHasFocus(true);
+          }}
+          onBlur={() => {
+            setInputHasFocus(false);
+            onClose();
+          }}
+          onKeyDown={onKeyDown}
           value={filterTerm}
           onChange={(e) => {
+            openDropdown();
             setFilterTerm(e.currentTarget.value);
           }}
           ref={setMarkerElement}
@@ -101,8 +137,16 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
       {isOpen ? (
         <Portal>
           <div {...underlayProps} />
-          <div ref={ref} {...overlayProps} {...dialogProps}>
+          <div
+            ref={ref}
+            {...overlayProps}
+            {...dialogProps}
+            onMouseDown={(e) => {
+              e.preventDefault(); /** Need to prevent default here to stop onMouseDown to trigger onBlur of the input element */
+            }}
+          >
             <PickerContent
+              keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
               onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
                 onClose();
@@ -164,6 +208,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <div className={styles.dataSourceList}>
         <DataSourceList
           {...props}
+          enableKeyboardNavigation
           current={current}
           onChange={changeCallback}
           filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
