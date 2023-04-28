@@ -69,5 +69,8 @@ export interface InfluxQuery extends DataQuery {
   timeEndColumn?: string;
   titleColumn?: string;
   name?: string;
+  matchAny?: boolean;
+  type?: string;
+
   textEditor?: boolean;
 }
