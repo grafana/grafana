@@ -1,8 +1,14 @@
 package util
 
 import (
+	"errors"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -106,6 +112,87 @@ func BenchmarkSplitString(b *testing.B) {
 				" test73,test74 test75 test76,test77 test78 test79,test80 test81 test82" +
 				" test83,test84 test85 test86,test87 test88 test89,test90 test91 test92" +
 				" test93,test94 test95 test96,test97 test98 test99,test100 ")
+		}
+	})
+}
+
+func TestKeyValue(t *testing.T) {
+	tests := []struct {
+		testName      string
+		testString    string
+		expectedMap   map[string]string
+		expectedError error
+	}{
+		{
+			testName:    "empty",
+			testString:  "",
+			expectedMap: map[string]string{},
+		},
+		{
+			testName:    "empty JSON",
+			testString:  "{}",
+			expectedMap: map[string]string{},
+		},
+		{
+			testName:    "basic",
+			testString:  "key1=value1, key2=value2",
+			expectedMap: map[string]string{"key1": "value1", "key2": "value2"},
+		},
+		{
+			testName:    "spacing",
+			testString:  "key1 = value1",
+			expectedMap: map[string]string{"key1": "value1"},
+		},
+		{
+			testName:    "basic JSON",
+			testString:  `{"key1": "value1", "key2": "value2"}`,
+			expectedMap: map[string]string{"key1": "value1", "key2": "value2"},
+		},
+		{
+			testName:      "no pair",
+			testString:    "0",
+			expectedError: ErrMissingValue,
+		},
+		{
+			testName:      "unicode character",
+			testString:    "✘",
+			expectedError: ErrInvalidChar,
+		},
+		{
+			testName:      "broken JSON",
+			testString:    `{"key1": "value1", "key2": 5}`,
+			expectedError: ErrParsingAsJSON,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.testName, func(t *testing.T) {
+			kvs, err := KeyValue(tc.testString)
+			assert.ErrorIs(t, err, tc.expectedError)
+			assert.EqualValues(t, tc.expectedMap, kvs)
+		})
+	}
+}
+
+func FuzzKeyValue(f *testing.F) {
+	f.Add("0")
+	f.Add("️✗")
+	f.Add(",")
+	f.Add("{")
+	f.Add("=")
+	f.Add("    {}")
+
+	f.Fuzz(func(t *testing.T, str string) {
+		_, err := KeyValue(str)
+		switch {
+		case errors.Is(err, ErrMissingValue):
+			gerr := errutil.Error{}
+			require.True(t, errors.As(err, &gerr))
+			assert.Contains(t, str, strings.TrimSuffix(gerr.PublicPayload["key"].(string), "..."))
+		case errors.Is(err, ErrInvalidChar), errors.Is(err, ErrParsingAsJSON):
+			t.Skip()
+		default:
+			require.NoError(t, err)
 		}
 	})
 }

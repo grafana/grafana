@@ -1824,10 +1824,19 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
 
+	cfg.CustomResponseHeaders = make(map[string]string)
+	if crh := server.Key("custom_response_headers").String(); len(crh) != 0 {
+		kvs, err := util.KeyValue(crh)
+		if err != nil {
+			return fmt.Errorf("error parsing server.custom_response_headers: %w", err)
+		}
+		for key, value := range kvs {
+			cfg.CustomResponseHeaders[key] = value
+		}
+	}
+
 	headersSection := cfg.Raw.Section("server.custom_response_headers")
 	keys := headersSection.Keys()
-	cfg.CustomResponseHeaders = make(map[string]string, len(keys))
-
 	for _, key := range keys {
 		cfg.CustomResponseHeaders[key.Name()] = key.Value()
 	}
