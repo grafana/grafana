@@ -9,7 +9,6 @@ import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
-import { IconButton } from '../IconButton/IconButton';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -74,7 +73,14 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
-            <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
+            <Button
+              aria-label="Close alert"
+              icon="times"
+              onClick={onRemove}
+              type="button"
+              fill="text"
+              variant="secondary"
+            />
           </div>
         )}
 
@@ -114,6 +120,7 @@ const getStyles = (
 ) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();
+  const borderColor = tinycolor2(color.border).setAlpha(0.2).toString();
 
   return {
     alert: css`
@@ -126,7 +133,7 @@ const getStyles = (
       background: ${color.transparent};
       box-shadow: ${elevated ? theme.shadows.z3 : 'none'};
       padding: ${theme.spacing(1, 2)};
-      border: 1px solid ${tinycolor2(color.border).setAlpha(0.2).toString()};
+      border: 1px solid ${borderColor};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
       margin-top: ${theme.spacing(topSpacing ?? 0)};
 
@@ -150,7 +157,6 @@ const getStyles = (
       fontWeight: theme.typography.fontWeightMedium,
     }),
     body: css`
-      color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1, 0)};
       flex-grow: 1;
       display: flex;
@@ -160,7 +166,6 @@ const getStyles = (
       word-break: break-word;
     `,
     content: css`
-      color: ${theme.colors.text.secondary};
       padding-top: ${hasTitle ? theme.spacing(0.5) : 0};
       max-height: 50vh;
       overflow-y: auto;
@@ -176,6 +181,9 @@ const getStyles = (
       color: ${theme.colors.text.secondary};
       background: none;
       display: flex;
+      position: relative;
+      top: -14px;
+      right: -14px;
     `,
   };
 };
