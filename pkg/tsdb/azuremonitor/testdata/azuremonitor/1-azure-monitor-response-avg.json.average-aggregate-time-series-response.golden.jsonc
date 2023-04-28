@@ -1,0 +1,83 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 2 Fields by 5 Rows
+//  +-------------------------------+----------------------+
+//  | Name: Time                    | Name: Percentage CPU |
+//  | Labels:                       | Labels:              |
+//  | Type: []time.Time             | Type: []*float64     |
+//  +-------------------------------+----------------------+
+//  | 2019-02-08 10:13:00 +0000 UTC | 2.0875               |
+//  | 2019-02-08 10:14:00 +0000 UTC | 2.1525               |
+//  | 2019-02-08 10:15:00 +0000 UTC | 2.155                |
+//  | 2019-02-08 10:16:00 +0000 UTC | 3.6925               |
+//  | 2019-02-08 10:17:00 +0000 UTC | 2.44                 |
+//  +-------------------------------+----------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Percentage CPU",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {},
+            "config": {
+              "unit": "percent",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1549620780000,
+            1549620840000,
+            1549620900000,
+            1549620960000,
+            1549621020000
+          ],
+          [
+            2.0875,
+            2.1525,
+            2.155,
+            3.6925,
+            2.44
+          ]
+        ]
+      }
+    }
+  ]
+}

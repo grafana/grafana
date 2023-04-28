@@ -64,15 +64,15 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instan
 	})
 
 	if err != nil {
-		return getHealthCheckMessage(logger, "Your configuration has been saved but there is an error.", err)
+		return getHealthCheckMessage(logger, "There was an error returned querying the Prometheus API.", err)
 	}
 
 	if resp.Responses[refID].Error != nil {
-		return getHealthCheckMessage(logger, "Your configuration has been saved but there is an error.",
+		return getHealthCheckMessage(logger, "There was an error returned querying the Prometheus API.",
 			errors.New(resp.Responses[refID].Error.Error()))
 	}
 
-	return getHealthCheckMessage(logger, "Successfully saved the configuration and queried the Prometheus API.", nil)
+	return getHealthCheckMessage(logger, "Successfully queried the Prometheus API.", nil)
 }
 
 func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
