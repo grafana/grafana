@@ -231,7 +231,9 @@ You can now query multiple data sources in Explore. Select "Mixed" from the data
 
 Mixed data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the exploreMixedDatasource feature toggle.
 
-## Span filtering for traces
+## Tracing
+
+### Span filtering for traces
 
 _Available in preview in all editions of Grafana._
 
@@ -247,6 +249,10 @@ Currently, you can add one or more of the following filters:
 - Tags (which include tags, process tags, and log fields).
 
 To try it out, you'll need to enable the `newTraceView` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+### OpenTelemetry replacing OpenTracing
+
+We have started our work to migrate to OpenTelemetry in Grafana 8.4 and now we are removing OpenTracing and replacing it with OpenTelemetry under the hood. The changes are made in backwards compatible way so that users of Grafana do not need to change anything and they will continue working in the same way as before.
 
 ## Datasources
 
@@ -298,4 +304,3 @@ To use it in enforce mode:
 
 - Enable `content_security_policy` in the configuration.
 - Add `require-trusted-types-for 'script';` to the `content_security_policy_template`.
-
