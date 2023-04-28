@@ -86,7 +86,7 @@ This section describes supported time units and relative ranges, the common time
 
 Grafana supports the following time units: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `Q (quarters)` and `y (years)`.
 
-The minus operator enables you to step back in time, relative to now. If you want to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end. To view fiscal periods, use `fQ (fiscal quarter)` and `fy (fiscal year)` time units.
+The minus operator enables you to step back in time, relative to now (`now`). If you want to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end. To view fiscal periods, use `fQ (fiscal quarter)` and `fy (fiscal year)` time units.
 
 The plus operator enables you to step forward in time, relative to now. For example, you can use this feature to look at predicted data in the future.
 
@@ -105,12 +105,14 @@ The following table provides example relative ranges:
 | This Year              | `now/Y`     | `now/Y`     |
 | Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
-#### Note about Grafana Alerting
+{{% admonition type="Note" %}}
 
-For Grafana Alerting, we do not support the following syntaxes at this time.
+Grafana Alerting does not support the following syntaxes at this time:
 
 - now+n for future timestamps.
 - now-1n/n for "start of n until end of n" because this is an absolute timestamp.
+
+{{% /admonition %}}
 
 ### Common time range controls
 
