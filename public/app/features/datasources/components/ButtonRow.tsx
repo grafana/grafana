@@ -19,7 +19,7 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Pr
         variant="destructive"
         disabled={!canDelete}
         onClick={onDelete}
-        aria-label={selectors.pages.DataSource.delete}
+        data-testid={selectors.pages.DataSource.delete}
       >
         Delete
       </Button>
@@ -29,7 +29,7 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Pr
           variant="primary"
           disabled={!canSave}
           onClick={onSubmit}
-          aria-label={selectors.pages.DataSource.saveAndTest}
+          data-testid={selectors.pages.DataSource.saveAndTest}
         >
           Save &amp; test
         </Button>

@@ -184,7 +184,8 @@ export function EditDataSourceView({
         onTest={onTest}
         onDelete={onDelete}
         canDelete={!readOnly && hasDeleteRights}
-        canSave={!readOnly && hasWriteRights} />
+        canSave={!readOnly && hasWriteRights}
+      />
     </form>
   );
 }
