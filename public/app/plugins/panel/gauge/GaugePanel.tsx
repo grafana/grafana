@@ -62,7 +62,7 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
           const min = field.config.min ?? 0;
           const max = field.config.max ?? field.config.unit === 'percent' ? 100 : 1;
           field.state = field.state ?? {};
-          field.state.range = { min, max, delta: max! - min! };
+          field.state.range = { min, max, delta: max - min };
           field.display = getDisplayProcessor({ field, theme: config.theme2 });
         }
       }
