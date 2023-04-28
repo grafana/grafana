@@ -49,10 +49,8 @@ export const ConfigEditor = (props: Props) => {
         azureAuthSettings={azureAuthSettings}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
-        connectionElements={{
-          label: 'Prometheus server URL',
-          tooltip: docsTip(),
-        }}
+        urlLabel="Prometheus server URL"
+        urlDocs={docsTip()}
       />
       <>
         <hr className={styles.hrTopSpace} />
