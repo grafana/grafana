@@ -58,6 +58,7 @@
     "@jest/core": "27.5.1",
     "@types/eslint": "8.4.1",
     "@types/jest": "27.4.1",
+    "@types/lodash": "^4.14.194",
     "@types/node": "16.11.26",
     "@types/prettier": "2.6.3",
     "@types/react-dev-utils": "9.0.10",
@@ -88,6 +89,7 @@
     "jest-junit": "13.1.0",
     "less": "^4.1.2",
     "less-loader": "^10.2.0",
+    "lodash": "4.17.21",
     "mini-css-extract-plugin": "^2.6.0",
     "ora": "^5.4.1",
     "postcss": "^8.4.12",
@@ -108,5 +110,8 @@
     "tslib": "2.4.0",
     "typescript": "4.8.2",
     "webpack": "^5.76.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "4.14.191"
   }
 }
