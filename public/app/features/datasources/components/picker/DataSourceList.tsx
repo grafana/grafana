@@ -97,10 +97,10 @@ function getDataSourceVariableIDs() {
     .map((v) => `\${${v.id}}`);
 }
 
-function getStyles(theme: GrafanaTheme2, selectedSelector: string) {
+function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
   return {
     container: css`
-      ${selectedSelector} {
+      ${selectedItemCssSelector} {
         background-color: ${theme.colors.background.secondary};
       }
     `,
