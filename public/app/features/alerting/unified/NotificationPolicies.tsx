@@ -8,7 +8,7 @@ import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -69,7 +69,7 @@ const AmRoutes = () => {
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const contactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
 
-  const [routeAlertGroupsMap, setRouteAlertGroupsMap] = useState(new Map<string, AlertmanagerGroup[]>());
+  // const [routeAlertGroupsMap, setRouteAlertGroupsMap] = useState(new Map<string, AlertmanagerGroup[]>());
 
   useEffect(() => {
     if (alertManagerSourceName) {
@@ -94,41 +94,39 @@ const AmRoutes = () => {
   }, [config?.route]);
 
   // these are computed from the contactPoint and labels matchers filter
-  // const routesMatchingFilters = useMemo(() => {
-  //   if (!rootRoute) {
-  //     return [];
-  //   }
-  //   return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
-  // }, [contactPointFilter, labelMatchersFilter, rootRoute]);
-
-  const { value: routesMatchingFilters } = useAsync(
-    async () =>
-      engine.findMatchingRoute({
-        contactPointFilter,
-        labelMatchersFilter,
-      }),
-    [rootRoute, contactPointFilter, labelMatchersFilter]
-  );
+  const routesMatchingFilters = useMemo(() => {
+    if (!rootRoute) {
+      return [];
+    }
+    return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
+  }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
-  useEffect(() => {
-    if (rootRoute) {
-      initWorker(rootRoute);
-    }
+  // useEffect(() => {
+  //   if (rootRoute && fetchAlertGroups.result) {
+  //     initMatchingInstances(rootRoute, fetchAlertGroups.result);
+  //   }
+  //
+  //   async function initMatchingInstances(rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) {
+  //     console.time('Route Instances Map');
+  //     const routeGroupMap = await engine.getRouteGroupsMap(rootRoute, alertGroups);
+  //     console.timeEnd('Route Instances Map');
+  //     setRouteAlertGroupsMap(routeGroupMap);
+  //   }
+  // }, [rootRoute, fetchAlertGroups.result]);
 
-    async function initWorker(rootRoute: RouteWithID) {
-      console.time('Worker INIT transfer');
-      await engine.initData(rootRoute, fetchAlertGroups.result ?? []);
-      console.timeEnd('Worker INIT transfer');
+  const { value: routeAlertGroupsMap } = useAsync(async () => {
+    if (rootRoute && fetchAlertGroups.result) {
       console.time('Route Instances Map');
-      const routeGroupMap = await engine.getRouteGroupsMap();
+      const routeGroupMap = await engine.getRouteGroupsMap(rootRoute, fetchAlertGroups.result);
       console.timeEnd('Route Instances Map');
-      setRouteAlertGroupsMap(routeGroupMap);
+      return routeGroupMap;
     }
+    return undefined;
   }, [rootRoute, fetchAlertGroups.result]);
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {

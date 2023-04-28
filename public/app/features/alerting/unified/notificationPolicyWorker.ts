@@ -1,5 +1,4 @@
 import * as comlink from 'comlink';
-import { intersectionBy, isEqual, pick } from 'lodash';
 
 import {
   AlertmanagerGroup,
@@ -10,28 +9,10 @@ import {
   RouteWithID,
 } from '../../../plugins/datasource/alertmanager/types';
 
-let rootRoute: RouteWithID | undefined = undefined;
-let alertGroups: AlertmanagerGroup[] = [];
-
 const npFilterEngine = {
-  initData(route: RouteWithID, groups: AlertmanagerGroup[]) {
-    rootRoute = route;
-    alertGroups = groups;
-    // console.log('Root route has been set', rootRoute);
-  },
-
-  findMatchingRoute(filters: RouteFilters): string[] {
-    console.log('Worker filtering');
-    return rootRoute ? findRoutesMatchingFilters(rootRoute, filters).map((r) => r.id) : [];
-  },
-
-  // findMatchingAlertGroups(route: RouteWithID) {
-  //   return rootRoute ? findMatchingAlertGroups(rootRoute, route, alertGroups) : [];
-  // },
-
-  getRouteGroupsMap(): Map<string, AlertmanagerGroup[]> {
+  getRouteGroupsMap(rootRoute: RouteWithID, groups: AlertmanagerGroup[]): Map<string, AlertmanagerGroup[]> {
     function addRouteGroups(route: RouteWithID, acc: Map<string, AlertmanagerGroup[]>) {
-      const routeGroups = rootRoute ? findMatchingAlertGroups(rootRoute, route, alertGroups) : [];
+      const routeGroups = rootRoute ? findMatchingAlertGroups(rootRoute, route, groups) : [];
       acc.set(route.id, routeGroups);
 
       route.routes?.forEach((r) => addRouteGroups(r, acc));
@@ -53,52 +34,6 @@ comlink.expose(npFilterEngine);
 export interface RouteFilters {
   contactPointFilter?: string;
   labelMatchersFilter?: ObjectMatcher[];
-}
-
-const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RouteWithID[] => {
-  const { contactPointFilter, labelMatchersFilter = [] } = filters;
-
-  let matchedRoutes: RouteWithID[][] = [];
-
-  const fullRoute = computeInheritedTree(rootRoute);
-
-  const routesMatchingContactPoint = contactPointFilter
-    ? findRoutesMatchingPredicate(fullRoute, (route) => route.receiver === contactPointFilter)
-    : undefined;
-
-  if (routesMatchingContactPoint) {
-    matchedRoutes.push(routesMatchingContactPoint);
-  }
-
-  const routesMatchingLabelMatchers = labelMatchersFilter.length
-    ? findRoutesMatchingPredicate(fullRoute, (route) => {
-        const routeMatchers = normalizeMatchers(route);
-        return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
-      })
-    : undefined;
-
-  if (routesMatchingLabelMatchers) {
-    matchedRoutes.push(routesMatchingLabelMatchers);
-  }
-
-  return intersectionBy(...matchedRoutes, 'id');
-};
-
-type FilterPredicate = (route: RouteWithID) => boolean;
-
-function findRoutesMatchingPredicate(routeTree: RouteWithID, predicateFn: FilterPredicate): RouteWithID[] {
-  const matches: RouteWithID[] = [];
-
-  function findMatch(route: RouteWithID) {
-    if (predicateFn(route)) {
-      matches.push(route);
-    }
-
-    route.routes?.forEach(findMatch);
-  }
-
-  findMatch(routeTree);
-  return matches;
 }
 
 function findMatchingAlertGroups(
@@ -193,28 +128,6 @@ const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
   [MatcherOperator.regex]: (lv, mv) => Boolean(lv.match(new RegExp(mv))),
   [MatcherOperator.notRegex]: (lv, mv) => !Boolean(lv.match(new RegExp(mv))),
 };
-
-function computeInheritedTree(routeTree: RouteWithID): RouteWithID {
-  return {
-    ...routeTree,
-    routes: routeTree.routes?.map((route) => {
-      const inheritableProperties = pick(routeTree, [
-        'receiver',
-        'group_by',
-        'group_wait',
-        'group_interval',
-        'repeat_interval',
-        'mute_time_intervals',
-      ]);
-
-      return computeInheritedTree({
-        ...inheritableProperties,
-        ...route,
-      });
-    }),
-  };
-}
-
 const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   const matchers: ObjectMatcher[] = [];
 

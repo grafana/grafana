@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode, useMemo } from 'react';
-import { useEnabled } from 'react-enable';
+import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -18,11 +17,9 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { AlertingFeature } from '../../features';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { normalizeMatchers } from '../../utils/amroutes';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
-import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
@@ -43,8 +40,8 @@ interface PolicyComponentProps {
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
   inheritedProperties?: InhertitableProperties;
-  routesMatchingFilters?: string[];
-  routeAlertGroupsMap: Map<string, AlertmanagerGroup[]>;
+  routesMatchingFilters?: RouteWithID[];
+  routeAlertGroupsMap: Map<string, AlertmanagerGroup[]> | undefined;
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -92,7 +89,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const matchers = normalizeMatchers(currentRoute);
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
-  const hasFocus = routesMatchingFilters.some((routeId) => routeId === currentRoute.id);
+  const hasFocus = routesMatchingFilters.some((route) => route.id === currentRoute.id);
 
   // gather errors here
   const errors: ReactNode[] = [];
@@ -119,10 +116,12 @@ const Policy: FC<PolicyComponentProps> = ({
   // const matchingAlertGroups = useMemo(() => {
   //   return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
   // }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
-  const matchingAlertGroups = routeAlertGroupsMap.get(currentRoute.id) ?? [];
+  const matchingAlertGroups = routeAlertGroupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
-  const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
+  const numberOfAlertInstances = matchingAlertGroups
+    ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
+    : undefined;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -203,11 +202,11 @@ const Policy: FC<PolicyComponentProps> = ({
                 <MetaText
                   icon="layers-alt"
                   onClick={() => {
-                    onShowAlertInstances(matchingAlertGroups, matchers);
+                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
                   }}
                   data-testid="matching-instances"
                 >
-                  <Strong>{numberOfAlertInstances}</Strong>
+                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
                   <span>{pluralize('instance', numberOfAlertInstances)}</span>
                 </MetaText>
               )}
