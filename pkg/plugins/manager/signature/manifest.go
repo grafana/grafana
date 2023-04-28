@@ -344,7 +344,7 @@ func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.B
 		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
 		// If the key includes revocations, we can assume that the key was revoked
 		if len(keyring) > 0 && len(keyring[0].Revocations) > 0 {
-			return fmt.Errorf("%v (KeyID: %s): %w", openpgpErrors.ErrKeyRevoked, keyID, err)
+			return fmt.Errorf("%s (KeyID: %s): %w", openpgpErrors.ErrKeyRevoked.Error(), keyID, err)
 		}
 		return fmt.Errorf("%v: %w", "failed to check signature", err)
 	}

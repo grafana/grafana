@@ -855,9 +855,7 @@ OOKpUCovEat+3W9JU1PM+z3cb1H/WWQ3hpKEykyzzi/jZMuRnRobW8Jm/4WxFgaY
 -----END PGP SIGNATURE-----
 `
 	block, _ := clearsign.Decode([]byte(txt))
-	if block == nil {
-		t.Fatalf("failed to decode block")
-	}
+	require.NotNil(t, block, "failed to decode block")
 	err := s.validateManifest(context.Background(), *m, block)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), openpgpErrors.ErrKeyRevoked.Error())
