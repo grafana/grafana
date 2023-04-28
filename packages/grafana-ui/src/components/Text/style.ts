@@ -5,7 +5,7 @@ import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 export interface TextStyleProps {
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
-  variant: keyof ThemeTypographyVariantTypes;
+  variant?: keyof ThemeTypographyVariantTypes;
 
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
@@ -22,14 +22,14 @@ export interface TextStyleProps {
 
 export const getTextStyles = (
   theme: GrafanaTheme2,
-  variant: TextStyleProps['variant'],
+  variant?: TextStyleProps['variant'],
   color?: TextStyleProps['color'],
   weight?: TextStyleProps['weight'],
   truncate?: TextStyleProps['truncate'],
   textAlignment?: TextStyleProps['textAlignment']
 ) => {
   return css([
-    {
+    variant && {
       ...theme.typography[variant],
     },
     {

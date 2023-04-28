@@ -6,7 +6,7 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
-import { H1, H2, H3, H4, H5, H6, Span, P, Legend } from './TextElements';
+import { H1, H2, H3, H4, H5, H6, P, Legend } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
@@ -15,7 +15,7 @@ const meta: Meta = {
     docs: {
       page: mdx,
     },
-    controls: { exclude: ['as'] },
+    controls: {},
   },
   argTypes: {
     variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
@@ -56,9 +56,10 @@ export const Example: Story = () => {
         <H4>h4. Heading</H4>
         <H5>h5. Heading</H5>
         <H6>h6. Heading</H6>
-        <P>This is a paragraph</P>
+        <P>
+          This is a paragraph with <Text weight="bold">emphasis</Text>{' '}
+        </P>
         <Legend>This is a legend</Legend>
-        <Span>This is a span</Span>
       </StoryExample>
     </VerticalGroup>
   );
