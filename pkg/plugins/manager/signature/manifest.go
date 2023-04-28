@@ -18,6 +18,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	openpgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/gobwas/glob"
 
@@ -141,7 +142,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
-		s.log.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
+		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -341,6 +342,10 @@ func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.B
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
 		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
+		// If the key includes revocations, we can assume that the key was revoked
+		if len(keyring) > 0 && len(keyring[0].Revocations) > 0 {
+			return fmt.Errorf("%s (KeyID: %s): %w", openpgpErrors.ErrKeyRevoked.Error(), keyID, err)
+		}
 		return fmt.Errorf("%v: %w", "failed to check signature", err)
 	}
 
