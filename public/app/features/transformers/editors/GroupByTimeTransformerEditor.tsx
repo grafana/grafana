@@ -68,9 +68,9 @@ const options = [
 ];
 
 const timeFrameOptions = [
-  { label: 'Day', value:  GroupByTimeBucket.day },
-  { label: 'Month', value:  GroupByTimeBucket.month  },
-  { label: 'Year', value:  GroupByTimeBucket.year  },
+  { label: 'Day', value: GroupByTimeBucket.day },
+  { label: 'Month', value: GroupByTimeBucket.month },
+  { label: 'Year', value: GroupByTimeBucket.year },
 ];
 
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
@@ -87,13 +87,16 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     [config, onConfigChange]
   );
 
-  const onTimeBucketChange = useCallback((value: SelectableValue<GroupByTimeBucket | null>) => {
-    onConfigChange({
-      aggregations: config?.aggregations ?? [],
-      operation: config?.operation ?? null,
-      timeBucket: value?.value ?? null,
-    })
-  }, [config, onConfigChange])
+  const onTimeBucketChange = useCallback(
+    (value: SelectableValue<GroupByTimeBucket | null>) => {
+      onConfigChange({
+        aggregations: config?.aggregations ?? [],
+        operation: config?.operation ?? null,
+        timeBucket: value?.value ?? null,
+      });
+    },
+    [config, onConfigChange]
+  );
 
   return (
     <div className={cx('gf-form-inline', styles.row)}>
@@ -121,6 +124,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
             placeholder="Select Timeframe"
             options={timeFrameOptions}
             onChange={onTimeBucketChange}
+            value={config?.timeBucket}
             isClearable
           />
         </div>
@@ -144,29 +148,29 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 };
 
 const getStyling = stylesFactory(() => {
-    const cell = css`
-      display: table-cell;
-    `;
-  
-    return {
-      row: css`
-        display: table-row;
-      `,
-      cell: cell,
-      rowSpacing: css`
-        margin-bottom: 4px;
-      `,
-      fieldName: css`
-        ${cell}
-        min-width: 250px;
-        white-space: nowrap;
-      `,
-      calculations: css`
-        ${cell}
-        width: 99%;
-      `,
-    };
-  });
+  const cell = css`
+    display: table-cell;
+  `;
+
+  return {
+    row: css`
+      display: table-row;
+    `,
+    cell: cell,
+    rowSpacing: css`
+      margin-bottom: 4px;
+    `,
+    fieldName: css`
+      ${cell}
+      min-width: 250px;
+      white-space: nowrap;
+    `,
+    calculations: css`
+      ${cell}
+      width: 99%;
+    `,
+  };
+});
 
 export const groupByTimeTransformRegistryItem: TransformerRegistryItem<GroupByTimeTransformerOptions> = {
   id: DataTransformerID.groupByTime,
@@ -174,5 +178,5 @@ export const groupByTimeTransformRegistryItem: TransformerRegistryItem<GroupByTi
   transformation: standardTransformers.groupByTimeTransformer,
   name: standardTransformers.groupByTimeTransformer.name,
   description: standardTransformers.groupByTimeTransformer.description,
-  state: PluginState.alpha
+  state: PluginState.alpha,
 };
