@@ -1,59 +1,60 @@
-import React from 'react';
+import React, { createElement, forwardRef, useCallback } from 'react';
+import { useStyles2 } from 'src/themes';
 
-import { Text, TextProps } from './Text';
+import { ThemeTypographyVariantTypes } from '@grafana/data';
 
-interface TextElementsProps extends Omit<TextProps, 'as'> {}
+import { getTextStyles, TextStyleProps } from './style';
 
-export const H1 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
-  return <Text as="h1" {...props} variant={props.variant || 'h1'} ref={ref} />;
-});
+type TextElement = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'legend';
 
+interface TextElementProps extends TextStyleProps {
+  children: React.ReactNode;
+}
+
+function createTextElement(element: TextElement, defaultVariant: keyof ThemeTypographyVariantTypes) {
+  const TextElement = forwardRef<HTMLElement, TextElementProps>(function Heading(props, ref) {
+    const { variant, weight, color, truncate, textAlignment, children } = props;
+
+    const styles = useStyles2(
+      useCallback(
+        (theme) => getTextStyles(theme, variant ?? defaultVariant, color, weight, truncate, textAlignment),
+        [color, textAlignment, truncate, weight, variant]
+      )
+    );
+
+    return createElement(
+      element,
+      {
+        className: styles,
+        ref,
+      },
+      children
+    );
+  });
+
+  return TextElement;
+}
+
+export const H1 = createTextElement('h1', 'h1');
 H1.displayName = 'H1';
 
-export const H2 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
-  return <Text as="h2" {...props} variant={props.variant || 'h2'} ref={ref} />;
-});
-
+export const H2 = createTextElement('h2', 'h2');
 H2.displayName = 'H2';
 
-export const H3 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
-  return <Text as="h3" {...props} variant={props.variant || 'h3'} ref={ref} />;
-});
-
+export const H3 = createTextElement('h3', 'h3');
 H3.displayName = 'H3';
 
-export const H4 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
-  return <Text as="h4" {...props} variant={props.variant || 'h4'} ref={ref} />;
-});
-
+export const H4 = createTextElement('h4', 'h4');
 H4.displayName = 'H4';
 
-export const H5 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
-  return <Text as="h5" {...props} variant={props.variant || 'h5'} ref={ref} />;
-});
-
+export const H5 = createTextElement('h5', 'h5');
 H5.displayName = 'H5';
 
-export const H6 = React.forwardRef<HTMLHeadingElement, TextElementsProps>((props, ref) => {
-  return <Text as="h6" {...props} variant={props.variant || 'h6'} ref={ref} />;
-});
-
+export const H6 = createTextElement('h6', 'h6');
 H6.displayName = 'H6';
 
-export const P = React.forwardRef<HTMLParagraphElement, TextElementsProps>((props, ref) => {
-  return <Text as="p" {...props} variant={props.variant || 'body'} ref={ref} />;
-});
-
+export const P = createTextElement('p', 'body');
 P.displayName = 'P';
 
-export const Span = React.forwardRef<HTMLSpanElement, TextElementsProps>((props, ref) => {
-  return <Text as="span" {...props} variant={props.variant || 'bodySmall'} ref={ref} />;
-});
-
-Span.displayName = 'Span';
-
-export const Legend = React.forwardRef<HTMLLegendElement, TextElementsProps>((props, ref) => {
-  return <Text as="legend" {...props} variant={props.variant || 'bodySmall'} ref={ref} />;
-});
-
+export const Legend = createTextElement('legend', 'bodySmall');
 Legend.displayName = 'Legend';
