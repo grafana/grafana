@@ -26,4 +26,24 @@ describe('NewActionsButton', () => {
     expect(screen.getByText('New Folder')).toHaveAttribute('href', '/dashboards/folder/new');
     expect(screen.getByText('Import')).toHaveAttribute('href', '/dashboard/import');
   });
+
+  it('should only render dashboard items when folder creation is disabled', async () => {
+    render(<CreateNewButton canCreateDashboard canCreateFolder={false} />);
+    const newButton = screen.getByText('New');
+    await userEvent.click(newButton);
+
+    expect(screen.getByText('New Dashboard')).toBeTruthy();
+    expect(screen.getByText('Import')).toBeTruthy();
+    expect(screen.queryByText('New Folder')).toBeFalsy();
+  });
+
+  it('should only render folder item when dashboard creation is disabled', async () => {
+    render(<CreateNewButton canCreateDashboard={false} canCreateFolder />);
+    const newButton = screen.getByText('New');
+    await userEvent.click(newButton);
+
+    expect(screen.queryByText('New Dashboard')).toBeFalsy();
+    expect(screen.queryByText('Import')).toBeFalsy();
+    expect(screen.getByText('New Folder')).toBeTruthy();
+  });
 });
