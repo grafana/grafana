@@ -158,17 +158,23 @@ This section also displays recently used absolute ranges.
 
 #### Semi-relative time range
 
-You can also use the absolute time range settings to set a semi-relative time range. Semi-relative time range dashboards are useful when you need to monitor the progress of something over time, but you also want to see the entire history from the beginning point in time.
+You can also use the absolute time range settings to set a semi-relative time range. Semi-relative time range dashboards are useful when you need to monitor the progress of something over time, but you also want to see the entire history from a beginning point in time.
 
-Set a semi-relative time range by setting the start time to an absolute timestamp, and the end time to a “now” that is relative to the current time.
-
-For example, to track a problem that happens infrequently, you may want to set a time range with an absolute start time and an end time of `now`, like so:
+Set a semi-relative time range by setting the start time to an absolute timestamp and the end time to a “now” that is relative to the current time. For example:
 
 **Start time:** `2023-05-01 00:00:00`
 
 **End time:** `now`
 
-As time progresses, the plot will automatically and progressively zoom out to show more history and fewer details (since the [interval]({{< relref "../../panels-visualizations/query-transform-data/#query-options" >}}) between data points gets bigger). At the same rate, the importance of high data resolution will decrease, while the relevance of viewing history trends over the entire time period will increase.
+If you wanted to track the progress of something during business hours, you could set a time range that covers the current day, but starting at 8am, like so:
+
+**Start time:** `now/d+8h`
+
+**End time:** `now`
+
+This is equivalent to the **Today so far** time range preset, but it starts at 8:00am instead of 12:00am by appending +8h to the periodic start time.
+
+Using a semi-relative time range, as time progresses, your dashboard will automatically and progressively zoom out to show more history and fewer details. At the same rate, as high data resolution decreases, historical trends over the entire time period will become more clear.
 
 #### Zoom out (Cmd+Z or Ctrl+Z)
 
