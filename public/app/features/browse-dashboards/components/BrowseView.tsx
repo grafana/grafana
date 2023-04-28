@@ -18,10 +18,10 @@ interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
-  showCheckboxes: boolean;
+  canSelect: boolean;
 }
 
-export function BrowseView({ folderUID, width, height, showCheckboxes }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
@@ -50,7 +50,7 @@ export function BrowseView({ folderUID, width, height, showCheckboxes }: BrowseV
 
   return (
     <DashboardsTree
-      showCheckboxes={showCheckboxes}
+      canSelect={canSelect}
       items={flatTree}
       width={width}
       height={height}

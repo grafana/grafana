@@ -23,7 +23,7 @@ interface DashboardsTreeProps {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
-  showCheckboxes: boolean;
+  canSelect: boolean;
 }
 
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
@@ -47,12 +47,12 @@ export function DashboardsTree({
   onFolderClick,
   onAllSelectionChange,
   onItemSelectionChange,
-  showCheckboxes = false,
+  canSelect = false,
 }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
 
   const tableColumns = useMemo(() => {
-    const checkboxColumn: DashboardsTreeColumn | null = showCheckboxes
+    const checkboxColumn: DashboardsTreeColumn | null = canSelect
       ? {
           id: 'checkbox',
           width: 0,
@@ -104,7 +104,7 @@ export function DashboardsTree({
       columns.unshift(checkboxColumn);
     }
     return columns;
-  }, [onItemSelectionChange, onAllSelectionChange, onFolderClick, showCheckboxes]);
+  }, [onItemSelectionChange, onAllSelectionChange, onFolderClick, canSelect]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;

@@ -83,11 +83,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView key={rerender} showCheckboxes={canEditInFolder} width={width} height={height} />
+                <SearchView key={rerender} canSelect={canEditInFolder} width={width} height={height} />
               ) : (
                 <BrowseView
                   key={rerender}
-                  showCheckboxes={canEditInFolder}
+                  canSelect={canEditInFolder}
                   width={width}
                   height={height}
                   folderUID={folderUID}

@@ -12,10 +12,10 @@ import { setAllSelection, setItemSelectionState, useHasSelection } from '../stat
 interface SearchViewProps {
   height: number;
   width: number;
-  showCheckboxes: boolean;
+  canSelect: boolean;
 }
 
-export function SearchView({ width, height, showCheckboxes }: SearchViewProps) {
+export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
   const hasSelection = useHasSelection();
@@ -74,8 +74,8 @@ export function SearchView({ width, height, showCheckboxes }: SearchViewProps) {
 
   const props: SearchResultsProps = {
     response: value,
-    selection: showCheckboxes ? selectionChecker : undefined,
-    selectionToggle: showCheckboxes ? handleItemSelectionChange : undefined,
+    selection: canSelect ? selectionChecker : undefined,
+    selectionToggle: canSelect ? handleItemSelectionChange : undefined,
     clearSelection,
     width: width,
     height: height,

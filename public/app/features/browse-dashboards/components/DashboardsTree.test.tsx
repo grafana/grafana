@@ -32,7 +32,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
-        showCheckboxes
+        canSelect
         items={[dashboard]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -51,7 +51,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('does not render checkbox when disabled', () => {
     render(
       <DashboardsTree
-        showCheckboxes={false}
+        canSelect={false}
         items={[dashboard]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -69,7 +69,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder item', () => {
     render(
       <DashboardsTree
-        showCheckboxes
+        canSelect
         items={[folder]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -87,7 +87,7 @@ describe('browse-dashboards DashboardsTree', () => {
     const handler = jest.fn();
     render(
       <DashboardsTree
-        showCheckboxes
+        canSelect
         items={[folder]}
         selectedItems={selectedItems}
         width={WIDTH}
@@ -106,7 +106,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders empty folder indicators', () => {
     render(
       <DashboardsTree
-        showCheckboxes
+        canSelect
         items={[emptyFolderIndicator]}
         selectedItems={selectedItems}
         width={WIDTH}

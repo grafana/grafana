@@ -11,7 +11,6 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
   // It is possible to have edit permissions for folders and dashboards, without being able to save, hence 'canSave'
   const canEditInFolderFallback = folderDTO ? folderDTO.canSave : contextSrv.hasEditPermissionInFolders;
 
-  // Can move around and create...?
   const canEditInFolder = checkFolderPermission(AccessControlAction.FoldersWrite, canEditInFolderFallback, folderDTO);
   const canCreateFolder = checkFolderPermission(AccessControlAction.FoldersCreate, contextSrv.isEditor);
   const canCreateDashboards = checkFolderPermission(
