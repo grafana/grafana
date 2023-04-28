@@ -22,12 +22,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "database_metrics",
-			Description: "Add Prometheus metrics for database tables",
-			State:       FeatureStateStable,
-			Owner:       hostedGrafanaTeam,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,

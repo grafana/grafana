@@ -519,6 +519,12 @@ type Cfg struct {
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+
+	// DatabaseInstrumentQueries is used to decide if database queries
+	// should be instrumented with metrics, logs and traces.
+	// This needs to be on the global object since its used in the
+	// sqlstore package and HTTP middlewares.
+	DatabaseInstrumentQueries bool
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1188,6 +1194,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.LogConfigSources()
+
+	databaseSection := iniFile.Section("database")
+	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 
 	return nil
 }

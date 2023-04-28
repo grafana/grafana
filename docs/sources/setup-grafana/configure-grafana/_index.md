@@ -404,6 +404,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 This setting applies to `sqlite` only and controls the number of times the system retries a transaction when the database is locked. The default value is `5`.
 
+### instrument_queries
+
+Set to `true` to add metrics and tracing for database queries. The default value is `false`.
+
 <hr />
 
 ## [remote_cache]
