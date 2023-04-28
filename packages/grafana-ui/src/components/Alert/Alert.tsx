@@ -177,12 +177,11 @@ const getStyles = (
       align-items: center;
     `,
     close: css`
-      padding: ${theme.spacing(1, 0)};
+      position: relative;
       color: ${theme.colors.text.secondary};
       background: none;
       display: flex;
-      position: relative;
-      top: -14px;
+      top: -6px;
       right: -14px;
     `,
   };
