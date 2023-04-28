@@ -151,6 +151,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
+  sqlConnectionLimits = {
+    maxOpenConns: 100,
+    maxIdleConns: 100,
+    connMaxLifetime: 14400,
+  };
 
   tokenExpirationDayLimit: undefined;
 
