@@ -193,12 +193,7 @@ export function PanelChrome({
               menu={menu}
               title={title}
               placement="bottom-end"
-              menuButtonClass={cx(
-                { [styles.hiddenMenu]: !isTouchDevice },
-                styles.menuItem,
-                dragClassCancel,
-                showOnHoverClass
-              )}
+              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
               onOpenMenu={onOpenMenu}
             />
           )}
