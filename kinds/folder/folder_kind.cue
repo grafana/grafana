@@ -9,6 +9,7 @@ lineage: seqs: [
 		schemas: [
 			//0.0
 			{
+
 				spec: {
 					// Unique folder id. (will be k8s name)
 					uid: string
@@ -19,6 +20,10 @@ lineage: seqs: [
 					// Description of the folder.
 					description?: string
 				} @cuetsy(kind="interface")
+				//
+				// TODO: 
+				// common metadata will soon support setting the parent folder in the metadata
+				//
 			},
 		]
 	},
