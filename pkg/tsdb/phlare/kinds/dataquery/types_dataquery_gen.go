@@ -35,6 +35,9 @@ type GrafanaPyroscopeDataQuery struct {
 	// Specifies the query label selectors.
 	LabelSelector string `json:"labelSelector"`
 
+	// Sets the maximum number of nodes in the flamegraph.
+	MaxNodes *int64 `json:"maxNodes,omitempty"`
+
 	// Specifies the type of profile to query.
 	ProfileTypeId string `json:"profileTypeId"`
 

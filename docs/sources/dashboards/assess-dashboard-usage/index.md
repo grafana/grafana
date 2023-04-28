@@ -45,9 +45,9 @@ For every dashboard and data source, you can access usage information.
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-To see dashboard usage information, click **Dashboard insights** in the top bar.
+To see dashboard usage information, click the dashboard insights icon in the header.
 
-{{< figure src="/static/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 Dashboard insights show the following information:
 
@@ -55,6 +55,12 @@ Dashboard insights show the following information:
 - **Users & activity:** The daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
+
+{{% admonition type="Note" %}}
+
+If you've enabled the `publicDashboards` feature toggle, you'll also see a Public dashboards tab in your analytics.
+
+{{% /admonition %}}
 
 ### Data source insights
 

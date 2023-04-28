@@ -301,7 +301,7 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    // is showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
+    // if showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
     if (
       config.showSuccessAlert === undefined &&
       (config.method === 'GET' || isDataQuery(config.url) || !isLocalUrl(config.url))

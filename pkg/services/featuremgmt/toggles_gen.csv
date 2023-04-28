@@ -1,7 +1,6 @@
 Name,State,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
 trimDefaults,beta,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,stable,@grafana/grafana-as-code,false,false,false,false
-database_metrics,stable,@grafana/hosted-grafana-team,false,false,false,false
 live-service-web-worker,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 panelTitleSearch,beta,@grafana/grafana-app-platform-squad,false,false,false,false
@@ -12,7 +11,6 @@ lokiLive,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
-k8s,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
 newTraceViewHeader,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false

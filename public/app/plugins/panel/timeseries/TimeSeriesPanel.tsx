@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps } from '@grafana/data';
+import { Field, PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -14,6 +14,7 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
+import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<PanelOptions> {}
@@ -39,15 +40,27 @@ export const TimeSeriesPanel = ({
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
+  const suggestions = useMemo(() => {
+    if (data.series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+      const s = getPrepareTimeseriesSuggestion(id);
+      return {
+        message: 'Long data must be converted to wide',
+        suggestions: s ? [s] : undefined,
+      };
+    }
+    return undefined;
+  }, [data.series, id]);
 
-  if (!frames) {
+  if (!frames || suggestions) {
     return (
       <PanelDataErrorView
         panelId={id}
+        message={suggestions?.message}
         fieldConfig={fieldConfig}
         data={data}
         needsTimeField={true}
         needsNumberField={true}
+        suggestions={suggestions?.suggestions}
       />
     );
   }

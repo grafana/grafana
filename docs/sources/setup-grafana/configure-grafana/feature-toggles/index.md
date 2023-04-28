@@ -22,7 +22,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | Feature toggle name                 | Description                                                                                                                                                                                         | Enabled by default |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
-| `database_metrics`                  | Add Prometheus metrics for database tables                                                                                                                                                          |                    |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                                                                                                                               | Yes                |
 | `dataConnectionsConsole`            | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
@@ -119,6 +118,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name   | Description                                                    |
 | --------------------- | -------------------------------------------------------------- |
-| `k8s`                 | Explore native k8s integrations                                |
 | `entityStore`         | SQL-based entity store (requires storage flag also)            |
 | `externalServiceAuth` | Starts an OAuth2 authentication provider for external services |
