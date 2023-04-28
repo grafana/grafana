@@ -379,7 +379,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			return nil, err
 		}
 
-		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl)
+		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl, nil)
 		frames = append(frames, &frameWithLink)
 	}
 

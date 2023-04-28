@@ -13,42 +13,50 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import React, { memo, Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Switch, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
 import { convertTimeFilter } from '../utils/filter-spans';
 
 export type TracePageSearchBarProps = {
   search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   spanFilterMatches: Set<string> | undefined;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
   reset: () => void;
+  totalSpans: number;
 };
 
 export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
   const {
     search,
     spanFilterMatches,
-    focusedSpanIdForSearch,
+    showSpanFilterMatchesOnly,
+    setShowSpanFilterMatchesOnly,
     setFocusedSpanIdForSearch,
     datasourceType,
     reset,
-    showSpanFilterMatchesOnly,
-    setShowSpanFilterMatchesOnly,
+    totalSpans,
   } = props;
+  const [currentSpanIndex, setCurrentSpanIndex] = useState(-1);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
+    setCurrentSpanIndex(-1);
     setFocusedSpanIdForSearch('');
-  }, [search, setFocusedSpanIdForSearch]);
+  }, [setFocusedSpanIdForSearch, spanFilterMatches]);
+
+  useEffect(() => {
+    if (spanFilterMatches) {
+      const spanMatches = Array.from(spanFilterMatches!);
+      setFocusedSpanIdForSearch(spanMatches[currentSpanIndex]);
+    }
+  }, [currentSpanIndex, setFocusedSpanIdForSearch, spanFilterMatches]);
 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
@@ -57,17 +65,14 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
       direction: 'next',
     });
 
-    const spanMatches = Array.from(spanFilterMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch);
-
     // new query || at end, go to start
-    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-      setFocusedSpanIdForSearch(spanMatches[0]);
+    if (currentSpanIndex === -1 || (spanFilterMatches && currentSpanIndex === spanFilterMatches.size - 1)) {
+      setCurrentSpanIndex(0);
       return;
     }
 
     // get next
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setCurrentSpanIndex(currentSpanIndex + 1);
   };
 
   const prevResult = () => {
@@ -77,19 +82,17 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
       direction: 'prev',
     });
 
-    const spanMatches = Array.from(spanFilterMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch);
-
     // new query || at start, go to end
-    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+    if (spanFilterMatches && (currentSpanIndex === -1 || currentSpanIndex === 0)) {
+      setCurrentSpanIndex(spanFilterMatches.size - 1);
       return;
     }
 
     // get prev
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setCurrentSpanIndex(currentSpanIndex - 1);
   };
 
+  const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
   const resetEnabled = useMemo(() => {
     return (
       (search.serviceName && search.serviceName !== '') ||
@@ -102,7 +105,26 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
       })
     );
   }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
-  const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
+
+  const amountText = spanFilterMatches?.size === 1 ? 'match' : 'matches';
+  const matches =
+    spanFilterMatches?.size === 0 ? (
+      <>
+        <span>0 matches</span>
+        <Tooltip
+          content="There are 0 span matches for the filters selected. Please try removing some of the selected filters."
+          placement="left"
+        >
+          <span className={styles.matchesTooltip}>
+            <Icon name="info-circle" size="lg" />
+          </span>
+        </Tooltip>
+      </>
+    ) : currentSpanIndex !== -1 ? (
+      `${currentSpanIndex + 1}/${spanFilterMatches?.size} ${amountText}`
+    ) : (
+      `${spanFilterMatches?.size} ${amountText}`
+    );
 
   return (
     <div className={styles.searchBar}>
@@ -129,6 +151,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
             </div>
           </div>
           <div className={styles.nextPrevButtons}>
+            <span className={styles.matches}>{spanFilterMatches ? matches : `${totalSpans} spans`}</span>
             <Button
               variant="secondary"
               disabled={!buttonEnabled}
@@ -186,6 +209,13 @@ export const getStyles = () => {
       button {
         margin-left: 8px;
       }
+    `,
+    matches: css`
+      margin-right: 5px;
+    `,
+    matchesTooltip: css`
+      color: #aaa;
+      margin: -2px 0 0 10px;
     `,
   };
 };

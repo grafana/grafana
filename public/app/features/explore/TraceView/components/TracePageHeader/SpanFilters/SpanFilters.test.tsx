@@ -45,10 +45,9 @@ describe('SpanFilters', () => {
       setShowSpanFilters: jest.fn(),
       showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),
-      search: search,
-      setSearch: setSearch,
+      search,
+      setSearch,
       spanFilterMatches: undefined,
-      focusedSpanIdForSearch: '',
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: 'tempo',
     };

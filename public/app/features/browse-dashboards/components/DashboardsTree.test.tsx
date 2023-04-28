@@ -21,6 +21,7 @@ describe('browse-dashboards DashboardsTree', () => {
   const dashboard = wellFormedDashboard(2);
   const noop = () => {};
   const selectedItems = {
+    $all: false,
     folder: {},
     dashboard: {},
     panel: {},
@@ -35,6 +36,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
@@ -51,6 +53,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText(folder.item.title)).toBeInTheDocument();
@@ -67,6 +70,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={handler}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     const folderButton = screen.getByLabelText('Collapse folder');
@@ -84,6 +88,7 @@ describe('browse-dashboards DashboardsTree', () => {
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText('Empty folder')).toBeInTheDocument();

@@ -5404,7 +5404,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -5655,7 +5655,7 @@
           "folders"
         ],
         "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
-        "operationId": "getFolderChildrenCounts",
+        "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
             "type": "string",
@@ -5666,7 +5666,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getFolderChildrenCountsResponse"
+            "$ref": "#/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -13091,6 +13091,13 @@
         }
       }
     },
+    "DescendantCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
     "DiscordConfig": {
       "type": "object",
       "title": "DiscordConfig configures notifications via Discord.",
@@ -13592,13 +13599,6 @@
           "type": "integer",
           "format": "int64"
         }
-      }
-    },
-    "FolderChildrenCounts": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "integer",
-        "format": "int64"
       }
     },
     "FolderSearchHit": {
@@ -20341,10 +20341,10 @@
         "$ref": "#/definitions/DataSourceList"
       }
     },
-    "getFolderChildrenCountsResponse": {
+    "getFolderDescendantCountsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/FolderChildrenCounts"
+        "$ref": "#/definitions/DescendantCounts"
       }
     },
     "getFolderPermissionListResponse": {

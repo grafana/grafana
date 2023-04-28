@@ -3,6 +3,7 @@ import React, { RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
+  CoreApp,
   DataFrame,
   DataLink,
   DataSourceApi,
@@ -76,7 +77,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
 
   const {
     detailStates,
@@ -159,6 +160,7 @@ export function TraceView(props: Props) {
             <>
               <NewTracePageHeader
                 trace={traceProp}
+                data={props.dataFrames[0]}
                 timeZone={timeZone}
                 search={newTraceViewHeaderSearch}
                 setSearch={setNewTraceViewHeaderSearch}
@@ -166,11 +168,11 @@ export function TraceView(props: Props) {
                 setShowSpanFilters={setShowSpanFilters}
                 showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
                 setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-                focusedSpanIdForSearch={newTraceViewHeaderFocusedSpanIdForSearch}
                 setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
                 spanFilterMatches={spanFilterMatches}
                 datasourceType={datasourceType}
                 setHeaderHeight={setHeaderHeight}
+                app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
               />
               <SpanGraph
                 trace={traceProp}
