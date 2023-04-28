@@ -1376,9 +1376,12 @@ function migratePhlareIdToGrafanaPyroscope(panel: PanelModel) {
     panel.datasource.type = 'grafana-pyroscope';
   }
 
-  for (const target of panel.targets) {
-    if (target.datasource?.type === 'phlare') {
-      target.datasource.type = 'grafana-pyroscope';
+  // Even though targets are not optional, because we use any upstream we have to check it.
+  if (panel.targets) {
+    for (const target of panel.targets) {
+      if (target.datasource?.type === 'phlare') {
+        target.datasource.type = 'grafana-pyroscope';
+      }
     }
   }
 
