@@ -1,3 +1,5 @@
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
@@ -6,7 +8,9 @@ import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { Action, MetricsModalMetadata, MetricsModalState } from './state';
+import { MetricsModalMetadata, MetricsModalState, stateSlice } from './state';
+
+const { setFilteredMetricCount } = stateSlice.actions;
 
 export async function getMetadata(
   datasource: PrometheusDatasource,
@@ -67,14 +71,11 @@ export async function getMetadata(
 /**
  * The filtered and paginated metrics displayed in the modal
  * */
-export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispatch<Action>) {
+export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispatch<AnyAction>) {
   const filteredSorted: MetricsData = filterMetrics(state);
 
   if (!state.isLoading && state.filteredMetricCount !== filteredSorted.length) {
-    dispatch({
-      type: 'setFilteredMetricCount',
-      payload: filteredSorted.length,
-    });
+    dispatch(setFilteredMetricCount(filteredSorted.length));
   }
 
   return sliceMetrics(filteredSorted, state.pageNum, state.resultsPerPage);

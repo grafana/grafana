@@ -27,8 +27,9 @@ import {
   DEFAULT_RESULTS_PER_PAGE,
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
-  MetricsModalReducer,
+  // MetricsModalReducer,
   MetricsModalMetadata,
+  stateSlice,
 } from './state/state';
 import { getStyles } from './styles';
 import { PromFilterOption } from './types';
@@ -43,10 +44,30 @@ export type MetricsModalProps = {
   initialMetrics: string[];
 };
 
+// actions
+const {
+  setIsLoading,
+  setMetadata,
+  filterMetricsBackend,
+  setResultsPerPage,
+  setPageNum,
+  setFuzzySearchQuery,
+  setNameHaystack,
+  setMetaHaystack,
+  setFullMetaSearch,
+  setExcludeNullMetadata,
+  setSelectedTypes,
+  setLetterSearch,
+  setUseBackend,
+  setSelectedIdx,
+  setDisableTextWrap,
+  showAdditionalSettings,
+} = stateSlice.actions;
+
 export const MetricsModal = (props: MetricsModalProps) => {
   const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
 
-  const [state, dispatch] = useReducer(MetricsModalReducer, initialState());
+  const [state, dispatch] = useReducer(stateSlice.reducer, initialState());
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
@@ -56,16 +77,12 @@ export const MetricsModal = (props: MetricsModalProps) => {
    */
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
-    dispatch({
-      type: 'setIsLoading',
-      payload: true,
-    });
+    dispatch(setIsLoading(true));
 
     const data: MetricsModalMetadata = await getMetadata(datasource, query, initialMetrics);
 
-    dispatch({
-      type: 'setMetadata',
-      payload: {
+    dispatch(
+      setMetadata({
         isLoading: false,
         hasMetadata: data.hasMetadata,
         metrics: data.metrics,
@@ -73,8 +90,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
         nameHaystackDictionary: data.nameHaystackDictionary,
         totalMetricCount: data.metrics.length,
         filteredMetricCount: data.metrics.length,
-      },
-    });
+      })
+    );
   }, [query, datasource, initialMetrics]);
 
   useEffect(() => {
@@ -95,24 +112,28 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const debouncedBackendSearch = useMemo(
     () =>
       debounce(async (metricText: string) => {
-        dispatch({
-          type: 'setIsLoading',
-          payload: true,
-        });
+        dispatch(setIsLoading(true));
 
         const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource);
 
-        dispatch({
-          type: 'filterMetricsBackend',
-          payload: {
+        dispatch(
+          filterMetricsBackend({
             metrics: metrics,
             filteredMetricCount: metrics.length,
             isLoading: false,
-          },
-        });
+          })
+        );
       }, datasource.getDebounceTimeInMilliseconds()),
     [datasource, query]
   );
+
+  function fuzzyNameDispatch(haystackData: string[][]) {
+    dispatch(setNameHaystack(haystackData));
+  }
+
+  function fuzzyMetaDispatch(haystackData: string[][]) {
+    dispatch(setMetaHaystack(haystackData));
+  }
 
   function fuzzySearchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
@@ -124,18 +145,18 @@ export const MetricsModal = (props: MetricsModalProps) => {
       // search either the names or all metadata
       // fuzzy search go!
       if (fullMetaSearchVal) {
-        debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, 'setMetaHaystack', dispatch);
+        debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, fuzzyMetaDispatch);
       } else {
-        debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, 'setNameHaystack', dispatch);
+        debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, fuzzyNameDispatch);
       }
     }
   }
 
   function keyFunction(e: React.KeyboardEvent<HTMLElement>) {
     if (e.code === 'ArrowDown' && state.selectedIdx < state.resultsPerPage - 1) {
-      dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx + 1 });
+      dispatch(setSelectedIdx(state.selectedIdx + 1));
     } else if (e.code === 'ArrowUp' && state.selectedIdx > 0) {
-      dispatch({ type: 'setSelectedIdx', payload: state.selectedIdx - 1 });
+      dispatch(setSelectedIdx(state.selectedIdx - 1));
     } else if (e.code === 'Enter') {
       const metric = displayedMetrics(state, dispatch)[state.selectedIdx];
 
@@ -172,10 +193,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
               value={state.fuzzySearchQuery}
               onInput={(e) => {
                 const value = e.currentTarget.value ?? '';
-                dispatch({
-                  type: 'setFuzzySearchQuery',
-                  payload: value,
-                });
+                dispatch(setFuzzySearchQuery(value));
 
                 fuzzySearchCallback(value, state.fullMetaSearch);
               }}
@@ -198,10 +216,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 // *** Filter by type
                 // *** always include metrics without metadata but label it as unknown type
                 // Consider tabs select instead of actual select or multi select
-                dispatch({
-                  type: 'setSelectedTypes',
-                  payload: v,
-                });
+                dispatch(setSelectedTypes(v));
               }}
             />
           </EditorField>
@@ -219,15 +234,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 disableTextWrap={state.disableTextWrap}
                 updateLetterSearch={(letter: string) => {
                   if (state.letterSearch === letter) {
-                    dispatch({
-                      type: 'setLetterSearch',
-                      payload: '',
-                    });
+                    dispatch(setLetterSearch(''));
                   } else {
-                    dispatch({
-                      type: 'setLetterSearch',
-                      payload: letter,
-                    });
+                    dispatch(setLetterSearch(letter));
                   }
                 }}
                 letterSearch={state.letterSearch}
@@ -236,7 +245,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 variant="secondary"
                 fill="text"
                 size="sm"
-                onClick={() => dispatch({ type: 'showAdditionalSettings', payload: null })}
+                onClick={() => dispatch(showAdditionalSettings())}
                 onKeyDown={(e) => {
                   keyFunction(e);
                 }}
@@ -254,10 +263,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     disabled={state.useBackend || !state.hasMetadata}
                     onChange={() => {
                       const newVal = !state.fullMetaSearch;
-                      dispatch({
-                        type: 'setFullMetaSearch',
-                        payload: newVal,
-                      });
+                      dispatch(setFullMetaSearch(newVal));
 
                       fuzzySearchCallback(state.fuzzySearchQuery, newVal);
                     }}
@@ -272,10 +278,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     value={state.excludeNullMetadata}
                     disabled={state.useBackend || !state.hasMetadata}
                     onChange={() => {
-                      dispatch({
-                        type: 'setExcludeNullMetadata',
-                        payload: !state.excludeNullMetadata,
-                      });
+                      dispatch(setExcludeNullMetadata(!state.excludeNullMetadata));
                     }}
                     onKeyDown={(e) => {
                       keyFunction(e);
@@ -286,7 +289,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 <div className={styles.selectItem}>
                   <Switch
                     value={state.disableTextWrap}
-                    onChange={() => dispatch({ type: 'setDisableTextWrap', payload: null })}
+                    onChange={() => dispatch(setDisableTextWrap())}
                     onKeyDown={(e) => {
                       keyFunction(e);
                     }}
@@ -299,10 +302,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     value={state.useBackend}
                     onChange={() => {
                       const newVal = !state.useBackend;
-                      dispatch({
-                        type: 'setUseBackend',
-                        payload: newVal,
-                      });
+                      dispatch(setUseBackend(newVal));
                       if (newVal === false) {
                         // rebuild the metrics metadata if we turn off useBackend
                         updateMetricsMetadata();
@@ -363,22 +363,17 @@ export const MetricsModal = (props: MetricsModalProps) => {
                   return;
                 }
 
-                dispatch({
-                  type: 'setResultsPerPage',
-                  payload: value,
-                });
+                dispatch(setResultsPerPage(value));
               }}
             />
           </InlineField>
           <Pagination
             currentPage={state.pageNum ?? 1}
             numberOfPages={calculatePageList(state).length}
-            onNavigate={(val: number) =>
-              dispatch({
-                type: 'setPageNum',
-                payload: val ?? 1,
-              })
-            }
+            onNavigate={(val: number) => {
+              const page = val ?? 1;
+              dispatch(setPageNum(page));
+            }}
           />
         </div>
         <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />

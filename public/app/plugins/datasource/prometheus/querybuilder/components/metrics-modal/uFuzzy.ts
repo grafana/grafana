@@ -1,8 +1,6 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { debounce as debounceLodash } from 'lodash';
 
-import { Action } from './state/state';
-
 const uf = new uFuzzy({
   intraMode: 1,
   intraIns: 1,
@@ -11,12 +9,7 @@ const uf = new uFuzzy({
   intraDel: 1,
 });
 
-export function fuzzySearch(
-  haystack: string[],
-  query: string,
-  type: 'setMetaHaystack' | 'setNameHaystack',
-  dispatcher: React.Dispatch<Action>
-) {
+export function fuzzySearch(haystack: string[], query: string, dispatcher: (data: string[][]) => void) {
   const [idxs, info, order] = uf.search(haystack, query, false, 1e5);
 
   let haystackOrder: string[] = [];
@@ -43,12 +36,7 @@ export function fuzzySearch(
       haystackOrder.push(haystack[info.idx[infoIdx]]);
     }
 
-    const action = {
-      type: type,
-      payload: [haystackOrder, [...matchesSet]],
-    };
-
-    dispatcher(action);
+    dispatcher([haystackOrder, [...matchesSet]]);
   }
 }
 

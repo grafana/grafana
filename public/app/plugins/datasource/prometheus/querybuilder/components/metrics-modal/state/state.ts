@@ -1,3 +1,5 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { SelectableValue } from '@grafana/data';
 
 import { HaystackDictionary, MetricsData } from '../types';
@@ -5,114 +7,88 @@ import { HaystackDictionary, MetricsData } from '../types';
 export const DEFAULT_RESULTS_PER_PAGE = 100;
 export const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
-/**
- * The reducer function that uses a switch statement to handle the Metrics Modal actions
- * @param state
- * @param action
- * @returns
- */
-export function MetricsModalReducer(state: MetricsModalState, action: Action): MetricsModalState {
-  const { type, payload } = action;
-  switch (type) {
-    case 'filterMetricsBackend':
-      return {
-        ...state,
-        ...payload,
-      };
-    case 'setMetadata':
-      return {
-        ...state,
-        ...payload,
-      };
-    case 'setIsLoading':
-      return {
-        ...state,
-        isLoading: payload,
-      };
-    case 'setFilteredMetricCount':
-      return {
-        ...state,
-        filteredMetricCount: payload,
-      };
-    case 'setResultsPerPage':
-      return {
-        ...state,
-        resultsPerPage: payload,
-      };
-    case 'setPageNum':
-      return {
-        ...state,
-        pageNum: payload,
-      };
-    case 'setFuzzySearchQuery':
-      return {
-        ...state,
-        fuzzySearchQuery: payload,
-        pageNum: 1,
-        letterSearch: '',
-        selectedIdx: 0,
-      };
-    case 'setNameHaystack':
-      return {
-        ...state,
-        nameHaystackOrder: payload[0],
-        nameHaystackMatches: payload[1],
-      };
-    case 'setMetaHaystack':
-      return {
-        ...state,
-        metaHaystackOrder: payload[0],
-        metaHaystackMatches: payload[1],
-      };
-    case 'setFullMetaSearch':
-      return {
-        ...state,
-        fullMetaSearch: payload,
-        pageNum: 1,
-      };
-    case 'setExcludeNullMetadata':
-      return {
-        ...state,
-        excludeNullMetadata: payload,
-        pageNum: 1,
-      };
-    case 'setSelectedTypes':
-      return {
-        ...state,
-        selectedTypes: payload,
-        pageNum: 1,
-      };
-    case 'setLetterSearch':
-      return {
-        ...state,
-        letterSearch: payload,
-        pageNum: 1,
-      };
-    case 'setUseBackend':
-      return {
-        ...state,
-        useBackend: payload,
-        pageNum: 1,
-      };
-    case 'setDisableTextWrap':
-      return {
-        ...state,
-        disableTextWrap: !state.disableTextWrap,
-      };
-    case 'setSelectedIdx':
-      return {
-        ...state,
-        selectedIdx: payload,
-      };
-    case 'showAdditionalSettings':
-      return {
-        ...state,
-        showAdditionalSettings: !state.showAdditionalSettings,
-      };
-    default:
-      return state;
-  }
-}
+export const stateSlice = createSlice({
+  name: 'metrics-modal-state',
+  initialState: initialState(),
+  reducers: {
+    filterMetricsBackend: (
+      state,
+      action: PayloadAction<{
+        metrics: MetricsData;
+        filteredMetricCount: number;
+        isLoading: boolean;
+      }>
+    ) => {
+      state.metrics = action.payload.metrics;
+      state.filteredMetricCount = action.payload.filteredMetricCount;
+      state.isLoading = action.payload.isLoading;
+    },
+    setMetadata: (state, action: PayloadAction<MetricsModalMetadata>) => {
+      state.isLoading = action.payload.isLoading;
+      state.metrics = action.payload.metrics;
+      state.hasMetadata = action.payload.hasMetadata;
+      state.metaHaystackDictionary = action.payload.metaHaystackDictionary;
+      state.nameHaystackDictionary = action.payload.nameHaystackDictionary;
+      state.totalMetricCount = action.payload.totalMetricCount;
+      state.filteredMetricCount = action.payload.filteredMetricCount;
+    },
+    setIsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
+    },
+    setFilteredMetricCount: (state, action: PayloadAction<number>) => {
+      state.filteredMetricCount = action.payload;
+    },
+    setResultsPerPage: (state, action: PayloadAction<number>) => {
+      state.resultsPerPage = action.payload;
+    },
+    setPageNum: (state, action: PayloadAction<number>) => {
+      state.pageNum = action.payload;
+    },
+    setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
+      state.fuzzySearchQuery = action.payload;
+      state.pageNum = 1;
+      state.letterSearch = '';
+      state.selectedIdx = 0;
+    },
+    setNameHaystack: (state, action: PayloadAction<string[][]>) => {
+      state.nameHaystackOrder = action.payload[0];
+      state.nameHaystackMatches = action.payload[1];
+    },
+    setMetaHaystack: (state, action: PayloadAction<string[][]>) => {
+      state.metaHaystackOrder = action.payload[0];
+      state.metaHaystackMatches = action.payload[1];
+    },
+    setFullMetaSearch: (state, action: PayloadAction<boolean>) => {
+      state.fullMetaSearch = action.payload;
+      state.pageNum = 1;
+    },
+    setExcludeNullMetadata: (state, action: PayloadAction<boolean>) => {
+      state.excludeNullMetadata = action.payload;
+      state.pageNum = 1;
+    },
+    setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
+      state.selectedTypes = action.payload;
+      state.pageNum = 1;
+    },
+    setLetterSearch: (state, action: PayloadAction<string>) => {
+      state.letterSearch = action.payload;
+      state.pageNum = 1;
+    },
+    setUseBackend: (state, action: PayloadAction<boolean>) => {
+      state.useBackend = action.payload;
+      state.pageNum = 1;
+    },
+    setSelectedIdx: (state, action: PayloadAction<number>) => {
+      state.selectedIdx = action.payload;
+    },
+    setDisableTextWrap: (state) => {
+      state.disableTextWrap = !state.disableTextWrap;
+    },
+    showAdditionalSettings: (state) => {
+      state.showAdditionalSettings = !state.showAdditionalSettings;
+    },
+  },
+});
 
 /**
  * Initial state for the Metrics Modal
@@ -211,35 +187,3 @@ export type MetricsModalMetadata = {
   totalMetricCount: number;
   filteredMetricCount: number | null;
 };
-
-/**
- * An interface for Metrics Modal actions with a discriminated union type
- */
-export type Action =
-  | { type: 'setIsLoading'; payload: boolean }
-  | {
-      type: 'setMetadata';
-      payload: MetricsModalMetadata;
-    }
-  | {
-      type: 'filterMetricsBackend';
-      payload: {
-        metrics: MetricsData;
-        filteredMetricCount: number;
-        isLoading: boolean;
-      };
-    }
-  | { type: 'setFilteredMetricCount'; payload: number }
-  | { type: 'setResultsPerPage'; payload: number }
-  | { type: 'setPageNum'; payload: number }
-  | { type: 'setFuzzySearchQuery'; payload: string }
-  | { type: 'setNameHaystack'; payload: string[][] }
-  | { type: 'setMetaHaystack'; payload: string[][] }
-  | { type: 'setFullMetaSearch'; payload: boolean }
-  | { type: 'setExcludeNullMetadata'; payload: boolean }
-  | { type: 'setSelectedTypes'; payload: Array<SelectableValue<string>> }
-  | { type: 'setLetterSearch'; payload: string }
-  | { type: 'setUseBackend'; payload: boolean }
-  | { type: 'setSelectedIdx'; payload: number }
-  | { type: 'setDisableTextWrap'; payload: null }
-  | { type: 'showAdditionalSettings'; payload: null };
