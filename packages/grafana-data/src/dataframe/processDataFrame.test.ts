@@ -4,6 +4,7 @@ import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { MutableDataFrame } from './MutableDataFrame';
 import {
+  createDataFrame,
   guessFieldTypeFromValue,
   guessFieldTypes,
   isDataFrame,
@@ -130,7 +131,7 @@ describe('toDataFrame', () => {
   });
 
   it('Guess Column Types from series', () => {
-    const series = new MutableDataFrame({
+    const series = createDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },
         { name: 'B (strings)', values: [null, 'Hello'] },
