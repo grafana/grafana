@@ -18,9 +18,10 @@ interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
+  canSelect: boolean;
 }
 
-export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
@@ -49,6 +50,7 @@ export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
 
   return (
     <DashboardsTree
+      canSelect={canSelect}
       items={flatTree}
       width={width}
       height={height}

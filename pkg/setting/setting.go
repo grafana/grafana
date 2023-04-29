@@ -238,6 +238,7 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
+	PluginForcePublicKeyDownload     bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -1591,7 +1592,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
