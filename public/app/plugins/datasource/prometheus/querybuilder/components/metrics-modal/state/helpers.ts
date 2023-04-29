@@ -7,12 +7,12 @@ import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { Action, MetricEncyclopediaMetadata, MetricEncyclopediaState } from './state';
+import { Action, MetricsModalMetadata, MetricsModalState } from './state';
 
 export async function getMetadata(
   datasource: PrometheusDatasource,
   query: PromVisualQuery
-): Promise<MetricEncyclopediaMetadata> {
+): Promise<MetricsModalMetadata> {
   // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   if (!datasource.languageProvider.metricsMetadata) {
@@ -75,7 +75,7 @@ export async function getMetadata(
 /**
  * The filtered and paginated metrics displayed in the modal
  * */
-export function displayedMetrics(state: MetricEncyclopediaState, dispatch: React.Dispatch<Action>) {
+export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispatch<Action>) {
   const filteredSorted: MetricsData = filterMetrics(state);
 
   if (!state.isLoading && state.filteredMetricCount !== filteredSorted.length) {
@@ -94,7 +94,7 @@ export function displayedMetrics(state: MetricEncyclopediaState, dispatch: React
  * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
  * @returns
  */
-export function filterMetrics(state: MetricEncyclopediaState, skipLetterSearch?: boolean): MetricsData {
+export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boolean): MetricsData {
   let filteredMetrics: MetricsData = state.metrics;
 
   if (state.fuzzySearchQuery && !state.useBackend) {
@@ -133,7 +133,7 @@ export function filterMetrics(state: MetricEncyclopediaState, skipLetterSearch?:
   return filteredMetrics;
 }
 
-export function calculatePageList(state: MetricEncyclopediaState) {
+export function calculatePageList(state: MetricsModalState) {
   if (!state.metrics.length) {
     return [];
   }

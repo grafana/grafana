@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
-import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
+import { MetricsModal, testIds } from './MetricsModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-describe('MetricEncyclopediaModal', () => {
+describe('MetricsModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
@@ -271,7 +271,7 @@ function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) 
   const props = createProps(query, datasource);
 
   // render the modal only
-  const { container } = render(<MetricEncyclopediaModal {...props} />);
+  const { container } = render(<MetricsModal {...props} />);
 
   return container;
 }

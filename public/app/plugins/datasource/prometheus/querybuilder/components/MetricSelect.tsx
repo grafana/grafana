@@ -24,7 +24,7 @@ export interface Props {
   onGetMetrics: () => Promise<SelectableValue[]>;
   datasource: PrometheusDatasource;
   labelsFilters: QueryBuilderLabelFilter[];
-  openMetricEncyclopedia: () => void;
+  openMetricsModal: () => void;
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
@@ -38,7 +38,7 @@ export function MetricSelect({
   onGetMetrics,
   labelsFilters,
   metricLookupDisabled,
-  openMetricEncyclopedia,
+  openMetricsModal,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
@@ -141,7 +141,7 @@ export function MetricSelect({
   const CustomOption = (props: any) => {
     const option = props.data;
 
-    if (option.value === 'MetricEncyclopedia') {
+    if (option.value === 'BrowseMetrics') {
       const isFocused = props.isFocused ? styles.focus : '';
 
       return (
@@ -150,7 +150,7 @@ export function MetricSelect({
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
-              openMetricEncyclopedia();
+              openMetricsModal();
             }
           }}
         >
@@ -160,7 +160,7 @@ export function MetricSelect({
                 <div>{option.label}</div>
                 <div className={styles.customOptionDesc}>{option.description}</div>
               </div>
-              <Button variant="primary" fill="outline" size="sm" onClick={() => openMetricEncyclopedia()} icon="book">
+              <Button variant="primary" fill="outline" size="sm" onClick={() => openMetricsModal()} icon="book">
                 Open
               </Button>
             </div>
@@ -195,14 +195,14 @@ export function MetricSelect({
             }
 
             if (config.featureToggles.prometheusMetricEncyclopedia) {
-              const metricEncyclopediaOption: SelectableValue[] = [
+              const metricsModalOption: SelectableValue[] = [
                 {
-                  value: 'MetricEncyclopedia',
-                  label: 'Metric Encyclopedia',
+                  value: 'BrowseMetrics',
+                  label: 'Browse metrics',
                   description: 'Browse and filter metrics and metadata with a fuzzy search',
                 },
               ];
-              setState({ metrics: [...metricEncyclopediaOption, ...metrics], isLoading: undefined });
+              setState({ metrics: [...metricsModalOption, ...metrics], isLoading: undefined });
             } else {
               setState({ metrics, isLoading: undefined });
             }
@@ -213,8 +213,8 @@ export function MetricSelect({
           onChange={({ value }) => {
             if (value) {
               // if there is no metric and the m.e. is enabled, open the modal
-              if (prometheusMetricEncyclopedia && value === 'MetricEncyclopedia') {
-                openMetricEncyclopedia();
+              if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
+                openMetricsModal();
               } else {
                 onChange({ ...query, metric: value });
               }

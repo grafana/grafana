@@ -8,7 +8,7 @@ import { useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
-import { MetricEncyclopediaState } from './state/state';
+import { MetricsModalState } from './state/state';
 import { MetricData, MetricsData } from './types';
 
 type ResultsTableProps = {
@@ -16,7 +16,7 @@ type ResultsTableProps = {
   onChange: (query: PromVisualQuery) => void;
   onClose: () => void;
   query: PromVisualQuery;
-  state: MetricEncyclopediaState;
+  state: MetricsModalState;
   selectedIdx: number;
   disableTextWrap: boolean;
 };

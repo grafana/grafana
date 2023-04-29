@@ -9,8 +9,8 @@ import { InlineField, Switch, Input, Modal, MultiSelect, Spinner, useTheme2, Pag
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
-import { FeedbackLink } from '.././FeedbackLink';
 
+import { FeedbackLink } from './FeedbackLink';
 import { LetterSearch } from './LetterSearch';
 import { ResultsTable } from './ResultsTable';
 import {
@@ -27,14 +27,14 @@ import {
   DEFAULT_RESULTS_PER_PAGE,
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
-  MetricEncyclopediaReducer,
-  MetricEncyclopediaMetadata,
+  MetricsModalReducer,
+  MetricsModalMetadata,
 } from './state/state';
 import { getStyles } from './styles';
 import { PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
-export type MetricEncyclopediaProps = {
+export type MetricsModalProps = {
   datasource: PrometheusDatasource;
   isOpen: boolean;
   query: PromVisualQuery;
@@ -42,10 +42,10 @@ export type MetricEncyclopediaProps = {
   onChange: (query: PromVisualQuery) => void;
 };
 
-export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
+export const MetricsModal = (props: MetricsModalProps) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
-  const [state, dispatch] = useReducer(MetricEncyclopediaReducer, initialState());
+  const [state, dispatch] = useReducer(MetricsModalReducer, initialState());
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
@@ -60,7 +60,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       payload: true,
     });
 
-    const data: MetricEncyclopediaMetadata = await getMetadata(datasource, query);
+    const data: MetricsModalMetadata = await getMetadata(datasource, query);
 
     dispatch({
       type: 'setMetadata',
@@ -158,7 +158,7 @@ export const MetricEncyclopediaModal = (props: MetricEncyclopediaProps) => {
       isOpen={isOpen}
       title="Browse metrics"
       onDismiss={onClose}
-      aria-label="Metric Encyclopedia"
+      aria-label="Browse metrics"
       className={styles.modal}
     >
       <div className={styles.inputWrapper}>

@@ -6,12 +6,12 @@ export const DEFAULT_RESULTS_PER_PAGE = 100;
 export const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 /**
- * The reducer function that uses a switch statement to handle the Metric Encyclopedia actions
+ * The reducer function that uses a switch statement to handle the Metrics Modal actions
  * @param state
  * @param action
  * @returns
  */
-export function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action: Action): MetricEncyclopediaState {
+export function MetricsModalReducer(state: MetricsModalState, action: Action): MetricsModalState {
   const { type, payload } = action;
   switch (type) {
     case 'filterMetricsBackend':
@@ -115,10 +115,10 @@ export function MetricEncyclopediaReducer(state: MetricEncyclopediaState, action
 }
 
 /**
- * Initial state for the Metric Encyclopedia
+ * Initial state for the Metrics Modal
  * @returns
  */
-export function initialState(): MetricEncyclopediaState {
+export function initialState(): MetricsModalState {
   return {
     isLoading: true,
     metrics: [],
@@ -146,9 +146,9 @@ export function initialState(): MetricEncyclopediaState {
 }
 
 /**
- * The Metric Encyclopedia state object
+ * The Metrics Modal state object
  */
-export interface MetricEncyclopediaState {
+export interface MetricsModalState {
   /** Used for the loading spinner */
   isLoading: boolean;
   /**
@@ -202,7 +202,7 @@ export interface MetricEncyclopediaState {
 /**
  * Type for the useEffect get metadata function
  */
-export type MetricEncyclopediaMetadata = {
+export type MetricsModalMetadata = {
   isLoading: boolean;
   metrics: MetricsData;
   hasMetadata: boolean;
@@ -213,13 +213,13 @@ export type MetricEncyclopediaMetadata = {
 };
 
 /**
- * An interface for Metric Encyclopedia actions with a discriminated union type
+ * An interface for Metrics Modal actions with a discriminated union type
  */
 export type Action =
   | { type: 'setIsLoading'; payload: boolean }
   | {
       type: 'setMetadata';
-      payload: MetricEncyclopediaMetadata;
+      payload: MetricsModalMetadata;
     }
   | {
       type: 'filterMetricsBackend';
