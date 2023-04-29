@@ -55,7 +55,6 @@ const props: Props = {
   onChange: jest.fn(),
   onGetMetrics: jest.fn().mockResolvedValue(mockValues),
   metricLookupDisabled: false,
-  openMetricsModal: () => {},
 };
 
 describe('MetricSelect', () => {

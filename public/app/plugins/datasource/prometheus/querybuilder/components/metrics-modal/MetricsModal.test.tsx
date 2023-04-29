@@ -46,7 +46,7 @@ describe('MetricsModal', () => {
       operations: [],
     };
 
-    setup(query, listOfMetrics);
+    setup(query, ['with-labels'], true);
     await waitFor(() => {
       expect(screen.getByText('with-labels')).toBeInTheDocument();
     });
@@ -210,12 +210,11 @@ const defaultQuery: PromVisualQuery = {
 
 const listOfMetrics: string[] = ['all-metrics', 'a_bucket', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
 
-function createDatasource(metrics: string[], withLabels?: boolean) {
+function createDatasource(withLabels?: boolean) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
 
   // display different results if their are labels selected in the PromVisualQuery
   if (withLabels) {
-    languageProvider.getSeries = () => Promise.resolve({ __name__: ['with-labels'] });
     languageProvider.metricsMetadata = {
       'with-labels': {
         type: 'with-labels-type',
@@ -224,7 +223,6 @@ function createDatasource(metrics: string[], withLabels?: boolean) {
     };
   } else {
     // all metrics
-    languageProvider.getLabelValues = () => Promise.resolve(metrics);
     languageProvider.metricsMetadata = {
       'all-metrics': {
         type: 'all-metrics-type',
@@ -255,20 +253,21 @@ function createDatasource(metrics: string[], withLabels?: boolean) {
   return datasource;
 }
 
-function createProps(query: PromVisualQuery, datasource: PrometheusDatasource) {
+function createProps(query: PromVisualQuery, datasource: PrometheusDatasource, metrics: string[]) {
   return {
     datasource,
     isOpen: true,
     onChange: jest.fn(),
     onClose: jest.fn(),
     query: query,
+    initialMetrics: metrics,
   };
 }
 
 function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) {
   const withLabels: boolean = query.labels.length > 0;
-  const datasource = createDatasource(metrics, withLabels);
-  const props = createProps(query, datasource);
+  const datasource = createDatasource(withLabels);
+  const props = createProps(query, datasource, metrics);
 
   // render the modal only
   const { container } = render(<MetricsModal {...props} />);

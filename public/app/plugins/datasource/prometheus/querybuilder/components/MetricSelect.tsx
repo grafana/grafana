@@ -14,6 +14,8 @@ import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
+import { MetricsModal } from './metrics-modal/MetricsModal';
+
 // We are matching words split with space
 const splitSeparator = ' ';
 
@@ -24,7 +26,6 @@ export interface Props {
   onGetMetrics: () => Promise<SelectableValue[]>;
   datasource: PrometheusDatasource;
   labelsFilters: QueryBuilderLabelFilter[];
-  openMetricsModal: () => void;
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
@@ -38,12 +39,13 @@ export function MetricSelect({
   onGetMetrics,
   labelsFilters,
   metricLookupDisabled,
-  openMetricsModal,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
     isLoading?: boolean;
+    metricsModalOpen?: boolean;
+    initialMetrics?: string[];
   }>({});
 
   const customFilterOption = useCallback((option: SelectableValue<any>, searchQuery: string) => {
@@ -150,7 +152,7 @@ export function MetricSelect({
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
-              openMetricsModal();
+              setState({ ...state, metricsModalOpen: true });
             }
           }}
         >
@@ -160,7 +162,13 @@ export function MetricSelect({
                 <div>{option.label}</div>
                 <div className={styles.customOptionDesc}>{option.description}</div>
               </div>
-              <Button variant="primary" fill="outline" size="sm" onClick={() => openMetricsModal()} icon="book">
+              <Button
+                variant="primary"
+                fill="outline"
+                size="sm"
+                onClick={() => setState({ ...state, metricsModalOpen: true })}
+                icon="book"
+              >
                 Open
               </Button>
             </div>
@@ -173,57 +181,74 @@ export function MetricSelect({
   };
 
   return (
-    <EditorFieldGroup>
-      <EditorField label="Metric">
-        <AsyncSelect
-          inputId="prometheus-metric-select"
-          className={styles.select}
-          value={query.metric ? toOption(query.metric) : undefined}
-          placeholder={'Select metric'}
-          allowCustomValue
-          formatOptionLabel={formatOptionLabel}
-          filterOption={customFilterOption}
-          onOpenMenu={async () => {
-            if (metricLookupDisabled) {
-              return;
-            }
-            setState({ isLoading: true });
-            const metrics = await onGetMetrics();
-
-            if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-              metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-            }
-
-            if (config.featureToggles.prometheusMetricEncyclopedia) {
-              const metricsModalOption: SelectableValue[] = [
-                {
-                  value: 'BrowseMetrics',
-                  label: 'Browse metrics',
-                  description: 'Browse and filter metrics and metadata with a fuzzy search',
-                },
-              ];
-              setState({ metrics: [...metricsModalOption, ...metrics], isLoading: undefined });
-            } else {
-              setState({ metrics, isLoading: undefined });
-            }
-          }}
-          loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
-          isLoading={state.isLoading}
-          defaultOptions={state.metrics}
-          onChange={({ value }) => {
-            if (value) {
-              // if there is no metric and the m.e. is enabled, open the modal
-              if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
-                openMetricsModal();
-              } else {
-                onChange({ ...query, metric: value });
-              }
-            }
-          }}
-          components={{ Option: CustomOption }}
+    <>
+      {prometheusMetricEncyclopedia && !datasource.lookupsDisabled && state.metricsModalOpen && (
+        <MetricsModal
+          datasource={datasource}
+          isOpen={state.metricsModalOpen}
+          onClose={() => setState({ ...state, metricsModalOpen: false })}
+          query={query}
+          onChange={onChange}
+          initialMetrics={state.initialMetrics ?? []}
         />
-      </EditorField>
-    </EditorFieldGroup>
+      )}
+      <EditorFieldGroup>
+        <EditorField label="Metric">
+          <AsyncSelect
+            inputId="prometheus-metric-select"
+            className={styles.select}
+            value={query.metric ? toOption(query.metric) : undefined}
+            placeholder={'Select metric'}
+            allowCustomValue
+            formatOptionLabel={formatOptionLabel}
+            filterOption={customFilterOption}
+            onOpenMenu={async () => {
+              if (metricLookupDisabled) {
+                return;
+              }
+              setState({ isLoading: true });
+              const metrics = await onGetMetrics();
+              const initialMetrics: string[] = metrics.map((m) => m.value);
+              if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+                metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+              }
+
+              if (config.featureToggles.prometheusMetricEncyclopedia) {
+                // pass the initial metrics, possibly filtered by labels into the Metrics Modal
+                const metricsModalOption: SelectableValue[] = [
+                  {
+                    value: 'BrowseMetrics',
+                    label: 'Browse metrics',
+                    description: 'Browse and filter metrics and metadata with a fuzzy search',
+                  },
+                ];
+                setState({
+                  metrics: [...metricsModalOption, ...metrics],
+                  isLoading: undefined,
+                  initialMetrics: initialMetrics,
+                });
+              } else {
+                setState({ metrics, isLoading: undefined });
+              }
+            }}
+            loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
+            isLoading={state.isLoading}
+            defaultOptions={state.metrics}
+            onChange={({ value }) => {
+              if (value) {
+                // if there is no metric and the m.e. is enabled, open the modal
+                if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
+                  setState({ ...state, metricsModalOpen: true });
+                } else {
+                  onChange({ ...query, metric: value });
+                }
+              }
+            }}
+            components={{ Option: CustomOption }}
+          />
+        </EditorField>
+      </EditorFieldGroup>
+    </>
   );
 }
 

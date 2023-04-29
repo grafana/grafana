@@ -40,10 +40,11 @@ export type MetricsModalProps = {
   query: PromVisualQuery;
   onClose: () => void;
   onChange: (query: PromVisualQuery) => void;
+  initialMetrics: string[];
 };
 
 export const MetricsModal = (props: MetricsModalProps) => {
-  const { datasource, isOpen, onClose, onChange, query } = props;
+  const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
 
   const [state, dispatch] = useReducer(MetricsModalReducer, initialState());
 
@@ -60,7 +61,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
       payload: true,
     });
 
-    const data: MetricsModalMetadata = await getMetadata(datasource, query);
+    const data: MetricsModalMetadata = await getMetadata(datasource, query, initialMetrics);
 
     dispatch({
       type: 'setMetadata',
@@ -74,7 +75,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         filteredMetricCount: data.metrics.length,
       },
     });
-  }, [query, datasource]);
+  }, [query, datasource, initialMetrics]);
 
   useEffect(() => {
     updateMetricsMetadata();

@@ -1,7 +1,6 @@
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
-import { promQueryModeller } from '../../../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../../../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
@@ -11,7 +10,8 @@ import { Action, MetricsModalMetadata, MetricsModalState } from './state';
 
 export async function getMetadata(
   datasource: PrometheusDatasource,
-  query: PromVisualQuery
+  query: PromVisualQuery,
+  initialMetrics?: string[]
 ): Promise<MetricsModalMetadata> {
   // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
@@ -25,24 +25,16 @@ export async function getMetadata(
   let hasMetadata = true;
   if (!datasource.languageProvider.metricsMetadata) {
     hasMetadata = false;
-    // setHasMetadata(false);
     datasource.languageProvider.metricsMetadata = {};
-  }
-
-  // filter by adding the query.labels to the search?
-  // *** do this in the filter???
-  let metrics;
-  if (query.labels.length > 0) {
-    const expr = promQueryModeller.renderLabels(query.labels);
-    metrics = (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
-  } else {
-    metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
   }
 
   let nameHaystackDictionaryData: HaystackDictionary = {};
   let metaHaystackDictionaryData: HaystackDictionary = {};
 
-  let metricsData: MetricsData = metrics.map((m: string) => {
+  // pass in metrics from getMetrics in the query builder, reduced in the metric select
+  let metricsData: MetricsData | undefined;
+
+  metricsData = initialMetrics?.map((m: string) => {
     const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
     const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
 
@@ -64,11 +56,11 @@ export async function getMetadata(
   return {
     isLoading: false,
     hasMetadata: hasMetadata,
-    metrics: metricsData,
+    metrics: metricsData ?? [],
     metaHaystackDictionary: metaHaystackDictionaryData,
     nameHaystackDictionary: nameHaystackDictionaryData,
-    totalMetricCount: metricsData.length,
-    filteredMetricCount: metricsData.length,
+    totalMetricCount: metricsData?.length ?? 0,
+    filteredMetricCount: metricsData?.length ?? 0,
   };
 }
 

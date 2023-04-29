@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -23,7 +22,6 @@ import { LabelFilters } from './LabelFilters';
 import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
-import { MetricsModal } from './metrics-modal/MetricsModal';
 
 export interface Props {
   query: PromVisualQuery;
@@ -37,7 +35,6 @@ export interface Props {
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
-  const [metricsModalOpen, setMetricsModalOpen] = useState(false);
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -205,22 +202,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   }, [datasource, query, withTemplateVariableOptions]);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
-  const isMetricEncyclopediaEnabled = config.featureToggles.prometheusMetricEncyclopedia;
 
   const initHints = datasource.getInitHints();
 
   return (
     <>
       <EditorRow>
-        {isMetricEncyclopediaEnabled && !datasource.lookupsDisabled && metricsModalOpen && (
-          <MetricsModal
-            datasource={datasource}
-            isOpen={metricsModalOpen}
-            onClose={() => setMetricsModalOpen(false)}
-            query={query}
-            onChange={onChange}
-          />
-        )}
         <MetricSelect
           query={query}
           onChange={onChange}
@@ -228,9 +215,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           datasource={datasource}
           labelsFilters={query.labels}
           metricLookupDisabled={datasource.lookupsDisabled}
-          openMetricsModal={() => setMetricsModalOpen(true)}
         />
-
         <LabelFilters
           debounceDuration={datasource.getDebounceTimeInMilliseconds()}
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
