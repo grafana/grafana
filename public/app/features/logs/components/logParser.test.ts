@@ -1,4 +1,4 @@
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { createLogRow } from './__mocks__/logRow';
@@ -17,7 +17,7 @@ describe('logParser', () => {
               name: 'labels',
               type: FieldType.other,
               config: {},
-              values: new ArrayVector([{ place: 'luna', source: 'data' }]),
+              values: [{ place: 'luna', source: 'data' }],
             },
           ],
         }),
@@ -39,7 +39,7 @@ describe('logParser', () => {
               name: 'labels',
               type: FieldType.string,
               config: {},
-              values: new ArrayVector([{ place: 'luna', source: 'data' }]),
+              values: [{ place: 'luna', source: 'data' }],
             },
           ],
         }),
@@ -60,7 +60,7 @@ describe('logParser', () => {
               name: 'id',
               type: FieldType.string,
               config: {},
-              values: new ArrayVector(['1659620138401000000_8b1f7688_']),
+              values: ['1659620138401000000_8b1f7688_'],
             },
           ],
         }),
@@ -129,11 +129,14 @@ describe('logParser', () => {
           config: { links: [] },
           name: 'Line',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
+          values: ['a', 'b'],
         },
         title: 'test',
         target: '_self',
-        variables: { path: 'test', msg: 'test msg' },
+        variables: [
+          { variableName: 'path', value: 'test', match: '${path}', found: true },
+          { variableName: 'msg', value: 'test msg', match: '${msg}', found: true },
+        ],
       };
 
       const fieldWithVarLink: FieldDef = {
@@ -152,37 +155,6 @@ describe('logParser', () => {
       expect(fields[0].values[1]).toBe('test msg');
     });
 
-    it('should convert null value to empty string and non string to string', () => {
-      const variableLink: ExploreFieldLinkModel = {
-        href: 'test',
-        onClick: () => {},
-        origin: {
-          config: { links: [] },
-          name: 'Line',
-          type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
-        },
-        title: 'test',
-        target: '_self',
-        variables: { path: undefined, message: false },
-      };
-
-      const fieldWithVarLink: FieldDef = {
-        fieldIndex: 2,
-        keys: ['Line'],
-        values: ['level=info msg="test msg" status_code=200 url=http://test'],
-        links: [variableLink],
-      };
-
-      const fields = createLogLineLinks([fieldWithVarLink]);
-      expect(fields.length).toBe(1);
-      expect(fields[0].keys.length).toBe(2);
-      expect(fields[0].keys[0]).toBe('path');
-      expect(fields[0].values[0]).toBe('');
-      expect(fields[0].keys[1]).toBe('message');
-      expect(fields[0].values[1]).toBe('false');
-    });
-
     it('should return empty array if no variables', () => {
       const variableLink: ExploreFieldLinkModel = {
         href: 'test',
@@ -191,7 +163,7 @@ describe('logParser', () => {
           config: { links: [] },
           name: 'Line',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
+          values: ['a', 'b'],
         },
         title: 'test',
         target: '_self',
@@ -214,12 +186,12 @@ const testStringField = {
   name: 'test_field_string',
   type: FieldType.string,
   config: {},
-  values: new ArrayVector(['abc']),
+  values: ['abc'],
 };
 
 const testFieldWithNullValue = {
   name: 'test_field_null',
   type: FieldType.string,
   config: {},
-  values: new ArrayVector([null]),
+  values: [null],
 };

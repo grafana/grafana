@@ -38,7 +38,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *login.GetUserB
 		authQuery.AuthModule = query.AuthModule
 		authQuery.AuthId = query.AuthId
 
-		err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
+		userAuth, err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
 		if !errors.Is(err, user.ErrUserNotFound) {
 			if err != nil {
 				return false, nil, nil, err
@@ -47,21 +47,21 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *login.GetUserB
 			// if user id was specified and doesn't match the user_auth entry, remove it
 			if query.UserLookupParams.UserID != nil &&
 				*query.UserLookupParams.UserID != 0 &&
-				*query.UserLookupParams.UserID != authQuery.Result.UserId {
+				*query.UserLookupParams.UserID != userAuth.UserId {
 				if err := s.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
-					UserAuth: authQuery.Result,
+					UserAuth: userAuth,
 				}); err != nil {
 					s.logger.Error("Error removing user_auth entry", "error", err)
 				}
 
 				return false, nil, nil, user.ErrUserNotFound
 			} else {
-				usr, err := s.authInfoStore.GetUserById(ctx, authQuery.Result.UserId)
+				usr, err := s.authInfoStore.GetUserById(ctx, userAuth.UserId)
 				if err != nil {
 					if errors.Is(err, user.ErrUserNotFound) {
 						// if the user has been deleted then remove the entry
 						if errDel := s.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
-							UserAuth: authQuery.Result,
+							UserAuth: userAuth,
 						}); errDel != nil {
 							s.logger.Error("Error removing user_auth entry", "error", errDel)
 						}
@@ -72,7 +72,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *login.GetUserB
 					return false, nil, nil, err
 				}
 
-				return true, usr, authQuery.Result, nil
+				return true, usr, userAuth, nil
 			}
 		}
 	}
@@ -121,12 +121,12 @@ func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule stri
 		authQuery.AuthModule = authModule
 		authQuery.AuthId = authId
 		authQuery.UserId = userID
-		err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
+		userAuth, err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
 		if err != nil {
 			return nil, err
 		}
 
-		return authQuery.Result, nil
+		return userAuth, nil
 	}
 	return nil, nil
 }
@@ -182,7 +182,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *login.GetUs
 	return usr, nil
 }
 
-func (s *Implementation) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
+func (s *Implementation) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	return s.authInfoStore.GetAuthInfo(ctx, query)
 }
 
@@ -201,7 +201,7 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfo
 	return s.authInfoStore.SetAuthInfo(ctx, cmd)
 }
 
-func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
+func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
 	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
 }
 

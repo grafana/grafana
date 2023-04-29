@@ -47,7 +47,8 @@ The order in which Grafana applies transformations directly impacts the results.
 The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
 
 1. Navigate to the panel where you want to add one or more transformations.
-1. Click the panel title and then click **Edit**.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
 1. Click the **Transform** tab.
 1. Click a transformation.
    A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).

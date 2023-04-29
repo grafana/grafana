@@ -9,7 +9,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .intercept({
         method: 'POST',
-        url: '/api/ds/query',
+        pathname: '/api/ds/query*',
       })
       .as('query');
 
@@ -61,7 +61,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .intercept({
         method: 'POST',
-        url: '/api/ds/query',
+        pathname: '/api/ds/query',
       })
       .as('query');
 
@@ -124,7 +124,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .intercept({
         method: 'POST',
-        url: '/api/ds/query',
+        pathname: '/api/ds/query',
       })
       .as('query');
 

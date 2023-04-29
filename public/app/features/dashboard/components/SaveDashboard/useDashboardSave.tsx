@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -27,54 +26,55 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
 };
 
 export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
-  const [state, onDashboardSave] = useAsyncFn(
-    async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) =>
-      await saveDashboard(clone, options, dashboard),
-    []
-  );
   const dispatch = useDispatch();
-
   const notifyApp = useAppNotification();
-  useEffect(() => {
-    if (state.error && !state.loading) {
-      notifyApp.error(state.error.message ?? 'Error saving dashboard');
-    }
-    if (state.value) {
-      dashboard.version = state.value.version;
-      dashboard.clearUnsavedChanges();
+  const [state, onDashboardSave] = useAsyncFn(
+    async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+      try {
+        const result = await saveDashboard(clone, options, dashboard);
+        dashboard.version = result.version;
+        dashboard.clearUnsavedChanges();
 
-      // important that these happen before location redirect below
-      appEvents.publish(new DashboardSavedEvent());
-      notifyApp.success('Dashboard saved');
-      if (isCopy) {
-        reportInteraction('grafana_dashboard_copied', {
-          name: dashboard.title,
-          url: state.value.url,
-        });
-      } else {
-        reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
-          name: dashboard.title,
-          url: state.value.url,
-        });
-      }
+        // important that these happen before location redirect below
+        appEvents.publish(new DashboardSavedEvent());
+        notifyApp.success('Dashboard saved');
+        if (isCopy) {
+          reportInteraction('grafana_dashboard_copied', {
+            name: dashboard.title,
+            url: result.url,
+          });
+        } else {
+          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
+            name: dashboard.title,
+            url: result.url,
+          });
+        }
 
-      const currentPath = locationService.getLocation().pathname;
-      const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
+        const currentPath = locationService.getLocation().pathname;
+        const newUrl = locationUtil.stripBaseFromUrl(result.url);
 
-      if (newUrl !== currentPath) {
-        setTimeout(() => locationService.replace(newUrl));
+        if (newUrl !== currentPath) {
+          setTimeout(() => locationService.replace(newUrl));
+        }
+        if (dashboard.meta.isStarred) {
+          dispatch(
+            updateDashboardName({
+              id: dashboard.uid,
+              title: dashboard.title,
+              url: newUrl,
+            })
+          );
+        }
+        return result;
+      } catch (error) {
+        if (error instanceof Error) {
+          notifyApp.error(error.message ?? 'Error saving dashboard');
+        }
+        throw error;
       }
-      if (dashboard.meta.isStarred) {
-        dispatch(
-          updateDashboardName({
-            id: dashboard.uid,
-            title: dashboard.title,
-            url: newUrl,
-          })
-        );
-      }
-    }
-  }, [dashboard, isCopy, state, notifyApp, dispatch]);
+    },
+    [dispatch, notifyApp]
+  );
 
   return { state, onDashboardSave };
 };

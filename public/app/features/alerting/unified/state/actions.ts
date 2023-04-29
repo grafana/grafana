@@ -8,6 +8,7 @@ import {
   AlertmanagerGroup,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
+  Matcher,
   Receiver,
   Silence,
   SilenceCreatePayload,
@@ -101,7 +102,19 @@ function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: stri
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
   async (
-    { rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter },
+    {
+      rulesSourceName,
+      filter,
+      limitAlerts,
+      matcher,
+      state,
+    }: {
+      rulesSourceName: string;
+      filter?: FetchPromRulesFilter;
+      limitAlerts?: number;
+      matcher?: Matcher[];
+      state?: string[];
+    },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
@@ -111,7 +124,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter));
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state));
   }
 );
 
@@ -162,6 +175,8 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
                 alertmanager_config: status.config,
                 template_files: {},
                 template_file_provenances: result.template_file_provenances,
+                last_applied: result.last_applied,
+                id: result.id,
               }));
             }
             return result;
@@ -337,7 +352,17 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
+interface FetchPromRulesRulesActionProps {
+  filter?: FetchPromRulesFilter;
+  limitAlerts?: number;
+  matcher?: Matcher[];
+  state?: string[];
+}
+
+export function fetchAllPromAndRulerRulesAction(
+  force = false,
+  options: FetchPromRulesRulesActionProps = {}
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
@@ -357,7 +382,7 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Prom
           (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
 
         await Promise.allSettled([
-          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
           shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
         ]);
       })
@@ -550,10 +575,10 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
           // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
           const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
 
-          if (
-            !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
-            JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
-          ) {
+          const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
+          const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
+
+          if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
             throw new Error(
               'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
             );

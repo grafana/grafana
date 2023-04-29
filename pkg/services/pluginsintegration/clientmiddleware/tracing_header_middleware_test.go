@@ -113,6 +113,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		req.Header[`X-Grafana-Org-Id`] = []string{"1"}
 		req.Header[`X-Panel-Id`] = []string{"2"}
 		req.Header[`X-Query-Group-Id`] = []string{"d26e337d-cb53-481a-9212-0112537b3c1a"}
+		req.Header[`X-Grafana-From-Expr`] = []string{"true"}
 
 		pluginCtx := backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -133,12 +134,13 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 5)
+			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 6)
 			require.Equal(t, `lN53lOcVk`, cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Org-Id`))
 			require.Equal(t, `2`, cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Id`))
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.QueryDataReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 		})
 
 		t.Run("tracing headers are set for health check", func(t *testing.T) {
@@ -156,12 +158,13 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 5)
+			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 6)
 			require.Equal(t, `lN53lOcVk`, cdt.CheckHealthReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.CheckHealthReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-Org-Id`))
 			require.Equal(t, `2`, cdt.CheckHealthReq.GetHTTPHeader(`X-Panel-Id`))
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.CheckHealthReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 		})
 	})
 }

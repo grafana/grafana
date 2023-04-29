@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: val3
+//  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-----------------------------------+--------------------+
 //  | Name: Time                        | Name: Value        |
@@ -29,7 +29,7 @@
 //          0
 //      ]
 //  }
-//  Name: val2
+//  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-----------------------------------+--------------------+
 //  | Name: Time                        | Name: Value        |
@@ -51,7 +51,7 @@
 //          0
 //      ]
 //  }
-//  Name: val1
+//  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-----------------------------------+--------------------+
 //  | Name: Time                        | Name: Value        |
@@ -71,7 +71,6 @@
   "frames": [
     {
       "schema": {
-        "name": "val3",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -96,6 +95,9 @@
             },
             "labels": {
               "label": "val3"
+            },
+            "config": {
+              "displayNameFromDS": "val3"
             }
           }
         ]
@@ -119,7 +121,6 @@
     },
     {
       "schema": {
-        "name": "val2",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -144,6 +145,9 @@
             },
             "labels": {
               "label": "val2"
+            },
+            "config": {
+              "displayNameFromDS": "val2"
             }
           }
         ]
@@ -167,7 +171,6 @@
     },
     {
       "schema": {
-        "name": "val1",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -192,6 +195,9 @@
             },
             "labels": {
               "label": "val1"
+            },
+            "config": {
+              "displayNameFromDS": "val1"
             }
           }
         ]

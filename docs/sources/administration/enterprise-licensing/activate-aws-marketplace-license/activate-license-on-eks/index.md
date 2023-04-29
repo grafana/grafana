@@ -119,7 +119,7 @@ To restart Grafana on a Kubernetes cluster,
 
 1. Run the command `kubectl rollout restart deployment my-release`.
 
-1. After you update the service, navigate to your Grafana instance, sign in with Grafana Admin credentials, and navigate to the Statistics and Licensing page to validate that your license is active.
+1. After you update the service, navigate to your Grafana instance, sign in with Grafana Admin credentials, and navigate to **Administration > Stats and license** to validate that your license is active.
 
 For more information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../../setup-grafana/start-restart-grafana/" >}}).
 

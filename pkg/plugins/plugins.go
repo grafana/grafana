@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	ErrFileNotExist   = errors.New("file does not exist")
-	ErrPluginFileRead = errors.New("file could not be read")
+	ErrFileNotExist              = errors.New("file does not exist")
+	ErrPluginFileRead            = errors.New("file could not be read")
+	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 )
 
 type Plugin struct {
@@ -93,25 +94,6 @@ func (p PluginDTO) IsApp() bool {
 
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
-}
-
-func (p PluginDTO) File(name string) (fs.File, error) {
-	cleanPath, err := util.CleanRelativePath(name)
-	if err != nil {
-		// CleanRelativePath should clean and make the path relative so this is not expected to fail
-		return nil, err
-	}
-
-	if p.fs == nil {
-		return nil, ErrFileNotExist
-	}
-
-	f, err := p.fs.Open(cleanPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
 }
 
 // JSONData represents the plugin's plugin.json
@@ -323,6 +305,25 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 		return backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+func (p *Plugin) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
+	}
+
+	if p.FS == nil {
+		return nil, ErrFileNotExist
+	}
+
+	f, err := p.FS.Open(cleanPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
 
 func (p *Plugin) RegisterClient(c backendplugin.Plugin) {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -34,7 +35,7 @@ type AnnotationBackend struct {
 }
 
 type RuleStore interface {
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 }
 
 type AnnotationStore interface {
@@ -67,10 +68,23 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 		return errCh
 	}
 
-	go func() {
+	// This is a new background job, so let's create a brand new context for it.
+	// We want it to be isolated, i.e. we don't want grafana shutdowns to interrupt this work
+	// immediately but rather try to flush writes.
+	// This also prevents timeouts or other lingering objects (like transactions) from being
+	// incorrectly propagated here from other areas.
+	writeCtx := context.Background()
+	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
+	writeCtx = history_model.WithRuleData(writeCtx, rule)
+	writeCtx = tracing.ContextWithSpan(writeCtx, tracing.SpanFromContext(ctx))
+
+	go func(ctx context.Context) {
+		defer cancel()
 		defer close(errCh)
+		logger := h.log.FromContext(ctx)
+
 		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
-	}()
+	}(writeCtx)
 	return errCh
 }
 
@@ -89,16 +103,16 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 		UID:   query.RuleUID,
 		OrgID: query.OrgID,
 	}
-	err := h.rules.GetAlertRuleByUID(ctx, &rq)
+	rule, err := h.rules.GetAlertRuleByUID(ctx, &rq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to look up the requested rule")
 	}
-	if rq.Result == nil {
+	if rule == nil {
 		return nil, fmt.Errorf("no such rule exists")
 	}
 
 	q := annotations.ItemQuery{
-		AlertID:      rq.Result.ID,
+		AlertID:      rule.ID,
 		OrgID:        query.OrgID,
 		From:         query.From.Unix(),
 		To:           query.To.Unix(),
@@ -199,11 +213,11 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 	}
 
 	org := fmt.Sprint(orgID)
-	h.metrics.WritesTotal.WithLabelValues(org).Inc()
+	h.metrics.WritesTotal.WithLabelValues(org, "annotations").Inc()
 	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailed.WithLabelValues(org).Inc()
+		h.metrics.WritesFailed.WithLabelValues(org, "annotations").Inc()
 		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}

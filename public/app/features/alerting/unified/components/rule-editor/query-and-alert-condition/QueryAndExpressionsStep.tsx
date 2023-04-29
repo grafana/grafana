@@ -13,6 +13,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { isPromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
@@ -169,13 +170,19 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const onChangeRecordingRulesQueries = useCallback(
-    (updatedQueries) => {
-      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(updatedQueries[0].datasourceUid);
+    (updatedQueries: AlertQuery[]) => {
+      const query = updatedQueries[0];
+
+      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
       if (!dataSourceSettings) {
         throw new Error('The Data source has not been defined.');
       }
 
-      const expression = updatedQueries[0].model?.expr || '';
+      if (!isPromOrLokiQuery(query.model)) {
+        return;
+      }
+
+      const expression = query.model.expr;
 
       setValue('dataSourceName', dataSourceSettings.name);
       setValue('expression', expression);
@@ -191,19 +198,26 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   useEffect(() => {
     setPanelData({});
     if (type === RuleFormType.cloudRecording) {
+      const expr = getValues('expression');
+      const datasourceUid =
+        (editingExistingRule && getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid) ||
+        recordingRuleDefaultDatasource.uid;
+
       const defaultQuery = {
         refId: 'A',
-        datasourceUid: recordingRuleDefaultDatasource.uid,
+        datasourceUid,
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr,
         model: {
           refId: 'A',
           hide: false,
+          expr,
         },
       };
-      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: getValues('expression') }));
+      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: expr }));
     }
-  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues]);
+  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues, dataSourceName]);
 
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
     dispatch(duplicateQuery(query));

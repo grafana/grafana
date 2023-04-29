@@ -115,6 +115,13 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [],
     });
+
+    ['sum({label="value",^})', '{label="value",^}', '{label="value", ^}'].forEach((query) => {
+      assertSituation(query, {
+        type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+        otherLabels: [{ name: 'label', value: 'value', op: '=' }],
+      });
+    });
   });
 
   it('identifies labels from queries', () => {
@@ -153,6 +160,12 @@ describe('situation', () => {
     assertSituation('{one=`val\\"1`,^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val\\"1', op: '=' }],
+    });
+
+    // double-quoted label-values with escape and multiple quotes
+    assertSituation('{one="val\\"1\\"",^}', {
+      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+      otherLabels: [{ name: 'one', value: 'val"1"', op: '=' }],
     });
   });
 

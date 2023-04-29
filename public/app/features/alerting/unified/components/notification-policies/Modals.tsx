@@ -218,9 +218,11 @@ const useAlertGroupsModal = (): [
     setMatchers([]);
   }, []);
 
-  const handleShow = useCallback((alertGroups, matchers) => {
+  const handleShow = useCallback((alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => {
     setAlertGroups(alertGroups);
-    setMatchers(matchers);
+    if (matchers) {
+      setMatchers(matchers);
+    }
     setShowModal(true);
   }, []);
 

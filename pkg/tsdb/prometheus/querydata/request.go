@@ -43,6 +43,7 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	enableWideSeries   bool
+	enableDataplane    bool
 	exemplarSampler    func() exemplar.Sampler
 }
 
@@ -82,6 +83,7 @@ func New(
 		ID:                 settings.ID,
 		URL:                settings.URL,
 		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
+		enableDataplane:    features.IsEnabled(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
 	}, nil
 }
@@ -174,6 +176,13 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,
+		}
+	}
+
+	// This is only for health check fall back scenario
+	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
+		return backend.DataResponse{
+			Error: fmt.Errorf(res.Status),
 		}
 	}
 

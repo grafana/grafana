@@ -47,7 +47,6 @@ const (
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
-	Test             = "test"
 	ApplicationName  = "Grafana"
 )
 
@@ -237,6 +236,7 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
+	PluginForcePublicKeyDownload     bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -270,6 +270,9 @@ type Cfg struct {
 	AdminEmail                   string
 	DisableSyncLock              bool
 	DisableLoginForm             bool
+	// Not documented & not supported
+	// stand in until a more complete solution is implemented
+	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -368,6 +371,11 @@ type Cfg struct {
 
 	// Data sources
 	DataSourceLimit int
+
+	// SQL Data sources
+	SqlDatasourceMaxOpenConnsDefault    int
+	SqlDatasourceMaxIdleConnsDefault    int
+	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
 	SnapshotEnabled       bool
@@ -484,8 +492,6 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
-	DashboardPreviews DashboardPreviewsSettings
-
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -507,12 +513,19 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+
 	// GRPC Server.
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+
+	// DatabaseInstrumentQueries is used to decide if database queries
+	// should be instrumented with metrics, logs and traces.
+	// This needs to be on the global object since its used in the
+	// sqlstore package and HTTP middlewares.
+	DatabaseInstrumentQueries bool
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1115,8 +1128,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readSqlDataSourceSettings()
 
-	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 
@@ -1182,6 +1195,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.LogConfigSources()
+
+	databaseSection := iniFile.Section("database")
+	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 
 	return nil
 }
@@ -1454,7 +1470,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
-
+	// Do not use
+	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
@@ -1558,7 +1575,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
-	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACEnabled = true
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
@@ -1573,7 +1590,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
@@ -1835,6 +1852,13 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readSqlDataSourceSettings() {
+	sqlDatasources := cfg.Raw.Section("sql_datasources")
+	cfg.SqlDatasourceMaxOpenConnsDefault = sqlDatasources.Key("max_open_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxIdleConnsDefault = sqlDatasources.Key("max_idle_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxConnLifetimeDefault = sqlDatasources.Key("max_conn_lifetime_default").MustInt(14400)
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {

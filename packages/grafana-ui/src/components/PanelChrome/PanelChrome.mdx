@@ -56,7 +56,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -133,7 +133,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -170,7 +170,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -202,7 +202,7 @@ Component used for rendering content wrapped in the same style as grafana panels
         style={{
           width: innerwidth,
           height: innerheight,
-          background: 'white',
+          background: 'rgba(230,0,0,0.05)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -232,7 +232,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -258,7 +258,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -285,7 +285,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -300,7 +300,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </HorizontalGroup>
 </Canvas>
 
-### Extra options? Title Items
+### Extra options? Title items and actions
 
 ```tsx
 <PanelChrome
@@ -311,8 +311,12 @@ Component used for rendering content wrapped in the same style as grafana panels
       <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
     </div>
   }
-  description="Here I will put a description that explains a bit more this panel"
-  width={400}
+  actions={
+    <Button size="sm" variant="secondary" key="A">
+      Breakdown
+    </Button>
+  }
+  width={500}
   height={200}
 >
   {(innerwidth, innerheight) => {
@@ -321,7 +325,7 @@ Component used for rendering content wrapped in the same style as grafana panels
         style={{
           width: innerwidth,
           height: innerheight,
-          background: 'white',
+          background: 'rgba(230,0,0,0.05)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -337,14 +341,18 @@ Component used for rendering content wrapped in the same style as grafana panels
 <Canvas>
   <PanelChrome
     title="My awesome panel title"
-    description="Here I will put a description that explains a bit more this panel"
     titleItems={
       <div>
         <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
         <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
       </div>
     }
-    width={400}
+    actions={
+      <Button size="sm" variant="secondary" key="A">
+        Breakdown
+      </Button>
+    }
+    width={500}
     height={200}
   >
     {(innerwidth, innerheight) => {
@@ -353,7 +361,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -415,7 +423,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -470,7 +478,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
