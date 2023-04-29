@@ -172,13 +172,17 @@ func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallRes
 	query := u.Query()
 	body := &BackendTypeRespBody{BackendType: "unknown"}
 
-	pyroClient := getClient("pyroscope", d.httpClient, query["url"][0])
+	// We take the url from the request query because the data source may not yet be saved in DB with the URL we want
+	// to test with (like when filling in the confgi page for the first time)
+	url := query["url"][0]
+
+	pyroClient := getClient("pyroscope", d.httpClient, url)
 	_, err = pyroClient.ProfileTypes(ctx)
 
 	if err == nil {
 		body.BackendType = "pyroscope"
 	} else {
-		phlareClient := getClient("phlare", d.httpClient, d.settings.URL)
+		phlareClient := getClient("phlare", d.httpClient, url)
 		_, err := phlareClient.ProfileTypes(ctx)
 		if err == nil {
 			body.BackendType = "phlare"
