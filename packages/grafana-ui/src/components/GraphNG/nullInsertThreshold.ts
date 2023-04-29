@@ -108,7 +108,7 @@ function nullInsertThreshold(
   const len = refValues.length;
   const refValuesNew: number[] = [];
 
-  // Continiuously subtract the threshold from the first data point, filling in insert values accordingly
+  // Continuously subtract the threshold from the first data point, filling in insert values accordingly
   if (refFieldPseudoMin != null && refFieldPseudoMin < refValues[0]) {
     let preFillCount = Math.ceil((refValues[0] - refFieldPseudoMin) / threshold);
     // this will be 0 or 1 threshold increment left of visible range
