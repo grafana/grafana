@@ -174,10 +174,10 @@ describe('nullInsertThreshold Transformer', () => {
       refFieldPseudoMax: 1679815217157,
     });
 
-    expect(result.fields[0].values).toEqual([
+    expect(result.fields[0].values.toArray()).toStrictEqual([
       1679266800000, 1679353200000, 1679439600000, 1679526000000, 1679612400000, 1679698800000, 1679785200000,
     ]);
-    expect(result.fields[1].values).toEqual([null, null, 0, 1, 2, 3, 4]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([null, null, 0, 1, 2, 3, 4]);
   });
 
   test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
