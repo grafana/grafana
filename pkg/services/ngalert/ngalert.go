@@ -289,6 +289,10 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
+	if err := ng.folderService.RegisterService(alertRuleService); err != nil {
+		return err
+	}
+
 	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
 		key, ok := models.RuleKeyFromContext(ctx)
 		if !ok {

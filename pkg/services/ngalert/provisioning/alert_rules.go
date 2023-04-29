@@ -518,19 +518,19 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	return result, nil
 }
 
-func (service *AlertRuleService) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
+func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
 	return service.ruleStore.CountAlertRulesInFolder(ctx, &models.CountAlertRulesQuery{
 		OrgID:        orgID,
 		NamespaceUID: uid,
 	})
 }
 
-func (service *AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, uid string) error {
+func (service AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, uid string) error {
 	// TODO add implementation once this issue is closed: https://github.com/grafana/grafana/issues/66038
 	return nil
 }
 
-func (service *AlertRuleService) Kind() string { return "alert" }
+func (service AlertRuleService) Kind() string { return "alertrule" }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
 func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.AlertRuleGroup {
