@@ -9,6 +9,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       ${theme.breakpoints.down('md')} {
         width: 100%;
       }
+      ${theme.breakpoints.up('xl')} {
+        width: 60%;
+      }
     `,
     inputWrapper: css`
       display: flex;
