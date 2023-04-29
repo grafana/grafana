@@ -152,6 +152,34 @@ describe('nullInsertThreshold Transformer', () => {
     ]);
   });
 
+  // this tests that intervals at 24hr but starting not at 12am UTC are not always snapped to 12am UTC
+  test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold 11PM UTC', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          config: { interval: 86400000 },
+          values: [1679439600000, 1679526000000, 1679612400000, 1679698800000, 1679785200000],
+        },
+        { name: 'One', type: FieldType.number, values: [0, 1, 2, 3, 4] },
+      ],
+    });
+
+    const result = applyNullInsertThreshold({
+      frame: df,
+      refFieldName: null,
+      refFieldPseudoMin: 1679320395828,
+      refFieldPseudoMax: 1679815217157,
+    });
+
+    expect(result.fields[0].values).toEqual([
+      1679266800000, 1679353200000, 1679439600000, 1679526000000, 1679612400000, 1679698800000, 1679785200000,
+    ]);
+    expect(result.fields[1].values).toEqual([null, null, 0, 1, 2, 3, 4]);
+  });
+
   test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
     const df = new MutableDataFrame({
       refId: 'A',
