@@ -1,7 +1,10 @@
 ---
 name: Bug report
 about: Report a bug you found when using Grafana
-labels: 'type: bug'
+title: ''
+labels: ''
+assignees: ''
+
 ---
 
 <!--
