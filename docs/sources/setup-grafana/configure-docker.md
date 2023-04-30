@@ -92,7 +92,7 @@ To install plugins from other sources, you must define the custom URL and specif
 
 Example:
 
-The following command will run Grafana Enterprise on **port 3000** in detached mode and also installs the custom plugin which is specified as a URL parameter under the `GF_INSTALL_PLUGIN` Environment variable.
+The following command runs Grafana Enterprise on **port 3000** in detached mode and installs the custom plugin, which is specified as a URL parameter in the `GF_INSTALL_PLUGIN` environment variable.
 
 ```bash
 docker run -d \
