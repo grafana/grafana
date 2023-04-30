@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { SelectableValue } from '@grafana/data';
 
+import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricsData } from '../types';
 
 export const DEFAULT_RESULTS_PER_PAGE = 100;
@@ -94,7 +95,7 @@ export const stateSlice = createSlice({
  * Initial state for the Metrics Modal
  * @returns
  */
-export function initialState(): MetricsModalState {
+export function initialState(query?: PromVisualQuery): MetricsModalState {
   return {
     isLoading: true,
     metrics: [],
@@ -110,12 +111,12 @@ export function initialState(): MetricsModalState {
     resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
     pageNum: 1,
     fuzzySearchQuery: '',
-    fullMetaSearch: false,
-    excludeNullMetadata: false,
+    fullMetaSearch: query?.fullMetaSearch ?? false,
+    excludeNullMetadata: query?.excludeNullMetadata ?? false,
     selectedTypes: [],
     letterSearch: '',
-    useBackend: false,
-    disableTextWrap: false,
+    useBackend: query?.useBackend ?? false,
+    disableTextWrap: query?.disableTextWrap ?? false,
     selectedIdx: 0,
     showAdditionalSettings: false,
   };
@@ -186,4 +187,20 @@ export type MetricsModalMetadata = {
   nameHaystackDictionary: HaystackDictionary;
   totalMetricCount: number;
   filteredMetricCount: number | null;
+};
+
+export function getSettings(visQuery: PromVisualQuery): MetricsModalSettings {
+  return {
+    useBackend: visQuery?.useBackend ?? false,
+    disableTextWrap: visQuery?.disableTextWrap ?? false,
+    fullMetaSearch: visQuery?.fullMetaSearch ?? false,
+    excludeNullMetadata: visQuery.excludeNullMetadata ?? false,
+  };
+}
+
+export type MetricsModalSettings = {
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  fullMetaSearch?: boolean;
+  excludeNullMetadata?: boolean;
 };

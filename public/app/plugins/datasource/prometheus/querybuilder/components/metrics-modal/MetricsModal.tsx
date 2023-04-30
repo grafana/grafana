@@ -67,7 +67,7 @@ const {
 export const MetricsModal = (props: MetricsModalProps) => {
   const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
 
-  const [state, dispatch] = useReducer(stateSlice.reducer, initialState());
+  const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
@@ -264,6 +264,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     onChange={() => {
                       const newVal = !state.fullMetaSearch;
                       dispatch(setFullMetaSearch(newVal));
+                      onChange({ ...query, fullMetaSearch: newVal });
 
                       fuzzySearchCallback(state.fuzzySearchQuery, newVal);
                     }}
@@ -279,6 +280,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     disabled={state.useBackend || !state.hasMetadata}
                     onChange={() => {
                       dispatch(setExcludeNullMetadata(!state.excludeNullMetadata));
+                      onChange({ ...query, excludeNullMetadata: !state.excludeNullMetadata });
                     }}
                     onKeyDown={(e) => {
                       keyFunction(e);
@@ -289,7 +291,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 <div className={styles.selectItem}>
                   <Switch
                     value={state.disableTextWrap}
-                    onChange={() => dispatch(setDisableTextWrap())}
+                    onChange={() => {
+                      dispatch(setDisableTextWrap());
+                      onChange({ ...query, disableTextWrap: !state.disableTextWrap });
+                    }}
                     onKeyDown={(e) => {
                       keyFunction(e);
                     }}
@@ -303,6 +308,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     onChange={() => {
                       const newVal = !state.useBackend;
                       dispatch(setUseBackend(newVal));
+                      onChange({ ...query, useBackend: newVal });
                       if (newVal === false) {
                         // rebuild the metrics metadata if we turn off useBackend
                         updateMetricsMetadata();
