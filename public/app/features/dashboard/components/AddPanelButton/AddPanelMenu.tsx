@@ -11,6 +11,9 @@ import {
   onCreateNewRow,
   onPasteCopiedPanel,
 } from 'app/features/dashboard/utils/dashboard';
+import { useDispatch, useSelector } from 'app/types';
+
+import { setInitialDatasource } from '../../state/reducers';
 
 interface Props {
   dashboard: DashboardModel;
@@ -18,6 +21,8 @@ interface Props {
 
 export const AddPanelMenu = ({ dashboard }: Props) => {
   const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
+  const dispatch = useDispatch();
+  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return (
     <Menu>
@@ -26,9 +31,10 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
         label="Visualization"
         testId={selectors.components.PageToolbar.itemButton('Add new visualization menu item')}
         onClick={() => {
+          const id = onCreateNewPanel(dashboard, initialDatasource);
           reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_visualization' });
-          const id = onCreateNewPanel(dashboard);
           locationService.partial({ editPanel: id });
+          dispatch(setInitialDatasource(undefined));
         }}
       />
       <Menu.Item
