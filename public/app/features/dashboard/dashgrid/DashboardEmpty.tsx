@@ -64,7 +64,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               fill="outline"
               aria-label="Add new row"
               onClick={() => {
-                reportInteraction('Create new row');
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
                 onCreateNewRow(dashboard);
               }}
               disabled={!canCreate}
@@ -86,7 +86,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               fill="outline"
               aria-label="Add new panel from panel library"
               onClick={() => {
-                reportInteraction('Add a panel from the panel library');
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
                 onAddLibraryPanel(dashboard);
               }}
               disabled={!canCreate}

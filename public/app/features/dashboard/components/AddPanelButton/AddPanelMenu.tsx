@@ -43,7 +43,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
         label={t('dashboard.add-menu.row', 'Row')}
         testId={selectors.components.PageToolbar.itemButton('Add new row menu item')}
         onClick={() => {
-          reportInteraction('Create new row');
+          reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_row' });
           onCreateNewRow(dashboard);
         }}
       />
@@ -52,7 +52,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
         label={t('dashboard.add-menu.import', 'Import from library')}
         testId={selectors.components.PageToolbar.itemButton('Add new panel from panel library menu item')}
         onClick={() => {
-          reportInteraction('Add a panel from the panel library');
+          reportInteraction('dashboards_toolbar_add_clicked', { item: 'import_from_library' });
           onAddLibraryPanel(dashboard);
         }}
       />
@@ -61,7 +61,7 @@ export const AddPanelMenu = ({ dashboard }: Props) => {
         label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
         testId={selectors.components.PageToolbar.itemButton('Add new panel from clipboard menu item')}
         onClick={() => {
-          reportInteraction('Paste panel from clipboard');
+          reportInteraction('dashboards_toolbar_add_clicked', { item: 'paste_panel' });
           onPasteCopiedPanel(dashboard, copiedPanelPlugin);
         }}
         disabled={!copiedPanelPlugin}
