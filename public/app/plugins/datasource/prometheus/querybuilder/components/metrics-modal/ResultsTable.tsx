@@ -118,7 +118,6 @@ export function ResultsTable(props: ResultsTableProps) {
               );
             })}
         </>
-        <tr></tr>
       </tbody>
     </table>
   );
