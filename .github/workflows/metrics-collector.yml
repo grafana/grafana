@@ -14,7 +14,6 @@ on:
     - cron: "*/10 * * * *"
   issues:
     types: [opened, closed]
-
 jobs:
   main:
     runs-on: ubuntu-latest
