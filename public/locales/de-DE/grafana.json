@@ -30,6 +30,23 @@
     "save": "Speichern"
   },
   "dashboard": {
+    "add-menu": {
+      "import": "",
+      "paste-panel": "",
+      "row": "",
+      "visualization": ""
+    },
+    "empty": {
+      "add-import-body": "",
+      "add-import-button": "",
+      "add-import-header": "",
+      "add-row-body": "",
+      "add-row-button": "",
+      "add-row-header": "",
+      "add-visualization-body": "",
+      "add-visualization-button": "",
+      "add-visualization-header": ""
+    },
     "inspect": {
       "data-tab": "Daten",
       "error-tab": "Fehler",
@@ -75,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiken zu Datenquellen",
+      "data-traceids": "",
       "processing-time": "Datenverarbeitungszeit",
       "queries": "Anzahl der Abfragen",
       "request-time": "Gesamte Anfragezeit",
@@ -82,6 +100,7 @@
       "table-title": "Statistiken"
     },
     "toolbar": {
+      "add": "",
       "add-panel": "Panel hinzufügen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
@@ -92,7 +111,6 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
-      "tv-button": "Zyklus-Ansichtsmodus",
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
@@ -123,6 +141,9 @@
       "folder": "In Ordner speichern",
       "folder-description": "Berechtigungen des Bibliotheks-Panels werden von den Ordnerberechtigungen übernommen",
       "name": "Name des Bibliotheks-Panels"
+    },
+    "add-widget": {
+      "title": ""
     }
   },
   "library-panels": {
@@ -185,8 +206,7 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Verwaltung",
-      "titleBeforeTopnav": "Konfiguration"
+      "title": "Verwaltung"
     },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
@@ -224,8 +244,7 @@
     },
     "global-users": {
       "subtitle": "Benutzer in Grafana verwalten",
-      "title": "Benutzer",
-      "titleBeforeTopnav": "Benutzer"
+      "title": "Benutzer"
     },
     "help": {
       "title": "Hilfe"
@@ -240,9 +259,6 @@
     "library-panels": {
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
-    },
-    "manage-dashboards": {
-      "title": "Durchsuchen"
     },
     "manage-folder": {
       "subtitle": ""
@@ -262,8 +278,7 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "Standardeinstellungen",
-      "titleBeforeTopnav": "Einstellungen"
+      "title": "Standardeinstellungen"
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -282,7 +297,6 @@
     "profile/settings": {
       "title": "Profil"
     },
-    "profile/switch-org": "Organisation wechseln",
     "public": {
       "title": ""
     },
@@ -303,7 +317,6 @@
       "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
       "title": "Servicekonten"
     },
-    "sign-in": "Anmelden",
     "sign-out": {
       "title": "Abmelden"
     },
@@ -399,7 +412,6 @@
       "sort-placeholder": "",
       "starred": "Hervorgehoben",
       "view-as-folders": "",
-      "view-as-grid": "",
       "view-as-list": ""
     },
     "dashboard-actions": {
