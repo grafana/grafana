@@ -231,7 +231,7 @@ require (
 	github.com/armon/go-radix v1.0.0
 	github.com/blugelabs/bluge v0.1.9
 	github.com/blugelabs/bluge_segment_api v0.2.0
-	github.com/bufbuild/connect-go v1.4.1
+	github.com/bufbuild/connect-go v1.7.0
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/drone/drone-cli v1.6.1
 	github.com/getkin/kin-openapi v0.115.0
@@ -253,8 +253,8 @@ require (
 )
 
 require (
-	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4
+	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.7.0-20230222170618-534eac59e3f5.1
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.30.0-20230222170618-534eac59e3f5.1
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/alicebob/miniredis/v2 v2.30.1
 	github.com/dave/dst v0.27.2
