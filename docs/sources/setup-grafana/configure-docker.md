@@ -84,7 +84,7 @@ When starting the Grafana Docker container, the following configurations are set
 
 # Install plugins in the Docker container
 
-Just like users can install the publicly available plugins in Grafana, can do same for plugins that are private or used internally in an organisation.
+You can install publicly available plugins and also plugins that are private or used internally in an organization.
 
 ## Install plugins from other sources
 
