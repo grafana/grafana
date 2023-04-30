@@ -1,7 +1,10 @@
 ---
-name: '@grafana/ui component request'
+name: "@grafana/ui component request"
 about: Suggest a component for the @grafana/ui package
-labels: 'area/grafana/ui'
+title: ''
+labels: ''
+assignees: ''
+
 ---
 
 <!-- 

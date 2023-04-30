@@ -1,7 +1,10 @@
 ---
 name: Chore
 about: Create an issue for a chore needing completion
-labels: 'type: chore'
+title: ''
+labels: ''
+assignees: ''
+
 ---
 
 <!--
