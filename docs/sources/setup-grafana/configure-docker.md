@@ -71,7 +71,7 @@ For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.
 
 # Default paths
 
-The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using [environment variables](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#override-configuration-with-environment-variables), not in `conf/grafana.ini`.
+When starting the Grafana Docker container, the following configurations are set by default and cannot be changed by editing the `conf/grafana.ini` file. Instead, you can only modify these configurations using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
 
 | Setting               | Default value             |
 | --------------------- | ------------------------- |
