@@ -88,7 +88,7 @@ You can install publicly available plugins and also plugins that are private or 
 
 ## Install plugins from other sources
 
-In order to install plugins from other sources, You will need to define the custom URL and specify it using the Environment Variable: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
+To install plugins from other sources, you must define the custom URL and specify it in an environment variable: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
 
 Example:
 
