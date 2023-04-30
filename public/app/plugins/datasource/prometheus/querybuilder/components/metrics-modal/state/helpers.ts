@@ -12,24 +12,17 @@ import { MetricsModalMetadata, MetricsModalState, stateSlice } from './state';
 
 const { setFilteredMetricCount } = stateSlice.actions;
 
-export async function getMetadata(
+export async function setMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery,
   initialMetrics?: string[]
 ): Promise<MetricsModalMetadata> {
-  // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
-  // don't use it with the visual builder and there is no need to run all the start() setup anyway.
-  if (!datasource.languageProvider.metricsMetadata) {
-    await datasource.languageProvider.loadMetricsMetadata();
-  }
-
-  // Error handling for when metrics metadata returns as undefined
-  // *** Will have to handle metadata filtering if this happens
-  // *** only display metrics fuzzy search, filter and pagination
+  // metadata is set in the metric select now
+  // use this to disable metadata search and display
   let hasMetadata = true;
-  if (!datasource.languageProvider.metricsMetadata) {
+  const metadata = datasource.languageProvider.metricsMetadata;
+  if (metadata && Object.keys(metadata).length === 0) {
     hasMetadata = false;
-    datasource.languageProvider.metricsMetadata = {};
   }
 
   let nameHaystackDictionaryData: HaystackDictionary = {};

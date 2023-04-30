@@ -19,7 +19,7 @@ import {
   displayedMetrics,
   filterMetrics,
   getBackendSearchMetrics,
-  getMetadata,
+  setMetrics,
   placeholders,
   promTypes,
 } from './state/helpers';
@@ -47,7 +47,7 @@ export type MetricsModalProps = {
 // actions
 const {
   setIsLoading,
-  setMetadata,
+  buildMetrics,
   filterMetricsBackend,
   setResultsPerPage,
   setPageNum,
@@ -79,10 +79,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
     // *** Loading Gif
     dispatch(setIsLoading(true));
 
-    const data: MetricsModalMetadata = await getMetadata(datasource, query, initialMetrics);
+    const data: MetricsModalMetadata = await setMetrics(datasource, query, initialMetrics);
 
     dispatch(
-      setMetadata({
+      buildMetrics({
         isLoading: false,
         hasMetadata: data.hasMetadata,
         metrics: data.metrics,

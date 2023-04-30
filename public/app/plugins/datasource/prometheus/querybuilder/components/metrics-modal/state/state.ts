@@ -24,7 +24,7 @@ export const stateSlice = createSlice({
       state.filteredMetricCount = action.payload.filteredMetricCount;
       state.isLoading = action.payload.isLoading;
     },
-    setMetadata: (state, action: PayloadAction<MetricsModalMetadata>) => {
+    buildMetrics: (state, action: PayloadAction<MetricsModalMetadata>) => {
       state.isLoading = action.payload.isLoading;
       state.metrics = action.payload.metrics;
       state.hasMetadata = action.payload.hasMetadata;
@@ -189,6 +189,7 @@ export type MetricsModalMetadata = {
   filteredMetricCount: number | null;
 };
 
+// for updating the settings in the PromQuery model
 export function getSettings(visQuery: PromVisualQuery): MetricsModalSettings {
   return {
     useBackend: visQuery?.useBackend ?? false,

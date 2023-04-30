@@ -54,7 +54,7 @@ export function ResultsTable(props: ResultsTableProps) {
     tr?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [selectedIdx]);
 
-  function metaHighlighting(metric: MetricData) {
+  function metaRows(metric: MetricData) {
     if (state.fullMetaSearch && metric) {
       return (
         <>
@@ -91,8 +91,12 @@ export function ResultsTable(props: ResultsTableProps) {
       <thead>
         <tr className={styles.header}>
           <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
+          {state.hasMetadata && (
+            <>
+              <th>Type</th>
+              <th>Description</th>
+            </>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -113,7 +117,7 @@ export function ResultsTable(props: ResultsTableProps) {
                       highlightClassName={styles.matchHighLight}
                     />
                   </td>
-                  {metaHighlighting(metric)}
+                  {state.hasMetadata && metaRows(metric)}
                 </tr>
               );
             })}
