@@ -223,7 +223,7 @@ Using configuration files, you can provide sensitive information such as secrets
 
 You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information.
 
-For example, you could set the admin password this way:
+The following example demonstrates how to set the admin password:
 
 - Admin password secret: `/run/secrets/admin_password`
 - Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
