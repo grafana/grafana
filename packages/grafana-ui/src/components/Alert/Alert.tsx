@@ -171,10 +171,12 @@ const getStyles = (
       overflow-y: auto;
     `,
     buttonWrapper: css`
-      padding: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(1)};
       background: none;
       display: flex;
       align-items: center;
+      align-self: center;
+      background: ${theme.colors.background.primary};
     `,
     close: css`
       position: relative;

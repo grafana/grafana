@@ -41,7 +41,7 @@ export const TimeSeriesPanel = ({
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
-    if (data.series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+    if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
       const s = getPrepareTimeseriesSuggestion(id);
       return {
         message: 'Long data must be converted to wide',
@@ -49,7 +49,7 @@ export const TimeSeriesPanel = ({
       };
     }
     return undefined;
-  }, [data.series, id]);
+  }, [frames, id]);
 
   if (!frames || suggestions) {
     return (
