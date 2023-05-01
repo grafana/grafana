@@ -74,17 +74,18 @@ Data source insights provides information about how a data source has been used 
 
 To find data source insights:
 
-1. Go to the Data source list view.
-1. Click on a data source.
+1. Go to the **Connections**.
+1. Under Your connections, click **Data sources**.
+1. Click a data source.
 1. Click the **Insights** tab.
 
-{{< figure src="/static/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-data-source-insights-9.5.png" max-width="650px" class="docs-image--no-shadow" >}}
 
 ## Presence indicator
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-When you are signed in and looking at a dashboard, you can know who is looking at the same dashboard as you are via a presence indicator, which displays avatars of users who have recently interacted with the dashboard. The default timeframe is 10 minutes. To see the user's name, hover over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
+When you are signed in and looking at a dashboard, you can know who is looking at the same dashboard as you are via a presence indicator, which displays avatars of users who have recently interacted with the dashboard. The default time frame is 10 minutes. To see the user's name, hover over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
 When there are more active users on a dashboard than can fit within the presence indicator, click the **+X** icon. Doing so opens [dashboard insights]({{< relref "#dashboard-and-data-source-insights" >}}), which contains more details about recent user activity.
 
@@ -102,16 +103,16 @@ recent_users_age = 10m
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-In the search view, you can use insights data to help you find most-used, broken, and unused dashbaords.
+In the search view, you can use insights data to help you find most-used, broken, and unused dashboards.
 
 You can sort the dashboards by:
 
 - Errors total
-- Errors 30 days
+- Errors 30 days (most and least)
 - Views total
-- Views 30 days
+- Views 30 days (most and least)
 
-{{< figure src="/static/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-sort-9.5.png" max-width="650px" class="docs-image--no-shadow" >}}
 
 ## Visualize usage insights data
 
