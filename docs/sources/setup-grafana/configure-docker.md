@@ -28,7 +28,7 @@ You can install and run Grafana using the following official Docker images.
 
 - **Grafana Open Source**: `grafana/grafana-oss`
 
-Each edition is available in two variants: Alpine and Ubuntu. See below.
+Each edition is available in two variants: Alpine and Ubuntu.
 
 ## Alpine image (recommended)
 
