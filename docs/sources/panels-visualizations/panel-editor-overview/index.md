@@ -24,6 +24,8 @@ weight: 1
 
 # Panel editor overview
 
+In the panel editor, you can update all the elements of a visualization including the data source, queries, time range, and visualization display options.
+
 ![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
 
 To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard. To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown:
