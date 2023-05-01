@@ -525,8 +525,18 @@ func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, 
 	})
 }
 
-func (service AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, uid string) error {
-	// TODO add implementation once this issue is closed: https://github.com/grafana/grafana/issues/66038
+func (service AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
+	rules, err := service.ruleStore.ListAlertRules(ctx, &models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folderUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := service.deleteRules(ctx, orgID, rules...); err != nil {
+		return err
+	}
 	return nil
 }
 
