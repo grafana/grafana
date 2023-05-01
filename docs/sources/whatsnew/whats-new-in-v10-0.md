@@ -7,7 +7,7 @@ keywords:
   - '10.0'
   - release notes
 title: What's new in Grafana v10.0
-weight: -33
+weight: -37
 ---
 
 # What’s new in Grafana v10.0
