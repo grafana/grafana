@@ -23,17 +23,19 @@ export function EditDataSourcePage(props: Props) {
       pageNav={nav.main}
       renderTitle={(title) => (
         <EditDataSourceTitle
+          dataSource={nav.dataSource}
           title={title}
-          readOnly={nav.dataSource.isReadOnly}
-          onNameChange={nav.dataSource.onNameChange}
+          readOnly={nav.dataSource.readOnly}
+          onUpdate={nav.dataSourceHeader.onUpdate}
+          onNameChange={nav.dataSourceHeader.onNameChange}
         />
       )}
       subTitle={
         <EditDataSourceSubtitle
           dataSourcePluginName={nav.main.dataSourcePluginName}
           isDefault={nav.dataSource.isDefault || false}
-          alertingSupported={nav.dataSource.alertingSupported}
-          onDefaultChange={nav.dataSource.onDefaultChange}
+          alertingSupported={nav.dataSourceHeader.alertingSupported}
+          onDefaultChange={nav.dataSourceHeader.onDefaultChange}
         />
       }
       actions={<EditDataSourceActions uid={uid} />}

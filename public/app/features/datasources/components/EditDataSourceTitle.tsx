@@ -1,34 +1,48 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, AutoSizeInput, useStyles2 } from '@grafana/ui';
 
 interface Props {
+  dataSource: DataSourceSettings;
   title: string;
   readOnly: boolean;
+  onUpdate: (dataSource: DataSourceSettings) => Promise<DataSourceSettings>;
   onNameChange: (name: string) => void;
 }
 
-export function EditDataSourceTitle({ title, readOnly, onNameChange }: Props) {
+export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate, onNameChange }: Props) {
   const [isNameEditable, setIsNameEditable] = useState(false);
   const [name, setName] = useState<string>(title);
+  const [initialDataSource, setInitialDataSource] = useState<DataSourceSettings>(dataSource);
   const styles = useStyles2(getStyles);
 
   const toggleEditMode = () => {
     setIsNameEditable(!isNameEditable);
   };
 
-  const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
-    onNameChange(event.currentTarget.value);
-    setName(event.currentTarget.value);
+  const handleChange = async (name: string) => {
+    onNameChange(name);
+    setName(name);
     toggleEditMode();
+    try {
+      await onUpdate({ ...initialDataSource, name });
+    } catch (err) {
+      return;
+    }
   };
 
   useEffect(() => {
     setName(title);
   }, [title]);
+
+  // update this to read only initial dataSource load
+  // currently it picks up dataSource updates from form
+  useEffect(() => {
+    setInitialDataSource(dataSource);
+  }, [dataSource]);
 
   return (
     <div className={styles.container}>
@@ -52,7 +66,7 @@ export function EditDataSourceTitle({ title, readOnly, onNameChange }: Props) {
             type="text"
             defaultValue={name}
             placeholder="Name"
-            onCommitChange={handleChange}
+            onCommitChange={(evt: React.FormEvent<HTMLInputElement>) => handleChange(evt.currentTarget.value)}
             minWidth={40}
             maxWidth={80}
             required

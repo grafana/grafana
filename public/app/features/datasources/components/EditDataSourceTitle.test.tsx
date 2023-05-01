@@ -3,13 +3,16 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { getMockDataSource } from 'app/features/datasources/__mocks__';
 
 import { EditDataSourceTitle } from './EditDataSourceTitle';
 
 const setup = () => {
   const props = {
+    dataSource: getMockDataSource(),
     title: 'My Datasource',
     readOnly: false,
+    onUpdate: jest.fn(),
     onNameChange: jest.fn(),
   };
 
