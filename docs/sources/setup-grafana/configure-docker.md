@@ -60,7 +60,7 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:<version nu
 
 Example:
 
-This command will run Grafana Enterprise container which has version 9.4.7. If you want to run a different version e.g. 9.4.3 then just put it in the version-number section
+The following command runs the Grafana Enterprise container, which has version 9.4.7. If you want to run a different version, modify the version number section.
 
 ```bash
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:9.4.7
