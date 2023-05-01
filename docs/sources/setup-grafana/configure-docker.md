@@ -52,7 +52,7 @@ You can also run a specific version, or run a beta version based on the main bra
 
 
 
-To run a specific version of Grafana mention it in the command <version number> section:
+To run a specific version of Grafana, add it in the command <version number> section:
 
 ```bash
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:<version number>
