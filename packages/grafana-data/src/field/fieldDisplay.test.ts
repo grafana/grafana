@@ -1,6 +1,5 @@
 import { merge } from 'lodash';
 
-import { MutableDataFrame } from '../dataframe';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes';
 import { ReducerID } from '../transformations/fieldReducer';
@@ -251,7 +250,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          new MutableDataFrame({
+          toDataFrame({
             fields: [
               { name: 'Name', values: ['A', 'B'] },
               { name: 'Value', values: [10, 20] },
@@ -274,7 +273,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          new MutableDataFrame({
+          toDataFrame({
             fields: [
               {
                 name: 'Name',
@@ -316,7 +315,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          new MutableDataFrame({
+          toDataFrame({
             fields: [
               { name: 'Name', values: ['A', 'B'] },
               { name: 'Value', values: [10, 10] },
@@ -342,7 +341,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          new MutableDataFrame({
+          toDataFrame({
             fields: [
               { name: 'Name', values: ['A', 'B'] },
               { name: 'SensorA', values: [10, 20] },
@@ -415,7 +414,7 @@ describe('FieldDisplay', () => {
           defaults: {},
         },
         data: [
-          new MutableDataFrame({
+          toDataFrame({
             fields: [
               {
                 name: 'Name',
@@ -509,8 +508,25 @@ function createEmptyDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
 }
 
 function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}): GetFieldDisplayValuesOptions {
-  const options: GetFieldDisplayValuesOptions = {
-    data: [
+  const options = merge(
+    {
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      reduceOptions: {
+        calcs: [],
+      },
+      fieldConfig: {
+        overrides: [],
+        defaults: {},
+      },
+      theme: createTheme(),
+    },
+    extend
+  );
+
+  if (!options.data?.length) {
+    options.data = [
       toDataFrame({
         name: 'Series Name',
         fields: [
@@ -519,21 +535,9 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
           { name: 'Field 3', values: [2, 4, 6] },
         ],
       }),
-    ],
-    replaceVariables: (value: string) => {
-      return value;
-    },
-    reduceOptions: {
-      calcs: [],
-    },
-    fieldConfig: {
-      overrides: [],
-      defaults: {},
-    },
-    theme: createTheme(),
-  };
-
-  return merge(options, extend);
+    ];
+  }
+  return options;
 }
 
 describe('fixCellTemplateExpressions', () => {
