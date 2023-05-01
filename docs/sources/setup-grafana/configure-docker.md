@@ -85,7 +85,7 @@ When starting the Grafana Docker container, the following configurations are set
 | GF_PATHS_PLUGINS      | /var/lib/grafana/plugins  |
 | GF_PATHS_PROVISIONING | /etc/grafana/provisioning |
 
-# Install plugins in the Docker container
+## Install plugins in the Docker container
 
 You can install publicly available plugins and also plugins that are private or used internally in an organization.
 
