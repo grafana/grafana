@@ -7,16 +7,18 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 import { DashboardViewItemKind } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
 
-import { setItemSelectionState } from '../state';
+import { setAllSelection, setItemSelectionState, useHasSelection } from '../state';
 
 interface SearchViewProps {
   height: number;
   width: number;
+  canSelect: boolean;
 }
 
-export function SearchView({ width, height }: SearchViewProps) {
+export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
+  const hasSelection = useHasSelection();
 
   const { keyboardEvents } = useKeyNavigationListener();
   const [searchState, stateManager] = useSearchStateManager();
@@ -25,18 +27,27 @@ export function SearchView({ width, height }: SearchViewProps) {
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
-      if (!kind || kind === '*') {
+      if (!kind) {
+        return false;
+      }
+
+      // Currently, this indicates _some_ items are selected, not nessicarily all are
+      // selected.
+      if (kind === '*' && uid === '*') {
+        return hasSelection;
+      } else if (kind === '*') {
+        // Unsure how this case can happen
         return false;
       }
 
       return selectedItems[assertDashboardViewItemKind(kind)][uid] ?? false;
     },
-    [selectedItems]
+    [selectedItems, hasSelection]
   );
 
   const clearSelection = useCallback(() => {
-    console.log('TODO: clearSelection');
-  }, []);
+    dispatch(setAllSelection({ isSelected: false }));
+  }, [dispatch]);
 
   const handleItemSelectionChange = useCallback(
     (kind: string, uid: string) => {
@@ -63,8 +74,8 @@ export function SearchView({ width, height }: SearchViewProps) {
 
   const props: SearchResultsProps = {
     response: value,
-    selection: selectionChecker,
-    selectionToggle: handleItemSelectionChange,
+    selection: canSelect ? selectionChecker : undefined,
+    selectionToggle: canSelect ? handleItemSelectionChange : undefined,
     clearSelection,
     width: width,
     height: height,

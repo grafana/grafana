@@ -1,11 +1,12 @@
 import React from 'react';
 
 import { config } from '@grafana/runtime';
+
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
-import { useDataSource, useDataSourceRights, useDeleteLoadedDataSource } from '../state';
+import { useDataSource } from '../state';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -15,12 +16,7 @@ interface Props {
 
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
-  const onDelete = useDeleteLoadedDataSource();
-
-  const { readOnly, hasDeleteRights } = useDataSourceRights(uid);
   const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
-
-  const canDelete = !readOnly && hasDeleteRights;
 
   return (
     <>
@@ -57,9 +53,6 @@ export function EditDataSourceActions({ uid }: Props) {
         }}
       >
         Build a dashboard
-      </Button>
-      <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete}>
-        Delete
       </Button>
     </>
   );

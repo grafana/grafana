@@ -97,14 +97,18 @@ export function EditDataSourceView({
   onUpdate,
 }: ViewProps) {
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
-  const { readOnly, hasWriteRights } = dataSourceRights;
+  const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onUpdate({ ...dataSource });
+    try {
+      await onUpdate({ ...dataSource });
+    } catch (err) {
+      return;
+    }
 
     onTest();
   };
@@ -149,9 +153,16 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} />
+      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
-      <ButtonRow onSubmit={onSubmit} onTest={onTest} canSave={!readOnly && hasWriteRights} />
+
+      <ButtonRow
+        onSubmit={onSubmit}
+        onTest={onTest}
+        onDelete={onDelete}
+        canDelete={!readOnly && hasDeleteRights}
+        canSave={!readOnly && hasWriteRights}
+      />
     </form>
   );
 }
