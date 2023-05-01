@@ -70,7 +70,7 @@ Data source insights provides information about how a data source has been used 
 
 To find data source insights:
 
-1. Go to the **Connections**.
+1. Click **Connections** in the main navigation.
 1. Under Your connections, click **Data sources**.
 1. Click a data source.
 1. Click the **Insights** tab.
