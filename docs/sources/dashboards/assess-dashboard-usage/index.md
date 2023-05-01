@@ -43,11 +43,9 @@ For every dashboard and data source, you can access usage information.
 
 ### Dashboard insights
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+To see dashboard usage information, click the dashboard insights icon in the header.
 
-To see dashboard usage information, click **Dashboard insights** in the top bar.
-
-{{< figure src="/static/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 Dashboard insights show the following information:
 
