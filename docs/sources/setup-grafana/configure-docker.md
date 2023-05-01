@@ -39,7 +39,7 @@ If you prioritize security and want to minimize the size of your image, it is re
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
-**Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
+- **Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
 
 These images are based on [Ubuntu](https://ubuntu.com/), available in the [Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an Ubuntu-based image and/or are dependent on certain tooling not available for Alpine.
 
