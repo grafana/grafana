@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
-import { CellProps, Column, TableInstance, useTable } from 'react-table';
+import { CellProps, Column, HeaderProps, TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
@@ -21,13 +21,18 @@ interface DashboardsTreeProps {
   height: number;
   selectedItems: DashboardTreeSelection;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
+  onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  canSelect: boolean;
 }
 
 type DashboardsTreeColumn = Column<DashboardsTreeItem>;
-type DashboardsTreeCellProps = CellProps<DashboardsTreeItem, unknown> & {
+type DashboardTreeHeaderProps = HeaderProps<DashboardsTreeItem> & {
   // Note: userProps for cell renderers (e.g. second argument in `cell.render('Cell', foo)` )
   // aren't typed, so we must be careful when accessing this
+  selectedItems?: DashboardsTreeProps['selectedItems'];
+};
+type DashboardsTreeCellProps = CellProps<DashboardsTreeItem, unknown> & {
   selectedItems?: DashboardsTreeProps['selectedItems'];
 };
 
@@ -40,31 +45,39 @@ export function DashboardsTree({
   height,
   selectedItems,
   onFolderClick,
+  onAllSelectionChange,
   onItemSelectionChange,
+  canSelect = false,
 }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
 
   const tableColumns = useMemo(() => {
-    const checkboxColumn: DashboardsTreeColumn = {
-      id: 'checkbox',
-      width: 0,
-      Header: () => <Checkbox value={false} />,
-      Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
-        const item = row.item;
-        if (item.kind === 'ui-empty-folder' || !selectedItems) {
-          return <></>;
-        }
+    const checkboxColumn: DashboardsTreeColumn | null = canSelect
+      ? {
+          id: 'checkbox',
+          width: 0,
+          Header: ({ selectedItems }: DashboardTreeHeaderProps) => {
+            const isAllSelected = selectedItems?.$all ?? false;
+            return <Checkbox value={isAllSelected} onChange={(ev) => onAllSelectionChange(ev.currentTarget.checked)} />;
+          },
+          Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
+            const item = row.item;
+            if (item.kind === 'ui-empty-folder' || !selectedItems) {
+              return <></>;
+            }
 
-        const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
-        return (
-          <Checkbox
-            data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
-            value={isSelected}
-            onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
-          />
-        );
-      },
-    };
+            const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
+
+            return (
+              <Checkbox
+                data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
+                value={isSelected}
+                onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
+              />
+            );
+          },
+        }
+      : null;
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
@@ -86,9 +99,10 @@ export function DashboardsTree({
       Header: 'Tags',
       Cell: TagsCell,
     };
+    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
 
-    return [checkboxColumn, nameColumn, typeColumn, tagsColumns];
-  }, [onItemSelectionChange, onFolderClick]);
+    return columns;
+  }, [onItemSelectionChange, onAllSelectionChange, onFolderClick, canSelect]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
@@ -114,7 +128,7 @@ export function DashboardsTree({
 
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header')}
+                  {column.render('Header', { selectedItems })}
                 </div>
               );
             })}

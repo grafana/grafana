@@ -258,11 +258,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
    * When item is selected clear some filters and report interaction
    */
   onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
-    // Clear some filters only if we're not opening a search item in a new tab
-    if (!e.altKey && !e.ctrlKey && !e.metaKey) {
-      this.setState({ tag: [], starred: false, sort: undefined, query: '', folderUid: undefined });
-    }
-
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,

@@ -165,6 +165,12 @@ func Test_newMux(t *testing.T) {
 			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
+		{
+			name:        "creates an Azure Traces executor",
+			queryType:   azureTraces,
+			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			Err:         require.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -189,7 +195,12 @@ func Test_newMux(t *testing.T) {
 			}
 			mux := s.newQueryMux()
 			res, err := mux.QueryData(context.Background(), &backend.QueryDataRequest{
-				PluginContext: backend.PluginContext{},
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+						Name: "datasource_name",
+						UID:  "datasource_UID",
+					},
+				},
 				Queries: []backend.DataQuery{
 					{QueryType: tt.queryType},
 				},

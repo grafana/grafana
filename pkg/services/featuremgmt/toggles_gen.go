@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagDatabaseMetrics
-	// Add Prometheus metrics for database tables
-	FlagDatabaseMetrics = "database_metrics"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
