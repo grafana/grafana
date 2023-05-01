@@ -518,10 +518,10 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	return result, nil
 }
 
-func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
+func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	return service.ruleStore.CountAlertRulesInFolder(ctx, &models.CountAlertRulesQuery{
 		OrgID:        orgID,
-		NamespaceUID: uid,
+		NamespaceUID: folderUID,
 	})
 }
 

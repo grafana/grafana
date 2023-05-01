@@ -499,9 +499,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, UID); err != nil {
+		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
 			return err
 		}
 	}
