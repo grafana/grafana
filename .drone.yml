@@ -796,7 +796,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.7.39
+  image: mysql:8.0.32
   name: mysql
   volumes:
   - name: mysql
@@ -1831,7 +1831,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.7.39
+  image: mysql:8.0.32
   name: mysql
   volumes:
   - name: mysql
@@ -5059,7 +5059,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.7.39
+  image: mysql:8.0.32
   name: mysql
   volumes:
   - name: mysql
@@ -5751,7 +5751,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.7.39
+  image: mysql:8.0.32
   name: mysql
   volumes:
   - name: mysql
@@ -6249,7 +6249,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.7.39
+  image: mysql:8.0.32
   name: mysql
   volumes:
   - name: mysql
@@ -6394,7 +6394,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.7.39
+  image: mysql:8.0.32
   name: mysql
   volumes:
   - name: mysql

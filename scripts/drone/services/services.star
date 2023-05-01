@@ -25,7 +25,7 @@ def integration_test_services():
         },
         {
             "name": "mysql",
-            "image": "mysql:5.7.39",
+            "image": "mysql:8.0.32",
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
                 "MYSQL_DATABASE": "grafana_tests",
