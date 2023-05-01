@@ -65,7 +65,7 @@ export const alphabet = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 function alphabetCheck(): { [char: string]: number } {
   const check: { [char: string]: number } = {};
 
-  [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].forEach((char) => (check[char] = 0));
+  alphabet.forEach((char) => (check[char] = 0));
 
   return check;
 }
