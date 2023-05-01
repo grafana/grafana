@@ -245,7 +245,7 @@ Supported variables:
 - `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
 - `GF_AWS_${profile}_REGION`: AWS region (optional).
 
-# Troubleshooting
+## Troubleshooting
 
 For troubleshooting, we recommend increasing the log level to `DEBUG` mode. For more information, refer to the [log section in Configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#log).
 
