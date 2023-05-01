@@ -9,7 +9,7 @@ export function DataSourceDashboardsPage() {
   const { uid } = useParams<{ uid: string }>();
   const params = new URLSearchParams(location.search);
   const pageId = params.get('page');
-  const nav = useDataSourceSettingsNav('dashboards', pageId);
+  const nav = useDataSourceSettingsNav(uid, pageId);
 
   return (
     <Page navId="connections-your-connections-datasources" pageNav={nav.main}>
