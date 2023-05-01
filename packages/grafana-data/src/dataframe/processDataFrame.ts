@@ -27,7 +27,6 @@ import {
 
 import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
-import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
