@@ -27,6 +27,7 @@ import {
 
 import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
+import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -573,7 +574,8 @@ export interface ParitalDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
 
 export function createDataFrame(input: ParitalDataFrame): DataFrame {
   let length = 0;
-  const fields = input.fields.map((field, idx) => {
+  const fields = input.fields.map((p, idx) => {
+    const { state, display, ...field } = p;
     if (!field.name) {
       field.name = `Field ${idx + 1}`;
     }
