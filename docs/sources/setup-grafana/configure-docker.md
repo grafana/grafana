@@ -32,7 +32,9 @@ Each edition is available in two variants: Alpine and Ubuntu.
 
 ## Alpine image (recommended)
 
-By default, the images are built using the widely-used [Alpine Linux project](http://alpinelinux.org/) and can be accessed through the [Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than other distribution base images, allowing for slimmer and more secure images to be created.
+[Alpine Linux](https://alpinelinux.org/about/) is an independent, non-commercial, general purpose Linux distribution designed for users users who appreciate security, simplicity and resource efficiency. Alpine Linux is much smaller than other distribution base images, allowing for slimmer and more secure images to be created.
+
+By default, the images are built using the widely-used [Alpine Linux project](http://alpinelinux.org/) and can be accessed through the [Alpine official image](https://hub.docker.com/_/alpine).
 If you prioritize security and want to minimize the size of your image, it is recommended that you use the Alpine variant. However, it's important to note that the Alpine variant uses [musl libc](http://www.musl-libc.org/) instead of [glibc and others](http://www.etalabs.net/compare_libcs.html). As a result, some software might encounter problems depending on their libc requirements. Nonetheless, most software should not experience any issues, so the Alpine variant is generally reliable.
 
 ## Ubuntu image
@@ -73,6 +75,8 @@ When running Grafana main in production, we strongly recommend that you use the 
 For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
 
 ## Default paths
+
+Grafana have some predefined default configuraiton parameters which are always same when a fresh Grafana server is installed and is independent of the operating systems or the environment (e.g. virtual machine, docker, kubernetes etc.). You can refer the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana) documentation to view all the default configuraiton settings.
 
 When starting the Grafana Docker container, the following configurations are set by default and cannot be changed by editing the `conf/grafana.ini` file. Instead, you can only modify these configurations using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
 
@@ -224,9 +228,13 @@ For example, you could set the admin password this way:
 - Admin password secret: `/run/secrets/admin_password`
 - Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
 
-## Configure AWS credentials for CloudWatch Support
+## Configure Docker secrets credentials for AWS CloudWatch
 
-Defining secrets is very important on the public cloud so that it is not visible as plain text and provide a layer of security.
+Grafana ships with built-in support for [Amazon CloudWatch datasource](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/), where need to provide information such as AWS ID-Key, secret access key, region etc. For which you can use the Docker secrets to achieve it.
+
+Example:
+
+The following example will define Docker Secrets to your AWS ID-Key and the secret access key, region and profie.
 
 ```bash
 docker run -d \
