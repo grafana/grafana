@@ -35,8 +35,8 @@ export async function setMetrics(
     const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
     const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
 
-    // string[] = name + type + description
-    const metaDataString = `${m} ${type} ${description}`;
+    // possibly remove the type in favor of the type select
+    const metaDataString = `${m}¦${type}¦${description}`;
 
     const metricData: MetricData = {
       value: m,
