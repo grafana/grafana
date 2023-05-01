@@ -9,7 +9,7 @@ keywords:
   - '9.2'
   - release notes
 title: What's new in Grafana v9.2
-weight: 100
+weight: -33
 ---
 
 # What's new in Grafana v9.2
