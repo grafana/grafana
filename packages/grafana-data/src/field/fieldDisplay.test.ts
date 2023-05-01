@@ -1,5 +1,6 @@
 import { merge } from 'lodash';
 
+import { MutableDataFrame } from '../dataframe';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes';
 import { ReducerID } from '../transformations/fieldReducer';
@@ -250,7 +251,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          toDataFrame({
+          new MutableDataFrame({
             fields: [
               { name: 'Name', values: ['A', 'B'] },
               { name: 'Value', values: [10, 20] },
@@ -273,7 +274,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          toDataFrame({
+          new MutableDataFrame({
             fields: [
               {
                 name: 'Name',
@@ -315,7 +316,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          toDataFrame({
+          new MutableDataFrame({
             fields: [
               { name: 'Name', values: ['A', 'B'] },
               { name: 'Value', values: [10, 10] },
@@ -341,7 +342,7 @@ describe('FieldDisplay', () => {
           calcs: [],
         },
         data: [
-          toDataFrame({
+          new MutableDataFrame({
             fields: [
               { name: 'Name', values: ['A', 'B'] },
               { name: 'SensorA', values: [10, 20] },
@@ -414,7 +415,7 @@ describe('FieldDisplay', () => {
           defaults: {},
         },
         data: [
-          toDataFrame({
+          new MutableDataFrame({
             fields: [
               {
                 name: 'Name',
