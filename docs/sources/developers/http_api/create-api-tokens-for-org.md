@@ -17,6 +17,8 @@ weight: 150
 # Create API tokens and dashboards for an organization
 
 Use the Grafana API to set up new Grafana organizations or to add dynamically generated dashboards to an existing organization.
+-->needs to mention this API is for on-prem and where we could use this API token? Customer may mistaken this to be for cloud product as well.
+
 
 ## Authentication
 
