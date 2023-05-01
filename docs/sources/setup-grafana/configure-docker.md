@@ -18,7 +18,7 @@ weight: 1800
 
 Running Grafana on Docker may require some additional configuration which depends on the complexity of your environment. We will explain some of those e.g. using different images, changing logging levels, defining secrets on Cloud (e.g. AWS), configuring plugins etc.
 
-> **Note:** These examples use the Grafana Enterprise docker image. You can use the Grafana Open Source edition by changing the docker image to `grafana/grafana-oss`.
+> **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana-oss`.
 
 # Supported Docker Image variants
 
