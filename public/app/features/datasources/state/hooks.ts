@@ -184,8 +184,9 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
       dataSourcePluginName: datasourcePlugin?.name || '',
       active: true,
     },
-    props: {
+    dataSource: {
       isDefault: dataSource.isDefault,
+      isReadOnly: dataSource.readOnly,
       alertingSupported,
       onNameChange,
       onDefaultChange,

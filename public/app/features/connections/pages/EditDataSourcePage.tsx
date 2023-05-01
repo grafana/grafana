@@ -19,13 +19,19 @@ export function EditDataSourcePage() {
     <Page
       navId="connections-your-connections-datasources"
       pageNav={nav.main}
-      renderTitle={(title) => <EditDataSourceTitle title={title} onNameChange={nav.props.onNameChange} />}
+      renderTitle={(title) => (
+        <EditDataSourceTitle
+          title={title}
+          readOnly={nav.dataSource.isReadOnly}
+          onNameChange={nav.dataSource.onNameChange}
+        />
+      )}
       subTitle={
         <EditDataSourceSubtitle
           dataSourcePluginName={nav.main.dataSourcePluginName}
-          isDefault={nav.props.isDefault || false}
-          alertingSupported={nav.props.alertingSupported}
-          onDefaultChange={nav.props.onDefaultChange}
+          isDefault={nav.dataSource.isDefault || false}
+          alertingSupported={nav.dataSource.alertingSupported}
+          onDefaultChange={nav.dataSource.onDefaultChange}
         />
       }
       actions={<EditDataSourceActions uid={uid} />}

@@ -9,6 +9,7 @@ import { EditDataSourceTitle } from './EditDataSourceTitle';
 const setup = () => {
   const props = {
     title: 'My Datasource',
+    readOnly: false,
     onNameChange: jest.fn(),
   };
 

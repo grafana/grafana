@@ -7,10 +7,11 @@ import { IconButton, AutoSizeInput, useStyles2 } from '@grafana/ui';
 
 interface Props {
   title: string;
+  readOnly: boolean;
   onNameChange: (name: string) => void;
 }
 
-export function EditDataSourceTitle({ title, onNameChange }: Props) {
+export function EditDataSourceTitle({ title, readOnly, onNameChange }: Props) {
   const [isNameEditable, setIsNameEditable] = useState(false);
   const [name, setName] = useState<string>(title);
   const styles = useStyles2(getStyles);
@@ -34,13 +35,15 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
       {!isNameEditable ? (
         <div className={styles.titleContainer}>
           <h1 className={styles.title}>{name}</h1>
-          <IconButton
-            name="pen"
-            onClick={toggleEditMode}
-            size="lg"
-            className={styles.editIcon}
-            data-testid={selectors.pages.DataSource.nameEditIcon}
-          />
+          {!readOnly && (
+            <IconButton
+              name="pen"
+              onClick={toggleEditMode}
+              size="lg"
+              className={styles.editIcon}
+              data-testid={selectors.pages.DataSource.nameEditIcon}
+            />
+          )}
         </div>
       ) : (
         <div className={styles.datasourceNameInput}>
