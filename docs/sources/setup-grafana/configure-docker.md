@@ -47,7 +47,9 @@ These images are based on [Ubuntu](https://ubuntu.com/), available in the [Ubunt
 
 You can also run a specific version, or run a beta version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
 
-> **Note:** If you are on a Linux system (e.g. Debian, Ubuntu), you might need to add `sudo` before the command or add your user to the `docker` group by following the official documentation to [run Docker without a non-root user](https://docs.docker.com/engine/install/linux-postinstall/).
+> **Note:** If you use a Linux operating system such as Debian or Ubuntu and encounter permission errors when running Docker commands, you might need to prefix the command with `sudo` or add your user to the `docker` group. The official Docker documentation provides instructions on how to [run Docker without a non-root user](https://docs.docker.com/engine/install/linux-postinstall/).
+
+
 
 
 To run a specific version of Grafana mention it in the command <version number> section:
