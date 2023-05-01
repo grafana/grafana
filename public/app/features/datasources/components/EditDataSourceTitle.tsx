@@ -34,7 +34,13 @@ export function EditDataSourceTitle({ title, onNameChange }: Props) {
       {!isNameEditable ? (
         <div className={styles.titleContainer}>
           <h1 className={styles.title}>{name}</h1>
-          <IconButton name="pen" onClick={toggleEditMode} size="lg" className={styles.editIcon} />
+          <IconButton
+            name="pen"
+            onClick={toggleEditMode}
+            size="lg"
+            className={styles.editIcon}
+            data-testid={selectors.pages.DataSource.nameEditIcon}
+          />
         </div>
       ) : (
         <div className={styles.datasourceNameInput}>
