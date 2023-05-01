@@ -72,7 +72,7 @@ For every successful build of the main branch, we update the `grafana/grafana-os
 When running Grafana main in production, we strongly recommend that you use the `grafana/grafana-oss-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of the most recent commit.
 For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
 
-# Default paths
+## Default paths
 
 When starting the Grafana Docker container, the following configurations are set by default and cannot be changed by editing the `conf/grafana.ini` file. Instead, you can only modify these configurations using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
 
