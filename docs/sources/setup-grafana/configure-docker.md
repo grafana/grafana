@@ -183,7 +183,7 @@ The Grafana Image Renderer plugin does not currently work (see [GitHub Issue#301
 
 Example:
 
-The below example shows how to build the customized Grafana Docker Image and provides the Image Render Plugin in the build argument.
+The following example shows how to build a customized Grafana Docker image that includes the Image Renderer plugin.
 
 ```bash
 #go to the folder
