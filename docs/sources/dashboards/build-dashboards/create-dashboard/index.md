@@ -55,6 +55,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. When you've finished editing your panel, click **Save** in the top right corner.
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+
+   ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
 
 ## Configure repeating rows
 

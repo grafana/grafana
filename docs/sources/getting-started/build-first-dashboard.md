@@ -55,6 +55,10 @@ To create your first dashboard:
 
 Congratulations, you have created your first dashboard and it is displaying results.
 
+To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+
+    ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
+
 #### Next steps
 
 Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source" >}}). The following topics will be of interest to you:
