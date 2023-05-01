@@ -154,7 +154,7 @@ describe('nullInsertThreshold Transformer', () => {
 
   // this tests that intervals at 24hr but starting not at 12am UTC are not always snapped to 12am UTC
   test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold 11PM UTC', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         {

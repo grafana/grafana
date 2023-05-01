@@ -18,7 +18,7 @@ export const MISSING_VALUE = undefined; // Treated as connected in new graph pan
 /**
  * MutableDataFrame is a complex wrapper around the DataFrame interface
  *
- * @deprecated use standard DataFrame, or create one with ParitalDataFrame
+ * @deprecated use standard DataFrame, or create one with PartialDataFrame
  */
 export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;

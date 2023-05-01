@@ -568,11 +568,11 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
   };
 }
 
-export interface ParitalDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
+export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
   fields: Array<Partial<Field>>;
 }
 
-export function createDataFrame(input: ParitalDataFrame): DataFrame {
+export function createDataFrame(input: PartialDataFrame): DataFrame {
   let length = 0;
   const fields = input.fields.map((p, idx) => {
     const { state, display, ...field } = p;
@@ -588,7 +588,7 @@ export function createDataFrame(input: ParitalDataFrame): DataFrame {
       length = field.values.length;
     }
     if (!field.type) {
-      field.type = guessFieldTypeForField(field as Field);
+      field.type = guessFieldTypeForField(field as Field) ?? FieldType.other;
     }
     return field as Field;
   });
