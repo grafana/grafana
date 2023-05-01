@@ -89,7 +89,7 @@ When starting the Grafana Docker container, the following configurations are set
 
 You can install publicly available plugins and also plugins that are private or used internally in an organization.
 
-## Install plugins from other sources
+### Install plugins from other sources
 
 To install plugins from other sources, you must define the custom URL and specify it in an environment variable: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
 
@@ -105,7 +105,7 @@ docker run -d \
   grafana/grafana-enterprise
 ```
 
-# Build and run a Docker image with pre-installed plugins
+## Build and run a Docker image with pre-installed plugins
 
 If you need to create multiple images with the same plugins, you can save time by building your own customized image that includes those plugins.
 
@@ -157,7 +157,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ## Build with pre-installed plugins from other sources
 
-You can build a Docker image with plugins from other sources if they are not publicly available (e.g. a private plugin used only within an organization) by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
+If a plugin is not publicly available and is only used within your organization, you can still build a Docker image with it by specifying the plugin's URL using the `GF_INSTALL_PLUGINS` build argument. You can do this by adding the URL and the plugin install folder name like this: `GF_INSTALL_PLUGINS=;`.
 
 The following example demonstrates creating a customized Grafana Docker image that includes the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable
 
@@ -199,9 +199,9 @@ docker build \
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
-# Logging
+## Logging
 
-Logs in the Docker container go to `STDOUT` by default, as is common in the Docker world. Change this by setting a different [log mode](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#mode). Available options are `console`, `file`, and `syslog`. The default is `console` and `file`. Use spaces to separate multiple modes, e.g `console file`
+By default, Docker container logs are directed to `STDOUT`, which is a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "../../../configure-grafana/#mode" >}}) such as `console`, `file`, or `syslog`. You can choose to use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
 
 Example:
 
@@ -215,15 +215,16 @@ docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana-enterprise
 ```
 # Configure Grafana with Docker Secrets
 
-You can supply Grafana sensitive information e.g. secrets, login credentials etc. with configuration through files. This works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/) as the secrets by default are mapped into the following location in the container: `/run/secrets/<name of secret>.
-` 
-You can do this with any of the configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the path of the file holding the secret.
+Using configuration files, you can provide sensitive information such as secrets and login credentials to Grafana. This method works particularly well with Docker Secrets, as the secrets are automatically mapped to the `/run/secrets/` location within the container. 
+
+You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information.
 
 For example, you could set the admin password this way:
 
 - Admin password secret: `/run/secrets/admin_password`
 - Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
-# Configure AWS credentials for CloudWatch Support
+
+## Configure AWS credentials for CloudWatch Support
 
 Defining secrets is very important on the public cloud so that it is not visible as plain text and provide a layer of security.
 
