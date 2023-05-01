@@ -267,6 +267,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 8px;
     display: flex;
     justify-content: space-between;
+    cursor: pointer;
     :hover {
       background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
     }

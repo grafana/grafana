@@ -149,6 +149,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     row: css`
       label: row;
+      cursor: pointer;
       border-bottom: 1px solid ${theme.colors.border.weak};
       &:last-child {
         border-bottom: 0;
