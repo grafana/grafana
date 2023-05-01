@@ -132,7 +132,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 ## Build with pre-installed plugins
 
-You can build the Grafana custom image by including plugins which are available on the [Grafana Plugin download page](https://grafana.com/grafana/plugins). By this, you will not need to install plugins manually which can save time.
+To save time, you can customize a Grafana image by including plugins available on the [Grafana Plugin download page](https://grafana.com/grafana/plugins). By doing so, you won't have to manually install the plugins each time, making the process more efficient.
 
 > **Note:**  If you need to specify the version of a plugin, you can add it to the `GF_INSTALL_PLUGINS` build an argument. Otherwise, the latest will be assumed for e.g. `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
 
