@@ -37,7 +37,7 @@ If you prioritize security and want to minimize the size of your image, it is re
 
 ## Ubuntu image
 
-**Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
+- **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
 **Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
 
