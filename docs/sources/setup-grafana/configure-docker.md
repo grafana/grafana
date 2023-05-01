@@ -179,7 +179,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 > **Note:**  This feature is experimental.
 
-The Grafana Image Renderer plugin does not currently work (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301)) if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
+The Grafana Image Renderer plugin does not currently work (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301)) if it is installed in a Grafana Docker image. You can build a custom Docker image using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
 
 Example:
 
