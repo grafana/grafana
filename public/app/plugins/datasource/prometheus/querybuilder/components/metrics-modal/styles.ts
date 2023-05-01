@@ -72,7 +72,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       column-gap: ${theme.spacing(1)};
     `,
     results: css`
-      height: 250px;
+      height: calc(80vh - 280px);
       overflow-y: scroll;
     `,
     pageSettingsWrapper: css`
