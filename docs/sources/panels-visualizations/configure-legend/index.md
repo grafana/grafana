@@ -2,6 +2,7 @@
 aliases:
   - ../../panels/working-with-panels/configure-legend/
   - ../panels-visualizations/visualizations/configure-legend/
+  - ../panels-visualizations/configure-legend/
 title: Configure a legend
 weight: 400
 ---
