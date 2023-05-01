@@ -2597,9 +2597,6 @@ exports[`better eslint`] = {
     "public/app/features/datasources/components/BasicSettings.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/features/datasources/components/ButtonRow.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "public/app/features/datasources/components/DataSourceReadOnlyMessage.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -3882,10 +3879,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/MetricsQueryEditor/Alias.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/cloudwatch/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

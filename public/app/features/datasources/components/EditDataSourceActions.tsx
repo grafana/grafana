@@ -3,11 +3,11 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
-import { useDataSource, useDataSourceRights, useDeleteLoadedDataSource } from '../state';
+import { useDataSource } from '../state';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -26,12 +26,7 @@ interface Props {
 export function EditDataSourceActions({ uid }: Props) {
   const styles = useStyles2(getStyles);
   const dataSource = useDataSource(uid);
-  const onDelete = useDeleteLoadedDataSource();
-
-  const { readOnly, hasDeleteRights } = useDataSourceRights(uid);
   const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
-
-  const canDelete = !readOnly && hasDeleteRights;
 
   return (
     <>
@@ -71,10 +66,6 @@ export function EditDataSourceActions({ uid }: Props) {
           Explore
         </LinkButton>
       )}
-
-      <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete} className={styles.button}>
-        Delete
-      </Button>
     </>
   );
 }
