@@ -159,7 +159,7 @@ You can build a Docker image with plugins from other sources if they are not pub
 Example:
 
 
-The below example shows how to build a customized Grafana Docker image with the **clock panel** and also the **simple-json-datasource** plugin gets installed by defining them in the build-argument under Grafana Plugin environment variable 
+The following example demonstrates creating a customized Grafana Docker image that includes the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable
 
 ```bash
 #go to the folder
