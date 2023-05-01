@@ -2,7 +2,6 @@ import { dateTime } from '../datetime/moment_wrapper';
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { MutableDataFrame } from './MutableDataFrame';
 import {
   createDataFrame,
   guessFieldTypeFromValue,
