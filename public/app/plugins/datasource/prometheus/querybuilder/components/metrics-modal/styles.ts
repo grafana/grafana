@@ -60,6 +60,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
+      justify-content: space-between;
       align-items: center;
       column-gap: ${theme.spacing(1)};
       margin-bottom: ${theme.spacing(1)};
