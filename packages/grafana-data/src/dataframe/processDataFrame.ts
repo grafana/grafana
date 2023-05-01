@@ -574,7 +574,7 @@ export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
 export function createDataFrame(input: PartialDataFrame): DataFrame {
   let length = 0;
   const fields = input.fields.map((p, idx) => {
-    const { state, display, ...field } = p;
+    const { state, ...field } = p;
     if (!field.name) {
       field.name = `Field ${idx + 1}`;
     }
