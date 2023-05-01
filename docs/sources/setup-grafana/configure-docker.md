@@ -205,7 +205,7 @@ Logs in the Docker container go to `STDOUT` by default, as is common in the Dock
 
 Example:
 
-To change the log mode, use the `GF_LOG_MODE` environment variable and define your mode e.g. to use `console file`, run the command:
+The following example runs Grafana using the `console file` log mode that is set in the `GF_LOG_MODE` environment variable
 
 ```bash
 # Run Grafana while logging to both standard out 
