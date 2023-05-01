@@ -9,17 +9,13 @@ weight: 15
 
 # Logs in Explore
 
-Along with metrics, Explore allows you to investigate your logs in the following data sources:
+Along with metrics, Explore allows you to investigate your logs across several data sources including:
 
 - [Elasticsearch]({{< relref "../datasources/elasticsearch/" >}})
 - [InfluxDB]({{< relref "../datasources/influxdb/" >}})
 - [Loki]({{< relref "../datasources/loki/" >}})
 
-During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow:
-
-1. Receive an alert.
-1. Drill down and examine metrics.
-1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
+During monitoring, troubleshooting and incident response, you can dig deeper into the metrics and logs to find the cause of the issue. Explore also allows you to correlate metrics and logs by viewing them side-by-side. 
 
 ## Logs visualization
 
@@ -27,7 +23,7 @@ Results of log queries are shown as histograms in the graph and individual logs 
 
 If the data source supports a full range log volume histogram, the graph with log distribution for all entered log queries is shown automatically. This feature is currently supported by Elasticsearch and Loki data sources.
 
-**NOTE:** In Loki, this full range log volume histogram is rendered by metric query which can be expensive depending on time range queried. This query may be particularly challenging for smaller Loki installations to process. To mitigate this, we recommend using a proxy like [nginx](https://www.nginx.com/) in front of Loki to set a custom timeout (e.g. 10 seconds) for these queries. Log volume histogram queries can be identified by looking for queries with the HTTP header `X-Query-Tags` with value `Source=logvolhist`; these headers are added by Grafana to all log volume histogram queries.
+> **NOTE:** In Loki, this full range log volume histogram is rendered by metric query which can be expensive depending on time range queried. This query may be particularly challenging for smaller Loki installations to process. To mitigate this, we recommend using a proxy like [nginx](https://www.nginx.com/) in front of Loki to set a custom timeout (e.g. 10 seconds) for these queries. Log volume histogram queries can be identified by looking for queries with the HTTP header `X-Query-Tags` with value `Source=logvolhist`; these headers are added by Grafana to all log volume histogram queries.
 
 If the data source does not support loading full range log volume histogram, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval, and the first log row's timestamp then anchors the start of the histogram from the result. The end of the time series is anchored to the time picker's **To** range.
 
@@ -62,7 +58,7 @@ For logs where a level label is specified, we use the value of the label to dete
 
 ## Logs navigation
 
-Logs navigation next to the log lines can be used to request more logs. You can do this by clicking on Older logs button on the bottom of navigation. This is especially useful when you hit the line limit and you want to see more logs. Each request that is run from the navigation is then displayed in the navigation as separate page. Every page is showing from and to timestamp of the incoming log lines. You can see previous results by clicking on the page. Explore is caching last five requests run from the logs navigation, so you are not re-running the same queries when clicking on the pages.
+Logs navigation at the right side of the log lines, can be used to request more logs. You can do this by clicking on *Older logs* button on the bottom of navigation. This is especially useful when you hit the line limit and you want to see more logs. Each request that is run from the navigation is then displayed in the navigation as separate page. Every page is showing from and to timestamp of the incoming log lines. You can see previous results by clicking on the page. Explore is caching last five requests run from the logs navigation, so you are not re-running the same queries when clicking on the pages.
 
 ![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
@@ -94,13 +90,13 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 - **Numbers -** Matches on the line after stripping out numbers such as durations, IP addresses, and so on.
 - **Signature -** The most aggressive deduplication, this strips all letters and numbers and matches on the remaining whitespace and punctuation.
 
-### Flip results order
+### Display results order
 
 You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).
 
 ## Labels and detected fields
 
-Each log row has an extendable area with its labels and detected fields, for more robust interaction. You can filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log line has an extendable area with its labels and detected fields, for more robust interaction. You can filter for (positive filter) and filter out (negative filter) selected labels. Additionaly, you can select a unique field to visualize instead of teh whole log line. Finally, each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
 ## Escaping newlines
 
@@ -127,12 +123,6 @@ When using Log context in Grafana, you can configure the number of lines of cont
 You may encounter long lines of text that make it difficult to read and analyze the context around each log entry. This is where the **Wrap lines** toggle can come in handy. By enabling this toggle, Grafana will automatically wrap long lines of text so that they fit within the visible width of the viewer. This can make it easier to read and understand the log entries.
 
 The **Open in split view** button allows you to execute the context query for a log entry in a split screen in the Explore view. Clicking this button will open a new Explore pane with the context query displayed alongside the log entry, making it easier to analyze and understand the surrounding context.
-
-## Toggle field visibility
-
-Expand a log line and click the eye icon to show or hide fields.
-
-{{< figure src="/static/img/docs/explore/toggle-fields-9-4.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
 
 ## Loki-specific features
 
