@@ -24,7 +24,7 @@ Running Grafana on Docker may require some additional configuration which depend
 
 You can install and run Grafana using the following official Docker images.
 
-**Grafana Enterprise**: `grafana/grafana-enterprise`
+- **Grafana Enterprise**: `grafana/grafana-enterprise`
 
 **Grafana Open Source**: `grafana/grafana-oss`
 
