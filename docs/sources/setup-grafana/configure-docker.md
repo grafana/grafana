@@ -33,7 +33,7 @@ Each edition is available in two variants: Alpine and Ubuntu.
 ## Alpine image (recommended)
 
 By default, the images are built using the widely-used [Alpine Linux project](http://alpinelinux.org/) and can be accessed through the [Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than other distribution base images, allowing for slimmer and more secure images to be created.
-The Alpine variant is highly recommended when security is important and you want an  image size that’s as small as possible. Note that the Alpine variant uses [musl libc](http://www.musl-libc.org/) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software doesn’t have an issue with this, so this variant is usually a very safe choice.
+If you prioritize security and want to minimize the size of your image, it is recommended that you use the Alpine variant. However, it's important to note that the Alpine variant uses [musl libc](http://www.musl-libc.org/) instead of [glibc and others](http://www.etalabs.net/compare_libcs.html). As a result, some software might encounter problems depending on their libc requirements. Nonetheless, most software should not experience any issues, so the Alpine variant is generally reliable.
 
 ## Ubuntu image
 
