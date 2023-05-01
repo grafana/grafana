@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { config } from '@grafana/runtime';
-
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -24,7 +23,6 @@ export function EditDataSourceActions({ uid }: Props) {
         <Button
           type="button"
           variant="secondary"
-          disabled={!canDelete}
           onClick={() => {
             trackExploreClicked({
               grafana_version: config.buildInfo.version,
@@ -41,7 +39,6 @@ export function EditDataSourceActions({ uid }: Props) {
       <Button
         type="button"
         variant="secondary"
-        disabled={!canDelete}
         onClick={() => {
           trackCreateDashboardClicked({
             grafana_version: config.buildInfo.version,
