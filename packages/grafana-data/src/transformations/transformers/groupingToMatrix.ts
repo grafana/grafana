@@ -1,6 +1,5 @@
 import { map } from 'rxjs/operators';
 
-import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue } from '../../types';
 import { fieldMatchers } from '../matchers';
