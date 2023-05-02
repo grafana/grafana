@@ -52,7 +52,7 @@ To create a Grafana-managed alert rule, complete the following steps.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
-   - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
+   - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
    - Click **Preview** to check the result of running the query at this moment. Preview excludes no data and error handling.
 
      **Note:**
