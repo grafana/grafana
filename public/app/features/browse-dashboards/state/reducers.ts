@@ -5,6 +5,7 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 import { BrowseDashboardsState } from '../types';
 
 import { fetchChildren } from './actions';
+import { findItem } from './utils';
 
 type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
 
@@ -119,31 +120,4 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
       }
     }
   }
-}
-
-function findItem(
-  rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
-  uid: string
-): DashboardViewItem | undefined {
-  for (const item of rootItems) {
-    if (item.uid === uid) {
-      return item;
-    }
-  }
-
-  for (const parentUID in childrenByUID) {
-    const children = childrenByUID[parentUID];
-    if (!children) {
-      continue;
-    }
-
-    for (const child of children) {
-      if (child.uid === uid) {
-        return child;
-      }
-    }
-  }
-
-  return undefined;
 }

@@ -107,17 +107,14 @@ export function DashboardsTree({
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
 
-  const virtualData = {
-    table,
-    selectedItems,
-  };
-  // TODO memoization here causes the tree not to rerender if the number of items doesn't change
-  // const virtualData = useMemo(() => {
-  //   return {
-  //     table,
-  //     selectedItems,
-  //   };
-  // }, [table, selectedItems]);
+  const virtualData = useMemo(() => {
+    return {
+      table,
+      selectedItems,
+    };
+    // we need this to rerender if items changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, selectedItems, items]);
 
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">

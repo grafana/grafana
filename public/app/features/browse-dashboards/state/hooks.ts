@@ -5,28 +5,30 @@ import { useSelector, StoreState } from 'app/types';
 
 import { DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
+export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
+export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
+export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
+export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
+
 const flatTreeSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.rootItems,
-  (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
-  (wholeState: StoreState) => wholeState.browseDashboards.openFolders,
+  rootItemsSelector,
+  childrenByParentUIDSelector,
+  openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
     return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
   }
 );
 
-const hasSelectionSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
-  (selectedItems) => {
-    return Object.values(selectedItems).some((selectedItem) =>
-      Object.values(selectedItem).some((isSelected) => isSelected)
-    );
-  }
-);
+const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {
+  return Object.values(selectedItems).some((selectedItem) =>
+    Object.values(selectedItem).some((isSelected) => isSelected)
+  );
+});
 
 const selectedItemsForActionsSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
-  (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
+  selectedItemsSelector,
+  childrenByParentUIDSelector,
   (selectedItems, childrenByParentUID) => {
     return getSelectedItemsForActions(selectedItems, childrenByParentUID);
   }
@@ -41,7 +43,7 @@ export function useHasSelection() {
 }
 
 export function useCheckboxSelectionState() {
-  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.selectedItems);
+  return useSelector(selectedItemsSelector);
 }
 
 export function useActionSelectionState() {
