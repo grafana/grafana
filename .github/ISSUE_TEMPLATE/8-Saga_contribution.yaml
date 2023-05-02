@@ -3,11 +3,9 @@ name: Saga contribution template
 description: Contribute to the design system.
 title: "Saga: "
 labels:
-  - area/grafana/ui, design-system
-assignees: null
+  - area/grafana/ui, design-system 
 body:
   - type: markdown
-    attributes:
       value: >
         By using this template, you help expand our component and pattern
         solutions within the design system and let others reuse your work! You
@@ -17,6 +15,7 @@ body:
         reduce duplicate efforts.
 
         Thank you!
+      required: false
   - type: checkboxes
     attribute:
       label: What type of contribution is this?
