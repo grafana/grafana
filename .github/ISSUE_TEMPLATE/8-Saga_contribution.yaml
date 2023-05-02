@@ -4,7 +4,7 @@ description: Contribute to the design system.
 title: "Saga: "
 labels:
   - area/grafana/ui, design-system
-assignee: null
+assignees: null
 body:
   - type: markdown
     attributes:
@@ -17,12 +17,12 @@ body:
         reduce duplicate efforts.
 
         Thank you!
-  - type: checkbox
+  - type: checkboxes
     attribute:
       label: What type of contribution is this?
       description: null
       options:
-        - label: Fix - bug, design defect, typo, docuementation conciseness
+        - label: Fix - bug, design defect, typo, documentation conciseness
         - label: Unification - combining similar components/patterns into a single
             solution
         - label: Proposal - net-new component, additions, variants
@@ -36,7 +36,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: use case
+    id: use_case
     attributes:
       label: Where is this or can be used?
       description: Explain the current/future use case, Be sure to include areas of impact.
@@ -52,7 +52,7 @@ body:
         - Figma mockup
         - Storybook story
         - …
-  - type: checkbox
+  - type: checkboxes
     attributes:
       label: Contribution guiding principles
       description: Use this checklist of guiding principles to ensure your
