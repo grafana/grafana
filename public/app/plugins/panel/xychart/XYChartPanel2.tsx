@@ -40,6 +40,7 @@ export const XYChartPanel2 = (props: Props) => {
   console.log({
     'props.data.state': props.data.state,
     'props.data.series === prevPanelDataSeries': props.data.series === prevPanelDataSeries,
+    'props.data.series[0] === prevPanelDataSeries[0]': props.data.series?.[0] === prevPanelDataSeries?.[0],
   });
   prevPanelDataSeries = props.data.series;
 
