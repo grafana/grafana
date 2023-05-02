@@ -20,13 +20,14 @@ export function EditDataSourceSubtitle({ dataSourcePluginName, isDefault, alerti
           Type: <span>{dataSourcePluginName}</span>
         </div>
         <InlineField
+          htmlFor=""
           label="Default"
           tooltip="This datasource is used when you select the data source in panels. The default data source is
         'preselected in new panels."
           transparent={true}
           labelWidth={8}
           disabled={false}
-          className={styles.defaultDataSourceSwitch}
+          className={styles.defaultDataSourceSwitchLabel}
         >
           <InlineSwitch
             id="basic-settings-default"
@@ -68,8 +69,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
       marginRight: theme.spacing(1),
     }),
-    defaultDataSourceSwitch: css({
+    defaultDataSourceSwitchLabel: css({
       margin: '0 0 0 0',
+      svg: {
+        marginLeft: '4px',
+      },
     }),
   };
 };
