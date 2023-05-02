@@ -39,19 +39,19 @@ func ProvideService(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvi
 }
 
 func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
-	if !p.Backend {
-		return nil
-	}
-	backendFactory := i.backendProvider.BackendFactory(ctx, p)
-	if backendFactory == nil {
-		return fmt.Errorf("could not find backend factory for plugin")
+	if p.Backend {
+		backendFactory := i.backendProvider.BackendFactory(ctx, p)
+		if backendFactory == nil {
+			return fmt.Errorf("could not find backend factory for plugin")
+		}
+
+		if backendClient, err := backendFactory(p.ID, p.Logger(), i.envVars(p)); err != nil {
+			return err
+		} else {
+			p.RegisterClient(backendClient)
+		}
 	}
 
-	backendClient, err := backendFactory(p.ID, p.Logger(), i.envVars(p))
-	if err != nil {
-		return err
-	}
-	p.RegisterClient(backendClient)
 	return nil
 }
 
