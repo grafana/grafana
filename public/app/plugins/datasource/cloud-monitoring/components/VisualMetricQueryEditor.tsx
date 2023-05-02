@@ -8,7 +8,8 @@ import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
-import { CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, TimeSeriesList, ValueTypes } from '../types';
+import { PreprocessorType, TimeSeriesList } from '../types/query';
+import { CustomMetaData, MetricDescriptor, MetricKind, ValueTypes } from '../types/types';
 
 import { AliasBy } from './AliasBy';
 import { Alignment } from './Alignment';

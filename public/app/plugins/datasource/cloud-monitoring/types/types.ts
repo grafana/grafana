@@ -122,58 +122,6 @@ export interface MetricQuery {
   graphPeriod?: 'disabled' | string;
 }
 
-export interface TimeSeriesList {
-  projectName: string;
-  crossSeriesReducer: string;
-  alignmentPeriod?: string;
-  perSeriesAligner?: string;
-  groupBys?: string[];
-  filters?: string[];
-  view?: string;
-  secondaryCrossSeriesReducer?: string;
-  secondaryAlignmentPeriod?: string;
-  secondaryPerSeriesAligner?: string;
-  secondaryGroupBys?: string[];
-  // preprocessor is not part of the API, but is used to store the preprocessor
-  // and not affect the UI for the rest of parameters
-  preprocessor?: PreprocessorType;
-}
-
-export interface TimeSeriesQuery {
-  projectName: string;
-  query: string;
-  // To disable the graphPeriod, it should explictly be set to 'disabled'
-  graphPeriod?: 'disabled' | string;
-}
-
-export interface AnnotationQuery extends TimeSeriesList {
-  title?: string;
-  text?: string;
-}
-
-export interface SLOQuery {
-  projectName: string;
-  perSeriesAligner?: string;
-  alignmentPeriod?: string;
-  selectorName: string;
-  serviceId: string;
-  serviceName: string;
-  sloId: string;
-  sloName: string;
-  goal?: number;
-  lookbackPeriod?: string;
-}
-
-export interface CloudMonitoringQuery extends DataQuery {
-  aliasBy?: string;
-  datasourceId?: number; // Should not be necessary anymore
-  queryType: QueryType;
-  timeSeriesList?: TimeSeriesList | AnnotationQuery;
-  timeSeriesQuery?: TimeSeriesQuery;
-  sloQuery?: SLOQuery;
-  intervalMs: number;
-}
-
 export interface CloudMonitoringOptions extends DataSourceOptions {
   gceDefaultProject?: string;
 }
