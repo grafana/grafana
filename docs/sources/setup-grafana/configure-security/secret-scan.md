@@ -1,8 +1,10 @@
 ---
-aliases:
-  - /docs/grafana/latest/auth/secretscan/
-  - /docs/grafana/latest/setup-grafana/configure-security/secretscan/
 description: Detect and revoke leaked Grafana service account tokens
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure Grafana secret scanning
 menuTitle: Configure secret scanning
 weight: 1000
@@ -10,10 +12,11 @@ weight: 1000
 
 # Configure Grafana secret scanning
 
+> **Note:** Available from Grafana 10.0.
+
 With Grafana, you can use the GitHub Secret Scanning service to determine if your [service account tokens]({{< relref "../../administration/service-accounts/" >}}) have been leaked on GitHub.
 
 <div class="clearfix"></div>
-
 
 When GitHub Secret Scanning detects a Grafana secret, its hash is stored in Grafana's secret scanning service.
 
@@ -23,8 +26,8 @@ If the service detects a leaked token, it immediately revokes it, making it usel
 
 > **Note:** If the `revoke` option is disabled, the service only sends a notification to the configured webhook URL and logs the event. The token is not automatically revoked.
 
-
-By default, when the Grafana secret scanning service detects a leaked token, the service automatically revokes the token and logs the event.
+By default, when the Grafana secret scanning service detects a leaked token,
+the service automatically revokes the token and logs the event.
 Additionally, the service can be configured to send an outgoing webhook notification to a webhook URL.
 
 The notification includes a JSON payload that contains the following data:
@@ -41,26 +44,45 @@ Grafana has revoked this token",
 }
 ```
 
+> secret scanning is disabled by default. No outgoing connections are made until you enable it.
+
+## Before you begin
+
+- Ensure all your API keys have been migrated to service accounts.
+  If you need help with this step, follow [Migrate API keys to Grafana service accounts]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts" >}}).
+- Deployed Grafana 10.0 or later.
+
 ## Steps
 
-> The secretscan feature is disabled by default.
+1. Open the Grafana configuration file.
 
-To configure Grafana secret scanning, complete the following steps:
+2. In the `[secretscan]` section, update the following parameters:
 
 ```ini
 [secretscan]
 # Enable secretscan feature
-enabled = false
-
-# Interval to check for token leaks
-interval = 5m
-
-# base URL of the grafana token secret check service
-base_url = https://secret-scanning.grafana.net
-
-# URL to send outgoing webhooks to in case of detection
-oncall_url =
+enabled = true
 
 # Whether to revoke the token if a leak is detected or just send a notification
 revoke = true
 ```
+
+Save the configuration file and restart Grafana.
+
+## Configure outgoing webhook notifications
+
+1. Create an oncall integration of the type **Webhook** and setup alerting. Copy the webhook URL.
+   You can learn how to create an oncall integration in [Webhook integrations for Grafana OnCall](https://grafana.com/docs/oncall/latest/integrations/available-integrations/configure-webhook/).
+
+2. Open the Grafana configuration file.
+
+3. In the `[secretscan]` section, update the following parameters,
+   replacing the URL with the webhook URL you copied in step 1:
+
+```ini
+[secretscan]
+# URL to send a webhook payload in oncall format
+oncall_url = https://example.url/integrations/v1/webhook/3a359nib9eweAd9lAAAETVdOx/
+```
+
+Save the configuration file and restart Grafana.
