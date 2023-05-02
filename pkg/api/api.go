@@ -126,11 +126,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", middleware.CanAdminPlugins(hs.Cfg), hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 
-	r.Get("/connections/your-connections/datasources", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
-	r.Get("/connections/your-connections/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
-	r.Get("/connections/your-connections/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
+	r.Get("/connections/your-datasources", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections/your-datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
+	r.Get("/connections/your-datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/connections", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
-	r.Get("/connections/connect-data", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections/add-new-connection", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 	r.Get("/connections/datasources/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 

@@ -19,7 +19,7 @@ export type Props = {
 
 export function DataSourceCategories({ categories, onClickDataSourceType }: Props) {
   const moreDataSourcesLink = config.featureToggles.dataConnectionsConsole
-    ? `${ROUTES.ConnectData}?cat=data-source`
+    ? `${ROUTES.AddNewConnection}?cat=data-source`
     : '/plugins?filterBy=all&filterByType=datasource&utm_source=grafana_add_ds';
 
   return (
