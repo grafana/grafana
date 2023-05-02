@@ -1,9 +1,15 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Props } from '@storybook/addon-docs/blocks';
 import { IconButton } from './IconButton';
+import { Alert } from '../Alert/Alert';
 
 <Meta title="MDX|IconButton" component={IconButton} />
 
 # IconButton
+
+<Alert severity="warning" title={'Please note:'}>
+  After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
+  xxl and xxxl are now shown in size xl as well and will be deprecated in the future.
+</Alert>
 
 This component looks like just an icon but behaves like a button. It fulfils an action when you click it and has hover and focus states. You can choose which icon size you would like to use.
 

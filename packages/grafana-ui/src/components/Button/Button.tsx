@@ -60,6 +60,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
+    // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}

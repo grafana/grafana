@@ -1,9 +1,14 @@
 import { Meta, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
 import { Button, LinkButton } from './Button';
+import { Alert } from '../Alert/Alert';
 
 <Meta title="MDX|Button" component={Button} />
 
 # Button
+
+<Alert severity="warning" title={'Please note:'}>
+  After reviewing this component we are asking you to use the IconButton when you require a button with only an icon.
+</Alert>
 
 ## Primary
 
