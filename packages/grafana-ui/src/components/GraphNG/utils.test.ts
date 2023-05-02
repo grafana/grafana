@@ -10,7 +10,7 @@ import {
   fieldMatchers,
   FieldType,
   getDefaultTimeRange,
-  createDataFrame,
+  MutableDataFrame,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -27,11 +27,11 @@ import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import { preparePlotFrame } from './utils';
 
 function mockDataFrame() {
-  const df1 = createDataFrame({
+  const df1 = new MutableDataFrame({
     refId: 'A',
     fields: [{ name: 'ts', type: FieldType.time, values: [1, 2, 3] }],
   });
-  const df2 = createDataFrame({
+  const df2 = new MutableDataFrame({
     refId: 'B',
     fields: [{ name: 'ts', type: FieldType.time, values: [1, 2, 4] }],
   });
