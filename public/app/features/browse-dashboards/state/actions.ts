@@ -22,7 +22,7 @@ export const deleteDashboard = createAsyncThunk(
     const state = getState();
 
     // refetch the parent folder children to update the tree
-    const dashboard = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), dashboardUID);
+    const dashboard = findItem(rootItemsSelector(state) ?? [], childrenByParentUIDSelector(state), dashboardUID);
 
     // Need to handle the case where the dashboard is at the root
     if (dashboard?.parentUID === GENERAL_FOLDER_UID) {
@@ -43,7 +43,7 @@ export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', as
   const state = getState();
 
   // refetch the parent and destination folder children to update the tree
-  const folder = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), folderUID);
+  const folder = findItem(rootItemsSelector(state) ?? [], childrenByParentUIDSelector(state), folderUID);
 
   // Need to handle the case where the folder is at the root
   if (folder?.parentUID === GENERAL_FOLDER_UID) {
@@ -74,7 +74,7 @@ export const moveDashboard = createAsyncThunk(
     });
 
     // refetch the parent and destination folder children to update the tree
-    const dashboard = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), dashboardUID);
+    const dashboard = findItem(rootItemsSelector(state) ?? [], childrenByParentUIDSelector(state), dashboardUID);
 
     // Need to handle the case where the folder is at the root
     if (dashboard?.parentUID === GENERAL_FOLDER_UID) {
@@ -96,7 +96,7 @@ export const moveFolder = createAsyncThunk(
     const state = getState();
 
     // refetch the parent and destination folder children to update the tree
-    const folder = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), folderUID);
+    const folder = findItem(rootItemsSelector(state) ?? [], childrenByParentUIDSelector(state), folderUID);
 
     // Need to handle the case where the folder is at the root
     if (folder?.parentUID === GENERAL_FOLDER_UID) {
