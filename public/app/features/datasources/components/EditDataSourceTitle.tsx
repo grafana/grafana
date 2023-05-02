@@ -10,10 +10,9 @@ interface Props {
   title: string;
   readOnly: boolean;
   onUpdate: (dataSource: DataSourceSettings) => Promise<DataSourceSettings>;
-  onNameChange: (name: string) => void;
 }
 
-export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate, onNameChange }: Props) {
+export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: Props) {
   const [isNameEditable, setIsNameEditable] = useState(false);
   const [name, setName] = useState<string>(title);
   const [initialDataSource, setInitialDataSource] = useState<DataSourceSettings>(dataSource);
@@ -23,8 +22,7 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate, onN
     setIsNameEditable(!isNameEditable);
   };
 
-  const handleChange = async (name: string) => {
-    onNameChange(name);
+  const handleNameChange = async (name: string) => {
     setName(name);
     toggleEditMode();
     try {
@@ -66,7 +64,7 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate, onN
             type="text"
             defaultValue={name}
             placeholder="Name"
-            onCommitChange={(evt: React.FormEvent<HTMLInputElement>) => handleChange(evt.currentTarget.value)}
+            onCommitChange={(evt: React.FormEvent<HTMLInputElement>) => handleNameChange(evt.currentTarget.value)}
             minWidth={40}
             maxWidth={80}
             required

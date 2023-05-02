@@ -25,15 +25,15 @@ export function EditDataSourcePage() {
           title={title}
           readOnly={nav.dataSource.readOnly}
           onUpdate={nav.dataSourceHeader.onUpdate}
-          onNameChange={nav.dataSourceHeader.onNameChange}
         />
       )}
       subTitle={
         <EditDataSourceSubtitle
+          dataSource={nav.dataSource}
           dataSourcePluginName={nav.main.dataSourcePluginName}
           isDefault={nav.dataSource.isDefault || false}
           alertingSupported={nav.dataSourceHeader.alertingSupported}
-          onDefaultChange={nav.dataSourceHeader.onDefaultChange}
+          onUpdate={nav.dataSourceHeader.onUpdate}
         />
       }
       actions={<EditDataSourceActions uid={uid} />}

@@ -1,13 +1,16 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
+import { getMockDataSource } from 'app/features/datasources/__mocks__';
+
 import { EditDataSourceSubtitle } from './EditDataSourceSubtitle';
 const setup = (propOverrides?: object) => {
   const props = {
+    dataSource: getMockDataSource(),
     dataSourcePluginName: 'My Datasource',
     isDefault: false,
     alertingSupported: false,
-    onDefaultChange: jest.fn(),
+    onUpdate: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
