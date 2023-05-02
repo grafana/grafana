@@ -10,9 +10,9 @@ weight: 200
 
 Grafana plugins extend its built-in functionality so that you can accomplish specialized tasks to make Grafana even more useful for them. By making a plugin for your organization, you can connect Grafana to other data sources, ticketing tools, and CI/CD tooling.
 
-You can create plugins for private use or contribute them to the open source community, such as by publishing to the [Grafana plugin catalog](https://grafana.com/grafana/plugins/) alongside hundreds of other community and commercial plugins.
+You can create plugins for private use or contribute them to the open source community, such as by publishing to the [Grafana plugin catalog](/grafana/plugins/) alongside hundreds of other community and commercial plugins.
 
-If you are a Grafana plugin developer or want to become one, this documentation is for you. Use it to get productive quickly, follow along with step-by-step tutorials, or you can refer back to it as you develop.  
+If you are a Grafana plugin developer or want to become one, this documentation is for you. Use it to get productive quickly, follow along with step-by-step tutorials, or you can refer back to it as you develop.
 
 ## Plugin basics
 
@@ -22,18 +22,18 @@ These are among the types of plugins you can create:
 - **Data source plugins** - Link to new databases or other sources of data.
 - **App plugins** - Create rich applications for custom out-of-the-box experiences.
 
-> **Note:** To learn more about the types of plugins you can build, refer to the [Plugin Overview]({{< relref "../../administration/plugin-management/" >}}) documentation.
+> **Note:** To learn more about the types of plugins you can build, refer to the [Plugin Overview]({{< relref "../../administration/plugin-management" >}}) documentation.
 
 ## Contents of this developer's guide
 
 The following topics give you an idea of what to expect from this guide:
 
-- **[Get started with plugins]({{< relref "get-started-with-plugins/">}})** - The easiest way to start developing Grafana plugins is to use the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool. 
-- **[Introduction to plugin development]({{< relref "introduction-to-plugin-development/">}})** - Ground yourself in the fundamentals of Grafana plugin development: frontend and backend development processes, data frames, error handling, and more. 
-- **[Create a Grafana plugin]({{< relref "create-a-grafana-plugin">}})** - If you're already familiar with plugin creation basics, then it's time to dive deeper into specific development scenarios. You'll find tutorials for creating panel plugins, data source plugins, and more. 
-- **[Migrate a plugin]({{< relref "migration-guide">}})** - Learn how to upgrade from a previous version of a Grafana plugin, rewrite an old Angular plugin in React, or update to a newer version. 
-- **[Publish a Grafana plugin]({{< relref "publish-a-plugin/>}}")**  - Learn about publishing a plugin to the Grafana plugin catalog, including publishing criteria, packaging, and deployment.
-- **[Reference]({{< relref "reference/>}}")** - Description of the `plugin.json` schema and plugin metadata.
+- **[Get started with plugins]({{< relref "./get-started-with-plugins" >}})** - The easiest way to start developing Grafana plugins is to use the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool.
+- **[Introduction to plugin development]({{< relref "./introduction-to-plugin-development" >}})** - Ground yourself in the fundamentals of Grafana plugin development: frontend and backend development processes, data frames, error handling, and more.
+- **[Create a Grafana plugin]({{< relref "./create-a-grafana-plugin" >}})** - If you're already familiar with plugin creation basics, then it's time to dive deeper into specific development scenarios. You'll find tutorials for creating panel plugins, data source plugins, and more.
+- **[Migrate a plugin]({{< relref "./migration-guide" >}})** - Learn how to upgrade from a previous version of a Grafana plugin, rewrite an old Angular plugin in React, or update to a newer version.
+- **[Publish a Grafana plugin]({{< relref "./publish-a-plugin" >}})** - Learn about publishing a plugin to the Grafana plugin catalog, including publishing criteria, packaging, and deployment.
+- **[Reference]({{< relref "./reference" >}})** - Description of the `plugin.json` schema and plugin metadata.
 
 ## Go further
 
@@ -49,4 +49,4 @@ Grafana Labs provides a number of best practice example plugins for different us
 
 ### SDK
 
-Learn more about [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go.md" >}}).
+Learn more about [Grafana Plugin SDK for Go]({{< relref "./backend/grafana-plugin-sdk-for-go" >}}).
