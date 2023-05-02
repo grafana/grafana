@@ -237,7 +237,7 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 	}
 
 	if err := l.hooksRunner.RunUnloadHooks(ctx, plugin); err != nil {
-		return err
+		l.log.Error("Error running unload hooks", "pluginId", plugin.ID, "err", err)
 	}
 
 	l.log.Debug("Plugin unregistered", "pluginId", plugin.ID)
