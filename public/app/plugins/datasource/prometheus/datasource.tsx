@@ -436,10 +436,8 @@ export class PrometheusDatasource
     const processedTargets: PromQuery[] = [];
 
     // This target query is up to date at this point?
-    console.log('before', target.expr);
     updatePrometheusQueryTarget(request.targets, target);
     target = interpolatePrometheusReferences(request.targets, target);
-    console.log('after', target.expr);
 
     const processedTarget = {
       ...target,
