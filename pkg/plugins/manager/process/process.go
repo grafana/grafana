@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -16,26 +17,39 @@ var _ Service = (*Manager)(nil)
 
 type Manager struct {
 	pluginRegistry registry.Service
+	loaderHooks    hooks.Registry
 
 	mu  sync.Mutex
 	log log.Logger
 }
 
-func ProvideService(pluginRegistry registry.Service) *Manager {
-	return NewManager(pluginRegistry)
+func ProvideService(pluginRegistry registry.Service, loaderHooks hooks.Registry) *Manager {
+	return NewManager(pluginRegistry, loaderHooks)
 }
 
-func NewManager(pluginRegistry registry.Service) *Manager {
-	return &Manager{
+func NewManager(pluginRegistry registry.Service, loaderHooks hooks.Registry) *Manager {
+	svc := &Manager{
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugin.process.manager"),
 	}
+	loaderHooks.RegisterAfterInitHook(hooks.HookFunc(svc.onPluginAfterInit))
+	loaderHooks.RegisterUnloadHook(hooks.HookFunc(svc.onPluginUnload))
+	return svc
 }
 
 func (m *Manager) Run(ctx context.Context) error {
 	<-ctx.Done()
 	m.shutdown(ctx)
 	return ctx.Err()
+}
+
+func (m *Manager) onPluginAfterInit(ctx context.Context, plugin *plugins.Plugin) error {
+	return m.Start(ctx, plugin.ID)
+}
+
+func (m *Manager) onPluginUnload(ctx context.Context, plugin *plugins.Plugin) error {
+	m.log.Debug("Stopping plugin process", "pluginId", plugin.ID)
+	return m.Stop(ctx, plugin.ID)
 }
 
 func (m *Manager) Start(ctx context.Context, pluginID string) error {

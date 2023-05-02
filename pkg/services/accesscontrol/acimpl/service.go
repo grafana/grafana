@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -30,8 +31,11 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
+func ProvideService(
+	cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager,
+	loaderHooks hooks.Registry,
+) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
 
 	if !accesscontrol.IsDisabled(cfg) {
@@ -39,6 +43,7 @@ func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRe
 		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 			return nil, err
 		}
+		loaderHooks.RegisterAfterInitHook(hooks.HookFunc(service.onPluginAfterInit))
 	}
 
 	return service, nil
@@ -73,6 +78,13 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
+}
+
+func (s *Service) onPluginAfterInit(ctx context.Context, p *plugins.Plugin) error {
+	if err := s.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
+		s.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", err)
+	}
+	return nil
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {

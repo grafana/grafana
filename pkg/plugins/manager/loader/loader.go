@@ -14,8 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/util"
@@ -25,41 +24,92 @@ var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
 	pluginFinder        finder.Finder
-	processManager      process.Service
 	pluginRegistry      registry.Service
-	roleRegistry        plugins.RoleRegistry
-	pluginInitializer   initializer.Initializer
 	signatureValidator  signature.Validator
 	signatureCalculator plugins.SignatureCalculator
 	assetPath           *assetpath.Service
 	log                 log.Logger
 	cfg                 *config.Cfg
 
+	hooksRegistry hooks.Registry
+	hooksRunner   hooks.Runner
+
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator) *Loader {
-	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder, signatureCalculator)
+func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service, pluginFinder finder.Finder, assetPath *assetpath.Service,
+	signatureCalculator plugins.SignatureCalculator, hooksRegistry hooks.Registry, hooksRunner hooks.Runner) *Loader {
+	return New(cfg, authorizer, pluginRegistry, assetPath, pluginFinder, signatureCalculator, hooksRegistry, hooksRunner)
 }
 
-func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator) *Loader {
+func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service,
+	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
+	hooksRegistry hooks.Registry, hooksRunner hooks.Runner) *Loader {
+	logger := log.New("plugin.loader")
+
+	// TODO: hooks: Move those to separate services
+	hooksRegistry.RegisterBeforeInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		if plugin.IsApp() {
+			setDefaultNavURL(plugin)
+		}
+		return nil
+	}))
+	hooksRegistry.RegisterBeforeInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		if plugin.Parent != nil && !plugin.Parent.IsApp() {
+			configureAppChildPlugin(plugin.Parent, plugin)
+		}
+		return nil
+	}))
+	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		if !plugin.IsCorePlugin() && !plugin.IsBundledPlugin() {
+			metrics.SetPluginBuildInformation(plugin.ID, string(plugin.Type), plugin.Info.Version, string(plugin.Signature))
+		}
+		return nil
+	}))
+	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		// verify module.js exists for SystemJS to load.
+		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
+		if plugin.IsRenderer() || plugin.IsCorePlugin() {
+			return nil
+		}
+		f, err := plugin.FS.Open("module.js")
+		if err != nil {
+			if errors.Is(err, plugins.ErrFileNotExist) {
+				logger.Warn("Plugin missing module.js", "pluginID", plugin.ID,
+					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
+			}
+		} else if f != nil {
+			if err := f.Close(); err != nil {
+				logger.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
+			}
+		}
+		return nil
+	}))
+	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		if !plugin.IsCorePlugin() {
+			logger.Info("Plugin registered", "pluginID", plugin.ID)
+		}
+		return nil
+	}))
+	hooksRegistry.RegisterUnloadHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		if remover, ok := plugin.FS.(plugins.FSRemover); ok {
+			return remover.Remove()
+		}
+		return nil
+	}))
+
 	return &Loader{
 		pluginFinder:        pluginFinder,
 		pluginRegistry:      pluginRegistry,
-		pluginInitializer:   initializer.New(cfg, backendProvider, license),
 		signatureValidator:  signature.NewValidator(authorizer),
 		signatureCalculator: signatureCalculator,
-		processManager:      processManager,
 		errs:                make(map[string]*plugins.SignatureError),
-		log:                 log.New("plugin.loader"),
-		roleRegistry:        roleRegistry,
+		log:                 logger,
 		cfg:                 cfg,
+		hooksRegistry:       hooksRegistry,
+		hooksRunner:         hooksRunner,
 		assetPath:           assetPath,
 	}
 }
@@ -122,8 +172,8 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	}
 
 	// validate signatures
-	verifiedPlugins := make([]*plugins.Plugin, 0)
 	for _, plugin := range loadedPlugins {
+		// TODO: hooks: implement as hook?
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
@@ -136,60 +186,19 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 
 		// clear plugin error if a pre-existing error has since been resolved
 		delete(l.errs, plugin.ID)
-
-		// verify module.js exists for SystemJS to load.
-		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
-		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			f, err := plugin.FS.Open("module.js")
-			if err != nil {
-				if errors.Is(err, plugins.ErrFileNotExist) {
-					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
-						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
-				}
-			} else if f != nil {
-				if err := f.Close(); err != nil {
-					l.log.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
-				}
-			}
-		}
-
-		if plugin.IsApp() {
-			setDefaultNavURL(plugin)
-		}
-
-		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildPlugin(plugin.Parent, plugin)
-		}
-
-		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 
-	// initialize plugins
-	initializedPlugins := make([]*plugins.Plugin, 0)
+	verifiedPlugins := l.hooksRunner.RunBeforeInitHooks(ctx, loadedPlugins)
+
+	// TODO: hooks: implement as hook and remove
 	for _, p := range verifiedPlugins {
-		err := l.pluginInitializer.Initialize(ctx, p)
-		if err != nil {
-			l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
-			continue
-		}
-		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
-			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", errDeclareRoles)
-		}
-
-		initializedPlugins = append(initializedPlugins, p)
-	}
-
-	for _, p := range initializedPlugins {
 		if err := l.load(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
-
-		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
-			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-		}
 	}
 
-	return initializedPlugins, nil
+	l.hooksRunner.RunAfterInitHooks(ctx, verifiedPlugins)
+	return verifiedPlugins, nil
 }
 
 func (l *Loader) Unload(ctx context.Context, pluginID string) error {
@@ -202,43 +211,30 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
+	if err := l.hooksRunner.RunUnloadHooks(ctx, plugin); err != nil {
+		return err
+	}
+
+	// TODO: hooks: implement as hook and remove
 	if err := l.unload(ctx, plugin); err != nil {
 		return err
 	}
+
+	l.log.Debug("Plugin unregistered", "pluginId", plugin.ID)
 	return nil
 }
 
 func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
+	// TODO: hooks: implement as hook
 	if err := l.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
-
-	if !p.IsCorePlugin() {
-		l.log.Info("Plugin registered", "pluginID", p.ID)
-	}
-
-	return l.processManager.Start(ctx, p.ID)
+	return nil
 }
 
 func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
-	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
-
-	if err := l.processManager.Stop(ctx, p.ID); err != nil {
-		return err
-	}
-
-	if err := l.pluginRegistry.Remove(ctx, p.ID); err != nil {
-		return err
-	}
-	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
-
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err := remover.Remove(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	// TODO: hooks: implement as hook
+	return l.pluginRegistry.Remove(ctx, p.ID)
 }
 
 func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) (*plugins.Plugin, error) {

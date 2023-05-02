@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 )
 
 type Initializer struct {
@@ -23,16 +24,23 @@ type Initializer struct {
 	log             log.Logger
 }
 
-func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
-	return Initializer{
+func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, loaderHooks hooks.Registry) Initializer {
+	svc := Initializer{
 		cfg:             cfg,
 		license:         license,
 		backendProvider: backendProvider,
 		log:             log.New("plugin.initializer"),
 	}
+
+	// TODO: hooks: this MUST run AFTER all other init hooks... how can we do that?
+	loaderHooks.RegisterBeforeInitHook(hooks.HookFunc(svc.Initialize))
+
+	return svc
 }
 
 func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
+	// TODO: hooks: if err -> l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
+
 	if p.Backend {
 		backendFactory := i.backendProvider.BackendFactory(ctx, p)
 		if backendFactory == nil {
