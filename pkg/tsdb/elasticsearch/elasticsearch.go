@@ -218,7 +218,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if err != nil {
 		return err
 	}
-	
+
 	responseHeaders := map[string][]string{
 		"content-type": {"application/json"},
 	}
@@ -228,7 +228,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
-		Status: response.StatusCode,
+		Status:  response.StatusCode,
 		Headers: responseHeaders,
 		Body:    body,
 	})
