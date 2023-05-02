@@ -518,6 +518,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	return result, nil
 }
 
+// CountInFolder returns the number of alert rules in a given folder.
 func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	return service.ruleStore.CountAlertRulesInFolder(ctx, &models.CountAlertRulesQuery{
 		OrgID:        orgID,
@@ -525,6 +526,7 @@ func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, 
 	})
 }
 
+// DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (service AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
 	rules, err := service.ruleStore.ListAlertRules(ctx, &models.ListAlertRulesQuery{
 		OrgID:         orgID,
