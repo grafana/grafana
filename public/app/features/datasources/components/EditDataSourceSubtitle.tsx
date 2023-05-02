@@ -22,8 +22,7 @@ export function EditDataSourceSubtitle({ dataSourcePluginName, isDefault, alerti
         <InlineField
           htmlFor=""
           label="Default"
-          tooltip="This datasource is used when you select the data source in panels. The default data source is
-        'preselected in new panels."
+          tooltip="The default data source is preselected in new panels."
           transparent={true}
           labelWidth={8}
           disabled={false}
