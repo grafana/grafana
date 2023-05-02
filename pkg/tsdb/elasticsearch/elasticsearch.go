@@ -1,10 +1,15 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -171,4 +176,53 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	instance := i.(es.DatasourceInfo)
 
 	return &instance, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	// allowed paths for resource calls:
+	// - empty string for fetching db version
+	if req.Path != "" {
+		return fmt.Errorf("invalid resource URL: %s", req.Path)
+	}
+
+	ds, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return err
+	}
+
+	resourcePath, err := url.Parse(req.Path)
+	if err != nil {
+		return err
+	}
+
+	// We take the path and the query-string only
+	esUrl.RawQuery = resourcePath.RawQuery
+	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
+
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
+	if err != nil {
+		return err
+	}
+
+	response, err := ds.HTTPClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status: response.StatusCode,
+		// We are sending back original req headers, as we don't want to expose any possibly confidential headers
+		Headers: req.Headers,
+		Body:    body,
+	})
 }

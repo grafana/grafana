@@ -1,5 +1,5 @@
 import { cloneDeep, find, first as _first, isObject, isString, map as _map } from 'lodash';
-import { generate, lastValueFrom, Observable, of } from 'rxjs';
+import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
@@ -30,7 +30,7 @@ import {
   LogRowContextOptions,
   SupplementaryQueryOptions,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config } from '@grafana/runtime';
+import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -739,7 +739,14 @@ export class ElasticDatasource
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    return lastValueFrom(this.legacyQueryRunner.request('GET', '/')).then(
+    let getDbVersionObservable;
+    if (config.featureToggles.enableElasticsearchBackendQuerying) {
+      getDbVersionObservable = from(this.getResource(''));
+    } else {
+      getDbVersionObservable = this.legacyQueryRunner.request('GET', '/');
+    }
+
+    return lastValueFrom(getDbVersionObservable).then(
       (data) => {
         const versionNumber = data?.version?.number;
         if (typeof versionNumber !== 'string') {
