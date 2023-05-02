@@ -117,7 +117,7 @@ describe('browse-dashboards BrowseView', () => {
     expect(grandparentCheckbox).not.toBeChecked();
   });
 
-  it('shows indeterminate checkboxes when an ancestor is selected', async () => {
+  it('shows indeterminate checkboxes when a descendant is selected', async () => {
     render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
