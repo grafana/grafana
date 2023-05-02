@@ -80,7 +80,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 }
 
 func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
-	clusterLogger := moa.logger.New("component", "clustering")
+	clusterLogger := moa.logger.New("ngalert.notifier.multiorg_alertmanager")
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby
 	// increasing the probability of success when waiting for the cluster to settle.
@@ -128,7 +128,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 
 		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
 		if err != nil {
-			moa.logger.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
+			moa.logger.Error("msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
 		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
 		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
@@ -142,7 +142,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 }
 
 func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
-	moa.logger.Info("starting MultiOrg Alertmanager")
+	moa.logger.Info("Starting MultiOrg Alertmanager")
 
 	for {
 		select {

@@ -125,7 +125,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Nflog:              nflogOptions,
 	}
 
-	l := log.New("alertmanager", "org", orgID)
+	l := log.New("ngalert.notifier.alertmanager", orgID)
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
-		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+		return fmt.Errorf("Failed to serialize to the Alertmanager configuration: %w", err)
 	}
 
 	var outerErr error
@@ -223,13 +223,13 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {
-		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
+		return fmt.Errorf("Failed to parse Alertmanager config: %w", err)
 	}
 
 	var outerErr error
 	am.Base.WithLock(func() {
 		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
-			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
+			outerErr = fmt.Errorf("Unable to apply configuration: %w", err)
 			return
 		}
 	})
@@ -270,7 +270,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !amConfigChanged && !templatesChanged {
-		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
+		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
 		return false, nil
 	}
 
