@@ -37,7 +37,6 @@ export function EditDataSourcePage(props: Props) {
           onUpdate={nav.dataSourceHeader.onUpdate}
         />
       )}
-      subTitle={<></>}
       info={info}
       actions={<EditDataSourceActions uid={uid} />}
     >

@@ -16,7 +16,6 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.uid,
-    subTitle: `Type: ${pluginMeta.name}`,
     url: '',
     text: dataSource.name,
     breadcrumbs: [{ title: 'Data Sources', url: 'datasources' }],

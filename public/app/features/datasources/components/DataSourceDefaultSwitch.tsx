@@ -30,7 +30,7 @@ export function DataSourceDefaultSwitch({ dataSource, isDefault, onUpdate }: Pro
     <InlineSwitch
       id="basic-settings-default"
       transparent={true}
-      value={isDefault}
+      value={isDefault || false}
       onChange={(evt: React.FormEvent<HTMLInputElement>) => handleDefaultDataSourceChange(evt.currentTarget.checked)}
     />
   );
