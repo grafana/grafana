@@ -48,7 +48,6 @@ func (m *Manager) onPluginAfterInit(ctx context.Context, plugin *plugins.Plugin)
 }
 
 func (m *Manager) onPluginUnload(ctx context.Context, plugin *plugins.Plugin) error {
-	m.log.Debug("Stopping plugin process", "pluginId", plugin.ID)
 	return m.Stop(ctx, plugin.ID)
 }
 

@@ -205,9 +205,25 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		delete(l.errs, plugin.ID)
 	}
 
-	verifiedPlugins := l.hooksRunner.RunBeforeInitHooks(ctx, loadedPlugins)
+	// Run before init hooks. If before init hooks fail to run for a plugin, filter it out.
+	verifiedPlugins := make([]*plugins.Plugin, 0, len(loadedPlugins))
+	for _, p := range loadedPlugins {
+		p := p
+		err := l.hooksRunner.RunBeforeInitHooks(ctx, p)
+		if err != nil {
+			l.log.Error("Error running before init hooks", "pluginId", p.ID, "err", err)
+			continue
+		}
+		// An error in a before init hooks makes the plugin fail to load
+		verifiedPlugins = append(verifiedPlugins, p)
+	}
 
-	l.hooksRunner.RunAfterInitHooks(ctx, verifiedPlugins)
+	// Run after init hooks. If after init hooks fail to run for a plugin, just log the failure.
+	for _, p := range verifiedPlugins {
+		if err := l.hooksRunner.RunAfterInitHooks(ctx, p); err != nil {
+			l.log.Error("Error running after init hooks", "pluginId", p.ID, "err", err)
+		}
+	}
 	return verifiedPlugins, nil
 }
 
