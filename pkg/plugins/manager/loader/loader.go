@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/util"
@@ -39,7 +41,11 @@ type Loader struct {
 
 func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, pluginFinder finder.Finder, assetPath *assetpath.Service,
-	signatureCalculator plugins.SignatureCalculator, hooksRegistry hooks.Registry, hooksRunner hooks.Runner) *Loader {
+	signatureCalculator plugins.SignatureCalculator, hooksRegistry hooks.Registry, hooksRunner hooks.Runner,
+
+	// TODO: hooks: Provided just for hooks side-effects, find a better way
+	_ initializer.Initializer, _ process.Service,
+) *Loader {
 	return New(cfg, authorizer, pluginRegistry, assetPath, pluginFinder, signatureCalculator, hooksRegistry, hooksRunner)
 }
 

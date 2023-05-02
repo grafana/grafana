@@ -38,6 +38,10 @@ func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, licens
 	return svc
 }
 
+func ProvideService(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, loaderHooks hooks.Registry) Initializer {
+	return New(cfg, backendProvider, license, loaderHooks)
+}
+
 func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 	// TODO: hooks: if err -> l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
 

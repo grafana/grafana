@@ -62,6 +62,8 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 		return nil
 	}
 
+	m.log.Debug("Starting plugin process", "pluginId", p.ID)
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

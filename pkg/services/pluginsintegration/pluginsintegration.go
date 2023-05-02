@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -56,6 +57,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(hooks.Registry), new(*hooks.Service)),
 	wire.Bind(new(hooks.Runner), new(*hooks.Service)),
 
+	initializer.ProvideService,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
