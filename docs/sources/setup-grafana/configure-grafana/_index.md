@@ -1284,31 +1284,19 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ### enabled
 
-Sentry javascript agent is initialized. Default is `false`.
-
-### provider
-
-Defines which provider to use `sentry` or `grafana`. Default is `sentry`
-
-### sentry_dsn
-
-Sentry DSN if you want to send events to Sentry
+Faro javascript agent is initialized. Default is `false`.
 
 ### custom_endpoint
 
-Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
-
-### sample_rate
-
-Rate of events to be reported between `0` (none) and `1` (all, default), float.
+Custom HTTP endpoint to send events captured by the Faro agent to. Default, `/log-grafana-javascript-agent`, will log the events to stdout.
 
 ### log_endpoint_requests_per_second_limit
 
-Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `3`.
 
 ### log_endpoint_burst_limit
 
-Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
 ### instrumentations_errors_enabled
 
