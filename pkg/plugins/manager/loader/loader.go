@@ -57,13 +57,13 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	logger := log.New("plugin.loader")
 
 	// TODO: hooks: Move those to separate services
-	hooksRegistry.RegisterBeforeInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterBeforeLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if plugin.IsApp() {
 			setDefaultNavURL(plugin)
 		}
 		return nil
 	})
-	hooksRegistry.RegisterBeforeInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterBeforeLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if plugin.Parent != nil && !plugin.Parent.IsApp() {
 			configureAppChildPlugin(plugin.Parent, plugin)
 		}
@@ -71,20 +71,20 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	})
 
 	// This hook MUST run AFTER all other before init hooks
-	hooksRegistry.RegisterBeforeInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterBeforeLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if err := pluginInitializer.Initialize(ctx, plugin); err != nil {
 			logger.Error("Could not initialize plugin", "pluginId", plugin.ID, "err", err)
 		}
 		return nil
 	})
 
-	hooksRegistry.RegisterAfterInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if !plugin.IsCorePlugin() && !plugin.IsBundledPlugin() {
 			metrics.SetPluginBuildInformation(plugin.ID, string(plugin.Type), plugin.Info.Version, string(plugin.Signature))
 		}
 		return nil
 	})
-	hooksRegistry.RegisterAfterInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		// verify module.js exists for SystemJS to load.
 		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if plugin.IsRenderer() || plugin.IsCorePlugin() {
@@ -103,7 +103,7 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 		}
 		return nil
 	})
-	hooksRegistry.RegisterAfterInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if !plugin.IsCorePlugin() {
 			logger.Info("Plugin registered", "pluginID", plugin.ID)
 		}
@@ -205,11 +205,11 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		delete(l.errs, plugin.ID)
 	}
 
-	// Run before init hooks. If before init hooks fail to run for a plugin, filter it out.
+	// Run before load hooks. If a before load hooks fail to run for a plugin, filter it out.
 	verifiedPlugins := make([]*plugins.Plugin, 0, len(loadedPlugins))
 	for _, p := range loadedPlugins {
 		p := p
-		err := l.hooksRunner.RunBeforeInitHooks(ctx, p)
+		err := l.hooksRunner.RunBeforeLoadHooks(ctx, p)
 		if err != nil {
 			l.log.Error("Error running before init hooks", "pluginId", p.ID, "err", err)
 			continue
@@ -218,9 +218,9 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		verifiedPlugins = append(verifiedPlugins, p)
 	}
 
-	// Run after init hooks. If after init hooks fail to run for a plugin, just log the failure.
+	// Run load hooks. If load hooks fail to run for a plugin, just log the failure.
 	for _, p := range verifiedPlugins {
-		if err := l.hooksRunner.RunAfterInitHooks(ctx, p); err != nil {
+		if err := l.hooksRunner.RunLoadHooks(ctx, p); err != nil {
 			l.log.Error("Error running after init hooks", "pluginId", p.ID, "err", err)
 		}
 	}
