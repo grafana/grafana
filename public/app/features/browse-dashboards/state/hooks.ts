@@ -26,11 +26,40 @@ const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItem
   );
 });
 
+// Returns a DashboardTreeSelection but unselects any selected folder's children.
+// This is useful when making backend requests to move or delete items.
+// In this case, we only need to move/delete the parent folder and it will cascade to the children.
 const selectedItemsForActionsSelector = createSelector(
   selectedItemsSelector,
   childrenByParentUIDSelector,
   (selectedItems, childrenByParentUID) => {
-    return getSelectedItemsForActions(selectedItems, childrenByParentUID);
+    // Take a copy of the selected items to work with
+    // We don't care about panels here, only dashboards and folders can be moved or deleted
+    const result: Omit<DashboardTreeSelection, 'panel' | '$all'> = {
+      dashboard: { ...selectedItems.dashboard },
+      folder: { ...selectedItems.folder },
+    };
+
+    // Loop over selected folders in the input
+    for (const folderUID of Object.keys(selectedItems.folder)) {
+      const isSelected = selectedItems.folder[folderUID];
+      if (isSelected) {
+        // Unselect any children in the output
+        const children = childrenByParentUID[folderUID];
+        if (children) {
+          for (const child of children) {
+            if (child.kind === 'dashboard') {
+              result.dashboard[child.uid] = false;
+            }
+            if (child.kind === 'folder') {
+              result.folder[child.uid] = false;
+            }
+          }
+        }
+      }
+    }
+
+    return result;
   }
 );
 
@@ -100,44 +129,4 @@ function createFlatTree(
     : rootItems;
 
   return items.flatMap((item) => mapItem(item, folderUID, level));
-}
-
-/**
- * Returns a DashboardTreeSelection but unselects any selected folder's children.
- * This is useful when making backend requests to move or delete items.
- * In this case, we only need to move/delete the parent folder and it will cascade to the children.
- * @param selectedItemsState Overall selection state
- * @param childrenByParentUID Arrays of children keyed by their parent UID
- */
-function getSelectedItemsForActions(
-  selectedItemsState: DashboardTreeSelection,
-  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>
-): Omit<DashboardTreeSelection, 'panel' | '$all'> {
-  // Take a copy of the selected items to work with
-  // We don't care about panels here, only dashboards and folders can be moved or deleted
-  const result = {
-    dashboard: { ...selectedItemsState.dashboard },
-    folder: { ...selectedItemsState.folder },
-  };
-
-  // Loop over selected folders in the input
-  for (const folderUID of Object.keys(selectedItemsState.folder)) {
-    const isSelected = selectedItemsState.folder[folderUID];
-    if (isSelected) {
-      // Unselect any children in the output
-      const children = childrenByParentUID[folderUID];
-      if (children) {
-        for (const child of children) {
-          if (child.kind === 'dashboard') {
-            result.dashboard[child.uid] = false;
-          }
-          if (child.kind === 'folder') {
-            result.folder[child.uid] = false;
-          }
-        }
-      }
-    }
-  }
-
-  return result;
 }
