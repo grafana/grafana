@@ -1,4 +1,4 @@
-import { MutableDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data';
 
 import { getDerivedFields } from './getDerivedFields';
 
@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('getDerivedFields', () => {
   it('adds links to fields', () => {
-    const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
+    const df = createDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
     const newFields = getDerivedFields(df, [
       {
         matcherRegex: 'trace1=(\\w+)',
