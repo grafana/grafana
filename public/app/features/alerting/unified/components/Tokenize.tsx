@@ -88,12 +88,12 @@ function Token({ content, description, type }: TokenProps) {
       disabled={disableCard}
       content={
         <div className={styles.hoverTokenItem}>
-          <Badge text={<>{type}</>} color={'blue'} /> {description && <code>{description}</code>}
+          <Badge tabIndex={0} text={<>{type}</>} color={'blue'} /> {description && <code>{description}</code>}
         </div>
       }
     >
       <span>
-        <Badge className={styles.token} text={content} color={'blue'} />
+        <Badge tabIndex={0} className={styles.token} text={content} color={'blue'} />
       </span>
     </HoverCard>
   );
