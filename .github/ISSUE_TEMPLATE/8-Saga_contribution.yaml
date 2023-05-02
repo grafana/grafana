@@ -19,7 +19,8 @@ body:
         - label: Unification - combining similar components/patterns into a single
             solution
         - label: Proposal - net-new component, additions, variants
-          required: true
+      validations:
+        required: true
   - type: textarea
     id: background
     attributes:
@@ -60,4 +61,5 @@ body:
         - label: Defined - documented clearly and consicely for ease of understanding
         - label: Distinct - solves a unique gap or problem that cannot be solved with
             current solutions
+      validations:
           required: false
