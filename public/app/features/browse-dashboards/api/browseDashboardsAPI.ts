@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { isTruthy } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { DescendantCount, FolderDTO } from 'app/types';
+import { DescendantCount, DescendantCountDTO, FolderDTO } from 'app/types';
 
 import { DashboardTreeSelection } from '../types';
 
@@ -41,30 +41,30 @@ export const browseDashboardsAPI = createApi({
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
         const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+
         const promises = folderUIDs.map((folderUID) => {
-          return getBackendSrv().get<DescendantCount>(`/api/folders/${folderUID}/counts`);
+          return getBackendSrv().get<DescendantCountDTO>(`/api/folders/${folderUID}/counts`);
         });
 
         const results = await Promise.all(promises);
-        const aggregatedResults = results.reduce(
-          (acc, val) => {
-            acc.folder += val.folder;
-            acc.dashboard += val.dashboard;
 
-            // TODO enable these once the backend correctly returns them
-            // acc.libraryPanel += val.libraryPanel;
-            // acc.alertRule += val.alertRule;
-            return acc;
-          },
-          {
-            folder: Object.values(selectedItems.folder).filter(isTruthy).length,
-            dashboard: Object.values(selectedItems.dashboard).filter(isTruthy).length,
-            libraryPanel: 0,
-            alertRule: 0,
-          }
-        );
+        const totalCounts = {
+          folder: Object.values(selectedItems.folder).filter(isTruthy).length,
+          dashboard: Object.values(selectedItems.dashboard).filter(isTruthy).length,
+          libraryPanel: 0,
+          alertRule: 0,
+        };
 
-        return { data: aggregatedResults };
+        for (const folderCounts of results) {
+          totalCounts.folder += folderCounts.folder;
+          totalCounts.dashboard += folderCounts.dashboard;
+          totalCounts.alertRule += folderCounts.alertrule ?? 0;
+
+          // TODO enable these once the backend correctly returns them
+          // totalCounts.libraryPanel += folderCounts.libraryPanel;
+        }
+
+        return { data: totalCounts };
       },
     }),
   }),
