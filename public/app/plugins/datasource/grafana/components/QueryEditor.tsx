@@ -16,7 +16,7 @@ import {
   getValueFormat,
   formattedValueToString,
 } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   InlineField,
   Select,
@@ -134,7 +134,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
           next: (rsp) => {
             if (rsp.data.length) {
               const names = (rsp.data[0] as DataFrame).fields[0];
-              const folders = names.values.toArray().map((v) => ({
+              const folders = names.values.map((v) => ({
                 value: v,
                 label: v,
               }));
@@ -391,6 +391,16 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         snapshot,
       });
       this.props.onRunQuery();
+
+      reportInteraction('grafana_datasource_drop_files', {
+        number_of_files: fileRejections.length + acceptedFiles.length,
+        accepted_files: acceptedFiles.map((a) => {
+          return { type: a.type, size: a.size };
+        }),
+        rejected_files: fileRejections.map((r) => {
+          return { type: r.file.type, size: r.file.size };
+        }),
+      });
     });
   };
 
@@ -419,7 +429,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 accept: DFImport.acceptedFiles,
               }}
             >
-              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+              <FileDropzoneDefaultChildren
+                primaryText={this.props?.query?.file ? 'Replace file' : 'Drop file here or click to upload'}
+              />
             </FileDropzone>
             {file && (
               <div className={styles.file}>

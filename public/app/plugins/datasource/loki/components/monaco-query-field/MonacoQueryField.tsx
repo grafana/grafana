@@ -9,8 +9,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
-import { isValidQuery } from '../../queryUtils';
-
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
@@ -79,6 +77,9 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
       width: 100%;
+      .monaco-editor .suggest-widget {
+        min-width: 50%;
+      }
     `,
     placeholder: css`
       ::after {
@@ -150,7 +151,7 @@ const MonacoQueryField = ({
   };
 
   const onTypeDebounced = debounce(async (query: string) => {
-    if (!onQueryType || (isValidQuery(query) === false && query !== '')) {
+    if (!onQueryType) {
       return;
     }
 

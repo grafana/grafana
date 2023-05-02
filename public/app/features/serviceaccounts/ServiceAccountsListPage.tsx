@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -166,21 +166,6 @@ export const ServiceAccountsListPageUnconnected = ({
   return (
     <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
-        <Page.OldNavOnly>
-          <div className={styles.pageHeader}>
-            <h2>Service accounts</h2>
-            <div className={styles.apiKeyInfoLabel}>
-              <Tooltip
-                placement="bottom"
-                interactive
-                content={<>API keys are now service accounts with tokens. Find out more {docsLink}</>}
-              >
-                <Icon name="question-circle" />
-              </Tooltip>
-              <span>Looking for API keys?</span>
-            </div>
-          </div>
-        </Page.OldNavOnly>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <FilterInput

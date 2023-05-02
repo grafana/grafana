@@ -51,7 +51,7 @@ export const RangeSlider = ({
       <HandleTooltip
         value={handleProps.value}
         visible={tooltipAlwaysVisible || handleProps.dragging}
-        tipFormatter={formatTooltipResult}
+        tipFormatter={formatTooltipResult ? () => formatTooltipResult(handleProps.value) : undefined}
         placement={isHorizontal ? 'top' : 'right'}
       >
         {node}

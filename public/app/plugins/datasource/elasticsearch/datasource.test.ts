@@ -2,7 +2,6 @@ import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 
 import {
-  ArrayVector,
   CoreApp,
   DataLink,
   DataQueryRequest,
@@ -236,13 +235,13 @@ describe('ElasticDatasource', () => {
                   name: 'Time',
                   type: FieldType.time,
                   config: {},
-                  values: new ArrayVector([1000]),
+                  values: [1000],
                 },
                 {
                   name: 'Value',
                   type: FieldType.number,
                   config: {},
-                  values: new ArrayVector([10]),
+                  values: [10],
                 },
               ],
               length: 1,
@@ -861,13 +860,14 @@ describe('ElasticDatasource', () => {
   describe('query', () => {
     it('should replace range as integer not string', async () => {
       const { ds } = getTestContext({ jsonData: { interval: 'Daily', timeField: '@time' } });
-      const postMock = jest.fn((url: string, data) => of(createFetchResponse({ responses: [] })));
-      ds['post'] = postMock;
+      const postMock = jest.fn((method: string, url: string, data, header: object) =>
+        of(createFetchResponse({ responses: [] }))
+      );
+      ds.legacyQueryRunner['request'] = postMock;
 
       await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
         expect(postMock).toHaveBeenCalledTimes(1);
-
-        const query = postMock.mock.calls[0][1];
+        const query = postMock.mock.calls[0][2];
         expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
       });
     });
@@ -928,22 +928,28 @@ describe('ElasticDatasource', () => {
 
     it('does not return logs volume query for metric query', () => {
       expect(
-        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-          refId: 'A',
-          metrics: [{ type: 'count', id: '1' }],
-          bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
-          query: 'foo="bar"',
-        })
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
+            query: 'foo="bar"',
+          }
+        )
       ).toEqual(undefined);
     });
 
     it('returns logs volume query for log query', () => {
       expect(
-        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-          refId: 'A',
-          metrics: [{ type: 'logs', id: '1' }],
-          query: 'foo="bar"',
-        })
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: 'foo="bar"',
+          }
+        )
       ).toEqual({
         bucketAggs: [
           {
@@ -997,11 +1003,11 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'urlField',
-          values: new ArrayVector([]),
+          values: [],
         },
         {
           name: 'traceField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
@@ -1065,7 +1071,7 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'someField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
@@ -1205,7 +1211,6 @@ describe('addAdhocFilters', () => {
 const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
   return {
     requestId: '',
-    dashboardId: 0,
     interval: '',
     panelId: 0,
     intervalMs: 1,

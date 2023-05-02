@@ -25,14 +25,14 @@ export function getChildId(children: ReactElement): string | undefined {
  * @param props props to be passed to the function if item provided as such
  */
 export function renderOrCallToRender<TProps = {}>(
-  itemToRender: ((props?: TProps) => React.ReactNode) | React.ReactNode,
+  itemToRender: ((props: TProps) => React.ReactNode) | React.ReactNode,
   props?: TProps
 ): React.ReactNode {
   if (React.isValidElement(itemToRender) || typeof itemToRender === 'string' || typeof itemToRender === 'number') {
     return itemToRender;
   }
 
-  if (typeof itemToRender === 'function') {
+  if (typeof itemToRender === 'function' && props) {
     return itemToRender(props);
   }
 
