@@ -22,7 +22,10 @@ func NewInMemory(hooksRegistry hooks.Registry) *InMemory {
 	reg := &InMemory{
 		store: make(map[string]*plugins.Plugin),
 	}
-	registerPluginHooks(reg, hooksRegistry)
+	hooksRegistry.RegisterLoadHook(reg.Add)
+	hooksRegistry.RegisterUnloadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+		return reg.Remove(ctx, plugin.ID)
+	})
 	return reg
 }
 
