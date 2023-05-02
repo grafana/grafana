@@ -31,22 +31,11 @@ func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, licens
 		backendProvider: backendProvider,
 		log:             log.New("plugin.initializer"),
 	}
-
-	// TODO: hooks: this MUST run AFTER all other init hooks... how can we do that?
-	loaderHooks.RegisterBeforeInitHook(hooks.HookFunc(svc.onPluginBeforeInit))
-
 	return svc
 }
 
 func ProvideService(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, loaderHooks hooks.Registry) Initializer {
 	return New(cfg, backendProvider, license, loaderHooks)
-}
-
-func (i *Initializer) onPluginBeforeInit(ctx context.Context, p *plugins.Plugin) error {
-	if err := i.Initialize(ctx, p); err != nil {
-		i.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
-	}
-	return nil
 }
 
 func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {

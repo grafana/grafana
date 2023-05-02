@@ -44,14 +44,15 @@ func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	signatureCalculator plugins.SignatureCalculator, hooksRegistry hooks.Registry, hooksRunner hooks.Runner,
 
 	// TODO: hooks: Provided just for hooks side-effects, find a better way
-	_ initializer.Initializer, _ process.Service,
+	pluginInitializer initializer.Initializer, _ process.Service,
 ) *Loader {
-	return New(cfg, authorizer, pluginRegistry, assetPath, pluginFinder, signatureCalculator, hooksRegistry, hooksRunner)
+	return New(cfg, authorizer, pluginRegistry, assetPath, pluginFinder, signatureCalculator, pluginInitializer, hooksRegistry, hooksRunner)
 }
 
 func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
+	pluginInitializer initializer.Initializer,
 	hooksRegistry hooks.Registry, hooksRunner hooks.Runner) *Loader {
 	logger := log.New("plugin.loader")
 
@@ -68,6 +69,15 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 		}
 		return nil
 	}))
+
+	// This hook MUST run AFTER all other before init hooks
+	hooksRegistry.RegisterBeforeInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+		if err := pluginInitializer.Initialize(ctx, plugin); err != nil {
+			logger.Error("Could not initialize plugin", "pluginId", plugin.ID, "err", err)
+		}
+		return nil
+	}))
+
 	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if !plugin.IsCorePlugin() && !plugin.IsBundledPlugin() {
 			metrics.SetPluginBuildInformation(plugin.ID, string(plugin.Type), plugin.Info.Version, string(plugin.Signature))
@@ -99,6 +109,7 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 		}
 		return nil
 	}))
+
 	hooksRegistry.RegisterUnloadHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if remover, ok := plugin.FS.(plugins.FSRemover); ok {
 			return remover.Remove()
