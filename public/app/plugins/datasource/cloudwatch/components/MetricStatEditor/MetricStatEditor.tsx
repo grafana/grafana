@@ -21,6 +21,10 @@ export type Props = {
   onChange: (value: MetricStat) => void;
 };
 
+const percentileSyntaxRE = /^(p|tm|tc|ts|wm)\d{2}(?:\.\d{1,2})?$/;
+const boundariesInnerParenthesesSyntax = `\\d*(\\.\\d+)?%?:\\d*(\\.\\d+)?%?`;
+const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerParenthesesSyntax})\\)$`);
+
 export function MetricStatEditor({
   refId,
   metricStat,
@@ -32,9 +36,6 @@ export function MetricStatEditor({
   const metrics = useMetrics(datasource, metricStat);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
   const accountState = useAccountOptions(datasource.resources, metricStat.region);
-  const percentileSyntaxRE = /^(p|tm|tc|ts|wm)\d{2}(?:\.\d{1,2})?$/;
-  const boundariesInnerParenthesesSyntax = `\\d*(\\.\\d+)?%?:\\d*(\\.\\d+)?%?`;
-  const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerParenthesesSyntax})\\)$`);
 
   useEffect(() => {
     datasource.resources.isMonitoringAccount(metricStat.region).then((isMonitoringAccount) => {

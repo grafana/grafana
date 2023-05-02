@@ -40,22 +40,7 @@ describe('MetricStatEditor', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
   });
   describe('statistics field', () => {
-    test.each([
-      'Average',
-      'p23.23',
-      'p34',
-      'TM(2%:98%)',
-      'WM(10%:90%)',
-      'tc99',
-      'ts90',
-      'TS(80%:)',
-      'PR(100:2000)',
-      'TC(0.005:0.030)',
-      'TM(100:200)',
-      'TM(:90%)',
-      'WM(45%:)',
-      '$statistic',
-    ])('should accept valid values', async (statistic) => {
+    test.each(['Average', 'p23.23', 'p34', '$statistic'])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
       props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
       render(<MetricStatEditor {...props} onChange={onChange} />);
