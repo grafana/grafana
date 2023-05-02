@@ -105,13 +105,6 @@ var (
 			Owner:       grafanaExploreSquad,
 		},
 		{
-			Name:        "cloudWatchDynamicLabels",
-			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
-		},
-		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			State:       FeatureStateAlpha,
