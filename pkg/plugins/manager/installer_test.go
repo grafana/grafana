@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -61,7 +62,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
+		inst := New(fakes.NewFakePluginRegistry(hooks.NewService()), loader, pluginRepo, fs)
 		err := inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 
@@ -140,7 +141,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			require.Equal(t, []string{pluginID}, unloadedPlugins)
 
 			t.Run("Won't remove if not exists", func(t *testing.T) {
-				inst.pluginRegistry = fakes.NewFakePluginRegistry()
+				inst.pluginRegistry = fakes.NewFakePluginRegistry(hooks.NewService())
 
 				err = inst.Remove(context.Background(), pluginID)
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)

@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -355,7 +356,7 @@ func Test_GetPluginAssets(t *testing.T) {
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), fakes.NewFakePluginRegistry(), func(sc *scenarioContext) {
+			setting.NewCfg(), fakes.NewFakePluginRegistry(hooks.NewService()), func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]interface{}

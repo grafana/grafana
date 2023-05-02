@@ -8,16 +8,18 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 )
 
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
-		registry := fakes.NewFakePluginRegistry()
+		registry := fakes.NewFakePluginRegistry(hooks.NewService())
 		client := ProvideService(registry, &config.Cfg{})
 		_, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
 		require.Error(t, err)
@@ -45,7 +47,7 @@ func TestQueryData(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
-				registry := fakes.NewFakePluginRegistry()
+				registry := fakes.NewFakePluginRegistry(hooks.NewService())
 				p := &plugins.Plugin{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -73,7 +75,7 @@ func TestQueryData(t *testing.T) {
 }
 
 func TestCallResource(t *testing.T) {
-	registry := fakes.NewFakePluginRegistry()
+	registry := fakes.NewFakePluginRegistry(hooks.NewService())
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "pid",

@@ -24,6 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
@@ -64,10 +67,12 @@ func TestCallResource(t *testing.T) {
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
 	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
-	reg := registry.ProvideService()
-	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()))
+	hooksSvc := hooks.NewService()
+	reg := registry.ProvideService(hooksSvc)
+	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
+		reg, finder.NewLocalFinder(pCfg),
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()),
+		hooksSvc, hooksSvc, initializer.New(pCfg, provider.ProvideService(coreRegistry), fakes.NewFakeLicensingService()), process.ProvideService(reg, hooksSvc))
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -252,7 +253,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				},
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-				r := registry.NewInMemory()
+				r := registry.NewInMemory(hooks.NewService())
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				hs.queryDataService = query.ProvideService(

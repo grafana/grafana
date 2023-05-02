@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 )
 
 func TestStore_ProvideService(t *testing.T) {
@@ -42,7 +43,7 @@ func TestStore_ProvideService(t *testing.T) {
 			}
 		}}
 
-		_, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
+		_, err := ProvideService(fakes.NewFakePluginRegistry(hooks.NewService()), srcs, l)
 		require.NoError(t, err)
 		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
 	})

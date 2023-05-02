@@ -10,11 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 )
 
 func TestProcessManager_Start(t *testing.T) {
 	t.Run("Plugin not found in registry", func(t *testing.T) {
-		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}))
+		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}), hooks.NewService())
 		err := m.Start(context.Background(), "non-existing-datasource")
 		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
 	})
@@ -65,7 +66,7 @@ func TestProcessManager_Start(t *testing.T) {
 
 				m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
 					p.ID: p,
-				}))
+				}), hooks.NewService())
 
 				err := m.Start(context.Background(), p.ID)
 				require.NoError(t, err)
@@ -83,7 +84,7 @@ func TestProcessManager_Start(t *testing.T) {
 
 func TestProcessManager_Stop(t *testing.T) {
 	t.Run("Plugin not found in registry", func(t *testing.T) {
-		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}))
+		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}), hooks.NewService())
 		err := m.Stop(context.Background(), "non-existing-datasource")
 		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
 	})
@@ -99,7 +100,7 @@ func TestProcessManager_Stop(t *testing.T) {
 
 		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
 			pluginID: p,
-		}))
+		}), hooks.NewService())
 		err := m.Stop(context.Background(), pluginID)
 		require.NoError(t, err)
 
@@ -118,7 +119,7 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 
 	m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
 		p.ID: p,
-	}))
+	}), hooks.NewService())
 
 	err := m.Start(context.Background(), p.ID)
 	require.NoError(t, err)

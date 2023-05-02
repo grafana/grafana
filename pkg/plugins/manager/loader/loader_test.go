@@ -1349,7 +1349,7 @@ type testScenario struct {
 }
 
 func newTestScenario(cfg *config.Cfg, cbs ...func(scenario *testScenario)) *testScenario {
-	hooksSvc := hooks.ProvideHooksService()
+	hooksSvc := hooks.NewService()
 	scenario := &testScenario{
 		hooks:        hooksSvc,
 		procProvider: fakes.NewFakeBackendProcessProvider(),
