@@ -16,7 +16,7 @@ export interface InterpolatedQuery extends QueryWithReference {
 }
 
 interface ReferenceSrvProps {
-  initialQueries: QueryWithReference[];
+  initialQueries?: QueryWithReference[];
 }
 
 type RefId = string;

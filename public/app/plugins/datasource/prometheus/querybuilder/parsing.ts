@@ -49,8 +49,8 @@ import { PromVisualQuery, PromVisualQueryBinary } from './types';
  * @param expr
  */
 export function buildVisualQueryFromString(expr: string): Context {
-  const replacedExpr = replaceVariables(expr);
-  const tree = parser.parse(replacedExpr);
+  const replacedVarsExpr = replaceVariables(expr);
+  const tree = parser.parse(replacedVarsExpr);
   const node = tree.topNode;
 
   // This will be modified in the handlers.
@@ -65,7 +65,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   };
 
   try {
-    handleExpression(replacedExpr, node, context);
+    handleExpression(replacedVarsExpr, node, context);
   } catch (err) {
     // Not ideal to log it here, but otherwise we would lose the stack trace.
     console.error(err);

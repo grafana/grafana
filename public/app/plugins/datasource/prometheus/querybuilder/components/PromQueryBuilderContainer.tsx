@@ -6,7 +6,6 @@ import { PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
-import { interpolatePrometheusReferences } from '../../language_utils';
 import { PromQuery } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
@@ -18,7 +17,7 @@ import { getSettings, MetricsModalSettings } from './metrics-modal/state/state';
 
 export interface Props {
   query: PromQuery;
-  queries: PromQuery[];
+  queries?: PromQuery[];
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
@@ -32,13 +31,13 @@ export interface State {
 }
 
 const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+
 /**
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function PromQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, data, showExplain, queries } = props;
+  const { query, onChange, onRunQuery, datasource, data, showExplain } = props;
   const queryWithReferencesInterpolated = clone(query);
-  interpolatePrometheusReferences(queries, queryWithReferencesInterpolated);
   const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
   // Only rebuild visual query if expr changes from outside
   useEffect(() => {

@@ -9,6 +9,7 @@ import { Button, ConfirmModal } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
+import { getReferenceSrv } from '../../services/ReferenceSrv';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { buildVisualQueryFromString } from '../parsing';
@@ -50,6 +51,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
+  const referenceSrv = getReferenceSrv({ initialQueries: queries });
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
@@ -65,6 +67,11 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       });
 
       if (newMetricEditorMode === QueryEditorMode.Builder) {
+        if (referenceSrv) {
+          referenceSrv?.setQuery(query);
+          query.expr = referenceSrv?.interpolatePrometheusReferences(query).expr;
+        }
+
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
         if (result.errors.length) {
@@ -74,7 +81,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       }
       changeEditorMode(query, newMetricEditorMode, onChange);
     },
-    [onChange, query, app]
+    [query, app, onChange, referenceSrv]
   );
 
   useEffect(() => {
@@ -146,7 +153,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}
-            queries={queries as PromQuery[]}
+            queries={queries}
             datasource={props.datasource}
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
