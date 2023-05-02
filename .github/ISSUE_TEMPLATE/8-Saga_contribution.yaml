@@ -58,7 +58,7 @@ body:
         - label: Flexible - thoughtfully built and designed to solve various
             configurations and situations
         - label: Coherent - follows existing visual styling and patterns
-        - label: Defined - documented clearly and consicely for ease of understanding
+        - label: Defined - documented clearly and concisely for ease of understanding
         - label: Distinct - solves a unique gap or problem that cannot be solved with
             current solutions
     validations:
