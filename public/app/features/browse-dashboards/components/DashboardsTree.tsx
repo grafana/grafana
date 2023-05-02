@@ -92,7 +92,9 @@ export function DashboardsTree({
       onAllSelectionChange,
       onItemSelectionChange,
     }),
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange]
+    // we need this to rerender if items changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
   );
 
   return (
