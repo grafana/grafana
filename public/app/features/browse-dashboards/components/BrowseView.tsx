@@ -107,13 +107,13 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     return (
       <div style={{ width }}>
         <EmptyListCTA
-          title={folderUID ? "This folder doesn't have any dashboards yet" : ''}
+          title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
           buttonIcon="plus"
           buttonTitle="Create Dashboard"
           buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
           proTip={folderUID && 'Add/move dashboards to your folder at ->'}
           proTipLink={folderUID && 'dashboards'}
-          proTipLinkTitle={folderUID && 'Manage dashboards'}
+          proTipLinkTitle={folderUID && 'Browse dashboards'}
           proTipTarget=""
         />
       </div>
