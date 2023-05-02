@@ -1,5 +1,6 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { BrowseDashboardsState } from '../types';
@@ -13,7 +14,7 @@ export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState,
   const parentUID = action.meta.arg;
   const children = action.payload;
 
-  if (!parentUID) {
+  if (!parentUID || parentUID === GENERAL_FOLDER_UID) {
     state.rootItems = children;
     return;
   }
