@@ -218,11 +218,18 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if err != nil {
 		return err
 	}
+	
+	responseHeaders := map[string][]string{
+		"content-type": {"application/json"},
+	}
+
+	if response.Header.Get("Content-Encoding") != "" {
+		responseHeaders["content-encoding"] = []string{response.Header.Get("Content-Encoding")}
+	}
 
 	return sender.Send(&backend.CallResourceResponse{
 		Status: response.StatusCode,
-		// We are not sending response headers, as we don't want to expose any possibly confidential headers
-		Headers: make(map[string][]string),
+		Headers: responseHeaders,
 		Body:    body,
 	})
 }
