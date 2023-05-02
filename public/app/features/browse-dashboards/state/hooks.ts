@@ -11,7 +11,7 @@ const flatTreeSelector = createSelector(
   (wholeState: StoreState) => wholeState.browseDashboards.openFolders,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
+    return createFlatTree(folderUID, rootItems ?? [], childrenByParentUID, openFolders);
   }
 );
 
@@ -31,6 +31,16 @@ const selectedItemsForActionsSelector = createSelector(
     return getSelectedItemsForActions(selectedItems, childrenByParentUID);
   }
 );
+
+export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending' | 'fulfilled' {
+  return useSelector((wholeState) => {
+    const children = folderUID
+      ? wholeState.browseDashboards.childrenByParentUID[folderUID]
+      : wholeState.browseDashboards.rootItems;
+
+    return children ? 'fulfilled' : 'pending';
+  });
+}
 
 export function useFlatTreeState(folderUID: string | undefined) {
   return useSelector((state) => flatTreeSelector(state, folderUID));
