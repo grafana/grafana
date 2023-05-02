@@ -111,12 +111,3 @@ function assertDashboardViewItemKind(kind: string): DashboardViewItemKind {
 
   throw new Error('Unsupported kind' + kind);
 }
-
-// const getStyles = (theme: GrafanaTheme2) => ({
-//   noResults: css`
-//     padding: ${theme.v1.spacing.md};
-//     background: ${theme.v1.colors.bg2};
-//     font-style: italic;
-//     margin-top: ${theme.v1.spacing.md};
-//   `,
-// });
