@@ -221,8 +221,8 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	return sender.Send(&backend.CallResourceResponse{
 		Status: response.StatusCode,
-		// We are sending back original req headers, as we don't want to expose any possibly confidential headers
-		Headers: req.Headers,
+		// We are not sending response headers, as we don't want to expose any possibly confidential headers
+		Headers: make(map[string][]string),
 		Body:    body,
 	})
 }
